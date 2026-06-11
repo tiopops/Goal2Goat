@@ -1,0 +1,490 @@
+:root{
+    --bg:#E8E0CC;
+    --panel:#F5F0E4;
+    --dark:#1B1B1B;
+    --accent:#D94A2B;
+    --gold:#C8A03B;
+}
+
+*{
+    box-sizing:border-box;
+}
+
+body{
+    margin:0;
+    background:var(--bg);
+    color:var(--dark);
+    font-family:Arial,sans-serif;
+}
+
+.app{
+    display:flex;
+    min-height:100vh;
+}
+
+/* PANELES */
+
+.panel{
+    width:250px;
+    padding:20px;
+    background:var(--panel);
+}
+
+.center-panel{
+    flex:1;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    padding:20px;
+}
+
+.box{
+    background:white;
+    padding:15px;
+    border-radius:10px;
+    margin-bottom:15px;
+    border:1px solid #d8d0be;
+}
+
+h2,
+h3{
+    margin-top:0;
+}
+
+/* BOTONES */
+
+button{
+    width:100%;
+    padding:18px;
+
+    border:none;
+    border-radius:12px;
+
+    background:#D94A2B;
+
+    color:white;
+
+    font-weight:800;
+    font-size:20px;
+    letter-spacing:2px;
+
+    cursor:pointer;
+
+    transition:.15s;
+}
+
+button:hover{
+    opacity:.95;
+    scale:1.02;
+}
+
+/* CAMPO */
+
+#pitch{
+    width:min(90vw,700px);
+    aspect-ratio:7/9;
+
+    background-image:url("assets/football-pitch.png");
+    background-size:cover;
+    background-position:center;
+    background-repeat:no-repeat;
+
+    border-radius:18px;
+
+    position:relative;
+    overflow:hidden;
+
+    box-shadow:
+        0 8px 20px rgba(0,0,0,.15);
+}
+
+/* POSICIONES */
+
+.position{
+    position:absolute;
+
+    width:52px;
+    height:52px;
+
+    border-radius:50%;
+
+    background:rgba(255,255,255,.08);
+
+    border:3px dashed rgba(255,255,255,.65);
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    color:white;
+    font-size:12px;
+    font-weight:bold;
+
+    backdrop-filter:blur(2px);
+
+    cursor:pointer;
+
+    transition:
+        scale .15s ease,
+        background .15s ease,
+        border-color .15s ease,
+        box-shadow .15s ease;
+}
+
+.position:hover{
+
+    scale:1.12;
+
+    background:rgba(255,255,255,.18);
+
+    border-color:white;
+
+    box-shadow:
+        0 0 10px rgba(255,255,255,.25);
+}
+
+/* DELANTEROS */
+
+.st{
+    top:13%;
+    left:50%;
+    transform:translateX(-50%);
+}
+
+.lw{
+    top:18%;
+    left:18%;
+}
+
+.rw{
+    top:18%;
+    right:18%;
+}
+
+/* CENTROCAMPISTAS */
+
+.cm1{
+    top:47%;
+    left:30%;
+}
+
+.cm2{
+    top:47%;
+    right:30%;
+}
+
+.cm3{
+    top:58%;
+    left:50%;
+    transform:translateX(-50%);
+}
+
+/* DEFENSAS */
+
+.lb{
+    top:72%;
+    left:18%;
+}
+
+.cb1{
+    top:74%;
+    left:36%;
+}
+
+.cb2{
+    top:74%;
+    right:36%;
+}
+
+.rb{
+    top:72%;
+    right:18%;
+}
+
+/* PORTERO */
+
+.gk{
+    top:88%;
+    left:50%;
+    transform:translateX(-50%);
+}
+
+/* CARTA ACTUAL */
+
+#playerCard{
+    margin-top:20px;
+}
+
+.player-card{
+    background:white;
+    border:2px solid var(--gold);
+    border-radius:12px;
+    padding:15px;
+    text-align:center;
+}
+
+.player-rating{
+    font-size:42px;
+    font-weight:bold;
+    color:var(--gold);
+}
+
+.player-name{
+    font-size:22px;
+    font-weight:bold;
+    margin-top:10px;
+}
+
+.player-position{
+    margin-top:10px;
+    color:#666;
+}
+
+/* RESPONSIVE */
+
+@media(max-width:1100px){
+
+    .app{
+        flex-direction:column;
+    }
+
+    .panel{
+        width:100%;
+    }
+
+    .center-panel{
+        padding:10px;
+    }
+
+    #pitch{
+        width:95vw;
+    }
+}
+
+@media(max-width:768px){
+
+    .position{
+        width:42px;
+        height:42px;
+        font-size:10px;
+    }
+
+    .panel{
+        padding:15px;
+    }
+    /* TEAM PROFILE */
+
+.team-profile{
+    background:transparent;
+}
+
+.team-profile h3{
+    font-size:14px;
+    letter-spacing:3px;
+    margin-bottom:30px;
+    color:#5c5648;
+}
+
+.stat-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+
+    font-size:12px;
+    font-weight:bold;
+
+    letter-spacing:1px;
+
+    margin-bottom:6px;
+}
+
+.stat-bar{
+    width:100%;
+    height:4px;
+
+    background:#d5cdbb;
+
+    margin-bottom:18px;
+}
+
+.stat-bar div{
+    height:100%;
+
+    background:#1B1B1B;
+
+    width:0%;
+
+    transition:.3s;
+}
+.team-choice{
+    display:flex;
+    flex-direction:column;
+    gap:15px;
+    margin-top:20px;
+}
+
+.team-option{
+    background:white;
+    border:2px solid var(--gold);
+    border-radius:12px;
+    padding:15px;
+    cursor:pointer;
+    transition:.2s;
+}
+
+.team-option:hover{
+    transform:translateY(-2px);
+}
+
+.team-option h3{
+    margin-bottom:8px;
+}
+
+.bonus-line{
+    font-size:13px;
+    margin-top:4px;
+}
+
+.team-roster{
+    background:white;
+    border:2px solid var(--gold);
+    border-radius:12px;
+    padding:15px;
+    margin-top:20px;
+}
+
+.player-select{
+    margin-top:8px;
+}
+}
+
+.team-option.disabled{
+    opacity:.4;
+    pointer-events:none;
+}
+
+.position.locked{
+    border-color:#ffffff;
+    background:rgba(255,255,255,.35);
+}
+
+#draftCounter{
+    font-size:24px;
+    font-weight:bold;
+}
+
+
+.selection-overlay{
+ display:flex;
+ flex-direction:column;
+ gap:20px;
+ width:100%;
+}
+.selection-title{
+ text-align:center;
+ font-weight:800;
+ letter-spacing:3px;
+ font-size:22px;
+}
+.team-choice{
+ display:flex;
+ gap:20px;
+ justify-content:center;
+ flex-wrap:wrap;
+}
+.roguelike-card{
+ width:260px;
+ background:#fff;
+ border:3px solid var(--gold);
+ border-radius:16px;
+ padding:20px;
+ text-align:center;
+ box-shadow:0 8px 20px rgba(0,0,0,.15);
+}
+.team-flag{
+ width:96px;
+ height:64px;
+ object-fit:cover;
+ border-radius:6px;
+ margin-bottom:10px;
+}
+.team-style{
+ font-weight:bold;
+ margin:10px 0;
+ color:#555;
+}
+.team-count{
+ margin-top:12px;
+ font-size:13px;
+ color:#666;
+}
+
+
+.position.locked{
+    background:#111 !important;
+    color:#fff !important;
+    border:3px solid #fff !important;
+}
+
+.selection-overlay{
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,.65);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    z-index:9999;
+}
+
+.selection-modal{
+    background:var(--panel);
+    padding:30px;
+    border-radius:18px;
+    max-width:900px;
+    width:90%;
+    box-shadow:0 10px 40px rgba(0,0,0,.4);
+}
+
+.selection-title{
+    text-align:center;
+    font-size:28px;
+    font-weight:bold;
+    margin-bottom:20px;
+}
+
+.team-choice{
+    display:flex;
+    gap:20px;
+    justify-content:center;
+}
+
+.team-option{
+    flex:1;
+    background:white;
+    border:2px solid #d8d0be;
+    border-radius:16px;
+    padding:20px;
+    cursor:pointer;
+    text-align:center;
+}
+
+.team-option img{
+    width:72px;
+    height:auto;
+    margin-bottom:10px;
+}
+
+@media(max-width:768px){
+ .team-choice{flex-direction:column;}
+}
+
+
+.roster-modal{max-width:900px;width:90vw;}
+.roster-table{width:100%;border-collapse:collapse;background:white;color:#222}
+.roster-table th,.roster-table td{padding:10px;border-bottom:1px solid #ddd;text-align:left}
+.roster-table th{background:#f1ebdc}
+.pick-btn{padding:8px 12px;font-size:14px;width:auto}
+.selection-overlay{position:fixed;inset:0;background:rgba(0,0,0,.65);display:flex;align-items:center;justify-content:center;z-index:9999}
+.selection-modal{background:#f5f0e4;padding:20px;border-radius:16px;max-height:85vh;overflow:auto;box-shadow:0 10px 40px rgba(0,0,0,.4)}
+.selection-title{text-align:center;font-size:28px;font-weight:bold;margin-bottom:15px}
+.position.locked{background:#111!important;color:#fff!important;border:2px solid #fff!important}

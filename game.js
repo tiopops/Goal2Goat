@@ -1,21 +1,23 @@
 const teams = [
 {
     name:"España 2010",
+    flag:"es",
     style:"Tiki-Taka",
     bonuses:{ passing:8, technique:6 },
     players:[
-        {name:"Casillas",positions:["POR"]},
-        {name:"Puyol",positions:["DFC","LD"]},
-        {name:"Piqué",positions:["DFC"]},
+        {name:"Casillas",positions:["POR"],rating:89},
+        {name:"Puyol",positions:["DFC","LD"],rating:88},
+        {name:"Piqué",positions:["DFC"],rating:86},
         {name:"Busquets",positions:["MC"]},
-        {name:"Xavi",positions:["MC"]},
-        {name:"Iniesta",positions:["MC","EI"]},
-        {name:"Villa",positions:["DC","EI"]},
-        {name:"Torres",positions:["DC"]}
+        {name:"Xavi",positions:["MC"],rating:92},
+        {name:"Iniesta",positions:["MC","EI"],rating:92},
+        {name:"Villa",positions:["DC","EI"],rating:89},
+        {name:"Torres",positions:["DC"],rating:86}
     ]
 },
 {
     name:"Italia 2006",
+    flag:"it",
     style:"Catenaccio",
     bonuses:{ defense:12 },
     players:[
@@ -29,6 +31,7 @@ const teams = [
 },
 {
     name:"Brasil 1970",
+    flag:"br",
     style:"Jogo Bonito",
     bonuses:{ attack:8, technique:10 },
     players:[
@@ -41,6 +44,7 @@ const teams = [
 },
 {
     name:"Alemania 2014",
+    flag:"de",
     style:"Máquina Alemana",
     bonuses:{ attack:5, defense:5 },
     players:[
@@ -71,6 +75,7 @@ function updateDraftCounter(){
  document.getElementById("draftCounter").textContent = draftedPlayers + " / 11";
 }
 
+
 function rollTeams(){
  if(draftedPlayers >= 11) return;
  const availableTeams = teams.filter(t => !usedTeams.includes(t.name));
@@ -85,13 +90,35 @@ function rollTeams(){
  }while(second.name===first.name);
 
  playerCard.innerHTML=`
- <div class="team-choice">
-  <div class="team-option" onclick="selectTeam('${first.name}')">
-   <h3>${first.name}</h3><p>${first.style}</p>${renderBonuses(first)}
+<div class="selection-overlay">
+ <div class="selection-modal">
+  <div class="selection-title">ELIGE UNA SELECCIÓN</div>
+  <div class="team-choice">
+   <div class="team-option" onclick="selectTeam('${first.name}')">
+    <img src="assets/flags/${first.flag}.png">
+    <h3>${first.name}</h3>
+    <p>${first.style}</p>
+    ${renderBonuses(first)}
+   </div>
+   <div class="team-option" onclick="selectTeam('${second.name}')">
+    <img src="assets/flags/${second.flag}.png">
+    <h3>${second.name}</h3>
+    <p>${second.style}</p>
+    ${renderBonuses(second)}
+   </div>
   </div>
-  <div class="team-option" onclick="selectTeam('${second.name}')">
-   <h3>${second.name}</h3><p>${second.style}</p>${renderBonuses(second)}
-  </div>
+ </div>
+</div>`; 
+}
+
+function renderTeamCard(team){
+ return `
+ <div class="team-option roguelike-card" onclick="selectTeam('${team.name}')">
+   <img class="team-flag" src="assets/flags/${team.flag}.png">
+   <h3>${team.name}</h3>
+   <div class="team-style">${team.style}</div>
+   <div class="bonus-list">${renderBonuses(team)}</div>
+   <div class="team-count">${team.players.length} jugadores</div>
  </div>`;
 }
 
@@ -103,6 +130,7 @@ function renderBonuses(team){
  return html;
 }
 
+
 function selectTeam(teamName){
  const team = teams.find(t=>t.name===teamName);
  usedTeams.push(team.name);
@@ -110,17 +138,33 @@ function selectTeam(teamName){
  if(styleEl) styleEl.textContent=team.style;
  applyBonuses(team);
 
- let html=`<div class="team-roster"><h3>${team.name}</h3><p>${team.style}</p>`;
- team.players.forEach(player=>{
+ let rows="";
+ team.players.forEach((player,index)=>{
   if(usedPlayers.includes(player.name)) return;
-  html += `<button class="player-select" onclick='selectPlayer(${JSON.stringify(player)})'>${player.name}</button>`;
+  rows += `<tr>
+   <td>${index+1}</td>
+   <td>${player.name}</td>
+   <td>${player.positions.join(" / ")}</td>
+   <td>${player.rating || 80}</td>
+   <td><button class="pick-btn" onclick='selectPlayer(${JSON.stringify(player).replace(/'/g,"&#39;")})'>Elegir</button></td>
+  </tr>`;
  });
- html += `</div>`;
- playerCard.innerHTML=html;
+
+ playerCard.innerHTML = `
+ <div class="selection-overlay">
+  <div class="selection-modal roster-modal">
+   <div class="selection-title">${team.name}</div>
+   <table class="roster-table">
+    <thead><tr><th>#</th><th>Jugador</th><th>Posiciones</th><th>OVR</th><th></th></tr></thead>
+    <tbody>${rows}</tbody>
+   </table>
+  </div>
+ </div>`;
 }
 
+
 function selectPlayer(player){
- selectedPlayer=player;
+ selectedPlayer=player; playerCard.innerHTML='';
  document.querySelectorAll(".position").forEach(pos=>{
   if(pos.classList.contains("locked")) return;
   pos.style.borderColor="rgba(255,255,255,.65)";
@@ -180,3 +224,24 @@ document.querySelectorAll(".position").forEach(slot=>{
   }
  });
 });
+
+
+function clearHighlights(){
+    document.querySelectorAll(".position").forEach(slot=>{
+        if(!slot.classList.contains("locked")){
+            slot.style.borderColor="rgba(255,255,255,.65)";
+            slot.style.boxShadow="none";
+        }
+    });
+}
+
+function highlightPlayerPositions(positions){
+    clearHighlights();
+    document.querySelectorAll(".position").forEach(slot=>{
+        const name = slot.textContent.trim();
+        if(!slot.classList.contains("locked") && positions.includes(name)){
+            slot.style.borderColor="#ffd700";
+            slot.style.boxShadow="0 0 15px #ffd700";
+        }
+    });
+}

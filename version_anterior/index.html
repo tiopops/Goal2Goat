@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Goal2Goat</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="app">
+
+    <div class="panel left-panel">
+
+        <h2>GOAL2GOAT</h2>
+
+        <div class="box">
+            <h3>DRAFT</h3>
+            <p id="draftCounter">0 / 11</p>
+        </div>
+
+        <div class="box">
+            <h3>ESTILO</h3>
+            <p id="teamStyle">Sin definir</p>
+        </div>
+
+        <div class="box">
+            <h3>Misión</h3>
+            <p>No seleccionada</p>
+        </div>
+
+        <button id="rollBtn">
+            ROLL!
+        </button>
+        
+        <div id="playerCard"></div>
+
+    </div>
+
+    <div class="center-panel">
+
+        <div id="pitch">
+
+            <div class="position gk">POR</div>
+
+            <div class="position lb">LI</div>
+            <div class="position cb1">DFC</div>
+            <div class="position cb2">DFC</div>
+            <div class="position rb">LD</div>
+
+            <div class="position cm1">MC</div>
+            <div class="position cm2">MC</div>
+            <div class="position cm3">MC</div>
+
+            <div class="position lw">EI</div>
+            <div class="position st">DC</div>
+            <div class="position rw">ED</div>
+
+        </div>
+
+    </div>
+
+    <div class="panel right-panel">
+
+    <div class="team-profile">
+
+        <h3>PERFIL DEL EQUIPO</h3>
+
+        <div class="stat-row">
+            <span>ATAQUE</span>
+            <span id="attackValue">0</span>
+        </div>
+        <div class="stat-bar">
+            <div id="attackBar"></div>
+        </div>
+
+        <div class="stat-row">
+            <span>DEFENSA</span>
+            <span id="defenseValue">0</span>
+        </div>
+        <div class="stat-bar">
+            <div id="defenseBar"></div>
+        </div>
+
+        <div class="stat-row">
+            <span>RITMO</span>
+            <span id="paceValue">0</span>
+        </div>
+        <div class="stat-bar">
+            <div id="paceBar"></div>
+        </div>
+
+        <div class="stat-row">
+            <span>PASE</span>
+            <span id="passingValue">0</span>
+        </div>
+        <div class="stat-bar">
+            <div id="passingBar"></div>
+        </div>
+
+        <div class="stat-row">
+            <span>TÉCNICA</span>
+            <span id="techniqueValue">0</span>
+        </div>
+        <div class="stat-bar">
+            <div id="techniqueBar"></div>
+        </div>
+
+    </div>
+
+</div>
+
+<script src="game.js"></script>
+
+</body>
+</html>
