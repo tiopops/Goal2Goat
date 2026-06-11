@@ -146,20 +146,21 @@ function selectTeam(teamName){
    <td>${player.name}</td>
    <td>${player.positions.join(" / ")}</td>
    <td>${player.rating || 80}</td>
-   <td><button class="pick-btn" onclick='selectPlayer(${JSON.stringify(player).replace(/'/g,"&#39;")})'>Elegir</button></td>
+   <td><button class="pick-btn" 
+onmouseover='highlightPlayerPositions(${JSON.stringify(player.positions)})'
+onmouseout='clearHighlights()'
+onclick='selectPlayer(${JSON.stringify(player).replace(/'/g,"&#39;")})'>Elegir</button></td>
   </tr>`;
  });
 
  playerCard.innerHTML = `
- <div class="selection-overlay">
-  <div class="selection-modal roster-modal">
-   <div class="selection-title">${team.name}</div>
+  <div class="roster-modal">
+   <div class="selection-title">ELIGE UN JUGADOR · ${team.name}</div>
    <table class="roster-table">
-    <thead><tr><th>#</th><th>Jugador</th><th>Posiciones</th><th>OVR</th><th></th></tr></thead>
+    <thead><tr><th>#</th><th>Jugador</th><th>Posiciones</th><th>ESTADÍSTICAS</th><th></th></tr></thead>
     <tbody>${rows}</tbody>
    </table>
-  </div>
- </div>`;
+  </div>`;
 }
 
 
@@ -206,7 +207,7 @@ document.querySelectorAll(".position").forEach(slot=>{
   slot.style.fontSize="10px";
   slot.classList.add("locked");
 
-  usedPlayers.push(selectedPlayer.name);
+  usedPlayers.push(selectedPlayer);
   draftedPlayers++;
   updateDraftCounter();
 
@@ -224,3 +225,82 @@ document.querySelectorAll(".position").forEach(slot=>{
   }
  });
 });
+
+
+function clearHighlights(){
+    document.querySelectorAll(".position").forEach(slot=>{
+        if(!slot.classList.contains("locked")){
+            slot.style.borderColor="rgba(255,255,255,.65)";
+            slot.style.boxShadow="none";
+        }
+    });
+}
+
+function highlightPlayerPositions(positions){
+    clearHighlights();
+    document.querySelectorAll(".position").forEach(slot=>{
+        const name = slot.textContent.trim();
+        if(!slot.classList.contains("locked") && positions.includes(name)){
+            slot.style.borderColor="#ffd700";
+            slot.style.boxShadow="0 0 15px #ffd700";
+        }
+    });
+}
+
+
+function updateConvocadosTable(){
+ const el=document.getElementById('convocadosTable');
+ if(!el) return;
+ const rows=usedPlayers.map((p,i)=>`<tr><td>${i+1}</td><td>${p.name}</td><td><span class="star">★</span>${p.positions[0]}</td><td>${p.rating||0}</td></tr>`).join('');
+ el.innerHTML=`<table><tr><th>#</th><th>Jugador</th><th>Pos</th><th>ESTADÍSTICAS</th></tr>${rows}</table>`;
+ const avg=usedPlayers.length?Math.round(usedPlayers.reduce((a,b)=>a+(b.rating||0),0)/usedPlayers.length):0;
+ const o=document.getElementById('teamOVR')||document.getElementById('teamESTADÍSTICAS'); if(o) o.textContent=avg;
+}
+const _oldDraft=updateDraftCounter;
+updateDraftCounter=function(){_oldDraft();updateConvocadosTable();}
+
+// extra enhancements
+function refreshESTADÍSTICAS(){const avg=usedPlayers.length?Math.round(usedPlayers.reduce((s,p)=>s+(p.rating||80),0)/usedPlayers.length):0;const e=document.getElementById('teamESTADÍSTICAS');if(e)e.textContent=avg;}
+const _u=updateDraftCounter;updateDraftCounter=function(){_u();refreshESTADÍSTICAS();updateConvocadosTable&&updateConvocadosTable();}
+
+
+// Goal2Goat FM upgrade
+function refreshConvocadosFM(){
+ const t=document.getElementById('convocadosTable');
+ if(!t || typeof usedPlayers==='undefined') return;
+ let rows='';
+ usedPlayers.forEach((p,i)=>{
+   const pos=(p.positions&&p.positions.length)?p.positions[0]:'--';
+   const sec=(p.positions&&p.positions.length>1)?p.positions.slice(1).join(', '):'';
+   rows += `<tr data-pos="${pos}"><td>${i+1}</td><td>${p.name||''}</td><td class="pos-main">${pos}★</td><td>${sec}</td><td>${p.rating||0}</td></tr>`;
+ });
+ t.innerHTML=`<table><tr><th>#</th><th>Jugador</th><th>Pos</th><th>Sec.</th><th>EST</th></tr>${rows}</table>`;
+
+ t.querySelectorAll('tr[data-pos]').forEach(r=>{
+   r.addEventListener('mouseenter',()=>{
+      document.querySelectorAll('[data-position]').forEach(el=>{
+        if(el.dataset.position===r.dataset.pos){ el.classList.add('player-flash'); }
+      });
+   });
+ });
+}
+setInterval(refreshConvocadosFM,1000);
+
+
+let G2G_PLAYERS=[];
+let G2G_TEAMS=[];
+
+async function loadGoal2GoatData(){
+ try{
+   const [p,t]=await Promise.all([
+     fetch('data/players.json').then(r=>r.json()),
+     fetch('data/teams.json').then(r=>r.json())
+   ]);
+   G2G_PLAYERS=p;
+   G2G_TEAMS=t;
+   console.log('Goal2Goat data loaded', G2G_PLAYERS.length, G2G_TEAMS.length);
+ }catch(e){
+   console.error('Error loading Goal2Goat data',e);
+ }
+}
+loadGoal2GoatData();
