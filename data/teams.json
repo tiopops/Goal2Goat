@@ -2,7 +2,6 @@
   {
     "id": "team_0",
     "name": "España 2008",
-    "style": "tiki_taka",
     "players": [
       "p_0_0",
       "p_0_1",
@@ -20,12 +19,16 @@
       "p_0_13",
       "p_0_14",
       "p_0_15"
-    ]
+    ],
+    "flag": "assets/flags/es.png",
+    "emoji": "🇪🇸",
+    "bonus": {
+      "PASE": 5
+    }
   },
   {
     "id": "team_1",
     "name": "España 2010",
-    "style": "catenaccio",
     "players": [
       "p_1_0",
       "p_1_1",
@@ -43,12 +46,16 @@
       "p_1_13",
       "p_1_14",
       "p_1_15"
-    ]
+    ],
+    "flag": "assets/flags/es.png",
+    "emoji": "🇪🇸",
+    "bonus": {
+      "PASE": 5
+    }
   },
   {
     "id": "team_2",
     "name": "España 2012",
-    "style": "total_football",
     "players": [
       "p_2_0",
       "p_2_1",
@@ -66,12 +73,16 @@
       "p_2_13",
       "p_2_14",
       "p_2_15"
-    ]
+    ],
+    "flag": "assets/flags/es.png",
+    "emoji": "🇪🇸",
+    "bonus": {
+      "PASE": 5
+    }
   },
   {
     "id": "team_3",
     "name": "Brasil 1970",
-    "style": "gegenpress",
     "players": [
       "p_3_0",
       "p_3_1",
@@ -89,12 +100,16 @@
       "p_3_13",
       "p_3_14",
       "p_3_15"
-    ]
+    ],
+    "flag": "assets/flags/br.png",
+    "emoji": "🇧🇷",
+    "bonus": {
+      "TÉCNICA": 5
+    }
   },
   {
     "id": "team_4",
     "name": "Brasil 2002",
-    "style": "jogo_bonito",
     "players": [
       "p_4_0",
       "p_4_1",
@@ -112,12 +127,16 @@
       "p_4_13",
       "p_4_14",
       "p_4_15"
-    ]
+    ],
+    "flag": "assets/flags/br.png",
+    "emoji": "🇧🇷",
+    "bonus": {
+      "TÉCNICA": 5
+    }
   },
   {
     "id": "team_5",
     "name": "Alemania 1974",
-    "style": "tiki_taka",
     "players": [
       "p_5_0",
       "p_5_1",
@@ -135,12 +154,16 @@
       "p_5_13",
       "p_5_14",
       "p_5_15"
-    ]
+    ],
+    "flag": "assets/flags/de.png",
+    "emoji": "🇩🇪",
+    "bonus": {
+      "DEFENSA": 5
+    }
   },
   {
     "id": "team_6",
     "name": "Alemania 1990",
-    "style": "catenaccio",
     "players": [
       "p_6_0",
       "p_6_1",
@@ -158,12 +181,16 @@
       "p_6_13",
       "p_6_14",
       "p_6_15"
-    ]
+    ],
+    "flag": "assets/flags/de.png",
+    "emoji": "🇩🇪",
+    "bonus": {
+      "DEFENSA": 5
+    }
   },
   {
     "id": "team_7",
     "name": "Alemania 2014",
-    "style": "total_football",
     "players": [
       "p_7_0",
       "p_7_1",
@@ -181,12 +208,16 @@
       "p_7_13",
       "p_7_14",
       "p_7_15"
-    ]
+    ],
+    "flag": "assets/flags/de.png",
+    "emoji": "🇩🇪",
+    "bonus": {
+      "DEFENSA": 5
+    }
   },
   {
     "id": "team_8",
     "name": "Argentina 1986",
-    "style": "gegenpress",
     "players": [
       "p_8_0",
       "p_8_1",
@@ -204,12 +235,16 @@
       "p_8_13",
       "p_8_14",
       "p_8_15"
-    ]
+    ],
+    "flag": "assets/flags/ar.png",
+    "emoji": "🇦🇷",
+    "bonus": {
+      "ATAQUE": 5
+    }
   },
   {
     "id": "team_9",
     "name": "Argentina 2022",
-    "style": "jogo_bonito",
     "players": [
       "p_9_0",
       "p_9_1",
@@ -227,12 +262,16 @@
       "p_9_13",
       "p_9_14",
       "p_9_15"
-    ]
+    ],
+    "flag": "assets/flags/ar.png",
+    "emoji": "🇦🇷",
+    "bonus": {
+      "ATAQUE": 5
+    }
   },
   {
     "id": "team_10",
     "name": "Francia 1998",
-    "style": "tiki_taka",
     "players": [
       "p_10_0",
       "p_10_1",
@@ -250,12 +289,16 @@
       "p_10_13",
       "p_10_14",
       "p_10_15"
-    ]
+    ],
+    "flag": "assets/flags/fr.png",
+    "emoji": "🏳️",
+    "bonus": {
+      "PASE": 2
+    }
   },
   {
     "id": "team_11",
     "name": "Francia 2018",
-    "style": "catenaccio",
     "players": [
       "p_11_0",
       "p_11_1",
@@ -273,12 +316,16 @@
       "p_11_13",
       "p_11_14",
       "p_11_15"
-    ]
+    ],
+    "flag": "assets/flags/fr.png",
+    "emoji": "🏳️",
+    "bonus": {
+      "PASE": 2
+    }
   },
   {
     "id": "team_12",
     "name": "Italia 1982",
-    "style": "total_football",
     "players": [
       "p_12_0",
       "p_12_1",
@@ -296,12 +343,16 @@
       "p_12_13",
       "p_12_14",
       "p_12_15"
-    ]
+    ],
+    "flag": "assets/flags/it.png",
+    "emoji": "🇮🇹",
+    "bonus": {
+      "DEFENSA": 5
+    }
   },
   {
     "id": "team_13",
     "name": "Italia 2006",
-    "style": "gegenpress",
     "players": [
       "p_13_0",
       "p_13_1",
@@ -319,12 +370,16 @@
       "p_13_13",
       "p_13_14",
       "p_13_15"
-    ]
+    ],
+    "flag": "assets/flags/it.png",
+    "emoji": "🇮🇹",
+    "bonus": {
+      "DEFENSA": 5
+    }
   },
   {
     "id": "team_14",
     "name": "Holanda 1974",
-    "style": "jogo_bonito",
     "players": [
       "p_14_0",
       "p_14_1",
@@ -342,12 +397,16 @@
       "p_14_13",
       "p_14_14",
       "p_14_15"
-    ]
+    ],
+    "flag": "assets/flags/nl.png",
+    "emoji": "🇳🇱",
+    "bonus": {
+      "RITMO": 5
+    }
   },
   {
     "id": "team_15",
     "name": "Holanda 1988",
-    "style": "tiki_taka",
     "players": [
       "p_15_0",
       "p_15_1",
@@ -365,12 +424,16 @@
       "p_15_13",
       "p_15_14",
       "p_15_15"
-    ]
+    ],
+    "flag": "assets/flags/nl.png",
+    "emoji": "🇳🇱",
+    "bonus": {
+      "RITMO": 5
+    }
   },
   {
     "id": "team_16",
     "name": "Inglaterra 1966",
-    "style": "catenaccio",
     "players": [
       "p_16_0",
       "p_16_1",
@@ -388,12 +451,16 @@
       "p_16_13",
       "p_16_14",
       "p_16_15"
-    ]
+    ],
+    "flag": "assets/flags/gb.png",
+    "emoji": "🏳️",
+    "bonus": {
+      "PASE": 2
+    }
   },
   {
     "id": "team_17",
     "name": "Portugal 2016",
-    "style": "total_football",
     "players": [
       "p_17_0",
       "p_17_1",
@@ -411,12 +478,16 @@
       "p_17_13",
       "p_17_14",
       "p_17_15"
-    ]
+    ],
+    "flag": "assets/flags/pt.png",
+    "emoji": "🇵🇹",
+    "bonus": {
+      "TÉCNICA": 3
+    }
   },
   {
     "id": "team_18",
     "name": "Croacia 2018",
-    "style": "gegenpress",
     "players": [
       "p_18_0",
       "p_18_1",
@@ -434,12 +505,15 @@
       "p_18_13",
       "p_18_14",
       "p_18_15"
-    ]
+    ],
+    "emoji": "🇭🇷",
+    "bonus": {
+      "PASE": 3
+    }
   },
   {
     "id": "team_19",
     "name": "Uruguay 1950",
-    "style": "jogo_bonito",
     "players": [
       "p_19_0",
       "p_19_1",
@@ -457,12 +531,16 @@
       "p_19_13",
       "p_19_14",
       "p_19_15"
-    ]
+    ],
+    "flag": "assets/flags/uy.png",
+    "emoji": "🇺🇾",
+    "bonus": {
+      "DEFENSA": 3
+    }
   },
   {
     "id": "team_20",
     "name": "Hungría 1954",
-    "style": "tiki_taka",
     "players": [
       "p_20_0",
       "p_20_1",
@@ -480,12 +558,15 @@
       "p_20_13",
       "p_20_14",
       "p_20_15"
-    ]
+    ],
+    "emoji": "🏳️",
+    "bonus": {
+      "PASE": 2
+    }
   },
   {
     "id": "team_21",
     "name": "Dinamarca 1992",
-    "style": "catenaccio",
     "players": [
       "p_21_0",
       "p_21_1",
@@ -503,12 +584,15 @@
       "p_21_13",
       "p_21_14",
       "p_21_15"
-    ]
+    ],
+    "emoji": "🏳️",
+    "bonus": {
+      "PASE": 2
+    }
   },
   {
     "id": "team_22",
     "name": "Bélgica 2018",
-    "style": "total_football",
     "players": [
       "p_22_0",
       "p_22_1",
@@ -526,12 +610,15 @@
       "p_22_13",
       "p_22_14",
       "p_22_15"
-    ]
+    ],
+    "emoji": "🏳️",
+    "bonus": {
+      "PASE": 2
+    }
   },
   {
     "id": "team_23",
     "name": "México 1986",
-    "style": "gegenpress",
     "players": [
       "p_23_0",
       "p_23_1",
@@ -549,12 +636,16 @@
       "p_23_13",
       "p_23_14",
       "p_23_15"
-    ]
+    ],
+    "flag": "assets/flags/mx.png",
+    "emoji": "🏳️",
+    "bonus": {
+      "PASE": 2
+    }
   },
   {
     "id": "team_24",
     "name": "Estados Unidos 2002",
-    "style": "jogo_bonito",
     "players": [
       "p_24_0",
       "p_24_1",
@@ -572,12 +663,15 @@
       "p_24_13",
       "p_24_14",
       "p_24_15"
-    ]
+    ],
+    "emoji": "🏳️",
+    "bonus": {
+      "PASE": 2
+    }
   },
   {
     "id": "team_25",
     "name": "Japón 2002",
-    "style": "tiki_taka",
     "players": [
       "p_25_0",
       "p_25_1",
@@ -595,12 +689,15 @@
       "p_25_13",
       "p_25_14",
       "p_25_15"
-    ]
+    ],
+    "emoji": "🏳️",
+    "bonus": {
+      "PASE": 2
+    }
   },
   {
     "id": "team_26",
     "name": "Corea del Sur 2002",
-    "style": "catenaccio",
     "players": [
       "p_26_0",
       "p_26_1",
@@ -618,12 +715,15 @@
       "p_26_13",
       "p_26_14",
       "p_26_15"
-    ]
+    ],
+    "emoji": "🏳️",
+    "bonus": {
+      "PASE": 2
+    }
   },
   {
     "id": "team_27",
     "name": "Marruecos 2022",
-    "style": "total_football",
     "players": [
       "p_27_0",
       "p_27_1",
@@ -641,12 +741,15 @@
       "p_27_13",
       "p_27_14",
       "p_27_15"
-    ]
+    ],
+    "emoji": "🏳️",
+    "bonus": {
+      "PASE": 2
+    }
   },
   {
     "id": "team_28",
     "name": "Nigeria 1994",
-    "style": "gegenpress",
     "players": [
       "p_28_0",
       "p_28_1",
@@ -664,12 +767,15 @@
       "p_28_13",
       "p_28_14",
       "p_28_15"
-    ]
+    ],
+    "emoji": "🏳️",
+    "bonus": {
+      "PASE": 2
+    }
   },
   {
     "id": "team_29",
     "name": "Camerún 1990",
-    "style": "jogo_bonito",
     "players": [
       "p_29_0",
       "p_29_1",
@@ -687,12 +793,16 @@
       "p_29_13",
       "p_29_14",
       "p_29_15"
-    ]
+    ],
+    "flag": "assets/flags/cm.png",
+    "emoji": "🏳️",
+    "bonus": {
+      "PASE": 2
+    }
   },
   {
     "id": "team_30",
     "name": "Chile 1962",
-    "style": "tiki_taka",
     "players": [
       "p_30_0",
       "p_30_1",
@@ -710,12 +820,15 @@
       "p_30_13",
       "p_30_14",
       "p_30_15"
-    ]
+    ],
+    "emoji": "🏳️",
+    "bonus": {
+      "PASE": 2
+    }
   },
   {
     "id": "team_31",
     "name": "Paraguay 2010",
-    "style": "catenaccio",
     "players": [
       "p_31_0",
       "p_31_1",
@@ -733,12 +846,16 @@
       "p_31_13",
       "p_31_14",
       "p_31_15"
-    ]
+    ],
+    "flag": "assets/flags/py.png",
+    "emoji": "🏳️",
+    "bonus": {
+      "PASE": 2
+    }
   },
   {
     "id": "team_32",
     "name": "Colombia 2014",
-    "style": "total_football",
     "players": [
       "p_32_0",
       "p_32_1",
@@ -756,12 +873,15 @@
       "p_32_13",
       "p_32_14",
       "p_32_15"
-    ]
+    ],
+    "emoji": "🏳️",
+    "bonus": {
+      "PASE": 2
+    }
   },
   {
     "id": "team_33",
     "name": "Perú 1978",
-    "style": "gegenpress",
     "players": [
       "p_33_0",
       "p_33_1",
@@ -779,12 +899,15 @@
       "p_33_13",
       "p_33_14",
       "p_33_15"
-    ]
+    ],
+    "emoji": "🏳️",
+    "bonus": {
+      "PASE": 2
+    }
   },
   {
     "id": "team_34",
     "name": "Suecia 1958",
-    "style": "jogo_bonito",
     "players": [
       "p_34_0",
       "p_34_1",
@@ -802,12 +925,15 @@
       "p_34_13",
       "p_34_14",
       "p_34_15"
-    ]
+    ],
+    "emoji": "🏳️",
+    "bonus": {
+      "PASE": 2
+    }
   },
   {
     "id": "team_35",
     "name": "Polonia 1974",
-    "style": "tiki_taka",
     "players": [
       "p_35_0",
       "p_35_1",
@@ -825,12 +951,15 @@
       "p_35_13",
       "p_35_14",
       "p_35_15"
-    ]
+    ],
+    "emoji": "🇵🇱",
+    "bonus": {
+      "ATAQUE": 3
+    }
   },
   {
     "id": "team_36",
     "name": "Checoslovaquia 1962",
-    "style": "catenaccio",
     "players": [
       "p_36_0",
       "p_36_1",
@@ -848,12 +977,15 @@
       "p_36_13",
       "p_36_14",
       "p_36_15"
-    ]
+    ],
+    "emoji": "🏳️",
+    "bonus": {
+      "PASE": 2
+    }
   },
   {
     "id": "team_37",
     "name": "Yugoslavia 1962",
-    "style": "total_football",
     "players": [
       "p_37_0",
       "p_37_1",
@@ -871,12 +1003,16 @@
       "p_37_13",
       "p_37_14",
       "p_37_15"
-    ]
+    ],
+    "flag": "assets/flags/rs.png",
+    "emoji": "🏳️",
+    "bonus": {
+      "PASE": 2
+    }
   },
   {
     "id": "team_38",
     "name": "Austria 1954",
-    "style": "gegenpress",
     "players": [
       "p_38_0",
       "p_38_1",
@@ -894,12 +1030,15 @@
       "p_38_13",
       "p_38_14",
       "p_38_15"
-    ]
+    ],
+    "emoji": "🏳️",
+    "bonus": {
+      "PASE": 2
+    }
   },
   {
     "id": "team_39",
     "name": "Suiza 1954",
-    "style": "jogo_bonito",
     "players": [
       "p_39_0",
       "p_39_1",
@@ -917,12 +1056,15 @@
       "p_39_13",
       "p_39_14",
       "p_39_15"
-    ]
+    ],
+    "emoji": "🏳️",
+    "bonus": {
+      "PASE": 2
+    }
   },
   {
     "id": "team_40",
     "name": "Turquía 2002",
-    "style": "tiki_taka",
     "players": [
       "p_40_0",
       "p_40_1",
@@ -940,12 +1082,15 @@
       "p_40_13",
       "p_40_14",
       "p_40_15"
-    ]
+    ],
+    "emoji": "🏳️",
+    "bonus": {
+      "PASE": 2
+    }
   },
   {
     "id": "team_41",
     "name": "Grecia 2004",
-    "style": "catenaccio",
     "players": [
       "p_41_0",
       "p_41_1",
@@ -963,12 +1108,15 @@
       "p_41_13",
       "p_41_14",
       "p_41_15"
-    ]
+    ],
+    "emoji": "🏳️",
+    "bonus": {
+      "PASE": 2
+    }
   },
   {
     "id": "team_42",
     "name": "Rumanía 1994",
-    "style": "total_football",
     "players": [
       "p_42_0",
       "p_42_1",
@@ -986,12 +1134,15 @@
       "p_42_13",
       "p_42_14",
       "p_42_15"
-    ]
+    ],
+    "emoji": "🏳️",
+    "bonus": {
+      "PASE": 2
+    }
   },
   {
     "id": "team_43",
     "name": "Irlanda 1990",
-    "style": "gegenpress",
     "players": [
       "p_43_0",
       "p_43_1",
@@ -1009,12 +1160,15 @@
       "p_43_13",
       "p_43_14",
       "p_43_15"
-    ]
+    ],
+    "emoji": "🏳️",
+    "bonus": {
+      "PASE": 2
+    }
   },
   {
     "id": "team_44",
     "name": "Escocia 1978",
-    "style": "jogo_bonito",
     "players": [
       "p_44_0",
       "p_44_1",
@@ -1032,12 +1186,15 @@
       "p_44_13",
       "p_44_14",
       "p_44_15"
-    ]
+    ],
+    "emoji": "🏴",
+    "bonus": {
+      "PASE": 2
+    }
   },
   {
     "id": "team_45",
     "name": "Gales 1958",
-    "style": "tiki_taka",
     "players": [
       "p_45_0",
       "p_45_1",
@@ -1055,12 +1212,15 @@
       "p_45_13",
       "p_45_14",
       "p_45_15"
-    ]
+    ],
+    "emoji": "🏳️",
+    "bonus": {
+      "PASE": 2
+    }
   },
   {
     "id": "team_46",
     "name": "Rusia 2018",
-    "style": "catenaccio",
     "players": [
       "p_46_0",
       "p_46_1",
@@ -1078,12 +1238,16 @@
       "p_46_13",
       "p_46_14",
       "p_46_15"
-    ]
+    ],
+    "flag": "assets/flags/ru.png",
+    "emoji": "🏳️",
+    "bonus": {
+      "PASE": 2
+    }
   },
   {
     "id": "team_47",
     "name": "Ucrania 2006",
-    "style": "total_football",
     "players": [
       "p_47_0",
       "p_47_1",
@@ -1101,12 +1265,15 @@
       "p_47_13",
       "p_47_14",
       "p_47_15"
-    ]
+    ],
+    "emoji": "🏳️",
+    "bonus": {
+      "PASE": 2
+    }
   },
   {
     "id": "team_48",
     "name": "Serbia 2010",
-    "style": "gegenpress",
     "players": [
       "p_48_0",
       "p_48_1",
@@ -1124,12 +1291,15 @@
       "p_48_13",
       "p_48_14",
       "p_48_15"
-    ]
+    ],
+    "emoji": "🇷🇸",
+    "bonus": {
+      "PASE": 2
+    }
   },
   {
     "id": "team_49",
     "name": "Noruega 1998",
-    "style": "jogo_bonito",
     "players": [
       "p_49_0",
       "p_49_1",
@@ -1147,6 +1317,10 @@
       "p_49_13",
       "p_49_14",
       "p_49_15"
-    ]
+    ],
+    "emoji": "🏳️",
+    "bonus": {
+      "PASE": 2
+    }
   }
 ]

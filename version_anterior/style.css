@@ -137,3 +137,125 @@ th:last-child, td:last-child { width: 26%; }      /* Acción */
 button {
     white-space: nowrap;
 }
+
+
+#pitch{background:none !important;overflow:hidden;}
+.pitch-svg{position:absolute;inset:0;width:100%;height:100%;z-index:0}
+
+.position{
+z-index:5;
+width:48px;height:48px;
+background:rgba(0,0,0,.08);
+backdrop-filter:blur(2px);
+}
+
+/* Coordenadas exactas SVG 480x640 */
+.st{left:50%;top:17.9%;transform:translate(-50%,-50%)}
+.lw{left:21.9%;top:24.2%;transform:translate(-50%,-50%)}
+.rw{left:78.1%;top:24.2%;transform:translate(-50%,-50%)}
+
+.cm1{left:28.1%;top:50%;transform:translate(-50%,-50%)}
+.cm2{left:50%;top:54.2%;transform:translate(-50%,-50%)}
+.cm3{left:71.9%;top:50%;transform:translate(-50%,-50%)}
+
+.lb{left:17.7%;top:71.9%;transform:translate(-50%,-50%)}
+.cb1{left:37.5%;top:75.8%;transform:translate(-50%,-50%)}
+.cb2{left:62.5%;top:75.8%;transform:translate(-50%,-50%)}
+.rb{left:82.3%;top:71.9%;transform:translate(-50%,-50%)}
+
+.gk{left:50%;top:91.4%;transform:translate(-50%,-50%)}
+
+
+/* Goal2Goat - layout compacto 3 columnas */
+.app,.layout,.container,.game-layout{
+    max-width:1700px;
+    margin:0 auto;
+}
+
+/* FINAL FIXES */
+body{overflow-x:hidden}
+.app{grid-template-columns:420px minmax(700px,1fr) 420px !important;max-width:none !important;width:100vw !important;gap:0 !important}
+.panel,.left-panel,.right-panel{margin:0 !important}
+.center-panel{padding:0 !important}
+#pitch{transform:none !important;width:min(100%,640px)!important}
+.position{cursor:pointer !important}
+.position:hover{cursor:pointer !important;border-color:#ffd700}
+#convocadosTable{max-height:500px !important}
+
+
+/* FINAL USER FIXES */
+body{margin:0}
+.app,.layout,.container,.game-layout{
+ width:100vw!important;
+ max-width:none!important;
+ display:grid!important;
+ grid-template-columns:460px 1fr 460px!important;
+ gap:0!important;
+}
+.left-panel,.sidebar-left,.right-panel,.sidebar-right{
+ width:auto!important;
+ min-width:0!important;
+}
+.position,.position *{cursor:pointer!important}
+#convocadosTable{max-height:650px!important;overflow:auto!important}
+
+
+/* FINAL UX */
+.app{grid-template-columns:520px minmax(700px,1fr) 520px !important;width:100vw}
+.panel{padding:20px}
+.center-panel{position:sticky;top:0;height:100vh;align-items:flex-start}
+#pitch{width:min(95%,700px)!important}
+#convocadosTable{max-height:none!important;font-size:14px}
+.box{overflow:visible}
+
+
+/* compact roster rows */
+.roster-table,.player-table,#playerCard table{
+font-size:12px !important;
+line-height:1.05 !important;
+}
+.roster-table td,.roster-table th,
+#playerCard td,#playerCard th{
+padding:2px 6px !important;
+vertical-align:middle !important;
+}
+#playerCard button{
+padding:6px 10px !important;
+font-size:12px !important;
+}
+#playerCard tr{
+height:30px !important;
+}
+#playerCard{
+font-size:12px !important;
+}
+
+
+.pick-btn{background:#0f6b3b!important;color:#fff!important;border:none!important}
+.roster-table th:first-child,.roster-table td:first-child{width:40px;min-width:40px;text-align:center}
+.position{cursor:pointer}
+.position.locked{
+background:#000!important;
+border:2px solid #fff!important;
+color:#fff!important;
+font-size:18px!important;
+font-weight:700;
+overflow:visible!important;
+}
+.player-info{
+position:absolute;
+top:58px;
+left:50%;
+transform:translateX(-50%);
+width:120px;
+text-align:center;
+color:#fff;
+font-size:11px;
+line-height:1.2;
+font-weight:700;
+}
+
+.team-bonus{font-weight:bold;color:#17783a}
+.rating-label{font-size:18px;font-weight:bold;text-align:center;margin-top:12px}
+
+.team-flag-emoji{font-size:64px;text-align:center}
