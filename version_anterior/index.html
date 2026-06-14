@@ -27,7 +27,7 @@
     </div>
 
     <div class="box" id="howToPlayBox">
-      <h3>🎮 CÓMO JUGAR</h3>
+      <h3>CÓMO JUGAR</h3>
       <div class="howto-content">
         <div class="howto-step">
           <span class="howto-num">1</span>
@@ -47,17 +47,17 @@
         </div>
         <div class="howto-step">
           <span class="howto-num">5</span>
-          <div>¡Bautiza tu equipo y a por la racha de <strong>7 partidos invicto</strong>! 🏆 Lee las pistas del rival para elegir bien tu estrategia.</div>
+          <div>¡Bautiza tu equipo y a por la racha de <strong>7 partidos invicto</strong>! Lee las pistas del rival para elegir bien tu estrategia.</div>
         </div>
         <div class="howto-step">
           <span class="howto-num">6</span>
-          <div>Entre partidos solo puedes hacer <strong>1 cambio</strong> entre Convocados y Banquillo (haz clic en un jugador de cada tabla para intercambiarlos). Úsalo con cabeza, ¡sobre todo si tienes algún lesionado! 🩹</div>
+          <div>Entre partidos solo puedes hacer <strong>1 cambio</strong> entre Convocados y Banquillo (haz clic en un jugador de cada tabla para intercambiarlos). Úsalo con cabeza, sobre todo si tienes algún lesionado.</div>
         </div>
       </div>
     </div>
 
     <div class="box" id="statsGuideBox">
-      <h3>📊 ¿PARA QUÉ SIRVE CADA ESTADÍSTICA?</h3>
+      <h3>PARA QUÉ SIRVE CADA ESTADÍSTICA</h3>
       <div class="howto-content">
         <div class="howto-step">
           <span class="howto-num stat-num stat-attack">A</span>
@@ -80,7 +80,7 @@
           <div><strong>TÉCNICA</strong> — calidad individual: suma un plus de peligro tanto en ataque como en el control del partido.</div>
         </div>
         <div class="howto-step">
-          <div class="howto-tip">💡 La <strong>formación</strong> y los <strong>jugadores ★ en su posición</strong> son lo que más mueve estas estadísticas. ¡Elige bien para inclinar la balanza a tu favor!</div>
+          <div class="howto-tip">La <strong>formación</strong> y los <strong>jugadores ★ en su posición</strong> son lo que más mueve estas estadísticas. ¡Elige bien para inclinar la balanza a tu favor!</div>
         </div>
       </div>
     </div>
@@ -100,9 +100,10 @@
   <!-- CENTER PANEL -->
   <div class="center-panel">
     <div id="topBar">
-      <button id="audioToggle" class="topbar-btn" title="Activar/desactivar sonido">🔊 SONIDO</button>
-      <button id="themeToggle" class="topbar-btn" title="Cambiar tema claro/oscuro">🌙 TEMA OSCURO</button>
+      <button id="audioToggle" class="topbar-btn" title="Activar/desactivar sonido"><span class="topbar-dot on"></span><span class="topbar-label">SONIDO</span></button>
+      <button id="themeToggle" class="topbar-btn" title="Cambiar tema claro/oscuro"><span class="topbar-dot"></span><span class="topbar-label">TEMA OSCURO</span></button>
     </div>
+    <div id="pitchBox">
     <div id="pitch">
       <svg class="pitch-svg" viewBox="0 0 480 640" xmlns="http://www.w3.org/2000/svg">
         <rect width="480" height="640" fill="#2f7c42"/>
@@ -144,8 +145,11 @@
         <button id="playMatchBtn">JUGAR</button>
       </div>
     </div>
+    </div>
     <!-- Selection / roster modal goes here on mobile -->
     <div id="playerCard"></div>
+    <!-- Quick-glance team summary, shown once squad is ready -->
+    <div id="centerSummary"></div>
   </div>
 
   <!-- RIGHT PANEL -->

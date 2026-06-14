@@ -12,7 +12,7 @@ body{background:var(--bg);font-family:'Inter',Arial,sans-serif;color:var(--text)
 /* ===================== LAYOUT ===================== */
 .app{
   display:grid;
-  grid-template-columns:minmax(380px,460px) 1fr minmax(380px,460px);
+  grid-template-columns:minmax(380px,440px) minmax(320px,420px) minmax(380px,440px);
   height:100vh;
   overflow:hidden;
 }
@@ -81,8 +81,12 @@ body{background:var(--bg);font-family:'Inter',Arial,sans-serif;color:var(--text)
 /* ===================== CENTER PANEL ===================== */
 .center-panel{
   display:flex;flex-direction:column;align-items:center;justify-content:flex-start;
-  background:#ddd;padding:0;overflow:hidden;
+  background:#ddd;padding:0;overflow-y:auto;overflow-x:hidden;
   height:100vh;
+}
+#pitchBox{
+  width:100%;display:flex;flex-direction:column;align-items:center;
+  flex-shrink:0;
 }
 #topBar{
   width:100%;display:flex;justify-content:flex-end;gap:8px;
@@ -92,7 +96,13 @@ body{background:var(--bg);font-family:'Inter',Arial,sans-serif;color:var(--text)
   background:#333;color:#ddd;border:1px solid #555;
   font-size:11px;font-weight:700;letter-spacing:.5px;
   padding:5px 10px;cursor:pointer;transition:.15s;border-radius:2px;
+  display:inline-flex;align-items:center;gap:6px;
 }
+.topbar-dot{
+  width:7px;height:7px;border-radius:50%;background:#666;
+  display:inline-block;transition:background .15s,box-shadow .15s;
+}
+.topbar-dot.on{background:var(--gold);box-shadow:0 0 4px var(--gold)}
 .topbar-btn:hover{background:#444;border-color:var(--gold)}
 .topbar-btn.off{color:#777;border-color:#444}
 
@@ -100,11 +110,9 @@ body{background:var(--bg);font-family:'Inter',Arial,sans-serif;color:var(--text)
 #pitch{
   position:relative;
   overflow:hidden;
-  flex:1 1 auto;
-  min-height:0;
-  width:auto;
-  height:100%;
-  max-width:100%;
+  width:100%;
+  max-width:420px;
+  max-height:62vh;
   aspect-ratio:3/4;
   margin:0 auto;
 }
@@ -177,8 +185,8 @@ body{background:var(--bg);font-family:'Inter',Arial,sans-serif;color:var(--text)
 #playMatchBtn:hover{transform:scale(1.04);background:#0c5a30}
 #playMatchBtn:active{transform:scale(.96)}
 
-/* ===================== RIGHT PANEL ===================== */
-/* player card desktop (right panel) */
+#playerCard{width:100%;padding:0 12px;flex-shrink:0}
+#playerCard:empty{display:none}
 #playerCardDesktop .selection-overlay,
 #playerCard .selection-overlay{
   position:static;background:none;display:block;
@@ -274,8 +282,8 @@ body{background:var(--bg);font-family:'Inter',Arial,sans-serif;color:var(--text)
 @media(max-width:1050px){
   html,body{overflow:auto;height:auto}
   .app{display:flex;flex-direction:column;height:auto}
-  .center-panel{order:1;height:60vw;max-height:420px}
-  #pitch{height:100%;width:auto;flex:none}
+  .center-panel{order:1;height:auto;max-height:none;overflow:visible}
+  #pitch{height:auto;width:100%;max-width:min(100%,60vh);max-height:none;flex:none}
   .left-panel{order:2;border-right:none;border-bottom:1px solid var(--line);overflow:visible}
   .right-panel{order:3;border-left:none;overflow:visible}
   .team-choice{flex-direction:column}
@@ -343,12 +351,8 @@ body{background:var(--bg);font-family:'Inter',Arial,sans-serif;color:var(--text)
 .howto-step strong{color:var(--accent)}
 
 /* STATS GUIDE */
-.stat-num{font-family:'Inter',sans-serif;font-size:11px}
-.stat-attack{background:#e74c3c;color:#fff}
-.stat-defense{background:#2980b9;color:#fff}
-.stat-pace{background:#f1c40f;color:#1a1a1a}
-.stat-passing{background:#27ae60;color:#fff}
-.stat-technique{background:#8e44ad;color:#fff}
+.stat-num{font-family:'Bebas Neue',Impact,sans-serif;font-size:12px;letter-spacing:.5px}
+.stat-attack,.stat-defense,.stat-pace,.stat-passing,.stat-technique{background:var(--dark);color:var(--gold);border:1px solid var(--gold)}
 .howto-tip{font-size:11px;color:#666;font-style:italic;background:#fffbea;padding:8px;border-left:3px solid var(--gold);line-height:1.5}
 
 .swap-hint{font-size:11px;font-weight:700;color:var(--accent);background:#f0f7f0;padding:6px 8px;margin-top:6px;border-left:3px solid var(--accent)}
@@ -422,9 +426,22 @@ body.dark-theme #howToPlayBox,
 body.dark-theme #statsGuideBox{background:linear-gradient(135deg,var(--card-bg),var(--panel))}
 body.dark-theme .howto-step{color:var(--text)}
 body.dark-theme .howto-num{color:#0a0c0d}
+body.dark-theme .stat-attack,
+body.dark-theme .stat-defense,
+body.dark-theme .stat-pace,
+body.dark-theme .stat-passing,
+body.dark-theme .stat-technique{background:#0a0c0d;color:var(--gold);border-color:var(--gold)}
 body.dark-theme #centerBottom{background:#0a0c0d;border-color:var(--line)}
 body.dark-theme #topBar{background:#0a0c0d;border-color:var(--line)}
 body.dark-theme .team-name-input{background:var(--card-bg);color:var(--text);border-color:var(--line)}
 body.dark-theme .pen-shots,
 body.dark-theme .goal-min,
 body.dark-theme .no-goal{color:var(--text-muted)}
+
+/* CENTER SUMMARY (quick-glance, below pitch) */
+#centerSummary{width:100%;padding:0 12px;flex-shrink:0}
+#centerSummary:empty{display:none}
+.center-summary-box{margin-top:10px}
+.center-summary-row{display:flex;justify-content:space-between;align-items:center}
+.center-summary-name{font-family:'Bebas Neue',Impact,sans-serif;font-size:18px;letter-spacing:1px;color:var(--text)}
+.center-summary-ovr{font-family:'Bebas Neue',Impact,sans-serif;font-size:28px;color:var(--gold)}

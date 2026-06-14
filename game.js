@@ -98,6 +98,10 @@ console.log("Loaded",teams.length,"teams locally");
 
 /* ---------- AUDIO SYSTEM (synthesized, no files needed) ---------- */
 let audioEnabled=true;
+try{
+  const savedAudio=localStorage.getItem('g2g_audioEnabled');
+  if(savedAudio!==null) audioEnabled=(savedAudio==='true');
+}catch(e){}
 let audioCtx=null;
 function getAudioCtx(){
   if(!audioCtx){
@@ -210,6 +214,7 @@ let phase = "draft"; // draft | bench | ready
 let usedPlayers = [];
 let bench = [];
 let draftedCount = 0;
+let baseTeamOVR = null;
 let benchCount = 0;
 let nextOpponent = null;
 let matchResults = [];
@@ -256,6 +261,16 @@ let currentFormationBonus={};
 const rollBtn = document.getElementById("rollBtn");
 const playerCardEl = document.getElementById("playerCardDesktop"); // desktop: right panel
 const pitchEl = document.getElementById("pitch");
+
+/* Scroll the relevant area into view on mobile/tablet, so the user always
+   sees what just happened (slot machine, roster, pitch placement...). */
+function scrollToEl(id, delay){
+  if(window.innerWidth>1050) return; // desktop: everything already visible
+  setTimeout(()=>{
+    const el=document.getElementById(id);
+    if(el) el.scrollIntoView({behavior:"smooth", block:"start"});
+  }, delay||30);
+}
 
 /* ---------- INIT ---------- */
 applyFormationBonus(FORMATIONS.equilibrada.find(f=>f.code==="4-4-2").bonus);
@@ -317,6 +332,7 @@ function showTeamChoice(t1,p1,t2,p2,isBench=false){
       <div class="team-option slot-reel"><div class="flag-wrap"><div class="slot-strip" id="reel2"></div></div></div>
     </div>
   </div>`;
+  scrollToEl("playerCardDesktop");
   const pool=teams.slice();
   const reel1=document.getElementById("reel1");
   const reel2=document.getElementById("reel2");
@@ -349,9 +365,19 @@ function teamOptionHTML(team,players){
     <div class="flag-wrap">${flagEmoji(team.name)}</div>
     <h3>${team.name}</h3>
     <p>${team.style}</p>
+    ${renderBonuses(team)}
   </div>`;
 }
 function esc(s){ return s.replace(/'/g,"&#39;"); }
+function renderBonuses(team){
+  let h="";
+  for(let k in team.bonuses){
+    const v=team.bonuses[k];
+    if(!v) continue;
+    h+=`<div class="bonus-line">${STAT_LABELS[k]||k.toUpperCase()} ${v>0?'+':''}${v}</div>`;
+  }
+  return h;
+}
 
 /* ========= SELECT TEAM → show 8 players ========= */
 function selectTeam(teamName){
@@ -425,6 +451,7 @@ function pickPlayer(player){
   selectedPlayer={...player};
   playerCardEl.innerHTML="";
   highlightPos(selectedPlayer.positions||[]);
+  scrollToEl("pitch");
 }
 
 /* ========= POSITION SLOTS ========= */
@@ -497,6 +524,7 @@ function onSlotClick(slot){
   updateConvocadosTable();
   updateStats();
   if(draftedCount>=11){
+    baseTeamOVR=Math.round(usedPlayers.reduce((s,p)=>s+effRating(p),0)/usedPlayers.length);
     phase="bench";
     rollBtn.textContent="BANQUILLO 0/3";
     rollBtn.disabled=false;
@@ -538,6 +566,21 @@ function effRating(p){
 }
 let swapSelection=null; // {source:'conv'|'bench', index:number}
 
+function renderCenterSummary(){
+  const el=document.getElementById("centerSummary");
+  if(!el) return;
+  if(baseTeamOVR===null) { el.innerHTML=""; return; }
+  const stars=usedPlayers.filter(p=>p.positions&&p.placedPos&&p.positions[0]===p.placedPos).length;
+  el.innerHTML=`
+  <div class="box center-summary-box">
+    <div class="center-summary-row">
+      <span class="center-summary-name">${myTeamName}</span>
+      <span class="center-summary-ovr">${baseTeamOVR}</span>
+    </div>
+    <div class="hint-line">${stars} jugador${stars===1?'':'es'} en su posición ★ · ${matchCount}/${MAX_MATCHES} partidos jugados</div>
+  </div>`;
+}
+
 function updateConvocadosTable(){
   const el=document.getElementById("convocadosTable");
   if(!el) return;
@@ -562,7 +605,7 @@ function updateConvocadosTable(){
   if(sbEl&&sbVal){ sbEl.style.display=stars>0?"block":"none"; sbVal.textContent=stars; }
   // Update OVR
   if(usedPlayers.length){
-    const avg=Math.round(usedPlayers.reduce((s,p)=>s+effRating(p),0)/usedPlayers.length);
+    const avg=(baseTeamOVR!==null)?baseTeamOVR:Math.round(usedPlayers.reduce((s,p)=>s+effRating(p),0)/usedPlayers.length);
     const el2=document.getElementById("teamOVR");
     if(el2) el2.textContent=avg;
   }
@@ -647,10 +690,12 @@ function performSwap(benchIdx, convIdx){
   const r=inPos?(benchPlayer.rating||70):Math.round((benchPlayer.rating||70)*0.75);
   const star=inPos&&benchPlayer.positions[0]===label?' <span class="star">★</span>':'';
   renderSlotContent(slot, benchPlayer, label, r, star);
+  baseTeamOVR=Math.round(usedPlayers.reduce((s,p)=>s+effRating(p),0)/usedPlayers.length);
   swapsUsedThisMatch++;
   playSound('select');
   updateConvocadosTable();
   updateBenchTable();
+  renderCenterSummary();
 }
 
 /* ========= STATS ========= */
@@ -666,7 +711,8 @@ function applyFormationBonus(bonus){
 }
 function updateStats(){
   ["attack","defense","pace","passing","technique"].forEach(k=>{
-    const val=Math.max(0,Math.min(100,Math.round(teamStats[k]||0)));
+    const displayVal=(teamStats[k]||0)-(currentFormationBonus[k]||0);
+    const val=Math.max(0,Math.min(100,Math.round(displayVal)));
     const v=document.getElementById(k+"Value");
     const b=document.getElementById(k+"Bar");
     if(v) v.textContent=val;
@@ -777,6 +823,7 @@ function showTeamNameModal(){
     const val=inp.value.trim();
     if(val) myTeamName=val.toUpperCase();
     document.getElementById("matchOverlay").innerHTML="";
+    renderCenterSummary();
     pickNextOpponent();
   };
   document.getElementById("teamNameConfirmBtn").addEventListener("click",confirmFn);
@@ -784,7 +831,9 @@ function showTeamNameModal(){
 }
 function pickNextOpponent(){
   nextOpponent=teams[Math.floor(Math.random()*teams.length)];
+  renderCenterSummary();
   spinRivalReveal();
+  scrollToEl("rivalBox");
 }
 function spinRivalReveal(){
   const rivalInfo=document.getElementById("rivalInfo");
@@ -887,6 +936,32 @@ function tacticalModifier(myStats,oppStats){
     oppScoreMod: Math.max(-0.4, Math.min(0.4, oppScoreMod)),
   };
 }
+/* Counter-strategy: compares the tactical LEAN of your chosen formation
+   (attack-defense balance from its bonus, independent of player stats —
+   never shown to the player) against the rival's tactical lean (from their
+   style bonuses). Picking the right counter (e.g. defensive/counter-attack
+   vs a very offensive rival) nudges win probability without touching the
+   visible team rating. */
+function formationLean(bonus){
+  return (bonus.attack||0) - (bonus.defense||0);
+}
+function teamLean(team){
+  const b=team.bonuses||{};
+  return (b.attack||0) - (b.defense||0);
+}
+function counterStrategyModifier(){
+  const myLean=formationLean(currentFormationBonus);     // >0 offensive, <0 defensive
+  const oppLean=teamLean(nextOpponent);                  // >0 rival attacks more, <0 rival defends more
+  // Good counters: rival very offensive (oppLean high) + I play defensive/counter (myLean low/negative)
+  //                rival very defensive (oppLean low/negative) + I play offensive (myLean high)
+  // Bad picks: mirroring the rival's extreme lean (both very offensive, or both very defensive)
+  const synergy = -(myLean*oppLean)/300; // opposite signs -> positive synergy
+  const capped = Math.max(-0.18, Math.min(0.18, synergy));
+  return {
+    myScoreMod: capped,
+    oppScoreMod: -capped*0.6,
+  };
+}
 function poissonSample(lambda){
   const L=Math.exp(-lambda); let k=0,p=1;
   do{ k++; p*=Math.random(); }while(p>L);
@@ -909,8 +984,9 @@ function playMatch(){
   const diff=(myPower-oppPower)*0.03;
   // Tactical matchup from stats (attack vs defense, etc.) — meaningful but not dominant
   const tactical=tacticalModifier(myStatProfile(), oppStatProfile(nextOpponent));
-  const myLambda=Math.max(0.25, 1.15+diff+tactical.myScoreMod);
-  const oppLambda=Math.max(0.25, 1.15-diff+tactical.oppScoreMod);
+  const counter=counterStrategyModifier();
+  const myLambda=Math.max(0.25, 1.15+diff+tactical.myScoreMod+counter.myScoreMod);
+  const oppLambda=Math.max(0.25, 1.15-diff+tactical.oppScoreMod+counter.oppScoreMod);
   const myGoals=poissonSample(myLambda);
   const oppGoals=poissonSample(oppLambda);
   // Match narrative
@@ -1019,8 +1095,8 @@ ${goalsHTML}`;
 function rollInjuries(myPower,oppPower){
   const fb=currentFormationBonus||{};
   const extreme=Math.abs(fb.attack||0)+Math.abs(fb.defense||0);
-  let risk=0.02;
-  if(extreme>=12) risk=0.06;
+  let risk=0.034;
+  if(extreme>=12) risk=0.075;
   if((fb.defense||0)<0&&oppPower>myPower) risk+=0.02;
   const injured=[];
   usedPlayers.forEach(p=>{
@@ -1121,11 +1197,32 @@ teams=teams.map(t=>{
 /* ========= TOP BAR: AUDIO & THEME TOGGLES ========= */
 const audioToggleBtn=document.getElementById("audioToggle");
 const themeToggleBtn=document.getElementById("themeToggle");
+
+// Restore saved preferences on load
+(function restorePrefs(){
+  // Audio: reflect loaded state in the UI
+  if(audioToggleBtn){
+    audioToggleBtn.querySelector(".topbar-dot").classList.toggle("on",audioEnabled);
+    audioToggleBtn.classList.toggle("off",!audioEnabled);
+  }
+  // Theme
+  let darkSaved=false;
+  try{ darkSaved=localStorage.getItem('g2g_darkTheme')==='true'; }catch(e){}
+  if(darkSaved){
+    document.body.classList.add("dark-theme");
+    if(themeToggleBtn){
+      themeToggleBtn.querySelector(".topbar-dot").classList.add("on");
+      themeToggleBtn.querySelector(".topbar-label").textContent="TEMA CLARO";
+    }
+  }
+})();
+
 if(audioToggleBtn){
   audioToggleBtn.addEventListener("click",()=>{
     audioEnabled=!audioEnabled;
     audioToggleBtn.querySelector(".topbar-dot").classList.toggle("on",audioEnabled);
     audioToggleBtn.classList.toggle("off",!audioEnabled);
+    try{ localStorage.setItem('g2g_audioEnabled', audioEnabled); }catch(e){}
     if(audioEnabled) playSound('select');
   });
 }
@@ -1134,6 +1231,7 @@ if(themeToggleBtn){
     const isDark=document.body.classList.toggle("dark-theme");
     themeToggleBtn.querySelector(".topbar-dot").classList.toggle("on",isDark);
     themeToggleBtn.querySelector(".topbar-label").textContent=isDark?"TEMA CLARO":"TEMA OSCURO";
+    try{ localStorage.setItem('g2g_darkTheme', isDark); }catch(e){}
     playSound('select');
   });
 }
