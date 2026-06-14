@@ -13,6 +13,7 @@ body{background:var(--bg);font-family:'Inter',Arial,sans-serif;color:var(--text)
 .app{
   display:grid;
   grid-template-columns:minmax(380px,440px) minmax(320px,420px) minmax(380px,440px);
+  justify-content:center;
   height:100vh;
   overflow:hidden;
 }

@@ -262,6 +262,16 @@ const rollBtn = document.getElementById("rollBtn");
 const playerCardEl = document.getElementById("playerCardDesktop"); // desktop: right panel
 const pitchEl = document.getElementById("pitch");
 
+/* Scroll the relevant area into view on mobile/tablet, so the user always
+   sees what just happened (slot machine, roster, pitch placement...). */
+function scrollToEl(id, delay){
+  if(window.innerWidth>1050) return; // desktop: everything already visible
+  setTimeout(()=>{
+    const el=document.getElementById(id);
+    if(el) el.scrollIntoView({behavior:"smooth", block:"start"});
+  }, delay||30);
+}
+
 /* ---------- INIT ---------- */
 applyFormationBonus(FORMATIONS.equilibrada.find(f=>f.code==="4-4-2").bonus);
 renderPitch("4-4-2");
@@ -322,6 +332,7 @@ function showTeamChoice(t1,p1,t2,p2,isBench=false){
       <div class="team-option slot-reel"><div class="flag-wrap"><div class="slot-strip" id="reel2"></div></div></div>
     </div>
   </div>`;
+  scrollToEl("playerCardDesktop");
   const pool=teams.slice();
   const reel1=document.getElementById("reel1");
   const reel2=document.getElementById("reel2");
@@ -440,6 +451,7 @@ function pickPlayer(player){
   selectedPlayer={...player};
   playerCardEl.innerHTML="";
   highlightPos(selectedPlayer.positions||[]);
+  scrollToEl("pitch");
 }
 
 /* ========= POSITION SLOTS ========= */
@@ -821,6 +833,7 @@ function pickNextOpponent(){
   nextOpponent=teams[Math.floor(Math.random()*teams.length)];
   renderCenterSummary();
   spinRivalReveal();
+  scrollToEl("rivalBox");
 }
 function spinRivalReveal(){
   const rivalInfo=document.getElementById("rivalInfo");

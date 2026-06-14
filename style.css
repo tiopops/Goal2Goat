@@ -221,6 +221,8 @@ body{background:var(--bg);font-family:'Inter',Arial,sans-serif;color:var(--text)
 .roster-table tr:hover td{background:#f8f5ee}
 .pick-btn{background:var(--accent);color:#fff;border:none;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer}
 .pick-btn:hover{background:#0c5a30}
+.pick-btn-warn{background:var(--red)}
+.pick-btn-warn:hover{background:#a93226}
 
 /* STAT BARS */
 .team-profile h3{font-size:11px;letter-spacing:1px;text-transform:uppercase;color:#555;margin-bottom:8px}
@@ -446,3 +448,10 @@ body.dark-theme .no-goal{color:var(--text-muted)}
 .center-summary-row{display:flex;justify-content:space-between;align-items:center}
 .center-summary-name{font-family:'Bebas Neue',Impact,sans-serif;font-size:18px;letter-spacing:1px;color:var(--text)}
 .center-summary-ovr{font-family:'Bebas Neue',Impact,sans-serif;font-size:28px;color:var(--gold)}
+
+/* SELECTED PLAYER BANNER */
+.selected-player-banner{border-color:var(--gold)}
+.spb-row{display:flex;justify-content:space-between;align-items:center;margin:4px 0}
+.spb-name{font-family:'Bebas Neue',Impact,sans-serif;font-size:18px;letter-spacing:.5px;color:var(--text)}
+.spb-rating{font-family:'Bebas Neue',Impact,sans-serif;font-size:20px;color:var(--gold)}
+.spb-positions{font-size:11px;color:var(--text-muted);margin-bottom:4px}

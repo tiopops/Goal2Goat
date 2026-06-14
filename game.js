@@ -393,16 +393,21 @@ function selectTeam(teamName){
 
 function showRosterModal(team,players){
   let rows="";
+  const emptySlotLabels = phase==="draft"
+    ? new Set(getPitchSlots().filter(s=>!s.classList.contains("locked")).map(s=>s.dataset.label))
+    : null;
   players.forEach((p,i)=>{
     const safeP=JSON.stringify(p).replace(/"/g,"&quot;");
     const safePos=JSON.stringify(p.positions||[]).replace(/"/g,"&quot;");
     const dorsal=p.dorsal||(i+1);
+    const noFreeSpot = emptySlotLabels && (p.positions||[]).every(pos=>!emptySlotLabels.has(pos));
+    const pickBtnClass = noFreeSpot ? "pick-btn pick-btn-warn" : "pick-btn";
     rows+=`<tr>
       <td class="dorsal-cell">${dorsal}</td>
       <td>${p.name}</td>
       <td>${(p.positions||[]).join(' / ')}</td>
       <td>${p.rating||0}</td>
-      <td><button class="pick-btn" 
+      <td><button class="${pickBtnClass}" 
         onmouseover="highlightPos(${safePos})"
         onmouseout="clearHighlights()"
         onclick="pickPlayer(${safeP})">Elegir</button></td>
@@ -444,6 +449,7 @@ function pickPlayer(player){
     } else {
       rollBtn.disabled=false;
       rollBtn.textContent=`BANQUILLO ${benchCount}/3`;
+      scrollToEl("rollBtn");
     }
     return;
   }
@@ -451,12 +457,48 @@ function pickPlayer(player){
   selectedPlayer={...player};
   playerCardEl.innerHTML="";
   highlightPos(selectedPlayer.positions||[]);
+  showSelectedPlayerBanner(selectedPlayer);
   scrollToEl("pitch");
+}
+
+function showSelectedPlayerBanner(p){
+  const el=document.getElementById("selectedPlayerBanner");
+  if(!el) return;
+  el.style.display="block";
+  el.innerHTML=`
+  <div class="box selected-player-banner">
+    <div class="selection-title">JUGADOR SELECCIONADO</div>
+    <div class="spb-row">
+      <span class="spb-name">${p.name}</span>
+      <span class="spb-rating">★${p.rating||0}</span>
+    </div>
+    <div class="spb-positions">Posiciones: ${(p.positions||[]).join(' / ')}</div>
+    <div class="hint-line">Colócalo en una posición resaltada del campo.</div>
+  </div>`;
+}
+function hideSelectedPlayerBanner(){
+  const el=document.getElementById("selectedPlayerBanner");
+  if(!el) return;
+  el.style.display="none";
+  el.innerHTML="";
 }
 
 /* ========= POSITION SLOTS ========= */
 function renderSlotContent(slot, player, label, rating, starHTML){
   slot.innerHTML=`<span class="pos-rating">${rating}</span><div class="player-info">${player.name}${starHTML}<div class="player-pos-label">${label}</div></div>`;
+}
+
+/* Refresh the on-pitch rating/star display for every starter based on their
+   current effRating (e.g. after an injury is sustained or recovered from). */
+function refreshPitchRatings(){
+  getPitchSlots().forEach(slot=>{
+    const p=slot._player;
+    if(!p) return;
+    const label=slot.dataset.label;
+    const inPos=p.positions&&p.positions.includes(label);
+    const star=inPos&&p.positions[0]===label?' <span class="star">★</span>':'';
+    renderSlotContent(slot, p, label, effRating(p), star);
+  });
 }
 
 function lineLabels(n,isDef,isAtt){
@@ -514,6 +556,7 @@ function onSlotClick(slot){
   const r=inPos ? (p.rating||70) : Math.round((p.rating||70)*0.75);
   const starHTML=inPos&&p.positions[0]===label?' <span class="star">★</span>':'';
   renderSlotContent(slot, p, label, r, starHTML);
+  hideSelectedPlayerBanner();
   slot.classList.add("locked");
   slot._player=p;
   usedPlayers.push(p);
@@ -978,6 +1021,9 @@ function playMatch(){
       if(p.injury.remaining<=0){ p.injury=null; p.forcedInjured=false; recovered.push(p.name); }
     }
   });
+  refreshPitchRatings();
+  updateConvocadosTable();
+  updateBenchTable();
   const myPower=computeMyPower();
   const oppPower=computeOppPower(nextOpponent);
   // Base difference from overall player quality — dampened so matches stay close
@@ -985,14 +1031,20 @@ function playMatch(){
   // Tactical matchup from stats (attack vs defense, etc.) — meaningful but not dominant
   const tactical=tacticalModifier(myStatProfile(), oppStatProfile(nextOpponent));
   const counter=counterStrategyModifier();
-  const myLambda=Math.max(0.25, 1.15+diff+tactical.myScoreMod+counter.myScoreMod);
-  const oppLambda=Math.max(0.25, 1.15-diff+tactical.oppScoreMod+counter.oppScoreMod);
+  // Early-game cushion: the first 2 matches of the streak are a bit gentler,
+  // so a run of bad luck right at the start doesn't end the attempt instantly.
+  const earlyBoost = matchCount===0 ? 0.12 : (matchCount===1 ? 0.06 : 0);
+  const myLambda=Math.max(0.25, 1.15+diff+tactical.myScoreMod+counter.myScoreMod+earlyBoost);
+  const oppLambda=Math.max(0.25, 1.15-diff+tactical.oppScoreMod+counter.oppScoreMod-earlyBoost*0.6);
   const myGoals=poissonSample(myLambda);
   const oppGoals=poissonSample(oppLambda);
   // Match narrative
   let summary=generateMatchSummary(myGoals,oppGoals,nextOpponent.name);
   // Injuries
   const newInjuries=rollInjuries(myPower,oppPower);
+  refreshPitchRatings();
+  updateConvocadosTable();
+  updateBenchTable();
   let won=myGoals>oppGoals, draw=false;
   let penaltyInfo=null;
   if(myGoals===oppGoals){
@@ -1205,15 +1257,17 @@ const themeToggleBtn=document.getElementById("themeToggle");
     audioToggleBtn.querySelector(".topbar-dot").classList.toggle("on",audioEnabled);
     audioToggleBtn.classList.toggle("off",!audioEnabled);
   }
-  // Theme
-  let darkSaved=false;
-  try{ darkSaved=localStorage.getItem('g2g_darkTheme')==='true'; }catch(e){}
-  if(darkSaved){
-    document.body.classList.add("dark-theme");
-    if(themeToggleBtn){
-      themeToggleBtn.querySelector(".topbar-dot").classList.add("on");
-      themeToggleBtn.querySelector(".topbar-label").textContent="TEMA CLARO";
-    }
+  // Theme: dark is the default; only go light if explicitly saved as light
+  let isDark=true;
+  try{
+    const saved=localStorage.getItem('g2g_darkTheme');
+    if(saved!==null) isDark=(saved==='true');
+  }catch(e){}
+  if(isDark) document.body.classList.add("dark-theme");
+  else document.body.classList.remove("dark-theme");
+  if(themeToggleBtn){
+    themeToggleBtn.querySelector(".topbar-dot").classList.toggle("on",isDark);
+    themeToggleBtn.querySelector(".topbar-label").textContent=isDark?"TEMA OSCURO":"TEMA CLARO";
   }
 })();
 
@@ -1230,7 +1284,7 @@ if(themeToggleBtn){
   themeToggleBtn.addEventListener("click",()=>{
     const isDark=document.body.classList.toggle("dark-theme");
     themeToggleBtn.querySelector(".topbar-dot").classList.toggle("on",isDark);
-    themeToggleBtn.querySelector(".topbar-label").textContent=isDark?"TEMA CLARO":"TEMA OSCURO";
+    themeToggleBtn.querySelector(".topbar-label").textContent=isDark?"TEMA OSCURO":"TEMA CLARO";
     try{ localStorage.setItem('g2g_darkTheme', isDark); }catch(e){}
     playSound('select');
   });
