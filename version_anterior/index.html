@@ -101,7 +101,7 @@
   <div class="center-panel">
     <div id="topBar">
       <button id="audioToggle" class="topbar-btn" title="Activar/desactivar sonido"><span class="topbar-dot on"></span><span class="topbar-label">SONIDO</span></button>
-      <button id="themeToggle" class="topbar-btn" title="Cambiar tema claro/oscuro"><span class="topbar-dot"></span><span class="topbar-label">TEMA OSCURO</span></button>
+      <button id="themeToggle" class="topbar-btn" title="Cambiar tema claro/oscuro"><span class="topbar-dot on"></span><span class="topbar-label">TEMA OSCURO</span></button>
     </div>
     <div id="pitchBox">
     <div id="pitch">
@@ -154,6 +154,9 @@
 
   <!-- RIGHT PANEL -->
   <div class="panel right-panel">
+
+    <!-- Shows the currently selected player until placed on the pitch -->
+    <div id="selectedPlayerBanner" style="display:none"></div>
 
     <!-- Show player selection modal here on desktop -->
     <div id="playerCardDesktop"></div>
