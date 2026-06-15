@@ -332,7 +332,8 @@ function showTeamChoice(t1,p1,t2,p2,isBench=false){
       <div class="team-option slot-reel"><div class="flag-wrap"><div class="slot-strip" id="reel2"></div></div></div>
     </div>
   </div>`;
-  scrollToEl("playerCardDesktop");
+  scrollToEl("playerCardDesktop", 30);
+  scrollToEl("playerCardDesktop", 950);
   const pool=teams.slice();
   const reel1=document.getElementById("reel1");
   const reel2=document.getElementById("reel2");
@@ -553,7 +554,7 @@ function onSlotClick(slot){
   const p=selectedPlayer;
   p.placedPos=label;
   const inPos=p.positions&&p.positions.includes(label);
-  const r=inPos ? (p.rating||70) : Math.round((p.rating||70)*0.75);
+  const r=inPos ? (p.rating||70) : Math.round((p.rating||70)*0.85);
   const starHTML=inPos&&p.positions[0]===label?' <span class="star">★</span>':'';
   renderSlotContent(slot, p, label, r, starHTML);
   hideSelectedPlayerBanner();
@@ -604,8 +605,10 @@ function updateDraftCounter(){
 function effRating(p){
   const r=p.rating||70;
   if(!p.placedPos) return r;
-  if(p.positions&&p.positions.includes(p.placedPos)) return p.injury?Math.round(r*0.6):r;
-  return p.injury?Math.round(r*0.3):Math.round(r*0.75);
+  const inPos=p.positions&&p.positions.includes(p.placedPos);
+  const positionFactor=inPos?1:0.85; // 15% penalty when out of position
+  const injuryFactor=p.injury?0.6:1;
+  return Math.round(r*positionFactor*injuryFactor);
 }
 let swapSelection=null; // {source:'conv'|'bench', index:number}
 
@@ -730,7 +733,7 @@ function performSwap(benchIdx, convIdx){
   usedPlayers[convIdx]=benchPlayer;
   slot._player=benchPlayer;
   const inPos=benchPlayer.positions&&benchPlayer.positions.includes(label);
-  const r=inPos?(benchPlayer.rating||70):Math.round((benchPlayer.rating||70)*0.75);
+  const r=inPos?(benchPlayer.rating||70):Math.round((benchPlayer.rating||70)*0.85);
   const star=inPos&&benchPlayer.positions[0]===label?' <span class="star">★</span>':'';
   renderSlotContent(slot, benchPlayer, label, r, star);
   baseTeamOVR=Math.round(usedPlayers.reduce((s,p)=>s+effRating(p),0)/usedPlayers.length);
@@ -828,7 +831,7 @@ function reassignSquad(code){
       p.placedPos=label;
       slot._player=p;
       const inPos=p.positions&&p.positions.includes(label);
-      const r=inPos?(p.rating||70):Math.round((p.rating||70)*0.75);
+      const r=inPos?(p.rating||70):Math.round((p.rating||70)*0.85);
       const star=inPos&&p.positions[0]===label?' <span class="star">★</span>':'';
       renderSlotContent(slot, p, label, r, star);
       slot.classList.add("locked");
@@ -876,7 +879,8 @@ function pickNextOpponent(){
   nextOpponent=teams[Math.floor(Math.random()*teams.length)];
   renderCenterSummary();
   spinRivalReveal();
-  scrollToEl("rivalBox");
+  scrollToEl("rivalBox", 30);
+  scrollToEl("rivalBox", 950); // re-anchor after the reveal settles and content height changes
 }
 function spinRivalReveal(){
   const rivalInfo=document.getElementById("rivalInfo");
@@ -1022,6 +1026,7 @@ function playMatch(){
     }
   });
   refreshPitchRatings();
+  baseTeamOVR=Math.round(usedPlayers.reduce((s,p)=>s+effRating(p),0)/usedPlayers.length);
   updateConvocadosTable();
   updateBenchTable();
   const myPower=computeMyPower();
@@ -1043,6 +1048,7 @@ function playMatch(){
   // Injuries
   const newInjuries=rollInjuries(myPower,oppPower);
   refreshPitchRatings();
+  baseTeamOVR=Math.round(usedPlayers.reduce((s,p)=>s+effRating(p),0)/usedPlayers.length);
   updateConvocadosTable();
   updateBenchTable();
   let won=myGoals>oppGoals, draw=false;
@@ -1119,13 +1125,18 @@ function generateMatchSummary(myGoals,oppGoals,rivalName){
   for(let i=0;i<myGoals;i++) myMinutes.push(Math.floor(5+Math.random()*85));
   for(let i=0;i<oppGoals;i++) oppMinutes.push(Math.floor(5+Math.random()*85));
   myMinutes.sort((a,b)=>a-b); oppMinutes.sort((a,b)=>a-b);
-  // Pick random scorers from usedPlayers
+  // Pick random scorers from usedPlayers (mine) and the rival's squad
   const attackers=usedPlayers.filter(p=>p.placedPos&&["DC","EI","ED","MC"].includes(p.placedPos));
+  const oppAttackers=nextOpponent.players.filter(p=>p.positions&&p.positions.some(pos=>["DC","EI","ED","MC"].includes(pos)));
+  const oppPool=oppAttackers.length?oppAttackers:nextOpponent.players;
   const myGoalLines=myMinutes.map(min=>{
     const scorer=attackers[Math.floor(Math.random()*attackers.length)]||usedPlayers[0];
     return `<li>⚽ ${scorer?scorer.name:"Desconocido"} <span class="goal-min">(${min}')</span></li>`;
   });
-  const oppGoalLines=oppMinutes.map(min=>`<li>⚽ ${rivalName} <span class="goal-min">(${min}')</span></li>`);
+  const oppGoalLines=oppMinutes.map(min=>{
+    const scorer=oppPool[Math.floor(Math.random()*oppPool.length)];
+    return `<li>⚽ ${scorer?scorer.name:rivalName} <span class="goal-min">(${min}')</span></li>`;
+  });
 
   const goalsHTML=`
   <div class="goals-columns">
