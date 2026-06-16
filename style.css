@@ -60,8 +60,8 @@ body.dark-theme .version-tag{color:#555}
 
 /* ===================== CONVOCADOS TABLE ===================== */
 #convocadosTable table,#benchTable table{width:100%;border-collapse:collapse}
-#convocadosTable th,#benchTable th{font-size:10px;text-align:left;background:#f0ece2;padding:4px 5px;border-bottom:1px solid var(--line);color:#666}
-#convocadosTable td,#benchTable td{font-size:12px;padding:4px 5px;border-bottom:1px solid #eee}
+#convocadosTable th,#benchTable th{font-size:11px;text-align:left;background:#f0ece2;padding:5px 6px;border-bottom:1px solid var(--line);color:#666}
+#convocadosTable td,#benchTable td{font-size:13px;padding:6px 6px;border-bottom:1px solid #eee}
 #convocadosTable tr:hover td,#benchTable tr:hover td{background:#f8f5ee}
 .star{color:var(--gold);font-weight:700}
 .cross{color:var(--red);font-weight:700}
@@ -219,8 +219,8 @@ body.dark-theme .version-tag{color:#555}
 .bonus-line{font-size:10px;color:var(--accent);font-weight:600}
 
 /* ROSTER TABLE */
-.roster-table{width:100%;border-collapse:collapse;font-size:11px}
-.roster-table th{background:#f0ece2;padding:4px 5px;text-align:left;font-size:10px;font-weight:700;color:#666}
+.roster-table{width:100%;border-collapse:collapse;font-size:12px}
+.roster-table th{background:#f0ece2;padding:5px 6px;text-align:left;font-size:11px;font-weight:700;color:#666}
 .roster-table td{padding:4px 5px;border-bottom:1px solid #eee;vertical-align:middle}
 .roster-table tr:hover td{background:#f8f5ee}
 .pick-btn{background:var(--accent);color:#fff;border:none;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer}
@@ -471,9 +471,9 @@ body.dark-theme .no-goal{color:var(--text-muted)}
 /* Stage label inside rival card */
 .rival-stage-tag{
   font-family:'Bebas Neue',Impact,sans-serif;
-  font-size:11px;letter-spacing:2px;
+  font-size:15px;letter-spacing:2px;
   color:var(--gold);background:#1a1a1a;
-  padding:2px 8px;display:inline-block;margin-bottom:8px;
+  padding:3px 10px;display:inline-block;margin-bottom:10px;
 }
 
 /* Group table */
@@ -664,14 +664,37 @@ body.dark-theme .vb-row{background:var(--row-hover)}
 body.dark-theme .vb-row:nth-child(even){background:transparent}
 
 /* QUICK BUILD BUTTON */
-.quick-build-btn{
-  width:100%;max-width:420px;
-  background:transparent;color:var(--gold);
-  border:1px solid var(--gold);
-  font-family:'Bebas Neue',Impact,sans-serif;
-  font-size:14px;letter-spacing:1.5px;
-  padding:7px 12px;cursor:pointer;
-  transition:.15s;flex-shrink:0;
-  opacity:.85;
+#quickBuildWrap{
+  width:100%;display:flex;align-items:center;justify-content:center;
+  padding:0 12px;background:#1a1a1a;padding-bottom:8px;
 }
-.quick-build-btn:hover{background:rgba(201,162,39,.1);opacity:1}
+.quick-build-btn{
+  background:#1a2a1a;color:var(--gold);
+  border:1px solid var(--gold);
+  max-width:340px;
+}
+.quick-build-btn:hover:not(:disabled){background:#1f3a1f}
+
+/* SUPPORT BUTTON & MODAL */
+.support-btn{
+  background:var(--gold);color:#000;border:none;
+  font-family:'Bebas Neue',Impact,sans-serif;
+  font-size:12px;letter-spacing:1px;
+  padding:5px 12px;cursor:pointer;transition:.15s;white-space:nowrap;
+}
+.support-btn:hover{background:#e0b82a}
+#supportOverlay{display:none}
+.support-modal{
+  background:var(--card-bg);border:2px solid var(--gold);
+  padding:28px;max-width:380px;width:90vw;
+  display:flex;flex-direction:column;gap:14px;align-items:center;text-align:center;
+}
+.support-text{font-size:14px;color:var(--text);line-height:1.5}
+.support-pay-btn{
+  display:block;background:var(--gold);color:#000;
+  font-family:'Bebas Neue',Impact,sans-serif;
+  font-size:18px;letter-spacing:1.5px;
+  padding:12px 28px;text-decoration:none;width:100%;
+  transition:.15s;
+}
+.support-pay-btn:hover{background:#e0b82a}

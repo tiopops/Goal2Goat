@@ -662,3 +662,16 @@ body.dark-theme .recovered-box{background:#0a4a28;border-color:#0f6b3b}
 }
 body.dark-theme .vb-row{background:var(--row-hover)}
 body.dark-theme .vb-row:nth-child(even){background:transparent}
+
+/* QUICK BUILD BUTTON */
+.quick-build-btn{
+  width:100%;max-width:420px;
+  background:transparent;color:var(--gold);
+  border:1px solid var(--gold);
+  font-family:'Bebas Neue',Impact,sans-serif;
+  font-size:14px;letter-spacing:1.5px;
+  padding:7px 12px;cursor:pointer;
+  transition:.15s;flex-shrink:0;
+  opacity:.85;
+}
+.quick-build-btn:hover{background:rgba(201,162,39,.1);opacity:1}

@@ -374,6 +374,9 @@ updateDraftCounter();
 /* ---------- ROLL BUTTON ---------- */
 rollBtn.addEventListener("click",()=>{
   if(rollBtn.disabled) return;
+  // Hide quick-build option once player starts manual draft
+  const qbw=document.getElementById("quickBuildWrap");
+  if(qbw) qbw.style.display="none";
   if(phase==="draft") rollTeams();
   else if(phase==="bench") rollBench();
 });
@@ -745,9 +748,9 @@ function updateConvocadosTable(){
   usedPlayers.forEach((p,i)=>{
     const inPrimary=p.positions&&p.placedPos&&p.positions[0]===p.placedPos;
     if(inPrimary) stars++;
-    const injuryTag=p.injury?` <span class="cross">✚(-${p.injury.remaining})</span> `:'';
+    const injuryTag=p.injury?` <span class="cross" title="Lesionado">✚(-${p.injury.remaining})</span> `:'';
     const cross=p.injury?injuryTag:'';
-    const star=inPrimary?'<span class="star">★</span>':'';
+    const star=inPrimary?'<span class="star" title="Posición principal ★">★</span>':'';
     const r=effRating(p);
     const streak=getStreakBadge(p.name);
     const sel=(swapSelection&&swapSelection.source==='conv'&&swapSelection.index===i)?' class="row-selected"':'';
@@ -966,7 +969,7 @@ function startMatchPhase(){
   document.getElementById("playMatchBtn").style.display="block";
   document.getElementById("moraleSection").style.display="block";
   renderMorale();
-  const qb=document.getElementById("quickBuildBtn");
+  const qb=document.getElementById("quickBuildWrap");
   if(qb) qb.style.display="none";
   playerCardEl.innerHTML="";
   showTeamNameModal();
@@ -1060,13 +1063,13 @@ function renderRivalBox(){
       <div class="rival-stage-tag">${stageLabel()}</div>
       <div class="rival-flag">${flagEmoji(nextOpponent.name,48)}</div>
       <h4>${nextOpponent.name}</h4>
-      <div class="style-label">Estilo de juego</div>
-      <div class="rival-style-tag">${nextOpponent.style}</div>
       <div class="rival-power-bar">
         <div class="rival-power-label">PODER RIVAL</div>
         <div class="rival-power-value">${Math.round(power)}</div>
         <div class="rival-power-track"><div class="rival-power-fill" style="width:${Math.min(100,power)}%"></div></div>
       </div>
+      <div class="style-label" style="margin-top:10px">Estilo de juego</div>
+      <div class="rival-style-tag">${nextOpponent.style}</div>
     </div>`;
   document.getElementById("rivalHint").textContent=hint;
 }
@@ -1803,7 +1806,7 @@ function getStreakBadge(playerName){
   const s=scorerStreaks[playerName]||0;
   if(s<=0) return "";
   const fire="🔥".repeat(Math.min(s,MAX_STREAK_BONUS));
-  return `<span class="streak-badge">${fire}+${Math.min(s,MAX_STREAK_BONUS)}</span>`;
+  return `<span class="streak-badge" title="Racha Goleadora">${fire}+${Math.min(s,MAX_STREAK_BONUS)}</span>`;
 }
 
 /* ========= PRESS EVENT SYSTEM ========= */
@@ -2045,14 +2048,14 @@ teams=teams.map(t=>{
 
 /* ========= QUICK BUILD ========= */
 (function setupQuickBuild(){
-  const btn=document.getElementById("quickBuildBtn");
+  const btn=document.getElementById("quickBuildWrap");
   if(!btn) return;
   btn.addEventListener("click",quickBuild);
 })();
 
 function quickBuild(){
   if(phase!=="draft"&&phase!=="bench") return;
-  const btn=document.getElementById("quickBuildBtn");
+  const btn=document.getElementById("quickBuildWrap");
   if(btn){ btn.disabled=true; btn.textContent="Generando..."; }
 
   // 1. Single slot-machine spin for ~700ms to simulate the "random" feel
@@ -2084,57 +2087,58 @@ function quickBuild(){
 }
 
 function _executeQuickBuild(){
-  // Build a pool of ALL players from ALL teams with their team bonus info
-  const allPlayers=[];
-  teams.forEach(team=>{
-    team.players.forEach(p=>{
-      allPlayers.push({
-        ...p,
-        teamName:team.name,
-        teamBonuses:team.bonuses||{}
-      });
-    });
-  });
-
-  // Remove already-used players
-  const usedNames=new Set([...usedPlayers.map(p=>p.name),...bench.map(p=>p.name)]);
-  const available=allPlayers.filter(p=>!usedNames.has(p.name));
-
-  // Get all pitch slots that need filling
+  // Simulate the REAL draft process: random team pairs → pick best team → pick best fitting player
+  // This mirrors what an optimal player would do given the random draws they get
+  const usedNames=new Set();
+  const pickedTeamNames=new Set();
   const pitchSlots=getPitchSlots().filter(s=>!s.classList.contains("locked"));
-  const benchNeeded=3-bench.length;
 
-  // Greedy fill: for each empty slot, find the best player whose PRIMARY
-  // position matches the slot label. If none, use best available overall.
-  const picked=new Set();
+  function drawTeamPair(){
+    // Draw 2 random teams not already heavily used
+    const pool=teams.filter(t=>!pickedTeamNames.has(t.name));
+    shuffle(pool);
+    return [pool[0], pool[1]||pool[0]];
+  }
+  function pickBestPlayer(teamPlayers, neededPos){
+    // From 5 random players from a team, pick the best for the needed position
+    const available=teamPlayers.filter(p=>!usedNames.has(p.name));
+    if(!available.length) return null;
+    shuffle(available);
+    const hand=available.slice(0,5);
+    // Score: primary position match = big bonus, secondary match = smaller, any = base rating
+    hand.sort((a,b)=>{
+      const scoreA=(a.positions&&a.positions[0]===neededPos?200:a.positions&&a.positions.includes(neededPos)?100:0)+(a.rating||70);
+      const scoreB=(b.positions&&b.positions[0]===neededPos?200:b.positions&&b.positions.includes(neededPos)?100:0)+(b.rating||70);
+      return scoreB-scoreA;
+    });
+    return hand[0];
+  }
 
-  // Apply team bonuses to simulate which team is "selected"
-  // We pick greedily per slot so no single team is forced — best player wins
+  // Fill each pitch slot
   pitchSlots.forEach(slot=>{
     const label=slot.dataset.label;
-    // Candidates who have this as their primary position and not yet picked
-    const primary=available.filter(p=>!picked.has(p.name)&&p.positions&&p.positions[0]===label);
-    // Fallback: any player who can play this position
-    const secondary=available.filter(p=>!picked.has(p.name)&&p.positions&&p.positions.includes(label));
-    // Last resort: any unpicked player
-    const any=available.filter(p=>!picked.has(p.name));
+    const [t1,t2]=drawTeamPair();
+    // Pick the team whose players better cover the needed position
+    const t1best=pickBestPlayer(t1.players,label);
+    const t2best=pickBestPlayer(t2.players,label);
+    let chosenTeam, chosenPlayer;
+    if(!t1best){ chosenTeam=t2; chosenPlayer=t2best; }
+    else if(!t2best){ chosenTeam=t1; chosenPlayer=t1best; }
+    else {
+      const s1=(t1best.positions&&t1best.positions[0]===label?200:t1best.positions&&t1best.positions.includes(label)?100:0)+(t1best.rating||70);
+      const s2=(t2best.positions&&t2best.positions[0]===label?200:t2best.positions&&t2best.positions.includes(label)?100:0)+(t2best.rating||70);
+      chosenTeam=s1>=s2?t1:t2; chosenPlayer=s1>=s2?t1best:t2best;
+    }
+    if(!chosenPlayer) return;
 
-    const candidates=primary.length?primary:secondary.length?secondary:any;
-    if(!candidates.length) return;
+    pickedTeamNames.add(chosenTeam.name);
+    usedNames.add(chosenPlayer.name);
+    applyBonuses({bonuses:chosenTeam.bonuses||{}});
 
-    // Sort by rating desc, pick best
-    candidates.sort((a,b)=>(b.rating||70)-(a.rating||70));
-    const best=candidates[0];
-    picked.add(best.name);
-
-    // Apply team bonus to teamStats (simulate selectTeam)
-    applyBonuses({bonuses:best.teamBonuses});
-
-    // Place on pitch
-    const inPos=best.positions&&best.positions.includes(label);
-    const r=inPos?(best.rating||70):Math.round((best.rating||70)*0.85);
-    const star=inPos&&best.positions[0]===label?' <span class="star">★</span>':'';
-    const playerObj={...best, placedPos:label};
+    const inPos=chosenPlayer.positions&&chosenPlayer.positions.includes(label);
+    const r=inPos?(chosenPlayer.rating||70):Math.round((chosenPlayer.rating||70)*0.85);
+    const star=inPos&&chosenPlayer.positions[0]===label?' <span class="star">★</span>':'';
+    const playerObj={...chosenPlayer, placedPos:label};
     slot._player=playerObj;
     slot.classList.add("locked");
     renderSlotContent(slot, playerObj, label, r, star);
@@ -2142,21 +2146,25 @@ function _executeQuickBuild(){
     draftedCount++;
   });
 
-  // Fill bench (3 players) — best remaining by rating
-  const remaining=available.filter(p=>!picked.has(p.name));
-  remaining.sort((a,b)=>(b.rating||70)-(a.rating||70));
-  const benchPicks=remaining.slice(0, benchNeeded);
-  benchPicks.forEach(p=>{
-    picked.add(p.name);
-    bench.push({...p});
+  // Fill bench (3 players) — simulate 3 more draws
+  const benchNeeded=3-bench.length;
+  for(let i=0;i<benchNeeded;i++){
+    const [t1,t2]=drawTeamPair();
+    const pool1=t1.players.filter(p=>!usedNames.has(p.name));
+    const pool2=t2.players.filter(p=>!usedNames.has(p.name));
+    shuffle(pool1); shuffle(pool2);
+    const hand=[...(pool1.slice(0,3)), ...(pool2.slice(0,3))];
+    if(!hand.length) continue;
+    hand.sort((a,b)=>(b.rating||70)-(a.rating||70));
+    const best=hand[0];
+    usedNames.add(best.name);
+    bench.push({...best});
     benchCount++;
-  });
+  }
 
   // Freeze OVR and transition to ready phase
   baseTeamOVR=computeTeamOVR();
   phase="ready";
-
-  // Hide draft UI, show match phase UI
   rollBtn.style.display="none";
   const howTo=document.getElementById("howToPlayBox");
   const statsGuide=document.getElementById("statsGuideBox");
@@ -2171,11 +2179,9 @@ function _executeQuickBuild(){
   updateStats();
   refreshPitchRatings();
   document.getElementById("benchSection").style.display="block";
-
   startMatchPhase();
   startLedLoop();
-
-  showToast("¡Equipo generado! "+draftedCount+" titulares · "+bench.length+" suplentes", "toast-pos");
+  showToast("¡Equipo generado! OVR "+baseTeamOVR, "toast-pos");
 }
 
 /* ========= TOP BAR: AUDIO & THEME TOGGLES ========= */
@@ -2224,3 +2230,8 @@ if(themeToggleBtn){
 
 // Apply inherited players from a chain run (runs after DOM is fully ready)
 setTimeout(applyInheritedPlayers, 100);
+
+function showSupportModal(){
+  const el=document.getElementById("supportOverlay");
+  if(el){ el.style.display="flex"; }
+}

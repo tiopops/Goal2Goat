@@ -966,6 +966,8 @@ function startMatchPhase(){
   document.getElementById("playMatchBtn").style.display="block";
   document.getElementById("moraleSection").style.display="block";
   renderMorale();
+  const qb=document.getElementById("quickBuildBtn");
+  if(qb) qb.style.display="none";
   playerCardEl.innerHTML="";
   showTeamNameModal();
 }
@@ -2040,6 +2042,141 @@ teams=teams.map(t=>{
   const raw=rawTeams.find(r=>r.name===t.name);
   return {...t,_styleKey:raw?raw.style:''};
 });
+
+/* ========= QUICK BUILD ========= */
+(function setupQuickBuild(){
+  const btn=document.getElementById("quickBuildBtn");
+  if(!btn) return;
+  btn.addEventListener("click",quickBuild);
+})();
+
+function quickBuild(){
+  if(phase!=="draft"&&phase!=="bench") return;
+  const btn=document.getElementById("quickBuildBtn");
+  if(btn){ btn.disabled=true; btn.textContent="Generando..."; }
+
+  // 1. Single slot-machine spin for ~700ms to simulate the "random" feel
+  const reel1=document.createElement("div"); reel1.id="reel1";
+  const reel2=document.createElement("div"); reel2.id="reel2";
+  playerCardEl.innerHTML=`<div class="box"><div class="selection-title">GENERANDO EQUIPO...</div>
+    <div class="team-choice slot-spin">
+      <div class="team-option slot-reel"><div class="flag-wrap"><div class="slot-strip" id="reel1"></div></div></div>
+      <div class="team-option slot-reel"><div class="flag-wrap"><div class="slot-strip" id="reel2"></div></div></div>
+    </div></div>`;
+  const pool=teams.slice();
+  const r1=document.getElementById("reel1");
+  const r2=document.getElementById("reel2");
+  const spin=setInterval(()=>{
+    const ta=pool[Math.floor(Math.random()*pool.length)];
+    const tb=pool[Math.floor(Math.random()*pool.length)];
+    if(r1) r1.innerHTML=flagEmoji(ta.name,56);
+    if(r2) r2.innerHTML=flagEmoji(tb.name,56);
+    playSound('spin');
+  },80);
+
+  setTimeout(()=>{
+    clearInterval(spin);
+    playSound('reveal');
+    playerCardEl.innerHTML="";
+    _executeQuickBuild();
+    if(btn){ btn.style.display="none"; }
+  }, 700);
+}
+
+function _executeQuickBuild(){
+  // Build a pool of ALL players from ALL teams with their team bonus info
+  const allPlayers=[];
+  teams.forEach(team=>{
+    team.players.forEach(p=>{
+      allPlayers.push({
+        ...p,
+        teamName:team.name,
+        teamBonuses:team.bonuses||{}
+      });
+    });
+  });
+
+  // Remove already-used players
+  const usedNames=new Set([...usedPlayers.map(p=>p.name),...bench.map(p=>p.name)]);
+  const available=allPlayers.filter(p=>!usedNames.has(p.name));
+
+  // Get all pitch slots that need filling
+  const pitchSlots=getPitchSlots().filter(s=>!s.classList.contains("locked"));
+  const benchNeeded=3-bench.length;
+
+  // Greedy fill: for each empty slot, find the best player whose PRIMARY
+  // position matches the slot label. If none, use best available overall.
+  const picked=new Set();
+
+  // Apply team bonuses to simulate which team is "selected"
+  // We pick greedily per slot so no single team is forced — best player wins
+  pitchSlots.forEach(slot=>{
+    const label=slot.dataset.label;
+    // Candidates who have this as their primary position and not yet picked
+    const primary=available.filter(p=>!picked.has(p.name)&&p.positions&&p.positions[0]===label);
+    // Fallback: any player who can play this position
+    const secondary=available.filter(p=>!picked.has(p.name)&&p.positions&&p.positions.includes(label));
+    // Last resort: any unpicked player
+    const any=available.filter(p=>!picked.has(p.name));
+
+    const candidates=primary.length?primary:secondary.length?secondary:any;
+    if(!candidates.length) return;
+
+    // Sort by rating desc, pick best
+    candidates.sort((a,b)=>(b.rating||70)-(a.rating||70));
+    const best=candidates[0];
+    picked.add(best.name);
+
+    // Apply team bonus to teamStats (simulate selectTeam)
+    applyBonuses({bonuses:best.teamBonuses});
+
+    // Place on pitch
+    const inPos=best.positions&&best.positions.includes(label);
+    const r=inPos?(best.rating||70):Math.round((best.rating||70)*0.85);
+    const star=inPos&&best.positions[0]===label?' <span class="star">★</span>':'';
+    const playerObj={...best, placedPos:label};
+    slot._player=playerObj;
+    slot.classList.add("locked");
+    renderSlotContent(slot, playerObj, label, r, star);
+    usedPlayers.push(playerObj);
+    draftedCount++;
+  });
+
+  // Fill bench (3 players) — best remaining by rating
+  const remaining=available.filter(p=>!picked.has(p.name));
+  remaining.sort((a,b)=>(b.rating||70)-(a.rating||70));
+  const benchPicks=remaining.slice(0, benchNeeded);
+  benchPicks.forEach(p=>{
+    picked.add(p.name);
+    bench.push({...p});
+    benchCount++;
+  });
+
+  // Freeze OVR and transition to ready phase
+  baseTeamOVR=computeTeamOVR();
+  phase="ready";
+
+  // Hide draft UI, show match phase UI
+  rollBtn.style.display="none";
+  const howTo=document.getElementById("howToPlayBox");
+  const statsGuide=document.getElementById("statsGuideBox");
+  const strat=document.getElementById("strategyBox");
+  if(howTo) howTo.style.display="none";
+  if(statsGuide) statsGuide.style.display="none";
+  if(strat) strat.style.display="block";
+
+  updateDraftCounter();
+  updateConvocadosTable();
+  updateBenchTable();
+  updateStats();
+  refreshPitchRatings();
+  document.getElementById("benchSection").style.display="block";
+
+  startMatchPhase();
+  startLedLoop();
+
+  showToast("¡Equipo generado! "+draftedCount+" titulares · "+bench.length+" suplentes", "toast-pos");
+}
 
 /* ========= TOP BAR: AUDIO & THEME TOGGLES ========= */
 const audioToggleBtn=document.getElementById("audioToggle");
