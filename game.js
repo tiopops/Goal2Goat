@@ -671,11 +671,14 @@ function updateConvocadosTable(){
   const sbEl=document.getElementById("starBonus");
   const sbVal=document.getElementById("starBonusVal");
   if(sbEl&&sbVal){ sbEl.style.display=stars>0?"block":"none"; sbVal.textContent=stars; }
-  // Update OVR
+  // Update OVR + breakdown (base + N★ = total)
   if(usedPlayers.length){
-    const avg=(baseTeamOVR!==null)?baseTeamOVR:Math.round(usedPlayers.reduce((s,p)=>s+effRating(p),0)/usedPlayers.length);
+    const base=Math.round(usedPlayers.reduce((s,p)=>s+effRating(p),0)/usedPlayers.length);
+    const avg=(baseTeamOVR!==null)?baseTeamOVR:base;
     const el2=document.getElementById("teamOVR");
+    const el3=document.getElementById("teamOVRBreakdown");
     if(el2) el2.textContent=avg;
+    if(el3) el3.textContent=stars>0?`${base} + ${stars}★`:"";
   }
   // Swap counter hint
   const swapHint=document.getElementById("swapHint");
