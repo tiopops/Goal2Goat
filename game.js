@@ -624,8 +624,12 @@ function effRating(p){
 function computeTeamOVR(){
   if(!usedPlayers.length) return null;
   const base=Math.round(usedPlayers.reduce((s,p)=>s+effRating(p),0)/usedPlayers.length);
+  return base; // stars give a hidden match bonus, not inflating the displayed OVR
+}
+// Returns a 0..1 bonus factor from star players, used internally in match calc
+function starMatchBonus(){
   const stars=usedPlayers.filter(p=>p.positions&&p.placedPos&&p.positions[0]===p.placedPos).length;
-  return base+stars; // +1 per player in their primary (★) position
+  return stars*0.012; // each ★ = +1.2% lambda boost, up to +13.2% with 11 stars
 }
 let swapSelection=null;
 
@@ -671,14 +675,11 @@ function updateConvocadosTable(){
   const sbEl=document.getElementById("starBonus");
   const sbVal=document.getElementById("starBonusVal");
   if(sbEl&&sbVal){ sbEl.style.display=stars>0?"block":"none"; sbVal.textContent=stars; }
-  // Update OVR + breakdown (base + N★ = total)
+  // Update OVR (total already includes +1 per star)
   if(usedPlayers.length){
-    const base=Math.round(usedPlayers.reduce((s,p)=>s+effRating(p),0)/usedPlayers.length);
-    const avg=(baseTeamOVR!==null)?baseTeamOVR:base;
+    const avg=(baseTeamOVR!==null)?baseTeamOVR:computeTeamOVR();
     const el2=document.getElementById("teamOVR");
-    const el3=document.getElementById("teamOVRBreakdown");
     if(el2) el2.textContent=avg;
-    if(el3) el3.textContent=stars>0?`${base} + ${stars}★`:"";
   }
   // Swap counter hint
   const swapHint=document.getElementById("swapHint");
@@ -1141,11 +1142,14 @@ function playMatch(){
   // knockout stage) are a bit gentler, so a run of bad luck right at the
   // start of a new stage doesn't end the run instantly.
   const stageMatchIdx = stage==="group" ? groupMatchIdx : knockoutRound;
-  const earlyBoost = stageMatchIdx===0 ? 0.12 : (stageMatchIdx===1 ? 0.06 : 0);
-  // Small qualification nudge during the group stage, so reaching the
-  // knockout rounds is a bit more likely than a perfectly neutral matchup.
-  const groupNudge = stage==="group" ? 0.05 : 0;
-  const myLambda=Math.max(0.25, 1.15+diff+tactical.myScoreMod+counter.myScoreMod+earlyBoost+groupNudge);
+  // Early cushion per stage: the first 2 matches of groups AND knockout
+  // are gentler so bad luck doesn't end the run immediately.
+  const earlyBoost = stageMatchIdx===0 ? 0.18 : (stageMatchIdx===1 ? 0.10 : 0);
+  // Small persistent nudge: groups favour qualification, knockout gives
+  // a modest ongoing advantage so reaching the semis/final feels achievable.
+  const groupNudge = stage==="group" ? 0.05 : 0.03;
+  const starBonus=starMatchBonus();
+  const myLambda=Math.max(0.25, 1.15+diff+tactical.myScoreMod+counter.myScoreMod+earlyBoost+groupNudge+starBonus);
   const oppLambda=Math.max(0.25, 1.15-diff+tactical.oppScoreMod+counter.oppScoreMod-earlyBoost*0.6-groupNudge*0.6);
   const myGoals=poissonSample(myLambda);
   const oppGoals=poissonSample(oppLambda);
