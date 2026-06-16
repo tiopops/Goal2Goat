@@ -579,7 +579,7 @@ function onSlotClick(slot){
   updateConvocadosTable();
   updateStats();
   if(draftedCount>=11){
-    baseTeamOVR=Math.round(usedPlayers.reduce((s,p)=>s+effRating(p),0)/usedPlayers.length);
+    baseTeamOVR=computeTeamOVR();
     phase="bench";
     rollBtn.textContent="BANQUILLO 0/3";
     rollBtn.disabled=false;
@@ -621,7 +621,13 @@ function effRating(p){
   const injuryFactor=p.injury?0.6:1;
   return Math.round(r*positionFactor*injuryFactor);
 }
-let swapSelection=null; // {source:'conv'|'bench', index:number}
+function computeTeamOVR(){
+  if(!usedPlayers.length) return null;
+  const base=Math.round(usedPlayers.reduce((s,p)=>s+effRating(p),0)/usedPlayers.length);
+  const stars=usedPlayers.filter(p=>p.positions&&p.placedPos&&p.positions[0]===p.placedPos).length;
+  return base+stars; // +1 per player in their primary (★) position
+}
+let swapSelection=null;
 
 function renderCenterSummary(){
   const el=document.getElementById("centerSummary");
@@ -752,7 +758,7 @@ function performSwap(benchIdx, convIdx){
   const r=inPos?(benchPlayer.rating||70):Math.round((benchPlayer.rating||70)*0.85);
   const star=inPos&&benchPlayer.positions[0]===label?' <span class="star">★</span>':'';
   renderSlotContent(slot, benchPlayer, label, r, star);
-  baseTeamOVR=Math.round(usedPlayers.reduce((s,p)=>s+effRating(p),0)/usedPlayers.length);
+  baseTeamOVR=computeTeamOVR();
   swapsUsedThisMatch++;
   playSound('select');
   updateConvocadosTable();
@@ -1118,7 +1124,7 @@ function playMatch(){
     }
   });
   refreshPitchRatings();
-  baseTeamOVR=Math.round(usedPlayers.reduce((s,p)=>s+effRating(p),0)/usedPlayers.length);
+  baseTeamOVR=computeTeamOVR();
   updateConvocadosTable();
   updateBenchTable();
   const myPower=computeMyPower();
@@ -1145,7 +1151,7 @@ function playMatch(){
   // Injuries
   const newInjuries=rollInjuries(myPower,oppPower);
   refreshPitchRatings();
-  baseTeamOVR=Math.round(usedPlayers.reduce((s,p)=>s+effRating(p),0)/usedPlayers.length);
+  baseTeamOVR=computeTeamOVR();
   updateConvocadosTable();
   updateBenchTable();
 

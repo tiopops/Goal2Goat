@@ -10,11 +10,12 @@ html,body{height:100%;overflow:hidden}
 body{background:var(--bg);font-family:'Inter',Arial,sans-serif;color:var(--text);font-size:13px;transition:background .2s,color .2s}
 
 /* ===================== LAYOUT ===================== */
+body{display:flex;flex-direction:column;height:100vh;overflow:hidden}
 .app{
   display:grid;
   grid-template-columns:minmax(380px,440px) minmax(320px,420px) minmax(380px,440px);
   justify-content:center;
-  height:100vh;
+  flex:1;min-height:0;
   overflow:hidden;
 }
 .panel{
@@ -32,14 +33,15 @@ body{background:var(--bg);font-family:'Inter',Arial,sans-serif;color:var(--text)
 /* ===================== LOGO ===================== */
 .logo{
   font-family:'Bebas Neue',Impact,sans-serif;
-  font-size:36px;letter-spacing:3px;
+  font-size:28px;letter-spacing:3px;
   color:var(--gold);
   text-shadow:2px 2px 0 #000, -1px -1px 0 #000;
-  margin-bottom:2px;
+  line-height:1;
 }
 .version-tag{
-  display:block;font-size:9px;color:#666;letter-spacing:.5px;
-  font-family:'Inter',sans-serif;margin-top:-6px;margin-bottom:6px;
+  font-size:9px;color:#666;letter-spacing:.5px;
+  font-family:'Inter',sans-serif;
+  align-self:flex-end;margin-bottom:2px;
 }
 body.dark-theme .version-tag{color:#555}
 
@@ -88,16 +90,19 @@ body.dark-theme .version-tag{color:#555}
 .center-panel{
   display:flex;flex-direction:column;align-items:center;justify-content:flex-start;
   background:#ddd;padding:0;overflow-y:auto;overflow-x:hidden;
-  height:100vh;
+  height:100%;
 }
 #pitchBox{
   width:100%;display:flex;flex-direction:column;align-items:center;
   flex-shrink:0;
 }
-#topBar{
-  width:100%;display:flex;justify-content:flex-end;gap:8px;
-  padding:6px 12px;background:#1a1a1a;border-bottom:1px solid #333;flex-shrink:0;
+#appHeader{
+  width:100%;display:flex;align-items:center;justify-content:space-between;
+  padding:8px 20px;background:#1a1a1a;border-bottom:2px solid #333;
+  flex-shrink:0;gap:16px;
 }
+.app-header-logo{display:flex;align-items:baseline;gap:10px}
+.app-header-actions{display:flex;gap:8px;align-items:center}
 .topbar-btn{
   background:#333;color:#ddd;border:1px solid #555;
   font-size:11px;font-weight:700;letter-spacing:.5px;
@@ -282,8 +287,9 @@ body.dark-theme .version-tag{color:#555}
 
 /* ===================== RESPONSIVE ===================== */
 @media(max-width:1050px){
-  html,body{overflow:auto;height:auto}
-  .app{display:flex;flex-direction:column;height:auto}
+  html,body{overflow:auto;height:auto;display:block}
+  #appHeader{position:sticky;top:0;z-index:100}
+  .app{display:flex;flex-direction:column;height:auto;flex:none}
   .center-panel{order:1;height:auto;max-height:none;overflow:visible}
   #pitch{height:auto;width:100%;max-width:min(100%,60vh);max-height:none;flex:none}
   .left-panel{order:2;border-right:none;border-bottom:1px solid var(--line);overflow:visible}
@@ -291,7 +297,8 @@ body.dark-theme .version-tag{color:#555}
   .team-choice{flex-direction:column}
 }
 @media(max-width:640px){
-  .logo{font-size:28px}
+  .logo{font-size:22px}
+  .app-header-logo{gap:6px}
   .box{padding:8px}
   .position{width:36px;height:36px;font-size:8px}
   .player-info{width:60px;font-size:8px;top:38px}
@@ -434,7 +441,7 @@ body.dark-theme .stat-pace,
 body.dark-theme .stat-passing,
 body.dark-theme .stat-technique{background:#0a0c0d;color:var(--gold);border-color:var(--gold)}
 body.dark-theme #centerBottom{background:#0a0c0d;border-color:var(--line)}
-body.dark-theme #topBar{background:#0a0c0d;border-color:var(--line)}
+body.dark-theme #appHeader{background:#0a0c0d;border-color:var(--line)}
 body.dark-theme .team-name-input{background:var(--card-bg);color:var(--text);border-color:var(--line)}
 body.dark-theme .pen-shots,
 body.dark-theme .goal-min,
@@ -493,11 +500,11 @@ body.dark-theme .group-row-me.group-row-qualified td{background:#1a2f1a;border-l
 /* ================== LED SCOREBOARD =================== */
 /* ===================================================== */
 .led-board{
-  width:100%;max-width:420px;height:36px;
+  width:100%;max-width:420px;height:52px;
   background:#000;
   border-top:1px solid #1a3a1a;border-bottom:1px solid #1a3a1a;
   overflow:hidden;position:relative;flex-shrink:0;
-  box-shadow:inset 0 0 12px rgba(0,200,0,.08);
+  box-shadow:inset 0 0 16px rgba(0,200,0,.10);
 }
 /* LED dot overlay */
 .led-board::after{
@@ -509,10 +516,10 @@ body.dark-theme .group-row-me.group-row-qualified td{background:#1a2f1a;border-l
   position:absolute;white-space:nowrap;
   color:#00e040;
   font-family:'Courier New',Courier,monospace;
-  font-size:14px;font-weight:bold;
-  line-height:36px;padding:0 8px;
-  text-shadow:0 0 6px #00ff44,0 0 12px #00cc33;
-  animation:led-scroll 28s linear infinite;
+  font-size:20px;font-weight:bold;
+  line-height:52px;padding:0 12px;
+  text-shadow:0 0 8px #00ff44,0 0 16px #00cc33;
+  animation:led-scroll 30s linear infinite;
   will-change:transform;
 }
 @keyframes led-scroll{

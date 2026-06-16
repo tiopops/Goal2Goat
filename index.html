@@ -10,13 +10,22 @@
 </head>
 <body>
 
+<!-- FULL-WIDTH APP HEADER -->
+<header id="appHeader">
+  <div class="app-header-logo">
+    <span class="logo">GOAL2GOAT</span>
+    <span class="version-tag">v0.1606260538</span>
+  </div>
+  <div class="app-header-actions">
+    <button id="audioToggle" class="topbar-btn" title="Activar/desactivar sonido"><span class="topbar-dot on"></span><span class="topbar-label">SONIDO</span></button>
+    <button id="themeToggle" class="topbar-btn" title="Cambiar tema claro/oscuro"><span class="topbar-dot on"></span><span class="topbar-label">TEMA OSCURO</span></button>
+  </div>
+</header>
+
 <div class="app">
 
   <!-- LEFT PANEL -->
   <div class="panel left-panel">
-    <h2 class="logo">GOAL2GOAT</h2>
-    <span class="version-tag">v0.1606260538</span>
-
     <div class="box">
       <h3>CONVOCADOS <span id="draftCounter" class="counter-badge">0/11</span></h3>
       <div id="convocadosTable"></div>
@@ -100,10 +109,6 @@
 
   <!-- CENTER PANEL -->
   <div class="center-panel">
-    <div id="topBar">
-      <button id="audioToggle" class="topbar-btn" title="Activar/desactivar sonido"><span class="topbar-dot on"></span><span class="topbar-label">SONIDO</span></button>
-      <button id="themeToggle" class="topbar-btn" title="Cambiar tema claro/oscuro"><span class="topbar-dot on"></span><span class="topbar-label">TEMA OSCURO</span></button>
-    </div>
     <div id="pitchBox">
     <div id="pitch">
       <svg class="pitch-svg" viewBox="0 0 480 640" xmlns="http://www.w3.org/2000/svg">
@@ -194,7 +199,7 @@
       <div class="stat-row"><span>TÉCNICA</span><span id="techniqueValue">0</span></div>
       <div class="stat-bar"><div id="techniqueBar"></div></div>
       <div id="starBonus" class="star-bonus-row" style="display:none">
-        <span class="star">★</span> Bonus posición: +<span id="starBonusVal">0</span> a nota media
+        <span class="star">★</span> Bonus posición: +<span id="starBonusVal">0</span> pts a nota media (+1 por ★)
       </div>
     </div>
 
