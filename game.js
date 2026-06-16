@@ -1182,6 +1182,9 @@ function playMatch(){
     updateGroupTable(myGoals,oppGoals,won,draw);
     matchResults.push({stage:"group", roundName:"Fase de Grupos", rival:nextOpponent.name, score:scoreLabel, won, draw});
     groupMatchIdx++;
+    // Once all 3 of our group matches are done, immediately simulate the 3
+    // inter-rival matches so groupTable is fully populated before the popup shows.
+    if(groupMatchIdx>=3) simulateRivalMatches();
   } else {
     matchResults.push({stage:"knockout", roundName:ROUND_NAMES[knockoutRound], rival:nextOpponent.name, score:scoreLabel, won, draw:false});
   }
@@ -1400,7 +1403,7 @@ function showMatchModal(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,
         pickNextOpponent();
         break;
       case "groupDone":
-        simulateRivalMatches();
+        renderMatchHistory();
         showGroupResultsPopup();
         break;
       case "nextKnockoutMatch":
