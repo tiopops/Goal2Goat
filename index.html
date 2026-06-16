@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Goal2Goat</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;600;700&family=Press+Start+2P&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -30,6 +30,18 @@
       <h3>CONVOCADOS <span id="draftCounter" class="counter-badge">0/11</span></h3>
       <div id="convocadosTable"></div>
       <div id="swapHint" class="swap-hint" style="display:none"></div>
+      <div id="moraleSection" style="display:none">
+        <div class="morale-bar-wrap">
+          <div class="morale-label">MORAL <span id="moraleValue">0</span></div>
+          <div class="morale-track">
+            <div class="morale-neg-zone"></div>
+            <div class="morale-center"></div>
+            <div class="morale-pos-zone"></div>
+            <div id="moraleFill" class="morale-fill"></div>
+            <div class="morale-zero-marker"></div>
+          </div>
+        </div>
+      </div>
       <div id="benchSection" style="display:none">
         <div class="bench-title">BANQUILLO <span id="benchCounter">0/3</span></div>
         <div id="benchTable"></div>
@@ -61,7 +73,7 @@
         </div>
         <div class="howto-step">
           <span class="howto-num">6</span>
-          <div>Entre partidos solo puedes hacer <strong>1 cambio</strong> entre Convocados y Banquillo (haz clic en un jugador de cada tabla para intercambiarlos). Úsalo con cabeza, sobre todo si tienes algún lesionado.</div>
+          <div>Entre partidos puedes hacer hasta <strong>2 cambios</strong> entre Convocados y Banquillo (haz clic en un jugador de cada tabla para intercambiarlos). Úsalo con cabeza, sobre todo si tienes algún lesionado.</div>
         </div>
       </div>
     </div>
@@ -155,6 +167,7 @@
       <button id="rollBtn" class="main-action-btn">GO!</button>
       <button id="playMatchBtn" class="main-action-btn" style="display:none">JUGAR</button>
     </div>
+    <button id="quickBuildBtn" class="quick-build-btn">⚡ GENERAR EQUIPO RÁPIDO</button>
     </div>
     <!-- Selection / roster modal goes here on mobile -->
     <div id="playerCard"></div>
@@ -174,6 +187,7 @@
     <!-- Rival box (during match phase) -->
     <div class="box" id="rivalBox" style="display:none">
       <h3>PRÓXIMO RIVAL</h3>
+      <div id="weatherDisplay" class="weather-display" style="display:none"></div>
       <div id="rivalInfo"></div>
       <div id="rivalHint" class="rival-hint"></div>
     </div>
@@ -199,7 +213,7 @@
       <div class="stat-row"><span>TÉCNICA</span><span id="techniqueValue">0</span></div>
       <div class="stat-bar"><div id="techniqueBar"></div></div>
       <div id="starBonus" class="star-bonus-row" style="display:none">
-        <span class="star">★</span> Bonus posición: <span id="starBonusVal">0</span>★ activas · ventaja oculta en partido
+        <span class="star">★</span> Bonus posición +<span id="starBonusVal">0</span>
       </div>
     </div>
 

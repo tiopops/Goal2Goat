@@ -218,7 +218,89 @@ let baseTeamOVR = null;
 let benchCount = 0;
 let nextOpponent = null;
 let swapsUsedThisMatch = 0;
-const MAX_SWAPS_PER_MATCH = 1;
+
+/* ========= ROGUELIKE SYSTEMS STATE ========= */
+// Morale: -50 to +50, starts at 0, affects match lambda
+let teamMorale = 0;
+// Scorer streaks: map playerName -> consecutive matches scored
+let scorerStreaks = {};
+// Current match weather
+let currentWeather = null;
+// Inherited players from previous run (names)
+let inheritedPlayers = [];
+// Best knockout round reached in current run (for chain run reward)
+let bestRoundReached = -1; // -1=none, 0=groups, 1=octavos, 2=cuartos, 3=semis, 4=final
+const WEATHER_TYPES = [
+  { id:'sunny',    label:'☀ Soleado',         desc:'Calor intenso · RITMO -15% ambos equipos',    effect:{pace:-0.10} },
+  { id:'cloudy',   label:'⛅ Nublado',          desc:'Condiciones neutras',                          effect:{} },
+  { id:'rain',     label:'🌧 Lluvia',           desc:'Campo pesado · RITMO -20%, TÉCNICA -10%',     effect:{pace:-0.15, technique:-0.08} },
+  { id:'wind',     label:'💨 Viento fuerte',    desc:'Juego directo · PASE -15%',                   effect:{passing:-0.12} },
+  { id:'hot',      label:'🌡 Calor extremo',    desc:'Fatiga máxima · RITMO -25%, DEFENSA -10%',    effect:{pace:-0.20, defense:-0.08} },
+];
+const PRESS_EVENTS = {
+  win: [
+    { q:"«¿Crees que el rival no estaba a vuestro nivel?»", answers:[
+      { text:"«Fueron un rival duro. El resultado es justo.»",           moral:+15, label:"Humilde" },
+      { text:"«Honestamente, esperábamos más de ellos.»",               moral:+3,  label:"Arrogante" },
+      { text:"«Tenemos suerte de ganar, la verdad.»",                    moral:-6,  label:"Inseguro" },
+    ]},
+    { q:"«¿Es este el mejor partido de la temporada?»", answers:[
+      { text:"«Todavía podemos mejorar. El trabajo sigue.»",             moral:+12, label:"Exigente" },
+      { text:"«Sí, el equipo ha rozado la perfección hoy.»",             moral:+5,  label:"Satisfecho" },
+      { text:"«Prefiero no hacer valoraciones tan pronto.»",             moral:+3,  label:"Cauto" },
+    ]},
+    { q:"«¿Sois ya los favoritos para ganar el torneo?»", answers:[
+      { text:"«Partido a partido. No miramos más allá.»",                moral:+14, label:"Profesional" },
+      { text:"«¡Claro que sí! Somos el mejor equipo aquí.»",             moral:+2,  label:"Arrogante" },
+      { text:"«Hay equipos muy fuertes, no cantemos victoria.»",         moral:+10, label:"Sensato" },
+    ]},
+    { q:"«Los aficionados están eufóricos. ¿Qué les dices?»", answers:[
+      { text:"«Que sigan creyendo. Lo hacemos por ellos.»",              moral:+18, label:"Emotivo" },
+      { text:"«Que esperen a ver qué hacemos en la siguiente ronda.»",   moral:+8,  label:"Comedido" },
+      { text:"«Que se lo merecen. ¡Este escudo vale mucho!»",            moral:+10, label:"Apasionado" },
+    ]},
+  ],
+  draw: [
+    { q:"«¿Os ha faltado fuerza para cerrar el partido?»", answers:[
+      { text:"«Nos faltó un punto de acierto, pero aprendemos.»",       moral:+8,  label:"Analítico" },
+      { text:"«El empate es justo. Ambos merecíamos más.»",              moral:+5,  label:"Ecuánime" },
+      { text:"«Deberíamos haber ganado. Es frustrante.»",               moral:-5,  label:"Frustrado" },
+    ]},
+    { q:"«¿El empate complica vuestra clasificación?»", answers:[
+      { text:"«Depende de nosotros. Seguimos trabajando.»",              moral:+10, label:"Sereno" },
+      { text:"«Sí, nos hace daño. Necesitamos reaccionar.»",             moral:-8,  label:"Preocupado" },
+      { text:"«Un punto siempre vale. Seguimos vivos.»",                 moral:+6,  label:"Positivo" },
+    ]},
+    { q:"«¿Les faltó ambición al equipo hoy?»", answers:[
+      { text:"«Quizás. Hablaremos internamente sobre eso.»",             moral:+4,  label:"Honesto" },
+      { text:"«No, el rival fue muy sólido defensivamente.»",            moral:+7,  label:"Objetivo" },
+      { text:"«El equipo lo ha dado todo, eso es indiscutible.»",        moral:+10, label:"Defensor" },
+    ]},
+  ],
+  loss: [
+    { q:"«¿Qué ha fallado hoy?»", answers:[
+      { text:"«El rival fue mejor. Aprendemos y seguimos.»",             moral:+12, label:"Maduro" },
+      { text:"«Los árbitros nos perjudicaron claramente.»",              moral:-8,  label:"Excusas" },
+      { text:"«Fue un desastre. No tengo respuestas.»",                  moral:-18, label:"Hundido" },
+    ]},
+    { q:"«¿Sigues creyendo en este proyecto tras la derrota?»", answers:[
+      { text:"«Absolutamente. Los malos momentos forjan equipos.»",      moral:+16, label:"Convicción" },
+      { text:"«Necesito reflexionar antes de contestar.»",               moral:-3,  label:"Dubitativo" },
+      { text:"«Hay decisiones que habría que replantear.»",              moral:-10, label:"Cuestionador" },
+    ]},
+    { q:"«¿Han bajado los brazos los jugadores?»", answers:[
+      { text:"«Jamás. Se nota que están comprometidos.»",                moral:+10, label:"Defensor" },
+      { text:"«Algunos sí perdieron la cabeza. Trabajaremos en ello.»",  moral:-5,  label:"Crítico" },
+      { text:"«Es una pregunta que me hago yo también.»",                moral:-14, label:"Cuestionador" },
+    ]},
+    { q:"«¿Hay tensión en el vestuario?»", answers:[
+      { text:"«El grupo está unido. Las derrotas nos hacen más fuertes.»",moral:+14, label:"Unidad" },
+      { text:"«Hay reflexión, que es sano. No tensión.»",                moral:+6,  label:"Diplomático" },
+      { text:"«Prefiero no entrar en detalles del vestuario.»",          moral:-2,  label:"Evasivo" },
+    ]},
+  ],
+};
+const MAX_SWAPS_PER_MATCH = 2;
 
 /* ========= COMPETITION STATE (World Cup format) ========= */
 const ROUND_NAMES = ["Octavos de Final","Cuartos de Final","Semifinal","Final"];
@@ -375,8 +457,9 @@ function teamOptionHTML(team,players){
   return `<div class="team-option" onclick="selectTeam('${esc(team.name)}')">
     <div class="flag-wrap">${flagEmoji(team.name)}</div>
     <h3>${team.name}</h3>
-    <p>${team.style}</p>
     ${renderBonuses(team)}
+    <div class="style-label">Estilo de juego</div>
+    <p class="style-text">${team.style}</p>
   </div>`;
 }
 function esc(s){ return s.replace(/'/g,"&#39;"); }
@@ -579,7 +662,7 @@ function onSlotClick(slot){
   updateConvocadosTable();
   updateStats();
   if(draftedCount>=11){
-    baseTeamOVR=Math.round(usedPlayers.reduce((s,p)=>s+effRating(p),0)/usedPlayers.length);
+    baseTeamOVR=computeTeamOVR();
     phase="bench";
     rollBtn.textContent="BANQUILLO 0/3";
     rollBtn.disabled=false;
@@ -621,7 +704,17 @@ function effRating(p){
   const injuryFactor=p.injury?0.6:1;
   return Math.round(r*positionFactor*injuryFactor);
 }
-let swapSelection=null; // {source:'conv'|'bench', index:number}
+function computeTeamOVR(){
+  if(!usedPlayers.length) return null;
+  const base=Math.round(usedPlayers.reduce((s,p)=>s+effRating(p),0)/usedPlayers.length);
+  return base; // stars give a hidden match bonus, not inflating the displayed OVR
+}
+// Returns a 0..1 bonus factor from star players, used internally in match calc
+function starMatchBonus(){
+  const stars=usedPlayers.filter(p=>p.positions&&p.placedPos&&p.positions[0]===p.placedPos).length;
+  return stars*0.012; // each ★ = +1.2% lambda boost, up to +13.2% with 11 stars
+}
+let swapSelection=null;
 
 function renderCenterSummary(){
   const el=document.getElementById("centerSummary");
@@ -656,18 +749,19 @@ function updateConvocadosTable(){
     const cross=p.injury?injuryTag:'';
     const star=inPrimary?'<span class="star">★</span>':'';
     const r=effRating(p);
+    const streak=getStreakBadge(p.name);
     const sel=(swapSelection&&swapSelection.source==='conv'&&swapSelection.index===i)?' class="row-selected"':'';
     const clickable=canSwap?` onclick="onConvocadoClick(${i})" style="cursor:pointer"`:'';
-    rows+=`<tr${sel}${clickable}><td>${i+1}</td><td>${p.name}${cross}</td><td>${p.placedPos||'?'} ${star}</td><td>${r}</td></tr>`;
+    rows+=`<tr${sel}${clickable}><td>${i+1}</td><td>${p.name}${cross}${streak}</td><td>${p.placedPos||'?'} ${star}</td><td>${r}</td></tr>`;
   });
   el.innerHTML=rows?`<table><thead><tr><th>#</th><th>Jugador</th><th>Pos</th><th>★</th></tr></thead><tbody>${rows}</tbody></table>`:"";
   // Update star bonus display
   const sbEl=document.getElementById("starBonus");
   const sbVal=document.getElementById("starBonusVal");
   if(sbEl&&sbVal){ sbEl.style.display=stars>0?"block":"none"; sbVal.textContent=stars; }
-  // Update OVR
+  // Update OVR (total already includes +1 per star)
   if(usedPlayers.length){
-    const avg=(baseTeamOVR!==null)?baseTeamOVR:Math.round(usedPlayers.reduce((s,p)=>s+effRating(p),0)/usedPlayers.length);
+    const avg=(baseTeamOVR!==null)?baseTeamOVR:computeTeamOVR();
     const el2=document.getElementById("teamOVR");
     if(el2) el2.textContent=avg;
   }
@@ -752,7 +846,7 @@ function performSwap(benchIdx, convIdx){
   const r=inPos?(benchPlayer.rating||70):Math.round((benchPlayer.rating||70)*0.85);
   const star=inPos&&benchPlayer.positions[0]===label?' <span class="star">★</span>':'';
   renderSlotContent(slot, benchPlayer, label, r, star);
-  baseTeamOVR=Math.round(usedPlayers.reduce((s,p)=>s+effRating(p),0)/usedPlayers.length);
+  baseTeamOVR=computeTeamOVR();
   swapsUsedThisMatch++;
   playSound('select');
   updateConvocadosTable();
@@ -870,6 +964,8 @@ function startMatchPhase(){
   document.getElementById("matchHistoryBox").style.display="block";
   document.getElementById("nextRivalStrip").style.display="flex";
   document.getElementById("playMatchBtn").style.display="block";
+  document.getElementById("moraleSection").style.display="block";
+  renderMorale();
   playerCardEl.innerHTML="";
   showTeamNameModal();
 }
@@ -947,6 +1043,9 @@ function spinRivalReveal(){
     renderRivalBox();
     stripFlag.innerHTML=flagEmoji(nextOpponent.name,28);
     stripName.textContent=nextOpponent.name;
+    rollWeather();
+    renderWeather();
+    updateLed();
     updateLed();
   },900);
 }
@@ -959,6 +1058,7 @@ function renderRivalBox(){
       <div class="rival-stage-tag">${stageLabel()}</div>
       <div class="rival-flag">${flagEmoji(nextOpponent.name,48)}</div>
       <h4>${nextOpponent.name}</h4>
+      <div class="style-label">Estilo de juego</div>
       <div class="rival-style-tag">${nextOpponent.style}</div>
       <div class="rival-power-bar">
         <div class="rival-power-label">PODER RIVAL</div>
@@ -1118,7 +1218,7 @@ function playMatch(){
     }
   });
   refreshPitchRatings();
-  baseTeamOVR=Math.round(usedPlayers.reduce((s,p)=>s+effRating(p),0)/usedPlayers.length);
+  baseTeamOVR=computeTeamOVR();
   updateConvocadosTable();
   updateBenchTable();
   const myPower=computeMyPower();
@@ -1132,20 +1232,27 @@ function playMatch(){
   // knockout stage) are a bit gentler, so a run of bad luck right at the
   // start of a new stage doesn't end the run instantly.
   const stageMatchIdx = stage==="group" ? groupMatchIdx : knockoutRound;
-  const earlyBoost = stageMatchIdx===0 ? 0.12 : (stageMatchIdx===1 ? 0.06 : 0);
-  // Small qualification nudge during the group stage, so reaching the
-  // knockout rounds is a bit more likely than a perfectly neutral matchup.
-  const groupNudge = stage==="group" ? 0.05 : 0;
-  const myLambda=Math.max(0.25, 1.15+diff+tactical.myScoreMod+counter.myScoreMod+earlyBoost+groupNudge);
-  const oppLambda=Math.max(0.25, 1.15-diff+tactical.oppScoreMod+counter.oppScoreMod-earlyBoost*0.6-groupNudge*0.6);
+  // Early cushion per stage: the first 2 matches of groups AND knockout
+  // are gentler so bad luck doesn't end the run immediately.
+  const earlyBoost = stageMatchIdx===0 ? 0.18 : (stageMatchIdx===1 ? 0.10 : 0);
+  // Small persistent nudge: groups favour qualification, knockout gives
+  // a modest ongoing advantage so reaching the semis/final feels achievable.
+  const groupNudge = stage==="group" ? 0.05 : 0.03;
+  const starBonus=starMatchBonus();
+  const moraleBonus=moraleLambdaBonus();
+  const streakBonus=getStreakLambdaBonus();
+  const weatherDelta=weatherLambdaEffect(); // weather was rolled when rival was revealed
+  const myLambda=Math.max(0.25, 1.15+diff+tactical.myScoreMod+counter.myScoreMod+earlyBoost+groupNudge+starBonus+moraleBonus+streakBonus+weatherDelta);
+  const oppLambda=Math.max(0.25, 1.15-diff+tactical.oppScoreMod+counter.oppScoreMod-earlyBoost*0.6-groupNudge*0.6+weatherDelta);
   const myGoals=poissonSample(myLambda);
   const oppGoals=poissonSample(oppLambda);
   // Match narrative
   let summary=generateMatchSummary(myGoals,oppGoals,nextOpponent.name);
+  updateScorerStreaks(generateMatchSummary._scorers||[]);
   // Injuries
   const newInjuries=rollInjuries(myPower,oppPower);
   refreshPitchRatings();
-  baseTeamOVR=Math.round(usedPlayers.reduce((s,p)=>s+effRating(p),0)/usedPlayers.length);
+  baseTeamOVR=computeTeamOVR();
   updateConvocadosTable();
   updateBenchTable();
 
@@ -1182,12 +1289,20 @@ function playMatch(){
     updateGroupTable(myGoals,oppGoals,won,draw);
     matchResults.push({stage:"group", roundName:"Fase de Grupos", rival:nextOpponent.name, score:scoreLabel, won, draw});
     groupMatchIdx++;
-    // Once all 3 of our group matches are done, immediately simulate the 3
-    // inter-rival matches so groupTable is fully populated before the popup shows.
     if(groupMatchIdx>=3) simulateRivalMatches();
   } else {
     matchResults.push({stage:"knockout", roundName:ROUND_NAMES[knockoutRound], rival:nextOpponent.name, score:scoreLabel, won, draw:false});
   }
+
+  // Update morale based on result
+  if(won) changeMorale(stage==="knockout"?12:8);
+  else if(draw) changeMorale(2);
+  else changeMorale(stage==="knockout"?-12:-7);
+
+  // Track best round for chain run rewards
+  if(stage==="group") bestRoundReached=Math.max(bestRoundReached,0);
+  else bestRoundReached=Math.max(bestRoundReached, knockoutRound+1);
+
   renderMatchHistory();
   updateLed();
   showMatchModal(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,penaltyInfo);
@@ -1300,10 +1415,13 @@ function generateMatchSummary(myGoals,oppGoals,rivalName){
   const attackers=usedPlayers.filter(p=>p.placedPos&&["DC","EI","ED","MC"].includes(p.placedPos));
   const oppAttackers=nextOpponent.players.filter(p=>p.positions&&p.positions.some(pos=>["DC","EI","ED","MC"].includes(pos)));
   const oppPool=oppAttackers.length?oppAttackers:nextOpponent.players;
+  const lastMatchScorers=[]; // store scorer names for streak tracking
   const myGoalLines=myMinutes.map(min=>{
     const scorer=attackers[Math.floor(Math.random()*attackers.length)]||usedPlayers[0];
+    if(scorer) lastMatchScorers.push(scorer.name);
     return `<li>⚽ ${scorer?scorer.name:"Desconocido"} <span class="goal-min">(${min}')</span></li>`;
   });
+  generateMatchSummary._scorers=lastMatchScorers;
   const oppGoalLines=oppMinutes.map(min=>{
     const scorer=oppPool[Math.floor(Math.random()*oppPool.length)];
     return `<li>⚽ ${scorer?scorer.name:rivalName} <span class="goal-min">(${min}')</span></li>`;
@@ -1360,11 +1478,11 @@ function showMatchModal(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,
   playSound(won||draw?'victory':'defeat');
   let extraHTML="";
   if(recovered.length){
-    extraHTML+=`<div class="match-summary" style="background:#f0fff0;border-color:#0f6b3b"><strong>Recuperados:</strong> ${recovered.join(", ")}</div>`;
+    extraHTML+=`<div class="match-summary recovered-box"><strong>Recuperados:</strong> ${recovered.join(", ")}</div>`;
   }
   if(newInjuries.length){
     const ILABELS={leve:"leve (1 partido)",básica:"básica (2 partidos)",grave:"grave (3 partidos)"};
-    extraHTML+=`<div class="injury-section"><p>⚠ Lesiones en ${myTeamName} tras el partido:</p><ul>${newInjuries.map(p=>`<li>${p.name}: lesión ${ILABELS[p.injury.type]}</li>`).join('')}</ul><p class="injury-note">Recuerda: solo puedes hacer <strong>1 cambio</strong> entre Convocados y Banquillo antes del próximo partido. Hazlo manualmente desde las tablas de la izquierda.</p></div>`;
+    extraHTML+=`<div class="injury-section"><p>⚠ Lesiones en ${myTeamName} tras el partido:</p><ul>${newInjuries.map(p=>`<li>${p.name}: lesión ${ILABELS[p.injury.type]}</li>`).join('')}</ul><p class="injury-note">Recuerda: puedes hacer hasta <strong>2 cambios</strong> entre Convocados y Banquillo antes del próximo partido. Hazlo manualmente desde las tablas de la izquierda.</p></div>`;
   }
 
   // Determine continue-button label and the outcome it leads to
@@ -1400,7 +1518,7 @@ function showMatchModal(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,
     document.getElementById("matchOverlay").innerHTML="";
     switch(outcome){
       case "nextGroupMatch":
-        pickNextOpponent();
+        maybeShowPressEvent(()=>pickNextOpponent(), won, draw);
         break;
       case "groupDone":
         renderMatchHistory();
@@ -1408,7 +1526,7 @@ function showMatchModal(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,
         break;
       case "nextKnockoutMatch":
         knockoutRound++;
-        pickNextOpponent();
+        maybeShowPressEvent(()=>pickNextOpponent(), won, draw);
         break;
       case "champion":
         showVictory();
@@ -1480,45 +1598,359 @@ function showGroupResultsPopup(){
 
 /* ---------- END SCREENS ---------- */
 function showEliminatedGroupStage(){
+  const slots=getChainSlots();
   document.getElementById("matchOverlay").innerHTML=`
   <div class="match-modal">
     <h3>FASE DE GRUPOS</h3>
     <div class="match-result-tag res-lose-tag">ELIMINADO EN FASE DE GRUPOS</div>
     <div class="match-summary">
       ${myTeamName} no ha conseguido terminar entre los 2 primeros de su grupo.
-      ¡El torneo termina aquí, pero siempre puedes formar un nuevo equipo y volver a intentarlo!
     </div>
     <button class="modal-btn danger" onclick="location.reload()">NUEVA PARTIDA</button>
   </div>`;
 }
 function showEliminated(){
   const round=ROUND_NAMES[knockoutRound];
+  const slots=getChainSlots();
+  const chainBtn=slots>0
+    ?`<button class="modal-btn" onclick="document.getElementById('matchOverlay').innerHTML='';showChainRunModal()">🔗 CONSERVAR ${slots} JUGADOR${slots>1?"ES":""}</button>`
+    :"";
   document.getElementById("matchOverlay").innerHTML=`
   <div class="match-modal">
     <h3>${round?round.toUpperCase():"ELIMINATORIAS"}</h3>
     <div class="match-result-tag res-lose-tag">ELIMINADO EN ${round?round.toUpperCase():"ELIMINATORIAS"}</div>
     <div class="match-summary">
-      ${myTeamName} cae eliminado en ${round||"las eliminatorias"} tras superar la fase de grupos.
-      ¡Buen torneo! Forma un nuevo equipo y vuelve a intentarlo para llegar más lejos.
+      ${myTeamName} cae eliminado en ${round||"las eliminatorias"}. Has llegado hasta ${round||"esta ronda"}.
+      ${slots>0?`<br><br>🔗 <strong>Run Encadenada disponible:</strong> puedes conservar ${slots} jugador${slots>1?"es":""} para el siguiente intento.`:""}
     </div>
-    <button class="modal-btn danger" onclick="location.reload()">NUEVA PARTIDA</button>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+      ${chainBtn}
+      <button class="modal-btn danger" onclick="location.reload()">NUEVA PARTIDA</button>
+    </div>
   </div>`;
 }
-function showVictory(){
-  const knockoutWins=matchResults.filter(r=>r.stage==="knockout"&&r.won).length;
+function computeFinalScore(){
+  const scores={};
+
+  // 1. Team quality (OVR 0-100) → up to 200 pts
+  scores.ovr=Math.round((baseTeamOVR||60)/100*200);
+
+  // 2. Goals scored across all matches → up to 150 pts (cap at 20 goals)
+  const totalGoals=matchResults.reduce((s,r)=>{
+    const g=parseInt(r.score)||0; return s+g;
+  },0);
+  scores.goals=Math.min(150, Math.round(totalGoals/20*150));
+
+  // 3. Goals conceded (fewer = better) → up to 100 pts
+  const totalConceded=matchResults.reduce((s,r)=>{
+    const parts=r.score.split('-');
+    const c=parseInt(parts[1])||0; return s+c;
+  },0);
+  scores.defense=Math.max(0, Math.round((1-Math.min(totalConceded,15)/15)*100));
+
+  // 4. Morale management → up to 100 pts
+  scores.morale=Math.round(Math.max(0,(teamMorale+50)/100*100));
+
+  // 5. Penalty wins (hardest matches) → 40 pts each, up to 120
   const penWins=matchResults.filter(r=>r.won&&r.score.includes('pen.')).length;
+  scores.penalties=Math.min(120, penWins*40);
+
+  // 6. Star players (positions) → up to 110 pts (10 pts per star, 11 max)
+  const stars=usedPlayers.filter(p=>p.positions&&p.placedPos&&p.positions[0]===p.placedPos).length;
+  scores.stars=stars*10;
+
+  // 7. Scorer streaks → up to 120 pts (20 per player in streak)
+  const streakTotal=Object.values(scorerStreaks).reduce((s,v)=>s+Math.min(v,MAX_STREAK_BONUS),0);
+  scores.streaks=Math.min(120, streakTotal*20);
+
+  // 8. Matches won without conceding (clean sheets) → 20 pts each, up to 100
+  const cleanSheets=matchResults.filter(r=>{
+    const parts=r.score.split('-');
+    return r.won && (parseInt(parts[1])||0)===0;
+  }).length;
+  scores.cleanSheets=Math.min(100, cleanSheets*20);
+
+  const total=Object.values(scores).reduce((a,b)=>a+b,0);
+  return {total:Math.min(1000,total), breakdown:scores, penWins, totalGoals, totalConceded, stars, cleanSheets};
+}
+
+function showVictory(){
+  const sc=computeFinalScore();
+  const grade=sc.total>=900?"LEGENDARIO":sc.total>=750?"ÉLITE":sc.total>=600?"EXCELENTE":sc.total>=450?"MUY BUENO":"BUENO";
+  const gradeColor=sc.total>=900?"#f0c419":sc.total>=750?"#e67e22":sc.total>=600?"#0f6b3b":"#3498db";
+
   document.getElementById("matchOverlay").innerHTML=`
-  <div class="match-modal">
+  <div class="match-modal victory-modal">
     <div class="match-result-tag res-win-tag">¡¡CAMPEÓN DEL MUNDO!!</div>
-    <div class="match-summary">
-      ¡${myTeamName} ha conquistado el torneo, superando la fase de grupos y las ${knockoutWins} eliminatorias hasta la Final!<br>
-      ${penWins?`Incluyendo ${penWins} eliminatoria${penWins===1?'':'s'} resuelta${penWins===1?'':'s'} en la tanda de penaltis.<br>`:''}
-      Eres el mejor seleccionador del planeta. ¡Mereces el trofeo!
+    <div class="victory-score-wrap">
+      <div class="victory-score-label">PUNTUACIÓN FINAL</div>
+      <div class="victory-score-num">${sc.total}</div>
+      <div class="victory-grade" style="color:${gradeColor}">${grade}</div>
+    </div>
+    <div class="victory-breakdown">
+      <div class="vb-row"><span>Calidad del equipo (OVR ${baseTeamOVR||0})</span><span class="vb-pts">${sc.breakdown.ovr} pts</span></div>
+      <div class="vb-row"><span>Goles marcados (${sc.totalGoals})</span><span class="vb-pts">${sc.breakdown.goals} pts</span></div>
+      <div class="vb-row"><span>Solidez defensiva (${sc.totalConceded} goles encajados)</span><span class="vb-pts">${sc.breakdown.defense} pts</span></div>
+      <div class="vb-row"><span>Gestión de moral (${teamMorale>0?"+":""}${teamMorale})</span><span class="vb-pts">${sc.breakdown.morale} pts</span></div>
+      <div class="vb-row"><span>Portería a cero (${sc.cleanSheets} partidos)</span><span class="vb-pts">${sc.breakdown.cleanSheets} pts</span></div>
+      <div class="vb-row"><span>Jugadores en posición ★ (${sc.stars}/11)</span><span class="vb-pts">${sc.breakdown.stars} pts</span></div>
+      <div class="vb-row"><span>Rachas de goleador</span><span class="vb-pts">${sc.breakdown.streaks} pts</span></div>
+      ${sc.penWins?`<div class="vb-row"><span>Victorias en penaltis (${sc.penWins})</span><span class="vb-pts">${sc.breakdown.penalties} pts</span></div>`:''}
     </div>
     <button class="modal-btn" onclick="location.reload()">NUEVA PARTIDA</button>
   </div>`;
 }
 
+
+/* ========= MORALE SYSTEM ========= */
+function clampMorale(v){ return Math.max(-50, Math.min(50, v)); }
+function changeMorale(delta){
+  teamMorale=clampMorale(teamMorale+delta);
+  renderMorale();
+  updateLed();
+}
+function renderMorale(){
+  const section=document.getElementById("moraleSection");
+  const valEl=document.getElementById("moraleValue");
+  const fill=document.getElementById("moraleFill");
+  if(!section||!valEl||!fill) return;
+  section.style.display="block";
+  valEl.textContent=(teamMorale>0?"+":"")+teamMorale;
+  const pct=Math.abs(teamMorale)/50*50; // 0-50% width
+  fill.style.width=pct+"%";
+  fill.style.height="100%";
+  if(teamMorale>=0){
+    fill.classList.add("positive"); fill.classList.remove("negative");
+    fill.style.left="50%";
+  } else {
+    fill.classList.add("negative"); fill.classList.remove("positive");
+    fill.style.left=(50-pct)+"%";
+  }
+}
+function moraleLambdaBonus(){
+  // Morale gives up to ±0.15 on the scoring lambda
+  return (teamMorale/50)*0.15;
+}
+
+/* ========= WEATHER SYSTEM ========= */
+function rollWeather(){
+  // Cloudy is more common (neutral), others less so
+  const weights=[1.5, 4, 2, 1.5, 1]; // hot,cloudy,rain,wind,hot_extreme
+  // Actually use WEATHER_TYPES indices
+  const w=[2,2,1,1.5,1]; // probabilities matching WEATHER_TYPES order
+  const total=w.reduce((a,b)=>a+b,0);
+  let r=Math.random()*total;
+  for(let i=0;i<WEATHER_TYPES.length;i++){
+    r-=w[i]; if(r<=0){ currentWeather=WEATHER_TYPES[i]; return; }
+  }
+  currentWeather=WEATHER_TYPES[1]; // fallback cloudy
+}
+function renderWeather(){
+  const el=document.getElementById("weatherDisplay");
+  if(!el||!currentWeather) return;
+  el.style.display="flex";
+  el.innerHTML=`
+    <span class="weather-icon">${currentWeather.label.split(' ')[0]}</span>
+    <div class="weather-block">
+      <span>${currentWeather.label.slice(currentWeather.label.indexOf(' ')+1)}</span>
+      <span class="weather-desc">${currentWeather.desc}</span>
+    </div>`;
+}
+function weatherStatModifier(){
+  // Returns a delta to apply to myStatProfile and oppStatProfile
+  // Weather affects both teams equally (fair)
+  if(!currentWeather) return {};
+  return currentWeather.effect;
+}
+function weatherLambdaEffect(){
+  // Converts stat modifiers to a lambda delta (small effect)
+  const eff=weatherStatModifier();
+  let delta=0;
+  if(eff.pace) delta+=eff.pace*0.3;
+  if(eff.technique) delta+=eff.technique*0.2;
+  if(eff.passing) delta+=eff.passing*0.15;
+  if(eff.defense) delta+=eff.defense*0.15;
+  return delta; // applied to BOTH lambdas equally (same conditions)
+}
+
+/* ========= SCORER STREAK SYSTEM ========= */
+const MAX_STREAK_BONUS = 3;
+function getStreakLambdaBonus(){
+  // Sum bonus from all attackers currently in squad
+  let bonus=0;
+  usedPlayers.forEach(p=>{
+    if(p.placedPos&&["DC","EI","ED","MC"].includes(p.placedPos)){
+      const streak=scorerStreaks[p.name]||0;
+      bonus+=Math.min(streak,MAX_STREAK_BONUS)*0.015; // +1.5% per streak level
+    }
+  });
+  return bonus;
+}
+function updateScorerStreaks(scorerNames){
+  const scorerSet=new Set(scorerNames);
+  usedPlayers.forEach(p=>{
+    if(!["DC","EI","ED","MC"].includes(p.placedPos)) return; // only track attackers/mids
+    if(scorerSet.has(p.name)){
+      scorerStreaks[p.name]=(scorerStreaks[p.name]||0)+1;
+    } else {
+      scorerStreaks[p.name]=0; // reset if didn't score
+    }
+  });
+}
+function getStreakBadge(playerName){
+  const s=scorerStreaks[playerName]||0;
+  if(s<=0) return "";
+  const fire="🔥".repeat(Math.min(s,MAX_STREAK_BONUS));
+  return `<span class="streak-badge">${fire}+${Math.min(s,MAX_STREAK_BONUS)}</span>`;
+}
+
+/* ========= PRESS EVENT SYSTEM ========= */
+function maybeShowPressEvent(callback, won, draw){
+  const chance=stage==="knockout"?0.40:0.25;
+  if(Math.random()>chance){ callback(); return; }
+  const key=won?"win":draw?"draw":"loss";
+  const pool=PRESS_EVENTS[key];
+  const event=pool[Math.floor(Math.random()*pool.length)];
+  showPressEventModal(event, callback);
+}
+function showPressEventModal(event, callback){
+  document.getElementById("matchOverlay").innerHTML=`
+  <div class="press-modal">
+    <span class="press-icon">🎙</span>
+    <h3>RUEDA DE PRENSA</h3>
+    <p class="press-question">${event.q}</p>
+    <div class="press-answers">
+      ${event.answers.map((a,i)=>`
+        <button class="press-answer-btn" onclick="choosePressAnswer(${i})">
+          <span>${a.text}</span>
+          <span class="press-answer-label">${a.label}</span>
+        </button>`).join('')}
+    </div>
+  </div>`;
+  window._pressCallback=callback;
+  window._pressEvent=event;
+}
+window.choosePressAnswer=function(idx){
+  const event=window._pressEvent;
+  const answer=event.answers[idx];
+  const delta=answer.moral;
+  document.getElementById("matchOverlay").innerHTML="";
+  changeMorale(delta);
+  // Brief feedback toast
+  const sign=delta>0?"+":"";
+  showToast(`${answer.label} · Moral ${sign}${delta}`, delta>0?"toast-pos":"toast-neg");
+  setTimeout(()=>{ if(window._pressCallback) window._pressCallback(); }, 900);
+};
+
+/* ========= TOAST NOTIFICATION ========= */
+function showToast(msg, cls){
+  let t=document.getElementById("gameToast");
+  if(!t){ t=document.createElement("div"); t.id="gameToast"; document.body.appendChild(t); }
+  t.className="game-toast "+(cls||"");
+  t.textContent=msg;
+  t.style.opacity="1";
+  clearTimeout(t._tid);
+  t._tid=setTimeout(()=>{ t.style.opacity="0"; }, 2200);
+}
+
+/* ========= CHAIN RUN SYSTEM ========= */
+function getChainSlots(){
+  // Slots based on best round reached: octavos=1, cuartos=2, semis=3
+  if(bestRoundReached>=3) return 3; // semis or final
+  if(bestRoundReached>=2) return 2; // cuartos
+  if(bestRoundReached>=1) return 1; // octavos
+  return 0;
+}
+function showChainRunModal(){
+  const slots=getChainSlots();
+  if(slots<=0){ location.reload(); return; }
+  const allPlayers=[...usedPlayers,...bench];
+  document.getElementById("matchOverlay").innerHTML=`
+  <div class="chain-modal">
+    <h3>RUN ENCADENADA</h3>
+    <p class="chain-subtitle">Has llegado a ${bestRoundReached>=3?"Semifinales":bestRoundReached>=2?"Cuartos de Final":"Octavos de Final"}. Puedes conservar <strong>${slots} jugador${slots>1?"es":""}</strong> para el siguiente intento. Elige sabiamente.</p>
+    <div class="chain-player-grid" id="chainPlayerGrid">
+      ${allPlayers.map((p,i)=>`
+        <div class="chain-player-card" id="cpc_${i}" onclick="toggleChainPlayer(${i}, ${slots})">
+          <div class="cpname">${p.name}</div>
+          <div class="cprating">${p.rating||0}</div>
+          <div class="cppos">${(p.positions||[]).join('/')}</div>
+        </div>`).join('')}
+    </div>
+    <div class="chain-actions">
+      <button class="modal-btn" id="chainConfirmBtn" disabled onclick="confirmChainRun()">CONTINUAR CON ${slots} JUGADOR${slots>1?"ES":""}</button>
+      <button class="modal-btn danger" onclick="location.reload()">NUEVA PARTIDA</button>
+    </div>
+  </div>`;
+  window._chainSelected=[];
+  window._chainPlayers=allPlayers;
+  window._chainSlots=slots;
+}
+window.toggleChainPlayer=function(idx, slots){
+  const sel=window._chainSelected;
+  const card=document.getElementById("cpc_"+idx);
+  const alreadyIdx=sel.indexOf(idx);
+  if(alreadyIdx>=0){
+    sel.splice(alreadyIdx,1);
+    card.classList.remove("selected");
+    card.querySelector(".chain-selected-mark")?.remove();
+  } else {
+    if(sel.length>=slots) return;
+    sel.push(idx);
+    card.classList.add("selected");
+    const mark=document.createElement("div");
+    mark.className="chain-selected-mark"; mark.textContent=sel.length;
+    card.appendChild(mark);
+  }
+  const btn=document.getElementById("chainConfirmBtn");
+  if(btn) btn.disabled=sel.length!==slots;
+};
+window.confirmChainRun=function(){
+  const selected=window._chainSelected.map(i=>window._chainPlayers[i]);
+  // Save full player objects so the next run can pre-place them
+  try{ sessionStorage.setItem('g2g_inherited', JSON.stringify(selected)); }catch(e){}
+  location.reload();
+};
+function loadInheritedPlayers(){
+  try{
+    const raw=sessionStorage.getItem('g2g_inherited');
+    if(!raw){ inheritedPlayers=[]; return; }
+    inheritedPlayers=JSON.parse(raw);
+    sessionStorage.removeItem('g2g_inherited');
+  }catch(e){ inheritedPlayers=[]; }
+}
+loadInheritedPlayers();
+
+/* If there are inherited players from a chain run, auto-place them on the
+   pitch at their primary position, skipping that many draft picks. */
+function applyInheritedPlayers(){
+  if(!inheritedPlayers.length) return;
+  const slots=getPitchSlots();
+  inheritedPlayers.forEach(p=>{
+    // Find the first unlocked slot matching their primary position
+    const primaryPos=(p.positions&&p.positions[0])||null;
+    let slot=primaryPos?slots.find(s=>!s.classList.contains('locked')&&s.dataset.label===primaryPos):null;
+    // Fallback: any unlocked slot
+    if(!slot) slot=slots.find(s=>!s.classList.contains('locked'));
+    if(!slot) return;
+    const label=slot.dataset.label;
+    const inPos=p.positions&&p.positions.includes(label);
+    const star=inPos&&p.positions[0]===label?' <span class="star">★</span>':'';
+    const r=inPos?(p.rating||70):Math.round((p.rating||70)*0.85);
+    p.placedPos=label;
+    slot._player={...p};
+    slot.classList.add('locked');
+    renderSlotContent(slot, p, label, r, star);
+    usedPlayers.push({...p});
+    draftedCount++;
+  });
+  updateDraftCounter();
+  updateConvocadosTable();
+  updateStats();
+  // Show a toast so the player knows inherited players are ready
+  showToast(`${inheritedPlayers.length} jugador${inheritedPlayers.length>1?'es':''}  heredado${inheritedPlayers.length>1?'s':''} colocado${inheritedPlayers.length>1?'s':''} en el campo`, 'toast-pos');
+  inheritedPlayers=[];
+}
 
 /* ========= LED SCOREBOARD ========= */
 function buildLedMessages(){
@@ -1564,10 +1996,21 @@ function buildLedMessages(){
     msgs.push(`MÁXIMO GOLEADOR  ${top.name.toUpperCase()}  ★${effRating(top)}`);
   }
 
-  // Star players
-  const stars = usedPlayers.filter(p=>p.positions&&p.placedPos&&p.positions[0]===p.placedPos);
-  if(stars.length){
-    msgs.push(`TITULARES EN SU POSICIÓN  ${stars.length}/11`);
+  // Morale
+  if(baseTeamOVR!==null){
+    const sign=teamMorale>=0?"+":"";
+    msgs.push(`MORAL  ${sign}${teamMorale}`);
+  }
+
+  // Weather
+  if(currentWeather && currentWeather.id!=='cloudy'){
+    msgs.push(`CLIMA  ${currentWeather.label.replace(/[^\w\s]/g,'').trim().toUpperCase()}`);
+  }
+
+  // Scorer streaks
+  const onStreak=usedPlayers.filter(p=>(scorerStreaks[p.name]||0)>0);
+  if(onStreak.length){
+    msgs.push(`EN RACHA  ${onStreak.map(p=>`${p.name.split(' ')[0].toUpperCase()} x${scorerStreaks[p.name]}`).join('  ')}`);
   }
 
   return msgs.join(SEP + "   ");
@@ -1641,3 +2084,6 @@ if(themeToggleBtn){
     playSound('select');
   });
 }
+
+// Apply inherited players from a chain run (runs after DOM is fully ready)
+setTimeout(applyInheritedPlayers, 100);
