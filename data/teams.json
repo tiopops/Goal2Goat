@@ -1,32 +1,5 @@
 [
   {
-    "id": "team_0",
-    "name": "España 2008",
-    "players": [
-      "p_0_0",
-      "p_0_1",
-      "p_0_2",
-      "p_0_3",
-      "p_0_4",
-      "p_0_5",
-      "p_0_6",
-      "p_0_7",
-      "p_0_8",
-      "p_0_9",
-      "p_0_10",
-      "p_0_11",
-      "p_0_12",
-      "p_0_13",
-      "p_0_14",
-      "p_0_15"
-    ],
-    "flag": "assets/flags/es.png",
-    "emoji": "🇪🇸",
-    "bonus": {
-      "PASE": 5
-    }
-  },
-  {
     "id": "team_1",
     "name": "España 2010",
     "players": [
@@ -81,33 +54,6 @@
     }
   },
   {
-    "id": "team_3",
-    "name": "Brasil 1970",
-    "players": [
-      "p_3_0",
-      "p_3_1",
-      "p_3_2",
-      "p_3_3",
-      "p_3_4",
-      "p_3_5",
-      "p_3_6",
-      "p_3_7",
-      "p_3_8",
-      "p_3_9",
-      "p_3_10",
-      "p_3_11",
-      "p_3_12",
-      "p_3_13",
-      "p_3_14",
-      "p_3_15"
-    ],
-    "flag": "assets/flags/br.png",
-    "emoji": "🇧🇷",
-    "bonus": {
-      "TÉCNICA": 5
-    }
-  },
-  {
     "id": "team_4",
     "name": "Brasil 2002",
     "players": [
@@ -132,33 +78,6 @@
     "emoji": "🇧🇷",
     "bonus": {
       "TÉCNICA": 5
-    }
-  },
-  {
-    "id": "team_5",
-    "name": "Alemania 1974",
-    "players": [
-      "p_5_0",
-      "p_5_1",
-      "p_5_2",
-      "p_5_3",
-      "p_5_4",
-      "p_5_5",
-      "p_5_6",
-      "p_5_7",
-      "p_5_8",
-      "p_5_9",
-      "p_5_10",
-      "p_5_11",
-      "p_5_12",
-      "p_5_13",
-      "p_5_14",
-      "p_5_15"
-    ],
-    "flag": "assets/flags/de.png",
-    "emoji": "🇩🇪",
-    "bonus": {
-      "DEFENSA": 5
     }
   },
   {
@@ -324,33 +243,6 @@
     }
   },
   {
-    "id": "team_12",
-    "name": "Italia 1982",
-    "players": [
-      "p_12_0",
-      "p_12_1",
-      "p_12_2",
-      "p_12_3",
-      "p_12_4",
-      "p_12_5",
-      "p_12_6",
-      "p_12_7",
-      "p_12_8",
-      "p_12_9",
-      "p_12_10",
-      "p_12_11",
-      "p_12_12",
-      "p_12_13",
-      "p_12_14",
-      "p_12_15"
-    ],
-    "flag": "assets/flags/it.png",
-    "emoji": "🇮🇹",
-    "bonus": {
-      "DEFENSA": 5
-    }
-  },
-  {
     "id": "team_13",
     "name": "Italia 2006",
     "players": [
@@ -375,87 +267,6 @@
     "emoji": "🇮🇹",
     "bonus": {
       "DEFENSA": 5
-    }
-  },
-  {
-    "id": "team_14",
-    "name": "Holanda 1974",
-    "players": [
-      "p_14_0",
-      "p_14_1",
-      "p_14_2",
-      "p_14_3",
-      "p_14_4",
-      "p_14_5",
-      "p_14_6",
-      "p_14_7",
-      "p_14_8",
-      "p_14_9",
-      "p_14_10",
-      "p_14_11",
-      "p_14_12",
-      "p_14_13",
-      "p_14_14",
-      "p_14_15"
-    ],
-    "flag": "assets/flags/nl.png",
-    "emoji": "🇳🇱",
-    "bonus": {
-      "RITMO": 5
-    }
-  },
-  {
-    "id": "team_15",
-    "name": "Holanda 1988",
-    "players": [
-      "p_15_0",
-      "p_15_1",
-      "p_15_2",
-      "p_15_3",
-      "p_15_4",
-      "p_15_5",
-      "p_15_6",
-      "p_15_7",
-      "p_15_8",
-      "p_15_9",
-      "p_15_10",
-      "p_15_11",
-      "p_15_12",
-      "p_15_13",
-      "p_15_14",
-      "p_15_15"
-    ],
-    "flag": "assets/flags/nl.png",
-    "emoji": "🇳🇱",
-    "bonus": {
-      "RITMO": 5
-    }
-  },
-  {
-    "id": "team_16",
-    "name": "Inglaterra 1966",
-    "players": [
-      "p_16_0",
-      "p_16_1",
-      "p_16_2",
-      "p_16_3",
-      "p_16_4",
-      "p_16_5",
-      "p_16_6",
-      "p_16_7",
-      "p_16_8",
-      "p_16_9",
-      "p_16_10",
-      "p_16_11",
-      "p_16_12",
-      "p_16_13",
-      "p_16_14",
-      "p_16_15"
-    ],
-    "flag": "assets/flags/gb.png",
-    "emoji": "🏳️",
-    "bonus": {
-      "PASE": 2
     }
   },
   {
@@ -509,59 +320,6 @@
     "emoji": "🇭🇷",
     "bonus": {
       "PASE": 3
-    }
-  },
-  {
-    "id": "team_19",
-    "name": "Uruguay 1950",
-    "players": [
-      "p_19_0",
-      "p_19_1",
-      "p_19_2",
-      "p_19_3",
-      "p_19_4",
-      "p_19_5",
-      "p_19_6",
-      "p_19_7",
-      "p_19_8",
-      "p_19_9",
-      "p_19_10",
-      "p_19_11",
-      "p_19_12",
-      "p_19_13",
-      "p_19_14",
-      "p_19_15"
-    ],
-    "flag": "assets/flags/uy.png",
-    "emoji": "🇺🇾",
-    "bonus": {
-      "DEFENSA": 3
-    }
-  },
-  {
-    "id": "team_20",
-    "name": "Hungría 1954",
-    "players": [
-      "p_20_0",
-      "p_20_1",
-      "p_20_2",
-      "p_20_3",
-      "p_20_4",
-      "p_20_5",
-      "p_20_6",
-      "p_20_7",
-      "p_20_8",
-      "p_20_9",
-      "p_20_10",
-      "p_20_11",
-      "p_20_12",
-      "p_20_13",
-      "p_20_14",
-      "p_20_15"
-    ],
-    "emoji": "🏳️",
-    "bonus": {
-      "PASE": 2
     }
   },
   {
@@ -801,32 +559,6 @@
     }
   },
   {
-    "id": "team_30",
-    "name": "Chile 1962",
-    "players": [
-      "p_30_0",
-      "p_30_1",
-      "p_30_2",
-      "p_30_3",
-      "p_30_4",
-      "p_30_5",
-      "p_30_6",
-      "p_30_7",
-      "p_30_8",
-      "p_30_9",
-      "p_30_10",
-      "p_30_11",
-      "p_30_12",
-      "p_30_13",
-      "p_30_14",
-      "p_30_15"
-    ],
-    "emoji": "🏳️",
-    "bonus": {
-      "PASE": 2
-    }
-  },
-  {
     "id": "team_31",
     "name": "Paraguay 2010",
     "players": [
@@ -873,189 +605,6 @@
       "p_32_13",
       "p_32_14",
       "p_32_15"
-    ],
-    "emoji": "🏳️",
-    "bonus": {
-      "PASE": 2
-    }
-  },
-  {
-    "id": "team_33",
-    "name": "Perú 1978",
-    "players": [
-      "p_33_0",
-      "p_33_1",
-      "p_33_2",
-      "p_33_3",
-      "p_33_4",
-      "p_33_5",
-      "p_33_6",
-      "p_33_7",
-      "p_33_8",
-      "p_33_9",
-      "p_33_10",
-      "p_33_11",
-      "p_33_12",
-      "p_33_13",
-      "p_33_14",
-      "p_33_15"
-    ],
-    "emoji": "🏳️",
-    "bonus": {
-      "PASE": 2
-    }
-  },
-  {
-    "id": "team_34",
-    "name": "Suecia 1958",
-    "players": [
-      "p_34_0",
-      "p_34_1",
-      "p_34_2",
-      "p_34_3",
-      "p_34_4",
-      "p_34_5",
-      "p_34_6",
-      "p_34_7",
-      "p_34_8",
-      "p_34_9",
-      "p_34_10",
-      "p_34_11",
-      "p_34_12",
-      "p_34_13",
-      "p_34_14",
-      "p_34_15"
-    ],
-    "emoji": "🏳️",
-    "bonus": {
-      "PASE": 2
-    }
-  },
-  {
-    "id": "team_35",
-    "name": "Polonia 1974",
-    "players": [
-      "p_35_0",
-      "p_35_1",
-      "p_35_2",
-      "p_35_3",
-      "p_35_4",
-      "p_35_5",
-      "p_35_6",
-      "p_35_7",
-      "p_35_8",
-      "p_35_9",
-      "p_35_10",
-      "p_35_11",
-      "p_35_12",
-      "p_35_13",
-      "p_35_14",
-      "p_35_15"
-    ],
-    "emoji": "🇵🇱",
-    "bonus": {
-      "ATAQUE": 3
-    }
-  },
-  {
-    "id": "team_36",
-    "name": "Checoslovaquia 1962",
-    "players": [
-      "p_36_0",
-      "p_36_1",
-      "p_36_2",
-      "p_36_3",
-      "p_36_4",
-      "p_36_5",
-      "p_36_6",
-      "p_36_7",
-      "p_36_8",
-      "p_36_9",
-      "p_36_10",
-      "p_36_11",
-      "p_36_12",
-      "p_36_13",
-      "p_36_14",
-      "p_36_15"
-    ],
-    "emoji": "🏳️",
-    "bonus": {
-      "PASE": 2
-    }
-  },
-  {
-    "id": "team_37",
-    "name": "Yugoslavia 1962",
-    "players": [
-      "p_37_0",
-      "p_37_1",
-      "p_37_2",
-      "p_37_3",
-      "p_37_4",
-      "p_37_5",
-      "p_37_6",
-      "p_37_7",
-      "p_37_8",
-      "p_37_9",
-      "p_37_10",
-      "p_37_11",
-      "p_37_12",
-      "p_37_13",
-      "p_37_14",
-      "p_37_15"
-    ],
-    "flag": "assets/flags/rs.png",
-    "emoji": "🏳️",
-    "bonus": {
-      "PASE": 2
-    }
-  },
-  {
-    "id": "team_38",
-    "name": "Austria 1954",
-    "players": [
-      "p_38_0",
-      "p_38_1",
-      "p_38_2",
-      "p_38_3",
-      "p_38_4",
-      "p_38_5",
-      "p_38_6",
-      "p_38_7",
-      "p_38_8",
-      "p_38_9",
-      "p_38_10",
-      "p_38_11",
-      "p_38_12",
-      "p_38_13",
-      "p_38_14",
-      "p_38_15"
-    ],
-    "emoji": "🏳️",
-    "bonus": {
-      "PASE": 2
-    }
-  },
-  {
-    "id": "team_39",
-    "name": "Suiza 1954",
-    "players": [
-      "p_39_0",
-      "p_39_1",
-      "p_39_2",
-      "p_39_3",
-      "p_39_4",
-      "p_39_5",
-      "p_39_6",
-      "p_39_7",
-      "p_39_8",
-      "p_39_9",
-      "p_39_10",
-      "p_39_11",
-      "p_39_12",
-      "p_39_13",
-      "p_39_14",
-      "p_39_15"
     ],
     "emoji": "🏳️",
     "bonus": {
@@ -1167,58 +716,6 @@
     }
   },
   {
-    "id": "team_44",
-    "name": "Escocia 1978",
-    "players": [
-      "p_44_0",
-      "p_44_1",
-      "p_44_2",
-      "p_44_3",
-      "p_44_4",
-      "p_44_5",
-      "p_44_6",
-      "p_44_7",
-      "p_44_8",
-      "p_44_9",
-      "p_44_10",
-      "p_44_11",
-      "p_44_12",
-      "p_44_13",
-      "p_44_14",
-      "p_44_15"
-    ],
-    "emoji": "🏴",
-    "bonus": {
-      "PASE": 2
-    }
-  },
-  {
-    "id": "team_45",
-    "name": "Gales 1958",
-    "players": [
-      "p_45_0",
-      "p_45_1",
-      "p_45_2",
-      "p_45_3",
-      "p_45_4",
-      "p_45_5",
-      "p_45_6",
-      "p_45_7",
-      "p_45_8",
-      "p_45_9",
-      "p_45_10",
-      "p_45_11",
-      "p_45_12",
-      "p_45_13",
-      "p_45_14",
-      "p_45_15"
-    ],
-    "emoji": "🏳️",
-    "bonus": {
-      "PASE": 2
-    }
-  },
-  {
     "id": "team_46",
     "name": "Rusia 2018",
     "players": [
@@ -1322,5 +819,189 @@
     "bonus": {
       "PASE": 2
     }
+  },
+  {
+    "id": "team_brasil_1982",
+    "name": "Brasil 1982",
+    "style": "jogo_bonito",
+    "players": [
+      "p_team_brasil_1982_0",
+      "p_team_brasil_1982_1",
+      "p_team_brasil_1982_2",
+      "p_team_brasil_1982_3",
+      "p_team_brasil_1982_4",
+      "p_team_brasil_1982_5",
+      "p_team_brasil_1982_6",
+      "p_team_brasil_1982_7",
+      "p_team_brasil_1982_8",
+      "p_team_brasil_1982_9",
+      "p_team_brasil_1982_10",
+      "p_team_brasil_1982_11",
+      "p_team_brasil_1982_12",
+      "p_team_brasil_1982_13",
+      "p_team_brasil_1982_14",
+      "p_team_brasil_1982_15"
+    ]
+  },
+  {
+    "id": "team_argentina_1978",
+    "name": "Argentina 1978",
+    "style": "total_football",
+    "players": [
+      "p_team_argentina_1978_0",
+      "p_team_argentina_1978_1",
+      "p_team_argentina_1978_2",
+      "p_team_argentina_1978_3",
+      "p_team_argentina_1978_4",
+      "p_team_argentina_1978_5",
+      "p_team_argentina_1978_6",
+      "p_team_argentina_1978_7",
+      "p_team_argentina_1978_8",
+      "p_team_argentina_1978_9",
+      "p_team_argentina_1978_10",
+      "p_team_argentina_1978_11",
+      "p_team_argentina_1978_12",
+      "p_team_argentina_1978_13",
+      "p_team_argentina_1978_14",
+      "p_team_argentina_1978_15"
+    ]
+  },
+  {
+    "id": "team_senegal_2002",
+    "name": "Senegal 2002",
+    "style": "gegenpress",
+    "players": [
+      "p_team_senegal_2002_0",
+      "p_team_senegal_2002_1",
+      "p_team_senegal_2002_2",
+      "p_team_senegal_2002_3",
+      "p_team_senegal_2002_4",
+      "p_team_senegal_2002_5",
+      "p_team_senegal_2002_6",
+      "p_team_senegal_2002_7",
+      "p_team_senegal_2002_8",
+      "p_team_senegal_2002_9",
+      "p_team_senegal_2002_10",
+      "p_team_senegal_2002_11",
+      "p_team_senegal_2002_12",
+      "p_team_senegal_2002_13",
+      "p_team_senegal_2002_14",
+      "p_team_senegal_2002_15"
+    ]
+  },
+  {
+    "id": "team_costa_rica_2014",
+    "name": "Costa Rica 2014",
+    "style": "catenaccio",
+    "players": [
+      "p_team_costa_rica_2014_0",
+      "p_team_costa_rica_2014_1",
+      "p_team_costa_rica_2014_2",
+      "p_team_costa_rica_2014_3",
+      "p_team_costa_rica_2014_4",
+      "p_team_costa_rica_2014_5",
+      "p_team_costa_rica_2014_6",
+      "p_team_costa_rica_2014_7",
+      "p_team_costa_rica_2014_8",
+      "p_team_costa_rica_2014_9",
+      "p_team_costa_rica_2014_10",
+      "p_team_costa_rica_2014_11",
+      "p_team_costa_rica_2014_12",
+      "p_team_costa_rica_2014_13",
+      "p_team_costa_rica_2014_14",
+      "p_team_costa_rica_2014_15"
+    ]
+  },
+  {
+    "id": "team_ghana_2010",
+    "name": "Ghana 2010",
+    "style": "jogo_bonito",
+    "players": [
+      "p_team_ghana_2010_0",
+      "p_team_ghana_2010_1",
+      "p_team_ghana_2010_2",
+      "p_team_ghana_2010_3",
+      "p_team_ghana_2010_4",
+      "p_team_ghana_2010_5",
+      "p_team_ghana_2010_6",
+      "p_team_ghana_2010_7",
+      "p_team_ghana_2010_8",
+      "p_team_ghana_2010_9",
+      "p_team_ghana_2010_10",
+      "p_team_ghana_2010_11",
+      "p_team_ghana_2010_12",
+      "p_team_ghana_2010_13",
+      "p_team_ghana_2010_14",
+      "p_team_ghana_2010_15"
+    ]
+  },
+  {
+    "id": "team_uruguay_2010",
+    "name": "Uruguay 2010",
+    "style": "catenaccio",
+    "players": [
+      "p_team_uruguay_2010_0",
+      "p_team_uruguay_2010_1",
+      "p_team_uruguay_2010_2",
+      "p_team_uruguay_2010_3",
+      "p_team_uruguay_2010_4",
+      "p_team_uruguay_2010_5",
+      "p_team_uruguay_2010_6",
+      "p_team_uruguay_2010_7",
+      "p_team_uruguay_2010_8",
+      "p_team_uruguay_2010_9",
+      "p_team_uruguay_2010_10",
+      "p_team_uruguay_2010_11",
+      "p_team_uruguay_2010_12",
+      "p_team_uruguay_2010_13",
+      "p_team_uruguay_2010_14",
+      "p_team_uruguay_2010_15"
+    ]
+  },
+  {
+    "id": "team_suecia_1994",
+    "name": "Suecia 1994",
+    "style": "total_football",
+    "players": [
+      "p_team_suecia_1994_0",
+      "p_team_suecia_1994_1",
+      "p_team_suecia_1994_2",
+      "p_team_suecia_1994_3",
+      "p_team_suecia_1994_4",
+      "p_team_suecia_1994_5",
+      "p_team_suecia_1994_6",
+      "p_team_suecia_1994_7",
+      "p_team_suecia_1994_8",
+      "p_team_suecia_1994_9",
+      "p_team_suecia_1994_10",
+      "p_team_suecia_1994_11",
+      "p_team_suecia_1994_12",
+      "p_team_suecia_1994_13",
+      "p_team_suecia_1994_14",
+      "p_team_suecia_1994_15"
+    ]
+  },
+  {
+    "id": "team_holanda_1988",
+    "name": "Holanda 1988",
+    "style": "total_football",
+    "players": [
+      "p_team_holanda_1988_0",
+      "p_team_holanda_1988_1",
+      "p_team_holanda_1988_2",
+      "p_team_holanda_1988_3",
+      "p_team_holanda_1988_4",
+      "p_team_holanda_1988_5",
+      "p_team_holanda_1988_6",
+      "p_team_holanda_1988_7",
+      "p_team_holanda_1988_8",
+      "p_team_holanda_1988_9",
+      "p_team_holanda_1988_10",
+      "p_team_holanda_1988_11",
+      "p_team_holanda_1988_12",
+      "p_team_holanda_1988_13",
+      "p_team_holanda_1988_14",
+      "p_team_holanda_1988_15"
+    ]
   }
 ]

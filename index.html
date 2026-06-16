@@ -16,10 +16,24 @@
     <span class="logo" onclick="location.reload()" style="cursor:pointer" title="Volver al inicio">GOAL2GOAT</span>
     <span class="version-tag">v0.1606260538</span>
   </div>
+<header id="appHeader">
+  <div class="app-header-logo">
+    <span class="logo" onclick="location.reload()" style="cursor:pointer" title="Volver al inicio">GOAL2GOAT</span>
+    <span class="version-tag">v0.1606260538</span>
+  </div>
   <div class="app-header-actions">
     <button class="support-btn" onclick="showSupportModal()">APOYA A GOAL2GOAT</button>
-    <button id="audioToggle" class="topbar-btn" title="Activar/desactivar sonido"><span class="topbar-dot on"></span><span class="topbar-label">SONIDO</span></button>
-    <button id="themeToggle" class="topbar-btn" title="Cambiar tema claro/oscuro"><span class="topbar-dot on"></span><span class="topbar-label">TEMA OSCURO</span></button>
+    <div class="settings-menu" id="settingsMenu">
+      <button class="settings-toggle" id="settingsToggle" onclick="toggleSettingsMenu()" title="Ajustes">⚙</button>
+      <div class="settings-dropdown" id="settingsDropdown">
+        <button id="audioToggle" class="settings-item" title="Activar/desactivar sonido">
+          <span class="topbar-dot on"></span><span class="topbar-label">SONIDO</span>
+        </button>
+        <button id="themeToggle" class="settings-item" title="Cambiar tema claro/oscuro">
+          <span class="topbar-dot on"></span><span class="topbar-label">TEMA OSCURO</span>
+        </button>
+      </div>
+    </div>
   </div>
 </header>
 
@@ -170,10 +184,6 @@
     </div>
     <!-- GO button + next rival compact strip under pitch -->
     <div id="centerBottom">
-      <div id="nextRivalStrip" style="display:none">
-        <span id="stripFlag"></span>
-        <span id="stripName">—</span>
-      </div>
       <button id="rollBtn" class="main-action-btn">SELECCIONAR JUGADOR</button>
       <button id="playMatchBtn" class="main-action-btn" style="display:none">JUGAR</button>
     </div>
@@ -184,7 +194,7 @@
     <!-- Selection / roster modal goes here on mobile -->
     <div id="playerCard"></div>
     <!-- Quick-glance team summary, shown once squad is ready -->
-    <div id="centerSummary"></div>
+
   </div>
 
   <!-- RIGHT PANEL -->

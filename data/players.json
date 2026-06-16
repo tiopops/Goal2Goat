@@ -1,133 +1,5 @@
 [
   {
-    "id": "p_0_0",
-    "name": "Jugador 1 España 2008",
-    "positions": [
-      "POR"
-    ],
-    "overall": 70
-  },
-  {
-    "id": "p_0_1",
-    "name": "Jugador 2 España 2008",
-    "positions": [
-      "DFC"
-    ],
-    "overall": 71
-  },
-  {
-    "id": "p_0_2",
-    "name": "Jugador 3 España 2008",
-    "positions": [
-      "DFC"
-    ],
-    "overall": 72
-  },
-  {
-    "id": "p_0_3",
-    "name": "Jugador 4 España 2008",
-    "positions": [
-      "DFC"
-    ],
-    "overall": 73
-  },
-  {
-    "id": "p_0_4",
-    "name": "Jugador 5 España 2008",
-    "positions": [
-      "DFC"
-    ],
-    "overall": 74
-  },
-  {
-    "id": "p_0_5",
-    "name": "Jugador 6 España 2008",
-    "positions": [
-      "MC"
-    ],
-    "overall": 75
-  },
-  {
-    "id": "p_0_6",
-    "name": "Jugador 7 España 2008",
-    "positions": [
-      "MC"
-    ],
-    "overall": 76
-  },
-  {
-    "id": "p_0_7",
-    "name": "Jugador 8 España 2008",
-    "positions": [
-      "MC"
-    ],
-    "overall": 77
-  },
-  {
-    "id": "p_0_8",
-    "name": "Jugador 9 España 2008",
-    "positions": [
-      "MC"
-    ],
-    "overall": 78
-  },
-  {
-    "id": "p_0_9",
-    "name": "Jugador 10 España 2008",
-    "positions": [
-      "MC"
-    ],
-    "overall": 79
-  },
-  {
-    "id": "p_0_10",
-    "name": "Jugador 11 España 2008",
-    "positions": [
-      "MC"
-    ],
-    "overall": 80
-  },
-  {
-    "id": "p_0_11",
-    "name": "Jugador 12 España 2008",
-    "positions": [
-      "DC"
-    ],
-    "overall": 81
-  },
-  {
-    "id": "p_0_12",
-    "name": "Jugador 13 España 2008",
-    "positions": [
-      "DC"
-    ],
-    "overall": 82
-  },
-  {
-    "id": "p_0_13",
-    "name": "Jugador 14 España 2008",
-    "positions": [
-      "DC"
-    ],
-    "overall": 83
-  },
-  {
-    "id": "p_0_14",
-    "name": "Jugador 15 España 2008",
-    "positions": [
-      "DC"
-    ],
-    "overall": 84
-  },
-  {
-    "id": "p_0_15",
-    "name": "Jugador 16 España 2008",
-    "positions": [
-      "DC"
-    ],
-    "overall": 85
-  },
-  {
     "id": "p_1_0",
     "name": "Jugador 1 España 2010",
     "positions": [
@@ -384,134 +256,6 @@
     "overall": 85
   },
   {
-    "id": "p_3_0",
-    "name": "Jugador 1 Brasil 1970",
-    "positions": [
-      "POR"
-    ],
-    "overall": 70
-  },
-  {
-    "id": "p_3_1",
-    "name": "Jugador 2 Brasil 1970",
-    "positions": [
-      "DFC"
-    ],
-    "overall": 71
-  },
-  {
-    "id": "p_3_2",
-    "name": "Jugador 3 Brasil 1970",
-    "positions": [
-      "DFC"
-    ],
-    "overall": 72
-  },
-  {
-    "id": "p_3_3",
-    "name": "Jugador 4 Brasil 1970",
-    "positions": [
-      "DFC"
-    ],
-    "overall": 73
-  },
-  {
-    "id": "p_3_4",
-    "name": "Jugador 5 Brasil 1970",
-    "positions": [
-      "DFC"
-    ],
-    "overall": 74
-  },
-  {
-    "id": "p_3_5",
-    "name": "Jugador 6 Brasil 1970",
-    "positions": [
-      "MC"
-    ],
-    "overall": 75
-  },
-  {
-    "id": "p_3_6",
-    "name": "Jugador 7 Brasil 1970",
-    "positions": [
-      "MC"
-    ],
-    "overall": 76
-  },
-  {
-    "id": "p_3_7",
-    "name": "Jugador 8 Brasil 1970",
-    "positions": [
-      "MC"
-    ],
-    "overall": 77
-  },
-  {
-    "id": "p_3_8",
-    "name": "Jugador 9 Brasil 1970",
-    "positions": [
-      "MC"
-    ],
-    "overall": 78
-  },
-  {
-    "id": "p_3_9",
-    "name": "Jugador 10 Brasil 1970",
-    "positions": [
-      "MC"
-    ],
-    "overall": 79
-  },
-  {
-    "id": "p_3_10",
-    "name": "Jugador 11 Brasil 1970",
-    "positions": [
-      "MC"
-    ],
-    "overall": 80
-  },
-  {
-    "id": "p_3_11",
-    "name": "Jugador 12 Brasil 1970",
-    "positions": [
-      "DC"
-    ],
-    "overall": 81
-  },
-  {
-    "id": "p_3_12",
-    "name": "Jugador 13 Brasil 1970",
-    "positions": [
-      "DC"
-    ],
-    "overall": 82
-  },
-  {
-    "id": "p_3_13",
-    "name": "Jugador 14 Brasil 1970",
-    "positions": [
-      "DC"
-    ],
-    "overall": 83
-  },
-  {
-    "id": "p_3_14",
-    "name": "Jugador 15 Brasil 1970",
-    "positions": [
-      "DC"
-    ],
-    "overall": 84
-  },
-  {
-    "id": "p_3_15",
-    "name": "Jugador 16 Brasil 1970",
-    "positions": [
-      "DC"
-    ],
-    "overall": 85
-  },
-  {
     "id": "p_4_0",
     "name": "Jugador 1 Brasil 2002",
     "positions": [
@@ -634,134 +378,6 @@
   {
     "id": "p_4_15",
     "name": "Jugador 16 Brasil 2002",
-    "positions": [
-      "DC"
-    ],
-    "overall": 85
-  },
-  {
-    "id": "p_5_0",
-    "name": "Jugador 1 Alemania 1974",
-    "positions": [
-      "POR"
-    ],
-    "overall": 70
-  },
-  {
-    "id": "p_5_1",
-    "name": "Jugador 2 Alemania 1974",
-    "positions": [
-      "DFC"
-    ],
-    "overall": 71
-  },
-  {
-    "id": "p_5_2",
-    "name": "Jugador 3 Alemania 1974",
-    "positions": [
-      "DFC"
-    ],
-    "overall": 72
-  },
-  {
-    "id": "p_5_3",
-    "name": "Jugador 4 Alemania 1974",
-    "positions": [
-      "DFC"
-    ],
-    "overall": 73
-  },
-  {
-    "id": "p_5_4",
-    "name": "Jugador 5 Alemania 1974",
-    "positions": [
-      "DFC"
-    ],
-    "overall": 74
-  },
-  {
-    "id": "p_5_5",
-    "name": "Jugador 6 Alemania 1974",
-    "positions": [
-      "MC"
-    ],
-    "overall": 75
-  },
-  {
-    "id": "p_5_6",
-    "name": "Jugador 7 Alemania 1974",
-    "positions": [
-      "MC"
-    ],
-    "overall": 76
-  },
-  {
-    "id": "p_5_7",
-    "name": "Jugador 8 Alemania 1974",
-    "positions": [
-      "MC"
-    ],
-    "overall": 77
-  },
-  {
-    "id": "p_5_8",
-    "name": "Jugador 9 Alemania 1974",
-    "positions": [
-      "MC"
-    ],
-    "overall": 78
-  },
-  {
-    "id": "p_5_9",
-    "name": "Jugador 10 Alemania 1974",
-    "positions": [
-      "MC"
-    ],
-    "overall": 79
-  },
-  {
-    "id": "p_5_10",
-    "name": "Jugador 11 Alemania 1974",
-    "positions": [
-      "MC"
-    ],
-    "overall": 80
-  },
-  {
-    "id": "p_5_11",
-    "name": "Jugador 12 Alemania 1974",
-    "positions": [
-      "DC"
-    ],
-    "overall": 81
-  },
-  {
-    "id": "p_5_12",
-    "name": "Jugador 13 Alemania 1974",
-    "positions": [
-      "DC"
-    ],
-    "overall": 82
-  },
-  {
-    "id": "p_5_13",
-    "name": "Jugador 14 Alemania 1974",
-    "positions": [
-      "DC"
-    ],
-    "overall": 83
-  },
-  {
-    "id": "p_5_14",
-    "name": "Jugador 15 Alemania 1974",
-    "positions": [
-      "DC"
-    ],
-    "overall": 84
-  },
-  {
-    "id": "p_5_15",
-    "name": "Jugador 16 Alemania 1974",
     "positions": [
       "DC"
     ],
@@ -1536,134 +1152,6 @@
     "overall": 85
   },
   {
-    "id": "p_12_0",
-    "name": "Jugador 1 Italia 1982",
-    "positions": [
-      "POR"
-    ],
-    "overall": 70
-  },
-  {
-    "id": "p_12_1",
-    "name": "Jugador 2 Italia 1982",
-    "positions": [
-      "DFC"
-    ],
-    "overall": 71
-  },
-  {
-    "id": "p_12_2",
-    "name": "Jugador 3 Italia 1982",
-    "positions": [
-      "DFC"
-    ],
-    "overall": 72
-  },
-  {
-    "id": "p_12_3",
-    "name": "Jugador 4 Italia 1982",
-    "positions": [
-      "DFC"
-    ],
-    "overall": 73
-  },
-  {
-    "id": "p_12_4",
-    "name": "Jugador 5 Italia 1982",
-    "positions": [
-      "DFC"
-    ],
-    "overall": 74
-  },
-  {
-    "id": "p_12_5",
-    "name": "Jugador 6 Italia 1982",
-    "positions": [
-      "MC"
-    ],
-    "overall": 75
-  },
-  {
-    "id": "p_12_6",
-    "name": "Jugador 7 Italia 1982",
-    "positions": [
-      "MC"
-    ],
-    "overall": 76
-  },
-  {
-    "id": "p_12_7",
-    "name": "Jugador 8 Italia 1982",
-    "positions": [
-      "MC"
-    ],
-    "overall": 77
-  },
-  {
-    "id": "p_12_8",
-    "name": "Jugador 9 Italia 1982",
-    "positions": [
-      "MC"
-    ],
-    "overall": 78
-  },
-  {
-    "id": "p_12_9",
-    "name": "Jugador 10 Italia 1982",
-    "positions": [
-      "MC"
-    ],
-    "overall": 79
-  },
-  {
-    "id": "p_12_10",
-    "name": "Jugador 11 Italia 1982",
-    "positions": [
-      "MC"
-    ],
-    "overall": 80
-  },
-  {
-    "id": "p_12_11",
-    "name": "Jugador 12 Italia 1982",
-    "positions": [
-      "DC"
-    ],
-    "overall": 81
-  },
-  {
-    "id": "p_12_12",
-    "name": "Jugador 13 Italia 1982",
-    "positions": [
-      "DC"
-    ],
-    "overall": 82
-  },
-  {
-    "id": "p_12_13",
-    "name": "Jugador 14 Italia 1982",
-    "positions": [
-      "DC"
-    ],
-    "overall": 83
-  },
-  {
-    "id": "p_12_14",
-    "name": "Jugador 15 Italia 1982",
-    "positions": [
-      "DC"
-    ],
-    "overall": 84
-  },
-  {
-    "id": "p_12_15",
-    "name": "Jugador 16 Italia 1982",
-    "positions": [
-      "DC"
-    ],
-    "overall": 85
-  },
-  {
     "id": "p_13_0",
     "name": "Jugador 1 Italia 2006",
     "positions": [
@@ -1786,390 +1274,6 @@
   {
     "id": "p_13_15",
     "name": "Jugador 16 Italia 2006",
-    "positions": [
-      "DC"
-    ],
-    "overall": 85
-  },
-  {
-    "id": "p_14_0",
-    "name": "Jugador 1 Holanda 1974",
-    "positions": [
-      "POR"
-    ],
-    "overall": 70
-  },
-  {
-    "id": "p_14_1",
-    "name": "Jugador 2 Holanda 1974",
-    "positions": [
-      "DFC"
-    ],
-    "overall": 71
-  },
-  {
-    "id": "p_14_2",
-    "name": "Jugador 3 Holanda 1974",
-    "positions": [
-      "DFC"
-    ],
-    "overall": 72
-  },
-  {
-    "id": "p_14_3",
-    "name": "Jugador 4 Holanda 1974",
-    "positions": [
-      "DFC"
-    ],
-    "overall": 73
-  },
-  {
-    "id": "p_14_4",
-    "name": "Jugador 5 Holanda 1974",
-    "positions": [
-      "DFC"
-    ],
-    "overall": 74
-  },
-  {
-    "id": "p_14_5",
-    "name": "Jugador 6 Holanda 1974",
-    "positions": [
-      "MC"
-    ],
-    "overall": 75
-  },
-  {
-    "id": "p_14_6",
-    "name": "Jugador 7 Holanda 1974",
-    "positions": [
-      "MC"
-    ],
-    "overall": 76
-  },
-  {
-    "id": "p_14_7",
-    "name": "Jugador 8 Holanda 1974",
-    "positions": [
-      "MC"
-    ],
-    "overall": 77
-  },
-  {
-    "id": "p_14_8",
-    "name": "Jugador 9 Holanda 1974",
-    "positions": [
-      "MC"
-    ],
-    "overall": 78
-  },
-  {
-    "id": "p_14_9",
-    "name": "Jugador 10 Holanda 1974",
-    "positions": [
-      "MC"
-    ],
-    "overall": 79
-  },
-  {
-    "id": "p_14_10",
-    "name": "Jugador 11 Holanda 1974",
-    "positions": [
-      "MC"
-    ],
-    "overall": 80
-  },
-  {
-    "id": "p_14_11",
-    "name": "Jugador 12 Holanda 1974",
-    "positions": [
-      "DC"
-    ],
-    "overall": 81
-  },
-  {
-    "id": "p_14_12",
-    "name": "Jugador 13 Holanda 1974",
-    "positions": [
-      "DC"
-    ],
-    "overall": 82
-  },
-  {
-    "id": "p_14_13",
-    "name": "Jugador 14 Holanda 1974",
-    "positions": [
-      "DC"
-    ],
-    "overall": 83
-  },
-  {
-    "id": "p_14_14",
-    "name": "Jugador 15 Holanda 1974",
-    "positions": [
-      "DC"
-    ],
-    "overall": 84
-  },
-  {
-    "id": "p_14_15",
-    "name": "Jugador 16 Holanda 1974",
-    "positions": [
-      "DC"
-    ],
-    "overall": 85
-  },
-  {
-    "id": "p_15_0",
-    "name": "Jugador 1 Holanda 1988",
-    "positions": [
-      "POR"
-    ],
-    "overall": 70
-  },
-  {
-    "id": "p_15_1",
-    "name": "Jugador 2 Holanda 1988",
-    "positions": [
-      "DFC"
-    ],
-    "overall": 71
-  },
-  {
-    "id": "p_15_2",
-    "name": "Jugador 3 Holanda 1988",
-    "positions": [
-      "DFC"
-    ],
-    "overall": 72
-  },
-  {
-    "id": "p_15_3",
-    "name": "Jugador 4 Holanda 1988",
-    "positions": [
-      "DFC"
-    ],
-    "overall": 73
-  },
-  {
-    "id": "p_15_4",
-    "name": "Jugador 5 Holanda 1988",
-    "positions": [
-      "DFC"
-    ],
-    "overall": 74
-  },
-  {
-    "id": "p_15_5",
-    "name": "Jugador 6 Holanda 1988",
-    "positions": [
-      "MC"
-    ],
-    "overall": 75
-  },
-  {
-    "id": "p_15_6",
-    "name": "Jugador 7 Holanda 1988",
-    "positions": [
-      "MC"
-    ],
-    "overall": 76
-  },
-  {
-    "id": "p_15_7",
-    "name": "Jugador 8 Holanda 1988",
-    "positions": [
-      "MC"
-    ],
-    "overall": 77
-  },
-  {
-    "id": "p_15_8",
-    "name": "Jugador 9 Holanda 1988",
-    "positions": [
-      "MC"
-    ],
-    "overall": 78
-  },
-  {
-    "id": "p_15_9",
-    "name": "Jugador 10 Holanda 1988",
-    "positions": [
-      "MC"
-    ],
-    "overall": 79
-  },
-  {
-    "id": "p_15_10",
-    "name": "Jugador 11 Holanda 1988",
-    "positions": [
-      "MC"
-    ],
-    "overall": 80
-  },
-  {
-    "id": "p_15_11",
-    "name": "Jugador 12 Holanda 1988",
-    "positions": [
-      "DC"
-    ],
-    "overall": 81
-  },
-  {
-    "id": "p_15_12",
-    "name": "Jugador 13 Holanda 1988",
-    "positions": [
-      "DC"
-    ],
-    "overall": 82
-  },
-  {
-    "id": "p_15_13",
-    "name": "Jugador 14 Holanda 1988",
-    "positions": [
-      "DC"
-    ],
-    "overall": 83
-  },
-  {
-    "id": "p_15_14",
-    "name": "Jugador 15 Holanda 1988",
-    "positions": [
-      "DC"
-    ],
-    "overall": 84
-  },
-  {
-    "id": "p_15_15",
-    "name": "Jugador 16 Holanda 1988",
-    "positions": [
-      "DC"
-    ],
-    "overall": 85
-  },
-  {
-    "id": "p_16_0",
-    "name": "Jugador 1 Inglaterra 1966",
-    "positions": [
-      "POR"
-    ],
-    "overall": 70
-  },
-  {
-    "id": "p_16_1",
-    "name": "Jugador 2 Inglaterra 1966",
-    "positions": [
-      "DFC"
-    ],
-    "overall": 71
-  },
-  {
-    "id": "p_16_2",
-    "name": "Jugador 3 Inglaterra 1966",
-    "positions": [
-      "DFC"
-    ],
-    "overall": 72
-  },
-  {
-    "id": "p_16_3",
-    "name": "Jugador 4 Inglaterra 1966",
-    "positions": [
-      "DFC"
-    ],
-    "overall": 73
-  },
-  {
-    "id": "p_16_4",
-    "name": "Jugador 5 Inglaterra 1966",
-    "positions": [
-      "DFC"
-    ],
-    "overall": 74
-  },
-  {
-    "id": "p_16_5",
-    "name": "Jugador 6 Inglaterra 1966",
-    "positions": [
-      "MC"
-    ],
-    "overall": 75
-  },
-  {
-    "id": "p_16_6",
-    "name": "Jugador 7 Inglaterra 1966",
-    "positions": [
-      "MC"
-    ],
-    "overall": 76
-  },
-  {
-    "id": "p_16_7",
-    "name": "Jugador 8 Inglaterra 1966",
-    "positions": [
-      "MC"
-    ],
-    "overall": 77
-  },
-  {
-    "id": "p_16_8",
-    "name": "Jugador 9 Inglaterra 1966",
-    "positions": [
-      "MC"
-    ],
-    "overall": 78
-  },
-  {
-    "id": "p_16_9",
-    "name": "Jugador 10 Inglaterra 1966",
-    "positions": [
-      "MC"
-    ],
-    "overall": 79
-  },
-  {
-    "id": "p_16_10",
-    "name": "Jugador 11 Inglaterra 1966",
-    "positions": [
-      "MC"
-    ],
-    "overall": 80
-  },
-  {
-    "id": "p_16_11",
-    "name": "Jugador 12 Inglaterra 1966",
-    "positions": [
-      "DC"
-    ],
-    "overall": 81
-  },
-  {
-    "id": "p_16_12",
-    "name": "Jugador 13 Inglaterra 1966",
-    "positions": [
-      "DC"
-    ],
-    "overall": 82
-  },
-  {
-    "id": "p_16_13",
-    "name": "Jugador 14 Inglaterra 1966",
-    "positions": [
-      "DC"
-    ],
-    "overall": 83
-  },
-  {
-    "id": "p_16_14",
-    "name": "Jugador 15 Inglaterra 1966",
-    "positions": [
-      "DC"
-    ],
-    "overall": 84
-  },
-  {
-    "id": "p_16_15",
-    "name": "Jugador 16 Inglaterra 1966",
     "positions": [
       "DC"
     ],
@@ -2426,262 +1530,6 @@
   {
     "id": "p_18_15",
     "name": "Jugador 16 Croacia 2018",
-    "positions": [
-      "DC"
-    ],
-    "overall": 85
-  },
-  {
-    "id": "p_19_0",
-    "name": "Jugador 1 Uruguay 1950",
-    "positions": [
-      "POR"
-    ],
-    "overall": 70
-  },
-  {
-    "id": "p_19_1",
-    "name": "Jugador 2 Uruguay 1950",
-    "positions": [
-      "DFC"
-    ],
-    "overall": 71
-  },
-  {
-    "id": "p_19_2",
-    "name": "Jugador 3 Uruguay 1950",
-    "positions": [
-      "DFC"
-    ],
-    "overall": 72
-  },
-  {
-    "id": "p_19_3",
-    "name": "Jugador 4 Uruguay 1950",
-    "positions": [
-      "DFC"
-    ],
-    "overall": 73
-  },
-  {
-    "id": "p_19_4",
-    "name": "Jugador 5 Uruguay 1950",
-    "positions": [
-      "DFC"
-    ],
-    "overall": 74
-  },
-  {
-    "id": "p_19_5",
-    "name": "Jugador 6 Uruguay 1950",
-    "positions": [
-      "MC"
-    ],
-    "overall": 75
-  },
-  {
-    "id": "p_19_6",
-    "name": "Jugador 7 Uruguay 1950",
-    "positions": [
-      "MC"
-    ],
-    "overall": 76
-  },
-  {
-    "id": "p_19_7",
-    "name": "Jugador 8 Uruguay 1950",
-    "positions": [
-      "MC"
-    ],
-    "overall": 77
-  },
-  {
-    "id": "p_19_8",
-    "name": "Jugador 9 Uruguay 1950",
-    "positions": [
-      "MC"
-    ],
-    "overall": 78
-  },
-  {
-    "id": "p_19_9",
-    "name": "Jugador 10 Uruguay 1950",
-    "positions": [
-      "MC"
-    ],
-    "overall": 79
-  },
-  {
-    "id": "p_19_10",
-    "name": "Jugador 11 Uruguay 1950",
-    "positions": [
-      "MC"
-    ],
-    "overall": 80
-  },
-  {
-    "id": "p_19_11",
-    "name": "Jugador 12 Uruguay 1950",
-    "positions": [
-      "DC"
-    ],
-    "overall": 81
-  },
-  {
-    "id": "p_19_12",
-    "name": "Jugador 13 Uruguay 1950",
-    "positions": [
-      "DC"
-    ],
-    "overall": 82
-  },
-  {
-    "id": "p_19_13",
-    "name": "Jugador 14 Uruguay 1950",
-    "positions": [
-      "DC"
-    ],
-    "overall": 83
-  },
-  {
-    "id": "p_19_14",
-    "name": "Jugador 15 Uruguay 1950",
-    "positions": [
-      "DC"
-    ],
-    "overall": 84
-  },
-  {
-    "id": "p_19_15",
-    "name": "Jugador 16 Uruguay 1950",
-    "positions": [
-      "DC"
-    ],
-    "overall": 85
-  },
-  {
-    "id": "p_20_0",
-    "name": "Jugador 1 Hungría 1954",
-    "positions": [
-      "POR"
-    ],
-    "overall": 70
-  },
-  {
-    "id": "p_20_1",
-    "name": "Jugador 2 Hungría 1954",
-    "positions": [
-      "DFC"
-    ],
-    "overall": 71
-  },
-  {
-    "id": "p_20_2",
-    "name": "Jugador 3 Hungría 1954",
-    "positions": [
-      "DFC"
-    ],
-    "overall": 72
-  },
-  {
-    "id": "p_20_3",
-    "name": "Jugador 4 Hungría 1954",
-    "positions": [
-      "DFC"
-    ],
-    "overall": 73
-  },
-  {
-    "id": "p_20_4",
-    "name": "Jugador 5 Hungría 1954",
-    "positions": [
-      "DFC"
-    ],
-    "overall": 74
-  },
-  {
-    "id": "p_20_5",
-    "name": "Jugador 6 Hungría 1954",
-    "positions": [
-      "MC"
-    ],
-    "overall": 75
-  },
-  {
-    "id": "p_20_6",
-    "name": "Jugador 7 Hungría 1954",
-    "positions": [
-      "MC"
-    ],
-    "overall": 76
-  },
-  {
-    "id": "p_20_7",
-    "name": "Jugador 8 Hungría 1954",
-    "positions": [
-      "MC"
-    ],
-    "overall": 77
-  },
-  {
-    "id": "p_20_8",
-    "name": "Jugador 9 Hungría 1954",
-    "positions": [
-      "MC"
-    ],
-    "overall": 78
-  },
-  {
-    "id": "p_20_9",
-    "name": "Jugador 10 Hungría 1954",
-    "positions": [
-      "MC"
-    ],
-    "overall": 79
-  },
-  {
-    "id": "p_20_10",
-    "name": "Jugador 11 Hungría 1954",
-    "positions": [
-      "MC"
-    ],
-    "overall": 80
-  },
-  {
-    "id": "p_20_11",
-    "name": "Jugador 12 Hungría 1954",
-    "positions": [
-      "DC"
-    ],
-    "overall": 81
-  },
-  {
-    "id": "p_20_12",
-    "name": "Jugador 13 Hungría 1954",
-    "positions": [
-      "DC"
-    ],
-    "overall": 82
-  },
-  {
-    "id": "p_20_13",
-    "name": "Jugador 14 Hungría 1954",
-    "positions": [
-      "DC"
-    ],
-    "overall": 83
-  },
-  {
-    "id": "p_20_14",
-    "name": "Jugador 15 Hungría 1954",
-    "positions": [
-      "DC"
-    ],
-    "overall": 84
-  },
-  {
-    "id": "p_20_15",
-    "name": "Jugador 16 Hungría 1954",
     "positions": [
       "DC"
     ],
@@ -3840,134 +2688,6 @@
     "overall": 85
   },
   {
-    "id": "p_30_0",
-    "name": "Jugador 1 Chile 1962",
-    "positions": [
-      "POR"
-    ],
-    "overall": 70
-  },
-  {
-    "id": "p_30_1",
-    "name": "Jugador 2 Chile 1962",
-    "positions": [
-      "DFC"
-    ],
-    "overall": 71
-  },
-  {
-    "id": "p_30_2",
-    "name": "Jugador 3 Chile 1962",
-    "positions": [
-      "DFC"
-    ],
-    "overall": 72
-  },
-  {
-    "id": "p_30_3",
-    "name": "Jugador 4 Chile 1962",
-    "positions": [
-      "DFC"
-    ],
-    "overall": 73
-  },
-  {
-    "id": "p_30_4",
-    "name": "Jugador 5 Chile 1962",
-    "positions": [
-      "DFC"
-    ],
-    "overall": 74
-  },
-  {
-    "id": "p_30_5",
-    "name": "Jugador 6 Chile 1962",
-    "positions": [
-      "MC"
-    ],
-    "overall": 75
-  },
-  {
-    "id": "p_30_6",
-    "name": "Jugador 7 Chile 1962",
-    "positions": [
-      "MC"
-    ],
-    "overall": 76
-  },
-  {
-    "id": "p_30_7",
-    "name": "Jugador 8 Chile 1962",
-    "positions": [
-      "MC"
-    ],
-    "overall": 77
-  },
-  {
-    "id": "p_30_8",
-    "name": "Jugador 9 Chile 1962",
-    "positions": [
-      "MC"
-    ],
-    "overall": 78
-  },
-  {
-    "id": "p_30_9",
-    "name": "Jugador 10 Chile 1962",
-    "positions": [
-      "MC"
-    ],
-    "overall": 79
-  },
-  {
-    "id": "p_30_10",
-    "name": "Jugador 11 Chile 1962",
-    "positions": [
-      "MC"
-    ],
-    "overall": 80
-  },
-  {
-    "id": "p_30_11",
-    "name": "Jugador 12 Chile 1962",
-    "positions": [
-      "DC"
-    ],
-    "overall": 81
-  },
-  {
-    "id": "p_30_12",
-    "name": "Jugador 13 Chile 1962",
-    "positions": [
-      "DC"
-    ],
-    "overall": 82
-  },
-  {
-    "id": "p_30_13",
-    "name": "Jugador 14 Chile 1962",
-    "positions": [
-      "DC"
-    ],
-    "overall": 83
-  },
-  {
-    "id": "p_30_14",
-    "name": "Jugador 15 Chile 1962",
-    "positions": [
-      "DC"
-    ],
-    "overall": 84
-  },
-  {
-    "id": "p_30_15",
-    "name": "Jugador 16 Chile 1962",
-    "positions": [
-      "DC"
-    ],
-    "overall": 85
-  },
-  {
     "id": "p_31_0",
     "name": "Jugador 1 Paraguay 2010",
     "positions": [
@@ -4218,902 +2938,6 @@
   {
     "id": "p_32_15",
     "name": "Jugador 16 Colombia 2014",
-    "positions": [
-      "DC"
-    ],
-    "overall": 85
-  },
-  {
-    "id": "p_33_0",
-    "name": "Jugador 1 Perú 1978",
-    "positions": [
-      "POR"
-    ],
-    "overall": 70
-  },
-  {
-    "id": "p_33_1",
-    "name": "Jugador 2 Perú 1978",
-    "positions": [
-      "DFC"
-    ],
-    "overall": 71
-  },
-  {
-    "id": "p_33_2",
-    "name": "Jugador 3 Perú 1978",
-    "positions": [
-      "DFC"
-    ],
-    "overall": 72
-  },
-  {
-    "id": "p_33_3",
-    "name": "Jugador 4 Perú 1978",
-    "positions": [
-      "DFC"
-    ],
-    "overall": 73
-  },
-  {
-    "id": "p_33_4",
-    "name": "Jugador 5 Perú 1978",
-    "positions": [
-      "DFC"
-    ],
-    "overall": 74
-  },
-  {
-    "id": "p_33_5",
-    "name": "Jugador 6 Perú 1978",
-    "positions": [
-      "MC"
-    ],
-    "overall": 75
-  },
-  {
-    "id": "p_33_6",
-    "name": "Jugador 7 Perú 1978",
-    "positions": [
-      "MC"
-    ],
-    "overall": 76
-  },
-  {
-    "id": "p_33_7",
-    "name": "Jugador 8 Perú 1978",
-    "positions": [
-      "MC"
-    ],
-    "overall": 77
-  },
-  {
-    "id": "p_33_8",
-    "name": "Jugador 9 Perú 1978",
-    "positions": [
-      "MC"
-    ],
-    "overall": 78
-  },
-  {
-    "id": "p_33_9",
-    "name": "Jugador 10 Perú 1978",
-    "positions": [
-      "MC"
-    ],
-    "overall": 79
-  },
-  {
-    "id": "p_33_10",
-    "name": "Jugador 11 Perú 1978",
-    "positions": [
-      "MC"
-    ],
-    "overall": 80
-  },
-  {
-    "id": "p_33_11",
-    "name": "Jugador 12 Perú 1978",
-    "positions": [
-      "DC"
-    ],
-    "overall": 81
-  },
-  {
-    "id": "p_33_12",
-    "name": "Jugador 13 Perú 1978",
-    "positions": [
-      "DC"
-    ],
-    "overall": 82
-  },
-  {
-    "id": "p_33_13",
-    "name": "Jugador 14 Perú 1978",
-    "positions": [
-      "DC"
-    ],
-    "overall": 83
-  },
-  {
-    "id": "p_33_14",
-    "name": "Jugador 15 Perú 1978",
-    "positions": [
-      "DC"
-    ],
-    "overall": 84
-  },
-  {
-    "id": "p_33_15",
-    "name": "Jugador 16 Perú 1978",
-    "positions": [
-      "DC"
-    ],
-    "overall": 85
-  },
-  {
-    "id": "p_34_0",
-    "name": "Jugador 1 Suecia 1958",
-    "positions": [
-      "POR"
-    ],
-    "overall": 70
-  },
-  {
-    "id": "p_34_1",
-    "name": "Jugador 2 Suecia 1958",
-    "positions": [
-      "DFC"
-    ],
-    "overall": 71
-  },
-  {
-    "id": "p_34_2",
-    "name": "Jugador 3 Suecia 1958",
-    "positions": [
-      "DFC"
-    ],
-    "overall": 72
-  },
-  {
-    "id": "p_34_3",
-    "name": "Jugador 4 Suecia 1958",
-    "positions": [
-      "DFC"
-    ],
-    "overall": 73
-  },
-  {
-    "id": "p_34_4",
-    "name": "Jugador 5 Suecia 1958",
-    "positions": [
-      "DFC"
-    ],
-    "overall": 74
-  },
-  {
-    "id": "p_34_5",
-    "name": "Jugador 6 Suecia 1958",
-    "positions": [
-      "MC"
-    ],
-    "overall": 75
-  },
-  {
-    "id": "p_34_6",
-    "name": "Jugador 7 Suecia 1958",
-    "positions": [
-      "MC"
-    ],
-    "overall": 76
-  },
-  {
-    "id": "p_34_7",
-    "name": "Jugador 8 Suecia 1958",
-    "positions": [
-      "MC"
-    ],
-    "overall": 77
-  },
-  {
-    "id": "p_34_8",
-    "name": "Jugador 9 Suecia 1958",
-    "positions": [
-      "MC"
-    ],
-    "overall": 78
-  },
-  {
-    "id": "p_34_9",
-    "name": "Jugador 10 Suecia 1958",
-    "positions": [
-      "MC"
-    ],
-    "overall": 79
-  },
-  {
-    "id": "p_34_10",
-    "name": "Jugador 11 Suecia 1958",
-    "positions": [
-      "MC"
-    ],
-    "overall": 80
-  },
-  {
-    "id": "p_34_11",
-    "name": "Jugador 12 Suecia 1958",
-    "positions": [
-      "DC"
-    ],
-    "overall": 81
-  },
-  {
-    "id": "p_34_12",
-    "name": "Jugador 13 Suecia 1958",
-    "positions": [
-      "DC"
-    ],
-    "overall": 82
-  },
-  {
-    "id": "p_34_13",
-    "name": "Jugador 14 Suecia 1958",
-    "positions": [
-      "DC"
-    ],
-    "overall": 83
-  },
-  {
-    "id": "p_34_14",
-    "name": "Jugador 15 Suecia 1958",
-    "positions": [
-      "DC"
-    ],
-    "overall": 84
-  },
-  {
-    "id": "p_34_15",
-    "name": "Jugador 16 Suecia 1958",
-    "positions": [
-      "DC"
-    ],
-    "overall": 85
-  },
-  {
-    "id": "p_35_0",
-    "name": "Jugador 1 Polonia 1974",
-    "positions": [
-      "POR"
-    ],
-    "overall": 70
-  },
-  {
-    "id": "p_35_1",
-    "name": "Jugador 2 Polonia 1974",
-    "positions": [
-      "DFC"
-    ],
-    "overall": 71
-  },
-  {
-    "id": "p_35_2",
-    "name": "Jugador 3 Polonia 1974",
-    "positions": [
-      "DFC"
-    ],
-    "overall": 72
-  },
-  {
-    "id": "p_35_3",
-    "name": "Jugador 4 Polonia 1974",
-    "positions": [
-      "DFC"
-    ],
-    "overall": 73
-  },
-  {
-    "id": "p_35_4",
-    "name": "Jugador 5 Polonia 1974",
-    "positions": [
-      "DFC"
-    ],
-    "overall": 74
-  },
-  {
-    "id": "p_35_5",
-    "name": "Jugador 6 Polonia 1974",
-    "positions": [
-      "MC"
-    ],
-    "overall": 75
-  },
-  {
-    "id": "p_35_6",
-    "name": "Jugador 7 Polonia 1974",
-    "positions": [
-      "MC"
-    ],
-    "overall": 76
-  },
-  {
-    "id": "p_35_7",
-    "name": "Jugador 8 Polonia 1974",
-    "positions": [
-      "MC"
-    ],
-    "overall": 77
-  },
-  {
-    "id": "p_35_8",
-    "name": "Jugador 9 Polonia 1974",
-    "positions": [
-      "MC"
-    ],
-    "overall": 78
-  },
-  {
-    "id": "p_35_9",
-    "name": "Jugador 10 Polonia 1974",
-    "positions": [
-      "MC"
-    ],
-    "overall": 79
-  },
-  {
-    "id": "p_35_10",
-    "name": "Jugador 11 Polonia 1974",
-    "positions": [
-      "MC"
-    ],
-    "overall": 80
-  },
-  {
-    "id": "p_35_11",
-    "name": "Jugador 12 Polonia 1974",
-    "positions": [
-      "DC"
-    ],
-    "overall": 81
-  },
-  {
-    "id": "p_35_12",
-    "name": "Jugador 13 Polonia 1974",
-    "positions": [
-      "DC"
-    ],
-    "overall": 82
-  },
-  {
-    "id": "p_35_13",
-    "name": "Jugador 14 Polonia 1974",
-    "positions": [
-      "DC"
-    ],
-    "overall": 83
-  },
-  {
-    "id": "p_35_14",
-    "name": "Jugador 15 Polonia 1974",
-    "positions": [
-      "DC"
-    ],
-    "overall": 84
-  },
-  {
-    "id": "p_35_15",
-    "name": "Jugador 16 Polonia 1974",
-    "positions": [
-      "DC"
-    ],
-    "overall": 85
-  },
-  {
-    "id": "p_36_0",
-    "name": "Jugador 1 Checoslovaquia 1962",
-    "positions": [
-      "POR"
-    ],
-    "overall": 70
-  },
-  {
-    "id": "p_36_1",
-    "name": "Jugador 2 Checoslovaquia 1962",
-    "positions": [
-      "DFC"
-    ],
-    "overall": 71
-  },
-  {
-    "id": "p_36_2",
-    "name": "Jugador 3 Checoslovaquia 1962",
-    "positions": [
-      "DFC"
-    ],
-    "overall": 72
-  },
-  {
-    "id": "p_36_3",
-    "name": "Jugador 4 Checoslovaquia 1962",
-    "positions": [
-      "DFC"
-    ],
-    "overall": 73
-  },
-  {
-    "id": "p_36_4",
-    "name": "Jugador 5 Checoslovaquia 1962",
-    "positions": [
-      "DFC"
-    ],
-    "overall": 74
-  },
-  {
-    "id": "p_36_5",
-    "name": "Jugador 6 Checoslovaquia 1962",
-    "positions": [
-      "MC"
-    ],
-    "overall": 75
-  },
-  {
-    "id": "p_36_6",
-    "name": "Jugador 7 Checoslovaquia 1962",
-    "positions": [
-      "MC"
-    ],
-    "overall": 76
-  },
-  {
-    "id": "p_36_7",
-    "name": "Jugador 8 Checoslovaquia 1962",
-    "positions": [
-      "MC"
-    ],
-    "overall": 77
-  },
-  {
-    "id": "p_36_8",
-    "name": "Jugador 9 Checoslovaquia 1962",
-    "positions": [
-      "MC"
-    ],
-    "overall": 78
-  },
-  {
-    "id": "p_36_9",
-    "name": "Jugador 10 Checoslovaquia 1962",
-    "positions": [
-      "MC"
-    ],
-    "overall": 79
-  },
-  {
-    "id": "p_36_10",
-    "name": "Jugador 11 Checoslovaquia 1962",
-    "positions": [
-      "MC"
-    ],
-    "overall": 80
-  },
-  {
-    "id": "p_36_11",
-    "name": "Jugador 12 Checoslovaquia 1962",
-    "positions": [
-      "DC"
-    ],
-    "overall": 81
-  },
-  {
-    "id": "p_36_12",
-    "name": "Jugador 13 Checoslovaquia 1962",
-    "positions": [
-      "DC"
-    ],
-    "overall": 82
-  },
-  {
-    "id": "p_36_13",
-    "name": "Jugador 14 Checoslovaquia 1962",
-    "positions": [
-      "DC"
-    ],
-    "overall": 83
-  },
-  {
-    "id": "p_36_14",
-    "name": "Jugador 15 Checoslovaquia 1962",
-    "positions": [
-      "DC"
-    ],
-    "overall": 84
-  },
-  {
-    "id": "p_36_15",
-    "name": "Jugador 16 Checoslovaquia 1962",
-    "positions": [
-      "DC"
-    ],
-    "overall": 85
-  },
-  {
-    "id": "p_37_0",
-    "name": "Jugador 1 Yugoslavia 1962",
-    "positions": [
-      "POR"
-    ],
-    "overall": 70
-  },
-  {
-    "id": "p_37_1",
-    "name": "Jugador 2 Yugoslavia 1962",
-    "positions": [
-      "DFC"
-    ],
-    "overall": 71
-  },
-  {
-    "id": "p_37_2",
-    "name": "Jugador 3 Yugoslavia 1962",
-    "positions": [
-      "DFC"
-    ],
-    "overall": 72
-  },
-  {
-    "id": "p_37_3",
-    "name": "Jugador 4 Yugoslavia 1962",
-    "positions": [
-      "DFC"
-    ],
-    "overall": 73
-  },
-  {
-    "id": "p_37_4",
-    "name": "Jugador 5 Yugoslavia 1962",
-    "positions": [
-      "DFC"
-    ],
-    "overall": 74
-  },
-  {
-    "id": "p_37_5",
-    "name": "Jugador 6 Yugoslavia 1962",
-    "positions": [
-      "MC"
-    ],
-    "overall": 75
-  },
-  {
-    "id": "p_37_6",
-    "name": "Jugador 7 Yugoslavia 1962",
-    "positions": [
-      "MC"
-    ],
-    "overall": 76
-  },
-  {
-    "id": "p_37_7",
-    "name": "Jugador 8 Yugoslavia 1962",
-    "positions": [
-      "MC"
-    ],
-    "overall": 77
-  },
-  {
-    "id": "p_37_8",
-    "name": "Jugador 9 Yugoslavia 1962",
-    "positions": [
-      "MC"
-    ],
-    "overall": 78
-  },
-  {
-    "id": "p_37_9",
-    "name": "Jugador 10 Yugoslavia 1962",
-    "positions": [
-      "MC"
-    ],
-    "overall": 79
-  },
-  {
-    "id": "p_37_10",
-    "name": "Jugador 11 Yugoslavia 1962",
-    "positions": [
-      "MC"
-    ],
-    "overall": 80
-  },
-  {
-    "id": "p_37_11",
-    "name": "Jugador 12 Yugoslavia 1962",
-    "positions": [
-      "DC"
-    ],
-    "overall": 81
-  },
-  {
-    "id": "p_37_12",
-    "name": "Jugador 13 Yugoslavia 1962",
-    "positions": [
-      "DC"
-    ],
-    "overall": 82
-  },
-  {
-    "id": "p_37_13",
-    "name": "Jugador 14 Yugoslavia 1962",
-    "positions": [
-      "DC"
-    ],
-    "overall": 83
-  },
-  {
-    "id": "p_37_14",
-    "name": "Jugador 15 Yugoslavia 1962",
-    "positions": [
-      "DC"
-    ],
-    "overall": 84
-  },
-  {
-    "id": "p_37_15",
-    "name": "Jugador 16 Yugoslavia 1962",
-    "positions": [
-      "DC"
-    ],
-    "overall": 85
-  },
-  {
-    "id": "p_38_0",
-    "name": "Jugador 1 Austria 1954",
-    "positions": [
-      "POR"
-    ],
-    "overall": 70
-  },
-  {
-    "id": "p_38_1",
-    "name": "Jugador 2 Austria 1954",
-    "positions": [
-      "DFC"
-    ],
-    "overall": 71
-  },
-  {
-    "id": "p_38_2",
-    "name": "Jugador 3 Austria 1954",
-    "positions": [
-      "DFC"
-    ],
-    "overall": 72
-  },
-  {
-    "id": "p_38_3",
-    "name": "Jugador 4 Austria 1954",
-    "positions": [
-      "DFC"
-    ],
-    "overall": 73
-  },
-  {
-    "id": "p_38_4",
-    "name": "Jugador 5 Austria 1954",
-    "positions": [
-      "DFC"
-    ],
-    "overall": 74
-  },
-  {
-    "id": "p_38_5",
-    "name": "Jugador 6 Austria 1954",
-    "positions": [
-      "MC"
-    ],
-    "overall": 75
-  },
-  {
-    "id": "p_38_6",
-    "name": "Jugador 7 Austria 1954",
-    "positions": [
-      "MC"
-    ],
-    "overall": 76
-  },
-  {
-    "id": "p_38_7",
-    "name": "Jugador 8 Austria 1954",
-    "positions": [
-      "MC"
-    ],
-    "overall": 77
-  },
-  {
-    "id": "p_38_8",
-    "name": "Jugador 9 Austria 1954",
-    "positions": [
-      "MC"
-    ],
-    "overall": 78
-  },
-  {
-    "id": "p_38_9",
-    "name": "Jugador 10 Austria 1954",
-    "positions": [
-      "MC"
-    ],
-    "overall": 79
-  },
-  {
-    "id": "p_38_10",
-    "name": "Jugador 11 Austria 1954",
-    "positions": [
-      "MC"
-    ],
-    "overall": 80
-  },
-  {
-    "id": "p_38_11",
-    "name": "Jugador 12 Austria 1954",
-    "positions": [
-      "DC"
-    ],
-    "overall": 81
-  },
-  {
-    "id": "p_38_12",
-    "name": "Jugador 13 Austria 1954",
-    "positions": [
-      "DC"
-    ],
-    "overall": 82
-  },
-  {
-    "id": "p_38_13",
-    "name": "Jugador 14 Austria 1954",
-    "positions": [
-      "DC"
-    ],
-    "overall": 83
-  },
-  {
-    "id": "p_38_14",
-    "name": "Jugador 15 Austria 1954",
-    "positions": [
-      "DC"
-    ],
-    "overall": 84
-  },
-  {
-    "id": "p_38_15",
-    "name": "Jugador 16 Austria 1954",
-    "positions": [
-      "DC"
-    ],
-    "overall": 85
-  },
-  {
-    "id": "p_39_0",
-    "name": "Jugador 1 Suiza 1954",
-    "positions": [
-      "POR"
-    ],
-    "overall": 70
-  },
-  {
-    "id": "p_39_1",
-    "name": "Jugador 2 Suiza 1954",
-    "positions": [
-      "DFC"
-    ],
-    "overall": 71
-  },
-  {
-    "id": "p_39_2",
-    "name": "Jugador 3 Suiza 1954",
-    "positions": [
-      "DFC"
-    ],
-    "overall": 72
-  },
-  {
-    "id": "p_39_3",
-    "name": "Jugador 4 Suiza 1954",
-    "positions": [
-      "DFC"
-    ],
-    "overall": 73
-  },
-  {
-    "id": "p_39_4",
-    "name": "Jugador 5 Suiza 1954",
-    "positions": [
-      "DFC"
-    ],
-    "overall": 74
-  },
-  {
-    "id": "p_39_5",
-    "name": "Jugador 6 Suiza 1954",
-    "positions": [
-      "MC"
-    ],
-    "overall": 75
-  },
-  {
-    "id": "p_39_6",
-    "name": "Jugador 7 Suiza 1954",
-    "positions": [
-      "MC"
-    ],
-    "overall": 76
-  },
-  {
-    "id": "p_39_7",
-    "name": "Jugador 8 Suiza 1954",
-    "positions": [
-      "MC"
-    ],
-    "overall": 77
-  },
-  {
-    "id": "p_39_8",
-    "name": "Jugador 9 Suiza 1954",
-    "positions": [
-      "MC"
-    ],
-    "overall": 78
-  },
-  {
-    "id": "p_39_9",
-    "name": "Jugador 10 Suiza 1954",
-    "positions": [
-      "MC"
-    ],
-    "overall": 79
-  },
-  {
-    "id": "p_39_10",
-    "name": "Jugador 11 Suiza 1954",
-    "positions": [
-      "MC"
-    ],
-    "overall": 80
-  },
-  {
-    "id": "p_39_11",
-    "name": "Jugador 12 Suiza 1954",
-    "positions": [
-      "DC"
-    ],
-    "overall": 81
-  },
-  {
-    "id": "p_39_12",
-    "name": "Jugador 13 Suiza 1954",
-    "positions": [
-      "DC"
-    ],
-    "overall": 82
-  },
-  {
-    "id": "p_39_13",
-    "name": "Jugador 14 Suiza 1954",
-    "positions": [
-      "DC"
-    ],
-    "overall": 83
-  },
-  {
-    "id": "p_39_14",
-    "name": "Jugador 15 Suiza 1954",
-    "positions": [
-      "DC"
-    ],
-    "overall": 84
-  },
-  {
-    "id": "p_39_15",
-    "name": "Jugador 16 Suiza 1954",
     "positions": [
       "DC"
     ],
@@ -5632,262 +3456,6 @@
     "overall": 85
   },
   {
-    "id": "p_44_0",
-    "name": "Jugador 1 Escocia 1978",
-    "positions": [
-      "POR"
-    ],
-    "overall": 70
-  },
-  {
-    "id": "p_44_1",
-    "name": "Jugador 2 Escocia 1978",
-    "positions": [
-      "DFC"
-    ],
-    "overall": 71
-  },
-  {
-    "id": "p_44_2",
-    "name": "Jugador 3 Escocia 1978",
-    "positions": [
-      "DFC"
-    ],
-    "overall": 72
-  },
-  {
-    "id": "p_44_3",
-    "name": "Jugador 4 Escocia 1978",
-    "positions": [
-      "DFC"
-    ],
-    "overall": 73
-  },
-  {
-    "id": "p_44_4",
-    "name": "Jugador 5 Escocia 1978",
-    "positions": [
-      "DFC"
-    ],
-    "overall": 74
-  },
-  {
-    "id": "p_44_5",
-    "name": "Jugador 6 Escocia 1978",
-    "positions": [
-      "MC"
-    ],
-    "overall": 75
-  },
-  {
-    "id": "p_44_6",
-    "name": "Jugador 7 Escocia 1978",
-    "positions": [
-      "MC"
-    ],
-    "overall": 76
-  },
-  {
-    "id": "p_44_7",
-    "name": "Jugador 8 Escocia 1978",
-    "positions": [
-      "MC"
-    ],
-    "overall": 77
-  },
-  {
-    "id": "p_44_8",
-    "name": "Jugador 9 Escocia 1978",
-    "positions": [
-      "MC"
-    ],
-    "overall": 78
-  },
-  {
-    "id": "p_44_9",
-    "name": "Jugador 10 Escocia 1978",
-    "positions": [
-      "MC"
-    ],
-    "overall": 79
-  },
-  {
-    "id": "p_44_10",
-    "name": "Jugador 11 Escocia 1978",
-    "positions": [
-      "MC"
-    ],
-    "overall": 80
-  },
-  {
-    "id": "p_44_11",
-    "name": "Jugador 12 Escocia 1978",
-    "positions": [
-      "DC"
-    ],
-    "overall": 81
-  },
-  {
-    "id": "p_44_12",
-    "name": "Jugador 13 Escocia 1978",
-    "positions": [
-      "DC"
-    ],
-    "overall": 82
-  },
-  {
-    "id": "p_44_13",
-    "name": "Jugador 14 Escocia 1978",
-    "positions": [
-      "DC"
-    ],
-    "overall": 83
-  },
-  {
-    "id": "p_44_14",
-    "name": "Jugador 15 Escocia 1978",
-    "positions": [
-      "DC"
-    ],
-    "overall": 84
-  },
-  {
-    "id": "p_44_15",
-    "name": "Jugador 16 Escocia 1978",
-    "positions": [
-      "DC"
-    ],
-    "overall": 85
-  },
-  {
-    "id": "p_45_0",
-    "name": "Jugador 1 Gales 1958",
-    "positions": [
-      "POR"
-    ],
-    "overall": 70
-  },
-  {
-    "id": "p_45_1",
-    "name": "Jugador 2 Gales 1958",
-    "positions": [
-      "DFC"
-    ],
-    "overall": 71
-  },
-  {
-    "id": "p_45_2",
-    "name": "Jugador 3 Gales 1958",
-    "positions": [
-      "DFC"
-    ],
-    "overall": 72
-  },
-  {
-    "id": "p_45_3",
-    "name": "Jugador 4 Gales 1958",
-    "positions": [
-      "DFC"
-    ],
-    "overall": 73
-  },
-  {
-    "id": "p_45_4",
-    "name": "Jugador 5 Gales 1958",
-    "positions": [
-      "DFC"
-    ],
-    "overall": 74
-  },
-  {
-    "id": "p_45_5",
-    "name": "Jugador 6 Gales 1958",
-    "positions": [
-      "MC"
-    ],
-    "overall": 75
-  },
-  {
-    "id": "p_45_6",
-    "name": "Jugador 7 Gales 1958",
-    "positions": [
-      "MC"
-    ],
-    "overall": 76
-  },
-  {
-    "id": "p_45_7",
-    "name": "Jugador 8 Gales 1958",
-    "positions": [
-      "MC"
-    ],
-    "overall": 77
-  },
-  {
-    "id": "p_45_8",
-    "name": "Jugador 9 Gales 1958",
-    "positions": [
-      "MC"
-    ],
-    "overall": 78
-  },
-  {
-    "id": "p_45_9",
-    "name": "Jugador 10 Gales 1958",
-    "positions": [
-      "MC"
-    ],
-    "overall": 79
-  },
-  {
-    "id": "p_45_10",
-    "name": "Jugador 11 Gales 1958",
-    "positions": [
-      "MC"
-    ],
-    "overall": 80
-  },
-  {
-    "id": "p_45_11",
-    "name": "Jugador 12 Gales 1958",
-    "positions": [
-      "DC"
-    ],
-    "overall": 81
-  },
-  {
-    "id": "p_45_12",
-    "name": "Jugador 13 Gales 1958",
-    "positions": [
-      "DC"
-    ],
-    "overall": 82
-  },
-  {
-    "id": "p_45_13",
-    "name": "Jugador 14 Gales 1958",
-    "positions": [
-      "DC"
-    ],
-    "overall": 83
-  },
-  {
-    "id": "p_45_14",
-    "name": "Jugador 15 Gales 1958",
-    "positions": [
-      "DC"
-    ],
-    "overall": 84
-  },
-  {
-    "id": "p_45_15",
-    "name": "Jugador 16 Gales 1958",
-    "positions": [
-      "DC"
-    ],
-    "overall": 85
-  },
-  {
     "id": "p_46_0",
     "name": "Jugador 1 Rusia 2018",
     "positions": [
@@ -6398,5 +3966,1192 @@
       "DC"
     ],
     "overall": 85
+  },
+  {
+    "id": "p_team_brasil_1982_0",
+    "name": "Waldir Peres",
+    "positions": [
+      "POR"
+    ],
+    "overall": 82
+  },
+  {
+    "id": "p_team_brasil_1982_1",
+    "name": "Leandro",
+    "positions": [
+      "LTD"
+    ],
+    "overall": 84
+  },
+  {
+    "id": "p_team_brasil_1982_2",
+    "name": "Oscar",
+    "positions": [
+      "DFC"
+    ],
+    "overall": 83
+  },
+  {
+    "id": "p_team_brasil_1982_3",
+    "name": "Luízinho",
+    "positions": [
+      "DFC"
+    ],
+    "overall": 82
+  },
+  {
+    "id": "p_team_brasil_1982_4",
+    "name": "Junior",
+    "positions": [
+      "LTI"
+    ],
+    "overall": 85
+  },
+  {
+    "id": "p_team_brasil_1982_5",
+    "name": "Toninho Cerezo",
+    "positions": [
+      "MC"
+    ],
+    "overall": 85
+  },
+  {
+    "id": "p_team_brasil_1982_6",
+    "name": "Falcão",
+    "positions": [
+      "MC"
+    ],
+    "overall": 92
+  },
+  {
+    "id": "p_team_brasil_1982_7",
+    "name": "Sócrates",
+    "positions": [
+      "EI",
+      "MC"
+    ],
+    "overall": 93
+  },
+  {
+    "id": "p_team_brasil_1982_8",
+    "name": "Zico",
+    "positions": [
+      "EI",
+      "DC"
+    ],
+    "overall": 94
+  },
+  {
+    "id": "p_team_brasil_1982_9",
+    "name": "Éder",
+    "positions": [
+      "EI"
+    ],
+    "overall": 87
+  },
+  {
+    "id": "p_team_brasil_1982_10",
+    "name": "Paulo Isidoro",
+    "positions": [
+      "ED"
+    ],
+    "overall": 83
+  },
+  {
+    "id": "p_team_brasil_1982_11",
+    "name": "Serginho",
+    "positions": [
+      "DC"
+    ],
+    "overall": 82
+  },
+  {
+    "id": "p_team_brasil_1982_12",
+    "name": "Batista",
+    "positions": [
+      "DFC",
+      "MC"
+    ],
+    "overall": 80
+  },
+  {
+    "id": "p_team_brasil_1982_13",
+    "name": "Dirceu",
+    "positions": [
+      "MC",
+      "EI"
+    ],
+    "overall": 84
+  },
+  {
+    "id": "p_team_brasil_1982_14",
+    "name": "Reinaldo",
+    "positions": [
+      "DC"
+    ],
+    "overall": 82
+  },
+  {
+    "id": "p_team_brasil_1982_15",
+    "name": "Paulo Roberto",
+    "positions": [
+      "MC"
+    ],
+    "overall": 83
+  },
+  {
+    "id": "p_team_argentina_1978_0",
+    "name": "Ubaldo Fillol",
+    "positions": [
+      "POR"
+    ],
+    "overall": 86
+  },
+  {
+    "id": "p_team_argentina_1978_1",
+    "name": "Jorge Olguín",
+    "positions": [
+      "LTD"
+    ],
+    "overall": 82
+  },
+  {
+    "id": "p_team_argentina_1978_2",
+    "name": "Daniel Passarella",
+    "positions": [
+      "DFC"
+    ],
+    "overall": 90
+  },
+  {
+    "id": "p_team_argentina_1978_3",
+    "name": "Luis Galván",
+    "positions": [
+      "DFC"
+    ],
+    "overall": 82
+  },
+  {
+    "id": "p_team_argentina_1978_4",
+    "name": "Alberto Tarantini",
+    "positions": [
+      "LTI"
+    ],
+    "overall": 81
+  },
+  {
+    "id": "p_team_argentina_1978_5",
+    "name": "Omar Larrosa",
+    "positions": [
+      "MC"
+    ],
+    "overall": 82
+  },
+  {
+    "id": "p_team_argentina_1978_6",
+    "name": "Américo Gallego",
+    "positions": [
+      "MC"
+    ],
+    "overall": 83
+  },
+  {
+    "id": "p_team_argentina_1978_7",
+    "name": "Osvaldo Ardiles",
+    "positions": [
+      "MC"
+    ],
+    "overall": 87
+  },
+  {
+    "id": "p_team_argentina_1978_8",
+    "name": "Leopoldo Luque",
+    "positions": [
+      "DC"
+    ],
+    "overall": 85
+  },
+  {
+    "id": "p_team_argentina_1978_9",
+    "name": "Mario Kempes",
+    "positions": [
+      "DC",
+      "EI"
+    ],
+    "overall": 93
+  },
+  {
+    "id": "p_team_argentina_1978_10",
+    "name": "René Houseman",
+    "positions": [
+      "ED"
+    ],
+    "overall": 84
+  },
+  {
+    "id": "p_team_argentina_1978_11",
+    "name": "Norberto Alonso",
+    "positions": [
+      "EI",
+      "MC"
+    ],
+    "overall": 83
+  },
+  {
+    "id": "p_team_argentina_1978_12",
+    "name": "Ricardo Villa",
+    "positions": [
+      "MC"
+    ],
+    "overall": 82
+  },
+  {
+    "id": "p_team_argentina_1978_13",
+    "name": "Daniel Bertoni",
+    "positions": [
+      "ED"
+    ],
+    "overall": 83
+  },
+  {
+    "id": "p_team_argentina_1978_14",
+    "name": "Hugo Gatti",
+    "positions": [
+      "POR"
+    ],
+    "overall": 82
+  },
+  {
+    "id": "p_team_argentina_1978_15",
+    "name": "Jorge Carrascosa",
+    "positions": [
+      "MC"
+    ],
+    "overall": 80
+  },
+  {
+    "id": "p_team_holanda_1988_0",
+    "name": "Hans van Breukelen",
+    "positions": [
+      "POR"
+    ],
+    "overall": 84
+  },
+  {
+    "id": "p_team_holanda_1988_1",
+    "name": "Berry van Aerle",
+    "positions": [
+      "LTD"
+    ],
+    "overall": 82
+  },
+  {
+    "id": "p_team_holanda_1988_2",
+    "name": "Ronald Koeman",
+    "positions": [
+      "DFC"
+    ],
+    "overall": 90
+  },
+  {
+    "id": "p_team_holanda_1988_3",
+    "name": "Adri van Tiggelen",
+    "positions": [
+      "DFC"
+    ],
+    "overall": 82
+  },
+  {
+    "id": "p_team_holanda_1988_4",
+    "name": "Jan Wouters",
+    "positions": [
+      "MC",
+      "DFC"
+    ],
+    "overall": 84
+  },
+  {
+    "id": "p_team_holanda_1988_5",
+    "name": "Gerald Vanenburg",
+    "positions": [
+      "MC"
+    ],
+    "overall": 83
+  },
+  {
+    "id": "p_team_holanda_1988_6",
+    "name": "Ruud Gullit",
+    "positions": [
+      "DC",
+      "EI"
+    ],
+    "overall": 95
+  },
+  {
+    "id": "p_team_holanda_1988_7",
+    "name": "Frank Rijkaard",
+    "positions": [
+      "MC"
+    ],
+    "overall": 91
+  },
+  {
+    "id": "p_team_holanda_1988_8",
+    "name": "Marco van Basten",
+    "positions": [
+      "DC"
+    ],
+    "overall": 96
+  },
+  {
+    "id": "p_team_holanda_1988_9",
+    "name": "John van 't Schip",
+    "positions": [
+      "EI",
+      "MC"
+    ],
+    "overall": 84
+  },
+  {
+    "id": "p_team_holanda_1988_10",
+    "name": "Rob Witschge",
+    "positions": [
+      "MC"
+    ],
+    "overall": 82
+  },
+  {
+    "id": "p_team_holanda_1988_11",
+    "name": "Wim Kieft",
+    "positions": [
+      "DC"
+    ],
+    "overall": 83
+  },
+  {
+    "id": "p_team_holanda_1988_12",
+    "name": "Hans Gillhaus",
+    "positions": [
+      "EI",
+      "DC"
+    ],
+    "overall": 82
+  },
+  {
+    "id": "p_team_holanda_1988_13",
+    "name": "Arnold Mühren",
+    "positions": [
+      "MC"
+    ],
+    "overall": 84
+  },
+  {
+    "id": "p_team_holanda_1988_14",
+    "name": "Erwin Koeman",
+    "positions": [
+      "LTD",
+      "MC"
+    ],
+    "overall": 83
+  },
+  {
+    "id": "p_team_holanda_1988_15",
+    "name": "Peter Boeve",
+    "positions": [
+      "DFC"
+    ],
+    "overall": 80
+  },
+  {
+    "id": "p_team_senegal_2002_0",
+    "name": "Tony Sylva",
+    "positions": [
+      "POR"
+    ],
+    "overall": 82
+  },
+  {
+    "id": "p_team_senegal_2002_1",
+    "name": "Lamine Diatta",
+    "positions": [
+      "DFC"
+    ],
+    "overall": 82
+  },
+  {
+    "id": "p_team_senegal_2002_2",
+    "name": "Ferdinand Coly",
+    "positions": [
+      "LTD"
+    ],
+    "overall": 83
+  },
+  {
+    "id": "p_team_senegal_2002_3",
+    "name": "Pape Bouba Diop",
+    "positions": [
+      "DFC"
+    ],
+    "overall": 82
+  },
+  {
+    "id": "p_team_senegal_2002_4",
+    "name": "Omar Daf",
+    "positions": [
+      "LTI"
+    ],
+    "overall": 81
+  },
+  {
+    "id": "p_team_senegal_2002_5",
+    "name": "Khalilou Fadiga",
+    "positions": [
+      "MC"
+    ],
+    "overall": 84
+  },
+  {
+    "id": "p_team_senegal_2002_6",
+    "name": "Aliou Cissé",
+    "positions": [
+      "MC"
+    ],
+    "overall": 82
+  },
+  {
+    "id": "p_team_senegal_2002_7",
+    "name": "El Hadji Diouf",
+    "positions": [
+      "DC",
+      "EI"
+    ],
+    "overall": 86
+  },
+  {
+    "id": "p_team_senegal_2002_8",
+    "name": "Salif Diao",
+    "positions": [
+      "MC"
+    ],
+    "overall": 83
+  },
+  {
+    "id": "p_team_senegal_2002_9",
+    "name": "Henri Camara",
+    "positions": [
+      "DC"
+    ],
+    "overall": 84
+  },
+  {
+    "id": "p_team_senegal_2002_10",
+    "name": "Souleymane Camara",
+    "positions": [
+      "DC"
+    ],
+    "overall": 81
+  },
+  {
+    "id": "p_team_senegal_2002_11",
+    "name": "Habib Beye",
+    "positions": [
+      "LTD",
+      "MC"
+    ],
+    "overall": 82
+  },
+  {
+    "id": "p_team_senegal_2002_12",
+    "name": "Mamadou Niang",
+    "positions": [
+      "DC"
+    ],
+    "overall": 82
+  },
+  {
+    "id": "p_team_senegal_2002_13",
+    "name": "Amdy Faye",
+    "positions": [
+      "MC"
+    ],
+    "overall": 81
+  },
+  {
+    "id": "p_team_senegal_2002_14",
+    "name": "Moussa N'Diaye",
+    "positions": [
+      "EI"
+    ],
+    "overall": 81
+  },
+  {
+    "id": "p_team_senegal_2002_15",
+    "name": "Pape Thiaw",
+    "positions": [
+      "DFC",
+      "MC"
+    ],
+    "overall": 80
+  },
+  {
+    "id": "p_team_costa_rica_2014_0",
+    "name": "Keylor Navas",
+    "positions": [
+      "POR"
+    ],
+    "overall": 90
+  },
+  {
+    "id": "p_team_costa_rica_2014_1",
+    "name": "Michael Umaña",
+    "positions": [
+      "DFC"
+    ],
+    "overall": 81
+  },
+  {
+    "id": "p_team_costa_rica_2014_2",
+    "name": "Óscar Duarte",
+    "positions": [
+      "DFC"
+    ],
+    "overall": 82
+  },
+  {
+    "id": "p_team_costa_rica_2014_3",
+    "name": "Giancarlo González",
+    "positions": [
+      "DFC"
+    ],
+    "overall": 81
+  },
+  {
+    "id": "p_team_costa_rica_2014_4",
+    "name": "Junior Díaz",
+    "positions": [
+      "LTI"
+    ],
+    "overall": 80
+  },
+  {
+    "id": "p_team_costa_rica_2014_5",
+    "name": "David Myrie",
+    "positions": [
+      "LTD"
+    ],
+    "overall": 79
+  },
+  {
+    "id": "p_team_costa_rica_2014_6",
+    "name": "Bryan Ruiz",
+    "positions": [
+      "MC",
+      "EI"
+    ],
+    "overall": 84
+  },
+  {
+    "id": "p_team_costa_rica_2014_7",
+    "name": "Yeltsin Tejeda",
+    "positions": [
+      "MC"
+    ],
+    "overall": 80
+  },
+  {
+    "id": "p_team_costa_rica_2014_8",
+    "name": "Celso Borges",
+    "positions": [
+      "MC"
+    ],
+    "overall": 82
+  },
+  {
+    "id": "p_team_costa_rica_2014_9",
+    "name": "Joel Campbell",
+    "positions": [
+      "EI",
+      "DC"
+    ],
+    "overall": 83
+  },
+  {
+    "id": "p_team_costa_rica_2014_10",
+    "name": "Marco Ureña",
+    "positions": [
+      "DC"
+    ],
+    "overall": 80
+  },
+  {
+    "id": "p_team_costa_rica_2014_11",
+    "name": "José Miguel Cubero",
+    "positions": [
+      "DFC",
+      "MC"
+    ],
+    "overall": 80
+  },
+  {
+    "id": "p_team_costa_rica_2014_12",
+    "name": "Álvaro Saborío",
+    "positions": [
+      "DC"
+    ],
+    "overall": 81
+  },
+  {
+    "id": "p_team_costa_rica_2014_13",
+    "name": "Johnny Acosta",
+    "positions": [
+      "DFC"
+    ],
+    "overall": 79
+  },
+  {
+    "id": "p_team_costa_rica_2014_14",
+    "name": "Diego Calvo",
+    "positions": [
+      "LTD"
+    ],
+    "overall": 78
+  },
+  {
+    "id": "p_team_costa_rica_2014_15",
+    "name": "Randall Brenes",
+    "positions": [
+      "MC"
+    ],
+    "overall": 79
+  },
+  {
+    "id": "p_team_ghana_2010_0",
+    "name": "Richard Kingson",
+    "positions": [
+      "POR"
+    ],
+    "overall": 81
+  },
+  {
+    "id": "p_team_ghana_2010_1",
+    "name": "Hans Sarpei",
+    "positions": [
+      "LTI"
+    ],
+    "overall": 80
+  },
+  {
+    "id": "p_team_ghana_2010_2",
+    "name": "John Mensah",
+    "positions": [
+      "DFC"
+    ],
+    "overall": 83
+  },
+  {
+    "id": "p_team_ghana_2010_3",
+    "name": "Jonathan Mensah",
+    "positions": [
+      "DFC"
+    ],
+    "overall": 80
+  },
+  {
+    "id": "p_team_ghana_2010_4",
+    "name": "Samuel Inkoom",
+    "positions": [
+      "LTD"
+    ],
+    "overall": 80
+  },
+  {
+    "id": "p_team_ghana_2010_5",
+    "name": "Anthony Annan",
+    "positions": [
+      "MC"
+    ],
+    "overall": 81
+  },
+  {
+    "id": "p_team_ghana_2010_6",
+    "name": "Kevin-Prince Boateng",
+    "positions": [
+      "MC",
+      "EI"
+    ],
+    "overall": 85
+  },
+  {
+    "id": "p_team_ghana_2010_7",
+    "name": "Kwadwo Asamoah",
+    "positions": [
+      "MC",
+      "LTI"
+    ],
+    "overall": 84
+  },
+  {
+    "id": "p_team_ghana_2010_8",
+    "name": "Sulley Muntari",
+    "positions": [
+      "MC"
+    ],
+    "overall": 83
+  },
+  {
+    "id": "p_team_ghana_2010_9",
+    "name": "Asamoah Gyan",
+    "positions": [
+      "DC"
+    ],
+    "overall": 87
+  },
+  {
+    "id": "p_team_ghana_2010_10",
+    "name": "André Ayew",
+    "positions": [
+      "EI",
+      "DC"
+    ],
+    "overall": 84
+  },
+  {
+    "id": "p_team_ghana_2010_11",
+    "name": "John Paintsil",
+    "positions": [
+      "LTD"
+    ],
+    "overall": 80
+  },
+  {
+    "id": "p_team_ghana_2010_12",
+    "name": "Dominic Adiyiah",
+    "positions": [
+      "DC"
+    ],
+    "overall": 80
+  },
+  {
+    "id": "p_team_ghana_2010_13",
+    "name": "Stephen Appiah",
+    "positions": [
+      "MC"
+    ],
+    "overall": 83
+  },
+  {
+    "id": "p_team_ghana_2010_14",
+    "name": "Laryea Kingston",
+    "positions": [
+      "MC",
+      "EI"
+    ],
+    "overall": 80
+  },
+  {
+    "id": "p_team_ghana_2010_15",
+    "name": "Jordan Ayew",
+    "positions": [
+      "EI",
+      "DC"
+    ],
+    "overall": 82
+  },
+  {
+    "id": "p_team_uruguay_2010_0",
+    "name": "Fernando Muslera",
+    "positions": [
+      "POR"
+    ],
+    "overall": 85
+  },
+  {
+    "id": "p_team_uruguay_2010_1",
+    "name": "Maxi Pereira",
+    "positions": [
+      "LTD"
+    ],
+    "overall": 82
+  },
+  {
+    "id": "p_team_uruguay_2010_2",
+    "name": "Diego Lugano",
+    "positions": [
+      "DFC"
+    ],
+    "overall": 84
+  },
+  {
+    "id": "p_team_uruguay_2010_3",
+    "name": "Diego Godín",
+    "positions": [
+      "DFC"
+    ],
+    "overall": 90
+  },
+  {
+    "id": "p_team_uruguay_2010_4",
+    "name": "Jorge Fucile",
+    "positions": [
+      "LTI"
+    ],
+    "overall": 80
+  },
+  {
+    "id": "p_team_uruguay_2010_5",
+    "name": "Álvaro Pereira",
+    "positions": [
+      "LTI",
+      "MC"
+    ],
+    "overall": 82
+  },
+  {
+    "id": "p_team_uruguay_2010_6",
+    "name": "Egidio Arévalo Ríos",
+    "positions": [
+      "MC"
+    ],
+    "overall": 81
+  },
+  {
+    "id": "p_team_uruguay_2010_7",
+    "name": "Diego Pérez",
+    "positions": [
+      "DFC",
+      "MC"
+    ],
+    "overall": 80
+  },
+  {
+    "id": "p_team_uruguay_2010_8",
+    "name": "Edinson Cavani",
+    "positions": [
+      "DC",
+      "EI"
+    ],
+    "overall": 91
+  },
+  {
+    "id": "p_team_uruguay_2010_9",
+    "name": "Luis Suárez",
+    "positions": [
+      "DC"
+    ],
+    "overall": 94
+  },
+  {
+    "id": "p_team_uruguay_2010_10",
+    "name": "Diego Forlán",
+    "positions": [
+      "DC",
+      "EI"
+    ],
+    "overall": 90
+  },
+  {
+    "id": "p_team_uruguay_2010_11",
+    "name": "Sebastián Abreu",
+    "positions": [
+      "DC"
+    ],
+    "overall": 80
+  },
+  {
+    "id": "p_team_uruguay_2010_12",
+    "name": "Andrés Scotti",
+    "positions": [
+      "DFC"
+    ],
+    "overall": 79
+  },
+  {
+    "id": "p_team_uruguay_2010_13",
+    "name": "Nicolás Lodeiro",
+    "positions": [
+      "MC",
+      "EI"
+    ],
+    "overall": 82
+  },
+  {
+    "id": "p_team_uruguay_2010_14",
+    "name": "Sebastián Eguren",
+    "positions": [
+      "MC"
+    ],
+    "overall": 80
+  },
+  {
+    "id": "p_team_uruguay_2010_15",
+    "name": "Carlos Bueno",
+    "positions": [
+      "DC"
+    ],
+    "overall": 79
+  },
+  {
+    "id": "p_team_suecia_1994_0",
+    "name": "Thomas Ravelli",
+    "positions": [
+      "POR"
+    ],
+    "overall": 85
+  },
+  {
+    "id": "p_team_suecia_1994_1",
+    "name": "Roland Nilsson",
+    "positions": [
+      "LTD"
+    ],
+    "overall": 83
+  },
+  {
+    "id": "p_team_suecia_1994_2",
+    "name": "Patrik Andersson",
+    "positions": [
+      "DFC"
+    ],
+    "overall": 82
+  },
+  {
+    "id": "p_team_suecia_1994_3",
+    "name": "Joachim Björklund",
+    "positions": [
+      "DFC"
+    ],
+    "overall": 81
+  },
+  {
+    "id": "p_team_suecia_1994_4",
+    "name": "Pontus Kåmark",
+    "positions": [
+      "DFC"
+    ],
+    "overall": 80
+  },
+  {
+    "id": "p_team_suecia_1994_5",
+    "name": "Klas Ingesson",
+    "positions": [
+      "MC"
+    ],
+    "overall": 82
+  },
+  {
+    "id": "p_team_suecia_1994_6",
+    "name": "Jonas Thern",
+    "positions": [
+      "MC"
+    ],
+    "overall": 83
+  },
+  {
+    "id": "p_team_suecia_1994_7",
+    "name": "Stefan Schwarz",
+    "positions": [
+      "MC"
+    ],
+    "overall": 83
+  },
+  {
+    "id": "p_team_suecia_1994_8",
+    "name": "Kennet Andersson",
+    "positions": [
+      "DC"
+    ],
+    "overall": 82
+  },
+  {
+    "id": "p_team_suecia_1994_9",
+    "name": "Henrik Larsson",
+    "positions": [
+      "DC",
+      "EI"
+    ],
+    "overall": 88
+  },
+  {
+    "id": "p_team_suecia_1994_10",
+    "name": "Martin Dahlin",
+    "positions": [
+      "DC"
+    ],
+    "overall": 85
+  },
+  {
+    "id": "p_team_suecia_1994_11",
+    "name": "Tomas Brolin",
+    "positions": [
+      "EI",
+      "DC"
+    ],
+    "overall": 86
+  },
+  {
+    "id": "p_team_suecia_1994_12",
+    "name": "Håkan Mild",
+    "positions": [
+      "MC"
+    ],
+    "overall": 81
+  },
+  {
+    "id": "p_team_suecia_1994_13",
+    "name": "Jesper Blomqvist",
+    "positions": [
+      "EI"
+    ],
+    "overall": 82
+  },
+  {
+    "id": "p_team_suecia_1994_14",
+    "name": "Jan Eriksson",
+    "positions": [
+      "DFC"
+    ],
+    "overall": 79
+  },
+  {
+    "id": "p_team_suecia_1994_15",
+    "name": "Niklas Alexandersson",
+    "positions": [
+      "LTD",
+      "MC"
+    ],
+    "overall": 80
+  },
+  {
+    "id": "p_team_holanda_1988_0",
+    "name": "Hans van Breukelen",
+    "positions": [
+      "POR"
+    ],
+    "overall": 84
+  },
+  {
+    "id": "p_team_holanda_1988_1",
+    "name": "Berry van Aerle",
+    "positions": [
+      "LTD"
+    ],
+    "overall": 82
+  },
+  {
+    "id": "p_team_holanda_1988_2",
+    "name": "Ronald Koeman",
+    "positions": [
+      "DFC"
+    ],
+    "overall": 90
+  },
+  {
+    "id": "p_team_holanda_1988_3",
+    "name": "Adri van Tiggelen",
+    "positions": [
+      "DFC"
+    ],
+    "overall": 82
+  },
+  {
+    "id": "p_team_holanda_1988_4",
+    "name": "Jan Wouters",
+    "positions": [
+      "MC",
+      "DFC"
+    ],
+    "overall": 84
+  },
+  {
+    "id": "p_team_holanda_1988_5",
+    "name": "Gerald Vanenburg",
+    "positions": [
+      "MC"
+    ],
+    "overall": 83
+  },
+  {
+    "id": "p_team_holanda_1988_6",
+    "name": "Ruud Gullit",
+    "positions": [
+      "DC",
+      "EI"
+    ],
+    "overall": 95
+  },
+  {
+    "id": "p_team_holanda_1988_7",
+    "name": "Frank Rijkaard",
+    "positions": [
+      "MC"
+    ],
+    "overall": 91
+  },
+  {
+    "id": "p_team_holanda_1988_8",
+    "name": "Marco van Basten",
+    "positions": [
+      "DC"
+    ],
+    "overall": 96
+  },
+  {
+    "id": "p_team_holanda_1988_9",
+    "name": "John van 't Schip",
+    "positions": [
+      "EI",
+      "MC"
+    ],
+    "overall": 84
+  },
+  {
+    "id": "p_team_holanda_1988_10",
+    "name": "Rob Witschge",
+    "positions": [
+      "MC"
+    ],
+    "overall": 82
+  },
+  {
+    "id": "p_team_holanda_1988_11",
+    "name": "Wim Kieft",
+    "positions": [
+      "DC"
+    ],
+    "overall": 83
+  },
+  {
+    "id": "p_team_holanda_1988_12",
+    "name": "Hans Gillhaus",
+    "positions": [
+      "EI",
+      "DC"
+    ],
+    "overall": 82
+  },
+  {
+    "id": "p_team_holanda_1988_13",
+    "name": "Arnold Mühren",
+    "positions": [
+      "MC"
+    ],
+    "overall": 84
+  },
+  {
+    "id": "p_team_holanda_1988_14",
+    "name": "Erwin Koeman",
+    "positions": [
+      "LTD",
+      "MC"
+    ],
+    "overall": 83
+  },
+  {
+    "id": "p_team_holanda_1988_15",
+    "name": "Peter Boeve",
+    "positions": [
+      "DFC"
+    ],
+    "overall": 80
   }
 ]
