@@ -1211,6 +1211,35 @@ function updateGroupTable(myGoals,oppGoals,won,draw){
   }
 }
 
+/* Simulate the 3 inter-rival matches that don't involve the player
+   (A vs B, A vs C, B vs C), so the group table is fully populated.
+   Called once after the player finishes their 3rd group match. */
+function simulateRivalMatches(){
+  const rivals=[groupOpponents[0], groupOpponents[1], groupOpponents[2]];
+  const pairs=[[0,1],[0,2],[1,2]];
+  pairs.forEach(([ai,bi])=>{
+    const a=rivals[ai], b=rivals[bi];
+    const pa=computeOppPower(a), pb=computeOppPower(b);
+    const diff=(pa-pb)*0.03;
+    const la=Math.max(0.25, 1.1+diff);
+    const lb=Math.max(0.25, 1.1-diff);
+    const ga=poissonSample(la), gb=poissonSample(lb);
+    const rowA=groupTable.find(r=>r.team===a);
+    const rowB=groupTable.find(r=>r.team===b);
+    rowA.played++; rowB.played++;
+    rowA.gf+=ga; rowA.ga+=gb;
+    rowB.gf+=gb; rowB.ga+=ga;
+    if(ga>gb){
+      rowA.won++; rowA.pts+=3; rowB.lost++;
+    } else if(gb>ga){
+      rowB.won++; rowB.pts+=3; rowA.lost++;
+    } else {
+      rowA.drawn++; rowA.pts+=1;
+      rowB.drawn++; rowB.pts+=1;
+    }
+  });
+}
+
 function simulatePenalties(myPower,oppPower){
   // Probability of scoring a penalty, slightly influenced by overall power
   const myProb=Math.min(0.92,Math.max(0.65,0.78+(myPower-oppPower)*0.01));
@@ -1371,6 +1400,7 @@ function showMatchModal(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,
         pickNextOpponent();
         break;
       case "groupDone":
+        simulateRivalMatches();
         showGroupResultsPopup();
         break;
       case "nextKnockoutMatch":

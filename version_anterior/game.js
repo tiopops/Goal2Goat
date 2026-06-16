@@ -974,13 +974,19 @@ function renderMatchHistory(){
   const el=document.getElementById("matchHistoryTable");
   const prog=document.getElementById("matchProgress");
   if(!el) return;
-  if(stage==="group" || (stage==="knockout" && groupTable.length)){
-    if(prog) prog.textContent="FASE DE GRUPOS";
-    el.innerHTML=renderGroupTableHTML();
-  } else {
-    if(prog) prog.textContent=ROUND_NAMES[knockoutRound]||"";
-    el.innerHTML=renderBracketHTML();
+  if(prog) prog.textContent=stage==="group"?"FASE DE GRUPOS":(ROUND_NAMES[knockoutRound]||"ELIMINATORIAS");
+  let html="";
+  // Always show group table once there are group matches
+  if(groupTable.length && matchResults.some(r=>r.stage==="group")){
+    html+=renderGroupTableHTML();
   }
+  // Show knockout results below the group table
+  const knockoutMatches=matchResults.filter(r=>r.stage==="knockout");
+  if(knockoutMatches.length){
+    html+=renderBracketHTML(knockoutMatches);
+  }
+  if(!html) html="";
+  el.innerHTML=html;
 }
 function sortedGroupTable(){
   return [...groupTable].sort((a,b)=>{
@@ -1011,16 +1017,17 @@ function renderGroupTableHTML(){
   return `<table class="group-table"><thead><tr><th>#</th><th>Equipo</th><th>PJ</th><th>G</th><th>E</th><th>P</th><th>GF-GC</th><th>Pts</th></tr></thead><tbody>${rows}</tbody></table>
   <div class="hint-line">Los 2 primeros avanzan a Octavos de Final.</div>`;
 }
-function renderBracketHTML(){
+function renderBracketHTML(knockoutMatches){
   let rows="";
-  matchResults.filter(r=>r.stage==="knockout").forEach((r,i)=>{
+  knockoutMatches.forEach(r=>{
     const cls=r.won?"res-win":"res-lose";
     const tag=r.won?"V":"D";
     rows+=`<tr><td>${r.roundName}</td><td>${flagEmoji(r.rival,16)} ${r.rival}</td><td>${r.score}</td><td class="${cls}">${tag}</td></tr>`;
   });
   const nextRound=ROUND_NAMES[knockoutRound];
-  return `<table><thead><tr><th>Ronda</th><th>Rival</th><th>Resultado</th><th>Res</th></tr></thead><tbody>${rows}</tbody></table>
-  <div class="hint-line">${nextRound?('Próxima ronda: '+nextRound):'¡Final completada!'}</div>`;
+  return `<div class="hint-line" style="margin-top:10px;font-weight:700">ELIMINATORIAS</div>
+  <table><thead><tr><th>Ronda</th><th>Rival</th><th>Resultado</th><th>Res</th></tr></thead><tbody>${rows}</tbody></table>
+  <div class="hint-line">${nextRound&&stage==="knockout"?('Próxima ronda: '+nextRound):'¡Final completada!'}</div>`;
 }
 
 /* ========= MATCH SIMULATION ========= */
@@ -1155,7 +1162,7 @@ function playMatch(){
       penaltyInfo=simulatePenalties(myPower,oppPower);
       won=penaltyInfo.myWon;
       const myShotsHTML=penaltyInfo.myShots.map(s=>`<li>${s.scored?'✅':'❌'} ${s.name}</li>`).join('');
-      const oppShotsHTML=penaltyInfo.oppShots.map(s=>`<li>${s.scored?'✅':'❌'} ${nextOpponent.name}</li>`).join('');
+      const oppShotsHTML=penaltyInfo.oppShots.map(s=>`<li>${s.scored?'✅':'❌'} ${s.name}</li>`).join('');
       summary+=`<br><br><strong>⚽ TANDA DE PENALTIS: ${myTeamName} ${penaltyInfo.myScore} – ${penaltyInfo.oppScore} ${nextOpponent.name}</strong>
       <div class="goals-columns">
         <div class="goals-col">
@@ -1209,10 +1216,14 @@ function simulatePenalties(myPower,oppPower){
   const myProb=Math.min(0.92,Math.max(0.65,0.78+(myPower-oppPower)*0.01));
   const oppProb=Math.min(0.92,Math.max(0.65,0.78+(oppPower-myPower)*0.01));
   let myScore=0,oppScore=0;
-  // Pick up to 5 takers from my squad (prioritize attackers/midfielders)
+  // Pick takers from my squad (prioritize attackers/midfielders)
   const priority=usedPlayers.filter(p=>p.placedPos&&["DC","EI","ED","MC"].includes(p.placedPos));
   const rest=usedPlayers.filter(p=>!priority.includes(p));
   const order=[...priority,...rest].slice(0,Math.max(5,0));
+  // Pick takers from rival squad (prioritize attackers/midfielders)
+  const oppPriority=nextOpponent.players.filter(p=>p.positions&&p.positions.some(pos=>["DC","EI","ED","MC"].includes(pos)));
+  const oppRest=nextOpponent.players.filter(p=>!oppPriority.includes(p));
+  const oppOrder=[...oppPriority,...oppRest];
   const myShots=[]; const oppShots=[];
   // Best-of-5 rounds, then sudden death
   for(let i=0;i<5;i++){
@@ -1220,9 +1231,10 @@ function simulatePenalties(myPower,oppPower){
     const scored=Math.random()<myProb;
     if(scored) myScore++;
     myShots.push({name:taker.name,scored});
+    const oppTaker=oppOrder[i%oppOrder.length]||{name:nextOpponent.name};
     const oppScored=Math.random()<oppProb;
     if(oppScored) oppScore++;
-    oppShots.push({scored:oppScored});
+    oppShots.push({name:oppTaker.name,scored:oppScored});
   }
   let rounds=0;
   while(myScore===oppScore && rounds<10){
@@ -1230,9 +1242,10 @@ function simulatePenalties(myPower,oppPower){
     const scored=Math.random()<myProb;
     if(scored) myScore++;
     myShots.push({name:taker.name,scored});
+    const oppTaker=oppOrder[(5+rounds)%oppOrder.length]||{name:nextOpponent.name};
     const oppScored=Math.random()<oppProb;
     if(oppScored) oppScore++;
-    oppShots.push({scored:oppScored});
+    oppShots.push({name:oppTaker.name,scored:oppScored});
     rounds++;
   }
   if(myScore===oppScore){ // extremely unlikely fallback
