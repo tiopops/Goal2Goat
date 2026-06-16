@@ -47,7 +47,7 @@
         </div>
         <div class="howto-step">
           <span class="howto-num">5</span>
-          <div>¡Bautiza tu equipo y a por la racha de <strong>7 partidos invicto</strong>! Lee las pistas del rival para elegir bien tu estrategia.</div>
+          <div>¡Bautiza tu equipo y a competir! Empieza en la <strong>Fase de Grupos</strong> (3 partidos, clasifican los 2 primeros). Los clasificados avanzan a <strong>Octavos → Cuartos → Semifinal → Final</strong>. Lee las pistas del rival para elegir bien tu estrategia.</div>
         </div>
         <div class="howto-step">
           <span class="howto-num">6</span>
@@ -138,12 +138,12 @@
     </div>
     <!-- GO button + next rival compact strip under pitch -->
     <div id="centerBottom">
-      <button id="rollBtn">GO!</button>
       <div id="nextRivalStrip" style="display:none">
         <span id="stripFlag"></span>
         <span id="stripName">—</span>
-        <button id="playMatchBtn">JUGAR</button>
       </div>
+      <button id="rollBtn" class="main-action-btn">GO!</button>
+      <button id="playMatchBtn" class="main-action-btn" style="display:none">JUGAR</button>
     </div>
     </div>
     <!-- Selection / roster modal goes here on mobile -->
@@ -170,7 +170,7 @@
 
     <!-- Match history -->
     <div class="box" id="matchHistoryBox" style="display:none">
-      <h3>RESULTADOS <span id="matchProgress">0/7</span></h3>
+      <h3>RESULTADOS <span id="matchProgress">FASE DE GRUPOS</span></h3>
       <div id="matchHistoryTable"></div>
     </div>
 

@@ -217,11 +217,18 @@ let draftedCount = 0;
 let baseTeamOVR = null;
 let benchCount = 0;
 let nextOpponent = null;
-let matchResults = [];
-let matchCount = 0;
-const MAX_MATCHES = 7;
 let swapsUsedThisMatch = 0;
 const MAX_SWAPS_PER_MATCH = 1;
+
+/* ========= COMPETITION STATE (World Cup format) ========= */
+const ROUND_NAMES = ["Octavos de Final","Cuartos de Final","Semifinal","Final"];
+let stage = "group";        // "group" | "knockout" | "done"
+let groupOpponents = [];    // 3 team objects for this group
+let groupMatchIdx = 0;       // 0,1,2 — which group match is next
+let groupTable = [];         // standings rows: {name, team|null, played, won, drawn, lost, gf, ga, pts}
+let knockoutRound = 0;       // 0=Octavos,1=Cuartos,2=Semis,3=Final
+let knockoutPool = [];       // remaining pool of teams for future knockout rounds
+let matchResults = [];       // flat history of all matches played, for display
 
 /* ---------- FORMATIONS ---------- */
 const FORMATIONS = {
@@ -623,8 +630,13 @@ function renderCenterSummary(){
       <span class="center-summary-name">${myTeamName}</span>
       <span class="center-summary-ovr">${baseTeamOVR}</span>
     </div>
-    <div class="hint-line">${stars} jugador${stars===1?'':'es'} en su posición ★ · ${matchCount}/${MAX_MATCHES} partidos jugados</div>
+    <div class="hint-line">${stars} jugador${stars===1?'':'es'} en su posición ★ · ${stageLabel()}</div>
   </div>`;
+}
+function stageLabel(){
+  if(stage==="group") return `Fase de grupos · partido ${groupMatchIdx+1}/3`;
+  if(stage==="knockout") return ROUND_NAMES[knockoutRound]||"Eliminatorias";
+  return "Torneo completado";
 }
 
 function updateConvocadosTable(){
@@ -852,6 +864,7 @@ function startMatchPhase(){
   document.getElementById("rivalBox").style.display="block";
   document.getElementById("matchHistoryBox").style.display="block";
   document.getElementById("nextRivalStrip").style.display="flex";
+  document.getElementById("playMatchBtn").style.display="block";
   playerCardEl.innerHTML="";
   showTeamNameModal();
 }
@@ -859,7 +872,7 @@ function showTeamNameModal(){
   document.getElementById("matchOverlay").innerHTML=`
   <div class="match-modal">
     <h3>¡Equipo completo!</h3>
-    <div class="match-summary">Tu plantilla GOAT está lista. Antes de empezar la racha de 7 partidos, ¡dale un nombre a tu equipo!</div>
+    <div class="match-summary">Tu plantilla GOAT está lista. ¡Dale un nombre a tu equipo antes de empezar el torneo! Empezarás en la <strong>Fase de Grupos</strong>: 3 partidos, los 2 primeros del grupo avanzan a octavos de final.</div>
     <input type="text" id="teamNameInput" maxlength="24" placeholder="Ej: Dream Team FC" class="team-name-input" value="${esc(myTeamName==='TU EQUIPO'?'':myTeamName)}">
     <button class="modal-btn" id="teamNameConfirmBtn">CONFIRMAR</button>
   </div>`;
@@ -869,14 +882,39 @@ function showTeamNameModal(){
     const val=inp.value.trim();
     if(val) myTeamName=val.toUpperCase();
     document.getElementById("matchOverlay").innerHTML="";
+    setupGroupStage();
     renderCenterSummary();
     pickNextOpponent();
   };
   document.getElementById("teamNameConfirmBtn").addEventListener("click",confirmFn);
   inp.addEventListener("keydown",e=>{ if(e.key==="Enter") confirmFn(); });
 }
+
+/* ---------- GROUP STAGE SETUP ---------- */
+function setupGroupStage(){
+  const pool=teams.slice();
+  shuffle(pool);
+  groupOpponents=pool.slice(0,3);
+  groupMatchIdx=0;
+  groupTable=[
+    {name:myTeamName, isMe:true, team:null, played:0, won:0, drawn:0, lost:0, gf:0, ga:0, pts:0},
+    ...groupOpponents.map(t=>({name:t.name, isMe:false, team:t, played:0, won:0, drawn:0, lost:0, gf:0, ga:0, pts:0}))
+  ];
+  // Reserve a pool of further teams for the knockout bracket (16 slots, excluding group teams)
+  const used=new Set([myTeamName, ...groupOpponents.map(t=>t.name)]);
+  knockoutPool=teams.filter(t=>!used.has(t.name));
+  shuffle(knockoutPool);
+}
+
+/* ---------- OPPONENT SELECTION ---------- */
 function pickNextOpponent(){
-  nextOpponent=teams[Math.floor(Math.random()*teams.length)];
+  if(stage==="group"){
+    nextOpponent=groupOpponents[groupMatchIdx];
+  } else if(stage==="knockout"){
+    nextOpponent=knockoutPool[knockoutRound] || teams[Math.floor(Math.random()*teams.length)];
+  } else {
+    return;
+  }
   renderCenterSummary();
   spinRivalReveal();
   scrollToEl("rivalBox", 30);
@@ -912,6 +950,7 @@ function renderRivalBox(){
   const hint=getScoutHint(nextOpponent);
   document.getElementById("rivalInfo").innerHTML=`
     <div class="rival-card">
+      <div class="rival-stage-tag">${stageLabel()}</div>
       <div class="rival-flag">${flagEmoji(nextOpponent.name,48)}</div>
       <h4>${nextOpponent.name}</h4>
       <div class="rival-style-tag">${nextOpponent.style}</div>
@@ -923,19 +962,59 @@ function renderRivalBox(){
     </div>`;
   document.getElementById("rivalHint").textContent=hint;
 }
+
+/* ---------- HISTORY / GROUP TABLE / BRACKET DISPLAY ---------- */
 function renderMatchHistory(){
   const el=document.getElementById("matchHistoryTable");
   const prog=document.getElementById("matchProgress");
-  if(prog) prog.textContent=matchCount+"/"+MAX_MATCHES;
   if(!el) return;
-  if(!matchResults.length){ el.innerHTML=""; return; }
-  let rows="";
-  matchResults.forEach((r,i)=>{
-    const cls=r.won?"res-win":(r.draw?"res-draw":"res-lose");
-    const tag=r.won?"V":(r.draw?"E":"D");
-    rows+=`<tr><td>${i+1}</td><td>${r.rival}</td><td>${r.score}</td><td class="${cls}">${tag}</td></tr>`;
+  if(stage==="group" || (stage==="knockout" && groupTable.length)){
+    if(prog) prog.textContent="FASE DE GRUPOS";
+    el.innerHTML=renderGroupTableHTML();
+  } else {
+    if(prog) prog.textContent=ROUND_NAMES[knockoutRound]||"";
+    el.innerHTML=renderBracketHTML();
+  }
+}
+function sortedGroupTable(){
+  return [...groupTable].sort((a,b)=>{
+    if(b.pts!==a.pts) return b.pts-a.pts;
+    const gdA=a.gf-a.ga, gdB=b.gf-b.ga;
+    if(gdB!==gdA) return gdB-gdA;
+    return b.gf-a.gf;
   });
-  el.innerHTML=`<table><thead><tr><th>#</th><th>Rival</th><th>Goles</th><th>Res</th></tr></thead><tbody>${rows}</tbody></table>`;
+}
+function renderGroupTableHTML(){
+  if(!groupTable.length) return "";
+  const sorted=sortedGroupTable();
+  let rows="";
+  sorted.forEach((r,i)=>{
+    const qualified=i<2;
+    const cls=r.isMe?"group-row-me":"";
+    rows+=`<tr class="${cls}${qualified?' group-row-qualified':''}">
+      <td>${i+1}</td>
+      <td>${r.isMe?('<span class="flag-emoji goat-emoji">🐐</span> '+r.name):(flagEmoji(r.name,18)+' '+r.name)}</td>
+      <td>${r.played}</td>
+      <td>${r.won}</td>
+      <td>${r.drawn}</td>
+      <td>${r.lost}</td>
+      <td>${r.gf}-${r.ga}</td>
+      <td><strong>${r.pts}</strong></td>
+    </tr>`;
+  });
+  return `<table class="group-table"><thead><tr><th>#</th><th>Equipo</th><th>PJ</th><th>G</th><th>E</th><th>P</th><th>GF-GC</th><th>Pts</th></tr></thead><tbody>${rows}</tbody></table>
+  <div class="hint-line">Los 2 primeros avanzan a Octavos de Final.</div>`;
+}
+function renderBracketHTML(){
+  let rows="";
+  matchResults.filter(r=>r.stage==="knockout").forEach((r,i)=>{
+    const cls=r.won?"res-win":"res-lose";
+    const tag=r.won?"V":"D";
+    rows+=`<tr><td>${r.roundName}</td><td>${flagEmoji(r.rival,16)} ${r.rival}</td><td>${r.score}</td><td class="${cls}">${tag}</td></tr>`;
+  });
+  const nextRound=ROUND_NAMES[knockoutRound];
+  return `<table><thead><tr><th>Ronda</th><th>Rival</th><th>Resultado</th><th>Res</th></tr></thead><tbody>${rows}</tbody></table>
+  <div class="hint-line">${nextRound?('Próxima ronda: '+nextRound):'¡Final completada!'}</div>`;
 }
 
 /* ========= MATCH SIMULATION ========= */
@@ -1036,11 +1115,16 @@ function playMatch(){
   // Tactical matchup from stats (attack vs defense, etc.) — meaningful but not dominant
   const tactical=tacticalModifier(myStatProfile(), oppStatProfile(nextOpponent));
   const counter=counterStrategyModifier();
-  // Early-game cushion: the first 2 matches of the streak are a bit gentler,
-  // so a run of bad luck right at the start doesn't end the attempt instantly.
-  const earlyBoost = matchCount===0 ? 0.12 : (matchCount===1 ? 0.06 : 0);
-  const myLambda=Math.max(0.25, 1.15+diff+tactical.myScoreMod+counter.myScoreMod+earlyBoost);
-  const oppLambda=Math.max(0.25, 1.15-diff+tactical.oppScoreMod+counter.oppScoreMod-earlyBoost*0.6);
+  // Early-game cushion: the first 2 matches of EACH stage (group stage and
+  // knockout stage) are a bit gentler, so a run of bad luck right at the
+  // start of a new stage doesn't end the run instantly.
+  const stageMatchIdx = stage==="group" ? groupMatchIdx : knockoutRound;
+  const earlyBoost = stageMatchIdx===0 ? 0.12 : (stageMatchIdx===1 ? 0.06 : 0);
+  // Small qualification nudge during the group stage, so reaching the
+  // knockout rounds is a bit more likely than a perfectly neutral matchup.
+  const groupNudge = stage==="group" ? 0.05 : 0;
+  const myLambda=Math.max(0.25, 1.15+diff+tactical.myScoreMod+counter.myScoreMod+earlyBoost+groupNudge);
+  const oppLambda=Math.max(0.25, 1.15-diff+tactical.oppScoreMod+counter.oppScoreMod-earlyBoost*0.6-groupNudge*0.6);
   const myGoals=poissonSample(myLambda);
   const oppGoals=poissonSample(oppLambda);
   // Match narrative
@@ -1051,32 +1135,67 @@ function playMatch(){
   baseTeamOVR=Math.round(usedPlayers.reduce((s,p)=>s+effRating(p),0)/usedPlayers.length);
   updateConvocadosTable();
   updateBenchTable();
-  let won=myGoals>oppGoals, draw=false;
-  let penaltyInfo=null;
-  if(myGoals===oppGoals){
-    penaltyInfo=simulatePenalties(myPower,oppPower);
-    won=penaltyInfo.myWon;
-    const myShotsHTML=penaltyInfo.myShots.map(s=>`<li>${s.scored?'✅':'❌'} ${s.name}</li>`).join('');
-    const oppShotsHTML=penaltyInfo.oppShots.map(s=>`<li>${s.scored?'✅':'❌'} ${nextOpponent.name}</li>`).join('');
-    summary+=`<br><br><strong>⚽ TANDA DE PENALTIS: ${myTeamName} ${penaltyInfo.myScore} – ${penaltyInfo.oppScore} ${nextOpponent.name}</strong>
-    <div class="goals-columns">
-      <div class="goals-col">
-        <div class="goals-col-header"><span class="flag-emoji goat-emoji">🐐</span> ${myTeamName}</div>
-        <ul class="goals-list pen-shots">${myShotsHTML}</ul>
-      </div>
-      <div class="goals-col">
-        <div class="goals-col-header">${flagEmoji(nextOpponent.name,20)} ${nextOpponent.name}</div>
-        <ul class="goals-list pen-shots">${oppShotsHTML}</ul>
-      </div>
-    </div>`;
+
+  let won, draw=false, penaltyInfo=null, scoreLabel;
+  if(stage==="group"){
+    // Group stage: draws are allowed, no penalty shootout.
+    if(myGoals===oppGoals){ draw=true; won=false; }
+    else won=myGoals>oppGoals;
+    scoreLabel=`${myGoals}-${oppGoals}`;
+  } else {
+    // Knockout: a draw must be resolved via penalties.
+    won=myGoals>oppGoals;
+    if(myGoals===oppGoals){
+      penaltyInfo=simulatePenalties(myPower,oppPower);
+      won=penaltyInfo.myWon;
+      const myShotsHTML=penaltyInfo.myShots.map(s=>`<li>${s.scored?'✅':'❌'} ${s.name}</li>`).join('');
+      const oppShotsHTML=penaltyInfo.oppShots.map(s=>`<li>${s.scored?'✅':'❌'} ${nextOpponent.name}</li>`).join('');
+      summary+=`<br><br><strong>⚽ TANDA DE PENALTIS: ${myTeamName} ${penaltyInfo.myScore} – ${penaltyInfo.oppScore} ${nextOpponent.name}</strong>
+      <div class="goals-columns">
+        <div class="goals-col">
+          <div class="goals-col-header"><span class="flag-emoji goat-emoji">🐐</span> ${myTeamName}</div>
+          <ul class="goals-list pen-shots">${myShotsHTML}</ul>
+        </div>
+        <div class="goals-col">
+          <div class="goals-col-header">${flagEmoji(nextOpponent.name,20)} ${nextOpponent.name}</div>
+          <ul class="goals-list pen-shots">${oppShotsHTML}</ul>
+        </div>
+      </div>`;
+    }
+    scoreLabel = penaltyInfo ? `${myGoals}-${oppGoals} (pen. ${penaltyInfo.myScore}-${penaltyInfo.oppScore})` : `${myGoals}-${oppGoals}`;
   }
-  matchCount++;
-  const scoreLabel = penaltyInfo ? `${myGoals}-${oppGoals} (pen. ${penaltyInfo.myScore}-${penaltyInfo.oppScore})` : `${myGoals}-${oppGoals}`;
-  matchResults.push({rival:nextOpponent.name,score:scoreLabel,won,draw});
+
+  if(stage==="group"){
+    updateGroupTable(myGoals,oppGoals,won,draw);
+    matchResults.push({stage:"group", roundName:"Fase de Grupos", rival:nextOpponent.name, score:scoreLabel, won, draw});
+    groupMatchIdx++;
+  } else {
+    matchResults.push({stage:"knockout", roundName:ROUND_NAMES[knockoutRound], rival:nextOpponent.name, score:scoreLabel, won, draw:false});
+  }
   renderMatchHistory();
   showMatchModal(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,penaltyInfo);
 }
 document.getElementById("playMatchBtn").addEventListener("click",playMatch);
+
+/* Update the group table after a group-stage match for both "me" and the
+   specific opponent faced. */
+function updateGroupTable(myGoals,oppGoals,won,draw){
+  const meRow=groupTable.find(r=>r.isMe);
+  const oppRow=groupTable.find(r=>r.team===nextOpponent);
+  meRow.played++; oppRow.played++;
+  meRow.gf+=myGoals; meRow.ga+=oppGoals;
+  oppRow.gf+=oppGoals; oppRow.ga+=myGoals;
+  if(draw){
+    meRow.drawn++; oppRow.drawn++;
+    meRow.pts+=1; oppRow.pts+=1;
+  } else if(won){
+    meRow.won++; meRow.pts+=3;
+    oppRow.lost++;
+  } else {
+    meRow.lost++;
+    oppRow.won++; oppRow.pts+=3;
+  }
+}
 
 function simulatePenalties(myPower,oppPower){
   // Probability of scoring a penalty, slightly influenced by overall power
@@ -1179,9 +1298,14 @@ function rollInjuries(myPower,oppPower){
 
 function showMatchModal(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,penaltyInfo){
   const wasShootout=!!penaltyInfo;
-  const resultText=won?(wasShootout?"¡VICTORIA EN PENALTIS!":"¡VICTORIA!"):(wasShootout?"DERROTA EN PENALTIS":"DERROTA");
-  const resultClass=won?"res-win-tag":"res-lose-tag";
-  playSound(won?'victory':'defeat');
+  let resultText, resultClass;
+  if(draw){
+    resultText="EMPATE"; resultClass="res-draw-tag";
+  } else {
+    resultText=won?(wasShootout?"¡VICTORIA EN PENALTIS!":"¡VICTORIA!"):(wasShootout?"DERROTA EN PENALTIS":"DERROTA");
+    resultClass=won?"res-win-tag":"res-lose-tag";
+  }
+  playSound(won||draw?'victory':'defeat');
   let extraHTML="";
   if(recovered.length){
     extraHTML+=`<div class="match-summary" style="background:#f0fff0;border-color:#0f6b3b"><strong>Recuperados:</strong> ${recovered.join(", ")}</div>`;
@@ -1190,7 +1314,18 @@ function showMatchModal(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,
     const ILABELS={leve:"leve (1 partido)",básica:"básica (2 partidos)",grave:"grave (3 partidos)"};
     extraHTML+=`<div class="injury-section"><p>⚠ Lesiones en ${myTeamName} tras el partido:</p><ul>${newInjuries.map(p=>`<li>${p.name}: lesión ${ILABELS[p.injury.type]}</li>`).join('')}</ul><p class="injury-note">Recuerda: solo puedes hacer <strong>1 cambio</strong> entre Convocados y Banquillo antes del próximo partido. Hazlo manualmente desde las tablas de la izquierda.</p></div>`;
   }
-  const isLast=matchCount>=MAX_MATCHES;
+
+  // Determine continue-button label and the outcome it leads to
+  let btnLabel, outcome;
+  if(stage==="group"){
+    if(groupMatchIdx>=3) btnLabel="VER RESULTADOS DE GRUPO", outcome="groupDone";
+    else btnLabel="SIGUIENTE PARTIDO", outcome="nextGroupMatch";
+  } else { // knockout
+    if(!won){ btnLabel="FIN DEL TORNEO"; outcome="knockoutLost"; }
+    else if(knockoutRound>=ROUND_NAMES.length-1){ btnLabel="VER RESUMEN FINAL"; outcome="champion"; }
+    else { btnLabel="SIGUIENTE RONDA"; outcome="nextKnockoutMatch"; }
+  }
+
   document.getElementById("matchOverlay").innerHTML=`
   <div class="match-modal">
     <div class="match-header">
@@ -1207,42 +1342,124 @@ function showMatchModal(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,
     <div class="match-result-tag ${resultClass}">${resultText}</div>
     <div class="match-summary">${summary}</div>
     ${extraHTML}
-    <button class="modal-btn" id="matchContinueBtn">${!won?"FIN DEL PARTIDO":isLast?"VER RESUMEN FINAL":"SIGUIENTE PARTIDO"}</button>
+    <button class="modal-btn" id="matchContinueBtn">${btnLabel}</button>
   </div>`;
   document.getElementById("matchContinueBtn").addEventListener("click",()=>{
     document.getElementById("matchOverlay").innerHTML="";
-    if(!won){
-      showGameOver();
-    } else if(isLast){
-      showVictory();
-    } else {
-      pickNextOpponent();
+    switch(outcome){
+      case "nextGroupMatch":
+        pickNextOpponent();
+        break;
+      case "groupDone":
+        showGroupResultsPopup();
+        break;
+      case "nextKnockoutMatch":
+        knockoutRound++;
+        pickNextOpponent();
+        break;
+      case "champion":
+        showVictory();
+        break;
+      case "knockoutLost":
+        showEliminated();
+        break;
     }
   });
 }
 
-function showGameOver(){
-  const wins=matchResults.filter(r=>r.won).length;
+/* ---------- PROGRESSIVE GROUP RESULTS POPUP ---------- */
+function showGroupResultsPopup(){
+  const sorted=sortedGroupTable();
+  const meIdx=sorted.findIndex(r=>r.isMe);
+  const qualified=meIdx<2;
   document.getElementById("matchOverlay").innerHTML=`
   <div class="match-modal">
-    <h3>DERROTA</h3>
-    <div class="match-result-tag res-lose-tag">FIN DE LA RACHA</div>
+    <h3>FASE DE GRUPOS — RESULTADOS</h3>
+    <div class="match-summary">Así queda la tabla de tu grupo:</div>
+    <div id="groupResultsTableWrap"></div>
+    <button class="modal-btn" id="groupResultsContinueBtn" style="display:none">CONTINUAR</button>
+  </div>`;
+  const wrap=document.getElementById("groupResultsTableWrap");
+  let i=0;
+  function revealNext(){
+    const shown=sorted.slice(0,i+1);
+    let rows="";
+    shown.forEach((r,idx)=>{
+      const qual=idx<2;
+      const cls=(r.isMe?"group-row-me":"")+(qual?' group-row-qualified':'');
+      rows+=`<tr class="${cls}">
+        <td>${idx+1}</td>
+        <td>${r.isMe?('<span class="flag-emoji goat-emoji">🐐</span> '+r.name):(flagEmoji(r.name,18)+' '+r.name)}</td>
+        <td>${r.played}</td><td>${r.won}</td><td>${r.drawn}</td><td>${r.lost}</td>
+        <td>${r.gf}-${r.ga}</td><td><strong>${r.pts}</strong></td>
+      </tr>`;
+    });
+    wrap.innerHTML=`<table class="group-table"><thead><tr><th>#</th><th>Equipo</th><th>PJ</th><th>G</th><th>E</th><th>P</th><th>GF-GC</th><th>Pts</th></tr></thead><tbody>${rows}</tbody></table>`;
+    playSound('reveal');
+    i++;
+    if(i<sorted.length){
+      setTimeout(revealNext, 600);
+    } else {
+      const btn=document.getElementById("groupResultsContinueBtn");
+      const summary=document.createElement("div");
+      summary.className="match-result-tag "+(qualified?"res-win-tag":"res-lose-tag");
+      summary.textContent=qualified
+        ? `¡${myTeamName} clasificado para Octavos de Final! (${meIdx+1}º del grupo)`
+        : `${myTeamName} eliminado en la fase de grupos (${meIdx+1}º del grupo)`;
+      wrap.parentNode.insertBefore(summary, btn);
+      btn.style.display="block";
+      btn.addEventListener("click",()=>{
+        document.getElementById("matchOverlay").innerHTML="";
+        if(qualified){
+          stage="knockout";
+          knockoutRound=0;
+          renderMatchHistory();
+          renderCenterSummary();
+          pickNextOpponent();
+        } else {
+          showEliminatedGroupStage();
+        }
+      });
+    }
+  }
+  setTimeout(revealNext, 300);
+}
+
+/* ---------- END SCREENS ---------- */
+function showEliminatedGroupStage(){
+  document.getElementById("matchOverlay").innerHTML=`
+  <div class="match-modal">
+    <h3>FASE DE GRUPOS</h3>
+    <div class="match-result-tag res-lose-tag">ELIMINADO EN FASE DE GRUPOS</div>
     <div class="match-summary">
-      ${myTeamName} ha caído. Ganaste <strong>${wins} de ${matchCount}</strong> partidos antes de la derrota.
-      El objetivo era llegar a los 7 sin perder ninguno. ¡Inténtalo de nuevo!
+      ${myTeamName} no ha conseguido terminar entre los 2 primeros de su grupo.
+      ¡El torneo termina aquí, pero siempre puedes formar un nuevo equipo y volver a intentarlo!
+    </div>
+    <button class="modal-btn danger" onclick="location.reload()">NUEVA PARTIDA</button>
+  </div>`;
+}
+function showEliminated(){
+  const round=ROUND_NAMES[knockoutRound];
+  document.getElementById("matchOverlay").innerHTML=`
+  <div class="match-modal">
+    <h3>${round?round.toUpperCase():"ELIMINATORIAS"}</h3>
+    <div class="match-result-tag res-lose-tag">ELIMINADO EN ${round?round.toUpperCase():"ELIMINATORIAS"}</div>
+    <div class="match-summary">
+      ${myTeamName} cae eliminado en ${round||"las eliminatorias"} tras superar la fase de grupos.
+      ¡Buen torneo! Forma un nuevo equipo y vuelve a intentarlo para llegar más lejos.
     </div>
     <button class="modal-btn danger" onclick="location.reload()">NUEVA PARTIDA</button>
   </div>`;
 }
 function showVictory(){
-  const wins=matchResults.filter(r=>r.won).length;
+  const knockoutWins=matchResults.filter(r=>r.stage==="knockout"&&r.won).length;
   const penWins=matchResults.filter(r=>r.won&&r.score.includes('pen.')).length;
   document.getElementById("matchOverlay").innerHTML=`
   <div class="match-modal">
-    <div class="match-result-tag res-win-tag">¡¡CAMPEÓN!!</div>
+    <div class="match-result-tag res-win-tag">¡¡CAMPEÓN DEL MUNDO!!</div>
     <div class="match-summary">
-      ¡${myTeamName} ha completado los 7 partidos invicto!<br>
-      <strong>${wins} victorias</strong>${penWins?` (incluyendo ${penWins} en la tanda de penaltis)`:''}<br>
+      ¡${myTeamName} ha conquistado el torneo, superando la fase de grupos y las ${knockoutWins} eliminatorias hasta la Final!<br>
+      ${penWins?`Incluyendo ${penWins} eliminatoria${penWins===1?'':'s'} resuelta${penWins===1?'':'s'} en la tanda de penaltis.<br>`:''}
       Eres el mejor seleccionador del planeta. ¡Mereces el trofeo!
     </div>
     <button class="modal-btn" onclick="location.reload()">NUEVA PARTIDA</button>

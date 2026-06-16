@@ -271,12 +271,15 @@ const pitchEl = document.getElementById("pitch");
 
 /* Scroll the relevant area into view on mobile/tablet, so the user always
    sees what just happened (slot machine, roster, pitch placement...). */
-function scrollToEl(id, delay){
-  if(window.innerWidth>1050) return; // desktop: everything already visible
+function scrollToEl(id, delay, block){
+  if(window.innerWidth>1050) return;
   setTimeout(()=>{
     const el=document.getElementById(id);
-    if(el) el.scrollIntoView({behavior:"smooth", block:"start"});
+    if(el) el.scrollIntoView({behavior:"smooth", block: block||"start"});
   }, delay||30);
+}
+function scrollToCenter(id, delay){
+  scrollToEl(id, delay, "center");
 }
 
 /* ---------- INIT ---------- */
@@ -454,10 +457,11 @@ function pickPlayer(player){
       updateConvocadosTable();
       updateBenchTable();
       startMatchPhase();
+      startLedLoop();
     } else {
       rollBtn.disabled=false;
       rollBtn.textContent=`BANQUILLO ${benchCount}/3`;
-      scrollToEl("rollBtn");
+      scrollToCenter("rollBtn");
     }
     return;
   }
@@ -754,6 +758,7 @@ function performSwap(benchIdx, convIdx){
   updateConvocadosTable();
   updateBenchTable();
   renderCenterSummary();
+  updateLed();
 }
 
 /* ========= STATS ========= */
@@ -942,6 +947,7 @@ function spinRivalReveal(){
     renderRivalBox();
     stripFlag.innerHTML=flagEmoji(nextOpponent.name,28);
     stripName.textContent=nextOpponent.name;
+    updateLed();
   },900);
 }
 function renderRivalBox(){
@@ -1173,6 +1179,7 @@ function playMatch(){
     matchResults.push({stage:"knockout", roundName:ROUND_NAMES[knockoutRound], rival:nextOpponent.name, score:scoreLabel, won, draw:false});
   }
   renderMatchHistory();
+  updateLed();
   showMatchModal(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,penaltyInfo);
 }
 document.getElementById("playMatchBtn").addEventListener("click",playMatch);
@@ -1466,6 +1473,77 @@ function showVictory(){
   </div>`;
 }
 
+
+/* ========= LED SCOREBOARD ========= */
+function buildLedMessages(){
+  const SEP = "   ·   ";
+  const msgs = [];
+
+  // Always: team name + OVR
+  if(baseTeamOVR!==null){
+    msgs.push(`🐐 ${myTeamName}  NOTA ${baseTeamOVR}`);
+  } else {
+    msgs.push("GOAL2GOAT  ·  MONTA TU EQUIPO LEGENDARIO Y CONQUISTA EL MUNDIAL");
+  }
+
+  // Stage info
+  if(stage==="group" && groupOpponents.length){
+    msgs.push(`FASE DE GRUPOS  ·  PARTIDO ${groupMatchIdx+1}/3`);
+  } else if(stage==="knockout"){
+    msgs.push(`ELIMINATORIAS  ·  ${(ROUND_NAMES[knockoutRound]||"").toUpperCase()}`);
+  }
+
+  // Last match result
+  const last = matchResults[matchResults.length-1];
+  if(last){
+    const res = last.won?"VICTORIA":last.draw?"EMPATE":"DERROTA";
+    msgs.push(`ÚLTIMO PARTIDO  ${res}  vs ${last.rival.toUpperCase()}  ${last.score}`);
+  }
+
+  // Next opponent
+  if(nextOpponent){
+    msgs.push(`PRÓXIMO RIVAL  ${nextOpponent.name.toUpperCase()}`);
+  }
+
+  // Injured players
+  const injured = usedPlayers.filter(p=>p.injury);
+  if(injured.length){
+    msgs.push(`LESIONADOS  ${injured.map(p=>`${p.name.split(' ')[0]} (${p.injury.remaining}P)`).join('  ')}`);
+  }
+
+  // Top scorer (player with most goals in match history — proxy: highest rated attacker)
+  const attackers = usedPlayers.filter(p=>p.placedPos&&["DC","EI","ED"].includes(p.placedPos));
+  if(attackers.length){
+    const top = attackers.reduce((a,b)=>effRating(a)>=effRating(b)?a:b);
+    msgs.push(`MÁXIMO GOLEADOR  ${top.name.toUpperCase()}  ★${effRating(top)}`);
+  }
+
+  // Star players
+  const stars = usedPlayers.filter(p=>p.positions&&p.placedPos&&p.positions[0]===p.placedPos);
+  if(stars.length){
+    msgs.push(`TITULARES EN SU POSICIÓN  ${stars.length}/11`);
+  }
+
+  return msgs.join(SEP + "   ");
+}
+
+function updateLed(){
+  const el = document.getElementById("ledText");
+  if(!el) return;
+  el.textContent = buildLedMessages();
+  // Reset animation so it restarts smoothly from the right
+  el.style.animation="none";
+  void el.offsetWidth; // reflow trigger
+  el.style.animation="";
+}
+
+// Update LED whenever game state changes meaningfully
+let _ledInterval = null;
+function startLedLoop(){
+  updateLed();
+  if(_ledInterval) clearInterval(_ledInterval);
+  _ledInterval = setInterval(updateLed, 8000);
+}
 
 /* ========= UTILS ========= */
 // Augment teams with _styleKey for hint lookup

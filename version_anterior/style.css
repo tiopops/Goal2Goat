@@ -157,34 +157,28 @@ body{background:var(--bg);font-family:'Inter',Arial,sans-serif;color:var(--text)
 
 /* CENTER BOTTOM STRIP */
 #centerBottom{
-  width:100%;display:flex;align-items:center;gap:8px;
+  width:100%;display:flex;align-items:center;justify-content:center;gap:10px;
   padding:8px 12px;background:#1a1a1a;border-top:1px solid #333;flex-shrink:0;
 }
-#rollBtn{
+.main-action-btn{
   background:var(--gold);color:#000;
   font-family:'Bebas Neue',Impact,sans-serif;
   font-size:22px;letter-spacing:2px;
   padding:8px 22px;border:none;cursor:pointer;
   transition:transform .15s,background .15s,opacity .15s;
   white-space:nowrap;
+  flex:1 1 auto;max-width:340px;text-align:center;
 }
-#rollBtn:hover:not(:disabled){transform:scale(1.06);background:#e0b82a}
-#rollBtn:active:not(:disabled){transform:scale(0.95)}
-#rollBtn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+.main-action-btn:hover:not(:disabled){transform:scale(1.04);background:#e0b82a}
+.main-action-btn:active:not(:disabled){transform:scale(0.96)}
+.main-action-btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
 #nextRivalStrip{
-  display:flex;align-items:center;gap:8px;flex:1;min-width:0;
-  color:#ddd;font-size:12px;font-weight:600;
+  display:flex;align-items:center;gap:6px;flex:0 1 auto;min-width:0;
+  color:#ddd;font-size:11px;font-weight:600;
+  max-width:140px;
 }
-#stripFlag{font-size:20px}
+#stripFlag{font-size:18px;flex-shrink:0}
 #stripName{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-#playMatchBtn{
-  background:var(--accent);color:#fff;border:none;
-  font-family:'Bebas Neue',Impact,sans-serif;font-size:16px;letter-spacing:1px;
-  padding:7px 16px;cursor:pointer;transition:transform .15s,background .15s;
-  white-space:nowrap;
-}
-#playMatchBtn:hover{transform:scale(1.04);background:#0c5a30}
-#playMatchBtn:active{transform:scale(.96)}
 
 #playerCard{width:100%;padding:0 12px;flex-shrink:0}
 #playerCard:empty{display:none}
@@ -297,7 +291,7 @@ body{background:var(--bg);font-family:'Inter',Arial,sans-serif;color:var(--text)
   .position{width:36px;height:36px;font-size:8px}
   .player-info{width:60px;font-size:8px;top:38px}
   .match-scoreline{font-size:28px}
-  #rollBtn{font-size:18px;padding:8px 16px}
+  .main-action-btn{font-size:18px;padding:8px 16px}
 }
 
 /* TEAM NAME INPUT */
@@ -455,3 +449,37 @@ body.dark-theme .no-goal{color:var(--text-muted)}
 .spb-name{font-family:'Bebas Neue',Impact,sans-serif;font-size:18px;letter-spacing:.5px;color:var(--text)}
 .spb-rating{font-family:'Bebas Neue',Impact,sans-serif;font-size:20px;color:var(--gold)}
 .spb-positions{font-size:11px;color:var(--text-muted);margin-bottom:4px}
+
+/* ===================================================== */
+/* =========== WORLD CUP COMPETITION SYSTEM ============ */
+/* ===================================================== */
+
+/* Stage label inside rival card */
+.rival-stage-tag{
+  font-family:'Bebas Neue',Impact,sans-serif;
+  font-size:11px;letter-spacing:2px;
+  color:var(--gold);background:#1a1a1a;
+  padding:2px 8px;display:inline-block;margin-bottom:8px;
+}
+
+/* Group table */
+.group-table{width:100%;border-collapse:collapse;font-size:12px}
+.group-table th{
+  background:var(--dark);color:var(--gold);
+  font-family:'Bebas Neue',Impact,sans-serif;
+  letter-spacing:.8px;font-size:11px;
+  padding:5px 4px;text-align:center;
+}
+.group-table td{padding:5px 4px;text-align:center;border-bottom:1px solid var(--line)}
+.group-table td:nth-child(2){text-align:left;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.group-row-me td{background:#f8f5e8;font-weight:700}
+.group-row-qualified td{border-left:3px solid var(--accent)}
+.group-row-me.group-row-qualified td{background:#eef8f0;border-left-color:var(--gold)}
+
+/* Dark theme overrides */
+body.dark-theme .rival-stage-tag{background:#0a0c0d;color:var(--gold)}
+body.dark-theme .group-table th{background:#0a0c0d;color:var(--gold)}
+body.dark-theme .group-table td{border-color:var(--line);color:var(--text)}
+body.dark-theme .group-row-me td{background:#2a2f1a;color:var(--text)}
+body.dark-theme .group-row-qualified td{border-left-color:var(--accent)}
+body.dark-theme .group-row-me.group-row-qualified td{background:#1a2f1a;border-left-color:var(--gold)}

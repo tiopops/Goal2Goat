@@ -37,6 +37,11 @@ body{background:var(--bg);font-family:'Inter',Arial,sans-serif;color:var(--text)
   text-shadow:2px 2px 0 #000, -1px -1px 0 #000;
   margin-bottom:2px;
 }
+.version-tag{
+  display:block;font-size:9px;color:#666;letter-spacing:.5px;
+  font-family:'Inter',sans-serif;margin-top:-6px;margin-bottom:6px;
+}
+body.dark-theme .version-tag{color:#555}
 
 /* ===================== BOXES ===================== */
 .box{
@@ -483,3 +488,34 @@ body.dark-theme .group-table td{border-color:var(--line);color:var(--text)}
 body.dark-theme .group-row-me td{background:#2a2f1a;color:var(--text)}
 body.dark-theme .group-row-qualified td{border-left-color:var(--accent)}
 body.dark-theme .group-row-me.group-row-qualified td{background:#1a2f1a;border-left-color:var(--gold)}
+
+/* ===================================================== */
+/* ================== LED SCOREBOARD =================== */
+/* ===================================================== */
+.led-board{
+  width:100%;max-width:420px;height:36px;
+  background:#000;
+  border-top:1px solid #1a3a1a;border-bottom:1px solid #1a3a1a;
+  overflow:hidden;position:relative;flex-shrink:0;
+  box-shadow:inset 0 0 12px rgba(0,200,0,.08);
+}
+/* LED dot overlay */
+.led-board::after{
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(circle,rgba(255,255,255,.06) 20%,transparent 25%);
+  background-size:5px 5px;
+}
+.led-text{
+  position:absolute;white-space:nowrap;
+  color:#00e040;
+  font-family:'Courier New',Courier,monospace;
+  font-size:14px;font-weight:bold;
+  line-height:36px;padding:0 8px;
+  text-shadow:0 0 6px #00ff44,0 0 12px #00cc33;
+  animation:led-scroll 28s linear infinite;
+  will-change:transform;
+}
+@keyframes led-scroll{
+  from{transform:translateX(420px)}
+  to{transform:translateX(-100%)}
+}
