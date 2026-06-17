@@ -1991,6 +1991,11 @@ function playMatch(){
   else if(draw) changeMorale(2);
   else changeMorale(stage==="knockout"?-12:-7);
 
+  // Save match stats to Firebase if logged in
+  if(typeof window.saveMatchStat==="function"){
+    window.saveMatchStat(won, draw, myGoals, oppGoals);
+  }
+
   // Track best round for chain run rewards
   if(stage==="group") bestRoundReached=Math.max(bestRoundReached,0);
   else bestRoundReached=Math.max(bestRoundReached, knockoutRound+1);
@@ -2368,6 +2373,8 @@ function computeFinalScore(){
 
 function showVictory(){
   const sc=computeFinalScore();
+  // Save to Firebase
+  if(typeof window.saveVictoryStat==="function") window.saveVictoryStat(sc.total);
   const grade=sc.total>=900?"LEGENDARIO":sc.total>=750?"ÉLITE":sc.total>=600?"EXCELENTE":sc.total>=450?"MUY BUENO":"BUENO";
   const gradeColor=sc.total>=900?"#f0c419":sc.total>=750?"#e67e22":sc.total>=600?"#0f6b3b":"#3498db";
 
@@ -2744,20 +2751,21 @@ function quickBuild(){
   if(phase!=="draft"&&phase!=="bench") return;
   const btn=document.getElementById("quickBuildWrap");
   if(btn){ btn.disabled=true; btn.textContent="Generando..."; }
-  const isMobile=window.innerWidth<=1050;
-  const cardEl=isMobile?document.getElementById("playerCard"):playerCardEl;
 
-  // 1. Set content first, then scroll so element has height on mobile
-  cardEl.innerHTML=`<div class="box"><div class="selection-title">GENERANDO EQUIPO...</div>
-    <div class="team-choice slot-spin">
-      <div class="team-option slot-reel"><div class="flag-wrap"><div class="slot-strip" id="reel1"></div></div></div>
-      <div class="team-option slot-reel"><div class="flag-wrap"><div class="slot-strip" id="reel2"></div></div></div>
-    </div></div>`;
-  // Scroll after content renders
-  setTimeout(()=>{
-    if(isMobile && cardEl) cardEl.scrollIntoView({behavior:"smooth",block:"start"});
-    else scrollTo("playerCardDesktop");
-  }, 30);
+  // Always show the spin animation in the center/pitch area, visible on both mobile and desktop
+  // We overlay a temporary fullscreen-ish modal so scroll is irrelevant
+  const spinOverlay=document.createElement("div");
+  spinOverlay.id="quickBuildSpinOverlay";
+  spinOverlay.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:9999;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px";
+  spinOverlay.innerHTML=`
+    <div style="font-family:'Bebas Neue',Impact,sans-serif;font-size:22px;letter-spacing:2px;color:#c9a227">GENERANDO EQUIPO...</div>
+    <div style="display:flex;gap:24px;align-items:center">
+      <div id="reel1" style="font-size:56px;min-width:80px;text-align:center"></div>
+      <div style="font-family:'Bebas Neue',Impact,sans-serif;font-size:28px;color:#555">VS</div>
+      <div id="reel2" style="font-size:56px;min-width:80px;text-align:center"></div>
+    </div>`;
+  document.body.appendChild(spinOverlay);
+
   const pool=teams.slice();
   const r1=document.getElementById("reel1");
   const r2=document.getElementById("reel2");
@@ -2772,6 +2780,9 @@ function quickBuild(){
   setTimeout(()=>{
     clearInterval(spin);
     playSound('reveal');
+    // Remove overlay
+    const ov=document.getElementById("quickBuildSpinOverlay");
+    if(ov) ov.remove();
     playerCardEl.innerHTML="";
     _executeQuickBuild();
     if(btn){ btn.style.display="none"; }
@@ -3105,11 +3116,63 @@ function initFirebaseAuth(){
   });
 
   /* ─── PROFILE MODAL ─── */
-  window.showProfileModal=function(){
+  window.showProfileModal=async function(){
     const o=$id("profileOverlay"); if(o) o.style.display="flex";
+    // Load stats from Firestore
+    const user=auth.currentUser;
+    if(!user) return;
+    try{
+      const snap=await db.collection("users").doc(user.uid).get();
+      if(!snap.exists) return;
+      const s=snap.data().stats||{};
+      const set=(id,v)=>{ const el=$id(id); if(el) el.textContent=v??0; };
+      set("pstat-games",  s.gamesPlayed||0);
+      set("pstat-wins",   s.wins||0);
+      set("pstat-draws",  s.draws||0);
+      set("pstat-losses", s.losses||0);
+      set("pstat-gf",     s.goalsFor||0);
+      set("pstat-ga",     s.goalsAgainst||0);
+      set("pstat-best",   s.bestScore||0);
+      set("pstat-titles", s.titles||0);
+    }catch(e){ console.warn("Stats load error:", e); }
   };
   window.closeProfileModal=function(){
     const o=$id("profileOverlay"); if(o) o.style.display="none";
+  };
+
+  // Save match result to Firestore
+  window.saveMatchStat=async function(won, draw, goalsFor, goalsAgainst){
+    const user=auth.currentUser; if(!user) return;
+    try{
+      const ref=db.collection("users").doc(user.uid);
+      const snap=await ref.get();
+      const s=snap.exists?(snap.data().stats||{}):{};
+      await ref.update({ stats:{
+        gamesPlayed: (s.gamesPlayed||0)+1,
+        wins:        (s.wins||0)+(won?1:0),
+        draws:       (s.draws||0)+(draw?1:0),
+        losses:      (s.losses||0)+(!won&&!draw?1:0),
+        goalsFor:    (s.goalsFor||0)+goalsFor,
+        goalsAgainst:(s.goalsAgainst||0)+goalsAgainst,
+        bestScore:   s.bestScore||0,
+        titles:      s.titles||0,
+      }});
+    }catch(e){ console.warn("Stat save error:", e); }
+  };
+
+  // Save final score after winning tournament
+  window.saveVictoryStat=async function(score){
+    const user=auth.currentUser; if(!user) return;
+    try{
+      const ref=db.collection("users").doc(user.uid);
+      const snap=await ref.get();
+      const s=snap.exists?(snap.data().stats||{}):{};
+      await ref.update({ stats:{
+        ...s,
+        titles:    (s.titles||0)+1,
+        bestScore: Math.max(s.bestScore||0, score),
+      }});
+    }catch(e){ console.warn("Victory stat error:", e); }
   };
 
   /* ─── CLOSE ON BACKDROP ─── */

@@ -843,3 +843,20 @@ body.dark-theme .settings-item:hover{background:#111;color:var(--gold)}
   font-size:12px;letter-spacing:.5px;
 }
 .profile-btn:hover{background:var(--gold);color:#000}
+
+/* PROFILE STATS */
+.profile-stats-grid{
+  display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:4px;
+}
+.profile-stat{
+  background:var(--dark);border:1px solid var(--line);
+  padding:10px 8px;text-align:center;display:flex;
+  flex-direction:column;gap:4px;border-radius:2px;
+}
+.pstat-val{
+  font-family:'Bebas Neue',Impact,sans-serif;
+  font-size:26px;line-height:1;color:var(--text);
+}
+.pstat-val.gold{color:var(--gold)}
+.pstat-val.red{color:var(--red)}
+.pstat-label{font-size:9px;color:var(--text-muted);letter-spacing:.5px;text-transform:uppercase}

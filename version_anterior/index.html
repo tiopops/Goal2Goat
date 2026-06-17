@@ -14,10 +14,12 @@
 <header id="appHeader">
   <div class="app-header-logo">
     <div class="logo" onclick="location.reload()" style="cursor:pointer" title="Volver al inicio">GOAL2GOAT</div>
-    <div class="version-tag">v0.1606260538</div>
+    <div class="version-tag">v0.21</div>
   </div>
   <div class="app-header-actions">
     <button class="support-btn" onclick="showSupportModal()">APOYA A GOAL2GOAT</button>
+    <button class="header-auth-btn register-btn" id="authBtn">LOGIN / REGISTRO</button>
+    <button class="header-auth-btn profile-btn" id="profileBtn" style="display:none">PERFIL</button>
     <div class="settings-menu" id="settingsMenu">
       <button class="settings-toggle" id="settingsToggle" onclick="toggleSettingsMenu()" title="Ajustes">⚙</button>
       <div class="settings-dropdown" id="settingsDropdown">
@@ -37,6 +39,81 @@
     <p class="support-text">Apoya al proyecto Goal2Goat para que siga recibiendo actualizaciones y mejoras.</p>
     <a href="https://paypal.me/goal2goat" target="_blank" class="support-pay-btn">APOYA A GOAL2GOAT</a>
     <button class="modal-btn danger" onclick="document.getElementById('supportOverlay').style.display='none'">CANCELAR</button>
+  </div>
+</div>
+
+<!-- PROFILE MODAL -->
+<div id="profileOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:40000;align-items:center;justify-content:center;">
+  <div class="auth-modal" style="max-width:340px">
+    <button class="auth-close" id="profileCloseBtn">✕</button>
+    <div class="auth-logo">👤 <span id="profileUsername"></span></div>
+    <p style="font-size:12px;color:var(--text-muted);text-align:center;margin-bottom:20px">Tu perfil Goal2Goat</p>
+    <button class="auth-submit-btn" style="background:#c0392b;margin-bottom:10px" id="profileLogoutBtn">CERRAR SESIÓN</button>
+  </div>
+</div>
+
+<!-- WELCOME POPUP -->
+<div id="welcomeOverlay" style="position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:50000;display:flex;align-items:center;justify-content:center;">
+  <div class="auth-modal" style="max-width:420px;text-align:center">
+    <div class="auth-logo">🐐 GOAL2GOAT</div>
+    <p style="font-size:13px;color:var(--text);line-height:1.6;margin-bottom:20px">
+      Bienvenido a <strong style="color:var(--gold)">Goal2Goat</strong>, un proyecto en desarrollo de un juego de fútbol con toques de roguelike. Si quieres que siga creciendo y añadiendo actualizaciones y mejoras sin que la publicidad entre en el once titular, ¡no dudes en apoyarnos!
+    </p>
+    <a href="https://paypal.me/goal2goat" target="_blank" class="support-pay-btn" style="display:block;margin-bottom:10px">APOYA A GOAL2GOAT</a>
+    <button class="auth-submit-btn" id="welcomeStartBtn" style="background:#1a2a1a;border:1px solid var(--gold);color:var(--gold)">EMPEZAR A JUGAR</button>
+  </div>
+</div>
+
+<!-- AUTH MODAL -->
+<div id="authOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:40000;align-items:center;justify-content:center;">
+  <div class="auth-modal">
+    <button class="auth-close"  id="authCloseBtn">✕</button>
+    <div class="auth-logo">🐐 GOAL2GOAT</div>
+    <!-- TABS -->
+    <div class="auth-tabs">
+      <button class="auth-tab auth-tab-active" id="tabLogin">INICIAR SESIÓN</button>
+      <button class="auth-tab" id="tabRegister">CREAR CUENTA</button>
+    </div>
+    <!-- LOGIN -->
+    <div id="authLogin">
+      <div class="auth-field">
+        <label>Usuario o correo electrónico</label>
+        <input type="text" id="loginIdentifier" placeholder="Nombre de usuario o email" autocomplete="username">
+        <span class="auth-error" id="loginIdentifierErr"></span>
+      </div>
+      <div class="auth-field">
+        <label>Contraseña</label>
+        <input type="password" id="loginPassword" placeholder="Contraseña" autocomplete="current-password">
+        <span class="auth-error" id="loginPasswordErr"></span>
+      </div>
+      <span class="auth-error auth-error-global" id="loginGlobalErr"></span>
+      <button class="auth-submit-btn" id="loginSubmitBtn">ENTRAR</button>
+    </div>
+    <!-- REGISTER -->
+    <div id="authRegister" style="display:none">
+      <div class="auth-field">
+        <label>Nombre de usuario</label>
+        <input type="text" id="regUsername" placeholder="3-20 caracteres · solo letras, números y _" autocomplete="off" maxlength="20">
+        <span class="auth-error" id="regUsernameErr"></span>
+      </div>
+      <div class="auth-field">
+        <label>Correo electrónico</label>
+        <input type="email" id="regEmail" placeholder="tu@correo.com" autocomplete="email">
+        <span class="auth-error" id="regEmailErr"></span>
+      </div>
+      <div class="auth-field">
+        <label>Contraseña</label>
+        <input type="password" id="regPassword" placeholder="Mínimo 8 caracteres" autocomplete="new-password">
+        <span class="auth-error" id="regPasswordErr"></span>
+      </div>
+      <div class="auth-field">
+        <label>Repetir contraseña</label>
+        <input type="password" id="regPassword2" placeholder="Repite la contraseña" autocomplete="new-password">
+        <span class="auth-error" id="regPassword2Err"></span>
+      </div>
+      <span class="auth-error auth-error-global" id="regGlobalErr"></span>
+      <button class="auth-submit-btn" id="regSubmitBtn">CREAR CUENTA</button>
+    </div>
   </div>
 </div>
 </header>
@@ -239,5 +316,35 @@
 
 <div id="matchOverlay"></div>
 <script src="game.js"></script>
+<!-- Firebase loads AFTER game.js so it never blocks the game -->
+<script>
+(function(){
+  var FBCONFIG = {
+    apiKey: "AIzaSyDtRj126ONxAH6dn0FQularkKC6upPZoJo",
+    authDomain: "goal2goat.firebaseapp.com",
+    projectId: "goal2goat",
+    storageBucket: "goal2goat.firebasestorage.app",
+    messagingSenderId: "566382525133",
+    appId: "1:566382525133:web:7de499fc2d467680350784"
+  };
+  function loadScript(src, cb){
+    var s=document.createElement('script');
+    s.src=src;
+    s.onload=cb;
+    s.onerror=function(){ console.warn('Firebase script failed to load (offline/localhost?):', src); };
+    document.head.appendChild(s);
+  }
+  loadScript('https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js', function(){
+    loadScript('https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js', function(){
+      loadScript('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js', function(){
+        try{
+          firebase.initializeApp(FBCONFIG);
+          if(typeof initFirebaseAuth==='function') initFirebaseAuth();
+        }catch(e){ console.warn('Firebase init failed:', e.message); }
+      });
+    });
+  });
+})();
+</script>
 </body>
 </html>
