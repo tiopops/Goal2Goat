@@ -3164,15 +3164,18 @@ function initFirebaseAuth(){
     try{
       const inc=firebase.firestore.FieldValue.increment;
       const ref=db.collection("users").doc(user.uid);
-      const upd={
-        "stats.gamesPlayed":inc(1),
-        "stats.goalsFor":   inc(goalsFor||0),
-        "stats.goalsAgainst":inc(goalsAgainst||0),
-      };
-      if(won) upd["stats.wins"]=inc(1);
-      else if(draw) upd["stats.draws"]=inc(1);
-      else upd["stats.losses"]=inc(1);
-      await ref.update(upd);
+      // Use set+merge so missing fields get created automatically
+      await ref.set({
+        stats:{
+          gamesPlayed: inc(1),
+          wins:        inc(won?1:0),
+          draws:       inc(draw?1:0),
+          losses:      inc(!won&&!draw?1:0),
+          goalsFor:    inc(goalsFor||0),
+          goalsAgainst:inc(goalsAgainst||0),
+        }
+      },{merge:true});
+      console.log("Stat saved:", {won,draw,goalsFor,goalsAgainst});
     }catch(e){ console.warn("Stat save error:", e.code, e.message); }
   };
 
@@ -3183,9 +3186,10 @@ function initFirebaseAuth(){
       const ref=db.collection("users").doc(user.uid);
       const snap=await ref.get();
       const s=snap.exists?(snap.data().stats||{}):{};
-      const upd={"stats.titles":inc(1)};
-      if((score||0)>(s.bestScore||0)) upd["stats.bestScore"]=score;
-      await ref.update(upd);
+      const statsUpdate={titles: inc(1)};
+      if((score||0)>(s.bestScore||0)) statsUpdate.bestScore=score;
+      await ref.set({stats:statsUpdate},{merge:true});
+      console.log("Victory saved:", score);
     }catch(e){ console.warn("Victory stat error:", e.code, e.message); }
   };
 

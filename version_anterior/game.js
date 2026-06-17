@@ -3064,7 +3064,7 @@ function initFirebaseAuth(){
       await db.collection("users").doc(cred.user.uid).set({
         username,username_lower:username.toLowerCase(),email,
         createdAt:new Date().toISOString(),
-        stats:{gamesPlayed:0,wins:0,bestScore:0}
+        stats:{gamesPlayed:0,wins:0,draws:0,losses:0,goalsFor:0,goalsAgainst:0,bestScore:0,titles:0}
       });
       window.closeAuthModal();
     }catch(err){
@@ -3118,23 +3118,41 @@ function initFirebaseAuth(){
   /* ─── PROFILE MODAL ─── */
   window.showProfileModal=async function(){
     const o=$id("profileOverlay"); if(o) o.style.display="flex";
-    // Load stats from Firestore
     const user=auth.currentUser;
     if(!user) return;
+    // Show loading state
+    ["pstat-games","pstat-wins","pstat-draws","pstat-losses",
+     "pstat-gf","pstat-ga","pstat-best","pstat-titles"]
+    .forEach(id=>{ const el=$id(id); if(el) el.textContent="..."; });
     try{
       const snap=await db.collection("users").doc(user.uid).get();
       if(!snap.exists) return;
       const s=snap.data().stats||{};
-      const set=(id,v)=>{ const el=$id(id); if(el) el.textContent=v??0; };
-      set("pstat-games",  s.gamesPlayed||0);
-      set("pstat-wins",   s.wins||0);
-      set("pstat-draws",  s.draws||0);
-      set("pstat-losses", s.losses||0);
-      set("pstat-gf",     s.goalsFor||0);
-      set("pstat-ga",     s.goalsAgainst||0);
-      set("pstat-best",   s.bestScore||0);
-      set("pstat-titles", s.titles||0);
-    }catch(e){ console.warn("Stats load error:", e); }
+      // If missing fields (old account), patch them silently
+      const needsPatch=s.draws===undefined||s.losses===undefined||s.goalsFor===undefined;
+      if(needsPatch){
+        await db.collection("users").doc(user.uid).update({
+          "stats.draws":s.draws||0,"stats.losses":s.losses||0,
+          "stats.goalsFor":s.goalsFor||0,"stats.goalsAgainst":s.goalsAgainst||0,
+          "stats.titles":s.titles||0
+        });
+      }
+      const n=(v)=>v||0;
+      const set=(id,v)=>{ const el=$id(id); if(el) el.textContent=n(v); };
+      set("pstat-games",  s.gamesPlayed);
+      set("pstat-wins",   s.wins);
+      set("pstat-draws",  s.draws);
+      set("pstat-losses", s.losses);
+      set("pstat-gf",     s.goalsFor);
+      set("pstat-ga",     s.goalsAgainst);
+      set("pstat-best",   s.bestScore);
+      set("pstat-titles", s.titles);
+    }catch(e){
+      console.warn("Stats load error:", e);
+      ["pstat-games","pstat-wins","pstat-draws","pstat-losses",
+       "pstat-gf","pstat-ga","pstat-best","pstat-titles"]
+      .forEach(id=>{ const el=$id(id); if(el) el.textContent="—"; });
+    }
   };
   window.closeProfileModal=function(){
     const o=$id("profileOverlay"); if(o) o.style.display="none";
