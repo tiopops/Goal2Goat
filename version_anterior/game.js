@@ -2239,7 +2239,16 @@ function showSupportModal(){
 /* ========= SETTINGS DROPDOWN ========= */
 function toggleSettingsMenu(){
   const dd=document.getElementById("settingsDropdown");
-  if(dd) dd.classList.toggle("open");
+  const btn=document.getElementById("settingsToggle");
+  if(!dd||!btn) return;
+  if(dd.classList.contains("open")){
+    dd.classList.remove("open");
+    return;
+  }
+  const rect=btn.getBoundingClientRect();
+  dd.style.top=(rect.bottom+6)+"px";
+  dd.style.right=(window.innerWidth-rect.right)+"px";
+  dd.classList.add("open");
 }
 // Close dropdown when clicking outside
 document.addEventListener("click", function(e){
