@@ -14,15 +14,12 @@
 <header id="appHeader">
   <div class="app-header-logo">
     <div class="logo" onclick="location.reload()" style="cursor:pointer" title="Volver al inicio">GOAL2GOAT</div>
-    <div class="version-tag">v0.1606260538</div>
+    <div class="version-tag">v0.2</div>
   </div>
   <div class="app-header-actions">
     <button class="support-btn" onclick="showSupportModal()">APOYA A GOAL2GOAT</button>
     <button class="header-auth-btn register-btn" id="authBtn">LOGIN / REGISTRO</button>
-    <span class="header-user-info" id="headerUserInfo" style="display:none">
-      <span class="header-username" id="headerUsername"></span>
-      <button class="header-auth-btn logout-btn"  id="logoutBtn">SALIR</button>
-    </span>
+    <button class="header-auth-btn profile-btn" id="profileBtn" style="display:none">PERFIL</button>
     <div class="settings-menu" id="settingsMenu">
       <button class="settings-toggle" id="settingsToggle" onclick="toggleSettingsMenu()" title="Ajustes">⚙</button>
       <div class="settings-dropdown" id="settingsDropdown">
@@ -42,6 +39,18 @@
     <p class="support-text">Apoya al proyecto Goal2Goat para que siga recibiendo actualizaciones y mejoras.</p>
     <a href="https://paypal.me/goal2goat" target="_blank" class="support-pay-btn">APOYA A GOAL2GOAT</a>
     <button class="modal-btn danger" onclick="document.getElementById('supportOverlay').style.display='none'">CANCELAR</button>
+  </div>
+</div>
+
+<!-- PROFILE MODAL -->
+<div id="profileOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:40000;align-items:center;justify-content:center;">
+  <div class="auth-modal" style="max-width:320px">
+    <button class="auth-close" id="profileCloseBtn">✕</button>
+    <div class="auth-logo">👤 <span id="profileUsername"></span></div>
+    <div style="display:flex;flex-direction:column;gap:10px;margin-top:8px">
+      <button class="auth-submit-btn" style="background:#c0392b" id="profileLogoutBtn">CERRAR SESIÓN</button>
+      <button class="auth-submit-btn" style="background:#333;color:#aaa" id="profileCancelBtn">CANCELAR</button>
+    </div>
   </div>
 </div>
 

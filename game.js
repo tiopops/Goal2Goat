@@ -3078,36 +3078,50 @@ function initFirebaseAuth(){
 
   /* ─── AUTH STATE ─── */
   auth.onAuthStateChanged(async user=>{
-    const authBtn=$id("authBtn"), userInfo=$id("headerUserInfo"), usernameEl=$id("headerUsername");
+    const authBtn=$id("authBtn");
+    const profileBtn=$id("profileBtn");
     if(user){
       const snap=await db.collection("users").doc(user.uid).get();
       const username=snap.exists?snap.data().username:user.email;
       if(authBtn)    authBtn.style.display="none";
-      if(userInfo)   userInfo.style.display="flex";
-      if(usernameEl) usernameEl.textContent="👤 "+username;
+      if(profileBtn){ profileBtn.style.display=""; profileBtn.textContent="👤 "+username; }
+      const pun=$id("profileUsername"); if(pun) pun.textContent=username;
       window.currentUsername=username;
     }else{
       if(authBtn)    authBtn.style.display="";
-      if(userInfo)   userInfo.style.display="none";
+      if(profileBtn) profileBtn.style.display="none";
       window.currentUsername=null;
     }
   });
 
+  /* ─── PROFILE MODAL ─── */
+  window.showProfileModal=function(){
+    const o=$id("profileOverlay"); if(o) o.style.display="flex";
+  };
+  window.closeProfileModal=function(){
+    const o=$id("profileOverlay"); if(o) o.style.display="none";
+  };
+
   /* ─── CLOSE ON BACKDROP ─── */
   document.addEventListener("click",e=>{
-    const o=$id("authOverlay");
-    if(o&&e.target===o) window.closeAuthModal();
+    const auth=$id("authOverlay");
+    if(auth&&e.target===auth) window.closeAuthModal();
+    const prof=$id("profileOverlay");
+    if(prof&&e.target===prof) window.closeProfileModal();
   });
 
-  /* ─── WIRE BUTTONS via addEventListener (no inline onclick needed) ─── */
+  /* ─── WIRE BUTTONS ─── */
   function wire(id,fn){ const el=$id(id); if(el) el.addEventListener("click",fn); }
-  wire("authBtn",        ()=>window.showAuthModal("login"));
-  wire("authCloseBtn",   ()=>window.closeAuthModal());
-  wire("logoutBtn",      ()=>window.authLogout());
-  wire("tabLogin",       ()=>window.switchAuthTab("login"));
-  wire("tabRegister",    ()=>window.switchAuthTab("register"));
-  wire("loginSubmitBtn", ()=>window.submitLogin());
-  wire("regSubmitBtn",   ()=>window.submitRegister());
+  wire("authBtn",          ()=>window.showAuthModal("login"));
+  wire("profileBtn",       ()=>window.showProfileModal());
+  wire("authCloseBtn",     ()=>window.closeAuthModal());
+  wire("profileCloseBtn",  ()=>window.closeProfileModal());
+  wire("profileCancelBtn", ()=>window.closeProfileModal());
+  wire("profileLogoutBtn", ()=>{ window.authLogout(); window.closeProfileModal(); });
+  wire("tabLogin",         ()=>window.switchAuthTab("login"));
+  wire("tabRegister",      ()=>window.switchAuthTab("register"));
+  wire("loginSubmitBtn",   ()=>window.submitLogin());
+  wire("regSubmitBtn",     ()=>window.submitRegister());
 }
 
 // initFirebaseAuth() is called by firebase.js once all Firebase SDKs are loaded

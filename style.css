@@ -836,3 +836,10 @@ body.dark-theme .settings-item:hover{background:#111;color:var(--gold)}
   color:#000!important;
   border:none!important;
 }
+
+.profile-btn{
+  background:#1a2a1a;color:var(--gold);
+  border:1px solid var(--gold);
+  font-size:12px;letter-spacing:.5px;
+}
+.profile-btn:hover{background:var(--gold);color:#000}
