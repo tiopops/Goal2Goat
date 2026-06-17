@@ -296,20 +296,36 @@
 </div>
 
 <div id="matchOverlay"></div>
-<!-- Firebase compat SDK (synchronous, no module issues) -->
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-<script>
-firebase.initializeApp({
-  apiKey: "AIzaSyDtRj126ONxAH6dn0FQularkKC6upPZoJo",
-  authDomain: "goal2goat.firebaseapp.com",
-  projectId: "goal2goat",
-  storageBucket: "goal2goat.firebasestorage.app",
-  messagingSenderId: "566382525133",
-  appId: "1:566382525133:web:7de499fc2d467680350784"
-});
-</script>
 <script src="game.js"></script>
+<!-- Firebase loads AFTER game.js so it never blocks the game -->
+<script>
+(function(){
+  var FBCONFIG = {
+    apiKey: "AIzaSyDtRj126ONxAH6dn0FQularkKC6upPZoJo",
+    authDomain: "goal2goat.firebaseapp.com",
+    projectId: "goal2goat",
+    storageBucket: "goal2goat.firebasestorage.app",
+    messagingSenderId: "566382525133",
+    appId: "1:566382525133:web:7de499fc2d467680350784"
+  };
+  function loadScript(src, cb){
+    var s=document.createElement('script');
+    s.src=src;
+    s.onload=cb;
+    s.onerror=function(){ console.warn('Firebase script failed to load (offline/localhost?):', src); };
+    document.head.appendChild(s);
+  }
+  loadScript('https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js', function(){
+    loadScript('https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js', function(){
+      loadScript('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js', function(){
+        try{
+          firebase.initializeApp(FBCONFIG);
+          if(typeof initFirebaseAuth==='function') initFirebaseAuth();
+        }catch(e){ console.warn('Firebase init failed:', e.message); }
+      });
+    });
+  });
+})();
+</script>
 </body>
 </html>
