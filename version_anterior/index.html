@@ -13,13 +13,37 @@
 <!-- FULL-WIDTH APP HEADER -->
 <header id="appHeader">
   <div class="app-header-logo">
-    <span class="logo">GOAL2GOAT</span>
+    <span class="logo" onclick="location.reload()" style="cursor:pointer" title="Volver al inicio">GOAL2GOAT</span>
+    <span class="version-tag">v0.1606260538</span>
+  </div>
+<header id="appHeader">
+  <div class="app-header-logo">
+    <span class="logo" onclick="location.reload()" style="cursor:pointer" title="Volver al inicio">GOAL2GOAT</span>
     <span class="version-tag">v0.1606260538</span>
   </div>
   <div class="app-header-actions">
-    <button id="audioToggle" class="topbar-btn" title="Activar/desactivar sonido"><span class="topbar-dot on"></span><span class="topbar-label">SONIDO</span></button>
-    <button id="themeToggle" class="topbar-btn" title="Cambiar tema claro/oscuro"><span class="topbar-dot on"></span><span class="topbar-label">TEMA OSCURO</span></button>
+    <button class="support-btn" onclick="showSupportModal()">APOYA A GOAL2GOAT</button>
+    <div class="settings-menu" id="settingsMenu">
+      <button class="settings-toggle" id="settingsToggle" onclick="toggleSettingsMenu()" title="Ajustes">⚙</button>
+      <div class="settings-dropdown" id="settingsDropdown">
+        <button id="audioToggle" class="settings-item" title="Activar/desactivar sonido">
+          <span class="topbar-dot on"></span><span class="topbar-label">SONIDO</span>
+        </button>
+        <button id="themeToggle" class="settings-item" title="Cambiar tema claro/oscuro">
+          <span class="topbar-dot on"></span><span class="topbar-label">TEMA OSCURO</span>
+        </button>
+      </div>
+    </div>
   </div>
+</header>
+
+<div id="supportOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:30000;display:none;align-items:center;justify-content:center;">
+  <div class="support-modal">
+    <p class="support-text">Apoya al proyecto Goal2Goat para que siga recibiendo actualizaciones y mejoras.</p>
+    <a href="https://paypal.me/goal2goat" target="_blank" class="support-pay-btn">APOYA A GOAL2GOAT</a>
+    <button class="modal-btn danger" onclick="document.getElementById('supportOverlay').style.display='none'">CANCELAR</button>
+  </div>
+</div>
 </header>
 
 <div class="app">
@@ -43,7 +67,7 @@
         </div>
       </div>
       <div id="benchSection" style="display:none">
-        <div class="bench-title">BANQUILLO <span id="benchCounter">0/3</span></div>
+        <div class="bench-title">BANQUILLO 🪑 <span id="benchCounter">0/3</span></div>
         <div id="benchTable"></div>
       </div>
     </div>
@@ -53,27 +77,27 @@
       <div class="howto-content">
         <div class="howto-step">
           <span class="howto-num">1</span>
-          <div><strong>Pulsa GO!</strong> y verás girar las banderas de dos selecciones al azar. ¡Elige tu favorita!</div>
+          <div><strong>SELECCIONAR JUGADOR</strong> baraja dos selecciones al azar. Elige una y selecciona uno de sus 5 jugadores para colocarlo en el campo. O usa <strong>EQUIPO RÁPIDO</strong> para generar toda la plantilla de golpe.</div>
         </div>
         <div class="howto-step">
           <span class="howto-num">2</span>
-          <div>Aparecerán <strong>5 jugadores</strong> de esa plantilla. Elige uno y colócalo en el campo.</div>
+          <div>Coloca a cada jugador en su <strong>posición ★</strong> para que rinda al 100%. Fuera de posición pierde un 15% y no suma al bonus de posición.</div>
         </div>
         <div class="howto-step">
           <span class="howto-num">3</span>
-          <div>Si lo colocas en su <strong>posición ★ principal</strong>, suma puntos extra a tu nota media. Fuera de posición pierde un 15%.</div>
+          <div>Completa <strong>11 titulares + 3 en el banquillo 🪑</strong>. Ponle nombre a tu equipo y empieza el torneo.</div>
         </div>
         <div class="howto-step">
           <span class="howto-num">4</span>
-          <div>Completa los <strong>11 titulares</strong> y luego elige <strong>3 jugadores de banquillo</strong>.</div>
+          <div><strong>Fase de Grupos</strong> (3 partidos, pasan los 2 primeros) → <strong>Octavos → Cuartos → Semis → Final</strong>. Lee el estilo del rival y elige tu estrategia en consecuencia.</div>
         </div>
         <div class="howto-step">
           <span class="howto-num">5</span>
-          <div>¡Bautiza tu equipo y a competir! Empieza en la <strong>Fase de Grupos</strong> (3 partidos, clasifican los 2 primeros). Los clasificados avanzan a <strong>Octavos → Cuartos → Semifinal → Final</strong>. Lee las pistas del rival para elegir bien tu estrategia.</div>
+          <div>Puedes hacer hasta <strong>2 cambios 🪑</strong> entre titulares y suplentes antes de cada partido. Imprescindible si hay lesionados ✚.</div>
         </div>
         <div class="howto-step">
           <span class="howto-num">6</span>
-          <div>Entre partidos puedes hacer hasta <strong>2 cambios</strong> entre Convocados y Banquillo (haz clic en un jugador de cada tabla para intercambiarlos). Úsalo con cabeza, sobre todo si tienes algún lesionado.</div>
+          <div>El <strong>clima ☁</strong> afecta a las estadísticas. La <strong>moral</strong> sube con victorias y buenas respuestas en rueda de prensa — y baja con derrotas. Los goleadores en racha muestran 🔥 y dan ventaja.</div>
         </div>
       </div>
     </div>
@@ -160,19 +184,17 @@
     </div>
     <!-- GO button + next rival compact strip under pitch -->
     <div id="centerBottom">
-      <div id="nextRivalStrip" style="display:none">
-        <span id="stripFlag"></span>
-        <span id="stripName">—</span>
-      </div>
-      <button id="rollBtn" class="main-action-btn">GO!</button>
+      <button id="rollBtn" class="main-action-btn">SELECCIONAR JUGADOR</button>
       <button id="playMatchBtn" class="main-action-btn" style="display:none">JUGAR</button>
     </div>
-    <button id="quickBuildBtn" class="quick-build-btn">⚡ GENERAR EQUIPO RÁPIDO</button>
+    <div id="quickBuildWrap">
+      <button id="quickBuildBtn" class="main-action-btn quick-build-btn">EQUIPO RÁPIDO</button>
+    </div>
     </div>
     <!-- Selection / roster modal goes here on mobile -->
     <div id="playerCard"></div>
     <!-- Quick-glance team summary, shown once squad is ready -->
-    <div id="centerSummary"></div>
+
   </div>
 
   <!-- RIGHT PANEL -->
