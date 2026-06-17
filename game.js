@@ -2744,19 +2744,20 @@ function quickBuild(){
   if(phase!=="draft"&&phase!=="bench") return;
   const btn=document.getElementById("quickBuildWrap");
   if(btn){ btn.disabled=true; btn.textContent="Generando..."; }
-  // On mobile: scroll to center panel. On desktop: scroll to player card area
   const isMobile=window.innerWidth<=1050;
-  scrollTo(isMobile?"pitchBox":"playerCardDesktop");
-
-  // 1. Single slot-machine spin for ~700ms to simulate the "random" feel
   const cardEl=isMobile?document.getElementById("playerCard"):playerCardEl;
-  const reel1=document.createElement("div"); reel1.id="reel1";
-  const reel2=document.createElement("div"); reel2.id="reel2";
+
+  // 1. Set content first, then scroll so element has height on mobile
   cardEl.innerHTML=`<div class="box"><div class="selection-title">GENERANDO EQUIPO...</div>
     <div class="team-choice slot-spin">
       <div class="team-option slot-reel"><div class="flag-wrap"><div class="slot-strip" id="reel1"></div></div></div>
       <div class="team-option slot-reel"><div class="flag-wrap"><div class="slot-strip" id="reel2"></div></div></div>
     </div></div>`;
+  // Scroll after content renders
+  setTimeout(()=>{
+    if(isMobile && cardEl) cardEl.scrollIntoView({behavior:"smooth",block:"start"});
+    else scrollTo("playerCardDesktop");
+  }, 30);
   const pool=teams.slice();
   const r1=document.getElementById("reel1");
   const r2=document.getElementById("reel2");
@@ -2881,7 +2882,16 @@ const themeToggleBtn=document.getElementById("themeToggle");
 
 // Restore saved preferences on load
 (function restorePrefs(){
-  // Audio: reflect loaded state in the UI
+  // Welcome popup: show only once
+  try{
+    if(!localStorage.getItem('g2g_welcomed')){
+      const o=document.getElementById("welcomeOverlay");
+      if(o) o.style.display="flex";
+    } else {
+      const o=document.getElementById("welcomeOverlay");
+      if(o) o.style.display="none";
+    }
+  }catch(e){}
   if(audioToggleBtn){
     audioToggleBtn.querySelector(".topbar-dot").classList.toggle("on",audioEnabled);
     audioToggleBtn.classList.toggle("off",!audioEnabled);
@@ -3116,12 +3126,16 @@ function initFirebaseAuth(){
   wire("profileBtn",       ()=>window.showProfileModal());
   wire("authCloseBtn",     ()=>window.closeAuthModal());
   wire("profileCloseBtn",  ()=>window.closeProfileModal());
-  wire("profileCancelBtn", ()=>window.closeProfileModal());
   wire("profileLogoutBtn", ()=>{ window.authLogout(); window.closeProfileModal(); });
   wire("tabLogin",         ()=>window.switchAuthTab("login"));
   wire("tabRegister",      ()=>window.switchAuthTab("register"));
   wire("loginSubmitBtn",   ()=>window.submitLogin());
   wire("regSubmitBtn",     ()=>window.submitRegister());
+  // Welcome popup
+  wire("welcomeStartBtn",  ()=>{
+    const o=$id("welcomeOverlay"); if(o) o.style.display="none";
+    try{ localStorage.setItem('g2g_welcomed','1'); }catch(e){}
+  });
 }
 
 // initFirebaseAuth() is called by firebase.js once all Firebase SDKs are loaded

@@ -14,7 +14,7 @@
 <header id="appHeader">
   <div class="app-header-logo">
     <div class="logo" onclick="location.reload()" style="cursor:pointer" title="Volver al inicio">GOAL2GOAT</div>
-    <div class="version-tag">v0.2</div>
+    <div class="version-tag">v0.21</div>
   </div>
   <div class="app-header-actions">
     <button class="support-btn" onclick="showSupportModal()">APOYA A GOAL2GOAT</button>
@@ -44,13 +44,23 @@
 
 <!-- PROFILE MODAL -->
 <div id="profileOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:40000;align-items:center;justify-content:center;">
-  <div class="auth-modal" style="max-width:320px">
+  <div class="auth-modal" style="max-width:340px">
     <button class="auth-close" id="profileCloseBtn">✕</button>
     <div class="auth-logo">👤 <span id="profileUsername"></span></div>
-    <div style="display:flex;flex-direction:column;gap:10px;margin-top:8px">
-      <button class="auth-submit-btn" style="background:#c0392b" id="profileLogoutBtn">CERRAR SESIÓN</button>
-      <button class="auth-submit-btn" style="background:#333;color:#aaa" id="profileCancelBtn">CANCELAR</button>
-    </div>
+    <p style="font-size:12px;color:var(--text-muted);text-align:center;margin-bottom:20px">Tu perfil Goal2Goat</p>
+    <button class="auth-submit-btn" style="background:#c0392b;margin-bottom:10px" id="profileLogoutBtn">CERRAR SESIÓN</button>
+  </div>
+</div>
+
+<!-- WELCOME POPUP -->
+<div id="welcomeOverlay" style="position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:50000;display:flex;align-items:center;justify-content:center;">
+  <div class="auth-modal" style="max-width:420px;text-align:center">
+    <div class="auth-logo">🐐 GOAL2GOAT</div>
+    <p style="font-size:13px;color:var(--text);line-height:1.6;margin-bottom:20px">
+      Bienvenido a <strong style="color:var(--gold)">Goal2Goat</strong>, un proyecto en desarrollo de un juego de fútbol con toques de roguelike. Si quieres que siga creciendo y añadiendo actualizaciones y mejoras sin que la publicidad entre en el once titular, ¡no dudes en apoyarnos!
+    </p>
+    <a href="https://paypal.me/goal2goat" target="_blank" class="support-pay-btn" style="display:block;margin-bottom:10px">APOYA A GOAL2GOAT</a>
+    <button class="auth-submit-btn" id="welcomeStartBtn" style="background:#1a2a1a;border:1px solid var(--gold);color:var(--gold)">EMPEZAR A JUGAR</button>
   </div>
 </div>
 
