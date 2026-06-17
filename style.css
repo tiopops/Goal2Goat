@@ -761,6 +761,7 @@ body.dark-theme .settings-item:hover{background:#111;color:var(--gold)}
   background:var(--card-bg);border:2px solid var(--gold);
   padding:28px;max-width:400px;width:92vw;
   position:relative;max-height:90vh;overflow-y:auto;
+  box-sizing:border-box;
 }
 .auth-close{
   position:absolute;top:12px;right:14px;
@@ -846,7 +847,7 @@ body.dark-theme .settings-item:hover{background:#111;color:var(--gold)}
 
 /* PROFILE STATS */
 .profile-stats-grid{
-  display:grid;grid-template-columns:1fr 1fr;gap:6px;
+  display:grid;grid-template-columns:1fr 1fr;gap:6px;width:100%;margin:8px 0;
 }
 .profile-stat-card{
   background:var(--dark);border:1px solid var(--line);

@@ -843,3 +843,25 @@ body.dark-theme .settings-item:hover{background:#111;color:var(--gold)}
   font-size:12px;letter-spacing:.5px;
 }
 .profile-btn:hover{background:var(--gold);color:#000}
+
+/* PROFILE STATS */
+.profile-stats-grid{
+  display:grid;grid-template-columns:1fr 1fr;gap:6px;
+}
+.profile-stat-card{
+  background:var(--dark);border:1px solid var(--line);
+  padding:12px 8px;text-align:center;display:flex;
+  flex-direction:column;align-items:center;gap:4px;
+}
+.profile-stat-card.wins{border-color:var(--gold);background:#1a1600}
+.profile-stat-card.losses{border-color:#7b2020;background:#1a0a0a}
+.profile-stat-card.best{border-color:var(--gold);grid-column:span 1}
+.profile-stat-card.titles{border-color:#888}
+.pstat-val{
+  font-family:'Bebas Neue',Impact,sans-serif;
+  font-size:30px;line-height:1;color:var(--text);
+}
+.profile-stat-card.wins .pstat-val{color:var(--gold)}
+.profile-stat-card.losses .pstat-val{color:#e74c3c}
+.profile-stat-card.best .pstat-val{color:var(--gold)}
+.pstat-label{font-size:8px;color:var(--text-muted);letter-spacing:.8px;text-transform:uppercase}
