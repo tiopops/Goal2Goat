@@ -18,10 +18,10 @@
   </div>
   <div class="app-header-actions">
     <button class="support-btn" onclick="showSupportModal()">APOYA A GOAL2GOAT</button>
-    <button class="header-auth-btn register-btn" id="authBtn" onclick="showAuthModal()">LOGIN / REGISTRO</button>
+    <button class="header-auth-btn register-btn" id="authBtn">LOGIN / REGISTRO</button>
     <span class="header-user-info" id="headerUserInfo" style="display:none">
       <span class="header-username" id="headerUsername"></span>
-      <button class="header-auth-btn logout-btn" onclick="authLogout()">SALIR</button>
+      <button class="header-auth-btn logout-btn"  id="logoutBtn">SALIR</button>
     </span>
     <div class="settings-menu" id="settingsMenu">
       <button class="settings-toggle" id="settingsToggle" onclick="toggleSettingsMenu()" title="Ajustes">⚙</button>
@@ -48,12 +48,12 @@
 <!-- AUTH MODAL -->
 <div id="authOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:40000;align-items:center;justify-content:center;">
   <div class="auth-modal">
-    <button class="auth-close" onclick="closeAuthModal()">✕</button>
+    <button class="auth-close"  id="authCloseBtn">✕</button>
     <div class="auth-logo">🐐 GOAL2GOAT</div>
     <!-- TABS -->
     <div class="auth-tabs">
-      <button class="auth-tab auth-tab-active" id="tabLogin" onclick="switchAuthTab('login')">INICIAR SESIÓN</button>
-      <button class="auth-tab" id="tabRegister" onclick="switchAuthTab('register')">CREAR CUENTA</button>
+      <button class="auth-tab auth-tab-active" id="tabLogin">INICIAR SESIÓN</button>
+      <button class="auth-tab" id="tabRegister">CREAR CUENTA</button>
     </div>
     <!-- LOGIN -->
     <div id="authLogin">
@@ -68,7 +68,7 @@
         <span class="auth-error" id="loginPasswordErr"></span>
       </div>
       <span class="auth-error auth-error-global" id="loginGlobalErr"></span>
-      <button class="auth-submit-btn" id="loginSubmitBtn" onclick="submitLogin()">ENTRAR</button>
+      <button class="auth-submit-btn" id="loginSubmitBtn">ENTRAR</button>
     </div>
     <!-- REGISTER -->
     <div id="authRegister" style="display:none">
@@ -93,7 +93,7 @@
         <span class="auth-error" id="regPassword2Err"></span>
       </div>
       <span class="auth-error auth-error-global" id="regGlobalErr"></span>
-      <button class="auth-submit-btn" id="regSubmitBtn" onclick="submitRegister()">CREAR CUENTA</button>
+      <button class="auth-submit-btn" id="regSubmitBtn">CREAR CUENTA</button>
     </div>
   </div>
 </div>

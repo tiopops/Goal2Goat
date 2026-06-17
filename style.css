@@ -829,3 +829,10 @@ body.dark-theme .settings-item:hover{background:#111;color:var(--gold)}
 .auth-tab-active{
   color:var(--gold);border-bottom-color:var(--gold);
 }
+
+/* Ensure auth button always shows gold regardless of load order */
+#authBtn{
+  background:var(--gold)!important;
+  color:#000!important;
+  border:none!important;
+}

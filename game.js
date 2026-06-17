@@ -2051,7 +2051,6 @@ teams=teams.map(t=>{
   const btn=document.getElementById("quickBuildWrap");
   if(!btn) return;
   btn.addEventListener("click",quickBuild);
-})();
 
 function quickBuild(){
   if(phase!=="draft"&&phase!=="bench") return;
@@ -2262,9 +2261,12 @@ document.addEventListener("click", function(e){
 });
 
 /* ========= FIREBASE AUTH ========= */
-(function initFirebaseAuth(){
-  // Wait until firebase is available (it's loaded via compat CDN before game.js)
-  if(typeof firebase==='undefined') return;
+function initFirebaseAuth(){
+  if(typeof firebase==='undefined'){
+    // Retry until Firebase CDN scripts have loaded
+    setTimeout(initFirebaseAuth, 100);
+    return;
+  }
   const auth=firebase.auth();
   const db=firebase.firestore();
 
@@ -2403,4 +2405,21 @@ document.addEventListener("click", function(e){
     const o=$id("authOverlay");
     if(o&&e.target===o) window.closeAuthModal();
   });
-})();
+
+  /* ─── WIRE BUTTONS via addEventListener (no inline onclick needed) ─── */
+  function wire(id,fn){ const el=$id(id); if(el) el.addEventListener("click",fn); }
+  wire("authBtn",        ()=>window.showAuthModal("login"));
+  wire("authCloseBtn",   ()=>window.closeAuthModal());
+  wire("logoutBtn",      ()=>window.authLogout());
+  wire("tabLogin",       ()=>window.switchAuthTab("login"));
+  wire("tabRegister",    ()=>window.switchAuthTab("register"));
+  wire("loginSubmitBtn", ()=>window.submitLogin());
+  wire("regSubmitBtn",   ()=>window.submitRegister());
+}
+
+// Start when DOM is ready, with retry for Firebase CDN
+if(document.readyState==="loading"){
+  document.addEventListener("DOMContentLoaded", initFirebaseAuth);
+} else {
+  initFirebaseAuth();
+}
