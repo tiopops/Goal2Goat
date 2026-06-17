@@ -3144,35 +3144,31 @@ function initFirebaseAuth(){
   window.saveMatchStat=async function(won, draw, goalsFor, goalsAgainst){
     const user=auth.currentUser; if(!user) return;
     try{
+      const inc=firebase.firestore.FieldValue.increment;
       const ref=db.collection("users").doc(user.uid);
-      const snap=await ref.get();
-      const s=snap.exists?(snap.data().stats||{}):{};
-      await ref.update({ stats:{
-        gamesPlayed: (s.gamesPlayed||0)+1,
-        wins:        (s.wins||0)+(won?1:0),
-        draws:       (s.draws||0)+(draw?1:0),
-        losses:      (s.losses||0)+(!won&&!draw?1:0),
-        goalsFor:    (s.goalsFor||0)+goalsFor,
-        goalsAgainst:(s.goalsAgainst||0)+goalsAgainst,
-        bestScore:   s.bestScore||0,
-        titles:      s.titles||0,
-      }});
-    }catch(e){ console.warn("Stat save error:", e); }
+      const upd={
+        "stats.gamesPlayed":inc(1),
+        "stats.goalsFor":   inc(goalsFor||0),
+        "stats.goalsAgainst":inc(goalsAgainst||0),
+      };
+      if(won) upd["stats.wins"]=inc(1);
+      else if(draw) upd["stats.draws"]=inc(1);
+      else upd["stats.losses"]=inc(1);
+      await ref.update(upd);
+    }catch(e){ console.warn("Stat save error:", e.code, e.message); }
   };
 
-  // Save final score after winning tournament
   window.saveVictoryStat=async function(score){
     const user=auth.currentUser; if(!user) return;
     try{
+      const inc=firebase.firestore.FieldValue.increment;
       const ref=db.collection("users").doc(user.uid);
       const snap=await ref.get();
       const s=snap.exists?(snap.data().stats||{}):{};
-      await ref.update({ stats:{
-        ...s,
-        titles:    (s.titles||0)+1,
-        bestScore: Math.max(s.bestScore||0, score),
-      }});
-    }catch(e){ console.warn("Victory stat error:", e); }
+      const upd={"stats.titles":inc(1)};
+      if((score||0)>(s.bestScore||0)) upd["stats.bestScore"]=score;
+      await ref.update(upd);
+    }catch(e){ console.warn("Victory stat error:", e.code, e.message); }
   };
 
   /* ─── CLOSE ON BACKDROP ─── */
