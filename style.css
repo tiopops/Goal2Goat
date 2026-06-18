@@ -911,6 +911,9 @@ body.dark-theme .settings-item:hover{background:#111;color:var(--gold)}
 
   .team-choice{flex-direction:column}
 
+  /* Hide desktop-only elements on mobile */
+  .desktop-only{display:none!important}
+
   /* TAB BAR — fixed at bottom of viewport */
   #mobileTabBar{
     display:flex!important;
@@ -921,31 +924,33 @@ body.dark-theme .settings-item:hover{background:#111;color:var(--gold)}
     padding-bottom:env(safe-area-inset-bottom,0px);
   }
   .mob-tab{
-    flex:1;background:none;border:none;color:#666;
-    padding:10px 4px 8px;cursor:pointer;
-    display:flex;flex-direction:column;align-items:center;gap:3px;
+    flex:1;background:none;border:none;color:#555;
+    padding:12px 4px 10px;cursor:pointer;
+    display:flex;flex-direction:column;align-items:center;gap:4px;
     transition:.15s;position:relative;
   }
-  .mob-tab-icon{font-size:20px;line-height:1}
+  .mob-tab-icon{
+    width:22px;height:22px;display:block;flex-shrink:0;
+  }
   .mob-tab-label{
     font-size:9px;font-family:'Bebas Neue',Impact,sans-serif;
-    letter-spacing:.8px;
+    letter-spacing:.8px;line-height:1;
   }
   .mob-tab.active{color:var(--gold)!important}
   .mob-tab.active::after{
-    content:'';position:absolute;top:0;left:10%;right:10%;
-    height:2px;background:var(--gold);border-radius:0 0 2px 2px;
+    content:'';position:absolute;top:0;left:15%;right:15%;
+    height:2px;background:var(--gold);
   }
-  .mob-tab:hover{color:#aaa}
+  .mob-tab:active{color:#aaa}
   .mob-tab-badge{
-    position:absolute;top:6px;right:14px;
+    position:absolute;top:8px;right:10px;
     background:var(--red);color:#fff;border-radius:50%;
     width:14px;height:14px;font-size:8px;
     display:flex;align-items:center;justify-content:center;font-weight:700;
   }
 
   /* Extra bottom padding so content isn't hidden behind tab bar */
-  .app::after{content:'';display:block;height:72px}
+  .app::after{content:'';display:block;height:82px}
 
   /* Popup/overlay adjustments */
   #welcomeOverlay .auth-modal{padding:20px!important}

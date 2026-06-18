@@ -486,8 +486,13 @@ function showTeamChoice(t1,p1,t2,p2,isBench=false){
   </div>`;
 
   if(isMobile){
-    // Switch to campo tab and scroll to the card below pitch
-    switchMobileTab('campo');
+    // Ensure campo tab active so panels are hidden, then scroll to card
+    document.querySelectorAll('.mob-tab').forEach(btn=>{
+      btn.classList.toggle('active', btn.dataset.tab==='campo');
+    });
+    document.querySelector('.left-panel')?.classList.remove('mob-active');
+    document.querySelector('.right-panel')?.classList.remove('mob-active');
+    document.getElementById('rankingPanel')?.classList.remove('mob-active');
     setTimeout(()=>{ if(targetEl) targetEl.scrollIntoView({behavior:'smooth',block:'start'}); }, 60);
     setTimeout(()=>{ if(targetEl) targetEl.scrollIntoView({behavior:'smooth',block:'start'}); }, 980);
   } else {
@@ -1092,8 +1097,6 @@ function startMatchPhase(){
   renderMorale();
   const qb=document.getElementById("quickBuildWrap");
   if(qb) qb.style.display="none";
-  // Mobile: ensure campo tab is active when match phase starts
-  if(typeof switchMobileTab==='function') switchMobileTab('campo');
   playerCardEl.innerHTML="";
   showTeamNameModal();
 }
@@ -2776,16 +2779,13 @@ function switchMobileTab(tab){
   if(ranking) ranking.classList.remove('mob-active');
 
   if(tab==='campo'){
-    setTimeout(()=>{
-      const p=document.getElementById('pitchBox')||document.getElementById('pitch');
-      if(p) p.scrollIntoView({behavior:'smooth',block:'start'});
-    },30);
+    // Just hide other panels — don't force scroll, let user scroll freely
+    // The pitch is always at top of page so it's naturally visible
   } else if(tab==='equipo'){
     if(left) left.classList.add('mob-active');
     setTimeout(()=>{
-      const el=document.getElementById('convocadosTable')||left;
-      if(el) el.scrollIntoView({behavior:'smooth',block:'start'});
-    },30);
+      if(left) left.scrollIntoView({behavior:'smooth',block:'start'});
+    },50);
   } else if(tab==='rival'){
     if(right) right.classList.add('mob-active');
     const badge=document.querySelector('.mob-tab[data-tab="rival"] .mob-tab-badge');
@@ -2793,17 +2793,19 @@ function switchMobileTab(tab){
     setTimeout(()=>{
       const rb=document.getElementById('rivalBox');
       if(rb) rb.scrollIntoView({behavior:'smooth',block:'start'});
-    },30);
+      else if(right) right.scrollIntoView({behavior:'smooth',block:'start'});
+    },50);
   } else if(tab==='historial'){
     if(right) right.classList.add('mob-active');
     setTimeout(()=>{
       const mh=document.getElementById('matchHistoryBox');
       if(mh) mh.scrollIntoView({behavior:'smooth',block:'start'});
-    },60);
+      else if(right) right.scrollIntoView({behavior:'smooth',block:'start'});
+    },80);
   } else if(tab==='ranking'){
     if(ranking){
       ranking.classList.add('mob-active');
-      setTimeout(()=>ranking.scrollIntoView({behavior:'smooth',block:'start'}),30);
+      setTimeout(()=>ranking.scrollIntoView({behavior:'smooth',block:'start'}),50);
     }
     if(typeof window.loadRanking==='function') window.loadRanking('rankingTable');
   }
