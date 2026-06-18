@@ -612,6 +612,8 @@ function pickPlayer(player){
   highlightPos(selectedPlayer.positions||[]);
   showSelectedPlayerBanner(selectedPlayer);
   scrollToEl("pitch");
+  // On mobile: switch to campo tab so pitch is visible for placement
+  if(typeof switchMobileTab==='function') switchMobileTab('campo');
 }
 
 function showSelectedPlayerBanner(p){
@@ -1074,6 +1076,8 @@ function startMatchPhase(){
   renderMorale();
   const qb=document.getElementById("quickBuildWrap");
   if(qb) qb.style.display="none";
+  // Mobile: ensure campo tab is active when match phase starts
+  if(typeof switchMobileTab==='function') switchMobileTab('campo');
   playerCardEl.innerHTML="";
   showTeamNameModal();
 }
@@ -1148,6 +1152,7 @@ function spinRivalReveal(){
     rollWeather();
     renderWeather();
     updateLed();
+    if(typeof notifyMobileRivalTab==='function') notifyMobileRivalTab();
     updateLed();
   },900);
 }
@@ -2664,3 +2669,62 @@ function initFirebaseAuth(){
 }
 
 // initFirebaseAuth() is called by firebase.js once all Firebase SDKs are loaded
+
+/* ========= MOBILE TAB NAVIGATION ========= */
+function switchMobileTab(tab){
+  if(window.innerWidth>1050) return;
+
+  document.querySelectorAll('.mob-tab').forEach(btn=>{
+    btn.classList.toggle('active', btn.dataset.tab===tab);
+  });
+
+  const left=document.querySelector('.left-panel');
+  const right=document.querySelector('.right-panel');
+
+  if(left)  left.classList.remove('mob-active');
+  if(right) right.classList.remove('mob-active');
+
+  if(tab==='equipo' && left){
+    left.classList.add('mob-active');
+    left.scrollTop=0;
+  }
+  if((tab==='rival'||tab==='historial') && right){
+    right.classList.add('mob-active');
+    right.scrollTop=0;
+    if(tab==='historial'){
+      setTimeout(()=>{
+        const mh=document.getElementById('matchHistoryBox');
+        if(mh) mh.scrollIntoView({behavior:'smooth',block:'start'});
+      },60);
+    }
+  }
+  // 'campo': both panels hidden, pitch always visible
+}
+
+// Auto-switch to rival tab when a new rival is revealed
+function notifyMobileRivalTab(){
+  if(window.innerWidth>1050) return;
+  const badge=document.querySelector('.mob-tab[data-tab="rival"] .mob-tab-badge');
+  if(badge){ badge.style.display='flex'; }
+  const btn=document.querySelector('.mob-tab[data-tab="rival"]');
+  if(btn) btn.style.color='var(--gold)';
+}
+// Clear rival badge when tab is opened
+document.addEventListener('click', e=>{
+  if(e.target.closest('.mob-tab[data-tab="rival"]')){
+    const badge=document.querySelector('.mob-tab[data-tab="rival"] .mob-tab-badge');
+    if(badge) badge.style.display='none';
+  }
+});
+
+// Add badge HTML to rival tab on init
+(function(){
+  const rivalTab=document.querySelector('.mob-tab[data-tab="rival"]');
+  if(rivalTab && !rivalTab.querySelector('.mob-tab-badge')){
+    const badge=document.createElement('span');
+    badge.className='mob-tab-badge';
+    badge.style.display='none';
+    badge.textContent='!';
+    rivalTab.appendChild(badge);
+  }
+})();

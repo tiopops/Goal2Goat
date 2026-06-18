@@ -352,6 +352,25 @@
 </div>
 
 <div id="matchOverlay"></div>
+<!-- MOBILE TAB BAR (hidden on desktop) -->
+<nav id="mobileTabBar">
+  <button class="mob-tab active" data-tab="campo" onclick="switchMobileTab('campo')">
+    <span class="mob-tab-icon">⚽</span>
+    <span class="mob-tab-label">CAMPO</span>
+  </button>
+  <button class="mob-tab" data-tab="equipo" onclick="switchMobileTab('equipo')">
+    <span class="mob-tab-icon">👥</span>
+    <span class="mob-tab-label">EQUIPO</span>
+  </button>
+  <button class="mob-tab" data-tab="rival" onclick="switchMobileTab('rival')">
+    <span class="mob-tab-icon">🎯</span>
+    <span class="mob-tab-label">RIVAL</span>
+  </button>
+  <button class="mob-tab" data-tab="historial" onclick="switchMobileTab('historial')">
+    <span class="mob-tab-icon">📋</span>
+    <span class="mob-tab-label">HISTORIAL</span>
+  </button>
+</nav>
 <script src="game.js"></script>
 <!-- Firebase loads AFTER game.js so it never blocks the game -->
 <script>

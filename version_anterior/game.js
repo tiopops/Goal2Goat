@@ -1710,6 +1710,7 @@ function showGroupResultsPopup(){
 function showEliminatedGroupStage(){
   const sc=computeFinalScore(false);
   if(typeof window.saveMatchStat==="function") window.saveMatchStat(false,false,0,0);
+  if(typeof window.saveFinalScore==="function") window.saveFinalScore(sc.total);
   document.getElementById("matchOverlay").innerHTML=`
   <div class="match-modal">
     <h3>FASE DE GRUPOS</h3>
@@ -1725,6 +1726,7 @@ function showEliminatedGroupStage(){
 function showEliminated(){
   const round=ROUND_NAMES[knockoutRound];
   const sc=computeFinalScore(false);
+  if(typeof window.saveFinalScore==="function") window.saveFinalScore(sc.total);
   const grade=sc.total>=750?"ÉLITE":sc.total>=550?"MUY BUENO":sc.total>=350?"BUENO":"MEJORABLE";
   const slots=getChainSlots();
   const chainBtn=slots>0
@@ -1747,76 +1749,67 @@ function showEliminated(){
   </div>`;
 }
 function computeFinalScore(champion){
-  // champion=true only when winning the whole tournament
   const scores={};
-  const totalMatches=matchResults.length;
-  const wins=matchResults.filter(r=>r.won).length;
-  const draws=matchResults.filter(r=>r.draw).length;
 
-  // 1. Stage bonus — how far you got (max 300 pts, only for champion)
-  // Non-champions get a reduced bonus based on round reached
+  // Stage factor: how far you got scales ALL quality metrics
+  // This ensures early elimination truly hurts — not just a small penalty
+  let stageFactor, stageBonus;
   if(champion){
-    scores.stage=300;
+    stageFactor=1.0; stageBonus=250;
+  } else if(stage==="knockout"){
+    const factors=[0.45, 0.60, 0.75, 0.88];
+    stageFactor=factors[Math.min(knockoutRound,3)]||0.45;
+    const bonuses=[60, 100, 150, 200];
+    stageBonus=bonuses[Math.min(knockoutRound,3)]||60;
   } else {
-    const stageMap={group:30, octavos:80, cuartos:140, semis:200};
-    scores.stage=stageMap[stage]||20;
-    // Knockout round for finer detail
-    if(stage==="knockout"){
-      scores.stage=Math.min(200, 80+knockoutRound*40);
-    }
+    stageFactor=0.20; stageBonus=20; // groups → harsh penalty
   }
+  scores.stage=stageBonus;
 
-  // 2. Team quality (OVR) → up to 150 pts
-  scores.ovr=Math.round((baseTeamOVR||60)/100*150);
+  // Team quality (OVR) — scaled by stageFactor
+  scores.ovr=Math.round((baseTeamOVR||60)/100*150*stageFactor);
 
-  // 3. Goals scored → up to 100 pts (cap at 15 goals)
-  const totalGoals=matchResults.reduce((s,r)=>{
-    const g=parseInt(r.score)||0; return s+g;
-  },0);
-  scores.goals=Math.min(100, Math.round(totalGoals/15*100));
+  // Goals scored
+  const totalGoals=matchResults.reduce((s,r)=>{const g=parseInt(r.score)||0;return s+g;},0);
+  scores.goals=Math.round(Math.min(80*stageFactor, totalGoals/12*80*stageFactor));
 
-  // 4. Defensive solidity → up to 80 pts
+  // Defensive solidity
   const totalConceded=matchResults.reduce((s,r)=>{
-    const parts=r.score.split('-');
-    const c=parseInt(parts[1])||0; return s+c;
+    const parts=r.score.split('-'); return s+(parseInt(parts[1])||0);
   },0);
-  scores.defense=Math.max(0, Math.round((1-Math.min(totalConceded,12)/12)*80));
+  scores.defense=Math.round(Math.max(0,(1-Math.min(totalConceded,10)/10)*60*stageFactor));
 
-  // 5. Morale → up to 60 pts
-  scores.morale=Math.round(Math.max(0,(teamMorale+50)/100*60));
+  // Morale
+  scores.morale=Math.round(Math.max(0,(teamMorale+50)/100*50*stageFactor));
 
-  // 6. Star players in position → up to 80 pts
+  // Star players in position
   const stars=usedPlayers.filter(p=>p.positions&&p.placedPos&&p.positions[0]===p.placedPos).length;
-  scores.stars=stars*Math.round(80/11);
+  scores.stars=Math.round(stars*(60/11)*stageFactor);
 
-  // 7. Scorer streaks → up to 80 pts
+  // Scorer streaks
   const streakTotal=Object.values(scorerStreaks).reduce((s,v)=>s+Math.min(v,MAX_STREAK_BONUS),0);
-  scores.streaks=Math.min(80, streakTotal*15);
+  scores.streaks=Math.round(Math.min(60*stageFactor, streakTotal*12*stageFactor));
 
-  // 8. Penalty wins → 35 pts each, up to 105 pts
+  // Penalty wins (reward for drama — not scaled, it's hard enough to earn)
   const penWins=matchResults.filter(r=>r.won&&r.score.includes('pen.')).length;
-  scores.penalties=Math.min(105, penWins*35);
+  scores.penalties=Math.min(80, penWins*30);
 
-  // 9. Clean sheets → 15 pts each, up to 75 pts
+  // Clean sheets
   const cleanSheets=matchResults.filter(r=>{
     const parts=r.score.split('-');
-    return r.won && (parseInt(parts[1])||0)===0;
+    return r.won&&(parseInt(parts[1])||0)===0;
   }).length;
-  scores.cleanSheets=Math.min(75, cleanSheets*15);
-
-  // Note: max possible without champion bonus ~= 150+100+80+60+80+80+105+75 = 730
-  // With champion bonus 300 → total can reach ~1030, cap at 1000
-  // This means only a perfect champion run approaches 1000
+  scores.cleanSheets=Math.round(Math.min(60*stageFactor, cleanSheets*12*stageFactor));
 
   const raw=Object.values(scores).reduce((a,b)=>a+b,0);
   const total=Math.min(1000, Math.round(raw));
-  return {total, breakdown:scores, penWins, totalGoals, totalConceded, stars, cleanSheets};
+  return {total, breakdown:scores, penWins, totalGoals, totalConceded, stars, cleanSheets, stageFactor};
 }
-
 function showVictory(){
   const sc=computeFinalScore(true);
-  // Save to Firebase
+  // Save to Firebase — victory saves titles+bestScore, saveFinalScore updates bestScore
   if(typeof window.saveVictoryStat==="function") window.saveVictoryStat(sc.total);
+  if(typeof window.saveFinalScore==="function") window.saveFinalScore(sc.total);
   const grade=sc.total>=900?"LEGENDARIO":sc.total>=750?"ÉLITE":sc.total>=600?"EXCELENTE":sc.total>=450?"MUY BUENO":"BUENO";
   const gradeColor=sc.total>=900?"#f0c419":sc.total>=750?"#e67e22":sc.total>=600?"#0f6b3b":"#3498db";
 
@@ -2629,6 +2622,20 @@ function initFirebaseAuth(){
       await ref.set({stats:statsUpdate},{merge:true});
       console.log("Victory saved:", score);
     }catch(e){ console.warn("Victory stat error:", e.code, e.message); }
+  };
+
+  // Save final score for ANY run (win or lose) — always updates bestScore if improved
+  window.saveFinalScore=async function(score){
+    const user=auth.currentUser; if(!user) return;
+    try{
+      const ref=db.collection("users").doc(user.uid);
+      const snap=await ref.get();
+      const s=snap.exists?(snap.data().stats||{}):{};
+      if((score||0)>(s.bestScore||0)){
+        await ref.set({stats:{bestScore:score}},{merge:true});
+        console.log("New bestScore saved:", score);
+      }
+    }catch(e){ console.warn("saveFinalScore error:", e.code, e.message); }
   };
 
   /* ─── CLOSE ON BACKDROP ─── */

@@ -877,3 +877,117 @@ body.dark-theme .settings-item:hover{background:#111;color:var(--gold)}
   padding:8px;cursor:pointer;transition:.15s;
 }
 .spb-back-btn:hover{background:#e0b82a}
+
+/* ================================================== */
+/* ============= MOBILE TAB LAYOUT ================= */
+/* ================================================== */
+
+#mobileTabBar{display:none} /* hidden on desktop */
+
+@media(max-width:1050px){
+
+  /* Reset body/app to full height column */
+  html,body{overflow:hidden!important;height:100%!important;display:flex!important;flex-direction:column!important}
+
+  #appHeader{flex-shrink:0;position:relative;z-index:100}
+
+  /* App becomes a single column that fills remaining space */
+  .app{
+    display:flex!important;flex-direction:column!important;
+    height:auto!important;flex:1!important;min-height:0!important;
+    overflow:hidden!important;
+  }
+
+  /* ── CENTER PANEL: pitch + buttons, always visible at top ── */
+  .center-panel{
+    order:1!important;
+    flex-shrink:0!important;
+    height:auto!important;max-height:none!important;
+    overflow:visible!important;
+    background:#ddd;
+    display:flex!important;flex-direction:column!important;align-items:center!important;
+  }
+
+  #pitchBox{
+    width:100%!important;
+    flex-shrink:0!important;
+  }
+
+  #pitch{
+    width:100%!important;max-width:100%!important;
+    height:auto!important;
+  }
+
+  /* LED board: slightly smaller on mobile */
+  .led-board{max-width:100%!important;height:42px!important}
+  .led-text{font-size:11px!important;line-height:42px!important}
+
+  /* Buttons under pitch */
+  #centerBottom{width:100%!important;max-width:100%!important}
+  #quickBuildWrap{width:100%!important;max-width:100%!important;padding:0 0 4px!important}
+  .main-action-btn{max-width:100%!important}
+
+  /* Player card on mobile stays below pitch */
+  #playerCard{width:100%;background:var(--bg);flex-shrink:0}
+
+  /* ── LEFT & RIGHT PANELS: become tab panes ── */
+  .left-panel,.right-panel{
+    display:none!important; /* hidden by default, shown by tab JS */
+    order:2!important;
+    flex:1!important;min-height:0!important;
+    overflow-y:auto!important;
+    height:auto!important;
+    border:none!important;
+    padding:10px!important;
+  }
+
+  .left-panel.mob-active,
+  .right-panel.mob-active{
+    display:block!important;
+  }
+
+  /* ── TAB BAR ── */
+  #mobileTabBar{
+    display:flex!important;
+    flex-shrink:0!important;
+    background:#1a1a1a!important;
+    border-top:2px solid #333!important;
+    z-index:200!important;
+    width:100%!important;
+  }
+
+  .mob-tab{
+    flex:1;background:none;border:none;color:#666;
+    padding:8px 4px 6px;cursor:pointer;
+    display:flex;flex-direction:column;align-items:center;gap:2px;
+    transition:.15s;
+  }
+  .mob-tab-icon{font-size:18px;line-height:1}
+  .mob-tab-label{font-size:8px;font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:.8px}
+  .mob-tab.active{color:var(--gold)!important;border-top:2px solid var(--gold);margin-top:-2px}
+  .mob-tab:hover{color:#aaa}
+
+  /* Tab badge for notifications */
+  .mob-tab-badge{
+    position:absolute;top:4px;right:12px;
+    background:var(--red);color:#fff;border-radius:50%;
+    width:14px;height:14px;font-size:8px;
+    display:flex;align-items:center;justify-content:center;
+    font-weight:700;
+  }
+  .mob-tab{position:relative}
+
+  /* When a tab panel is shown, it scrolls independently */
+  .left-panel.mob-active,
+  .right-panel.mob-active{
+    overflow-y:auto!important;
+    max-height:none!important;
+    -webkit-overflow-scrolling:touch;
+  }
+
+  /* Ensure howToPlayBox and other left-panel content display properly */
+  #howToPlayBox,#statsGuideBox,#strategyBox{display:block!important}
+
+  /* Shrink welcome popup padding on mobile */
+  #welcomeOverlay .auth-modal{padding:20px!important}
+}
