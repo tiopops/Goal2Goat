@@ -924,33 +924,31 @@ body.dark-theme .settings-item:hover{background:#111;color:var(--gold)}
     padding-bottom:env(safe-area-inset-bottom,0px);
   }
   .mob-tab{
-    flex:1;background:none;border:none;color:#555;
-    padding:12px 4px 10px;cursor:pointer;
-    display:flex;flex-direction:column;align-items:center;gap:4px;
+    flex:1;background:none;border:none;color:#666;
+    padding:10px 4px 8px;cursor:pointer;
+    display:flex;flex-direction:column;align-items:center;gap:3px;
     transition:.15s;position:relative;
   }
-  .mob-tab-icon{
-    width:22px;height:22px;display:block;flex-shrink:0;
-  }
+  .mob-tab-icon{font-size:20px;line-height:1}
   .mob-tab-label{
     font-size:9px;font-family:'Bebas Neue',Impact,sans-serif;
-    letter-spacing:.8px;line-height:1;
+    letter-spacing:.8px;
   }
   .mob-tab.active{color:var(--gold)!important}
   .mob-tab.active::after{
-    content:'';position:absolute;top:0;left:15%;right:15%;
-    height:2px;background:var(--gold);
+    content:'';position:absolute;top:0;left:10%;right:10%;
+    height:2px;background:var(--gold);border-radius:0 0 2px 2px;
   }
-  .mob-tab:active{color:#aaa}
+  .mob-tab:hover{color:#aaa}
   .mob-tab-badge{
-    position:absolute;top:8px;right:10px;
+    position:absolute;top:6px;right:14px;
     background:var(--red);color:#fff;border-radius:50%;
     width:14px;height:14px;font-size:8px;
     display:flex;align-items:center;justify-content:center;font-weight:700;
   }
 
   /* Extra bottom padding so content isn't hidden behind tab bar */
-  .app::after{content:'';display:block;height:82px}
+  .app::after{content:'';display:block;height:72px}
 
   /* Popup/overlay adjustments */
   #welcomeOverlay .auth-modal{padding:20px!important}

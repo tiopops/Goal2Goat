@@ -2652,59 +2652,69 @@ function initFirebaseAuth(){
     const user=auth.currentUser; if(!user) return;
     try{
       const inc=firebase.firestore.FieldValue.increment;
-      const ref=db.collection("users").doc(user.uid);
-      const snap=await ref.get();
-      const s=snap.exists?(snap.data().stats||{}):{};
-      const statsUpdate={titles: inc(1)};
-      if((score||0)>(s.bestScore||0)) statsUpdate.bestScore=score;
-      await ref.set({stats:statsUpdate},{merge:true});
-      console.log("Victory saved:", score);
+      await db.collection("users").doc(user.uid)
+        .set({stats:{titles:inc(1)}},{merge:true});
     }catch(e){ console.warn("Victory stat error:", e.code, e.message); }
   };
 
+  // Save score for any run — updates bestScore only if better, always adds to scores collection
   window.saveFinalScore=async function(score){
     const user=auth.currentUser; if(!user) return;
+    if(!score||score<=0) return;
     try{
-      const ref=db.collection("users").doc(user.uid);
-      const snap=await ref.get();
+      const userRef=db.collection("users").doc(user.uid);
+      const snap=await userRef.get();
       const s=snap.exists?(snap.data().stats||{}):{};
-      if((score||0)>(s.bestScore||0)){
-        await ref.set({
+      const username=snap.exists?snap.data().username:'—';
+
+      // 1. Update bestScore in user profile only if this score is better
+      if((score)>(s.bestScore||0)){
+        await userRef.set({
           stats:{bestScore:score},
-          bestTeamName: typeof myTeamName!=='undefined'?myTeamName:'—'
+          bestTeamName:typeof myTeamName!=='undefined'?myTeamName:'—'
         },{merge:true});
-        console.log("New bestScore saved:", score);
       }
+
+      // 2. Always add this score to the global 'scores' collection (one doc per run)
+      //    The ranking reads from this collection, so ALL scores are preserved
+      await db.collection("scores").add({
+        uid:       user.uid,
+        username:  username,
+        teamName:  typeof myTeamName!=='undefined'?myTeamName:'—',
+        score:     score,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      console.log("Score saved:", score);
     }catch(e){ console.warn("saveFinalScore error:", e.code, e.message); }
   };
 
-  // Load top 50 scores for ranking tab
+  // Load top 50 from the 'scores' collection — all runs, all users, ordered desc
   window.loadRanking=async function(targetId){
     const el=document.getElementById(targetId||'rankingTable');
     if(!el) return;
     el.innerHTML='<p class="ranking-loading">Cargando ranking...</p>';
     try{
-      const snap=await db.collection("users")
-        .orderBy("stats.bestScore","desc")
+      const snap=await db.collection("scores")
+        .orderBy("score","desc")
         .limit(50)
         .get();
       if(snap.empty){
-        el.innerHTML='<p class="ranking-loading">Aún no hay puntuaciones registradas. ¡Sé el primero!</p>';
+        el.innerHTML='<p class="ranking-loading">Aún no hay puntuaciones. ¡Sé el primero!</p>';
         return;
       }
-      let rows='';
-      snap.docs.forEach((doc,i)=>{
+      let rows=''; let pos=0;
+      snap.docs.forEach(doc=>{
         const d=doc.data();
-        const score=d.stats&&d.stats.bestScore?d.stats.bestScore:0;
-        if(score<=0) return;
-        const pos=i+1;
+        if(!d.score||d.score<=0) return;
+        pos++;
         const posClass=pos===1?'gold':pos===2?'silver':pos===3?'bronze':'';
         const medal=pos===1?'🥇':pos===2?'🥈':pos===3?'🥉':'';
-        const teamName=d.bestTeamName||'—';
         rows+=`<tr>
           <td class="rank-pos ${posClass}">${medal||pos}</td>
-          <td class="rank-name">${d.username||'—'}<br><span style="font-size:10px;color:var(--text-muted);font-weight:400">${teamName}</span></td>
-          <td class="rank-score">${score}</td>
+          <td class="rank-name">${d.username||'—'}<br>
+            <span style="font-size:10px;color:var(--text-muted);font-weight:400">${d.teamName||'—'}</span>
+          </td>
+          <td class="rank-score">${d.score}</td>
         </tr>`;
       });
       el.innerHTML=rows
