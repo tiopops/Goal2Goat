@@ -2676,8 +2676,8 @@ function initFirebaseAuth(){
   };
 
   // Load top 50 scores for ranking tab
-  window.loadRanking=async function(){
-    const el=document.getElementById('rankingTable');
+  window.loadRanking=async function(targetId){
+    const el=document.getElementById(targetId||'rankingTable');
     if(!el) return;
     el.innerHTML='<p class="ranking-loading">Cargando ranking...</p>';
     try{
@@ -2716,12 +2716,19 @@ function initFirebaseAuth(){
     }
   };
 
+  window.showRankingModal=function(){
+    const o=document.getElementById('rankingOverlay');
+    if(o){ o.style.display='flex'; window.loadRanking('rankingTableDesktop'); }
+  };
+
   /* ─── CLOSE ON BACKDROP ─── */
   document.addEventListener("click",e=>{
     const auth=$id("authOverlay");
     if(auth&&e.target===auth) window.closeAuthModal();
     const prof=$id("profileOverlay");
     if(prof&&e.target===prof) window.closeProfileModal();
+    const rank=$id("rankingOverlay");
+    if(rank&&e.target===rank) rank.style.display='none';
   });
 
   /* ─── WIRE BUTTONS ─── */
@@ -2798,7 +2805,7 @@ function switchMobileTab(tab){
       ranking.classList.add('mob-active');
       setTimeout(()=>ranking.scrollIntoView({behavior:'smooth',block:'start'}),30);
     }
-    if(typeof window.loadRanking==='function') window.loadRanking();
+    if(typeof window.loadRanking==='function') window.loadRanking('rankingTable');
   }
 }
 function notifyMobileRivalTab(){

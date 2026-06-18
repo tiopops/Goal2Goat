@@ -18,6 +18,7 @@
   </div>
   <div class="app-header-actions">
     <button class="support-btn" onclick="showSupportModal()">APOYA A GOAL2GOAT</button>
+    <button class="support-btn" style="background:#1a1a1a;border:1px solid var(--gold);color:var(--gold)" onclick="showRankingModal()">🏆 RANKING</button>
     <button class="header-auth-btn register-btn" id="authBtn">LOGIN / REGISTRO</button>
     <button class="header-auth-btn profile-btn" id="profileBtn" style="display:none">PERFIL</button>
     <div class="settings-menu" id="settingsMenu">
@@ -352,6 +353,16 @@
 </div>
 
 <div id="matchOverlay"></div>
+<!-- RANKING MODAL (desktop) -->
+<div id="rankingOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:40000;align-items:center;justify-content:center;">
+  <div class="auth-modal" style="max-width:480px">
+    <button class="auth-close" onclick="document.getElementById('rankingOverlay').style.display='none'">✕</button>
+    <div class="auth-logo">🏆 RANKING GLOBAL</div>
+    <p class="ranking-subtitle" style="text-align:center">Top 50 mejores puntuaciones de jugadores registrados</p>
+    <div id="rankingTableDesktop"><p class="ranking-loading">Cargando...</p></div>
+  </div>
+</div>
+
 <!-- RANKING PANEL (mobile tab) -->
 <div id="rankingPanel" style="display:none" class="ranking-panel">
   <div class="box">
