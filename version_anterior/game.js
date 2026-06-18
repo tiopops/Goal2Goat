@@ -539,6 +539,7 @@ function selectTeam(teamName){
   const already=new Set([...usedPlayers.map(p=>p.name),...bench.map(p=>p.name)]);
   const available=team.players.filter(p=>!already.has(p.name));
   const show=randomPick(available,5);
+  window._lastRoster={team, players:show}; // store for VOLVER
   showRosterModal(team,show);
 }
 
@@ -637,13 +638,13 @@ function hideSelectedPlayerBanner(){
 }
 
 function volverASeleccion(){
-  // Deselect player, clear highlights, restore last team choice
   selectedPlayer=null;
   clearHighlights();
   hideSelectedPlayerBanner();
-  if(window._lastTeamChoice){
-    const {t1,p1,t2,p2,isBench}=window._lastTeamChoice;
-    showTeamChoice(t1,p1,t2,p2,isBench);
+  // Restore the same 5 players from the last selected team
+  if(window._lastRoster){
+    const {team, players}=window._lastRoster;
+    showRosterModal(team, players);
   }
 }
 
