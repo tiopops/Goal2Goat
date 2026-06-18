@@ -640,6 +640,7 @@ function hideSelectedPlayerBanner(){
 }
 
 function volverASeleccion(){
+  playSound('select');
   selectedPlayer=null;
   clearHighlights();
   hideSelectedPlayerBanner();
@@ -2680,25 +2681,37 @@ function switchMobileTab(tab){
 
   const left=document.querySelector('.left-panel');
   const right=document.querySelector('.right-panel');
-
   if(left)  left.classList.remove('mob-active');
   if(right) right.classList.remove('mob-active');
 
-  if(tab==='equipo' && left){
-    left.classList.add('mob-active');
-    left.scrollTop=0;
+  if(tab==='campo'){
+    // Scroll to pitch
+    setTimeout(()=>{
+      const p=document.getElementById('pitchBox')||document.getElementById('pitch');
+      if(p) p.scrollIntoView({behavior:'smooth',block:'start'});
+    },30);
+  } else if(tab==='equipo'){
+    if(left){ left.classList.add('mob-active'); }
+    setTimeout(()=>{
+      const el=document.getElementById('convocadosTable')||left;
+      if(el) el.scrollIntoView({behavior:'smooth',block:'start'});
+    },30);
+  } else if(tab==='rival'){
+    if(right){ right.classList.add('mob-active'); }
+    // Clear badge
+    const badge=document.querySelector('.mob-tab[data-tab="rival"] .mob-tab-badge');
+    if(badge) badge.style.display='none';
+    setTimeout(()=>{
+      const rb=document.getElementById('rivalBox');
+      if(rb) rb.scrollIntoView({behavior:'smooth',block:'start'});
+    },30);
+  } else if(tab==='historial'){
+    if(right){ right.classList.add('mob-active'); }
+    setTimeout(()=>{
+      const mh=document.getElementById('matchHistoryBox');
+      if(mh) mh.scrollIntoView({behavior:'smooth',block:'start'});
+    },60);
   }
-  if((tab==='rival'||tab==='historial') && right){
-    right.classList.add('mob-active');
-    right.scrollTop=0;
-    if(tab==='historial'){
-      setTimeout(()=>{
-        const mh=document.getElementById('matchHistoryBox');
-        if(mh) mh.scrollIntoView({behavior:'smooth',block:'start'});
-      },60);
-    }
-  }
-  // 'campo': both panels hidden, pitch always visible
 }
 
 // Auto-switch to rival tab when a new rival is revealed

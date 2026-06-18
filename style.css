@@ -311,16 +311,7 @@ body.dark-theme .version-tag{color:#555}
 .modal-btn.danger{background:var(--red)}.modal-btn.danger:hover{background:#a93226}
 
 /* ===================== RESPONSIVE ===================== */
-@media(max-width:1050px){
-  html,body{overflow:auto;height:auto;display:block}
-  #appHeader{position:sticky;top:0;z-index:100}
-  .app{display:flex;flex-direction:column;height:auto;flex:none}
-  .center-panel{order:1;height:auto;max-height:none;overflow:visible}
-  #pitch{height:auto;width:100%;max-width:min(100%,60vh);max-height:none;flex:none}
-  .left-panel{order:2;border-right:none;border-bottom:1px solid var(--line);overflow:visible}
-  .right-panel{order:3;border-left:none;overflow:visible}
-  .team-choice{flex-direction:column}
-}
+
 @media(max-width:640px){
   .logo{font-size:22px}
   .app-header-logo{gap:6px}
@@ -882,112 +873,81 @@ body.dark-theme .settings-item:hover{background:#111;color:var(--gold)}
 /* ============= MOBILE TAB LAYOUT ================= */
 /* ================================================== */
 
-#mobileTabBar{display:none} /* hidden on desktop */
+#mobileTabBar{display:none}
 
 @media(max-width:1050px){
 
-  /* Reset body/app to full height column */
-  html,body{overflow:hidden!important;height:100%!important;display:flex!important;flex-direction:column!important}
+  /* Body scrolls normally — tabs just show/hide sections */
+  html,body{overflow:auto;height:auto;display:block}
+  #appHeader{position:sticky;top:0;z-index:200;width:100%}
 
-  #appHeader{flex-shrink:0;position:relative;z-index:100}
+  .app{display:block!important;height:auto!important}
 
-  /* App becomes a single column that fills remaining space */
-  .app{
-    display:flex!important;flex-direction:column!important;
-    height:auto!important;flex:1!important;min-height:0!important;
-    overflow:hidden!important;
-  }
-
-  /* ── CENTER PANEL: pitch + buttons, always visible at top ── */
+  /* Center panel: always shown, no fixed height */
   .center-panel{
-    order:1!important;
-    flex-shrink:0!important;
-    height:auto!important;max-height:none!important;
-    overflow:visible!important;
-    background:#ddd;
     display:flex!important;flex-direction:column!important;align-items:center!important;
+    width:100%!important;height:auto!important;overflow:visible!important;
   }
+  #pitchBox{width:100%!important}
+  #pitch{width:100%!important;max-width:100%!important;height:auto!important}
+  #playerCard{width:100%;background:var(--bg)}
 
-  #pitchBox{
-    width:100%!important;
-    flex-shrink:0!important;
-  }
-
-  #pitch{
-    width:100%!important;max-width:100%!important;
-    height:auto!important;
-  }
-
-  /* LED board: slightly smaller on mobile */
-  .led-board{max-width:100%!important;height:42px!important}
-  .led-text{font-size:11px!important;line-height:42px!important}
-
-  /* Buttons under pitch */
+  .led-board{max-width:100%!important;height:44px!important}
+  .led-text{font-size:11px!important;line-height:44px!important}
   #centerBottom{width:100%!important;max-width:100%!important}
   #quickBuildWrap{width:100%!important;max-width:100%!important;padding:0 0 4px!important}
   .main-action-btn{max-width:100%!important}
 
-  /* Player card on mobile stays below pitch */
-  #playerCard{width:100%;background:var(--bg);flex-shrink:0}
-
-  /* ── LEFT & RIGHT PANELS: become tab panes ── */
+  /* Panels: hidden by default, shown by tab */
   .left-panel,.right-panel{
-    display:none!important; /* hidden by default, shown by tab JS */
-    order:2!important;
-    flex:1!important;min-height:0!important;
-    overflow-y:auto!important;
-    height:auto!important;
-    border:none!important;
-    padding:10px!important;
+    display:none!important;
+    width:100%!important;height:auto!important;
+    overflow:visible!important;
+    border:none!important;padding:10px!important;
+    box-sizing:border-box!important;
   }
-
   .left-panel.mob-active,
-  .right-panel.mob-active{
-    display:block!important;
-  }
+  .right-panel.mob-active{display:block!important}
 
-  /* ── TAB BAR ── */
+  .team-choice{flex-direction:column}
+
+  /* TAB BAR — fixed at bottom of viewport */
   #mobileTabBar{
     display:flex!important;
-    flex-shrink:0!important;
-    background:#1a1a1a!important;
+    position:fixed!important;bottom:0!important;left:0!important;right:0!important;
+    background:#111!important;
     border-top:2px solid #333!important;
-    z-index:200!important;
-    width:100%!important;
+    z-index:999!important;
+    padding-bottom:env(safe-area-inset-bottom,0px);
   }
-
   .mob-tab{
     flex:1;background:none;border:none;color:#666;
-    padding:8px 4px 6px;cursor:pointer;
-    display:flex;flex-direction:column;align-items:center;gap:2px;
-    transition:.15s;
+    padding:10px 4px 8px;cursor:pointer;
+    display:flex;flex-direction:column;align-items:center;gap:3px;
+    transition:.15s;position:relative;
   }
-  .mob-tab-icon{font-size:18px;line-height:1}
-  .mob-tab-label{font-size:8px;font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:.8px}
-  .mob-tab.active{color:var(--gold)!important;border-top:2px solid var(--gold);margin-top:-2px}
+  .mob-tab-icon{font-size:20px;line-height:1}
+  .mob-tab-label{
+    font-size:9px;font-family:'Bebas Neue',Impact,sans-serif;
+    letter-spacing:.8px;
+  }
+  .mob-tab.active{color:var(--gold)!important}
+  .mob-tab.active::after{
+    content:'';position:absolute;top:0;left:10%;right:10%;
+    height:2px;background:var(--gold);border-radius:0 0 2px 2px;
+  }
   .mob-tab:hover{color:#aaa}
-
-  /* Tab badge for notifications */
   .mob-tab-badge{
-    position:absolute;top:4px;right:12px;
+    position:absolute;top:6px;right:14px;
     background:var(--red);color:#fff;border-radius:50%;
     width:14px;height:14px;font-size:8px;
-    display:flex;align-items:center;justify-content:center;
-    font-weight:700;
-  }
-  .mob-tab{position:relative}
-
-  /* When a tab panel is shown, it scrolls independently */
-  .left-panel.mob-active,
-  .right-panel.mob-active{
-    overflow-y:auto!important;
-    max-height:none!important;
-    -webkit-overflow-scrolling:touch;
+    display:flex;align-items:center;justify-content:center;font-weight:700;
   }
 
-  /* Ensure howToPlayBox and other left-panel content display properly */
-  #howToPlayBox,#statsGuideBox,#strategyBox{display:block!important}
+  /* Extra bottom padding so content isn't hidden behind tab bar */
+  .app::after{content:'';display:block;height:72px}
 
-  /* Shrink welcome popup padding on mobile */
+  /* Popup/overlay adjustments */
   #welcomeOverlay .auth-modal{padding:20px!important}
+  .auth-modal{max-height:85vh!important;overflow-y:auto!important}
 }
