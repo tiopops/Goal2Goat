@@ -870,10 +870,10 @@ body.dark-theme .settings-item:hover{background:#111;color:var(--gold)}
 /* VOLVER button in player selection banner */
 .spb-back-btn{
   margin-top:8px;width:100%;
-  background:transparent;color:var(--text-muted);
-  border:1px solid var(--line);
+  background:var(--gold);color:#000;
+  border:none;
   font-family:'Bebas Neue',Impact,sans-serif;
-  font-size:14px;letter-spacing:1px;
-  padding:6px;cursor:pointer;transition:.15s;
+  font-size:16px;letter-spacing:1.5px;
+  padding:8px;cursor:pointer;transition:.15s;
 }
-.spb-back-btn:hover{border-color:var(--gold);color:var(--gold)}
+.spb-back-btn:hover{background:#e0b82a}
