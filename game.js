@@ -33,648 +33,7 @@ function flagEmoji(name, size){
   return `<img class="flag-emoji" src="https://flagcdn.com/w80/${cc}.png" srcset="https://flagcdn.com/w160/${cc}.png 2x" alt="${name}" title="${name}" style="width:${w}px;height:auto;display:inline-block;vertical-align:middle;border-radius:2px;box-shadow:0 0 0 1px rgba(0,0,0,.1)">`;
 }
 
-let playersDB = [
-  {"id": "p_1_0", "name": "Iker Casillas", "positions": ["POR"], "overall": 91},
-  {"id": "p_1_1", "name": "Sergio Ramos", "positions": ["DFC"], "overall": 86},
-  {"id": "p_1_2", "name": "Gerard Piqué", "positions": ["DFC"], "overall": 86},
-  {"id": "p_1_3", "name": "Carles Puyol", "positions": ["DFC"], "overall": 85},
-  {"id": "p_1_4", "name": "Joan Capdevila", "positions": ["LTI", "DFC"], "overall": 80},
-  {"id": "p_1_5", "name": "Álvaro Arbeloa", "positions": ["LTD", "DFC"], "overall": 78},
-  {"id": "p_1_6", "name": "Xavi Hernández", "positions": ["MC"], "overall": 92},
-  {"id": "p_1_7", "name": "Andrés Iniesta", "positions": ["MC"], "overall": 93},
-  {"id": "p_1_8", "name": "Sergio Busquets", "positions": ["MC"], "overall": 83},
-  {"id": "p_1_9", "name": "Xabi Alonso", "positions": ["MC"], "overall": 87},
-  {"id": "p_1_10", "name": "Pedro Rodríguez", "positions": ["EI", "ED"], "overall": 84},
-  {"id": "p_1_11", "name": "David Silva", "positions": ["ED", "EI"], "overall": 87},
-  {"id": "p_1_12", "name": "David Villa", "positions": ["DC"], "overall": 91},
-  {"id": "p_1_13", "name": "Fernando Torres", "positions": ["DC"], "overall": 85},
-  {"id": "p_1_14", "name": "Cesc Fàbregas", "positions": ["DC", "EI"], "overall": 86},
-  {"id": "p_1_15", "name": "Jesús Navas", "positions": ["ED", "EI"], "overall": 78},
-  {"id": "p_2_0", "name": "Iker Casillas", "positions": ["POR"], "overall": 90},
-  {"id": "p_2_1", "name": "Gerard Piqué", "positions": ["DFC"], "overall": 87},
-  {"id": "p_2_2", "name": "Sergio Ramos", "positions": ["DFC"], "overall": 87},
-  {"id": "p_2_3", "name": "Carles Puyol", "positions": ["DFC"], "overall": 85},
-  {"id": "p_2_4", "name": "Jordi Alba", "positions": ["LTI", "DFC"], "overall": 84},
-  {"id": "p_2_5", "name": "Álvaro Arbeloa", "positions": ["LTD", "DFC"], "overall": 79},
-  {"id": "p_2_6", "name": "Xavi Hernández", "positions": ["MC"], "overall": 91},
-  {"id": "p_2_7", "name": "Andrés Iniesta", "positions": ["MC"], "overall": 93},
-  {"id": "p_2_8", "name": "Sergio Busquets", "positions": ["MC"], "overall": 85},
-  {"id": "p_2_9", "name": "Xabi Alonso", "positions": ["MC"], "overall": 88},
-  {"id": "p_2_10", "name": "David Silva", "positions": ["EI", "ED"], "overall": 88},
-  {"id": "p_2_11", "name": "Jesús Navas", "positions": ["ED", "EI"], "overall": 79},
-  {"id": "p_2_12", "name": "Fernando Torres", "positions": ["DC"], "overall": 84},
-  {"id": "p_2_13", "name": "Cesc Fàbregas", "positions": ["DC"], "overall": 87},
-  {"id": "p_2_14", "name": "Pedro Rodríguez", "positions": ["DC", "EI"], "overall": 83},
-  {"id": "p_2_15", "name": "David Villa", "positions": ["DC", "ED"], "overall": 88},
-  {"id": "p_4_0", "name": "Marcos", "positions": ["POR"], "overall": 85},
-  {"id": "p_4_1", "name": "Lúcio", "positions": ["DFC"], "overall": 86},
-  {"id": "p_4_2", "name": "Roque Júnior", "positions": ["DFC"], "overall": 78},
-  {"id": "p_4_3", "name": "Edmílson", "positions": ["DFC"], "overall": 82},
-  {"id": "p_4_4", "name": "Roberto Carlos", "positions": ["LTI", "DFC"], "overall": 90},
-  {"id": "p_4_5", "name": "Cafu", "positions": ["LTD", "DFC"], "overall": 89},
-  {"id": "p_4_6", "name": "Gilberto Silva", "positions": ["MC"], "overall": 85},
-  {"id": "p_4_7", "name": "Kléberson", "positions": ["MC"], "overall": 80},
-  {"id": "p_4_8", "name": "Ronaldinho", "positions": ["EI", "ED"], "overall": 92},
-  {"id": "p_4_9", "name": "Rivaldo", "positions": ["ED", "EI"], "overall": 91},
-  {"id": "p_4_10", "name": "Ronaldo Nazário", "positions": ["DC"], "overall": 97},
-  {"id": "p_4_11", "name": "Edmundo", "positions": ["DC"], "overall": 78},
-  {"id": "p_4_12", "name": "Luizão", "positions": ["DC", "EI"], "overall": 76},
-  {"id": "p_4_13", "name": "Denílson", "positions": ["DC", "ED"], "overall": 79},
-  {"id": "p_4_14", "name": "Juninho Paulista", "positions": ["MC"], "overall": 79},
-  {"id": "p_4_15", "name": "Edílson", "positions": ["MC"], "overall": 76},
-  {"id": "p_6_0", "name": "Bodo Illgner", "positions": ["POR"], "overall": 84},
-  {"id": "p_6_1", "name": "Jürgen Kohler", "positions": ["DFC"], "overall": 86},
-  {"id": "p_6_2", "name": "Guido Buchwald", "positions": ["DFC"], "overall": 84},
-  {"id": "p_6_3", "name": "Klaus Augenthaler", "positions": ["DFC"], "overall": 82},
-  {"id": "p_6_4", "name": "Andreas Brehme", "positions": ["LTI", "DFC"], "overall": 87},
-  {"id": "p_6_5", "name": "Stefan Reuter", "positions": ["LTD", "DFC"], "overall": 80},
-  {"id": "p_6_6", "name": "Lothar Matthäus", "positions": ["MC"], "overall": 93},
-  {"id": "p_6_7", "name": "Thomas Häßler", "positions": ["MC"], "overall": 85},
-  {"id": "p_6_8", "name": "Olaf Thon", "positions": ["MC"], "overall": 80},
-  {"id": "p_6_9", "name": "Pierre Littbarski", "positions": ["MC"], "overall": 81},
-  {"id": "p_6_10", "name": "Jürgen Klinsmann", "positions": ["EI", "ED"], "overall": 92},
-  {"id": "p_6_11", "name": "Rudi Völler", "positions": ["ED", "EI"], "overall": 88},
-  {"id": "p_6_12", "name": "Karl-Heinz Riedle", "positions": ["DC"], "overall": 78},
-  {"id": "p_6_13", "name": "Uwe Bein", "positions": ["DC"], "overall": 76},
-  {"id": "p_6_14", "name": "Frank Mill", "positions": ["DC", "EI"], "overall": 74},
-  {"id": "p_6_15", "name": "Thomas Berthold", "positions": ["DFC", "MC"], "overall": 80},
-  {"id": "p_7_0", "name": "Manuel Neuer", "positions": ["POR"], "overall": 93},
-  {"id": "p_7_1", "name": "Mats Hummels", "positions": ["DFC"], "overall": 87},
-  {"id": "p_7_2", "name": "Jérôme Boateng", "positions": ["DFC"], "overall": 86},
-  {"id": "p_7_3", "name": "Per Mertesacker", "positions": ["DFC"], "overall": 83},
-  {"id": "p_7_4", "name": "Benedikt Höwedes", "positions": ["LTI", "DFC"], "overall": 81},
-  {"id": "p_7_5", "name": "Philipp Lahm", "positions": ["LTD", "DFC"], "overall": 89},
-  {"id": "p_7_6", "name": "Bastian Schweinsteiger", "positions": ["MC"], "overall": 88},
-  {"id": "p_7_7", "name": "Toni Kroos", "positions": ["MC"], "overall": 89},
-  {"id": "p_7_8", "name": "Sami Khedira", "positions": ["MC"], "overall": 84},
-  {"id": "p_7_9", "name": "Mesut Özil", "positions": ["EI", "ED"], "overall": 88},
-  {"id": "p_7_10", "name": "Thomas Müller", "positions": ["ED", "EI"], "overall": 89},
-  {"id": "p_7_11", "name": "Miroslav Klose", "positions": ["DC"], "overall": 87},
-  {"id": "p_7_12", "name": "André Schürrle", "positions": ["DC"], "overall": 82},
-  {"id": "p_7_13", "name": "Mario Götze", "positions": ["DC", "EI"], "overall": 85},
-  {"id": "p_7_14", "name": "Lukas Podolski", "positions": ["DC", "ED"], "overall": 81},
-  {"id": "p_7_15", "name": "Christoph Kramer", "positions": ["MC"], "overall": 76},
-  {"id": "p_8_0", "name": "Nery Pumpido", "positions": ["POR"], "overall": 80},
-  {"id": "p_8_1", "name": "Oscar Ruggeri", "positions": ["DFC"], "overall": 84},
-  {"id": "p_8_2", "name": "José Luis Brown", "positions": ["DFC"], "overall": 81},
-  {"id": "p_8_3", "name": "Néstor Clausen", "positions": ["DFC"], "overall": 76},
-  {"id": "p_8_4", "name": "Julio Olarticoechea", "positions": ["LTI", "DFC"], "overall": 79},
-  {"id": "p_8_5", "name": "José Luis Cuciuffo", "positions": ["LTD", "DFC"], "overall": 78},
-  {"id": "p_8_6", "name": "Diego Armando Maradona", "positions": ["EI", "MC"], "overall": 98},
-  {"id": "p_8_7", "name": "Jorge Burruchaga", "positions": ["MC"], "overall": 84},
-  {"id": "p_8_8", "name": "Sergio Batista", "positions": ["MC"], "overall": 80},
-  {"id": "p_8_9", "name": "Ricardo Giusti", "positions": ["MC"], "overall": 78},
-  {"id": "p_8_10", "name": "Jorge Valdano", "positions": ["EI", "ED"], "overall": 86},
-  {"id": "p_8_11", "name": "Héctor Enrique", "positions": ["MC"], "overall": 76},
-  {"id": "p_8_12", "name": "Claudio Borghi", "positions": ["MC"], "overall": 76},
-  {"id": "p_8_13", "name": "Ramón Díaz", "positions": ["DC"], "overall": 78},
-  {"id": "p_8_14", "name": "Pedro Pasculli", "positions": ["DC"], "overall": 75},
-  {"id": "p_8_15", "name": "Marcelo Trobbiani", "positions": ["ED", "EI"], "overall": 73},
-  {"id": "p_9_0", "name": "Emiliano Martínez", "positions": ["POR"], "overall": 88},
-  {"id": "p_9_1", "name": "Cristian Romero", "positions": ["DFC"], "overall": 85},
-  {"id": "p_9_2", "name": "Nicolás Otamendi", "positions": ["DFC"], "overall": 82},
-  {"id": "p_9_3", "name": "Lisandro Martínez", "positions": ["DFC"], "overall": 84},
-  {"id": "p_9_4", "name": "Nicolás Tagliafico", "positions": ["LTI", "DFC"], "overall": 81},
-  {"id": "p_9_5", "name": "Nahuel Molina", "positions": ["LTD", "DFC"], "overall": 80},
-  {"id": "p_9_6", "name": "Rodrigo De Paul", "positions": ["MC"], "overall": 84},
-  {"id": "p_9_7", "name": "Enzo Fernández", "positions": ["MC"], "overall": 85},
-  {"id": "p_9_8", "name": "Alexis Mac Allister", "positions": ["MC"], "overall": 83},
-  {"id": "p_9_9", "name": "Ángel Di María", "positions": ["EI", "ED"], "overall": 86},
-  {"id": "p_9_10", "name": "Julián Álvarez", "positions": ["DC", "EI"], "overall": 86},
-  {"id": "p_9_11", "name": "Lionel Messi", "positions": ["EI", "DC"], "overall": 97},
-  {"id": "p_9_12", "name": "Lautaro Martínez", "positions": ["DC"], "overall": 86},
-  {"id": "p_9_13", "name": "Paulo Dybala", "positions": ["DC", "EI"], "overall": 82},
-  {"id": "p_9_14", "name": "Leandro Paredes", "positions": ["MC"], "overall": 78},
-  {"id": "p_9_15", "name": "Alejandro Gómez", "positions": ["DC", "ED"], "overall": 77},
-  {"id": "p_10_0", "name": "Fabien Barthez", "positions": ["POR"], "overall": 87},
-  {"id": "p_10_1", "name": "Laurent Blanc", "positions": ["DFC"], "overall": 86},
-  {"id": "p_10_2", "name": "Marcel Desailly", "positions": ["DFC"], "overall": 88},
-  {"id": "p_10_3", "name": "Lilian Thuram", "positions": ["DFC"], "overall": 87},
-  {"id": "p_10_4", "name": "Bixente Lizarazu", "positions": ["LTI", "DFC"], "overall": 85},
-  {"id": "p_10_5", "name": "Christian Karembeu", "positions": ["LTD", "DFC"], "overall": 79},
-  {"id": "p_10_6", "name": "Didier Deschamps", "positions": ["MC"], "overall": 84},
-  {"id": "p_10_7", "name": "Emmanuel Petit", "positions": ["MC"], "overall": 85},
-  {"id": "p_10_8", "name": "Youri Djorkaeff", "positions": ["MC"], "overall": 86},
-  {"id": "p_10_9", "name": "Zinedine Zidane", "positions": ["MC", "EI"], "overall": 94},
-  {"id": "p_10_10", "name": "Thierry Henry", "positions": ["EI", "ED"], "overall": 88},
-  {"id": "p_10_11", "name": "Robert Pirès", "positions": ["ED", "EI"], "overall": 84},
-  {"id": "p_10_12", "name": "David Trezeguet", "positions": ["DC"], "overall": 84},
-  {"id": "p_10_13", "name": "Christophe Dugarry", "positions": ["DC"], "overall": 79},
-  {"id": "p_10_14", "name": "Patrick Vieira", "positions": ["MC"], "overall": 86},
-  {"id": "p_10_15", "name": "Stéphane Guivarc'h", "positions": ["DC"], "overall": 76},
-  {"id": "p_11_0", "name": "Hugo Lloris", "positions": ["POR"], "overall": 87},
-  {"id": "p_11_1", "name": "Raphaël Varane", "positions": ["DFC"], "overall": 88},
-  {"id": "p_11_2", "name": "Samuel Umtiti", "positions": ["DFC"], "overall": 82},
-  {"id": "p_11_3", "name": "Lucas Hernández", "positions": ["LTI", "DFC"], "overall": 83},
-  {"id": "p_11_4", "name": "Benjamin Pavard", "positions": ["LTD", "DFC"], "overall": 81},
-  {"id": "p_11_5", "name": "Presnel Kimpembe", "positions": ["DFC"], "overall": 79},
-  {"id": "p_11_6", "name": "N'Golo Kanté", "positions": ["MC"], "overall": 89},
-  {"id": "p_11_7", "name": "Paul Pogba", "positions": ["MC"], "overall": 87},
-  {"id": "p_11_8", "name": "Blaise Matuidi", "positions": ["MC"], "overall": 82},
-  {"id": "p_11_9", "name": "Kylian Mbappé", "positions": ["EI", "ED"], "overall": 91},
-  {"id": "p_11_10", "name": "Antoine Griezmann", "positions": ["DC", "EI"], "overall": 90},
-  {"id": "p_11_11", "name": "Olivier Giroud", "positions": ["DC"], "overall": 84},
-  {"id": "p_11_12", "name": "Ousmane Dembélé", "positions": ["ED", "EI"], "overall": 81},
-  {"id": "p_11_13", "name": "Florian Thauvin", "positions": ["ED", "EI"], "overall": 79},
-  {"id": "p_11_14", "name": "Steven Nzonzi", "positions": ["MC"], "overall": 80},
-  {"id": "p_11_15", "name": "Corentin Tolisso", "positions": ["MC"], "overall": 78},
-  {"id": "p_13_0", "name": "Gianluigi Buffon", "positions": ["POR"], "overall": 91},
-  {"id": "p_13_1", "name": "Fabio Cannavaro", "positions": ["DFC"], "overall": 90},
-  {"id": "p_13_2", "name": "Alessandro Nesta", "positions": ["DFC"], "overall": 87},
-  {"id": "p_13_3", "name": "Marco Materazzi", "positions": ["DFC"], "overall": 83},
-  {"id": "p_13_4", "name": "Fabio Grosso", "positions": ["LTI", "DFC"], "overall": 81},
-  {"id": "p_13_5", "name": "Gianluca Zambrotta", "positions": ["LTD", "DFC"], "overall": 84},
-  {"id": "p_13_6", "name": "Andrea Pirlo", "positions": ["MC"], "overall": 90},
-  {"id": "p_13_7", "name": "Gennaro Gattuso", "positions": ["MC"], "overall": 84},
-  {"id": "p_13_8", "name": "Mauro Camoranesi", "positions": ["MC"], "overall": 80},
-  {"id": "p_13_9", "name": "Francesco Totti", "positions": ["EI", "ED"], "overall": 89},
-  {"id": "p_13_10", "name": "Luca Toni", "positions": ["ED", "EI"], "overall": 85},
-  {"id": "p_13_11", "name": "Alessandro Del Piero", "positions": ["DC"], "overall": 88},
-  {"id": "p_13_12", "name": "Alberto Gilardino", "positions": ["DC"], "overall": 81},
-  {"id": "p_13_13", "name": "Vincenzo Iaquinta", "positions": ["DC", "EI"], "overall": 77},
-  {"id": "p_13_14", "name": "Daniele De Rossi", "positions": ["MC"], "overall": 84},
-  {"id": "p_13_15", "name": "Simone Perrotta", "positions": ["MC"], "overall": 78},
-  {"id": "p_17_0", "name": "Rui Patrício", "positions": ["POR"], "overall": 84},
-  {"id": "p_17_1", "name": "Pepe", "positions": ["DFC"], "overall": 84},
-  {"id": "p_17_2", "name": "José Fonte", "positions": ["DFC"], "overall": 81},
-  {"id": "p_17_3", "name": "Bruno Alves", "positions": ["DFC"], "overall": 80},
-  {"id": "p_17_4", "name": "Raphaël Guerreiro", "positions": ["LTI", "DFC"], "overall": 81},
-  {"id": "p_17_5", "name": "Cédric Soares", "positions": ["LTD", "DFC"], "overall": 78},
-  {"id": "p_17_6", "name": "William Carvalho", "positions": ["MC"], "overall": 82},
-  {"id": "p_17_7", "name": "João Moutinho", "positions": ["MC"], "overall": 83},
-  {"id": "p_17_8", "name": "Adrien Silva", "positions": ["MC"], "overall": 79},
-  {"id": "p_17_9", "name": "Renato Sanches", "positions": ["MC"], "overall": 80},
-  {"id": "p_17_10", "name": "Cristiano Ronaldo", "positions": ["EI", "DC"], "overall": 95},
-  {"id": "p_17_11", "name": "Nani", "positions": ["ED", "EI"], "overall": 81},
-  {"id": "p_17_12", "name": "Ricardo Quaresma", "positions": ["ED", "EI"], "overall": 80},
-  {"id": "p_17_13", "name": "André Silva", "positions": ["DC"], "overall": 76},
-  {"id": "p_17_14", "name": "João Mário", "positions": ["MC", "ED"], "overall": 78},
-  {"id": "p_17_15", "name": "Éder", "positions": ["DC"], "overall": 76},
-  {"id": "p_18_0", "name": "Danijel Subašić", "positions": ["POR"], "overall": 85},
-  {"id": "p_18_1", "name": "Dejan Lovren", "positions": ["DFC"], "overall": 81},
-  {"id": "p_18_2", "name": "Domagoj Vida", "positions": ["DFC"], "overall": 80},
-  {"id": "p_18_3", "name": "Šime Vrsaljko", "positions": ["LTD", "DFC"], "overall": 79},
-  {"id": "p_18_4", "name": "Ivan Strinić", "positions": ["LTI", "DFC"], "overall": 77},
-  {"id": "p_18_5", "name": "Borna Barišić", "positions": ["LTI", "DFC"], "overall": 76},
-  {"id": "p_18_6", "name": "Luka Modrić", "positions": ["MC"], "overall": 93},
-  {"id": "p_18_7", "name": "Ivan Rakitić", "positions": ["MC"], "overall": 88},
-  {"id": "p_18_8", "name": "Marcelo Brozović", "positions": ["MC"], "overall": 82},
-  {"id": "p_18_9", "name": "Ivan Perišić", "positions": ["EI", "ED"], "overall": 86},
-  {"id": "p_18_10", "name": "Mario Mandžukić", "positions": ["DC"], "overall": 86},
-  {"id": "p_18_11", "name": "Ante Rebić", "positions": ["ED", "EI"], "overall": 81},
-  {"id": "p_18_12", "name": "Andrej Kramarić", "positions": ["DC"], "overall": 81},
-  {"id": "p_18_13", "name": "Milan Badelj", "positions": ["MC"], "overall": 78},
-  {"id": "p_18_14", "name": "Marko Pjaca", "positions": ["DC", "EI"], "overall": 76},
-  {"id": "p_18_15", "name": "Nikola Kalinić", "positions": ["DC", "ED"], "overall": 77},
-  {"id": "p_21_0", "name": "Peter Schmeichel", "positions": ["POR"], "overall": 89},
-  {"id": "p_21_1", "name": "Lars Olsen", "positions": ["DFC"], "overall": 82},
-  {"id": "p_21_2", "name": "Kent Nielsen", "positions": ["DFC"], "overall": 77},
-  {"id": "p_21_3", "name": "Torben Piechnik", "positions": ["DFC"], "overall": 76},
-  {"id": "p_21_4", "name": "Jan Heintze", "positions": ["LTI", "DFC"], "overall": 79},
-  {"id": "p_21_5", "name": "Kim Christofte", "positions": ["LTD", "DFC"], "overall": 75},
-  {"id": "p_21_6", "name": "John Jensen", "positions": ["MC"], "overall": 80},
-  {"id": "p_21_7", "name": "Kim Vilfort", "positions": ["MC"], "overall": 83},
-  {"id": "p_21_8", "name": "Henrik Andersen", "positions": ["MC"], "overall": 78},
-  {"id": "p_21_9", "name": "Brian Laudrup", "positions": ["EI", "ED"], "overall": 87},
-  {"id": "p_21_10", "name": "Flemming Povlsen", "positions": ["ED", "EI"], "overall": 81},
-  {"id": "p_21_11", "name": "Henrik Larsen", "positions": ["DC"], "overall": 83},
-  {"id": "p_21_12", "name": "Bent Christensen", "positions": ["DC"], "overall": 76},
-  {"id": "p_21_13", "name": "Lars Elstrup", "positions": ["MC"], "overall": 76},
-  {"id": "p_21_14", "name": "Peter Rasmussen", "positions": ["DC", "EI"], "overall": 73},
-  {"id": "p_21_15", "name": "Claus Christiansen", "positions": ["DC", "ED"], "overall": 73},
-  {"id": "p_22_0", "name": "Thibaut Courtois", "positions": ["POR"], "overall": 89},
-  {"id": "p_22_1", "name": "Vincent Kompany", "positions": ["DFC"], "overall": 86},
-  {"id": "p_22_2", "name": "Toby Alderweireld", "positions": ["DFC"], "overall": 84},
-  {"id": "p_22_3", "name": "Jan Vertonghen", "positions": ["DFC"], "overall": 84},
-  {"id": "p_22_4", "name": "Thomas Meunier", "positions": ["LTD", "DFC"], "overall": 78},
-  {"id": "p_22_5", "name": "Nacer Chadli", "positions": ["LTI", "DFC"], "overall": 78},
-  {"id": "p_22_6", "name": "Kevin De Bruyne", "positions": ["MC"], "overall": 91},
-  {"id": "p_22_7", "name": "Axel Witsel", "positions": ["MC"], "overall": 82},
-  {"id": "p_22_8", "name": "Marouane Fellaini", "positions": ["MC"], "overall": 79},
-  {"id": "p_22_9", "name": "Eden Hazard", "positions": ["EI", "ED"], "overall": 91},
-  {"id": "p_22_10", "name": "Romelu Lukaku", "positions": ["DC"], "overall": 87},
-  {"id": "p_22_11", "name": "Dries Mertens", "positions": ["DC", "EI"], "overall": 82},
-  {"id": "p_22_12", "name": "Yannick Carrasco", "positions": ["ED", "EI"], "overall": 80},
-  {"id": "p_22_13", "name": "Mousa Dembélé", "positions": ["MC"], "overall": 80},
-  {"id": "p_22_14", "name": "Michy Batshuayi", "positions": ["DC"], "overall": 77},
-  {"id": "p_22_15", "name": "Adnan Januzaj", "positions": ["DC", "ED"], "overall": 76},
-  {"id": "p_23_0", "name": "Pablo Larios", "positions": ["POR"], "overall": 78},
-  {"id": "p_23_1", "name": "Fernando Quirarte", "positions": ["DFC"], "overall": 79},
-  {"id": "p_23_2", "name": "Rafael Amador", "positions": ["DFC"], "overall": 75},
-  {"id": "p_23_3", "name": "Miguel España", "positions": ["LTI", "DFC"], "overall": 75},
-  {"id": "p_23_4", "name": "Javier López", "positions": ["LTD", "DFC"], "overall": 73},
-  {"id": "p_23_5", "name": "Mario Villa", "positions": ["DFC"], "overall": 73},
-  {"id": "p_23_6", "name": "Hugo Sánchez", "positions": ["DC"], "overall": 90},
-  {"id": "p_23_7", "name": "Carlos Hermosillo", "positions": ["DC"], "overall": 75},
-  {"id": "p_23_8", "name": "Manuel Negrete", "positions": ["MC"], "overall": 81},
-  {"id": "p_23_9", "name": "Javier Aguirre", "positions": ["MC"], "overall": 78},
-  {"id": "p_23_10", "name": "Tomás Boy", "positions": ["MC"], "overall": 80},
-  {"id": "p_23_11", "name": "Luis Flores", "positions": ["EI", "ED"], "overall": 76},
-  {"id": "p_23_12", "name": "Carlos de los Cobos", "positions": ["MC"], "overall": 74},
-  {"id": "p_23_13", "name": "Mario Ortiz", "positions": ["DC", "EI"], "overall": 73},
-  {"id": "p_23_14", "name": "Sergio Lugo", "positions": ["DC", "ED"], "overall": 73},
-  {"id": "p_23_15", "name": "Javier Hernández sr.", "positions": ["ED", "EI"], "overall": 74},
-  {"id": "p_24_0", "name": "Brad Friedel", "positions": ["POR"], "overall": 82},
-  {"id": "p_24_1", "name": "Eddie Pope", "positions": ["DFC"], "overall": 79},
-  {"id": "p_24_2", "name": "Jeff Agoos", "positions": ["DFC"], "overall": 75},
-  {"id": "p_24_3", "name": "Gregg Berhalter", "positions": ["DFC"], "overall": 76},
-  {"id": "p_24_4", "name": "Tony Sanneh", "positions": ["LTI", "DFC"], "overall": 75},
-  {"id": "p_24_5", "name": "Frankie Hejduk", "positions": ["LTD", "DFC"], "overall": 76},
-  {"id": "p_24_6", "name": "Claudio Reyna", "positions": ["MC"], "overall": 84},
-  {"id": "p_24_7", "name": "John O'Brien", "positions": ["MC"], "overall": 78},
-  {"id": "p_24_8", "name": "Pablo Mastroeni", "positions": ["MC"], "overall": 75},
-  {"id": "p_24_9", "name": "Earnie Stewart", "positions": ["MC"], "overall": 77},
-  {"id": "p_24_10", "name": "Landon Donovan", "positions": ["EI", "ED"], "overall": 84},
-  {"id": "p_24_11", "name": "DaMarcus Beasley", "positions": ["ED", "EI"], "overall": 79},
-  {"id": "p_24_12", "name": "Brian McBride", "positions": ["DC"], "overall": 81},
-  {"id": "p_24_13", "name": "Josh Wolff", "positions": ["DC"], "overall": 75},
-  {"id": "p_24_14", "name": "Clint Mathis", "positions": ["DC", "EI"], "overall": 77},
-  {"id": "p_24_15", "name": "Cobi Jones", "positions": ["DC", "ED"], "overall": 76},
-  {"id": "p_25_0", "name": "Yoshikatsu Kawaguchi", "positions": ["POR"], "overall": 80},
-  {"id": "p_25_1", "name": "Tsuneyasu Miyamoto", "positions": ["DFC"], "overall": 78},
-  {"id": "p_25_2", "name": "Naoki Matsuda", "positions": ["DFC"], "overall": 76},
-  {"id": "p_25_3", "name": "Ryuzo Morioka", "positions": ["DFC"], "overall": 75},
-  {"id": "p_25_4", "name": "Koji Nakata", "positions": ["LTI", "DFC"], "overall": 75},
-  {"id": "p_25_5", "name": "Hiroaki Morishima", "positions": ["LTD", "DFC"], "overall": 74},
-  {"id": "p_25_6", "name": "Hidetoshi Nakata", "positions": ["MC"], "overall": 86},
-  {"id": "p_25_7", "name": "Junichi Inamoto", "positions": ["MC"], "overall": 79},
-  {"id": "p_25_8", "name": "Shinji Ono", "positions": ["MC"], "overall": 81},
-  {"id": "p_25_9", "name": "Toshiya Fujita", "positions": ["MC"], "overall": 75},
-  {"id": "p_25_10", "name": "Atsushi Yanagisawa", "positions": ["DC"], "overall": 76},
-  {"id": "p_25_11", "name": "Naohiro Takahara", "positions": ["DC"], "overall": 76},
-  {"id": "p_25_12", "name": "Masashi Nakayama", "positions": ["DC", "EI"], "overall": 78},
-  {"id": "p_25_13", "name": "Shoji Jo", "positions": ["DC", "ED"], "overall": 73},
-  {"id": "p_25_14", "name": "Akinori Nishizawa", "positions": ["ED", "EI"], "overall": 76},
-  {"id": "p_25_15", "name": "Teruyoshi Ito", "positions": ["MC"], "overall": 74},
-  {"id": "p_26_0", "name": "Lee Woon-jae", "positions": ["POR"], "overall": 81},
-  {"id": "p_26_1", "name": "Hong Myung-bo", "positions": ["DFC"], "overall": 84},
-  {"id": "p_26_2", "name": "Choi Jin-cheul", "positions": ["DFC"], "overall": 76},
-  {"id": "p_26_3", "name": "Kim Tae-young", "positions": ["DFC"], "overall": 76},
-  {"id": "p_26_4", "name": "Lee Young-pyo", "positions": ["LTI", "DFC"], "overall": 80},
-  {"id": "p_26_5", "name": "Song Chong-gug", "positions": ["LTD", "DFC"], "overall": 78},
-  {"id": "p_26_6", "name": "Park Ji-sung", "positions": ["MC"], "overall": 84},
-  {"id": "p_26_7", "name": "Yoo Sang-chul", "positions": ["MC"], "overall": 81},
-  {"id": "p_26_8", "name": "Kim Nam-il", "positions": ["MC"], "overall": 77},
-  {"id": "p_26_9", "name": "Lee Chun-soo", "positions": ["MC"], "overall": 78},
-  {"id": "p_26_10", "name": "Ahn Jung-hwan", "positions": ["DC"], "overall": 82},
-  {"id": "p_26_11", "name": "Seol Ki-hyeon", "positions": ["EI", "ED"], "overall": 79},
-  {"id": "p_26_12", "name": "Hwang Sun-hong", "positions": ["DC"], "overall": 78},
-  {"id": "p_26_13", "name": "Cha Du-ri", "positions": ["LTD", "MC"], "overall": 76},
-  {"id": "p_26_14", "name": "Kim Do-hoon", "positions": ["DC", "ED"], "overall": 75},
-  {"id": "p_26_15", "name": "Choi Tae-uk", "positions": ["ED", "EI"], "overall": 75},
-  {"id": "p_27_0", "name": "Yassine Bounou", "positions": ["POR"], "overall": 86},
-  {"id": "p_27_1", "name": "Romain Saïss", "positions": ["DFC"], "overall": 80},
-  {"id": "p_27_2", "name": "Nayef Aguerd", "positions": ["DFC"], "overall": 79},
-  {"id": "p_27_3", "name": "Achraf Dari", "positions": ["DFC"], "overall": 75},
-  {"id": "p_27_4", "name": "Noussair Mazraoui", "positions": ["LTD", "DFC"], "overall": 80},
-  {"id": "p_27_5", "name": "Achraf Hakimi", "positions": ["LTD", "DFC"], "overall": 86},
-  {"id": "p_27_6", "name": "Sofyan Amrabat", "positions": ["MC"], "overall": 83},
-  {"id": "p_27_7", "name": "Azzedine Ounahi", "positions": ["MC"], "overall": 80},
-  {"id": "p_27_8", "name": "Selim Amallah", "positions": ["MC"], "overall": 75},
-  {"id": "p_27_9", "name": "Abdelhamid Sabiri", "positions": ["MC"], "overall": 76},
-  {"id": "p_27_10", "name": "Hakim Ziyech", "positions": ["EI", "ED"], "overall": 84},
-  {"id": "p_27_11", "name": "Sofiane Boufal", "positions": ["ED", "EI"], "overall": 78},
-  {"id": "p_27_12", "name": "Youssef En-Nesyri", "positions": ["DC"], "overall": 82},
-  {"id": "p_27_13", "name": "Abderrazak Hamdallah", "positions": ["DC"], "overall": 75},
-  {"id": "p_27_14", "name": "Walid Cheddira", "positions": ["DC", "EI"], "overall": 74},
-  {"id": "p_27_15", "name": "Zakaria Aboukhlal", "positions": ["DC", "ED"], "overall": 75},
-  {"id": "p_28_0", "name": "Peter Rufai", "positions": ["POR"], "overall": 82},
-  {"id": "p_28_1", "name": "Uche Okechukwu", "positions": ["DFC"], "overall": 77},
-  {"id": "p_28_2", "name": "Augustine Eguavoen", "positions": ["DFC"], "overall": 78},
-  {"id": "p_28_3", "name": "Benedict Iroha", "positions": ["DFC"], "overall": 75},
-  {"id": "p_28_4", "name": "Chidi Nwanu", "positions": ["LTI", "DFC"], "overall": 73},
-  {"id": "p_28_5", "name": "Mobi Oparaku", "positions": ["LTD", "DFC"], "overall": 73},
-  {"id": "p_28_6", "name": "Jay-Jay Okocha", "positions": ["EI", "ED"], "overall": 87},
-  {"id": "p_28_7", "name": "Sunday Oliseh", "positions": ["MC"], "overall": 81},
-  {"id": "p_28_8", "name": "Emmanuel Amunike", "positions": ["MC"], "overall": 82},
-  {"id": "p_28_9", "name": "Samson Siasia", "positions": ["MC"], "overall": 75},
-  {"id": "p_28_10", "name": "Mutiu Adepoju", "positions": ["MC"], "overall": 76},
-  {"id": "p_28_11", "name": "Finidi George", "positions": ["ED", "EI"], "overall": 83},
-  {"id": "p_28_12", "name": "Rashidi Yekini", "positions": ["DC"], "overall": 85},
-  {"id": "p_28_13", "name": "Daniel Amokachi", "positions": ["DC"], "overall": 81},
-  {"id": "p_28_14", "name": "Victor Ikpeba", "positions": ["DC", "EI"], "overall": 79},
-  {"id": "p_28_15", "name": "Friday Ekpo", "positions": ["DC", "ED"], "overall": 72},
-  {"id": "p_29_0", "name": "Thomas N'Kono", "positions": ["POR"], "overall": 84},
-  {"id": "p_29_1", "name": "Stephen Tataw", "positions": ["DFC"], "overall": 78},
-  {"id": "p_29_2", "name": "Emmanuel Kundé", "positions": ["DFC"], "overall": 78},
-  {"id": "p_29_3", "name": "Benjamin Massing", "positions": ["DFC"], "overall": 75},
-  {"id": "p_29_4", "name": "André Kana-Biyik", "positions": ["LTI", "DFC"], "overall": 76},
-  {"id": "p_29_5", "name": "Bertin Ebwellé", "positions": ["LTD", "DFC"], "overall": 73},
-  {"id": "p_29_6", "name": "Roger Milla", "positions": ["DC"], "overall": 86},
-  {"id": "p_29_7", "name": "François Omam-Biyik", "positions": ["EI", "ED"], "overall": 80},
-  {"id": "p_29_8", "name": "Cyrille Makanaky", "positions": ["MC"], "overall": 79},
-  {"id": "p_29_9", "name": "Emile Mbouh", "positions": ["MC"], "overall": 75},
-  {"id": "p_29_10", "name": "Louis-Paul Mfedé", "positions": ["MC"], "overall": 74},
-  {"id": "p_29_11", "name": "Victor Ndip Akem", "positions": ["MC"], "overall": 73},
-  {"id": "p_29_12", "name": "Eugène Ekéké", "positions": ["DC"], "overall": 75},
-  {"id": "p_29_13", "name": "Jean-Claude Pagal", "positions": ["DC", "EI"], "overall": 73},
-  {"id": "p_29_14", "name": "Roger Feutmba", "positions": ["DC", "ED"], "overall": 73},
-  {"id": "p_29_15", "name": "Jules Nyongha", "positions": ["ED", "EI"], "overall": 73},
-  {"id": "p_31_0", "name": "Justo Villar", "positions": ["POR"], "overall": 82},
-  {"id": "p_31_1", "name": "Paulo da Silva", "positions": ["DFC"], "overall": 79},
-  {"id": "p_31_2", "name": "Antolín Alcaraz", "positions": ["DFC"], "overall": 78},
-  {"id": "p_31_3", "name": "Darío Verón", "positions": ["DFC"], "overall": 75},
-  {"id": "p_31_4", "name": "Denis Caniza", "positions": ["LTI", "DFC"], "overall": 76},
-  {"id": "p_31_5", "name": "Claudio Morel Rodríguez", "positions": ["LTD", "DFC"], "overall": 75},
-  {"id": "p_31_6", "name": "Roque Santa Cruz", "positions": ["DC"], "overall": 82},
-  {"id": "p_31_7", "name": "Óscar Cardozo", "positions": ["DC"], "overall": 80},
-  {"id": "p_31_8", "name": "Cristian Riveros", "positions": ["MC"], "overall": 78},
-  {"id": "p_31_9", "name": "Víctor Cáceres", "positions": ["MC"], "overall": 76},
-  {"id": "p_31_10", "name": "Enrique Vera", "positions": ["MC"], "overall": 76},
-  {"id": "p_31_11", "name": "Edgar Barreto", "positions": ["MC"], "overall": 78},
-  {"id": "p_31_12", "name": "Nelson Haedo Valdez", "positions": ["EI", "ED"], "overall": 78},
-  {"id": "p_31_13", "name": "Lucas Barrios", "positions": ["DC", "EI"], "overall": 77},
-  {"id": "p_31_14", "name": "Edgar Benítez", "positions": ["DC", "EI"], "overall": 75},
-  {"id": "p_31_15", "name": "Santiago Salcedo", "positions": ["DC", "ED"], "overall": 73},
-  {"id": "p_32_0", "name": "David Ospina", "positions": ["POR"], "overall": 84},
-  {"id": "p_32_1", "name": "Mario Yepes", "positions": ["DFC"], "overall": 79},
-  {"id": "p_32_2", "name": "Cristián Zapata", "positions": ["DFC"], "overall": 78},
-  {"id": "p_32_3", "name": "Pablo Armero", "positions": ["LTI", "DFC"], "overall": 76},
-  {"id": "p_32_4", "name": "Santiago Arias", "positions": ["LTD", "DFC"], "overall": 78},
-  {"id": "p_32_5", "name": "Éder Álvarez Balanta", "positions": ["DFC"], "overall": 75},
-  {"id": "p_32_6", "name": "James Rodríguez", "positions": ["EI", "ED"], "overall": 89},
-  {"id": "p_32_7", "name": "Juan Cuadrado", "positions": ["MC", "ED"], "overall": 82},
-  {"id": "p_32_8", "name": "Fredy Guarín", "positions": ["MC"], "overall": 80},
-  {"id": "p_32_9", "name": "Carlos Sánchez", "positions": ["MC"], "overall": 79},
-  {"id": "p_32_10", "name": "Abel Aguilar", "positions": ["MC"], "overall": 75},
-  {"id": "p_32_11", "name": "Jackson Martínez", "positions": ["DC"], "overall": 80},
-  {"id": "p_32_12", "name": "Carlos Bacca", "positions": ["DC"], "overall": 81},
-  {"id": "p_32_13", "name": "Teófilo Gutiérrez", "positions": ["DC"], "overall": 77},
-  {"id": "p_32_14", "name": "Juan Fernando Quintero", "positions": ["ED", "EI"], "overall": 78},
-  {"id": "p_32_15", "name": "Adrián Ramos", "positions": ["DC", "ED"], "overall": 75},
-  {"id": "p_40_0", "name": "Rüştü Reçber", "positions": ["POR"], "overall": 84},
-  {"id": "p_40_1", "name": "Alpay Özalan", "positions": ["DFC"], "overall": 80},
-  {"id": "p_40_2", "name": "Bülent Korkmaz", "positions": ["DFC"], "overall": 78},
-  {"id": "p_40_3", "name": "Fatih Akyel", "positions": ["DFC"], "overall": 76},
-  {"id": "p_40_4", "name": "Ümit Davala", "positions": ["LTI", "DFC"], "overall": 78},
-  {"id": "p_40_5", "name": "Ogün Temizkanoğlu", "positions": ["LTD", "DFC"], "overall": 73},
-  {"id": "p_40_6", "name": "Hakan Şükür", "positions": ["DC"], "overall": 84},
-  {"id": "p_40_7", "name": "Nihat Kahveci", "positions": ["DC"], "overall": 80},
-  {"id": "p_40_8", "name": "Tugay Kerimoğlu", "positions": ["MC"], "overall": 81},
-  {"id": "p_40_9", "name": "Emre Belözoğlu", "positions": ["MC"], "overall": 80},
-  {"id": "p_40_10", "name": "Yıldıray Baştürk", "positions": ["MC"], "overall": 77},
-  {"id": "p_40_11", "name": "Hasan Şaş", "positions": ["MC"], "overall": 79},
-  {"id": "p_40_12", "name": "İlhan Mansız", "positions": ["EI", "ED"], "overall": 78},
-  {"id": "p_40_13", "name": "Ümit Karan", "positions": ["ED", "EI"], "overall": 75},
-  {"id": "p_40_14", "name": "Tayfun Korkut", "positions": ["DC", "EI"], "overall": 73},
-  {"id": "p_40_15", "name": "Tayfur Havutçu", "positions": ["DC", "ED"], "overall": 74},
-  {"id": "p_41_0", "name": "Antonis Nikopolidis", "positions": ["POR"], "overall": 81},
-  {"id": "p_41_1", "name": "Traianos Dellas", "positions": ["DFC"], "overall": 80},
-  {"id": "p_41_2", "name": "Michalis Kapsis", "positions": ["DFC"], "overall": 76},
-  {"id": "p_41_3", "name": "Takis Fyssas", "positions": ["LTI", "DFC"], "overall": 76},
-  {"id": "p_41_4", "name": "Giourkas Seitaridis", "positions": ["LTD", "DFC"], "overall": 78},
-  {"id": "p_41_5", "name": "Stelios Venetidis", "positions": ["LTD", "DFC"], "overall": 73},
-  {"id": "p_41_6", "name": "Theodoros Zagorakis", "positions": ["MC"], "overall": 82},
-  {"id": "p_41_7", "name": "Kostas Katsouranis", "positions": ["MC"], "overall": 78},
-  {"id": "p_41_8", "name": "Angelos Basinas", "positions": ["MC"], "overall": 78},
-  {"id": "p_41_9", "name": "Stylianos Giannakopoulos", "positions": ["MC"], "overall": 75},
-  {"id": "p_41_10", "name": "Giorgos Karagounis", "positions": ["MC", "ED"], "overall": 79},
-  {"id": "p_41_11", "name": "Angelos Charisteas", "positions": ["DC"], "overall": 81},
-  {"id": "p_41_12", "name": "Demis Nikolaidis", "positions": ["DC"], "overall": 77},
-  {"id": "p_41_13", "name": "Zisis Vryzas", "positions": ["EI", "ED"], "overall": 75},
-  {"id": "p_41_14", "name": "Vassilios Tsiartas", "positions": ["EI", "ED"], "overall": 76},
-  {"id": "p_41_15", "name": "Vassilis Lakis", "positions": ["DC", "EI"], "overall": 72},
-  {"id": "p_42_0", "name": "Florin Prunea", "positions": ["POR"], "overall": 79},
-  {"id": "p_42_1", "name": "Gheorghe Popescu", "positions": ["DFC"], "overall": 82},
-  {"id": "p_42_2", "name": "Miodrag Belodedici", "positions": ["DFC"], "overall": 80},
-  {"id": "p_42_3", "name": "Daniel Prodan", "positions": ["DFC"], "overall": 75},
-  {"id": "p_42_4", "name": "Dan Petrescu", "positions": ["LTD", "DFC"], "overall": 80},
-  {"id": "p_42_5", "name": "Ioan Lupescu", "positions": ["LTI", "DFC"], "overall": 78},
-  {"id": "p_42_6", "name": "Gheorghe Hagi", "positions": ["MC", "EI"], "overall": 89},
-  {"id": "p_42_7", "name": "Ilie Dumitrescu", "positions": ["MC"], "overall": 80},
-  {"id": "p_42_8", "name": "Tibor Selymes", "positions": ["MC"], "overall": 75},
-  {"id": "p_42_9", "name": "Cristian Dulca", "positions": ["MC"], "overall": 73},
-  {"id": "p_42_10", "name": "Florin Răducioiu", "positions": ["EI", "ED"], "overall": 79},
-  {"id": "p_42_11", "name": "Adrian Ilie", "positions": ["ED", "EI"], "overall": 76},
-  {"id": "p_42_12", "name": "Dorinel Munteanu", "positions": ["MC"], "overall": 76},
-  {"id": "p_42_13", "name": "Viorel Moldovan", "positions": ["DC"], "overall": 76},
-  {"id": "p_42_14", "name": "Gheorghe Craioveanu", "positions": ["DC", "ED"], "overall": 73},
-  {"id": "p_42_15", "name": "Ioan Vlădoiu", "positions": ["DC"], "overall": 73},
-  {"id": "p_43_0", "name": "Packie Bonner", "positions": ["POR"], "overall": 82},
-  {"id": "p_43_1", "name": "Paul McGrath", "positions": ["DFC"], "overall": 85},
-  {"id": "p_43_2", "name": "Mick McCarthy", "positions": ["DFC"], "overall": 76},
-  {"id": "p_43_3", "name": "Kevin Moran", "positions": ["DFC"], "overall": 78},
-  {"id": "p_43_4", "name": "Steve Staunton", "positions": ["LTI", "DFC"], "overall": 77},
-  {"id": "p_43_5", "name": "Chris Morris", "positions": ["LTD", "DFC"], "overall": 74},
-  {"id": "p_43_6", "name": "Liam Brady", "positions": ["MC"], "overall": 81},
-  {"id": "p_43_7", "name": "Andy Townsend", "positions": ["MC"], "overall": 78},
-  {"id": "p_43_8", "name": "Ray Houghton", "positions": ["MC"], "overall": 79},
-  {"id": "p_43_9", "name": "Ronnie Whelan", "positions": ["MC"], "overall": 78},
-  {"id": "p_43_10", "name": "Kevin Sheedy", "positions": ["ED", "EI"], "overall": 78},
-  {"id": "p_43_11", "name": "John Aldridge", "positions": ["DC"], "overall": 78},
-  {"id": "p_43_12", "name": "Niall Quinn", "positions": ["DC"], "overall": 78},
-  {"id": "p_43_13", "name": "Tony Cascarino", "positions": ["DC"], "overall": 76},
-  {"id": "p_43_14", "name": "David O'Leary", "positions": ["DFC", "MC"], "overall": 77},
-  {"id": "p_43_15", "name": "David Kelly", "positions": ["DC", "ED"], "overall": 73},
-  {"id": "p_46_0", "name": "Igor Akinfeev", "positions": ["POR"], "overall": 83},
-  {"id": "p_46_1", "name": "Sergei Ignashevich", "positions": ["DFC"], "overall": 78},
-  {"id": "p_46_2", "name": "Ilya Kutepov", "positions": ["DFC"], "overall": 74},
-  {"id": "p_46_3", "name": "Andrei Semyonov", "positions": ["DFC"], "overall": 73},
-  {"id": "p_46_4", "name": "Yuri Zhirkov", "positions": ["LTI", "DFC"], "overall": 78},
-  {"id": "p_46_5", "name": "Mário Fernandes", "positions": ["LTD", "DFC"], "overall": 76},
-  {"id": "p_46_6", "name": "Aleksandr Golovin", "positions": ["MC"], "overall": 81},
-  {"id": "p_46_7", "name": "Roman Zobnin", "positions": ["MC"], "overall": 77},
-  {"id": "p_46_8", "name": "Alan Dzagoev", "positions": ["MC"], "overall": 76},
-  {"id": "p_46_9", "name": "Daler Kuzyaev", "positions": ["MC"], "overall": 75},
-  {"id": "p_46_10", "name": "Denis Cheryshev", "positions": ["EI", "ED"], "overall": 79},
-  {"id": "p_46_11", "name": "Aleksandr Samedov", "positions": ["ED", "EI"], "overall": 74},
-  {"id": "p_46_12", "name": "Artem Dzyuba", "positions": ["DC"], "overall": 79},
-  {"id": "p_46_13", "name": "Fedor Smolov", "positions": ["DC"], "overall": 76},
-  {"id": "p_46_14", "name": "Anton Miranchuk", "positions": ["DC", "EI"], "overall": 74},
-  {"id": "p_46_15", "name": "Yuri Gazinsky", "positions": ["DC", "ED"], "overall": 72},
-  {"id": "p_47_0", "name": "Oleksandr Shovkovskiy", "positions": ["POR"], "overall": 81},
-  {"id": "p_47_1", "name": "Vladislav Vashchuk", "positions": ["DFC"], "overall": 76},
-  {"id": "p_47_2", "name": "Andriy Nesmachniy", "positions": ["DFC"], "overall": 75},
-  {"id": "p_47_3", "name": "Vyacheslav Sviderskyi", "positions": ["DFC"], "overall": 75},
-  {"id": "p_47_4", "name": "Andriy Husin", "positions": ["LTI", "DFC"], "overall": 75},
-  {"id": "p_47_5", "name": "Bohdan Shust", "positions": ["LTD", "DFC"], "overall": 72},
-  {"id": "p_47_6", "name": "Andriy Shevchenko", "positions": ["DC"], "overall": 88},
-  {"id": "p_47_7", "name": "Anatoliy Tymoshchuk", "positions": ["MC"], "overall": 84},
-  {"id": "p_47_8", "name": "Serhiy Rebrov", "positions": ["MC", "EI"], "overall": 80},
-  {"id": "p_47_9", "name": "Oleh Husyev", "positions": ["MC"], "overall": 76},
-  {"id": "p_47_10", "name": "Ruslan Rotan", "positions": ["MC"], "overall": 75},
-  {"id": "p_47_11", "name": "Andriy Voronin", "positions": ["EI", "ED"], "overall": 79},
-  {"id": "p_47_12", "name": "Maksym Kalynychenko", "positions": ["ED", "EI"], "overall": 76},
-  {"id": "p_47_13", "name": "Artem Milevskyi", "positions": ["DC"], "overall": 75},
-  {"id": "p_47_14", "name": "Andriy Vorobei", "positions": ["DC", "EI"], "overall": 73},
-  {"id": "p_47_15", "name": "Yevhen Levchenko", "positions": ["DC", "ED"], "overall": 72},
-  {"id": "p_48_0", "name": "Vladimir Stojković", "positions": ["POR"], "overall": 78},
-  {"id": "p_48_1", "name": "Nemanja Vidić", "positions": ["DFC"], "overall": 87},
-  {"id": "p_48_2", "name": "Branislav Ivanović", "positions": ["DFC", "LTD"], "overall": 84},
-  {"id": "p_48_3", "name": "Aleksandar Luković", "positions": ["DFC"], "overall": 75},
-  {"id": "p_48_4", "name": "Neven Subotić", "positions": ["LTI", "DFC"], "overall": 78},
-  {"id": "p_48_5", "name": "Ivan Obradović", "positions": ["LTD", "DFC"], "overall": 73},
-  {"id": "p_48_6", "name": "Dejan Stanković", "positions": ["MC"], "overall": 82},
-  {"id": "p_48_7", "name": "Zdravko Kuzmanović", "positions": ["MC"], "overall": 75},
-  {"id": "p_48_8", "name": "Miloš Krasić", "positions": ["MC", "ED"], "overall": 79},
-  {"id": "p_48_9", "name": "Gojko Kačar", "positions": ["MC"], "overall": 73},
-  {"id": "p_48_10", "name": "Milan Jovanović", "positions": ["EI", "ED"], "overall": 78},
-  {"id": "p_48_11", "name": "Zoran Tošić", "positions": ["ED", "EI"], "overall": 76},
-  {"id": "p_48_12", "name": "Marko Pantelić", "positions": ["DC"], "overall": 76},
-  {"id": "p_48_13", "name": "Nikola Žigić", "positions": ["DC"], "overall": 78},
-  {"id": "p_48_14", "name": "Danko Lazović", "positions": ["DC", "EI"], "overall": 75},
-  {"id": "p_48_15", "name": "Milan Smiljanić", "positions": ["DC", "ED"], "overall": 72},
-  {"id": "p_49_0", "name": "Frode Grodås", "positions": ["POR"], "overall": 78},
-  {"id": "p_49_1", "name": "Ronny Johnsen", "positions": ["DFC"], "overall": 81},
-  {"id": "p_49_2", "name": "Henning Berg", "positions": ["DFC"], "overall": 80},
-  {"id": "p_49_3", "name": "Dan Eggen", "positions": ["DFC"], "overall": 73},
-  {"id": "p_49_4", "name": "Gunnar Halle", "positions": ["LTD", "DFC"], "overall": 74},
-  {"id": "p_49_5", "name": "Erland Johnsen", "positions": ["LTI", "DFC"], "overall": 75},
-  {"id": "p_49_6", "name": "Ole Gunnar Solskjær", "positions": ["DC"], "overall": 82},
-  {"id": "p_49_7", "name": "Tore André Flo", "positions": ["DC"], "overall": 81},
-  {"id": "p_49_8", "name": "Kjetil Rekdal", "positions": ["MC"], "overall": 76},
-  {"id": "p_49_9", "name": "Øyvind Leonhardsen", "positions": ["MC"], "overall": 76},
-  {"id": "p_49_10", "name": "Stig Inge Bjørnebye", "positions": ["LTI", "MC"], "overall": 76},
-  {"id": "p_49_11", "name": "Erik Mykland", "positions": ["MC"], "overall": 74},
-  {"id": "p_49_12", "name": "Jostein Flo", "positions": ["EI", "DC"], "overall": 75},
-  {"id": "p_49_13", "name": "Steffen Iversen", "positions": ["DC", "EI"], "overall": 76},
-  {"id": "p_49_14", "name": "Egil Østenstad", "positions": ["DC", "EI"], "overall": 73},
-  {"id": "p_49_15", "name": "Håvard Flo", "positions": ["DC", "ED"], "overall": 72},
-  {"id": "p_team_brasil_1982_0", "name": "Waldir Peres", "positions": ["POR"], "overall": 82},
-  {"id": "p_team_brasil_1982_1", "name": "Leandro", "positions": ["LTD"], "overall": 84},
-  {"id": "p_team_brasil_1982_2", "name": "Oscar", "positions": ["DFC"], "overall": 83},
-  {"id": "p_team_brasil_1982_3", "name": "Luízinho", "positions": ["DFC"], "overall": 82},
-  {"id": "p_team_brasil_1982_4", "name": "Junior", "positions": ["LTI"], "overall": 85},
-  {"id": "p_team_brasil_1982_5", "name": "Toninho Cerezo", "positions": ["MC"], "overall": 85},
-  {"id": "p_team_brasil_1982_6", "name": "Falcão", "positions": ["MC"], "overall": 92},
-  {"id": "p_team_brasil_1982_7", "name": "Sócrates", "positions": ["EI", "MC"], "overall": 93},
-  {"id": "p_team_brasil_1982_8", "name": "Zico", "positions": ["EI", "DC"], "overall": 94},
-  {"id": "p_team_brasil_1982_9", "name": "Éder", "positions": ["EI"], "overall": 87},
-  {"id": "p_team_brasil_1982_10", "name": "Paulo Isidoro", "positions": ["ED"], "overall": 83},
-  {"id": "p_team_brasil_1982_11", "name": "Serginho", "positions": ["DC"], "overall": 82},
-  {"id": "p_team_brasil_1982_12", "name": "Batista", "positions": ["DFC", "MC"], "overall": 80},
-  {"id": "p_team_brasil_1982_13", "name": "Dirceu", "positions": ["MC", "EI"], "overall": 84},
-  {"id": "p_team_brasil_1982_14", "name": "Reinaldo", "positions": ["DC"], "overall": 82},
-  {"id": "p_team_brasil_1982_15", "name": "Paulo Roberto", "positions": ["MC"], "overall": 83},
-  {"id": "p_team_argentina_1978_0", "name": "Ubaldo Fillol", "positions": ["POR"], "overall": 86},
-  {"id": "p_team_argentina_1978_1", "name": "Jorge Olguín", "positions": ["LTD"], "overall": 82},
-  {"id": "p_team_argentina_1978_2", "name": "Daniel Passarella", "positions": ["DFC"], "overall": 90},
-  {"id": "p_team_argentina_1978_3", "name": "Luis Galván", "positions": ["DFC"], "overall": 82},
-  {"id": "p_team_argentina_1978_4", "name": "Alberto Tarantini", "positions": ["LTI"], "overall": 81},
-  {"id": "p_team_argentina_1978_5", "name": "Omar Larrosa", "positions": ["MC"], "overall": 82},
-  {"id": "p_team_argentina_1978_6", "name": "Américo Gallego", "positions": ["MC"], "overall": 83},
-  {"id": "p_team_argentina_1978_7", "name": "Osvaldo Ardiles", "positions": ["MC"], "overall": 87},
-  {"id": "p_team_argentina_1978_8", "name": "Leopoldo Luque", "positions": ["DC"], "overall": 85},
-  {"id": "p_team_argentina_1978_9", "name": "Mario Kempes", "positions": ["DC", "EI"], "overall": 93},
-  {"id": "p_team_argentina_1978_10", "name": "René Houseman", "positions": ["ED"], "overall": 84},
-  {"id": "p_team_argentina_1978_11", "name": "Norberto Alonso", "positions": ["EI", "MC"], "overall": 83},
-  {"id": "p_team_argentina_1978_12", "name": "Ricardo Villa", "positions": ["MC"], "overall": 82},
-  {"id": "p_team_argentina_1978_13", "name": "Daniel Bertoni", "positions": ["ED"], "overall": 83},
-  {"id": "p_team_argentina_1978_14", "name": "Hugo Gatti", "positions": ["POR"], "overall": 82},
-  {"id": "p_team_argentina_1978_15", "name": "Jorge Carrascosa", "positions": ["MC"], "overall": 80},
-  {"id": "p_team_holanda_1988_0", "name": "Hans van Breukelen", "positions": ["POR"], "overall": 84},
-  {"id": "p_team_holanda_1988_1", "name": "Berry van Aerle", "positions": ["LTD"], "overall": 82},
-  {"id": "p_team_holanda_1988_2", "name": "Ronald Koeman", "positions": ["DFC"], "overall": 90},
-  {"id": "p_team_holanda_1988_3", "name": "Adri van Tiggelen", "positions": ["DFC"], "overall": 82},
-  {"id": "p_team_holanda_1988_4", "name": "Jan Wouters", "positions": ["MC", "DFC"], "overall": 84},
-  {"id": "p_team_holanda_1988_5", "name": "Gerald Vanenburg", "positions": ["MC"], "overall": 83},
-  {"id": "p_team_holanda_1988_6", "name": "Ruud Gullit", "positions": ["DC", "EI"], "overall": 95},
-  {"id": "p_team_holanda_1988_7", "name": "Frank Rijkaard", "positions": ["MC"], "overall": 91},
-  {"id": "p_team_holanda_1988_8", "name": "Marco van Basten", "positions": ["DC"], "overall": 96},
-  {"id": "p_team_holanda_1988_9", "name": "John van 't Schip", "positions": ["EI", "MC"], "overall": 84},
-  {"id": "p_team_holanda_1988_10", "name": "Rob Witschge", "positions": ["MC"], "overall": 82},
-  {"id": "p_team_holanda_1988_11", "name": "Wim Kieft", "positions": ["DC"], "overall": 83},
-  {"id": "p_team_holanda_1988_12", "name": "Hans Gillhaus", "positions": ["EI", "DC"], "overall": 82},
-  {"id": "p_team_holanda_1988_13", "name": "Arnold Mühren", "positions": ["MC"], "overall": 84},
-  {"id": "p_team_holanda_1988_14", "name": "Erwin Koeman", "positions": ["LTD", "MC"], "overall": 83},
-  {"id": "p_team_holanda_1988_15", "name": "Peter Boeve", "positions": ["DFC"], "overall": 80},
-  {"id": "p_team_senegal_2002_0", "name": "Tony Sylva", "positions": ["POR"], "overall": 82},
-  {"id": "p_team_senegal_2002_1", "name": "Lamine Diatta", "positions": ["DFC"], "overall": 82},
-  {"id": "p_team_senegal_2002_2", "name": "Ferdinand Coly", "positions": ["LTD"], "overall": 83},
-  {"id": "p_team_senegal_2002_3", "name": "Pape Bouba Diop", "positions": ["DFC"], "overall": 82},
-  {"id": "p_team_senegal_2002_4", "name": "Omar Daf", "positions": ["LTI"], "overall": 81},
-  {"id": "p_team_senegal_2002_5", "name": "Khalilou Fadiga", "positions": ["MC"], "overall": 84},
-  {"id": "p_team_senegal_2002_6", "name": "Aliou Cissé", "positions": ["MC"], "overall": 82},
-  {"id": "p_team_senegal_2002_7", "name": "El Hadji Diouf", "positions": ["DC", "EI"], "overall": 86},
-  {"id": "p_team_senegal_2002_8", "name": "Salif Diao", "positions": ["MC"], "overall": 83},
-  {"id": "p_team_senegal_2002_9", "name": "Henri Camara", "positions": ["DC"], "overall": 84},
-  {"id": "p_team_senegal_2002_10", "name": "Souleymane Camara", "positions": ["DC"], "overall": 81},
-  {"id": "p_team_senegal_2002_11", "name": "Habib Beye", "positions": ["LTD", "MC"], "overall": 82},
-  {"id": "p_team_senegal_2002_12", "name": "Mamadou Niang", "positions": ["DC"], "overall": 82},
-  {"id": "p_team_senegal_2002_13", "name": "Amdy Faye", "positions": ["MC"], "overall": 81},
-  {"id": "p_team_senegal_2002_14", "name": "Moussa N'Diaye", "positions": ["EI"], "overall": 81},
-  {"id": "p_team_senegal_2002_15", "name": "Pape Thiaw", "positions": ["DFC", "MC"], "overall": 80},
-  {"id": "p_team_costa_rica_2014_0", "name": "Keylor Navas", "positions": ["POR"], "overall": 90},
-  {"id": "p_team_costa_rica_2014_1", "name": "Michael Umaña", "positions": ["DFC"], "overall": 81},
-  {"id": "p_team_costa_rica_2014_2", "name": "Óscar Duarte", "positions": ["DFC"], "overall": 82},
-  {"id": "p_team_costa_rica_2014_3", "name": "Giancarlo González", "positions": ["DFC"], "overall": 81},
-  {"id": "p_team_costa_rica_2014_4", "name": "Junior Díaz", "positions": ["LTI"], "overall": 80},
-  {"id": "p_team_costa_rica_2014_5", "name": "David Myrie", "positions": ["LTD"], "overall": 79},
-  {"id": "p_team_costa_rica_2014_6", "name": "Bryan Ruiz", "positions": ["MC", "EI"], "overall": 84},
-  {"id": "p_team_costa_rica_2014_7", "name": "Yeltsin Tejeda", "positions": ["MC"], "overall": 80},
-  {"id": "p_team_costa_rica_2014_8", "name": "Celso Borges", "positions": ["MC"], "overall": 82},
-  {"id": "p_team_costa_rica_2014_9", "name": "Joel Campbell", "positions": ["EI", "DC"], "overall": 83},
-  {"id": "p_team_costa_rica_2014_10", "name": "Marco Ureña", "positions": ["DC"], "overall": 80},
-  {"id": "p_team_costa_rica_2014_11", "name": "José Miguel Cubero", "positions": ["DFC", "MC"], "overall": 80},
-  {"id": "p_team_costa_rica_2014_12", "name": "Álvaro Saborío", "positions": ["DC"], "overall": 81},
-  {"id": "p_team_costa_rica_2014_13", "name": "Johnny Acosta", "positions": ["DFC"], "overall": 79},
-  {"id": "p_team_costa_rica_2014_14", "name": "Diego Calvo", "positions": ["LTD"], "overall": 78},
-  {"id": "p_team_costa_rica_2014_15", "name": "Randall Brenes", "positions": ["MC"], "overall": 79},
-  {"id": "p_team_ghana_2010_0", "name": "Richard Kingson", "positions": ["POR"], "overall": 81},
-  {"id": "p_team_ghana_2010_1", "name": "Hans Sarpei", "positions": ["LTI"], "overall": 80},
-  {"id": "p_team_ghana_2010_2", "name": "John Mensah", "positions": ["DFC"], "overall": 83},
-  {"id": "p_team_ghana_2010_3", "name": "Jonathan Mensah", "positions": ["DFC"], "overall": 80},
-  {"id": "p_team_ghana_2010_4", "name": "Samuel Inkoom", "positions": ["LTD"], "overall": 80},
-  {"id": "p_team_ghana_2010_5", "name": "Anthony Annan", "positions": ["MC"], "overall": 81},
-  {"id": "p_team_ghana_2010_6", "name": "Kevin-Prince Boateng", "positions": ["MC", "EI"], "overall": 85},
-  {"id": "p_team_ghana_2010_7", "name": "Kwadwo Asamoah", "positions": ["MC", "LTI"], "overall": 84},
-  {"id": "p_team_ghana_2010_8", "name": "Sulley Muntari", "positions": ["MC"], "overall": 83},
-  {"id": "p_team_ghana_2010_9", "name": "Asamoah Gyan", "positions": ["DC"], "overall": 87},
-  {"id": "p_team_ghana_2010_10", "name": "André Ayew", "positions": ["EI", "DC"], "overall": 84},
-  {"id": "p_team_ghana_2010_11", "name": "John Paintsil", "positions": ["LTD"], "overall": 80},
-  {"id": "p_team_ghana_2010_12", "name": "Dominic Adiyiah", "positions": ["DC"], "overall": 80},
-  {"id": "p_team_ghana_2010_13", "name": "Stephen Appiah", "positions": ["MC"], "overall": 83},
-  {"id": "p_team_ghana_2010_14", "name": "Laryea Kingston", "positions": ["MC", "EI"], "overall": 80},
-  {"id": "p_team_ghana_2010_15", "name": "Jordan Ayew", "positions": ["EI", "DC"], "overall": 82},
-  {"id": "p_team_uruguay_2010_0", "name": "Fernando Muslera", "positions": ["POR"], "overall": 85},
-  {"id": "p_team_uruguay_2010_1", "name": "Maxi Pereira", "positions": ["LTD"], "overall": 82},
-  {"id": "p_team_uruguay_2010_2", "name": "Diego Lugano", "positions": ["DFC"], "overall": 84},
-  {"id": "p_team_uruguay_2010_3", "name": "Diego Godín", "positions": ["DFC"], "overall": 90},
-  {"id": "p_team_uruguay_2010_4", "name": "Jorge Fucile", "positions": ["LTI"], "overall": 80},
-  {"id": "p_team_uruguay_2010_5", "name": "Álvaro Pereira", "positions": ["LTI", "MC"], "overall": 82},
-  {"id": "p_team_uruguay_2010_6", "name": "Egidio Arévalo Ríos", "positions": ["MC"], "overall": 81},
-  {"id": "p_team_uruguay_2010_7", "name": "Diego Pérez", "positions": ["DFC", "MC"], "overall": 80},
-  {"id": "p_team_uruguay_2010_8", "name": "Edinson Cavani", "positions": ["DC", "EI"], "overall": 91},
-  {"id": "p_team_uruguay_2010_9", "name": "Luis Suárez", "positions": ["DC"], "overall": 94},
-  {"id": "p_team_uruguay_2010_10", "name": "Diego Forlán", "positions": ["DC", "EI"], "overall": 90},
-  {"id": "p_team_uruguay_2010_11", "name": "Sebastián Abreu", "positions": ["DC"], "overall": 80},
-  {"id": "p_team_uruguay_2010_12", "name": "Andrés Scotti", "positions": ["DFC"], "overall": 79},
-  {"id": "p_team_uruguay_2010_13", "name": "Nicolás Lodeiro", "positions": ["MC", "EI"], "overall": 82},
-  {"id": "p_team_uruguay_2010_14", "name": "Sebastián Eguren", "positions": ["MC"], "overall": 80},
-  {"id": "p_team_uruguay_2010_15", "name": "Carlos Bueno", "positions": ["DC"], "overall": 79},
-  {"id": "p_team_suecia_1994_0", "name": "Thomas Ravelli", "positions": ["POR"], "overall": 85},
-  {"id": "p_team_suecia_1994_1", "name": "Roland Nilsson", "positions": ["LTD"], "overall": 83},
-  {"id": "p_team_suecia_1994_2", "name": "Patrik Andersson", "positions": ["DFC"], "overall": 82},
-  {"id": "p_team_suecia_1994_3", "name": "Joachim Björklund", "positions": ["DFC"], "overall": 81},
-  {"id": "p_team_suecia_1994_4", "name": "Pontus Kåmark", "positions": ["DFC"], "overall": 80},
-  {"id": "p_team_suecia_1994_5", "name": "Klas Ingesson", "positions": ["MC"], "overall": 82},
-  {"id": "p_team_suecia_1994_6", "name": "Jonas Thern", "positions": ["MC"], "overall": 83},
-  {"id": "p_team_suecia_1994_7", "name": "Stefan Schwarz", "positions": ["MC"], "overall": 83},
-  {"id": "p_team_suecia_1994_8", "name": "Kennet Andersson", "positions": ["DC"], "overall": 82},
-  {"id": "p_team_suecia_1994_9", "name": "Henrik Larsson", "positions": ["DC", "EI"], "overall": 88},
-  {"id": "p_team_suecia_1994_10", "name": "Martin Dahlin", "positions": ["DC"], "overall": 85},
-  {"id": "p_team_suecia_1994_11", "name": "Tomas Brolin", "positions": ["EI", "DC"], "overall": 86},
-  {"id": "p_team_suecia_1994_12", "name": "Håkan Mild", "positions": ["MC"], "overall": 81},
-  {"id": "p_team_suecia_1994_13", "name": "Jesper Blomqvist", "positions": ["EI"], "overall": 82},
-  {"id": "p_team_suecia_1994_14", "name": "Jan Eriksson", "positions": ["DFC"], "overall": 79},
-  {"id": "p_team_suecia_1994_15", "name": "Niklas Alexandersson", "positions": ["LTD", "MC"], "overall": 80},
-  {"id": "p_team_holanda_1988_0", "name": "Hans van Breukelen", "positions": ["POR"], "overall": 84},
-  {"id": "p_team_holanda_1988_1", "name": "Berry van Aerle", "positions": ["LTD"], "overall": 82},
-  {"id": "p_team_holanda_1988_2", "name": "Ronald Koeman", "positions": ["DFC"], "overall": 90},
-  {"id": "p_team_holanda_1988_3", "name": "Adri van Tiggelen", "positions": ["DFC"], "overall": 82},
-  {"id": "p_team_holanda_1988_4", "name": "Jan Wouters", "positions": ["MC", "DFC"], "overall": 84},
-  {"id": "p_team_holanda_1988_5", "name": "Gerald Vanenburg", "positions": ["MC"], "overall": 83},
-  {"id": "p_team_holanda_1988_6", "name": "Ruud Gullit", "positions": ["DC", "EI"], "overall": 95},
-  {"id": "p_team_holanda_1988_7", "name": "Frank Rijkaard", "positions": ["MC"], "overall": 91},
-  {"id": "p_team_holanda_1988_8", "name": "Marco van Basten", "positions": ["DC"], "overall": 96},
-  {"id": "p_team_holanda_1988_9", "name": "John van 't Schip", "positions": ["EI", "MC"], "overall": 84},
-  {"id": "p_team_holanda_1988_10", "name": "Rob Witschge", "positions": ["MC"], "overall": 82},
-  {"id": "p_team_holanda_1988_11", "name": "Wim Kieft", "positions": ["DC"], "overall": 83},
-  {"id": "p_team_holanda_1988_12", "name": "Hans Gillhaus", "positions": ["EI", "DC"], "overall": 82},
-  {"id": "p_team_holanda_1988_13", "name": "Arnold Mühren", "positions": ["MC"], "overall": 84},
-  {"id": "p_team_holanda_1988_14", "name": "Erwin Koeman", "positions": ["LTD", "MC"], "overall": 83},
-  {"id": "p_team_holanda_1988_15", "name": "Peter Boeve", "positions": ["DFC"], "overall": 80}
-];
+let playersDB = [{"id": "p_1_0", "name": "Iker Casillas", "positions": ["POR"], "overall": 91}, {"id": "p_1_1", "name": "Sergio Ramos", "positions": ["DFC"], "overall": 86}, {"id": "p_1_2", "name": "Gerard Piqué", "positions": ["DFC"], "overall": 86}, {"id": "p_1_3", "name": "Carles Puyol", "positions": ["DFC"], "overall": 85}, {"id": "p_1_4", "name": "Joan Capdevila", "positions": ["LI", "DFC"], "overall": 80}, {"id": "p_1_5", "name": "Álvaro Arbeloa", "positions": ["LD", "DFC"], "overall": 78}, {"id": "p_1_6", "name": "Xavi Hernández", "positions": ["MC"], "overall": 92}, {"id": "p_1_7", "name": "Andrés Iniesta", "positions": ["MC"], "overall": 93}, {"id": "p_1_8", "name": "Sergio Busquets", "positions": ["MC"], "overall": 83}, {"id": "p_1_9", "name": "Xabi Alonso", "positions": ["MC"], "overall": 87}, {"id": "p_1_10", "name": "Pedro Rodríguez", "positions": ["EI", "ED"], "overall": 84}, {"id": "p_1_11", "name": "David Silva", "positions": ["ED", "EI"], "overall": 87}, {"id": "p_1_12", "name": "David Villa", "positions": ["DC"], "overall": 91}, {"id": "p_1_13", "name": "Fernando Torres", "positions": ["DC"], "overall": 85}, {"id": "p_1_14", "name": "Cesc Fàbregas", "positions": ["DC", "EI"], "overall": 86}, {"id": "p_1_15", "name": "Jesús Navas", "positions": ["ED", "EI"], "overall": 78}, {"id": "p_2_0", "name": "Iker Casillas", "positions": ["POR"], "overall": 90}, {"id": "p_2_1", "name": "Gerard Piqué", "positions": ["DFC"], "overall": 87}, {"id": "p_2_2", "name": "Sergio Ramos", "positions": ["DFC"], "overall": 87}, {"id": "p_2_3", "name": "Carles Puyol", "positions": ["DFC"], "overall": 85}, {"id": "p_2_4", "name": "Jordi Alba", "positions": ["LI", "DFC"], "overall": 84}, {"id": "p_2_5", "name": "Álvaro Arbeloa", "positions": ["LD", "DFC"], "overall": 79}, {"id": "p_2_6", "name": "Xavi Hernández", "positions": ["MC"], "overall": 91}, {"id": "p_2_7", "name": "Andrés Iniesta", "positions": ["MC"], "overall": 93}, {"id": "p_2_8", "name": "Sergio Busquets", "positions": ["MC"], "overall": 85}, {"id": "p_2_9", "name": "Xabi Alonso", "positions": ["MC"], "overall": 88}, {"id": "p_2_10", "name": "David Silva", "positions": ["EI", "ED"], "overall": 88}, {"id": "p_2_11", "name": "Jesús Navas", "positions": ["ED", "EI"], "overall": 79}, {"id": "p_2_12", "name": "Fernando Torres", "positions": ["DC"], "overall": 84}, {"id": "p_2_13", "name": "Cesc Fàbregas", "positions": ["DC"], "overall": 87}, {"id": "p_2_14", "name": "Pedro Rodríguez", "positions": ["DC", "EI"], "overall": 83}, {"id": "p_2_15", "name": "David Villa", "positions": ["DC", "ED"], "overall": 88}, {"id": "p_4_0", "name": "Marcos", "positions": ["POR"], "overall": 85}, {"id": "p_4_1", "name": "Lúcio", "positions": ["DFC"], "overall": 86}, {"id": "p_4_2", "name": "Roque Júnior", "positions": ["DFC"], "overall": 78}, {"id": "p_4_3", "name": "Edmílson", "positions": ["DFC"], "overall": 82}, {"id": "p_4_4", "name": "Roberto Carlos", "positions": ["LI", "DFC"], "overall": 90}, {"id": "p_4_5", "name": "Cafu", "positions": ["LD", "DFC"], "overall": 89}, {"id": "p_4_6", "name": "Gilberto Silva", "positions": ["MC"], "overall": 85}, {"id": "p_4_7", "name": "Kléberson", "positions": ["MC"], "overall": 80}, {"id": "p_4_8", "name": "Ronaldinho", "positions": ["EI", "ED"], "overall": 92}, {"id": "p_4_9", "name": "Rivaldo", "positions": ["ED", "EI"], "overall": 91}, {"id": "p_4_10", "name": "Ronaldo Nazário", "positions": ["DC"], "overall": 97}, {"id": "p_4_11", "name": "Edmundo", "positions": ["DC"], "overall": 78}, {"id": "p_4_12", "name": "Luizão", "positions": ["DC", "EI"], "overall": 76}, {"id": "p_4_13", "name": "Denílson", "positions": ["DC", "ED"], "overall": 79}, {"id": "p_4_14", "name": "Juninho Paulista", "positions": ["MC"], "overall": 79}, {"id": "p_4_15", "name": "Edílson", "positions": ["MC"], "overall": 76}, {"id": "p_6_0", "name": "Bodo Illgner", "positions": ["POR"], "overall": 84}, {"id": "p_6_1", "name": "Jürgen Kohler", "positions": ["DFC"], "overall": 86}, {"id": "p_6_2", "name": "Guido Buchwald", "positions": ["DFC"], "overall": 84}, {"id": "p_6_3", "name": "Klaus Augenthaler", "positions": ["DFC"], "overall": 82}, {"id": "p_6_4", "name": "Andreas Brehme", "positions": ["LI", "DFC"], "overall": 87}, {"id": "p_6_5", "name": "Stefan Reuter", "positions": ["LD", "DFC"], "overall": 80}, {"id": "p_6_6", "name": "Lothar Matthäus", "positions": ["MC"], "overall": 93}, {"id": "p_6_7", "name": "Thomas Häßler", "positions": ["MC"], "overall": 85}, {"id": "p_6_8", "name": "Olaf Thon", "positions": ["MC"], "overall": 80}, {"id": "p_6_9", "name": "Pierre Littbarski", "positions": ["MC"], "overall": 81}, {"id": "p_6_10", "name": "Jürgen Klinsmann", "positions": ["EI", "ED"], "overall": 92}, {"id": "p_6_11", "name": "Rudi Völler", "positions": ["ED", "EI"], "overall": 88}, {"id": "p_6_12", "name": "Karl-Heinz Riedle", "positions": ["DC"], "overall": 78}, {"id": "p_6_13", "name": "Uwe Bein", "positions": ["DC"], "overall": 76}, {"id": "p_6_14", "name": "Frank Mill", "positions": ["DC", "EI"], "overall": 74}, {"id": "p_6_15", "name": "Thomas Berthold", "positions": ["DFC", "MC"], "overall": 80}, {"id": "p_7_0", "name": "Manuel Neuer", "positions": ["POR"], "overall": 93}, {"id": "p_7_1", "name": "Mats Hummels", "positions": ["DFC"], "overall": 87}, {"id": "p_7_2", "name": "Jérôme Boateng", "positions": ["DFC"], "overall": 86}, {"id": "p_7_3", "name": "Per Mertesacker", "positions": ["DFC"], "overall": 83}, {"id": "p_7_4", "name": "Benedikt Höwedes", "positions": ["LI", "DFC"], "overall": 81}, {"id": "p_7_5", "name": "Philipp Lahm", "positions": ["LD", "DFC"], "overall": 89}, {"id": "p_7_6", "name": "Bastian Schweinsteiger", "positions": ["MC"], "overall": 88}, {"id": "p_7_7", "name": "Toni Kroos", "positions": ["MC"], "overall": 89}, {"id": "p_7_8", "name": "Sami Khedira", "positions": ["MC"], "overall": 84}, {"id": "p_7_9", "name": "Mesut Özil", "positions": ["EI", "ED"], "overall": 88}, {"id": "p_7_10", "name": "Thomas Müller", "positions": ["ED", "EI"], "overall": 89}, {"id": "p_7_11", "name": "Miroslav Klose", "positions": ["DC"], "overall": 87}, {"id": "p_7_12", "name": "André Schürrle", "positions": ["DC"], "overall": 82}, {"id": "p_7_13", "name": "Mario Götze", "positions": ["DC", "EI"], "overall": 85}, {"id": "p_7_14", "name": "Lukas Podolski", "positions": ["DC", "ED"], "overall": 81}, {"id": "p_7_15", "name": "Christoph Kramer", "positions": ["MC"], "overall": 76}, {"id": "p_8_0", "name": "Nery Pumpido", "positions": ["POR"], "overall": 80}, {"id": "p_8_1", "name": "Oscar Ruggeri", "positions": ["DFC"], "overall": 84}, {"id": "p_8_2", "name": "José Luis Brown", "positions": ["DFC"], "overall": 81}, {"id": "p_8_3", "name": "Néstor Clausen", "positions": ["DFC"], "overall": 76}, {"id": "p_8_4", "name": "Julio Olarticoechea", "positions": ["LI", "DFC"], "overall": 79}, {"id": "p_8_5", "name": "José Luis Cuciuffo", "positions": ["LD", "DFC"], "overall": 78}, {"id": "p_8_6", "name": "Diego Armando Maradona", "positions": ["EI", "MC"], "overall": 98}, {"id": "p_8_7", "name": "Jorge Burruchaga", "positions": ["MC"], "overall": 84}, {"id": "p_8_8", "name": "Sergio Batista", "positions": ["MC"], "overall": 80}, {"id": "p_8_9", "name": "Ricardo Giusti", "positions": ["MC"], "overall": 78}, {"id": "p_8_10", "name": "Jorge Valdano", "positions": ["EI", "ED"], "overall": 86}, {"id": "p_8_11", "name": "Héctor Enrique", "positions": ["MC"], "overall": 76}, {"id": "p_8_12", "name": "Claudio Borghi", "positions": ["MC"], "overall": 76}, {"id": "p_8_13", "name": "Ramón Díaz", "positions": ["DC"], "overall": 78}, {"id": "p_8_14", "name": "Pedro Pasculli", "positions": ["DC"], "overall": 75}, {"id": "p_8_15", "name": "Marcelo Trobbiani", "positions": ["ED", "EI"], "overall": 73}, {"id": "p_9_0", "name": "Emiliano Martínez", "positions": ["POR"], "overall": 88}, {"id": "p_9_1", "name": "Cristian Romero", "positions": ["DFC"], "overall": 85}, {"id": "p_9_2", "name": "Nicolás Otamendi", "positions": ["DFC"], "overall": 82}, {"id": "p_9_3", "name": "Lisandro Martínez", "positions": ["DFC"], "overall": 84}, {"id": "p_9_4", "name": "Nicolás Tagliafico", "positions": ["LI", "DFC"], "overall": 81}, {"id": "p_9_5", "name": "Nahuel Molina", "positions": ["LD", "DFC"], "overall": 80}, {"id": "p_9_6", "name": "Rodrigo De Paul", "positions": ["MC"], "overall": 84}, {"id": "p_9_7", "name": "Enzo Fernández", "positions": ["MC"], "overall": 85}, {"id": "p_9_8", "name": "Alexis Mac Allister", "positions": ["MC"], "overall": 83}, {"id": "p_9_9", "name": "Ángel Di María", "positions": ["EI", "ED"], "overall": 86}, {"id": "p_9_10", "name": "Julián Álvarez", "positions": ["DC", "EI"], "overall": 86}, {"id": "p_9_11", "name": "Lionel Messi", "positions": ["EI", "DC"], "overall": 97}, {"id": "p_9_12", "name": "Lautaro Martínez", "positions": ["DC"], "overall": 86}, {"id": "p_9_13", "name": "Paulo Dybala", "positions": ["DC", "EI"], "overall": 82}, {"id": "p_9_14", "name": "Leandro Paredes", "positions": ["MC"], "overall": 78}, {"id": "p_9_15", "name": "Alejandro Gómez", "positions": ["DC", "ED"], "overall": 77}, {"id": "p_10_0", "name": "Fabien Barthez", "positions": ["POR"], "overall": 87}, {"id": "p_10_1", "name": "Laurent Blanc", "positions": ["DFC"], "overall": 86}, {"id": "p_10_2", "name": "Marcel Desailly", "positions": ["DFC"], "overall": 88}, {"id": "p_10_3", "name": "Lilian Thuram", "positions": ["DFC"], "overall": 87}, {"id": "p_10_4", "name": "Bixente Lizarazu", "positions": ["LI", "DFC"], "overall": 85}, {"id": "p_10_5", "name": "Christian Karembeu", "positions": ["LD", "DFC"], "overall": 79}, {"id": "p_10_6", "name": "Didier Deschamps", "positions": ["MC"], "overall": 84}, {"id": "p_10_7", "name": "Emmanuel Petit", "positions": ["MC"], "overall": 85}, {"id": "p_10_8", "name": "Youri Djorkaeff", "positions": ["MC"], "overall": 86}, {"id": "p_10_9", "name": "Zinedine Zidane", "positions": ["MC", "EI"], "overall": 94}, {"id": "p_10_10", "name": "Thierry Henry", "positions": ["EI", "ED"], "overall": 88}, {"id": "p_10_11", "name": "Robert Pirès", "positions": ["ED", "EI"], "overall": 84}, {"id": "p_10_12", "name": "David Trezeguet", "positions": ["DC"], "overall": 84}, {"id": "p_10_13", "name": "Christophe Dugarry", "positions": ["DC"], "overall": 79}, {"id": "p_10_14", "name": "Patrick Vieira", "positions": ["MC"], "overall": 86}, {"id": "p_10_15", "name": "Stéphane Guivarc'h", "positions": ["DC"], "overall": 76}, {"id": "p_11_0", "name": "Hugo Lloris", "positions": ["POR"], "overall": 87}, {"id": "p_11_1", "name": "Raphaël Varane", "positions": ["DFC"], "overall": 88}, {"id": "p_11_2", "name": "Samuel Umtiti", "positions": ["DFC"], "overall": 82}, {"id": "p_11_3", "name": "Lucas Hernández", "positions": ["LI", "DFC"], "overall": 83}, {"id": "p_11_4", "name": "Benjamin Pavard", "positions": ["LD", "DFC"], "overall": 81}, {"id": "p_11_5", "name": "Presnel Kimpembe", "positions": ["DFC"], "overall": 79}, {"id": "p_11_6", "name": "N'Golo Kanté", "positions": ["MC"], "overall": 89}, {"id": "p_11_7", "name": "Paul Pogba", "positions": ["MC"], "overall": 87}, {"id": "p_11_8", "name": "Blaise Matuidi", "positions": ["MC"], "overall": 82}, {"id": "p_11_9", "name": "Kylian Mbappé", "positions": ["EI", "ED"], "overall": 91}, {"id": "p_11_10", "name": "Antoine Griezmann", "positions": ["DC", "EI"], "overall": 90}, {"id": "p_11_11", "name": "Olivier Giroud", "positions": ["DC"], "overall": 84}, {"id": "p_11_12", "name": "Ousmane Dembélé", "positions": ["ED", "EI"], "overall": 81}, {"id": "p_11_13", "name": "Florian Thauvin", "positions": ["ED", "EI"], "overall": 79}, {"id": "p_11_14", "name": "Steven Nzonzi", "positions": ["MC"], "overall": 80}, {"id": "p_11_15", "name": "Corentin Tolisso", "positions": ["MC"], "overall": 78}, {"id": "p_13_0", "name": "Gianluigi Buffon", "positions": ["POR"], "overall": 91}, {"id": "p_13_1", "name": "Fabio Cannavaro", "positions": ["DFC"], "overall": 90}, {"id": "p_13_2", "name": "Alessandro Nesta", "positions": ["DFC"], "overall": 87}, {"id": "p_13_3", "name": "Marco Materazzi", "positions": ["DFC"], "overall": 83}, {"id": "p_13_4", "name": "Fabio Grosso", "positions": ["LI", "DFC"], "overall": 81}, {"id": "p_13_5", "name": "Gianluca Zambrotta", "positions": ["LD", "DFC"], "overall": 84}, {"id": "p_13_6", "name": "Andrea Pirlo", "positions": ["MC"], "overall": 90}, {"id": "p_13_7", "name": "Gennaro Gattuso", "positions": ["MC"], "overall": 84}, {"id": "p_13_8", "name": "Mauro Camoranesi", "positions": ["MC"], "overall": 80}, {"id": "p_13_9", "name": "Francesco Totti", "positions": ["EI", "ED"], "overall": 89}, {"id": "p_13_10", "name": "Luca Toni", "positions": ["ED", "EI"], "overall": 85}, {"id": "p_13_11", "name": "Alessandro Del Piero", "positions": ["DC"], "overall": 88}, {"id": "p_13_12", "name": "Alberto Gilardino", "positions": ["DC"], "overall": 81}, {"id": "p_13_13", "name": "Vincenzo Iaquinta", "positions": ["DC", "EI"], "overall": 77}, {"id": "p_13_14", "name": "Daniele De Rossi", "positions": ["MC"], "overall": 84}, {"id": "p_13_15", "name": "Simone Perrotta", "positions": ["MC"], "overall": 78}, {"id": "p_17_0", "name": "Rui Patrício", "positions": ["POR"], "overall": 84}, {"id": "p_17_1", "name": "Pepe", "positions": ["DFC"], "overall": 84}, {"id": "p_17_2", "name": "José Fonte", "positions": ["DFC"], "overall": 81}, {"id": "p_17_3", "name": "Bruno Alves", "positions": ["DFC"], "overall": 80}, {"id": "p_17_4", "name": "Raphaël Guerreiro", "positions": ["LI", "DFC"], "overall": 81}, {"id": "p_17_5", "name": "Cédric Soares", "positions": ["LD", "DFC"], "overall": 78}, {"id": "p_17_6", "name": "William Carvalho", "positions": ["MC"], "overall": 82}, {"id": "p_17_7", "name": "João Moutinho", "positions": ["MC"], "overall": 83}, {"id": "p_17_8", "name": "Adrien Silva", "positions": ["MC"], "overall": 79}, {"id": "p_17_9", "name": "Renato Sanches", "positions": ["MC"], "overall": 80}, {"id": "p_17_10", "name": "Cristiano Ronaldo", "positions": ["EI", "DC"], "overall": 95}, {"id": "p_17_11", "name": "Nani", "positions": ["ED", "EI"], "overall": 81}, {"id": "p_17_12", "name": "Ricardo Quaresma", "positions": ["ED", "EI"], "overall": 80}, {"id": "p_17_13", "name": "André Silva", "positions": ["DC"], "overall": 76}, {"id": "p_17_14", "name": "João Mário", "positions": ["MC", "ED"], "overall": 78}, {"id": "p_17_15", "name": "Éder", "positions": ["DC"], "overall": 76}, {"id": "p_18_0", "name": "Danijel Subašić", "positions": ["POR"], "overall": 85}, {"id": "p_18_1", "name": "Dejan Lovren", "positions": ["DFC"], "overall": 81}, {"id": "p_18_2", "name": "Domagoj Vida", "positions": ["DFC"], "overall": 80}, {"id": "p_18_3", "name": "Šime Vrsaljko", "positions": ["LD", "DFC"], "overall": 79}, {"id": "p_18_4", "name": "Ivan Strinić", "positions": ["LI", "DFC"], "overall": 77}, {"id": "p_18_5", "name": "Borna Barišić", "positions": ["LI", "DFC"], "overall": 76}, {"id": "p_18_6", "name": "Luka Modrić", "positions": ["MC"], "overall": 93}, {"id": "p_18_7", "name": "Ivan Rakitić", "positions": ["MC"], "overall": 88}, {"id": "p_18_8", "name": "Marcelo Brozović", "positions": ["MC"], "overall": 82}, {"id": "p_18_9", "name": "Ivan Perišić", "positions": ["EI", "ED"], "overall": 86}, {"id": "p_18_10", "name": "Mario Mandžukić", "positions": ["DC"], "overall": 86}, {"id": "p_18_11", "name": "Ante Rebić", "positions": ["ED", "EI"], "overall": 81}, {"id": "p_18_12", "name": "Andrej Kramarić", "positions": ["DC"], "overall": 81}, {"id": "p_18_13", "name": "Milan Badelj", "positions": ["MC"], "overall": 78}, {"id": "p_18_14", "name": "Marko Pjaca", "positions": ["DC", "EI"], "overall": 76}, {"id": "p_18_15", "name": "Nikola Kalinić", "positions": ["DC", "ED"], "overall": 77}, {"id": "p_21_0", "name": "Peter Schmeichel", "positions": ["POR"], "overall": 89}, {"id": "p_21_1", "name": "Lars Olsen", "positions": ["DFC"], "overall": 82}, {"id": "p_21_2", "name": "Kent Nielsen", "positions": ["DFC"], "overall": 77}, {"id": "p_21_3", "name": "Torben Piechnik", "positions": ["DFC"], "overall": 76}, {"id": "p_21_4", "name": "Jan Heintze", "positions": ["LI", "DFC"], "overall": 79}, {"id": "p_21_5", "name": "Kim Christofte", "positions": ["LD", "DFC"], "overall": 75}, {"id": "p_21_6", "name": "John Jensen", "positions": ["MC"], "overall": 80}, {"id": "p_21_7", "name": "Kim Vilfort", "positions": ["MC"], "overall": 83}, {"id": "p_21_8", "name": "Henrik Andersen", "positions": ["MC"], "overall": 78}, {"id": "p_21_9", "name": "Brian Laudrup", "positions": ["EI", "ED"], "overall": 87}, {"id": "p_21_10", "name": "Flemming Povlsen", "positions": ["ED", "EI"], "overall": 81}, {"id": "p_21_11", "name": "Henrik Larsen", "positions": ["DC"], "overall": 83}, {"id": "p_21_12", "name": "Bent Christensen", "positions": ["DC"], "overall": 76}, {"id": "p_21_13", "name": "Lars Elstrup", "positions": ["MC"], "overall": 76}, {"id": "p_21_14", "name": "Peter Rasmussen", "positions": ["DC", "EI"], "overall": 73}, {"id": "p_21_15", "name": "Claus Christiansen", "positions": ["DC", "ED"], "overall": 73}, {"id": "p_22_0", "name": "Thibaut Courtois", "positions": ["POR"], "overall": 89}, {"id": "p_22_1", "name": "Vincent Kompany", "positions": ["DFC"], "overall": 86}, {"id": "p_22_2", "name": "Toby Alderweireld", "positions": ["DFC"], "overall": 84}, {"id": "p_22_3", "name": "Jan Vertonghen", "positions": ["DFC"], "overall": 84}, {"id": "p_22_4", "name": "Thomas Meunier", "positions": ["LD", "DFC"], "overall": 78}, {"id": "p_22_5", "name": "Nacer Chadli", "positions": ["LI", "DFC"], "overall": 78}, {"id": "p_22_6", "name": "Kevin De Bruyne", "positions": ["MC"], "overall": 91}, {"id": "p_22_7", "name": "Axel Witsel", "positions": ["MC"], "overall": 82}, {"id": "p_22_8", "name": "Marouane Fellaini", "positions": ["MC"], "overall": 79}, {"id": "p_22_9", "name": "Eden Hazard", "positions": ["EI", "ED"], "overall": 91}, {"id": "p_22_10", "name": "Romelu Lukaku", "positions": ["DC"], "overall": 87}, {"id": "p_22_11", "name": "Dries Mertens", "positions": ["DC", "EI"], "overall": 82}, {"id": "p_22_12", "name": "Yannick Carrasco", "positions": ["ED", "EI"], "overall": 80}, {"id": "p_22_13", "name": "Mousa Dembélé", "positions": ["MC"], "overall": 80}, {"id": "p_22_14", "name": "Michy Batshuayi", "positions": ["DC"], "overall": 77}, {"id": "p_22_15", "name": "Adnan Januzaj", "positions": ["DC", "ED"], "overall": 76}, {"id": "p_23_0", "name": "Pablo Larios", "positions": ["POR"], "overall": 78}, {"id": "p_23_1", "name": "Fernando Quirarte", "positions": ["DFC"], "overall": 79}, {"id": "p_23_2", "name": "Rafael Amador", "positions": ["DFC"], "overall": 75}, {"id": "p_23_3", "name": "Miguel España", "positions": ["LI", "DFC"], "overall": 75}, {"id": "p_23_4", "name": "Javier López", "positions": ["LD", "DFC"], "overall": 73}, {"id": "p_23_5", "name": "Mario Villa", "positions": ["DFC"], "overall": 73}, {"id": "p_23_6", "name": "Hugo Sánchez", "positions": ["DC"], "overall": 90}, {"id": "p_23_7", "name": "Carlos Hermosillo", "positions": ["DC"], "overall": 75}, {"id": "p_23_8", "name": "Manuel Negrete", "positions": ["MC"], "overall": 81}, {"id": "p_23_9", "name": "Javier Aguirre", "positions": ["MC"], "overall": 78}, {"id": "p_23_10", "name": "Tomás Boy", "positions": ["MC"], "overall": 80}, {"id": "p_23_11", "name": "Luis Flores", "positions": ["EI", "ED"], "overall": 76}, {"id": "p_23_12", "name": "Carlos de los Cobos", "positions": ["MC"], "overall": 74}, {"id": "p_23_13", "name": "Mario Ortiz", "positions": ["DC", "EI"], "overall": 73}, {"id": "p_23_14", "name": "Sergio Lugo", "positions": ["DC", "ED"], "overall": 73}, {"id": "p_23_15", "name": "Javier Hernández sr.", "positions": ["ED", "EI"], "overall": 74}, {"id": "p_24_0", "name": "Brad Friedel", "positions": ["POR"], "overall": 82}, {"id": "p_24_1", "name": "Eddie Pope", "positions": ["DFC"], "overall": 79}, {"id": "p_24_2", "name": "Jeff Agoos", "positions": ["DFC"], "overall": 75}, {"id": "p_24_3", "name": "Gregg Berhalter", "positions": ["DFC"], "overall": 76}, {"id": "p_24_4", "name": "Tony Sanneh", "positions": ["LI", "DFC"], "overall": 75}, {"id": "p_24_5", "name": "Frankie Hejduk", "positions": ["LD", "DFC"], "overall": 76}, {"id": "p_24_6", "name": "Claudio Reyna", "positions": ["MC"], "overall": 84}, {"id": "p_24_7", "name": "John O'Brien", "positions": ["MC"], "overall": 78}, {"id": "p_24_8", "name": "Pablo Mastroeni", "positions": ["MC"], "overall": 75}, {"id": "p_24_9", "name": "Earnie Stewart", "positions": ["MC"], "overall": 77}, {"id": "p_24_10", "name": "Landon Donovan", "positions": ["EI", "ED"], "overall": 84}, {"id": "p_24_11", "name": "DaMarcus Beasley", "positions": ["ED", "EI"], "overall": 79}, {"id": "p_24_12", "name": "Brian McBride", "positions": ["DC"], "overall": 81}, {"id": "p_24_13", "name": "Josh Wolff", "positions": ["DC"], "overall": 75}, {"id": "p_24_14", "name": "Clint Mathis", "positions": ["DC", "EI"], "overall": 77}, {"id": "p_24_15", "name": "Cobi Jones", "positions": ["DC", "ED"], "overall": 76}, {"id": "p_25_0", "name": "Yoshikatsu Kawaguchi", "positions": ["POR"], "overall": 80}, {"id": "p_25_1", "name": "Tsuneyasu Miyamoto", "positions": ["DFC"], "overall": 78}, {"id": "p_25_2", "name": "Naoki Matsuda", "positions": ["DFC"], "overall": 76}, {"id": "p_25_3", "name": "Ryuzo Morioka", "positions": ["DFC"], "overall": 75}, {"id": "p_25_4", "name": "Koji Nakata", "positions": ["LI", "DFC"], "overall": 75}, {"id": "p_25_5", "name": "Hiroaki Morishima", "positions": ["LD", "DFC"], "overall": 74}, {"id": "p_25_6", "name": "Hidetoshi Nakata", "positions": ["MC"], "overall": 86}, {"id": "p_25_7", "name": "Junichi Inamoto", "positions": ["MC"], "overall": 79}, {"id": "p_25_8", "name": "Shinji Ono", "positions": ["MC"], "overall": 81}, {"id": "p_25_9", "name": "Toshiya Fujita", "positions": ["MC"], "overall": 75}, {"id": "p_25_10", "name": "Atsushi Yanagisawa", "positions": ["DC"], "overall": 76}, {"id": "p_25_11", "name": "Naohiro Takahara", "positions": ["DC"], "overall": 76}, {"id": "p_25_12", "name": "Masashi Nakayama", "positions": ["DC", "EI"], "overall": 78}, {"id": "p_25_13", "name": "Shoji Jo", "positions": ["DC", "ED"], "overall": 73}, {"id": "p_25_14", "name": "Akinori Nishizawa", "positions": ["ED", "EI"], "overall": 76}, {"id": "p_25_15", "name": "Teruyoshi Ito", "positions": ["MC"], "overall": 74}, {"id": "p_26_0", "name": "Lee Woon-jae", "positions": ["POR"], "overall": 81}, {"id": "p_26_1", "name": "Hong Myung-bo", "positions": ["DFC"], "overall": 84}, {"id": "p_26_2", "name": "Choi Jin-cheul", "positions": ["DFC"], "overall": 76}, {"id": "p_26_3", "name": "Kim Tae-young", "positions": ["DFC"], "overall": 76}, {"id": "p_26_4", "name": "Lee Young-pyo", "positions": ["LI", "DFC"], "overall": 80}, {"id": "p_26_5", "name": "Song Chong-gug", "positions": ["LD", "DFC"], "overall": 78}, {"id": "p_26_6", "name": "Park Ji-sung", "positions": ["MC"], "overall": 84}, {"id": "p_26_7", "name": "Yoo Sang-chul", "positions": ["MC"], "overall": 81}, {"id": "p_26_8", "name": "Kim Nam-il", "positions": ["MC"], "overall": 77}, {"id": "p_26_9", "name": "Lee Chun-soo", "positions": ["MC"], "overall": 78}, {"id": "p_26_10", "name": "Ahn Jung-hwan", "positions": ["DC"], "overall": 82}, {"id": "p_26_11", "name": "Seol Ki-hyeon", "positions": ["EI", "ED"], "overall": 79}, {"id": "p_26_12", "name": "Hwang Sun-hong", "positions": ["DC"], "overall": 78}, {"id": "p_26_13", "name": "Cha Du-ri", "positions": ["LD", "MC"], "overall": 76}, {"id": "p_26_14", "name": "Kim Do-hoon", "positions": ["DC", "ED"], "overall": 75}, {"id": "p_26_15", "name": "Choi Tae-uk", "positions": ["ED", "EI"], "overall": 75}, {"id": "p_27_0", "name": "Yassine Bounou", "positions": ["POR"], "overall": 86}, {"id": "p_27_1", "name": "Romain Saïss", "positions": ["DFC"], "overall": 80}, {"id": "p_27_2", "name": "Nayef Aguerd", "positions": ["DFC"], "overall": 79}, {"id": "p_27_3", "name": "Achraf Dari", "positions": ["DFC"], "overall": 75}, {"id": "p_27_4", "name": "Noussair Mazraoui", "positions": ["LD", "DFC"], "overall": 80}, {"id": "p_27_5", "name": "Achraf Hakimi", "positions": ["LD", "DFC"], "overall": 86}, {"id": "p_27_6", "name": "Sofyan Amrabat", "positions": ["MC"], "overall": 83}, {"id": "p_27_7", "name": "Azzedine Ounahi", "positions": ["MC"], "overall": 80}, {"id": "p_27_8", "name": "Selim Amallah", "positions": ["MC"], "overall": 75}, {"id": "p_27_9", "name": "Abdelhamid Sabiri", "positions": ["MC"], "overall": 76}, {"id": "p_27_10", "name": "Hakim Ziyech", "positions": ["EI", "ED"], "overall": 84}, {"id": "p_27_11", "name": "Sofiane Boufal", "positions": ["ED", "EI"], "overall": 78}, {"id": "p_27_12", "name": "Youssef En-Nesyri", "positions": ["DC"], "overall": 82}, {"id": "p_27_13", "name": "Abderrazak Hamdallah", "positions": ["DC"], "overall": 75}, {"id": "p_27_14", "name": "Walid Cheddira", "positions": ["DC", "EI"], "overall": 74}, {"id": "p_27_15", "name": "Zakaria Aboukhlal", "positions": ["DC", "ED"], "overall": 75}, {"id": "p_28_0", "name": "Peter Rufai", "positions": ["POR"], "overall": 82}, {"id": "p_28_1", "name": "Uche Okechukwu", "positions": ["DFC"], "overall": 77}, {"id": "p_28_2", "name": "Augustine Eguavoen", "positions": ["DFC"], "overall": 78}, {"id": "p_28_3", "name": "Benedict Iroha", "positions": ["DFC"], "overall": 75}, {"id": "p_28_4", "name": "Chidi Nwanu", "positions": ["LI", "DFC"], "overall": 73}, {"id": "p_28_5", "name": "Mobi Oparaku", "positions": ["LD", "DFC"], "overall": 73}, {"id": "p_28_6", "name": "Jay-Jay Okocha", "positions": ["EI", "ED"], "overall": 87}, {"id": "p_28_7", "name": "Sunday Oliseh", "positions": ["MC"], "overall": 81}, {"id": "p_28_8", "name": "Emmanuel Amunike", "positions": ["MC"], "overall": 82}, {"id": "p_28_9", "name": "Samson Siasia", "positions": ["MC"], "overall": 75}, {"id": "p_28_10", "name": "Mutiu Adepoju", "positions": ["MC"], "overall": 76}, {"id": "p_28_11", "name": "Finidi George", "positions": ["ED", "EI"], "overall": 83}, {"id": "p_28_12", "name": "Rashidi Yekini", "positions": ["DC"], "overall": 85}, {"id": "p_28_13", "name": "Daniel Amokachi", "positions": ["DC"], "overall": 81}, {"id": "p_28_14", "name": "Victor Ikpeba", "positions": ["DC", "EI"], "overall": 79}, {"id": "p_28_15", "name": "Friday Ekpo", "positions": ["DC", "ED"], "overall": 72}, {"id": "p_29_0", "name": "Thomas N'Kono", "positions": ["POR"], "overall": 84}, {"id": "p_29_1", "name": "Stephen Tataw", "positions": ["DFC"], "overall": 78}, {"id": "p_29_2", "name": "Emmanuel Kundé", "positions": ["DFC"], "overall": 78}, {"id": "p_29_3", "name": "Benjamin Massing", "positions": ["DFC"], "overall": 75}, {"id": "p_29_4", "name": "André Kana-Biyik", "positions": ["LI", "DFC"], "overall": 76}, {"id": "p_29_5", "name": "Bertin Ebwellé", "positions": ["LD", "DFC"], "overall": 73}, {"id": "p_29_6", "name": "Roger Milla", "positions": ["DC"], "overall": 86}, {"id": "p_29_7", "name": "François Omam-Biyik", "positions": ["EI", "ED"], "overall": 80}, {"id": "p_29_8", "name": "Cyrille Makanaky", "positions": ["MC"], "overall": 79}, {"id": "p_29_9", "name": "Emile Mbouh", "positions": ["MC"], "overall": 75}, {"id": "p_29_10", "name": "Louis-Paul Mfedé", "positions": ["MC"], "overall": 74}, {"id": "p_29_11", "name": "Victor Ndip Akem", "positions": ["MC"], "overall": 73}, {"id": "p_29_12", "name": "Eugène Ekéké", "positions": ["DC"], "overall": 75}, {"id": "p_29_13", "name": "Jean-Claude Pagal", "positions": ["DC", "EI"], "overall": 73}, {"id": "p_29_14", "name": "Roger Feutmba", "positions": ["DC", "ED"], "overall": 73}, {"id": "p_29_15", "name": "Jules Nyongha", "positions": ["ED", "EI"], "overall": 73}, {"id": "p_31_0", "name": "Justo Villar", "positions": ["POR"], "overall": 82}, {"id": "p_31_1", "name": "Paulo da Silva", "positions": ["DFC"], "overall": 79}, {"id": "p_31_2", "name": "Antolín Alcaraz", "positions": ["DFC"], "overall": 78}, {"id": "p_31_3", "name": "Darío Verón", "positions": ["DFC"], "overall": 75}, {"id": "p_31_4", "name": "Denis Caniza", "positions": ["LI", "DFC"], "overall": 76}, {"id": "p_31_5", "name": "Claudio Morel Rodríguez", "positions": ["LD", "DFC"], "overall": 75}, {"id": "p_31_6", "name": "Roque Santa Cruz", "positions": ["DC"], "overall": 82}, {"id": "p_31_7", "name": "Óscar Cardozo", "positions": ["DC"], "overall": 80}, {"id": "p_31_8", "name": "Cristian Riveros", "positions": ["MC"], "overall": 78}, {"id": "p_31_9", "name": "Víctor Cáceres", "positions": ["MC"], "overall": 76}, {"id": "p_31_10", "name": "Enrique Vera", "positions": ["MC"], "overall": 76}, {"id": "p_31_11", "name": "Edgar Barreto", "positions": ["MC"], "overall": 78}, {"id": "p_31_12", "name": "Nelson Haedo Valdez", "positions": ["EI", "ED"], "overall": 78}, {"id": "p_31_13", "name": "Lucas Barrios", "positions": ["DC", "EI"], "overall": 77}, {"id": "p_31_14", "name": "Edgar Benítez", "positions": ["DC", "EI"], "overall": 75}, {"id": "p_31_15", "name": "Santiago Salcedo", "positions": ["DC", "ED"], "overall": 73}, {"id": "p_32_0", "name": "David Ospina", "positions": ["POR"], "overall": 84}, {"id": "p_32_1", "name": "Mario Yepes", "positions": ["DFC"], "overall": 79}, {"id": "p_32_2", "name": "Cristián Zapata", "positions": ["DFC"], "overall": 78}, {"id": "p_32_3", "name": "Pablo Armero", "positions": ["LI", "DFC"], "overall": 76}, {"id": "p_32_4", "name": "Santiago Arias", "positions": ["LD", "DFC"], "overall": 78}, {"id": "p_32_5", "name": "Éder Álvarez Balanta", "positions": ["DFC"], "overall": 75}, {"id": "p_32_6", "name": "James Rodríguez", "positions": ["EI", "ED"], "overall": 89}, {"id": "p_32_7", "name": "Juan Cuadrado", "positions": ["MC", "ED"], "overall": 82}, {"id": "p_32_8", "name": "Fredy Guarín", "positions": ["MC"], "overall": 80}, {"id": "p_32_9", "name": "Carlos Sánchez", "positions": ["MC"], "overall": 79}, {"id": "p_32_10", "name": "Abel Aguilar", "positions": ["MC"], "overall": 75}, {"id": "p_32_11", "name": "Jackson Martínez", "positions": ["DC"], "overall": 80}, {"id": "p_32_12", "name": "Carlos Bacca", "positions": ["DC"], "overall": 81}, {"id": "p_32_13", "name": "Teófilo Gutiérrez", "positions": ["DC"], "overall": 77}, {"id": "p_32_14", "name": "Juan Fernando Quintero", "positions": ["ED", "EI"], "overall": 78}, {"id": "p_32_15", "name": "Adrián Ramos", "positions": ["DC", "ED"], "overall": 75}, {"id": "p_40_0", "name": "Rüştü Reçber", "positions": ["POR"], "overall": 84}, {"id": "p_40_1", "name": "Alpay Özalan", "positions": ["DFC"], "overall": 80}, {"id": "p_40_2", "name": "Bülent Korkmaz", "positions": ["DFC"], "overall": 78}, {"id": "p_40_3", "name": "Fatih Akyel", "positions": ["DFC"], "overall": 76}, {"id": "p_40_4", "name": "Ümit Davala", "positions": ["LI", "DFC"], "overall": 78}, {"id": "p_40_5", "name": "Ogün Temizkanoğlu", "positions": ["LD", "DFC"], "overall": 73}, {"id": "p_40_6", "name": "Hakan Şükür", "positions": ["DC"], "overall": 84}, {"id": "p_40_7", "name": "Nihat Kahveci", "positions": ["DC"], "overall": 80}, {"id": "p_40_8", "name": "Tugay Kerimoğlu", "positions": ["MC"], "overall": 81}, {"id": "p_40_9", "name": "Emre Belözoğlu", "positions": ["MC"], "overall": 80}, {"id": "p_40_10", "name": "Yıldıray Baştürk", "positions": ["MC"], "overall": 77}, {"id": "p_40_11", "name": "Hasan Şaş", "positions": ["MC"], "overall": 79}, {"id": "p_40_12", "name": "İlhan Mansız", "positions": ["EI", "ED"], "overall": 78}, {"id": "p_40_13", "name": "Ümit Karan", "positions": ["ED", "EI"], "overall": 75}, {"id": "p_40_14", "name": "Tayfun Korkut", "positions": ["DC", "EI"], "overall": 73}, {"id": "p_40_15", "name": "Tayfur Havutçu", "positions": ["DC", "ED"], "overall": 74}, {"id": "p_41_0", "name": "Antonis Nikopolidis", "positions": ["POR"], "overall": 81}, {"id": "p_41_1", "name": "Traianos Dellas", "positions": ["DFC"], "overall": 80}, {"id": "p_41_2", "name": "Michalis Kapsis", "positions": ["DFC"], "overall": 76}, {"id": "p_41_3", "name": "Takis Fyssas", "positions": ["LI", "DFC"], "overall": 76}, {"id": "p_41_4", "name": "Giourkas Seitaridis", "positions": ["LD", "DFC"], "overall": 78}, {"id": "p_41_5", "name": "Stelios Venetidis", "positions": ["LD", "DFC"], "overall": 73}, {"id": "p_41_6", "name": "Theodoros Zagorakis", "positions": ["MC"], "overall": 82}, {"id": "p_41_7", "name": "Kostas Katsouranis", "positions": ["MC"], "overall": 78}, {"id": "p_41_8", "name": "Angelos Basinas", "positions": ["MC"], "overall": 78}, {"id": "p_41_9", "name": "Stylianos Giannakopoulos", "positions": ["MC"], "overall": 75}, {"id": "p_41_10", "name": "Giorgos Karagounis", "positions": ["MC", "ED"], "overall": 79}, {"id": "p_41_11", "name": "Angelos Charisteas", "positions": ["DC"], "overall": 81}, {"id": "p_41_12", "name": "Demis Nikolaidis", "positions": ["DC"], "overall": 77}, {"id": "p_41_13", "name": "Zisis Vryzas", "positions": ["EI", "ED"], "overall": 75}, {"id": "p_41_14", "name": "Vassilios Tsiartas", "positions": ["EI", "ED"], "overall": 76}, {"id": "p_41_15", "name": "Vassilis Lakis", "positions": ["DC", "EI"], "overall": 72}, {"id": "p_42_0", "name": "Florin Prunea", "positions": ["POR"], "overall": 79}, {"id": "p_42_1", "name": "Gheorghe Popescu", "positions": ["DFC"], "overall": 82}, {"id": "p_42_2", "name": "Miodrag Belodedici", "positions": ["DFC"], "overall": 80}, {"id": "p_42_3", "name": "Daniel Prodan", "positions": ["DFC"], "overall": 75}, {"id": "p_42_4", "name": "Dan Petrescu", "positions": ["LD", "DFC"], "overall": 80}, {"id": "p_42_5", "name": "Ioan Lupescu", "positions": ["LI", "DFC"], "overall": 78}, {"id": "p_42_6", "name": "Gheorghe Hagi", "positions": ["MC", "EI"], "overall": 89}, {"id": "p_42_7", "name": "Ilie Dumitrescu", "positions": ["MC"], "overall": 80}, {"id": "p_42_8", "name": "Tibor Selymes", "positions": ["MC"], "overall": 75}, {"id": "p_42_9", "name": "Cristian Dulca", "positions": ["MC"], "overall": 73}, {"id": "p_42_10", "name": "Florin Răducioiu", "positions": ["EI", "ED"], "overall": 79}, {"id": "p_42_11", "name": "Adrian Ilie", "positions": ["ED", "EI"], "overall": 76}, {"id": "p_42_12", "name": "Dorinel Munteanu", "positions": ["MC"], "overall": 76}, {"id": "p_42_13", "name": "Viorel Moldovan", "positions": ["DC"], "overall": 76}, {"id": "p_42_14", "name": "Gheorghe Craioveanu", "positions": ["DC", "ED"], "overall": 73}, {"id": "p_42_15", "name": "Ioan Vlădoiu", "positions": ["DC"], "overall": 73}, {"id": "p_43_0", "name": "Packie Bonner", "positions": ["POR"], "overall": 82}, {"id": "p_43_1", "name": "Paul McGrath", "positions": ["DFC"], "overall": 85}, {"id": "p_43_2", "name": "Mick McCarthy", "positions": ["DFC"], "overall": 76}, {"id": "p_43_3", "name": "Kevin Moran", "positions": ["DFC"], "overall": 78}, {"id": "p_43_4", "name": "Steve Staunton", "positions": ["LI", "DFC"], "overall": 77}, {"id": "p_43_5", "name": "Chris Morris", "positions": ["LD", "DFC"], "overall": 74}, {"id": "p_43_6", "name": "Liam Brady", "positions": ["MC"], "overall": 81}, {"id": "p_43_7", "name": "Andy Townsend", "positions": ["MC"], "overall": 78}, {"id": "p_43_8", "name": "Ray Houghton", "positions": ["MC"], "overall": 79}, {"id": "p_43_9", "name": "Ronnie Whelan", "positions": ["MC"], "overall": 78}, {"id": "p_43_10", "name": "Kevin Sheedy", "positions": ["ED", "EI"], "overall": 78}, {"id": "p_43_11", "name": "John Aldridge", "positions": ["DC"], "overall": 78}, {"id": "p_43_12", "name": "Niall Quinn", "positions": ["DC"], "overall": 78}, {"id": "p_43_13", "name": "Tony Cascarino", "positions": ["DC"], "overall": 76}, {"id": "p_43_14", "name": "David O'Leary", "positions": ["DFC", "MC"], "overall": 77}, {"id": "p_43_15", "name": "David Kelly", "positions": ["DC", "ED"], "overall": 73}, {"id": "p_46_0", "name": "Igor Akinfeev", "positions": ["POR"], "overall": 83}, {"id": "p_46_1", "name": "Sergei Ignashevich", "positions": ["DFC"], "overall": 78}, {"id": "p_46_2", "name": "Ilya Kutepov", "positions": ["DFC"], "overall": 74}, {"id": "p_46_3", "name": "Andrei Semyonov", "positions": ["DFC"], "overall": 73}, {"id": "p_46_4", "name": "Yuri Zhirkov", "positions": ["LI", "DFC"], "overall": 78}, {"id": "p_46_5", "name": "Mário Fernandes", "positions": ["LD", "DFC"], "overall": 76}, {"id": "p_46_6", "name": "Aleksandr Golovin", "positions": ["MC"], "overall": 81}, {"id": "p_46_7", "name": "Roman Zobnin", "positions": ["MC"], "overall": 77}, {"id": "p_46_8", "name": "Alan Dzagoev", "positions": ["MC"], "overall": 76}, {"id": "p_46_9", "name": "Daler Kuzyaev", "positions": ["MC"], "overall": 75}, {"id": "p_46_10", "name": "Denis Cheryshev", "positions": ["EI", "ED"], "overall": 79}, {"id": "p_46_11", "name": "Aleksandr Samedov", "positions": ["ED", "EI"], "overall": 74}, {"id": "p_46_12", "name": "Artem Dzyuba", "positions": ["DC"], "overall": 79}, {"id": "p_46_13", "name": "Fedor Smolov", "positions": ["DC"], "overall": 76}, {"id": "p_46_14", "name": "Anton Miranchuk", "positions": ["DC", "EI"], "overall": 74}, {"id": "p_46_15", "name": "Yuri Gazinsky", "positions": ["DC", "ED"], "overall": 72}, {"id": "p_47_0", "name": "Oleksandr Shovkovskiy", "positions": ["POR"], "overall": 81}, {"id": "p_47_1", "name": "Vladislav Vashchuk", "positions": ["DFC"], "overall": 76}, {"id": "p_47_2", "name": "Andriy Nesmachniy", "positions": ["DFC"], "overall": 75}, {"id": "p_47_3", "name": "Vyacheslav Sviderskyi", "positions": ["DFC"], "overall": 75}, {"id": "p_47_4", "name": "Andriy Husin", "positions": ["LI", "DFC"], "overall": 75}, {"id": "p_47_5", "name": "Bohdan Shust", "positions": ["LD", "DFC"], "overall": 72}, {"id": "p_47_6", "name": "Andriy Shevchenko", "positions": ["DC"], "overall": 88}, {"id": "p_47_7", "name": "Anatoliy Tymoshchuk", "positions": ["MC"], "overall": 84}, {"id": "p_47_8", "name": "Serhiy Rebrov", "positions": ["MC", "EI"], "overall": 80}, {"id": "p_47_9", "name": "Oleh Husyev", "positions": ["MC"], "overall": 76}, {"id": "p_47_10", "name": "Ruslan Rotan", "positions": ["MC"], "overall": 75}, {"id": "p_47_11", "name": "Andriy Voronin", "positions": ["EI", "ED"], "overall": 79}, {"id": "p_47_12", "name": "Maksym Kalynychenko", "positions": ["ED", "EI"], "overall": 76}, {"id": "p_47_13", "name": "Artem Milevskyi", "positions": ["DC"], "overall": 75}, {"id": "p_47_14", "name": "Andriy Vorobei", "positions": ["DC", "EI"], "overall": 73}, {"id": "p_47_15", "name": "Yevhen Levchenko", "positions": ["DC", "ED"], "overall": 72}, {"id": "p_48_0", "name": "Vladimir Stojković", "positions": ["POR"], "overall": 78}, {"id": "p_48_1", "name": "Nemanja Vidić", "positions": ["DFC"], "overall": 87}, {"id": "p_48_2", "name": "Branislav Ivanović", "positions": ["DFC", "LD"], "overall": 84}, {"id": "p_48_3", "name": "Aleksandar Luković", "positions": ["DFC"], "overall": 75}, {"id": "p_48_4", "name": "Neven Subotić", "positions": ["LI", "DFC"], "overall": 78}, {"id": "p_48_5", "name": "Ivan Obradović", "positions": ["LD", "DFC"], "overall": 73}, {"id": "p_48_6", "name": "Dejan Stanković", "positions": ["MC"], "overall": 82}, {"id": "p_48_7", "name": "Zdravko Kuzmanović", "positions": ["MC"], "overall": 75}, {"id": "p_48_8", "name": "Miloš Krasić", "positions": ["MC", "ED"], "overall": 79}, {"id": "p_48_9", "name": "Gojko Kačar", "positions": ["MC"], "overall": 73}, {"id": "p_48_10", "name": "Milan Jovanović", "positions": ["EI", "ED"], "overall": 78}, {"id": "p_48_11", "name": "Zoran Tošić", "positions": ["ED", "EI"], "overall": 76}, {"id": "p_48_12", "name": "Marko Pantelić", "positions": ["DC"], "overall": 76}, {"id": "p_48_13", "name": "Nikola Žigić", "positions": ["DC"], "overall": 78}, {"id": "p_48_14", "name": "Danko Lazović", "positions": ["DC", "EI"], "overall": 75}, {"id": "p_48_15", "name": "Milan Smiljanić", "positions": ["DC", "ED"], "overall": 72}, {"id": "p_49_0", "name": "Frode Grodås", "positions": ["POR"], "overall": 78}, {"id": "p_49_1", "name": "Ronny Johnsen", "positions": ["DFC"], "overall": 81}, {"id": "p_49_2", "name": "Henning Berg", "positions": ["DFC"], "overall": 80}, {"id": "p_49_3", "name": "Dan Eggen", "positions": ["DFC"], "overall": 73}, {"id": "p_49_4", "name": "Gunnar Halle", "positions": ["LD", "DFC"], "overall": 74}, {"id": "p_49_5", "name": "Erland Johnsen", "positions": ["LI", "DFC"], "overall": 75}, {"id": "p_49_6", "name": "Ole Gunnar Solskjær", "positions": ["DC"], "overall": 82}, {"id": "p_49_7", "name": "Tore André Flo", "positions": ["DC"], "overall": 81}, {"id": "p_49_8", "name": "Kjetil Rekdal", "positions": ["MC"], "overall": 76}, {"id": "p_49_9", "name": "Øyvind Leonhardsen", "positions": ["MC"], "overall": 76}, {"id": "p_49_10", "name": "Stig Inge Bjørnebye", "positions": ["LI", "MC"], "overall": 76}, {"id": "p_49_11", "name": "Erik Mykland", "positions": ["MC"], "overall": 74}, {"id": "p_49_12", "name": "Jostein Flo", "positions": ["EI", "DC"], "overall": 75}, {"id": "p_49_13", "name": "Steffen Iversen", "positions": ["DC", "EI"], "overall": 76}, {"id": "p_49_14", "name": "Egil Østenstad", "positions": ["DC", "EI"], "overall": 73}, {"id": "p_49_15", "name": "Håvard Flo", "positions": ["DC", "ED"], "overall": 72}, {"id": "p_team_brasil_1982_0", "name": "Waldir Peres", "positions": ["POR"], "overall": 82}, {"id": "p_team_brasil_1982_1", "name": "Leandro", "positions": ["LD"], "overall": 84}, {"id": "p_team_brasil_1982_2", "name": "Oscar", "positions": ["DFC"], "overall": 83}, {"id": "p_team_brasil_1982_3", "name": "Luízinho", "positions": ["DFC"], "overall": 82}, {"id": "p_team_brasil_1982_4", "name": "Junior", "positions": ["LI"], "overall": 85}, {"id": "p_team_brasil_1982_5", "name": "Toninho Cerezo", "positions": ["MC"], "overall": 85}, {"id": "p_team_brasil_1982_6", "name": "Falcão", "positions": ["MC"], "overall": 92}, {"id": "p_team_brasil_1982_7", "name": "Sócrates", "positions": ["EI", "MC"], "overall": 93}, {"id": "p_team_brasil_1982_8", "name": "Zico", "positions": ["EI", "DC"], "overall": 94}, {"id": "p_team_brasil_1982_9", "name": "Éder", "positions": ["EI"], "overall": 87}, {"id": "p_team_brasil_1982_10", "name": "Paulo Isidoro", "positions": ["ED"], "overall": 83}, {"id": "p_team_brasil_1982_11", "name": "Serginho", "positions": ["DC"], "overall": 82}, {"id": "p_team_brasil_1982_12", "name": "Batista", "positions": ["DFC", "MC"], "overall": 80}, {"id": "p_team_brasil_1982_13", "name": "Dirceu", "positions": ["MC", "EI"], "overall": 84}, {"id": "p_team_brasil_1982_14", "name": "Reinaldo", "positions": ["DC"], "overall": 82}, {"id": "p_team_brasil_1982_15", "name": "Paulo Roberto", "positions": ["MC"], "overall": 83}, {"id": "p_team_argentina_1978_0", "name": "Ubaldo Fillol", "positions": ["POR"], "overall": 86}, {"id": "p_team_argentina_1978_1", "name": "Jorge Olguín", "positions": ["LD"], "overall": 82}, {"id": "p_team_argentina_1978_2", "name": "Daniel Passarella", "positions": ["DFC"], "overall": 90}, {"id": "p_team_argentina_1978_3", "name": "Luis Galván", "positions": ["DFC"], "overall": 82}, {"id": "p_team_argentina_1978_4", "name": "Alberto Tarantini", "positions": ["LI"], "overall": 81}, {"id": "p_team_argentina_1978_5", "name": "Omar Larrosa", "positions": ["MC"], "overall": 82}, {"id": "p_team_argentina_1978_6", "name": "Américo Gallego", "positions": ["MC"], "overall": 83}, {"id": "p_team_argentina_1978_7", "name": "Osvaldo Ardiles", "positions": ["MC"], "overall": 87}, {"id": "p_team_argentina_1978_8", "name": "Leopoldo Luque", "positions": ["DC"], "overall": 85}, {"id": "p_team_argentina_1978_9", "name": "Mario Kempes", "positions": ["DC", "EI"], "overall": 93}, {"id": "p_team_argentina_1978_10", "name": "René Houseman", "positions": ["ED"], "overall": 84}, {"id": "p_team_argentina_1978_11", "name": "Norberto Alonso", "positions": ["EI", "MC"], "overall": 83}, {"id": "p_team_argentina_1978_12", "name": "Ricardo Villa", "positions": ["MC"], "overall": 82}, {"id": "p_team_argentina_1978_13", "name": "Daniel Bertoni", "positions": ["ED"], "overall": 83}, {"id": "p_team_argentina_1978_14", "name": "Hugo Gatti", "positions": ["POR"], "overall": 82}, {"id": "p_team_argentina_1978_15", "name": "Jorge Carrascosa", "positions": ["MC"], "overall": 80}, {"id": "p_team_holanda_1988_0", "name": "Hans van Breukelen", "positions": ["POR"], "overall": 84}, {"id": "p_team_holanda_1988_1", "name": "Berry van Aerle", "positions": ["LD"], "overall": 82}, {"id": "p_team_holanda_1988_2", "name": "Ronald Koeman", "positions": ["DFC"], "overall": 90}, {"id": "p_team_holanda_1988_3", "name": "Adri van Tiggelen", "positions": ["DFC"], "overall": 82}, {"id": "p_team_holanda_1988_4", "name": "Jan Wouters", "positions": ["MC", "DFC"], "overall": 84}, {"id": "p_team_holanda_1988_5", "name": "Gerald Vanenburg", "positions": ["MC"], "overall": 83}, {"id": "p_team_holanda_1988_6", "name": "Ruud Gullit", "positions": ["DC", "EI"], "overall": 95}, {"id": "p_team_holanda_1988_7", "name": "Frank Rijkaard", "positions": ["MC"], "overall": 91}, {"id": "p_team_holanda_1988_8", "name": "Marco van Basten", "positions": ["DC"], "overall": 96}, {"id": "p_team_holanda_1988_9", "name": "John van 't Schip", "positions": ["EI", "MC"], "overall": 84}, {"id": "p_team_holanda_1988_10", "name": "Rob Witschge", "positions": ["MC"], "overall": 82}, {"id": "p_team_holanda_1988_11", "name": "Wim Kieft", "positions": ["DC"], "overall": 83}, {"id": "p_team_holanda_1988_12", "name": "Hans Gillhaus", "positions": ["EI", "DC"], "overall": 82}, {"id": "p_team_holanda_1988_13", "name": "Arnold Mühren", "positions": ["MC"], "overall": 84}, {"id": "p_team_holanda_1988_14", "name": "Erwin Koeman", "positions": ["LD", "MC"], "overall": 83}, {"id": "p_team_holanda_1988_15", "name": "Peter Boeve", "positions": ["DFC"], "overall": 80}, {"id": "p_team_senegal_2002_0", "name": "Tony Sylva", "positions": ["POR"], "overall": 82}, {"id": "p_team_senegal_2002_1", "name": "Lamine Diatta", "positions": ["DFC"], "overall": 82}, {"id": "p_team_senegal_2002_2", "name": "Ferdinand Coly", "positions": ["LD"], "overall": 83}, {"id": "p_team_senegal_2002_3", "name": "Pape Bouba Diop", "positions": ["DFC"], "overall": 82}, {"id": "p_team_senegal_2002_4", "name": "Omar Daf", "positions": ["LI"], "overall": 81}, {"id": "p_team_senegal_2002_5", "name": "Khalilou Fadiga", "positions": ["MC"], "overall": 84}, {"id": "p_team_senegal_2002_6", "name": "Aliou Cissé", "positions": ["MC"], "overall": 82}, {"id": "p_team_senegal_2002_7", "name": "El Hadji Diouf", "positions": ["DC", "EI"], "overall": 86}, {"id": "p_team_senegal_2002_8", "name": "Salif Diao", "positions": ["MC"], "overall": 83}, {"id": "p_team_senegal_2002_9", "name": "Henri Camara", "positions": ["DC"], "overall": 84}, {"id": "p_team_senegal_2002_10", "name": "Souleymane Camara", "positions": ["DC"], "overall": 81}, {"id": "p_team_senegal_2002_11", "name": "Habib Beye", "positions": ["LD", "MC"], "overall": 82}, {"id": "p_team_senegal_2002_12", "name": "Mamadou Niang", "positions": ["DC"], "overall": 82}, {"id": "p_team_senegal_2002_13", "name": "Amdy Faye", "positions": ["MC"], "overall": 81}, {"id": "p_team_senegal_2002_14", "name": "Moussa N'Diaye", "positions": ["EI"], "overall": 81}, {"id": "p_team_senegal_2002_15", "name": "Pape Thiaw", "positions": ["DFC", "MC"], "overall": 80}, {"id": "p_team_costa_rica_2014_0", "name": "Keylor Navas", "positions": ["POR"], "overall": 90}, {"id": "p_team_costa_rica_2014_1", "name": "Michael Umaña", "positions": ["DFC"], "overall": 81}, {"id": "p_team_costa_rica_2014_2", "name": "Óscar Duarte", "positions": ["DFC"], "overall": 82}, {"id": "p_team_costa_rica_2014_3", "name": "Giancarlo González", "positions": ["DFC"], "overall": 81}, {"id": "p_team_costa_rica_2014_4", "name": "Junior Díaz", "positions": ["LI"], "overall": 80}, {"id": "p_team_costa_rica_2014_5", "name": "David Myrie", "positions": ["LD"], "overall": 79}, {"id": "p_team_costa_rica_2014_6", "name": "Bryan Ruiz", "positions": ["MC", "EI"], "overall": 84}, {"id": "p_team_costa_rica_2014_7", "name": "Yeltsin Tejeda", "positions": ["MC"], "overall": 80}, {"id": "p_team_costa_rica_2014_8", "name": "Celso Borges", "positions": ["MC"], "overall": 82}, {"id": "p_team_costa_rica_2014_9", "name": "Joel Campbell", "positions": ["EI", "DC"], "overall": 83}, {"id": "p_team_costa_rica_2014_10", "name": "Marco Ureña", "positions": ["DC"], "overall": 80}, {"id": "p_team_costa_rica_2014_11", "name": "José Miguel Cubero", "positions": ["DFC", "MC"], "overall": 80}, {"id": "p_team_costa_rica_2014_12", "name": "Álvaro Saborío", "positions": ["DC"], "overall": 81}, {"id": "p_team_costa_rica_2014_13", "name": "Johnny Acosta", "positions": ["DFC"], "overall": 79}, {"id": "p_team_costa_rica_2014_14", "name": "Diego Calvo", "positions": ["LD"], "overall": 78}, {"id": "p_team_costa_rica_2014_15", "name": "Randall Brenes", "positions": ["MC"], "overall": 79}, {"id": "p_team_ghana_2010_0", "name": "Richard Kingson", "positions": ["POR"], "overall": 81}, {"id": "p_team_ghana_2010_1", "name": "Hans Sarpei", "positions": ["LI"], "overall": 80}, {"id": "p_team_ghana_2010_2", "name": "John Mensah", "positions": ["DFC"], "overall": 83}, {"id": "p_team_ghana_2010_3", "name": "Jonathan Mensah", "positions": ["DFC"], "overall": 80}, {"id": "p_team_ghana_2010_4", "name": "Samuel Inkoom", "positions": ["LD"], "overall": 80}, {"id": "p_team_ghana_2010_5", "name": "Anthony Annan", "positions": ["MC"], "overall": 81}, {"id": "p_team_ghana_2010_6", "name": "Kevin-Prince Boateng", "positions": ["MC", "EI"], "overall": 85}, {"id": "p_team_ghana_2010_7", "name": "Kwadwo Asamoah", "positions": ["MC", "LI"], "overall": 84}, {"id": "p_team_ghana_2010_8", "name": "Sulley Muntari", "positions": ["MC"], "overall": 83}, {"id": "p_team_ghana_2010_9", "name": "Asamoah Gyan", "positions": ["DC"], "overall": 87}, {"id": "p_team_ghana_2010_10", "name": "André Ayew", "positions": ["EI", "DC"], "overall": 84}, {"id": "p_team_ghana_2010_11", "name": "John Paintsil", "positions": ["LD"], "overall": 80}, {"id": "p_team_ghana_2010_12", "name": "Dominic Adiyiah", "positions": ["DC"], "overall": 80}, {"id": "p_team_ghana_2010_13", "name": "Stephen Appiah", "positions": ["MC"], "overall": 83}, {"id": "p_team_ghana_2010_14", "name": "Laryea Kingston", "positions": ["MC", "EI"], "overall": 80}, {"id": "p_team_ghana_2010_15", "name": "Jordan Ayew", "positions": ["EI", "DC"], "overall": 82}, {"id": "p_team_uruguay_2010_0", "name": "Fernando Muslera", "positions": ["POR"], "overall": 85}, {"id": "p_team_uruguay_2010_1", "name": "Maxi Pereira", "positions": ["LD"], "overall": 82}, {"id": "p_team_uruguay_2010_2", "name": "Diego Lugano", "positions": ["DFC"], "overall": 84}, {"id": "p_team_uruguay_2010_3", "name": "Diego Godín", "positions": ["DFC"], "overall": 90}, {"id": "p_team_uruguay_2010_4", "name": "Jorge Fucile", "positions": ["LI"], "overall": 80}, {"id": "p_team_uruguay_2010_5", "name": "Álvaro Pereira", "positions": ["LI", "MC"], "overall": 82}, {"id": "p_team_uruguay_2010_6", "name": "Egidio Arévalo Ríos", "positions": ["MC"], "overall": 81}, {"id": "p_team_uruguay_2010_7", "name": "Diego Pérez", "positions": ["DFC", "MC"], "overall": 80}, {"id": "p_team_uruguay_2010_8", "name": "Edinson Cavani", "positions": ["DC", "EI"], "overall": 91}, {"id": "p_team_uruguay_2010_9", "name": "Luis Suárez", "positions": ["DC"], "overall": 94}, {"id": "p_team_uruguay_2010_10", "name": "Diego Forlán", "positions": ["DC", "EI"], "overall": 90}, {"id": "p_team_uruguay_2010_11", "name": "Sebastián Abreu", "positions": ["DC"], "overall": 80}, {"id": "p_team_uruguay_2010_12", "name": "Andrés Scotti", "positions": ["DFC"], "overall": 79}, {"id": "p_team_uruguay_2010_13", "name": "Nicolás Lodeiro", "positions": ["MC", "EI"], "overall": 82}, {"id": "p_team_uruguay_2010_14", "name": "Sebastián Eguren", "positions": ["MC"], "overall": 80}, {"id": "p_team_uruguay_2010_15", "name": "Carlos Bueno", "positions": ["DC"], "overall": 79}, {"id": "p_team_suecia_1994_0", "name": "Thomas Ravelli", "positions": ["POR"], "overall": 85}, {"id": "p_team_suecia_1994_1", "name": "Roland Nilsson", "positions": ["LD"], "overall": 83}, {"id": "p_team_suecia_1994_2", "name": "Patrik Andersson", "positions": ["DFC"], "overall": 82}, {"id": "p_team_suecia_1994_3", "name": "Joachim Björklund", "positions": ["DFC"], "overall": 81}, {"id": "p_team_suecia_1994_4", "name": "Pontus Kåmark", "positions": ["DFC"], "overall": 80}, {"id": "p_team_suecia_1994_5", "name": "Klas Ingesson", "positions": ["MC"], "overall": 82}, {"id": "p_team_suecia_1994_6", "name": "Jonas Thern", "positions": ["MC"], "overall": 83}, {"id": "p_team_suecia_1994_7", "name": "Stefan Schwarz", "positions": ["MC"], "overall": 83}, {"id": "p_team_suecia_1994_8", "name": "Kennet Andersson", "positions": ["DC"], "overall": 82}, {"id": "p_team_suecia_1994_9", "name": "Henrik Larsson", "positions": ["DC", "EI"], "overall": 88}, {"id": "p_team_suecia_1994_10", "name": "Martin Dahlin", "positions": ["DC"], "overall": 85}, {"id": "p_team_suecia_1994_11", "name": "Tomas Brolin", "positions": ["EI", "DC"], "overall": 86}, {"id": "p_team_suecia_1994_12", "name": "Håkan Mild", "positions": ["MC"], "overall": 81}, {"id": "p_team_suecia_1994_13", "name": "Jesper Blomqvist", "positions": ["EI"], "overall": 82}, {"id": "p_team_suecia_1994_14", "name": "Jan Eriksson", "positions": ["DFC"], "overall": 79}, {"id": "p_team_suecia_1994_15", "name": "Niklas Alexandersson", "positions": ["LD", "MC"], "overall": 80}, {"id": "p_team_holanda_1988_0", "name": "Hans van Breukelen", "positions": ["POR"], "overall": 84}, {"id": "p_team_holanda_1988_1", "name": "Berry van Aerle", "positions": ["LD"], "overall": 82}, {"id": "p_team_holanda_1988_2", "name": "Ronald Koeman", "positions": ["DFC"], "overall": 90}, {"id": "p_team_holanda_1988_3", "name": "Adri van Tiggelen", "positions": ["DFC"], "overall": 82}, {"id": "p_team_holanda_1988_4", "name": "Jan Wouters", "positions": ["MC", "DFC"], "overall": 84}, {"id": "p_team_holanda_1988_5", "name": "Gerald Vanenburg", "positions": ["MC"], "overall": 83}, {"id": "p_team_holanda_1988_6", "name": "Ruud Gullit", "positions": ["DC", "EI"], "overall": 95}, {"id": "p_team_holanda_1988_7", "name": "Frank Rijkaard", "positions": ["MC"], "overall": 91}, {"id": "p_team_holanda_1988_8", "name": "Marco van Basten", "positions": ["DC"], "overall": 96}, {"id": "p_team_holanda_1988_9", "name": "John van 't Schip", "positions": ["EI", "MC"], "overall": 84}, {"id": "p_team_holanda_1988_10", "name": "Rob Witschge", "positions": ["MC"], "overall": 82}, {"id": "p_team_holanda_1988_11", "name": "Wim Kieft", "positions": ["DC"], "overall": 83}, {"id": "p_team_holanda_1988_12", "name": "Hans Gillhaus", "positions": ["EI", "DC"], "overall": 82}, {"id": "p_team_holanda_1988_13", "name": "Arnold Mühren", "positions": ["MC"], "overall": 84}, {"id": "p_team_holanda_1988_14", "name": "Erwin Koeman", "positions": ["LD", "MC"], "overall": 83}, {"id": "p_team_holanda_1988_15", "name": "Peter Boeve", "positions": ["DFC"], "overall": 80}];
 let rawTeams = [
   {"id":"team_1","name":"España 2010","players":["p_1_0","p_1_1","p_1_2","p_1_3","p_1_4","p_1_5","p_1_6","p_1_7","p_1_8","p_1_9","p_1_10","p_1_11","p_1_12","p_1_13","p_1_14","p_1_15"],"flag":"assets/flags/es.png","emoji":"🇪🇸","bonus":{"PASE":5},"style":"tiki_taka"},
   {"id":"team_2","name":"España 2012","players":["p_2_0","p_2_1","p_2_2","p_2_3","p_2_4","p_2_5","p_2_6","p_2_7","p_2_8","p_2_9","p_2_10","p_2_11","p_2_12","p_2_13","p_2_14","p_2_15"],"flag":"assets/flags/es.png","emoji":"🇪🇸","bonus":{"PASE":5},"style":"tiki_taka"},
@@ -926,64 +285,64 @@ const WEATHER_TYPES = [
 ];
 const PRESS_EVENTS = {
   win: [
-    { q:"«¿Crees que el rival no estaba a vuestro nivel?»", answers:[
-      { text:"«Fueron un rival duro. El resultado es justo.»",           moral:+15, label:"Humilde" },
-      { text:"«Honestamente, esperábamos más de ellos.»",               moral:+3,  label:"Arrogante" },
-      { text:"«Tenemos suerte de ganar, la verdad.»",                    moral:-6,  label:"Inseguro" },
+    { q:"«¿Crees que el rival no estaba a vuestro nivel en este Mundial?»", answers:[
+      { text:"«Fueron un rival duro. El resultado es merecido para ambos.»", moral:+15, label:"Humilde" },
+      { text:"«Sinceramente, esperábamos más dificultades de ellos.»",        moral:+3,  label:"Arrogante" },
+      { text:"«Hemos tenido algo de suerte. Hay que reconocerlo.»",           moral:-6,  label:"Inseguro" },
     ]},
-    { q:"«¿Es este el mejor partido de la temporada?»", answers:[
-      { text:"«Todavía podemos mejorar. El trabajo sigue.»",             moral:+12, label:"Exigente" },
-      { text:"«Sí, el equipo ha rozado la perfección hoy.»",             moral:+5,  label:"Satisfecho" },
-      { text:"«Prefiero no hacer valoraciones tan pronto.»",             moral:+3,  label:"Cauto" },
+    { q:"«¿Es este el mejor partido que habéis jugado en el torneo?»", answers:[
+      { text:"«Todavía hay margen de mejora. El Mundial no ha terminado.»",   moral:+12, label:"Exigente" },
+      { text:"«Sí, creo que hemos jugado un fútbol extraordinario hoy.»",     moral:+5,  label:"Satisfecho" },
+      { text:"«Es pronto para hacer valoraciones. Vamos paso a paso.»",       moral:+3,  label:"Cauto" },
     ]},
-    { q:"«¿Sois ya los favoritos para ganar el torneo?»", answers:[
-      { text:"«Partido a partido. No miramos más allá.»",                moral:+14, label:"Profesional" },
-      { text:"«¡Claro que sí! Somos el mejor equipo aquí.»",             moral:+2,  label:"Arrogante" },
-      { text:"«Hay equipos muy fuertes, no cantemos victoria.»",         moral:+10, label:"Sensato" },
+    { q:"«¿Sois favoritos para ganar el Mundial tras esta victoria?»", answers:[
+      { text:"«Partido a partido. El siguiente rival es lo único que importa.»",moral:+14, label:"Profesional" },
+      { text:"«Podemos ganar este Mundial, no lo dudo.»",                      moral:+2,  label:"Arrogante" },
+      { text:"«Hay selecciones muy fuertes. Seamos cautos.»",                  moral:+10, label:"Sensato" },
     ]},
-    { q:"«Los aficionados están eufóricos. ¿Qué les dices?»", answers:[
-      { text:"«Que sigan creyendo. Lo hacemos por ellos.»",              moral:+18, label:"Emotivo" },
-      { text:"«Que esperen a ver qué hacemos en la siguiente ronda.»",   moral:+8,  label:"Comedido" },
-      { text:"«Que se lo merecen. ¡Este escudo vale mucho!»",            moral:+10, label:"Apasionado" },
+    { q:"«Los aficionados de todo el mundo siguen vuestra aventura. ¿Qué les dices?»", answers:[
+      { text:"«Que sigan creyendo en nosotros. Lo damos todo por ellos.»",    moral:+18, label:"Emotivo" },
+      { text:"«Que esperen a ver qué hacemos en la siguiente eliminatoria.»",  moral:+8,  label:"Comedido" },
+      { text:"«Este escudo y este torneo merecen lo mejor de nosotros.»",     moral:+10, label:"Apasionado" },
     ]},
   ],
   draw: [
-    { q:"«¿Os ha faltado fuerza para cerrar el partido?»", answers:[
-      { text:"«Nos faltó un punto de acierto, pero aprendemos.»",       moral:+8,  label:"Analítico" },
-      { text:"«El empate es justo. Ambos merecíamos más.»",              moral:+5,  label:"Ecuánime" },
-      { text:"«Deberíamos haber ganado. Es frustrante.»",               moral:-5,  label:"Frustrado" },
+    { q:"«¿Os ha faltado fuerza para cerrar el partido en el Mundial?»", answers:[
+      { text:"«Nos faltó un punto de acierto, pero el grupo está fuerte.»",   moral:+8,  label:"Analítico" },
+      { text:"«El empate es un resultado justo, ambos equipos lucharon bien.»",moral:+5,  label:"Ecuánime" },
+      { text:"«Deberíamos haber ganado. Es muy frustrante en un torneo así.»", moral:-5,  label:"Frustrado" },
     ]},
-    { q:"«¿El empate complica vuestra clasificación?»", answers:[
-      { text:"«Depende de nosotros. Seguimos trabajando.»",              moral:+10, label:"Sereno" },
-      { text:"«Sí, nos hace daño. Necesitamos reaccionar.»",             moral:-8,  label:"Preocupado" },
-      { text:"«Un punto siempre vale. Seguimos vivos.»",                 moral:+6,  label:"Positivo" },
+    { q:"«¿El empate complica vuestra clasificación en el grupo?»", answers:[
+      { text:"«La clasificación depende de nosotros. Seguimos concentrados.»", moral:+10, label:"Sereno" },
+      { text:"«Sí, nos complica. Tenemos que ganar el próximo partido sí o sí.»",moral:-8, label:"Preocupado" },
+      { text:"«Un punto en el Mundial siempre tiene valor. Seguimos vivos.»",  moral:+6,  label:"Positivo" },
     ]},
-    { q:"«¿Les faltó ambición al equipo hoy?»", answers:[
-      { text:"«Quizás. Hablaremos internamente sobre eso.»",             moral:+4,  label:"Honesto" },
-      { text:"«No, el rival fue muy sólido defensivamente.»",            moral:+7,  label:"Objetivo" },
-      { text:"«El equipo lo ha dado todo, eso es indiscutible.»",        moral:+10, label:"Defensor" },
+    { q:"«¿Le faltó ambición al equipo para buscar la victoria?»", answers:[
+      { text:"«Quizás sí. Es algo que hablaremos en el vestuario.»",           moral:+4,  label:"Honesto" },
+      { text:"«No, el rival fue muy ordenado defensivamente.»",                moral:+7,  label:"Objetivo" },
+      { text:"«El equipo lo ha dado absolutamente todo. Sin dudarlo.»",        moral:+10, label:"Defensor" },
     ]},
   ],
   loss: [
-    { q:"«¿Qué ha fallado hoy?»", answers:[
-      { text:"«El rival fue mejor. Aprendemos y seguimos.»",             moral:+12, label:"Maduro" },
-      { text:"«Los árbitros nos perjudicaron claramente.»",              moral:-8,  label:"Excusas" },
-      { text:"«Fue un desastre. No tengo respuestas.»",                  moral:-18, label:"Hundido" },
+    { q:"«¿Qué ha fallado hoy en el partido?»", answers:[
+      { text:"«El rival fue mejor hoy. En el fútbol pasa. Seguimos adelante.»",moral:+12, label:"Maduro" },
+      { text:"«Los árbitros nos perjudicaron en momentos clave.»",             moral:-8,  label:"Excusas" },
+      { text:"«Ha sido un desastre. No encuentro palabras para explicarlo.»",  moral:-18, label:"Hundido" },
     ]},
-    { q:"«¿Sigues creyendo en este proyecto tras la derrota?»", answers:[
-      { text:"«Absolutamente. Los malos momentos forjan equipos.»",      moral:+16, label:"Convicción" },
-      { text:"«Necesito reflexionar antes de contestar.»",               moral:-3,  label:"Dubitativo" },
-      { text:"«Hay decisiones que habría que replantear.»",              moral:-10, label:"Cuestionador" },
+    { q:"«¿Quedan fuerzas en el grupo tras este golpe en el Mundial?»", answers:[
+      { text:"«Absolutamente. Las adversidades forjan equipos grandes.»",      moral:+16, label:"Convicción" },
+      { text:"«Necesito tiempo para procesar lo que ha pasado hoy.»",          moral:-3,  label:"Dubitativo" },
+      { text:"«Hay cosas que replantear internamente, sin duda.»",             moral:-10, label:"Cuestionador" },
     ]},
-    { q:"«¿Han bajado los brazos los jugadores?»", answers:[
-      { text:"«Jamás. Se nota que están comprometidos.»",                moral:+10, label:"Defensor" },
-      { text:"«Algunos sí perdieron la cabeza. Trabajaremos en ello.»",  moral:-5,  label:"Crítico" },
-      { text:"«Es una pregunta que me hago yo también.»",                moral:-14, label:"Cuestionador" },
+    { q:"«¿El equipo bajó los brazos en algún momento del partido?»", answers:[
+      { text:"«Jamás. El compromiso del grupo es total e indiscutible.»",      moral:+10, label:"Defensor" },
+      { text:"«Algunos jugadores perdieron la concentración. Hay que mejorar.»",moral:-5, label:"Crítico" },
+      { text:"«Es una pregunta difícil que yo mismo me estoy haciendo.»",      moral:-14, label:"Cuestionador" },
     ]},
-    { q:"«¿Hay tensión en el vestuario?»", answers:[
-      { text:"«El grupo está unido. Las derrotas nos hacen más fuertes.»",moral:+14, label:"Unidad" },
-      { text:"«Hay reflexión, que es sano. No tensión.»",                moral:+6,  label:"Diplomático" },
-      { text:"«Prefiero no entrar en detalles del vestuario.»",          moral:-2,  label:"Evasivo" },
+    { q:"«¿Hay tensión en el vestuario tras la derrota?»", answers:[
+      { text:"«El grupo está unido. Una derrota en el Mundial no nos rompe.»", moral:+14, label:"Unidad" },
+      { text:"«Hay reflexión, que es sano y necesario tras esto.»",            moral:+6,  label:"Diplomático" },
+      { text:"«Lo que ocurre en el vestuario se queda en el vestuario.»",      moral:-2,  label:"Evasivo" },
     ]},
   ],
 };
@@ -1090,6 +449,7 @@ function rollTeams(){
   shuffle(pool);
   const t1=pool[0], t2=pool[1];
   const p1=randomPick(t1.players,5), p2=randomPick(t2.players,5);
+  window._lastTeamChoice={t1,p1,t2,p2,isBench:false};
   showTeamChoice(t1,p1,t2,p2);
 }
 
@@ -1101,6 +461,7 @@ function rollBench(){
   const already=new Set([...usedPlayers.map(p=>p.name),...bench.map(p=>p.name)]);
   const p1=randomPick(t1.players.filter(p=>!already.has(p.name)),5);
   const p2=randomPick(t2.players.filter(p=>!already.has(p.name)),5);
+  window._lastTeamChoice={t1,p1,p2,t2,isBench:true};
   showTeamChoice(t1,p1,t2,p2,true);
 }
 
@@ -1265,6 +626,7 @@ function showSelectedPlayerBanner(p){
     </div>
     <div class="spb-positions">Posiciones: ${(p.positions||[]).join(' / ')}</div>
     <div class="hint-line">Colócalo en una posición resaltada del campo.</div>
+    <button class="spb-back-btn" onclick="volverASeleccion()">↩ VOLVER</button>
   </div>`;
 }
 function hideSelectedPlayerBanner(){
@@ -1272,6 +634,17 @@ function hideSelectedPlayerBanner(){
   if(!el) return;
   el.style.display="none";
   el.innerHTML="";
+}
+
+function volverASeleccion(){
+  // Deselect player, clear highlights, restore last team choice
+  selectedPlayer=null;
+  clearHighlights();
+  hideSelectedPlayerBanner();
+  if(window._lastTeamChoice){
+    const {t1,p1,t2,p2,isBench}=window._lastTeamChoice;
+    showTeamChoice(t1,p1,t2,p2,isBench);
+  }
 }
 
 /* ========= POSITION SLOTS ========= */
@@ -1497,13 +870,23 @@ function updateBenchTable(){
 function onConvocadoClick(i){
   if(phase!=='ready'||swapsUsedThisMatch>=MAX_SWAPS_PER_MATCH) return;
   if(swapSelection&&swapSelection.source==='bench'){
+    // bench → conv swap
     const benchIdx=swapSelection.index;
     swapSelection=null;
     performSwap(benchIdx, i);
     return;
   }
-  if(swapSelection&&swapSelection.source==='conv'&&swapSelection.index===i){
-    swapSelection=null;
+  if(swapSelection&&swapSelection.source==='conv'){
+    if(swapSelection.index===i){
+      // Deselect
+      swapSelection=null;
+    } else {
+      // conv → conv: swap two titulars' pitch positions
+      const idxA=swapSelection.index, idxB=i;
+      swapSelection=null;
+      performConvConvSwap(idxA, idxB);
+      return;
+    }
   } else {
     swapSelection={source:'conv',index:i};
   }
@@ -1552,7 +935,33 @@ function performSwap(benchIdx, convIdx){
   updateLed();
 }
 
-/* ========= STATS ========= */
+function performConvConvSwap(idxA, idxB){
+  // Swap two titulars' pitch positions with each other
+  const pA=usedPlayers[idxA], pB=usedPlayers[idxB];
+  if(!pA||!pB) return;
+  const slots=getPitchSlots();
+  const slotA=slots.find(s=>s._player===pA);
+  const slotB=slots.find(s=>s._player===pB);
+  if(!slotA||!slotB) return;
+  const labelA=slotA.dataset.label, labelB=slotB.dataset.label;
+  // Swap placed positions
+  pA.placedPos=labelB; pB.placedPos=labelA;
+  slotA._player=pB;    slotB._player=pA;
+  // Re-render both slots
+  [{ slot:slotA, p:pB, label:labelB }, { slot:slotB, p:pA, label:labelA }].forEach(({slot,p,label})=>{
+    const inPos=p.positions&&p.positions.includes(label);
+    const r=inPos?(p.rating||70):Math.round((p.rating||70)*0.85);
+    const star=inPos&&p.positions[0]===label?' <span class="star">★</span>':'';
+    renderSlotContent(slot, p, label, r, star);
+  });
+  baseTeamOVR=computeTeamOVR();
+  swapsUsedThisMatch++;
+  playSound('select');
+  updateConvocadosTable();
+  updateBenchTable();
+  renderCenterSummary();
+  updateLed();
+}
 function applyBonuses(team){
   for(let k in team.bonuses) teamStats[k]=(teamStats[k]||0)+team.bonuses[k];
   updateStats();
@@ -1987,9 +1396,12 @@ function playMatch(){
   }
 
   // Update morale based on result
-  if(won) changeMorale(stage==="knockout"?12:8);
-  else if(draw) changeMorale(2);
-  else changeMorale(stage==="knockout"?-12:-7);
+  // Morale: goals scored/conceded affect it directly
+  const moralGoals   = myGoals  * 3;   // +3 per goal scored
+  const moralConceded= oppGoals * (-4); // -4 per goal conceded
+  // Result bonus (reduced — goals already carry most of the swing)
+  const moralResult  = won ? 6 : draw ? 1 : -8;
+  changeMorale(moralGoals + moralConceded + moralResult);
 
   // Save match stats to Firebase if logged in
   if(typeof window.saveMatchStat==="function"){
@@ -2295,19 +1707,24 @@ function showGroupResultsPopup(){
 
 /* ---------- END SCREENS ---------- */
 function showEliminatedGroupStage(){
-  const slots=getChainSlots();
+  const sc=computeFinalScore(false);
+  if(typeof window.saveMatchStat==="function") window.saveMatchStat(false,false,0,0);
   document.getElementById("matchOverlay").innerHTML=`
   <div class="match-modal">
     <h3>FASE DE GRUPOS</h3>
     <div class="match-result-tag res-lose-tag">ELIMINADO EN FASE DE GRUPOS</div>
-    <div class="match-summary">
-      ${myTeamName} no ha conseguido terminar entre los 2 primeros de su grupo.
+    <div class="match-summary">${myTeamName} no ha conseguido clasificarse entre los 2 primeros del grupo.</div>
+    <div class="victory-score-wrap" style="border-top:1px solid #333;margin-top:12px;padding-top:12px">
+      <div class="victory-score-label">PUNTUACIÓN</div>
+      <div class="victory-score-num" style="font-size:48px">${sc.total}</div>
     </div>
     <button class="modal-btn danger" onclick="location.reload()">NUEVA PARTIDA</button>
   </div>`;
 }
 function showEliminated(){
   const round=ROUND_NAMES[knockoutRound];
+  const sc=computeFinalScore(false);
+  const grade=sc.total>=750?"ÉLITE":sc.total>=550?"MUY BUENO":sc.total>=350?"BUENO":"MEJORABLE";
   const slots=getChainSlots();
   const chainBtn=slots>0
     ?`<button class="modal-btn" onclick="document.getElementById('matchOverlay').innerHTML='';showChainRunModal()">🔗 CONSERVAR ${slots} JUGADOR${slots>1?"ES":""}</button>`
@@ -2316,63 +1733,87 @@ function showEliminated(){
   <div class="match-modal">
     <h3>${round?round.toUpperCase():"ELIMINATORIAS"}</h3>
     <div class="match-result-tag res-lose-tag">ELIMINADO EN ${round?round.toUpperCase():"ELIMINATORIAS"}</div>
-    <div class="match-summary">
-      ${myTeamName} cae eliminado en ${round||"las eliminatorias"}. Has llegado hasta ${round||"esta ronda"}.
-      ${slots>0?`<br><br>🔗 <strong>Run Encadenada disponible:</strong> puedes conservar ${slots} jugador${slots>1?"es":""} para el siguiente intento.`:""}
+    <div class="victory-score-wrap" style="border:1px solid #333;margin:12px 0;padding:12px">
+      <div class="victory-score-label">PUNTUACIÓN FINAL</div>
+      <div class="victory-score-num" style="font-size:52px">${sc.total}</div>
+      <div class="victory-grade" style="color:#aaa;font-size:16px">${grade}</div>
     </div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+    ${slots>0?`<p style="font-size:12px;color:var(--gold);margin-bottom:8px">🔗 Run Encadenada: conserva ${slots} jugador${slots>1?"es":""} para el siguiente intento</p>`:""}
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
       ${chainBtn}
       <button class="modal-btn danger" onclick="location.reload()">NUEVA PARTIDA</button>
     </div>
   </div>`;
 }
-function computeFinalScore(){
+function computeFinalScore(champion){
+  // champion=true only when winning the whole tournament
   const scores={};
+  const totalMatches=matchResults.length;
+  const wins=matchResults.filter(r=>r.won).length;
+  const draws=matchResults.filter(r=>r.draw).length;
 
-  // 1. Team quality (OVR 0-100) → up to 200 pts
-  scores.ovr=Math.round((baseTeamOVR||60)/100*200);
+  // 1. Stage bonus — how far you got (max 300 pts, only for champion)
+  // Non-champions get a reduced bonus based on round reached
+  if(champion){
+    scores.stage=300;
+  } else {
+    const stageMap={group:30, octavos:80, cuartos:140, semis:200};
+    scores.stage=stageMap[stage]||20;
+    // Knockout round for finer detail
+    if(stage==="knockout"){
+      scores.stage=Math.min(200, 80+knockoutRound*40);
+    }
+  }
 
-  // 2. Goals scored across all matches → up to 150 pts (cap at 20 goals)
+  // 2. Team quality (OVR) → up to 150 pts
+  scores.ovr=Math.round((baseTeamOVR||60)/100*150);
+
+  // 3. Goals scored → up to 100 pts (cap at 15 goals)
   const totalGoals=matchResults.reduce((s,r)=>{
     const g=parseInt(r.score)||0; return s+g;
   },0);
-  scores.goals=Math.min(150, Math.round(totalGoals/20*150));
+  scores.goals=Math.min(100, Math.round(totalGoals/15*100));
 
-  // 3. Goals conceded (fewer = better) → up to 100 pts
+  // 4. Defensive solidity → up to 80 pts
   const totalConceded=matchResults.reduce((s,r)=>{
     const parts=r.score.split('-');
     const c=parseInt(parts[1])||0; return s+c;
   },0);
-  scores.defense=Math.max(0, Math.round((1-Math.min(totalConceded,15)/15)*100));
+  scores.defense=Math.max(0, Math.round((1-Math.min(totalConceded,12)/12)*80));
 
-  // 4. Morale management → up to 100 pts
-  scores.morale=Math.round(Math.max(0,(teamMorale+50)/100*100));
+  // 5. Morale → up to 60 pts
+  scores.morale=Math.round(Math.max(0,(teamMorale+50)/100*60));
 
-  // 5. Penalty wins (hardest matches) → 40 pts each, up to 120
-  const penWins=matchResults.filter(r=>r.won&&r.score.includes('pen.')).length;
-  scores.penalties=Math.min(120, penWins*40);
-
-  // 6. Star players (positions) → up to 110 pts (10 pts per star, 11 max)
+  // 6. Star players in position → up to 80 pts
   const stars=usedPlayers.filter(p=>p.positions&&p.placedPos&&p.positions[0]===p.placedPos).length;
-  scores.stars=stars*10;
+  scores.stars=stars*Math.round(80/11);
 
-  // 7. Scorer streaks → up to 120 pts (20 per player in streak)
+  // 7. Scorer streaks → up to 80 pts
   const streakTotal=Object.values(scorerStreaks).reduce((s,v)=>s+Math.min(v,MAX_STREAK_BONUS),0);
-  scores.streaks=Math.min(120, streakTotal*20);
+  scores.streaks=Math.min(80, streakTotal*15);
 
-  // 8. Matches won without conceding (clean sheets) → 20 pts each, up to 100
+  // 8. Penalty wins → 35 pts each, up to 105 pts
+  const penWins=matchResults.filter(r=>r.won&&r.score.includes('pen.')).length;
+  scores.penalties=Math.min(105, penWins*35);
+
+  // 9. Clean sheets → 15 pts each, up to 75 pts
   const cleanSheets=matchResults.filter(r=>{
     const parts=r.score.split('-');
     return r.won && (parseInt(parts[1])||0)===0;
   }).length;
-  scores.cleanSheets=Math.min(100, cleanSheets*20);
+  scores.cleanSheets=Math.min(75, cleanSheets*15);
 
-  const total=Object.values(scores).reduce((a,b)=>a+b,0);
-  return {total:Math.min(1000,total), breakdown:scores, penWins, totalGoals, totalConceded, stars, cleanSheets};
+  // Note: max possible without champion bonus ~= 150+100+80+60+80+80+105+75 = 730
+  // With champion bonus 300 → total can reach ~1030, cap at 1000
+  // This means only a perfect champion run approaches 1000
+
+  const raw=Object.values(scores).reduce((a,b)=>a+b,0);
+  const total=Math.min(1000, Math.round(raw));
+  return {total, breakdown:scores, penWins, totalGoals, totalConceded, stars, cleanSheets};
 }
 
 function showVictory(){
-  const sc=computeFinalScore();
+  const sc=computeFinalScore(true);
   // Save to Firebase
   if(typeof window.saveVictoryStat==="function") window.saveVictoryStat(sc.total);
   const grade=sc.total>=900?"LEGENDARIO":sc.total>=750?"ÉLITE":sc.total>=600?"EXCELENTE":sc.total>=450?"MUY BUENO":"BUENO";
@@ -2637,10 +2078,11 @@ function applyInheritedPlayers(){
     const star=inPos&&p.positions[0]===label?' <span class="star">★</span>':'';
     const r=inPos?(p.rating||70):Math.round((p.rating||70)*0.85);
     p.placedPos=label;
-    slot._player={...p};
+    const playerObj={...p, placedPos:label};
+    slot._player=playerObj;
     slot.classList.add('locked');
-    renderSlotContent(slot, p, label, r, star);
-    usedPlayers.push({...p});
+    renderSlotContent(slot, playerObj, label, r, star);
+    usedPlayers.push(playerObj); // same reference as slot._player
     draftedCount++;
   });
   updateDraftCounter();
@@ -2893,15 +2335,10 @@ const themeToggleBtn=document.getElementById("themeToggle");
 
 // Restore saved preferences on load
 (function restorePrefs(){
-  // Welcome popup: show only once
+  // Welcome popup: always show on load
   try{
-    if(!localStorage.getItem('g2g_welcomed')){
-      const o=document.getElementById("welcomeOverlay");
-      if(o) o.style.display="flex";
-    } else {
-      const o=document.getElementById("welcomeOverlay");
-      if(o) o.style.display="none";
-    }
+    const o=document.getElementById("welcomeOverlay");
+    if(o) o.style.display="flex";
   }catch(e){}
   if(audioToggleBtn){
     audioToggleBtn.querySelector(".topbar-dot").classList.toggle("on",audioEnabled);
@@ -3215,7 +2652,6 @@ function initFirebaseAuth(){
   // Welcome popup
   wire("welcomeStartBtn",  ()=>{
     const o=$id("welcomeOverlay"); if(o) o.style.display="none";
-    try{ localStorage.setItem('g2g_welcomed','1'); }catch(e){}
   });
 }
 

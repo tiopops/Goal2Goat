@@ -866,3 +866,14 @@ body.dark-theme .settings-item:hover{background:#111;color:var(--gold)}
 .profile-stat-card.losses .pstat-val{color:#e74c3c}
 .profile-stat-card.best .pstat-val{color:var(--gold)}
 .pstat-label{font-size:8px;color:var(--text-muted);letter-spacing:.8px;text-transform:uppercase}
+
+/* VOLVER button in player selection banner */
+.spb-back-btn{
+  margin-top:8px;width:100%;
+  background:transparent;color:var(--text-muted);
+  border:1px solid var(--line);
+  font-family:'Bebas Neue',Impact,sans-serif;
+  font-size:14px;letter-spacing:1px;
+  padding:6px;cursor:pointer;transition:.15s;
+}
+.spb-back-btn:hover{border-color:var(--gold);color:var(--gold)}
