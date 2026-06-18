@@ -472,8 +472,11 @@ function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.rand
 
 function showTeamChoice(t1,p1,t2,p2,isBench=false){
   const title=isBench?"ELIGE JUGADOR DE BANQUILLO":"ELIGE UNA SELECCIÓN";
+  const isMobile=window.innerWidth<=1050;
+  const targetEl=isMobile?document.getElementById("playerCard"):playerCardEl;
+
   // Slot-machine reveal: shuffle random flags for ~1s before showing the real choices
-  playerCardEl.innerHTML=`
+  targetEl.innerHTML=`
   <div class="box" style="margin-bottom:0">
     <div class="selection-title">${title}</div>
     <div class="team-choice slot-spin">
@@ -481,8 +484,16 @@ function showTeamChoice(t1,p1,t2,p2,isBench=false){
       <div class="team-option slot-reel"><div class="flag-wrap"><div class="slot-strip" id="reel2"></div></div></div>
     </div>
   </div>`;
-  scrollToEl("playerCardDesktop", 30);
-  scrollToEl("playerCardDesktop", 950);
+
+  if(isMobile){
+    // Switch to campo tab and scroll to the card below pitch
+    switchMobileTab('campo');
+    setTimeout(()=>{ if(targetEl) targetEl.scrollIntoView({behavior:'smooth',block:'start'}); }, 60);
+    setTimeout(()=>{ if(targetEl) targetEl.scrollIntoView({behavior:'smooth',block:'start'}); }, 980);
+  } else {
+    scrollToEl("playerCardDesktop", 30);
+    scrollToEl("playerCardDesktop", 950);
+  }
   const pool=teams.slice();
   const reel1=document.getElementById("reel1");
   const reel2=document.getElementById("reel2");
@@ -498,7 +509,7 @@ function showTeamChoice(t1,p1,t2,p2,isBench=false){
   setTimeout(()=>{
     clearInterval(spin);
     playSound('reveal');
-    playerCardEl.innerHTML=`
+    targetEl.innerHTML=`
     <div class="box" style="margin-bottom:0">
       <div class="selection-title">${title}</div>
       <div class="team-choice">
@@ -565,7 +576,8 @@ function showRosterModal(team,players){
         onclick="pickPlayer(${safeP})">Elegir</button></td>
     </tr>`;
   });
-  playerCardEl.innerHTML=`
+  const rosterTarget=window.innerWidth<=1050?document.getElementById("playerCard"):playerCardEl;
+  rosterTarget.innerHTML=`
   <div class="box roster-modal" style="margin-bottom:0">
     <div class="roster-header">
       ${flagEmoji(team.name,40)}
@@ -576,6 +588,9 @@ function showRosterModal(team,players){
       <tbody>${rows}</tbody>
     </table>
   </div>`;
+  if(window.innerWidth<=1050){
+    setTimeout(()=>{ if(rosterTarget) rosterTarget.scrollIntoView({behavior:'smooth',block:'start'}); },60);
+  }
 }
 
 /* ========= PICK PLAYER ========= */
@@ -1088,14 +1103,28 @@ function showTeamNameModal(){
     <h3>¡Equipo completo!</h3>
     <div class="match-summary">Tu plantilla GOAT está lista. ¡Dale un nombre a tu equipo antes de empezar el torneo! Empezarás en la <strong>Fase de Grupos</strong>: 3 partidos, los 2 primeros del grupo avanzan a octavos de final.</div>
     <input type="text" id="teamNameInput" maxlength="24" placeholder="Ej: Dream Team FC" class="team-name-input" value="${esc(myTeamName==='TU EQUIPO'?'':myTeamName)}">
+    <span id="teamNameErr" style="display:none;color:#e74c3c;font-size:11px;margin-top:4px">El nombre del equipo no puede estar vacío.</span>
     <button class="modal-btn" id="teamNameConfirmBtn">CONFIRMAR</button>
   </div>`;
   const inp=document.getElementById("teamNameInput");
   inp.focus();
   const confirmFn=()=>{
     const val=inp.value.trim();
-    if(val) myTeamName=val.toUpperCase();
+    if(!val){
+      document.getElementById("teamNameErr").style.display="block";
+      inp.focus();
+      return;
+    }
+    myTeamName=val.toUpperCase();
     document.getElementById("matchOverlay").innerHTML="";
+    // Save team name to Firebase profile if logged in
+    if(typeof firebase!=='undefined'){
+      try{
+        const user=firebase.auth().currentUser;
+        if(user) firebase.firestore().collection("users").doc(user.uid)
+          .set({lastTeamName:myTeamName},{merge:true});
+      }catch(e){}
+    }
     setupGroupStage();
     renderCenterSummary();
     pickNextOpponent();
@@ -2630,7 +2659,6 @@ function initFirebaseAuth(){
     }catch(e){ console.warn("Victory stat error:", e.code, e.message); }
   };
 
-  // Save final score for ANY run (win or lose) — always updates bestScore if improved
   window.saveFinalScore=async function(score){
     const user=auth.currentUser; if(!user) return;
     try{
@@ -2638,10 +2666,54 @@ function initFirebaseAuth(){
       const snap=await ref.get();
       const s=snap.exists?(snap.data().stats||{}):{};
       if((score||0)>(s.bestScore||0)){
-        await ref.set({stats:{bestScore:score}},{merge:true});
+        await ref.set({
+          stats:{bestScore:score},
+          bestTeamName: typeof myTeamName!=='undefined'?myTeamName:'—'
+        },{merge:true});
         console.log("New bestScore saved:", score);
       }
     }catch(e){ console.warn("saveFinalScore error:", e.code, e.message); }
+  };
+
+  // Load top 50 scores for ranking tab
+  window.loadRanking=async function(){
+    const el=document.getElementById('rankingTable');
+    if(!el) return;
+    el.innerHTML='<p class="ranking-loading">Cargando ranking...</p>';
+    try{
+      const snap=await db.collection("users")
+        .orderBy("stats.bestScore","desc")
+        .limit(50)
+        .get();
+      if(snap.empty){
+        el.innerHTML='<p class="ranking-loading">Aún no hay puntuaciones registradas. ¡Sé el primero!</p>';
+        return;
+      }
+      let rows='';
+      snap.docs.forEach((doc,i)=>{
+        const d=doc.data();
+        const score=d.stats&&d.stats.bestScore?d.stats.bestScore:0;
+        if(score<=0) return;
+        const pos=i+1;
+        const posClass=pos===1?'gold':pos===2?'silver':pos===3?'bronze':'';
+        const medal=pos===1?'🥇':pos===2?'🥈':pos===3?'🥉':'';
+        const teamName=d.bestTeamName||'—';
+        rows+=`<tr>
+          <td class="rank-pos ${posClass}">${medal||pos}</td>
+          <td class="rank-name">${d.username||'—'}<br><span style="font-size:10px;color:var(--text-muted);font-weight:400">${teamName}</span></td>
+          <td class="rank-score">${score}</td>
+        </tr>`;
+      });
+      el.innerHTML=rows
+        ?`<table class="ranking-table">
+            <thead><tr><th>#</th><th>JUGADOR / EQUIPO</th><th style="text-align:right">PTS</th></tr></thead>
+            <tbody>${rows}</tbody>
+          </table>`
+        :'<p class="ranking-loading">Aún no hay puntuaciones. ¡Juega y sé el primero!</p>';
+    }catch(e){
+      console.warn("Ranking load error:", e);
+      el.innerHTML='<p class="ranking-loading">Error al cargar el ranking.</p>';
+    }
   };
 
   /* ─── CLOSE ON BACKDROP ─── */
@@ -2663,6 +2735,16 @@ function initFirebaseAuth(){
   wire("tabRegister",      ()=>window.switchAuthTab("register"));
   wire("loginSubmitBtn",   ()=>window.submitLogin());
   wire("regSubmitBtn",     ()=>window.submitRegister());
+
+  // Enter key support for auth forms
+  function addEnterKey(inputId, submitFn){
+    const el=$id(inputId);
+    if(el) el.addEventListener("keydown",e=>{ if(e.key==="Enter") submitFn(); });
+  }
+  // Login: Enter on any field submits
+  ["loginIdentifier","loginPassword"].forEach(id=>addEnterKey(id,window.submitLogin));
+  // Register: Enter on last field submits
+  ["regUsername","regEmail","regPassword","regPassword2"].forEach(id=>addEnterKey(id,window.submitRegister));
   // Welcome popup
   wire("welcomeStartBtn",  ()=>{
     const o=$id("welcomeOverlay"); if(o) o.style.display="none";
@@ -2681,24 +2763,24 @@ function switchMobileTab(tab){
 
   const left=document.querySelector('.left-panel');
   const right=document.querySelector('.right-panel');
-  if(left)  left.classList.remove('mob-active');
-  if(right) right.classList.remove('mob-active');
+  const ranking=document.getElementById('rankingPanel');
+  if(left)    left.classList.remove('mob-active');
+  if(right)   right.classList.remove('mob-active');
+  if(ranking) ranking.classList.remove('mob-active');
 
   if(tab==='campo'){
-    // Scroll to pitch
     setTimeout(()=>{
       const p=document.getElementById('pitchBox')||document.getElementById('pitch');
       if(p) p.scrollIntoView({behavior:'smooth',block:'start'});
     },30);
   } else if(tab==='equipo'){
-    if(left){ left.classList.add('mob-active'); }
+    if(left) left.classList.add('mob-active');
     setTimeout(()=>{
       const el=document.getElementById('convocadosTable')||left;
       if(el) el.scrollIntoView({behavior:'smooth',block:'start'});
     },30);
   } else if(tab==='rival'){
-    if(right){ right.classList.add('mob-active'); }
-    // Clear badge
+    if(right) right.classList.add('mob-active');
     const badge=document.querySelector('.mob-tab[data-tab="rival"] .mob-tab-badge');
     if(badge) badge.style.display='none';
     setTimeout(()=>{
@@ -2706,15 +2788,19 @@ function switchMobileTab(tab){
       if(rb) rb.scrollIntoView({behavior:'smooth',block:'start'});
     },30);
   } else if(tab==='historial'){
-    if(right){ right.classList.add('mob-active'); }
+    if(right) right.classList.add('mob-active');
     setTimeout(()=>{
       const mh=document.getElementById('matchHistoryBox');
       if(mh) mh.scrollIntoView({behavior:'smooth',block:'start'});
     },60);
+  } else if(tab==='ranking'){
+    if(ranking){
+      ranking.classList.add('mob-active');
+      setTimeout(()=>ranking.scrollIntoView({behavior:'smooth',block:'start'}),30);
+    }
+    if(typeof window.loadRanking==='function') window.loadRanking();
   }
 }
-
-// Auto-switch to rival tab when a new rival is revealed
 function notifyMobileRivalTab(){
   if(window.innerWidth>1050) return;
   const badge=document.querySelector('.mob-tab[data-tab="rival"] .mob-tab-badge');

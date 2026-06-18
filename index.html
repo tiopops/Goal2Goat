@@ -14,7 +14,7 @@
 <header id="appHeader">
   <div class="app-header-logo">
     <div class="logo" onclick="location.reload()" style="cursor:pointer" title="Volver al inicio">GOAL2GOAT</div>
-    <div class="version-tag">v0.252</div>
+    <div class="version-tag">v0.253</div>
   </div>
   <div class="app-header-actions">
     <button class="support-btn" onclick="showSupportModal()">APOYA A GOAL2GOAT</button>
@@ -352,6 +352,15 @@
 </div>
 
 <div id="matchOverlay"></div>
+<!-- RANKING PANEL (mobile tab) -->
+<div id="rankingPanel" style="display:none" class="ranking-panel">
+  <div class="box">
+    <h3>🏆 RANKING GLOBAL</h3>
+    <p class="ranking-subtitle">Top 50 mejores puntuaciones de jugadores registrados</p>
+    <div id="rankingTable"><p style="color:var(--text-muted);font-size:12px;text-align:center;padding:20px">Cargando ranking...</p></div>
+  </div>
+</div>
+
 <!-- MOBILE TAB BAR (hidden on desktop) -->
 <nav id="mobileTabBar">
   <button class="mob-tab active" data-tab="campo" onclick="switchMobileTab('campo')">
@@ -369,6 +378,10 @@
   <button class="mob-tab" data-tab="historial" onclick="switchMobileTab('historial')">
     <span class="mob-tab-icon">📋</span>
     <span class="mob-tab-label">HISTORIAL</span>
+  </button>
+  <button class="mob-tab" data-tab="ranking" onclick="switchMobileTab('ranking')">
+    <span class="mob-tab-icon">🏆</span>
+    <span class="mob-tab-label">RANKING</span>
   </button>
 </nav>
 <script src="game.js"></script>
