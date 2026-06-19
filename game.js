@@ -119,6 +119,47 @@ const STYLES = {
 };
 const STAT_LABELS={attack:"ATAQUE",defense:"DEFENSA",pace:"RITMO",passing:"PASE",technique:"TÉCNICA"};
 
+/* ========= MATCH STRATEGIES (chosen before each match) ========= */
+// Each strategy can be played, and "counters" points to the strategy key it beats.
+// Counter logic is based on real footballing logic:
+//  - Tiki-Taka breaks Bloque Bajo (patience unlocks low blocks) and is broken by Presión Alta
+//  - Catenaccio is broken by Ataque por Bandas (wide play opens compact centers)
+//  - Gegenpressing is broken by Juego Directo (skip the press with long balls)
+//  - etc.
+const STRATEGIES = {
+  tiki_taka:      { name:"Tiki-Taka",          desc:"Prioriza los pases cortos y la posesión para desgastar al rival y crear espacios.", counters:"bloque_bajo" },
+  contraataque:   { name:"Contraataque",        desc:"Defiende con orden y busca atacar rápidamente tras recuperar el balón.", counters:"ataque_bandas" },
+  catenaccio:     { name:"Catenaccio",          desc:"Centra sus esfuerzos en la defensa y aprovecha las pocas oportunidades de ataque.", counters:"juego_directo" },
+  presion_alta:   { name:"Presión Alta",        desc:"Presiona al rival en su campo para recuperar el balón cuanto antes.", counters:"tiki_taka" },
+  gegenpressing:  { name:"Gegenpressing",       desc:"Tras perder la posesión, todo el equipo intenta recuperarla inmediatamente.", counters:"posesion" },
+  posesion:       { name:"Juego de Posesión",   desc:"Mantiene el control del balón para dominar el ritmo del partido.", counters:"contraataque" },
+  juego_directo:  { name:"Juego Directo",       desc:"Busca llegar al área rival con rapidez y el menor número de pases posible.", counters:"gegenpressing" },
+  futbol_total:   { name:"Fútbol Total",        desc:"Los jugadores intercambian posiciones constantemente para generar superioridades.", counters:"catenaccio" },
+  bloque_bajo:    { name:"Bloque Bajo",         desc:"Repliega al equipo cerca de su área para cerrar espacios y dificultar los ataques rivales.", counters:"futbol_total" },
+  ataque_bandas:  { name:"Ataque por Bandas",   desc:"Utiliza las bandas para crear peligro mediante desbordes y centros al área.", counters:"presion_alta" },
+};
+const STRATEGY_ORDER=["tiki_taka","contraataque","catenaccio","presion_alta","gegenpressing","posesion","juego_directo","futbol_total","bloque_bajo","ataque_bandas"];
+
+// Map each of the 38 narrative team styles to one of the 10 match strategies,
+// based on which strategy best reflects that team's footballing identity.
+const TEAM_STYLE_TO_STRATEGY={
+  tiki_taka:"tiki_taka", samba_total:"futbol_total", ataque_letal:"juego_directo",
+  maquinaria_alemana:"presion_alta", gegenpressing:"gegenpressing", magia_individual:"contraataque",
+  la_scaloneta:"contraataque", solidez_francesa:"bloque_bajo", velocidad_punzante:"ataque_bandas",
+  catenaccio:"catenaccio", total_football:"futbol_total", naranja_mecanica:"tiki_taka",
+  futbol_directo:"juego_directo", garra_lusa:"contraataque", muralla_balcanica:"catenaccio",
+  garra_charrua:"bloque_bajo", once_oro_magiar:"tiki_taka", dinamita_danesa:"ataque_bandas",
+  tricolor_tecnico:"posesion", garra_yanqui:"bloque_bajo", disciplina_nipona:"posesion",
+  muralla_atlas:"catenaccio", superaguilas:"ataque_bandas", leones_indomables:"contraataque",
+  garra_chilena:"presion_alta", muralla_guarani:"catenaccio", fiesta_cafetera:"posesion",
+  vendaval_incaico:"ataque_bandas", disciplina_vikinga:"bloque_bajo", tecnica_centroeuropea:"posesion",
+  tecnica_balcanica:"tiki_taka", wunderteam:"juego_directo", sistema_cerrojo:"catenaccio",
+  furia_otomana:"presion_alta", milagro_defensivo:"bloque_bajo", magia_carpatica:"posesion",
+  furia_tartan:"presion_alta", muralla_celta:"bloque_bajo", punta_lanza:"juego_directo",
+  vikingo_directo:"juego_directo",
+};
+let selectedMatchStrategy=null; // strategy key chosen by the player for the upcoming match
+
 let teams = rawTeams.map(function(t){
  const styleInfo = STYLES[t.style];
  return {
@@ -250,7 +291,16 @@ const STYLE_HINTS = {
 /* ---------- TEAM SCOUT HINTS ---------- */
 function getScoutHint(team){
   const s = team._styleKey || '';
-  return STYLE_HINTS[s] || "Información de scouting no disponible. Prepárate para cualquier escenario.";
+  const flavor = STYLE_HINTS[s] || "Información de scouting no disponible. Prepárate para cualquier escenario.";
+  const rivalKey = getRivalStrategyKey(team);
+  const rivalStratName = STRATEGIES[rivalKey] ? STRATEGIES[rivalKey].name : "desconocida";
+  // Find which of our 10 strategies counters the rival's strategy
+  const bestCounterKey = STRATEGY_ORDER.find(k => STRATEGIES[k].counters === rivalKey);
+  const bestCounterName = bestCounterKey ? STRATEGIES[bestCounterKey].name : null;
+  const tip = bestCounterName
+    ? ` Su enfoque se asemeja a ${rivalStratName}. Para contrarrestarlo, prueba con ${bestCounterName}.`
+    : ` Su enfoque se asemeja a ${rivalStratName}.`;
+  return flavor + tip;
 }
 
 /* ---------- STATE ---------- */
@@ -359,33 +409,36 @@ let knockoutPool = [];       // remaining pool of teams for future knockout roun
 let matchResults = [];       // flat history of all matches played, for display
 
 /* ---------- FORMATIONS ---------- */
+// Formations are now PURELY visual/layout — they define where the 11 pitch
+// slots are placed, but give NO stat bonus. The stat bonus now comes from
+// the per-match STRATEGY chosen against each rival (see STRATEGIES above).
 const FORMATIONS = {
   ofensiva:[
-    {code:"3-4-3",label:"Ataque total",bonus:{attack:10,pace:6,defense:-6}},
-    {code:"3-4-1-2",label:"Mediapunta creativo",bonus:{attack:8,technique:7,defense:-4}},
-    {code:"4-2-4",label:"Brasil clásico",bonus:{attack:12,pace:5,defense:-8}},
-    {code:"4-3-3",label:"Barcelona style",bonus:{attack:7,passing:5,technique:3}},
-    {code:"4-2-3-1",label:"Extremos al ataque",bonus:{attack:8,pace:5,defense:-2}},
-    {code:"3-5-2",label:"Superioridad central",bonus:{passing:8,technique:5,attack:3,defense:-3}},
-    {code:"2-3-5",label:"Vintage ofensivo",bonus:{attack:15,pace:5,defense:-12}},
+    {code:"3-4-3",label:"Ataque total",bonus:{}},
+    {code:"3-4-1-2",label:"Mediapunta creativo",bonus:{}},
+    {code:"4-2-4",label:"Brasil clásico",bonus:{}},
+    {code:"4-3-3",label:"Barcelona style",bonus:{}},
+    {code:"4-2-3-1",label:"Extremos al ataque",bonus:{}},
+    {code:"3-5-2",label:"Superioridad central",bonus:{}},
+    {code:"2-3-5",label:"Vintage ofensivo",bonus:{}},
   ],
   equilibrada:[
-    {code:"4-4-2",label:"El clásico",bonus:{attack:4,defense:4,passing:3,pace:3}},
-    {code:"4-3-3",label:"Posesión y ataque",bonus:{attack:6,passing:5,technique:3}},
-    {code:"4-1-4-1",label:"Sólido en todo",bonus:{defense:7,passing:5,pace:2}},
-    {code:"4-2-3-1",label:"Fútbol moderno",bonus:{attack:6,passing:5,pace:3}},
-    {code:"4-3-1-2",label:"Control + 2 puntas",bonus:{passing:6,technique:6,attack:3}},
-    {code:"3-5-2",label:"Carrileros activos",bonus:{passing:7,technique:4,pace:3}},
-    {code:"4-5-1",label:"Defensivo+contragol",bonus:{defense:6,passing:4,pace:2}},
+    {code:"4-4-2",label:"El clásico",bonus:{}},
+    {code:"4-3-3",label:"Posesión y ataque",bonus:{}},
+    {code:"4-1-4-1",label:"Sólido en todo",bonus:{}},
+    {code:"4-2-3-1",label:"Fútbol moderno",bonus:{}},
+    {code:"4-3-1-2",label:"Control + 2 puntas",bonus:{}},
+    {code:"3-5-2",label:"Carrileros activos",bonus:{}},
+    {code:"4-5-1",label:"Defensivo+contragol",bonus:{}},
   ],
   defensiva:[
-    {code:"5-4-1",label:"Fortaleza",bonus:{defense:12,passing:2,attack:-6}},
-    {code:"5-3-2",label:"5 atrás + 2 arriba",bonus:{defense:10,pace:3,attack:-3}},
-    {code:"4-5-1",label:"Bloque compacto",bonus:{defense:9,passing:3,attack:-3}},
-    {code:"4-1-4-1",label:"Pivote protector",bonus:{defense:11,passing:3,attack:-4}},
-    {code:"3-6-1",label:"Muro defensivo",bonus:{defense:9,passing:6,attack:-8}},
-    {code:"5-2-2-1",label:"Contragolpe",bonus:{defense:10,pace:5,attack:-5}},
-    {code:"6-3-1",label:"Ultra defensivo",bonus:{defense:15,attack:-12}},
+    {code:"5-4-1",label:"Fortaleza",bonus:{}},
+    {code:"5-3-2",label:"5 atrás + 2 arriba",bonus:{}},
+    {code:"4-5-1",label:"Bloque compacto",bonus:{}},
+    {code:"4-1-4-1",label:"Pivote protector",bonus:{}},
+    {code:"3-6-1",label:"Muro defensivo",bonus:{}},
+    {code:"5-2-2-1",label:"Contragolpe",bonus:{}},
+    {code:"6-3-1",label:"Ultra defensivo",bonus:{}},
   ]
 };
 const CAT_NAMES={ofensiva:"Ofensiva",equilibrada:"Equilibrada",defensiva:"Defensiva"};
@@ -436,6 +489,8 @@ rollBtn.addEventListener("click",()=>{
 /* ---------- FORMATION TABS ---------- */
 document.querySelectorAll(".formation-tab").forEach(tab=>{
   tab.addEventListener("click",()=>{
+    if(phase!=="draft"||draftedCount>0) return; // locked once drafting starts
+    playSound('select');
     document.querySelectorAll(".formation-tab").forEach(t=>t.classList.remove("active"));
     tab.classList.add("active");
     renderFormationList(tab.dataset.cat);
@@ -606,10 +661,9 @@ function pickPlayer(player){
       rollBtn.style.display="none";
       const howTo=document.getElementById("howToPlayBox");
       const statsGuide=document.getElementById("statsGuideBox");
-      const strat=document.getElementById("strategyBox");
+      lockFormationDisplay();
       if(howTo) howTo.style.display="none";
       if(statsGuide) statsGuide.style.display="none";
-      if(strat) strat.style.display="block";
       updateConvocadosTable();
       updateBenchTable();
       startMatchPhase();
@@ -1017,22 +1071,15 @@ function renderFormationList(cat){
   });
 }
 function selectFormation(cat,code){
-  if(phase==="bench") return;
+  // Formation can ONLY be changed during initial setup, before SELECCIONAR
+  // JUGADOR / EQUIPO RÁPIDO has been pressed. Once the draft has started
+  // (draftedCount>0) or finished (phase==="ready"/"bench"), it's locked.
+  if(phase!=="draft"||draftedCount>0) return;
   const f=FORMATIONS[cat].find(x=>x.code===code);
   if(!f) return;
   playSound('select');
-  if(phase==="ready"){
-    currentFormation={category:cat,code};
-    applyFormationBonus(f.bonus);
-    reassignSquad(code);
-    renderFormationList(cat);
-    const el=document.getElementById("currentFormation");
-    if(el) el.textContent=`${code} · ${CAT_NAMES[cat]}`;
-    return;
-  }
-  if(draftedCount>0){
-    if(!confirm("Cambiar la formación reinicia la colocación. ¿Continuar?")) return;
-  }
+  const badge=document.getElementById("formationBadge");
+  if(badge) badge.style.display="none";
   currentFormation={category:cat,code};
   applyFormationBonus(f.bonus);
   renderPitch(code);
@@ -1041,12 +1088,27 @@ function selectFormation(cat,code){
   const el=document.getElementById("currentFormation");
   if(el) el.textContent=`${code} · ${CAT_NAMES[cat]}`;
 }
+function lockFormationDisplay(){
+  // Called once the squad is fully built — formation can no longer change.
+  // Hide the interactive picker, show the read-only info panel instead.
+  const picker=document.getElementById("formationPicker");
+  const info=document.getElementById("formationInfo");
+  const title=document.getElementById("formationBoxTitle");
+  if(picker) picker.style.display="none";
+  if(info)   info.style.display="block";
+  if(title)  title.textContent="FORMACIÓN ELEGIDA";
+  const el=document.getElementById("currentFormation");
+  if(el) el.textContent=`${currentFormation.code} · ${CAT_NAMES[currentFormation.category]}`;
+  const badge=document.getElementById("formationBadge");
+  if(badge) badge.style.display="none";
+}
+
 function resetDraft(){
   usedPlayers=[]; draftedCount=0;
   updateDraftCounter();
   updateConvocadosTable();
   rollBtn.disabled=false;
-  rollBtn.textContent="GO!";
+  rollBtn.textContent="SELECCIONAR JUGADOR";
   selectedPlayer=null;
   playerCardEl.innerHTML="";
 }
@@ -1149,6 +1211,7 @@ function setupGroupStage(){
 
 /* ---------- OPPONENT SELECTION ---------- */
 function pickNextOpponent(){
+  selectedMatchStrategy=null; // fresh strategy choice for each new match
   if(stage==="group"){
     nextOpponent=groupOpponents[groupMatchIdx];
   } else if(stage==="knockout"){
@@ -1205,7 +1268,32 @@ function renderRivalBox(){
       <div class="rival-style-tag">${nextOpponent.style}</div>
     </div>`;
   document.getElementById("rivalHint").textContent=hint;
+  renderStrategySelector();
 }
+
+/* ========= MATCH STRATEGY SELECTOR ========= */
+function renderStrategySelector(){
+  const el=document.getElementById("strategySelector");
+  if(!el) return;
+  el.innerHTML=`
+    <div class="style-label" style="margin-top:12px">Elige tu estrategia para este partido</div>
+    <div class="strategy-grid">
+      ${STRATEGY_ORDER.map(key=>{
+        const s=STRATEGIES[key];
+        const sel=selectedMatchStrategy===key?' selected':'';
+        return `<button class="strategy-btn${sel}" data-key="${key}" onclick="chooseMatchStrategy('${key}')" title="${esc(s.desc)}">${s.name}</button>`;
+      }).join('')}
+    </div>
+    ${selectedMatchStrategy?`<div class="strategy-desc">${STRATEGIES[selectedMatchStrategy].desc}</div>`:'<div class="strategy-desc strategy-desc-empty">Sin estrategia elegida: sin bonus ni penalización.</div>'}
+  `;
+}
+function chooseMatchStrategy(key){
+  if(!STRATEGIES[key]) return;
+  playSound('select');
+  selectedMatchStrategy = (selectedMatchStrategy===key) ? null : key; // click again to deselect
+  renderStrategySelector();
+}
+window.chooseMatchStrategy=chooseMatchStrategy;
 
 /* ---------- HISTORY / GROUP TABLE / BRACKET DISPLAY ---------- */
 function renderMatchHistory(){
@@ -1313,31 +1401,30 @@ function tacticalModifier(myStats,oppStats){
     oppScoreMod: Math.max(-0.4, Math.min(0.4, oppScoreMod)),
   };
 }
-/* Counter-strategy: compares the tactical LEAN of your chosen formation
-   (attack-defense balance from its bonus, independent of player stats —
-   never shown to the player) against the rival's tactical lean (from their
-   style bonuses). Picking the right counter (e.g. defensive/counter-attack
-   vs a very offensive rival) nudges win probability without touching the
-   visible team rating. */
-function formationLean(bonus){
-  return (bonus.attack||0) - (bonus.defense||0);
-}
-function teamLean(team){
-  const b=team.bonuses||{};
-  return (b.attack||0) - (b.defense||0);
+/* Counter-strategy: compares the MATCH STRATEGY chosen by the player
+   (Tiki-Taka, Catenaccio, etc., picked fresh before each match) against
+   the rival's narrative style mapped to one of the 10 strategies. Picking
+   the correct counter gives a meaningful lambda bonus; mirroring the
+   rival's own strategy gives a small penalty. */
+function getRivalStrategyKey(team){
+  // Map the rival's narrative style to one of the 10 match strategies
+  return TEAM_STYLE_TO_STRATEGY[team._styleKey] || "posesion";
 }
 function counterStrategyModifier(){
-  const myLean=formationLean(currentFormationBonus);     // >0 offensive, <0 defensive
-  const oppLean=teamLean(nextOpponent);                  // >0 rival attacks more, <0 rival defends more
-  // Good counters: rival very offensive (oppLean high) + I play defensive/counter (myLean low/negative)
-  //                rival very defensive (oppLean low/negative) + I play offensive (myLean high)
-  // Bad picks: mirroring the rival's extreme lean (both very offensive, or both very defensive)
-  const synergy = -(myLean*oppLean)/300; // opposite signs -> positive synergy
-  const capped = Math.max(-0.18, Math.min(0.18, synergy));
-  return {
-    myScoreMod: capped,
-    oppScoreMod: -capped*0.6,
-  };
+  // Bonus if the player picked the strategy that counters the rival's strategy.
+  // Picking the SAME strategy as the rival (mirroring) gives a small penalty —
+  // mirroring an opponent's approach rarely creates an advantage.
+  if(!nextOpponent) return {myScoreMod:0, oppScoreMod:0};
+  const rivalKey=getRivalStrategyKey(nextOpponent);
+  const myKey=selectedMatchStrategy;
+  if(!myKey) return {myScoreMod:0, oppScoreMod:0}; // no strategy chosen = neutral
+  const rivalCountersMe = STRATEGIES[rivalKey] && STRATEGIES[rivalKey].counters===myKey;
+  const iCounterRival    = STRATEGIES[myKey] && STRATEGIES[myKey].counters===rivalKey;
+  let mod=0;
+  if(iCounterRival)    mod=+0.16;  // good read of the opponent
+  else if(rivalCountersMe) mod=-0.10; // picked the strategy the rival naturally beats
+  else if(myKey===rivalKey) mod=-0.04; // mirroring rarely pays off
+  return { myScoreMod:mod, oppScoreMod:-mod*0.5 };
 }
 function poissonSample(lambda){
   const L=Math.exp(-lambda); let k=0,p=1;
@@ -1629,6 +1716,19 @@ function showMatchModal(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,
   if(newInjuries.length){
     const ILABELS={leve:"leve (1 partido)",básica:"básica (2 partidos)",grave:"grave (3 partidos)"};
     extraHTML+=`<div class="injury-section"><p>⚠ Lesiones en ${myTeamName} tras el partido:</p><ul>${newInjuries.map(p=>`<li>${p.name}: lesión ${ILABELS[p.injury.type]}</li>`).join('')}</ul><p class="injury-note">Recuerda: puedes hacer hasta <strong>2 cambios</strong> entre Convocados y Banquillo antes del próximo partido. Hazlo manualmente desde las tablas de la izquierda.</p></div>`;
+  }
+  // Strategy result feedback
+  if(selectedMatchStrategy && nextOpponent){
+    const rivalKey=getRivalStrategyKey(nextOpponent);
+    const myKey=selectedMatchStrategy;
+    const iCounter = STRATEGIES[myKey] && STRATEGIES[myKey].counters===rivalKey;
+    const counteredByRival = STRATEGIES[rivalKey] && STRATEGIES[rivalKey].counters===myKey;
+    let stratMsg, stratClass;
+    if(iCounter){ stratMsg=`✓ Tu estrategia (${STRATEGIES[myKey].name}) contrarrestó perfectamente a ${nextOpponent.name}.`; stratClass="strategy-feedback-good"; }
+    else if(counteredByRival){ stratMsg=`✗ ${nextOpponent.name} aprovechó mejor el enfrentamiento táctico esta vez.`; stratClass="strategy-feedback-bad"; }
+    else if(myKey===rivalKey){ stratMsg=`= Ambos equipos jugaron con un enfoque similar (${STRATEGIES[myKey].name}).`; stratClass="strategy-feedback-neutral"; }
+    else { stratMsg=`Estrategia neutral: ${STRATEGIES[myKey].name}, sin ventaja táctica clara.`; stratClass="strategy-feedback-neutral"; }
+    extraHTML+=`<div class="strategy-feedback ${stratClass}">${stratMsg}</div>`;
   }
 
   // Determine continue-button label and the outcome it leads to
@@ -2343,10 +2443,9 @@ function _executeQuickBuild(){
   rollBtn.style.display="none";
   const howTo=document.getElementById("howToPlayBox");
   const statsGuide=document.getElementById("statsGuideBox");
-  const strat=document.getElementById("strategyBox");
+  lockFormationDisplay();
   if(howTo) howTo.style.display="none";
   if(statsGuide) statsGuide.style.display="none";
-  if(strat) strat.style.display="block";
 
   updateDraftCounter();
   updateConvocadosTable();
