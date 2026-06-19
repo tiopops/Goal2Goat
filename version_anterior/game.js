@@ -486,15 +486,10 @@ function showTeamChoice(t1,p1,t2,p2,isBench=false){
   </div>`;
 
   if(isMobile){
-    // Ensure campo tab active so panels are hidden, then scroll to card
-    document.querySelectorAll('.mob-tab').forEach(btn=>{
-      btn.classList.toggle('active', btn.dataset.tab==='campo');
-    });
-    document.querySelector('.left-panel')?.classList.remove('mob-active');
-    document.querySelector('.right-panel')?.classList.remove('mob-active');
-    document.getElementById('rankingPanel')?.classList.remove('mob-active');
-    setTimeout(()=>{ if(targetEl) targetEl.scrollIntoView({behavior:'smooth',block:'start'}); }, 60);
-    setTimeout(()=>{ if(targetEl) targetEl.scrollIntoView({behavior:'smooth',block:'start'}); }, 980);
+    // Active tab = RIVAL during shuffling (center panel with the card is always visible regardless)
+    switchMobileTab('rival');
+    setTimeout(()=>{ if(targetEl) targetEl.scrollIntoView({behavior:'smooth',block:'start'}); }, 80);
+    setTimeout(()=>{ if(targetEl) targetEl.scrollIntoView({behavior:'smooth',block:'start'}); }, 1000);
   } else {
     scrollToEl("playerCardDesktop", 30);
     scrollToEl("playerCardDesktop", 950);
@@ -1162,6 +1157,9 @@ function pickNextOpponent(){
     return;
   }
   renderCenterSummary();
+  if(window.innerWidth<=1050 && typeof switchMobileTab==='function'){
+    switchMobileTab('rival');
+  }
   spinRivalReveal();
   scrollToEl("rivalBox", 30);
   scrollToEl("rivalBox", 950); // re-anchor after the reveal settles and content height changes

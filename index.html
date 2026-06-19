@@ -6,7 +6,10 @@
 <title>Goal2Goat</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;600;700&family=Press+Start+2P&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css">
+<script>
+  // Cache-busting: force fresh CSS on every page load/refresh
+  document.write('<link rel="stylesheet" href="style.css?v=' + Date.now() + '">');
+</script>
 </head>
 <body>
 
@@ -395,7 +398,10 @@
     <span class="mob-tab-label">RANKING</span>
   </button>
 </nav>
-<script src="game.js"></script>
+<script>
+  // Cache-busting: force fresh game.js on every page load/refresh
+  document.write('<script src="game.js?v=' + Date.now() + '"><\/script>');
+</script>
 <!-- Firebase loads AFTER game.js so it never blocks the game -->
 <script>
 (function(){
