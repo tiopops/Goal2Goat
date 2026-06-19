@@ -472,8 +472,11 @@ function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.rand
 
 function showTeamChoice(t1,p1,t2,p2,isBench=false){
   const title=isBench?"ELIGE JUGADOR DE BANQUILLO":"ELIGE UNA SELECCIÓN";
+  const isMobile=window.innerWidth<=1050;
+  const targetEl=isMobile?document.getElementById("playerCard"):playerCardEl;
+
   // Slot-machine reveal: shuffle random flags for ~1s before showing the real choices
-  playerCardEl.innerHTML=`
+  targetEl.innerHTML=`
   <div class="box" style="margin-bottom:0">
     <div class="selection-title">${title}</div>
     <div class="team-choice slot-spin">
@@ -481,8 +484,21 @@ function showTeamChoice(t1,p1,t2,p2,isBench=false){
       <div class="team-option slot-reel"><div class="flag-wrap"><div class="slot-strip" id="reel2"></div></div></div>
     </div>
   </div>`;
-  scrollToEl("playerCardDesktop", 30);
-  scrollToEl("playerCardDesktop", 950);
+
+  if(isMobile){
+    // Ensure campo tab active so panels are hidden, then scroll to card
+    document.querySelectorAll('.mob-tab').forEach(btn=>{
+      btn.classList.toggle('active', btn.dataset.tab==='campo');
+    });
+    document.querySelector('.left-panel')?.classList.remove('mob-active');
+    document.querySelector('.right-panel')?.classList.remove('mob-active');
+    document.getElementById('rankingPanel')?.classList.remove('mob-active');
+    setTimeout(()=>{ if(targetEl) targetEl.scrollIntoView({behavior:'smooth',block:'start'}); }, 60);
+    setTimeout(()=>{ if(targetEl) targetEl.scrollIntoView({behavior:'smooth',block:'start'}); }, 980);
+  } else {
+    scrollToEl("playerCardDesktop", 30);
+    scrollToEl("playerCardDesktop", 950);
+  }
   const pool=teams.slice();
   const reel1=document.getElementById("reel1");
   const reel2=document.getElementById("reel2");
@@ -498,7 +514,7 @@ function showTeamChoice(t1,p1,t2,p2,isBench=false){
   setTimeout(()=>{
     clearInterval(spin);
     playSound('reveal');
-    playerCardEl.innerHTML=`
+    targetEl.innerHTML=`
     <div class="box" style="margin-bottom:0">
       <div class="selection-title">${title}</div>
       <div class="team-choice">
@@ -565,7 +581,8 @@ function showRosterModal(team,players){
         onclick="pickPlayer(${safeP})">Elegir</button></td>
     </tr>`;
   });
-  playerCardEl.innerHTML=`
+  const rosterTarget=window.innerWidth<=1050?document.getElementById("playerCard"):playerCardEl;
+  rosterTarget.innerHTML=`
   <div class="box roster-modal" style="margin-bottom:0">
     <div class="roster-header">
       ${flagEmoji(team.name,40)}
@@ -576,6 +593,9 @@ function showRosterModal(team,players){
       <tbody>${rows}</tbody>
     </table>
   </div>`;
+  if(window.innerWidth<=1050){
+    setTimeout(()=>{ if(rosterTarget) rosterTarget.scrollIntoView({behavior:'smooth',block:'start'}); },60);
+  }
 }
 
 /* ========= PICK PLAYER ========= */
@@ -612,6 +632,8 @@ function pickPlayer(player){
   highlightPos(selectedPlayer.positions||[]);
   showSelectedPlayerBanner(selectedPlayer);
   scrollToEl("pitch");
+  // On mobile: switch to campo tab so pitch is visible for placement
+  if(typeof switchMobileTab==='function') switchMobileTab('campo');
 }
 
 function showSelectedPlayerBanner(p){
@@ -638,6 +660,7 @@ function hideSelectedPlayerBanner(){
 }
 
 function volverASeleccion(){
+  playSound('select');
   selectedPlayer=null;
   clearHighlights();
   hideSelectedPlayerBanner();
@@ -1083,14 +1106,28 @@ function showTeamNameModal(){
     <h3>¡Equipo completo!</h3>
     <div class="match-summary">Tu plantilla GOAT está lista. ¡Dale un nombre a tu equipo antes de empezar el torneo! Empezarás en la <strong>Fase de Grupos</strong>: 3 partidos, los 2 primeros del grupo avanzan a octavos de final.</div>
     <input type="text" id="teamNameInput" maxlength="24" placeholder="Ej: Dream Team FC" class="team-name-input" value="${esc(myTeamName==='TU EQUIPO'?'':myTeamName)}">
+    <span id="teamNameErr" style="display:none;color:#e74c3c;font-size:11px;margin-top:4px">El nombre del equipo no puede estar vacío.</span>
     <button class="modal-btn" id="teamNameConfirmBtn">CONFIRMAR</button>
   </div>`;
   const inp=document.getElementById("teamNameInput");
   inp.focus();
   const confirmFn=()=>{
     const val=inp.value.trim();
-    if(val) myTeamName=val.toUpperCase();
+    if(!val){
+      document.getElementById("teamNameErr").style.display="block";
+      inp.focus();
+      return;
+    }
+    myTeamName=val.toUpperCase();
     document.getElementById("matchOverlay").innerHTML="";
+    // Save team name to Firebase profile if logged in
+    if(typeof firebase!=='undefined'){
+      try{
+        const user=firebase.auth().currentUser;
+        if(user) firebase.firestore().collection("users").doc(user.uid)
+          .set({lastTeamName:myTeamName},{merge:true});
+      }catch(e){}
+    }
     setupGroupStage();
     renderCenterSummary();
     pickNextOpponent();
@@ -1148,6 +1185,7 @@ function spinRivalReveal(){
     rollWeather();
     renderWeather();
     updateLed();
+    if(typeof notifyMobileRivalTab==='function') notifyMobileRivalTab();
     updateLed();
   },900);
 }
@@ -2614,28 +2652,86 @@ function initFirebaseAuth(){
     const user=auth.currentUser; if(!user) return;
     try{
       const inc=firebase.firestore.FieldValue.increment;
-      const ref=db.collection("users").doc(user.uid);
-      const snap=await ref.get();
-      const s=snap.exists?(snap.data().stats||{}):{};
-      const statsUpdate={titles: inc(1)};
-      if((score||0)>(s.bestScore||0)) statsUpdate.bestScore=score;
-      await ref.set({stats:statsUpdate},{merge:true});
-      console.log("Victory saved:", score);
+      await db.collection("users").doc(user.uid)
+        .set({stats:{titles:inc(1)}},{merge:true});
     }catch(e){ console.warn("Victory stat error:", e.code, e.message); }
   };
 
-  // Save final score for ANY run (win or lose) — always updates bestScore if improved
+  // Save score for any run — updates bestScore only if better, always adds to scores collection
   window.saveFinalScore=async function(score){
     const user=auth.currentUser; if(!user) return;
+    if(!score||score<=0) return;
     try{
-      const ref=db.collection("users").doc(user.uid);
-      const snap=await ref.get();
+      const userRef=db.collection("users").doc(user.uid);
+      const snap=await userRef.get();
       const s=snap.exists?(snap.data().stats||{}):{};
-      if((score||0)>(s.bestScore||0)){
-        await ref.set({stats:{bestScore:score}},{merge:true});
-        console.log("New bestScore saved:", score);
+      const username=snap.exists?snap.data().username:'—';
+
+      // 1. Update bestScore in user profile only if this score is better
+      if((score)>(s.bestScore||0)){
+        await userRef.set({
+          stats:{bestScore:score},
+          bestTeamName:typeof myTeamName!=='undefined'?myTeamName:'—'
+        },{merge:true});
       }
+
+      // 2. Always add this score to the global 'scores' collection (one doc per run)
+      //    The ranking reads from this collection, so ALL scores are preserved
+      await db.collection("scores").add({
+        uid:       user.uid,
+        username:  username,
+        teamName:  typeof myTeamName!=='undefined'?myTeamName:'—',
+        score:     score,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      console.log("Score saved:", score);
     }catch(e){ console.warn("saveFinalScore error:", e.code, e.message); }
+  };
+
+  // Load top 50 from the 'scores' collection — all runs, all users, ordered desc
+  window.loadRanking=async function(targetId){
+    const el=document.getElementById(targetId||'rankingTable');
+    if(!el) return;
+    el.innerHTML='<p class="ranking-loading">Cargando ranking...</p>';
+    try{
+      const snap=await db.collection("scores")
+        .orderBy("score","desc")
+        .limit(50)
+        .get();
+      if(snap.empty){
+        el.innerHTML='<p class="ranking-loading">Aún no hay puntuaciones. ¡Sé el primero!</p>';
+        return;
+      }
+      let rows=''; let pos=0;
+      snap.docs.forEach(doc=>{
+        const d=doc.data();
+        if(!d.score||d.score<=0) return;
+        pos++;
+        const posClass=pos===1?'gold':pos===2?'silver':pos===3?'bronze':'';
+        const medal=pos===1?'🥇':pos===2?'🥈':pos===3?'🥉':'';
+        rows+=`<tr>
+          <td class="rank-pos ${posClass}">${medal||pos}</td>
+          <td class="rank-name">${d.username||'—'}<br>
+            <span style="font-size:10px;color:var(--text-muted);font-weight:400">${d.teamName||'—'}</span>
+          </td>
+          <td class="rank-score">${d.score}</td>
+        </tr>`;
+      });
+      el.innerHTML=rows
+        ?`<table class="ranking-table">
+            <thead><tr><th>#</th><th>JUGADOR / EQUIPO</th><th style="text-align:right">PTS</th></tr></thead>
+            <tbody>${rows}</tbody>
+          </table>`
+        :'<p class="ranking-loading">Aún no hay puntuaciones. ¡Juega y sé el primero!</p>';
+    }catch(e){
+      console.warn("Ranking load error:", e);
+      el.innerHTML='<p class="ranking-loading">Error al cargar el ranking.</p>';
+    }
+  };
+
+  window.showRankingModal=function(){
+    const o=document.getElementById('rankingOverlay');
+    if(o){ o.style.display='flex'; window.loadRanking('rankingTableDesktop'); }
   };
 
   /* ─── CLOSE ON BACKDROP ─── */
@@ -2644,6 +2740,8 @@ function initFirebaseAuth(){
     if(auth&&e.target===auth) window.closeAuthModal();
     const prof=$id("profileOverlay");
     if(prof&&e.target===prof) window.closeProfileModal();
+    const rank=$id("rankingOverlay");
+    if(rank&&e.target===rank) rank.style.display='none';
   });
 
   /* ─── WIRE BUTTONS ─── */
@@ -2657,6 +2755,16 @@ function initFirebaseAuth(){
   wire("tabRegister",      ()=>window.switchAuthTab("register"));
   wire("loginSubmitBtn",   ()=>window.submitLogin());
   wire("regSubmitBtn",     ()=>window.submitRegister());
+
+  // Enter key support for auth forms
+  function addEnterKey(inputId, submitFn){
+    const el=$id(inputId);
+    if(el) el.addEventListener("keydown",e=>{ if(e.key==="Enter") submitFn(); });
+  }
+  // Login: Enter on any field submits
+  ["loginIdentifier","loginPassword"].forEach(id=>addEnterKey(id,window.submitLogin));
+  // Register: Enter on last field submits
+  ["regUsername","regEmail","regPassword","regPassword2"].forEach(id=>addEnterKey(id,window.submitRegister));
   // Welcome popup
   wire("welcomeStartBtn",  ()=>{
     const o=$id("welcomeOverlay"); if(o) o.style.display="none";
@@ -2664,3 +2772,77 @@ function initFirebaseAuth(){
 }
 
 // initFirebaseAuth() is called by firebase.js once all Firebase SDKs are loaded
+
+/* ========= MOBILE TAB NAVIGATION ========= */
+function switchMobileTab(tab){
+  if(window.innerWidth>1050) return;
+
+  document.querySelectorAll('.mob-tab').forEach(btn=>{
+    btn.classList.toggle('active', btn.dataset.tab===tab);
+  });
+
+  const left=document.querySelector('.left-panel');
+  const right=document.querySelector('.right-panel');
+  const ranking=document.getElementById('rankingPanel');
+  if(left)    left.classList.remove('mob-active');
+  if(right)   right.classList.remove('mob-active');
+  if(ranking) ranking.classList.remove('mob-active');
+
+  if(tab==='campo'){
+    // Just hide other panels — don't force scroll, let user scroll freely
+    // The pitch is always at top of page so it's naturally visible
+  } else if(tab==='equipo'){
+    if(left) left.classList.add('mob-active');
+    setTimeout(()=>{
+      if(left) left.scrollIntoView({behavior:'smooth',block:'start'});
+    },50);
+  } else if(tab==='rival'){
+    if(right) right.classList.add('mob-active');
+    const badge=document.querySelector('.mob-tab[data-tab="rival"] .mob-tab-badge');
+    if(badge) badge.style.display='none';
+    setTimeout(()=>{
+      const rb=document.getElementById('rivalBox');
+      if(rb) rb.scrollIntoView({behavior:'smooth',block:'start'});
+      else if(right) right.scrollIntoView({behavior:'smooth',block:'start'});
+    },50);
+  } else if(tab==='historial'){
+    if(right) right.classList.add('mob-active');
+    setTimeout(()=>{
+      const mh=document.getElementById('matchHistoryBox');
+      if(mh) mh.scrollIntoView({behavior:'smooth',block:'start'});
+      else if(right) right.scrollIntoView({behavior:'smooth',block:'start'});
+    },80);
+  } else if(tab==='ranking'){
+    if(ranking){
+      ranking.classList.add('mob-active');
+      setTimeout(()=>ranking.scrollIntoView({behavior:'smooth',block:'start'}),50);
+    }
+    if(typeof window.loadRanking==='function') window.loadRanking('rankingTable');
+  }
+}
+function notifyMobileRivalTab(){
+  if(window.innerWidth>1050) return;
+  const badge=document.querySelector('.mob-tab[data-tab="rival"] .mob-tab-badge');
+  if(badge){ badge.style.display='flex'; }
+  const btn=document.querySelector('.mob-tab[data-tab="rival"]');
+  if(btn) btn.style.color='var(--gold)';
+}
+// Clear rival badge when tab is opened
+document.addEventListener('click', e=>{
+  if(e.target.closest('.mob-tab[data-tab="rival"]')){
+    const badge=document.querySelector('.mob-tab[data-tab="rival"] .mob-tab-badge');
+    if(badge) badge.style.display='none';
+  }
+});
+
+// Add badge HTML to rival tab on init
+(function(){
+  const rivalTab=document.querySelector('.mob-tab[data-tab="rival"]');
+  if(rivalTab && !rivalTab.querySelector('.mob-tab-badge')){
+    const badge=document.createElement('span');
+    badge.className='mob-tab-badge';
+    badge.style.display='none';
+    badge.textContent='!';
+    rivalTab.appendChild(badge);
+  }
+})();

@@ -311,16 +311,7 @@ body.dark-theme .version-tag{color:#555}
 .modal-btn.danger{background:var(--red)}.modal-btn.danger:hover{background:#a93226}
 
 /* ===================== RESPONSIVE ===================== */
-@media(max-width:1050px){
-  html,body{overflow:auto;height:auto;display:block}
-  #appHeader{position:sticky;top:0;z-index:100}
-  .app{display:flex;flex-direction:column;height:auto;flex:none}
-  .center-panel{order:1;height:auto;max-height:none;overflow:visible}
-  #pitch{height:auto;width:100%;max-width:min(100%,60vh);max-height:none;flex:none}
-  .left-panel{order:2;border-right:none;border-bottom:1px solid var(--line);overflow:visible}
-  .right-panel{order:3;border-left:none;overflow:visible}
-  .team-choice{flex-direction:column}
-}
+
 @media(max-width:640px){
   .logo{font-size:22px}
   .app-header-logo{gap:6px}
@@ -877,3 +868,118 @@ body.dark-theme .settings-item:hover{background:#111;color:var(--gold)}
   padding:8px;cursor:pointer;transition:.15s;
 }
 .spb-back-btn:hover{background:#e0b82a}
+
+/* ================================================== */
+/* ============= MOBILE TAB LAYOUT ================= */
+/* ================================================== */
+
+#mobileTabBar{display:none}
+
+@media(max-width:1050px){
+
+  /* Body scrolls normally — tabs just show/hide sections */
+  html,body{overflow:auto;height:auto;display:block}
+  #appHeader{position:sticky;top:0;z-index:200;width:100%}
+
+  .app{display:block!important;height:auto!important}
+
+  /* Center panel: always shown, no fixed height */
+  .center-panel{
+    display:flex!important;flex-direction:column!important;align-items:center!important;
+    width:100%!important;height:auto!important;overflow:visible!important;
+  }
+  #pitchBox{width:100%!important}
+  #pitch{width:100%!important;max-width:100%!important;height:auto!important}
+  #playerCard{width:100%;background:var(--bg)}
+
+  .led-board{max-width:100%!important;height:44px!important}
+  .led-text{font-size:11px!important;line-height:44px!important}
+  #centerBottom{width:100%!important;max-width:100%!important}
+  #quickBuildWrap{width:100%!important;max-width:100%!important;padding:0 0 4px!important}
+  .main-action-btn{max-width:100%!important}
+
+  /* Panels: hidden by default, shown by tab */
+  .left-panel,.right-panel{
+    display:none!important;
+    width:100%!important;height:auto!important;
+    overflow:visible!important;
+    border:none!important;padding:10px!important;
+    box-sizing:border-box!important;
+  }
+  .left-panel.mob-active,
+  .right-panel.mob-active{display:block!important}
+
+  .team-choice{flex-direction:column}
+
+  /* Hide desktop-only elements on mobile */
+  .desktop-only{display:none!important}
+
+  /* TAB BAR — fixed at bottom of viewport */
+  #mobileTabBar{
+    display:flex!important;
+    position:fixed!important;bottom:0!important;left:0!important;right:0!important;
+    background:#111!important;
+    border-top:2px solid #333!important;
+    z-index:999!important;
+    padding-bottom:env(safe-area-inset-bottom,0px);
+  }
+  .mob-tab{
+    flex:1;background:none;border:none;color:#666;
+    padding:10px 4px 8px;cursor:pointer;
+    display:flex;flex-direction:column;align-items:center;gap:3px;
+    transition:.15s;position:relative;
+  }
+  .mob-tab-icon{font-size:20px;line-height:1}
+  .mob-tab-label{
+    font-size:9px;font-family:'Bebas Neue',Impact,sans-serif;
+    letter-spacing:.8px;
+  }
+  .mob-tab.active{color:var(--gold)!important}
+  .mob-tab.active::after{
+    content:'';position:absolute;top:0;left:10%;right:10%;
+    height:2px;background:var(--gold);border-radius:0 0 2px 2px;
+  }
+  .mob-tab:hover{color:#aaa}
+  .mob-tab-badge{
+    position:absolute;top:6px;right:14px;
+    background:var(--red);color:#fff;border-radius:50%;
+    width:14px;height:14px;font-size:8px;
+    display:flex;align-items:center;justify-content:center;font-weight:700;
+  }
+
+  /* Extra bottom padding so content isn't hidden behind tab bar */
+  .app::after{content:'';display:block;height:72px}
+
+  /* Popup/overlay adjustments */
+  #welcomeOverlay .auth-modal{padding:20px!important}
+  .auth-modal{max-height:85vh!important;overflow-y:auto!important}
+}
+
+/* RANKING PANEL */
+.ranking-panel{display:none;width:100%;box-sizing:border-box;padding:10px}
+.ranking-panel.mob-active{display:block!important}
+.ranking-subtitle{font-size:11px;color:var(--text-muted);margin-bottom:12px}
+.ranking-table{width:100%;border-collapse:collapse;font-size:13px}
+.ranking-table th{
+  background:var(--dark);color:var(--gold);
+  font-family:'Bebas Neue',Impact,sans-serif;
+  font-size:12px;letter-spacing:.5px;
+  padding:8px 6px;text-align:left;border-bottom:2px solid var(--gold);
+}
+.ranking-table td{padding:8px 6px;border-bottom:1px solid var(--line);color:var(--text)}
+.ranking-table tr:hover td{background:var(--row-hover)}
+.rank-pos{font-family:'Bebas Neue',Impact,sans-serif;font-size:16px;color:var(--text-muted);width:32px}
+.rank-pos.gold{color:#f0c419}
+.rank-pos.silver{color:#aaa}
+.rank-pos.bronze{color:#cd7f32}
+.rank-name{font-weight:700}
+.rank-score{
+  font-family:'Bebas Neue',Impact,sans-serif;
+  font-size:18px;color:var(--gold);text-align:right;
+}
+.ranking-loading{color:var(--text-muted);font-size:12px;text-align:center;padding:20px}
+
+@media(max-width:1050px){
+  .ranking-panel{display:none}
+  .ranking-panel.mob-active{display:block!important;padding:10px}
+}
