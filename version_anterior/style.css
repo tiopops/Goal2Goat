@@ -257,6 +257,7 @@ body.dark-theme .version-tag{color:#555}
 .team-stat-title{font-size:11px;font-weight:700;letter-spacing:.5px}
 #teamOVR{font-size:22px;font-weight:800;color:var(--gold);margin-left:auto}
 .stat-row{display:flex;justify-content:space-between;font-size:11px;font-weight:600;margin:4px 0 2px}
+.stat-row .stat-negative{color:var(--red)}
 .stat-bar{height:6px;background:#e0d9ce;margin-bottom:4px}
 .stat-bar div{height:100%;background:var(--accent);transition:width .4s ease}
 .star-bonus-row{font-size:11px;color:var(--gold);font-weight:600;margin-top:6px;padding-top:6px;border-top:1px solid var(--line)}
@@ -933,8 +934,8 @@ body.dark-theme .settings-item:hover{background:#111;color:var(--gold)}
   .led-board{max-width:100%!important;height:44px!important}
   .led-text{font-size:11px!important;line-height:44px!important}
   #centerBottom{width:100%!important;max-width:100%!important}
-  #quickBuildWrap{width:100%!important;max-width:100%!important;padding:0 0 4px!important}
-  .main-action-btn{max-width:100%!important}
+  #quickBuildWrap{width:100%!important;max-width:100%!important;padding:0 12px 8px!important}
+  .main-action-btn,.quick-build-btn{max-width:100%!important;width:100%!important}
 
   /* Left/right panels: hidden by default, shown by tab JS */
   .left-panel,.right-panel{
@@ -945,6 +946,15 @@ body.dark-theme .settings-item:hover{background:#111;color:var(--gold)}
     box-sizing:border-box!important;
   }
   .left-panel.mob-active,.right-panel.mob-active{display:block!important}
+
+  /* Formation picker: relocated via JS into the center-panel (always visible
+     on mobile) so it's reachable from the FORMACIÓN tab without living
+     inside the EQUIPO tab's hidden left-panel. PERFIL DEL EQUIPO follows
+     right below it, in the same tab. */
+  #formationPickerBox,
+  #teamProfileBox{
+    width:100%;box-sizing:border-box;margin:8px 0 0;
+  }
 
   .team-choice{flex-direction:column}
 
@@ -1057,12 +1067,8 @@ body.dark-theme .strategy-desc{background:#0a0c0d}
   .formation-picker-hint{display:none}
 }
 
-/* Desktop only: hide CONVOCADOS and PERFIL DEL EQUIPO until the squad-building
-   has actually started (SELECCIONAR JUGADOR / EQUIPO RÁPIDO pressed) */
-@media(min-width:1051px){
-  #convocadosBox.pre-draft,
-  #teamProfileBox.pre-draft{display:none}
-}
+/* CONVOCADOS and PERFIL DEL EQUIPO are visible from the start (desktop) —
+   the player can already see formation-driven base stats before drafting. */
 
 /* FORMACIÓN box: lives in center-panel under the LED on desktop.
    On mobile it's hidden — #mobileFormationInfo (compact) is shown instead. */
@@ -1073,4 +1079,34 @@ body.dark-theme .strategy-desc{background:#0a0c0d}
 }
 @media(max-width:1050px){
   .formation-box-desktop{display:none!important}
+}
+
+/* COLLAPSIBLE TUTORIAL BOXES (desktop) */
+.collapsible-header{
+  cursor:pointer;user-select:none;
+  display:flex!important;align-items:center;justify-content:space-between;
+  color:var(--gold)!important;
+}
+.collapse-arrow{
+  font-size:18px;color:var(--gold);transition:transform .2s;
+  flex-shrink:0;margin-left:8px;line-height:1;
+}
+.collapsible-box.collapsed .collapse-arrow{transform:rotate(-90deg)}
+.collapsible-box.collapsed .howto-content{
+  display:none;
+}
+.collapsible-box.collapsed{
+  padding-bottom:10px;
+}
+
+/* Desktop: put the LEFT panel's scrollbar on the screen's left edge
+   (not in the middle, next to the center column) using the classic
+   direction:rtl trick — content stays normal (ltr) inside. */
+@media(min-width:1051px){
+  .left-panel{
+    direction:rtl;
+  }
+  .left-panel > *{
+    direction:ltr;
+  }
 }

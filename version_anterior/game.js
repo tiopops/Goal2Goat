@@ -407,31 +407,31 @@ let matchResults = [];       // flat history of all matches played, for display
 // the per-match STRATEGY chosen against each rival (see STRATEGIES above).
 const FORMATIONS = {
   ofensiva:[
-    {code:"3-4-3",label:"Ataque total",bonus:{}},
-    {code:"3-4-1-2",label:"Mediapunta creativo",bonus:{}},
-    {code:"4-2-4",label:"Brasil clásico",bonus:{}},
-    {code:"4-3-3",label:"Barcelona style",bonus:{}},
-    {code:"4-2-3-1",label:"Extremos al ataque",bonus:{}},
-    {code:"3-5-2",label:"Superioridad central",bonus:{}},
-    {code:"2-3-5",label:"Vintage ofensivo",bonus:{}},
+    {code:"3-4-3",label:"Ataque total",bonus:{attack:13,defense:3,passing:7,pace:11,technique:6}},
+    {code:"3-4-1-2",label:"Mediapunta creativo",bonus:{attack:9,defense:4,passing:12,pace:7,technique:8}},
+    {code:"4-2-4",label:"Brasil clásico",bonus:{attack:16,defense:6,passing:4,pace:10,technique:4}},
+    {code:"4-3-3",label:"Barcelona style",bonus:{attack:11,defense:5,passing:8,pace:7,technique:9}},
+    {code:"4-2-3-1",label:"Extremos al ataque",bonus:{attack:8,defense:6,passing:11,pace:9,technique:6}},
+    {code:"3-5-2",label:"Superioridad central",bonus:{attack:7,defense:4,passing:13,pace:8,technique:8}},
+    {code:"2-3-5",label:"Vintage ofensivo",bonus:{attack:15,defense:2,passing:6,pace:13,technique:4}},
   ],
   equilibrada:[
-    {code:"4-4-2",label:"El clásico",bonus:{}},
-    {code:"4-3-3",label:"Posesión y ataque",bonus:{}},
-    {code:"4-1-4-1",label:"Sólido en todo",bonus:{}},
-    {code:"4-2-3-1",label:"Fútbol moderno",bonus:{}},
-    {code:"4-3-1-2",label:"Control + 2 puntas",bonus:{}},
-    {code:"3-5-2",label:"Carrileros activos",bonus:{}},
-    {code:"4-5-1",label:"Defensivo+contragol",bonus:{}},
+    {code:"4-4-2",label:"El clásico",bonus:{attack:8,defense:8,passing:8,pace:8,technique:8}},
+    {code:"4-3-3",label:"Posesión y ataque",bonus:{attack:12,defense:5,passing:9,pace:8,technique:6}},
+    {code:"4-1-4-1",label:"Sólido en todo",bonus:{attack:6,defense:10,passing:12,pace:5,technique:7}},
+    {code:"4-2-3-1",label:"Fútbol moderno",bonus:{attack:7,defense:7,passing:13,pace:6,technique:7}},
+    {code:"4-3-1-2",label:"Control + 2 puntas",bonus:{attack:10,defense:6,passing:10,pace:7,technique:7}},
+    {code:"3-5-2",label:"Carrileros activos",bonus:{attack:8,defense:5,passing:11,pace:9,technique:7}},
+    {code:"4-5-1",label:"Defensivo+contragol",bonus:{attack:5,defense:11,passing:10,pace:6,technique:8}},
   ],
   defensiva:[
-    {code:"5-4-1",label:"Fortaleza",bonus:{}},
-    {code:"5-3-2",label:"5 atrás + 2 arriba",bonus:{}},
-    {code:"4-5-1",label:"Bloque compacto",bonus:{}},
-    {code:"4-1-4-1",label:"Pivote protector",bonus:{}},
-    {code:"3-6-1",label:"Muro defensivo",bonus:{}},
-    {code:"5-2-2-1",label:"Contragolpe",bonus:{}},
-    {code:"6-3-1",label:"Ultra defensivo",bonus:{}},
+    {code:"5-4-1",label:"Fortaleza",bonus:{attack:4,defense:16,passing:8,pace:5,technique:7}},
+    {code:"5-3-2",label:"5 atrás + 2 arriba",bonus:{attack:7,defense:18,passing:6,pace:5,technique:4}},
+    {code:"4-5-1",label:"Bloque compacto",bonus:{attack:4,defense:12,passing:11,pace:4,technique:9}},
+    {code:"4-1-4-1",label:"Pivote protector",bonus:{attack:5,defense:14,passing:9,pace:4,technique:8}},
+    {code:"3-6-1",label:"Muro defensivo",bonus:{attack:3,defense:9,passing:15,pace:3,technique:10}},
+    {code:"5-2-2-1",label:"Contragolpe",bonus:{attack:6,defense:17,passing:5,pace:8,technique:4}},
+    {code:"6-3-1",label:"Ultra defensivo",bonus:{attack:3,defense:22,passing:6,pace:4,technique:5}},
   ]
 };
 const CAT_NAMES={ofensiva:"Ofensiva",equilibrada:"Equilibrada",defensiva:"Defensiva"};
@@ -488,6 +488,67 @@ renderFormationList("equilibrada");
 updateStats();
 updateDraftCounter();
 renderMobileFormationInfo();
+relocateFormationPickerForViewport();
+window.addEventListener("resize", relocateFormationPickerForViewport);
+
+/* On mobile, the formation picker must be reachable from the FORMACIÓN tab
+   (center-panel, which is always visible) — not buried inside the EQUIPO
+   tab's left-panel (hidden by default). We physically move the DOM node. */
+/* On desktop, CÓMO JUGAR and PARA QUÉ SIRVE are collapsible accordions —
+   open by default, collapse to a compact title bar on click. Mobile shows
+   the same content inside the INFORMACIÓN tab instead (always expanded). */
+function toggleCollapsible(boxId){
+  const box=document.getElementById(boxId);
+  if(!box) return;
+  playSound('select');
+  box.classList.toggle("collapsed");
+}
+
+function relocateFormationPickerForViewport(){
+  const picker=document.getElementById("formationPickerBox");
+  const teamProfile=document.getElementById("teamProfileBox");
+  const isMobile=window.innerWidth<=1050;
+  const centerPanel=document.querySelector(".center-panel");
+  const leftPanel=document.querySelector(".left-panel");
+
+  if(picker){
+    if(isMobile && centerPanel && picker.parentElement!==centerPanel){
+      // Append at the END of center-panel — keeps pitch, LED scoreboard
+      // and SELECCIONAR JUGADOR/JUGAR right after the pitch, with the
+      // formation picker (and team profile) below all of that.
+      centerPanel.appendChild(picker);
+    } else if(!isMobile && leftPanel && picker.parentElement!==leftPanel){
+      if(teamProfile) teamProfile.insertAdjacentElement("beforebegin", picker);
+      else leftPanel.appendChild(picker);
+    }
+  }
+
+  // PERFIL DEL EQUIPO follows the formation picker on mobile — same tab
+  // (FORMACIÓN/CAMPO), positioned right below it. On desktop it returns
+  // to its normal place in the left panel (after CONVOCADOS).
+  if(teamProfile){
+    if(isMobile && picker && teamProfile.parentElement!==picker.parentElement){
+      picker.insertAdjacentElement("afterend", teamProfile);
+    } else if(!isMobile && leftPanel && teamProfile.parentElement!==leftPanel){
+      leftPanel.appendChild(teamProfile);
+    }
+  }
+
+  // CÓMO JUGAR + PARA QUÉ SIRVE: live in the right panel on desktop (as
+  // collapsible accordions), but move into the dedicated INFORMACIÓN tab
+  // panel on mobile, always expanded there.
+  const howTo=document.getElementById("howToPlayBox");
+  const statsGuide=document.getElementById("statsGuideBox");
+  const infoPanel=document.getElementById("infoPanel");
+  const rightPanel=document.querySelector(".right-panel");
+  if(isMobile && infoPanel){
+    if(howTo && howTo.parentElement!==infoPanel){ howTo.classList.remove("collapsed"); infoPanel.appendChild(howTo); }
+    if(statsGuide && statsGuide.parentElement!==infoPanel){ statsGuide.classList.remove("collapsed"); infoPanel.appendChild(statsGuide); }
+  } else if(!isMobile && rightPanel){
+    if(howTo && howTo.parentElement!==rightPanel) rightPanel.appendChild(howTo);
+    if(statsGuide && statsGuide.parentElement!==rightPanel) rightPanel.appendChild(statsGuide);
+  }
+}
 
 /* ---------- ROLL BUTTON ---------- */
 rollBtn.addEventListener("click",()=>{
@@ -496,6 +557,10 @@ rollBtn.addEventListener("click",()=>{
   // Hide quick-build option once player starts manual draft
   const qbw=document.getElementById("quickBuildWrap");
   if(qbw) qbw.style.display="none";
+  // Lock the formation choice the moment drafting actually begins —
+  // not just once the squad is fully built. The player should see
+  // immediately that they can no longer change it.
+  if(phase==="draft"&&draftedCount===0) lockFormationDisplay();
   if(phase==="draft") rollTeams();
   else if(phase==="bench") rollBench();
 });
@@ -531,9 +596,9 @@ function maybeShowMobileFormationGate(retryFn){
   document.getElementById("gateChangeBtn").addEventListener("click",()=>{
     playSound('select');
     document.getElementById("matchOverlay").innerHTML="";
-    switchMobileTab('equipo');
+    switchMobileTab('campo');
     setTimeout(()=>{
-      const fb=document.getElementById('formationBox');
+      const fb=document.getElementById('formationPickerBox');
       if(fb) fb.scrollIntoView({behavior:'smooth',block:'start'});
     },80);
   });
@@ -553,12 +618,8 @@ document.querySelectorAll(".formation-tab").forEach(tab=>{
 
 /* ========= ROLL TEAMS (show 2 random teams, 8 random players each) ========= */
 function revealPreDraftBoxes(){
-  // Once the player actually starts building the squad (manual or quick-build),
-  // show CONVOCADOS and PERFIL DEL EQUIPO on desktop (mobile shows them via tabs already).
-  const a=document.getElementById("convocadosBox");
-  const b=document.getElementById("teamProfileBox");
-  if(a) a.classList.remove("pre-draft");
-  if(b) b.classList.remove("pre-draft");
+  // CONVOCADOS and PERFIL DEL EQUIPO are visible from the start now —
+  // kept as a no-op so existing call sites don't need to change.
 }
 function rollTeams(){
   rollBtn.disabled=true;
@@ -725,8 +786,10 @@ function pickPlayer(player){
       const howTo=document.getElementById("howToPlayBox");
       const statsGuide=document.getElementById("statsGuideBox");
       lockFormationDisplay();
-      if(howTo) howTo.style.display="none";
-      if(statsGuide) statsGuide.style.display="none";
+      // Collapse (don't hide) the tutorial boxes — still consultable on
+      // desktop once the squad is built, just compact at the bottom.
+      if(howTo) howTo.classList.add("collapsed");
+      if(statsGuide) statsGuide.classList.add("collapsed");
       updateConvocadosTable();
       updateBenchTable();
       startMatchPhase();
@@ -1109,13 +1172,20 @@ function applyFormationBonus(bonus){
   updateStats();
 }
 function updateStats(){
+  // Formation (and later, drafted players) shape ATAQUE/DEFENSA/etc. directly.
+  // The NUMBER shown is always the real value (can be negative — e.g. a very
+  // defensive formation before any player is drafted). Only the BAR's width
+  // is clamped to 0-100%, since a bar can't visually go negative.
   ["attack","defense","pace","passing","technique"].forEach(k=>{
-    const displayVal=(teamStats[k]||0)-(currentFormationBonus[k]||0);
-    const val=Math.max(0,Math.min(100,Math.round(displayVal)));
+    const real=Math.round(teamStats[k]||0);
+    const barPct=Math.max(0,Math.min(100,real));
     const v=document.getElementById(k+"Value");
     const b=document.getElementById(k+"Bar");
-    if(v) v.textContent=val;
-    if(b) b.style.width=val+"%";
+    if(v){
+      v.textContent=real;
+      v.classList.toggle("stat-negative", real<0);
+    }
+    if(b) b.style.width=barPct+"%";
   });
 }
 
@@ -1153,14 +1223,14 @@ function selectFormation(cat,code){
   renderMobileFormationInfo();
 }
 function lockFormationDisplay(){
-  // Called once the squad is fully built — formation can no longer change.
-  // Hide the interactive picker, show the read-only info panel instead.
-  const picker=document.getElementById("formationPicker");
-  const info=document.getElementById("formationInfo");
-  const title=document.getElementById("formationBoxTitle");
-  if(picker) picker.style.display="none";
-  if(info)   info.style.display="block";
-  if(title)  title.textContent="FORMACIÓN ELEGIDA";
+  // Called as soon as drafting starts (SELECCIONAR JUGADOR / EQUIPO RÁPIDO
+  // pressed for the first time) — formation can no longer change from here.
+  // Hide the picker box (left panel), show the read-only info card instead
+  // (center panel, below the LED board).
+  const picker=document.getElementById("formationPickerBox");
+  const infoCard=document.getElementById("formationInfoCard");
+  if(picker)   picker.style.display="none";
+  if(infoCard) infoCard.style.display="block";
   const el=document.getElementById("currentFormation");
   if(el) el.textContent=`${currentFormation.code} · ${CAT_NAMES[currentFormation.category]}`;
   const descEl=document.getElementById("formationDesc");
@@ -1176,7 +1246,7 @@ function renderMobileFormationInfo(){
   if(!el) return;
   if(phase==="draft" && draftedCount===0){
     el.classList.add("empty");
-    el.innerHTML=`Elige tu <strong>formación</strong> abajo, en la pestaña EQUIPO, antes de empezar a seleccionar jugadores.`;
+    el.innerHTML=`Elige tu <strong>formación</strong> justo debajo, antes de empezar a seleccionar jugadores.`;
   } else {
     el.classList.remove("empty");
     const desc=FORMATION_DESC[currentFormation.code]||"";
@@ -2403,6 +2473,9 @@ teams=teams.map(t=>{
 function quickBuild(){
   if(phase!=="draft"&&phase!=="bench") return;
   if(maybeShowMobileFormationGate(()=>quickBuild())) return; // pauses for confirmation on mobile, first time only
+  // Lock the formation choice the moment quick-build is used, same as
+  // manual drafting — the formation is no longer changeable from here on.
+  if(phase==="draft"&&draftedCount===0) lockFormationDisplay();
   revealPreDraftBoxes();
   const btn=document.getElementById("quickBuildWrap");
   if(btn){ btn.disabled=true; btn.textContent="Generando..."; }
@@ -2527,8 +2600,10 @@ function _executeQuickBuild(){
   const howTo=document.getElementById("howToPlayBox");
   const statsGuide=document.getElementById("statsGuideBox");
   lockFormationDisplay();
-  if(howTo) howTo.style.display="none";
-  if(statsGuide) statsGuide.style.display="none";
+  // Collapse (don't hide) the tutorial boxes — still consultable on
+  // desktop once the squad is built, just compact at the bottom.
+  if(howTo) howTo.classList.add("collapsed");
+  if(statsGuide) statsGuide.classList.add("collapsed");
 
   updateDraftCounter();
   updateConvocadosTable();
@@ -2986,18 +3061,23 @@ function switchMobileTab(tab){
   const left=document.querySelector('.left-panel');
   const right=document.querySelector('.right-panel');
   const ranking=document.getElementById('rankingPanel');
+  const info=document.getElementById('infoPanel');
   if(left)    left.classList.remove('mob-active');
   if(right)   right.classList.remove('mob-active');
   if(ranking) ranking.classList.remove('mob-active');
+  if(info)    info.classList.remove('mob-active');
 
   if(tab==='campo'){
-    // Just hide other panels — don't force scroll, let user scroll freely
-    // The pitch is always at top of page so it's naturally visible
     if(typeof renderMobileFormationInfo==='function') renderMobileFormationInfo();
+    setTimeout(()=>{
+      const p=document.getElementById('pitchBox')||document.getElementById('pitch');
+      if(p) p.scrollIntoView({behavior:'smooth',block:'start'});
+    },50);
   } else if(tab==='equipo'){
     if(left) left.classList.add('mob-active');
     setTimeout(()=>{
-      if(left) left.scrollIntoView({behavior:'smooth',block:'start'});
+      const cb=document.getElementById('convocadosBox')||left;
+      if(cb) cb.scrollIntoView({behavior:'smooth',block:'start'});
     },50);
   } else if(tab==='rival'){
     if(right) right.classList.add('mob-active');
@@ -3015,6 +3095,11 @@ function switchMobileTab(tab){
       if(mh) mh.scrollIntoView({behavior:'smooth',block:'start'});
       else if(right) right.scrollIntoView({behavior:'smooth',block:'start'});
     },80);
+  } else if(tab==='info'){
+    if(info){
+      info.classList.add('mob-active');
+      setTimeout(()=>info.scrollIntoView({behavior:'smooth',block:'start'}),50);
+    }
   } else if(tab==='ranking'){
     if(ranking){
       ranking.classList.add('mob-active');

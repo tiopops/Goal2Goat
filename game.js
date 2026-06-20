@@ -456,6 +456,7 @@ const FORMATION_DESC={
 };
 let currentFormation={category:"equilibrada",code:"4-4-2"};
 let currentFormationBonus={};
+let formationIsLocked=false; // set true the moment SELECCIONAR JUGADOR/EQUIPO RÁPIDO is pressed
 
 /* ---------- DOM REFS ---------- */
 const rollBtn = document.getElementById("rollBtn");
@@ -507,15 +508,18 @@ function toggleCollapsible(boxId){
 function relocateFormationPickerForViewport(){
   const picker=document.getElementById("formationPickerBox");
   const teamProfile=document.getElementById("teamProfileBox");
+  const convocadosBox=document.getElementById("convocadosBox");
   const isMobile=window.innerWidth<=1050;
   const centerPanel=document.querySelector(".center-panel");
   const leftPanel=document.querySelector(".left-panel");
+  // Formation is locked once SELECCIONAR JUGADOR / EQUIPO RÁPIDO was pressed
+  const formationLocked = formationIsLocked;
 
   if(picker){
     if(isMobile && centerPanel && picker.parentElement!==centerPanel){
       // Append at the END of center-panel — keeps pitch, LED scoreboard
       // and SELECCIONAR JUGADOR/JUGAR right after the pitch, with the
-      // formation picker (and team profile) below all of that.
+      // formation picker below all of that.
       centerPanel.appendChild(picker);
     } else if(!isMobile && leftPanel && picker.parentElement!==leftPanel){
       if(teamProfile) teamProfile.insertAdjacentElement("beforebegin", picker);
@@ -523,12 +527,15 @@ function relocateFormationPickerForViewport(){
     }
   }
 
-  // PERFIL DEL EQUIPO follows the formation picker on mobile — same tab
-  // (FORMACIÓN/CAMPO), positioned right below it. On desktop it returns
-  // to its normal place in the left panel (after CONVOCADOS).
+  // PERFIL DEL EQUIPO: while the formation is still being chosen (pre-draft),
+  // it sits in the CAMPO tab right below the picker. Once the formation
+  // locks (drafting started), it moves to the EQUIPO tab, right after
+  // CONVOCADOS — same place it always has on desktop.
   if(teamProfile){
-    if(isMobile && picker && teamProfile.parentElement!==picker.parentElement){
+    if(isMobile && !formationLocked && picker && teamProfile.parentElement!==picker.parentElement){
       picker.insertAdjacentElement("afterend", teamProfile);
+    } else if(isMobile && formationLocked && convocadosBox && teamProfile.parentElement!==convocadosBox.parentElement){
+      convocadosBox.insertAdjacentElement("afterend", teamProfile);
     } else if(!isMobile && leftPanel && teamProfile.parentElement!==leftPanel){
       leftPanel.appendChild(teamProfile);
     }
@@ -1227,6 +1234,7 @@ function lockFormationDisplay(){
   // pressed for the first time) — formation can no longer change from here.
   // Hide the picker box (left panel), show the read-only info card instead
   // (center panel, below the LED board).
+  formationIsLocked=true;
   const picker=document.getElementById("formationPickerBox");
   const infoCard=document.getElementById("formationInfoCard");
   if(picker)   picker.style.display="none";
@@ -1238,6 +1246,9 @@ function lockFormationDisplay(){
   const badge=document.getElementById("formationBadge");
   if(badge) badge.style.display="none";
   renderMobileFormationInfo();
+  // Now that the formation is locked, PERFIL DEL EQUIPO moves from the
+  // CAMPO tab (next to the picker) to the EQUIPO tab (after CONVOCADOS).
+  if(typeof relocateFormationPickerForViewport==="function") relocateFormationPickerForViewport();
 }
 
 function renderMobileFormationInfo(){
@@ -3100,7 +3111,21 @@ function switchMobileTab(tab){
       info.classList.add('mob-active');
       setTimeout(()=>info.scrollIntoView({behavior:'smooth',block:'start'}),50);
     }
-  } else if(tab==='ranking'){
+    // Auto-expand both tutorial boxes when entering INFORMACIÓN
+    const howTo=document.getElementById("howToPlayBox");
+    const statsGuide=document.getElementById("statsGuideBox");
+    if(howTo) howTo.classList.remove("collapsed");
+    if(statsGuide) statsGuide.classList.remove("collapsed");
+  } else {
+    // Any other tab: re-collapse the tutorial boxes (they live off-screen
+    // in infoPanel, but keep the collapsed state consistent for next visit
+    // and for when they relocate back to the right panel on desktop).
+    const howTo=document.getElementById("howToPlayBox");
+    const statsGuide=document.getElementById("statsGuideBox");
+    if(howTo) howTo.classList.add("collapsed");
+    if(statsGuide) statsGuide.classList.add("collapsed");
+  }
+  if(tab==='ranking'){
     if(ranking){
       ranking.classList.add('mob-active');
       setTimeout(()=>ranking.scrollIntoView({behavior:'smooth',block:'start'}),50);

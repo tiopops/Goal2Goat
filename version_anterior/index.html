@@ -17,7 +17,7 @@
 <header id="appHeader">
   <div class="app-header-logo">
     <div class="logo" onclick="location.reload()" style="cursor:pointer" title="Volver al inicio">GOAL2GOAT</div>
-    <div class="version-tag">v0.32</div>
+    <div class="version-tag">v0.324</div>
   </div>
   <div class="app-header-actions">
     <button class="support-btn" onclick="showSupportModal()">APOYA A GOAL2GOAT</button>
@@ -159,7 +159,7 @@
 
   <!-- LEFT PANEL -->
   <div class="panel left-panel">
-    <div class="box pre-draft" id="convocadosBox">
+    <div class="box" id="convocadosBox">
       <h3>CONVOCADOS <span id="draftCounter" class="counter-badge">0/11</span></h3>
       <div id="convocadosTable"></div>
       <div id="swapHint" class="swap-hint" style="display:none"></div>
@@ -181,7 +181,21 @@
       </div>
     </div>
 
-    <div class="team-profile box pre-draft" id="teamProfileBox">
+    <!-- Formation picker: only visible during draft, before squad is complete.
+         Once locked, the read-only summary moves to the FORMACIÓN ELEGIDA card
+         in the center panel (below the LED board). -->
+    <div class="box" id="formationPickerBox">
+      <h3>FORMACIÓN</h3>
+      <div class="formation-tabs">
+        <button class="formation-tab" data-cat="ofensiva">Ofensiva</button>
+        <button class="formation-tab active" data-cat="equilibrada">Equilibrada</button>
+        <button class="formation-tab" data-cat="defensiva">Defensiva</button>
+      </div>
+      <div id="formationList"></div>
+      <p class="hint-line formation-picker-hint">Elige tu formación ahora — una vez completes el equipo, quedará fijada para todo el torneo.</p>
+    </div>
+
+    <div class="team-profile box" id="teamProfileBox">
       <h3>PERFIL DEL EQUIPO</h3>
       <div class="ovr-team"><span class="team-stat-title">NOTA MEDIA</span><span id="teamOVR">—</span></div>
       <div class="stat-row"><span>ATAQUE</span><span id="attackValue">0</span></div>
@@ -243,25 +257,12 @@
       <div id="ledText" class="led-text">GOAL2GOAT · MONTA TU EQUIPO LEGENDARIO Y CONQUISTA EL MUNDIAL</div>
     </div>
 
-    <!-- Formation: chosen before drafting starts (desktop). On mobile this box
-         is hidden — #mobileFormationInfo above shows the compact equivalent. -->
-    <div class="box formation-box-desktop" id="formationBox">
-      <h3 id="formationBoxTitle">FORMACIÓN</h3>
-      <!-- Interactive picker: only visible during draft, before squad is complete -->
-      <div id="formationPicker">
-        <div class="formation-tabs">
-          <button class="formation-tab" data-cat="ofensiva">Ofensiva</button>
-          <button class="formation-tab active" data-cat="equilibrada">Equilibrada</button>
-          <button class="formation-tab" data-cat="defensiva">Defensiva</button>
-        </div>
-        <div id="formationList"></div>
-        <p class="hint-line formation-picker-hint">Elige tu formación ahora — una vez completes el equipo, quedará fijada para todo el torneo.</p>
-      </div>
-      <!-- Read-only info: shown once the squad is locked in (match phase) -->
-      <div id="formationInfo" style="display:none">
-        <p id="currentFormation" class="hint-line">4-4-2 · Equilibrada</p>
-        <p id="formationDesc" class="hint-line" style="margin-top:4px;color:var(--text-muted)"></p>
-      </div>
+    <!-- Formation info: read-only card shown once the squad is locked in.
+         The interactive picker lives in the LEFT panel (only during draft). -->
+    <div class="box formation-box-desktop" id="formationInfoCard" style="display:none">
+      <h3>FORMACIÓN ELEGIDA</h3>
+      <p id="currentFormation" class="hint-line">4-4-2 · Equilibrada</p>
+      <p id="formationDesc" class="hint-line" style="margin-top:4px;color:var(--text-muted)"></p>
     </div>
 
     <!-- GO button + next rival compact strip under pitch -->
@@ -303,8 +304,8 @@
       <div id="matchHistoryTable"></div>
     </div>
 
-    <div class="box" id="howToPlayBox">
-      <h3>CÓMO JUGAR</h3>
+    <div class="box collapsible-box" id="howToPlayBox">
+      <h3 class="collapsible-header" onclick="toggleCollapsible('howToPlayBox')">CÓMO JUGAR <span class="collapse-arrow">▾</span></h3>
       <div class="howto-content">
         <div class="howto-step">
           <span class="howto-num">1</span>
@@ -341,8 +342,8 @@
       </div>
     </div>
 
-    <div class="box" id="statsGuideBox">
-      <h3>PARA QUÉ SIRVE CADA ESTADÍSTICA</h3>
+    <div class="box collapsible-box" id="statsGuideBox">
+      <h3 class="collapsible-header" onclick="toggleCollapsible('statsGuideBox')">PARA QUÉ SIRVE CADA ESTADÍSTICA <span class="collapse-arrow">▾</span></h3>
       <div class="howto-content">
         <div class="howto-step">
           <span class="howto-num stat-num stat-attack">A</span>
@@ -384,6 +385,9 @@
   </div>
 </div>
 
+<!-- INFORMACIÓN PANEL (mobile tab) — CÓMO JUGAR + PARA QUÉ SIRVE relocated here via JS -->
+<div id="infoPanel" class="ranking-panel"></div>
+
 <!-- RANKING PANEL (mobile tab) -->
 <div id="rankingPanel" class="ranking-panel">
   <div class="box">
@@ -397,7 +401,7 @@
 <nav id="mobileTabBar">
   <button class="mob-tab active" data-tab="campo" onclick="switchMobileTab('campo')">
     <svg class="mob-tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="12" y1="4" x2="12" y2="20"/><circle cx="12" cy="12" r="2.5"/></svg>
-    <span class="mob-tab-label">FORMACIÓN</span>
+    <span class="mob-tab-label">CAMPO</span>
   </button>
   <button class="mob-tab" data-tab="equipo" onclick="switchMobileTab('equipo')">
     <svg class="mob-tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="7" r="3"/><path d="M2 21v-1.5C2 16 5 14 9 14s7 2 7 5.5V21z"/><circle cx="17" cy="8" r="2.3" opacity=".8"/><path d="M22 21v-1.2c0-2.5-2-4.2-4.5-4.5"/></svg>
@@ -411,6 +415,10 @@
   <button class="mob-tab" data-tab="historial" onclick="switchMobileTab('historial')">
     <svg class="mob-tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3h14a1 1 0 0 1 1 1v17l-8-4-8 4V4a1 1 0 0 1 1-1z"/></svg>
     <span class="mob-tab-label">HISTORIAL</span>
+  </button>
+  <button class="mob-tab" data-tab="info" onclick="switchMobileTab('info')">
+    <svg class="mob-tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="12" y1="11" x2="12" y2="16"/><circle cx="12" cy="7.5" r="0.9" fill="currentColor" stroke="none"/></svg>
+    <span class="mob-tab-label">INFORMACIÓN</span>
   </button>
   <button class="mob-tab" data-tab="ranking" onclick="switchMobileTab('ranking')">
     <svg class="mob-tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4h10v6a5 5 0 0 1-10 0z"/><path d="M7 5H4.5A2.5 2.5 0 0 0 4 9.9C4.6 11 5.7 11.6 7 11.5"/><path d="M17 5h2.5A2.5 2.5 0 0 1 20 9.9c-.6 1.1-1.7 1.7-3 1.6"/><line x1="12" y1="14" x2="12" y2="18"/><path d="M8 21h8v-1.3c0-.9-.7-1.7-1.6-1.7H9.6c-.9 0-1.6.8-1.6 1.7z"/></svg>
