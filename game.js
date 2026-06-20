@@ -3087,6 +3087,14 @@ function switchMobileTab(tab){
   } else if(tab==='equipo'){
     if(left) left.classList.add('mob-active');
     setTimeout(()=>{
+      // Before the formation is locked, FORMACIÓN + PERFIL DEL EQUIPO
+      // still live in the center panel — scroll there instead of
+      // CONVOCADOS (which has no relevant content to show yet).
+      if(!formationIsLocked){
+        const fp=document.getElementById('formationPickerBox');
+        if(fp) fp.scrollIntoView({behavior:'smooth',block:'start'});
+        return;
+      }
       const cb=document.getElementById('convocadosBox')||left;
       if(cb) cb.scrollIntoView({behavior:'smooth',block:'start'});
     },50);
