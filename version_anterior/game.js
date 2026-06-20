@@ -291,16 +291,9 @@ const STYLE_HINTS = {
 /* ---------- TEAM SCOUT HINTS ---------- */
 function getScoutHint(team){
   const s = team._styleKey || '';
-  const flavor = STYLE_HINTS[s] || "Información de scouting no disponible. Prepárate para cualquier escenario.";
-  const rivalKey = getRivalStrategyKey(team);
-  const rivalStratName = STRATEGIES[rivalKey] ? STRATEGIES[rivalKey].name : "desconocida";
-  // Find which of our 10 strategies counters the rival's strategy
-  const bestCounterKey = STRATEGY_ORDER.find(k => STRATEGIES[k].counters === rivalKey);
-  const bestCounterName = bestCounterKey ? STRATEGIES[bestCounterKey].name : null;
-  const tip = bestCounterName
-    ? ` Su enfoque se asemeja a ${rivalStratName}. Para contrarrestarlo, prueba con ${bestCounterName}.`
-    : ` Su enfoque se asemeja a ${rivalStratName}.`;
-  return flavor + tip;
+  // Purely descriptive — never names the strategy or tells the player what to pick.
+  // The player must read between the lines and deduce the right counter themselves.
+  return STYLE_HINTS[s] || "Información de scouting no disponible. Prepárate para cualquier escenario.";
 }
 
 /* ---------- STATE ---------- */
@@ -442,6 +435,25 @@ const FORMATIONS = {
   ]
 };
 const CAT_NAMES={ofensiva:"Ofensiva",equilibrada:"Equilibrada",defensiva:"Defensiva"};
+// Short, neutral one-line description per formation code (shown after the squad is locked)
+const FORMATION_DESC={
+  "3-4-3":"Tres centrales y tres delanteros: máxima presencia ofensiva.",
+  "3-4-1-2":"Línea de 3 con un mediapunta libre entre líneas.",
+  "4-2-4":"Cuatro atacantes apoyados por solo dos centrocampistas.",
+  "4-3-3":"Equilibrio clásico entre posesión y ancho ofensivo.",
+  "4-2-3-1":"Doble pivote y un enganche que conecta con la punta.",
+  "3-5-2":"Carrileros que suben por banda y dos puntas arriba.",
+  "2-3-5":"Formación vintage con cinco hombres en ataque.",
+  "4-4-2":"El dibujo más clásico: simetría y bloques compactos.",
+  "4-1-4-1":"Pivote defensivo que protege la línea de cuatro.",
+  "4-3-1-2":"Mediocentro creativo entre la medular y la delantera.",
+  "4-5-1":"Línea de cinco en el centro, un único punta de referencia.",
+  "5-4-1":"Cinco defensas para cerrar todos los espacios.",
+  "5-3-2":"Bloque de cinco atrás con doble delantero al contragolpe.",
+  "3-6-1":"Seis hombres en el medio, máxima cautela ofensiva.",
+  "5-2-2-1":"Defensa numerosa pensada para salir rápido a la contra.",
+  "6-3-1":"El mayor número de defensas posible en el campo.",
+};
 let currentFormation={category:"equilibrada",code:"4-4-2"};
 let currentFormationBonus={};
 
@@ -475,16 +487,58 @@ renderPitch("4-4-2");
 renderFormationList("equilibrada");
 updateStats();
 updateDraftCounter();
+renderMobileFormationInfo();
 
 /* ---------- ROLL BUTTON ---------- */
 rollBtn.addEventListener("click",()=>{
   if(rollBtn.disabled) return;
+  if(maybeShowMobileFormationGate(()=>rollBtn.click())) return; // pauses for confirmation on mobile, first time only
   // Hide quick-build option once player starts manual draft
   const qbw=document.getElementById("quickBuildWrap");
   if(qbw) qbw.style.display="none";
   if(phase==="draft") rollTeams();
   else if(phase==="bench") rollBench();
 });
+
+/* Mobile-only safeguard: before the FIRST draft action (manual or quick-build),
+   make sure the player has consciously seen/confirmed their formation choice.
+   Shown only once per session — never interrupts again afterwards. */
+let _formationGateShown=false;
+function maybeShowMobileFormationGate(retryFn){
+  if(window.innerWidth>1050) return false;       // desktop: never show
+  if(_formationGateShown) return false;           // already shown this session
+  if(phase!=="draft"||draftedCount>0) return false; // only before drafting starts
+  _formationGateShown=true;
+  playSound('select');
+  document.getElementById("matchOverlay").innerHTML=`
+  <div class="match-modal">
+    <h3>Confirma tu formación</h3>
+    <div class="match-summary">
+      Vas a jugar con <strong>${currentFormation.code} · ${CAT_NAMES[currentFormation.category]}</strong>.
+      ${FORMATION_DESC[currentFormation.code]?`<br>${FORMATION_DESC[currentFormation.code]}`:''}
+      <br><br>Recuerda: la formación <strong>solo puede elegirse ahora</strong>, antes de empezar a fichar jugadores. Después quedará fija para todo el torneo.
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+      <button class="modal-btn" id="gateContinueBtn">CONTINUAR CON ESTA FORMACIÓN</button>
+      <button class="modal-btn danger" id="gateChangeBtn">CAMBIAR FORMACIÓN</button>
+    </div>
+  </div>`;
+  document.getElementById("gateContinueBtn").addEventListener("click",()=>{
+    playSound('select');
+    document.getElementById("matchOverlay").innerHTML="";
+    retryFn();
+  });
+  document.getElementById("gateChangeBtn").addEventListener("click",()=>{
+    playSound('select');
+    document.getElementById("matchOverlay").innerHTML="";
+    switchMobileTab('equipo');
+    setTimeout(()=>{
+      const fb=document.getElementById('formationBox');
+      if(fb) fb.scrollIntoView({behavior:'smooth',block:'start'});
+    },80);
+  });
+  return true;
+}
 
 /* ---------- FORMATION TABS ---------- */
 document.querySelectorAll(".formation-tab").forEach(tab=>{
@@ -1087,6 +1141,7 @@ function selectFormation(cat,code){
   renderFormationList(cat);
   const el=document.getElementById("currentFormation");
   if(el) el.textContent=`${code} · ${CAT_NAMES[cat]}`;
+  renderMobileFormationInfo();
 }
 function lockFormationDisplay(){
   // Called once the squad is fully built — formation can no longer change.
@@ -1099,8 +1154,25 @@ function lockFormationDisplay(){
   if(title)  title.textContent="FORMACIÓN ELEGIDA";
   const el=document.getElementById("currentFormation");
   if(el) el.textContent=`${currentFormation.code} · ${CAT_NAMES[currentFormation.category]}`;
+  const descEl=document.getElementById("formationDesc");
+  if(descEl) descEl.textContent=FORMATION_DESC[currentFormation.code]||"";
   const badge=document.getElementById("formationBadge");
   if(badge) badge.style.display="none";
+  renderMobileFormationInfo();
+}
+
+function renderMobileFormationInfo(){
+  // Mobile-only compact card shown under the pitch, in the FORMACIÓN tab
+  const el=document.getElementById("mobileFormationInfo");
+  if(!el) return;
+  if(phase==="draft" && draftedCount===0){
+    el.classList.add("empty");
+    el.innerHTML=`Elige tu <strong>formación</strong> abajo, en la pestaña EQUIPO, antes de empezar a seleccionar jugadores.`;
+  } else {
+    el.classList.remove("empty");
+    const desc=FORMATION_DESC[currentFormation.code]||"";
+    el.innerHTML=`<strong>${currentFormation.code} · ${CAT_NAMES[currentFormation.category]}</strong><br>${desc}`;
+  }
 }
 
 function resetDraft(){
@@ -2321,6 +2393,7 @@ teams=teams.map(t=>{
 
 function quickBuild(){
   if(phase!=="draft"&&phase!=="bench") return;
+  if(maybeShowMobileFormationGate(()=>quickBuild())) return; // pauses for confirmation on mobile, first time only
   const btn=document.getElementById("quickBuildWrap");
   if(btn){ btn.disabled=true; btn.textContent="Generando..."; }
 
@@ -2703,6 +2776,19 @@ function initFirebaseAuth(){
           "stats.titles":s.titles||0
         });
       }
+      // Self-heal: reconcile bestScore against this user's actual run history,
+      // in case an old race condition left a stale (too low) bestScore stored.
+      let displayBest=s.bestScore||0;
+      try{
+        const myScoresSnap=await db.collection("scores").where("uid","==",user.uid).get();
+        let actualBest=0;
+        myScoresSnap.forEach(d=>{ const sc=d.data().score||0; if(sc>actualBest) actualBest=sc; });
+        if(actualBest>displayBest){
+          displayBest=actualBest;
+          await db.collection("users").doc(user.uid).set({stats:{bestScore:actualBest}},{merge:true});
+          console.log("Reconciled bestScore:", actualBest);
+        }
+      }catch(e){ console.warn("bestScore reconciliation skipped:", e.code); }
       const n=(v)=>v||0;
       const set=(id,v)=>{ const el=$id(id); if(el) el.textContent=n(v); };
       set("pstat-games",  s.gamesPlayed);
@@ -2711,7 +2797,7 @@ function initFirebaseAuth(){
       set("pstat-losses", s.losses);
       set("pstat-gf",     s.goalsFor);
       set("pstat-ga",     s.goalsAgainst);
-      set("pstat-best",   s.bestScore);
+      set("pstat-best",   displayBest);
       set("pstat-titles", s.titles);
     }catch(e){
       console.warn("Stats load error:", e);
@@ -2755,22 +2841,31 @@ function initFirebaseAuth(){
   };
 
   // Save score for any run — updates bestScore only if better, always adds to scores collection
+  // Save score for any run — updates bestScore only if better (atomic via transaction
+  // to avoid race conditions when multiple runs finish in quick succession), always
+  // adds this run's score to the global 'scores' collection.
   window.saveFinalScore=async function(score){
     const user=auth.currentUser; if(!user) return;
     if(!score||score<=0) return;
     try{
       const userRef=db.collection("users").doc(user.uid);
-      const snap=await userRef.get();
-      const s=snap.exists?(snap.data().stats||{}):{};
-      const username=snap.exists?snap.data().username:'—';
 
-      // 1. Update bestScore in user profile only if this score is better
-      if((score)>(s.bestScore||0)){
-        await userRef.set({
-          stats:{bestScore:score},
-          bestTeamName:typeof myTeamName!=='undefined'?myTeamName:'—'
-        },{merge:true});
-      }
+      // 1. Atomically update bestScore only if this score is higher than whatever
+      //    is currently stored — a transaction prevents two near-simultaneous
+      //    runs from both reading a stale value and one overwriting the other.
+      const username = await db.runTransaction(async (tx)=>{
+        const snap=await tx.get(userRef);
+        const data=snap.exists?snap.data():{};
+        const s=data.stats||{};
+        const currentBest=s.bestScore||0;
+        if(score>currentBest){
+          tx.set(userRef,{
+            stats:{bestScore:score},
+            bestTeamName:typeof myTeamName!=='undefined'?myTeamName:'—'
+          },{merge:true});
+        }
+        return data.username||'—';
+      });
 
       // 2. Always add this score to the global 'scores' collection (one doc per run)
       //    The ranking reads from this collection, so ALL scores are preserved
@@ -2888,6 +2983,7 @@ function switchMobileTab(tab){
   if(tab==='campo'){
     // Just hide other panels — don't force scroll, let user scroll freely
     // The pitch is always at top of page so it's naturally visible
+    if(typeof renderMobileFormationInfo==='function') renderMobileFormationInfo();
   } else if(tab==='equipo'){
     if(left) left.classList.add('mob-active');
     setTimeout(()=>{

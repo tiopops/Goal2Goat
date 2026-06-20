@@ -17,7 +17,7 @@
 <header id="appHeader">
   <div class="app-header-logo">
     <div class="logo" onclick="location.reload()" style="cursor:pointer" title="Volver al inicio">GOAL2GOAT</div>
-    <div class="version-tag">v0.3</div>
+    <div class="version-tag">v0.31</div>
   </div>
   <div class="app-header-actions">
     <button class="support-btn" onclick="showSupportModal()">APOYA A GOAL2GOAT</button>
@@ -181,6 +181,25 @@
       </div>
     </div>
 
+    <div class="box" id="formationBox">
+      <h3 id="formationBoxTitle">FORMACIÓN</h3>
+      <!-- Interactive picker: only visible during draft, before squad is complete -->
+      <div id="formationPicker">
+        <div class="formation-tabs">
+          <button class="formation-tab" data-cat="ofensiva">Ofensiva</button>
+          <button class="formation-tab active" data-cat="equilibrada">Equilibrada</button>
+          <button class="formation-tab" data-cat="defensiva">Defensiva</button>
+        </div>
+        <div id="formationList"></div>
+        <p class="hint-line">Elige tu formación ahora — una vez completes el equipo, quedará fijada para todo el torneo.</p>
+      </div>
+      <!-- Read-only info: shown once the squad is locked in (match phase) -->
+      <div id="formationInfo" style="display:none">
+        <p id="currentFormation" class="hint-line">4-4-2 · Equilibrada</p>
+        <p id="formationDesc" class="hint-line" style="margin-top:4px;color:var(--text-muted)"></p>
+      </div>
+    </div>
+
     <div class="box" id="howToPlayBox">
       <h3>CÓMO JUGAR</h3>
       <div class="howto-content">
@@ -217,104 +236,6 @@
           <div>Cada partida puntúa de <strong>0 a 1000</strong>. Ganar el Mundial de forma brillante es la única forma de acercarse al máximo. Tu puntuación se guarda en tu perfil si estás registrado.</div>
         </div>
       </div>
-    </div>
-
-    <div class="box" id="formationBox">
-      <h3 id="formationBoxTitle">FORMACIÓN</h3>
-      <!-- Interactive picker: only visible during draft, before squad is complete -->
-      <div id="formationPicker">
-        <div class="formation-tabs">
-          <button class="formation-tab" data-cat="ofensiva">Ofensiva</button>
-          <button class="formation-tab active" data-cat="equilibrada">Equilibrada</button>
-          <button class="formation-tab" data-cat="defensiva">Defensiva</button>
-        </div>
-        <div id="formationList"></div>
-        <p class="hint-line">Elige tu formación ahora — una vez completes el equipo, quedará fijada para todo el torneo.</p>
-      </div>
-      <!-- Read-only info: shown once the squad is locked in (match phase) -->
-      <div id="formationInfo" style="display:none">
-        <p id="currentFormation" class="hint-line">4-4-2 · Equilibrada</p>
-        <p class="hint-line" style="margin-top:4px;color:var(--text-muted)">La formación define la disposición de tu once, y ya no puede cambiarse en este torneo. Elige tu <strong>estrategia</strong> antes de cada partido en la pestaña RIVAL para obtener ventaja táctica.</p>
-      </div>
-    </div>
-  </div>
-
-  <!-- CENTER PANEL -->
-  <div class="center-panel">
-    <div id="pitchBox">
-    <div id="pitch">
-      <svg class="pitch-svg" viewBox="0 0 480 640" xmlns="http://www.w3.org/2000/svg">
-        <rect width="480" height="640" fill="#2f7c42"/>
-        <rect y="38" width="480" height="38" fill="#246f38"/>
-        <rect y="114" width="480" height="38" fill="#246f38"/>
-        <rect y="190" width="480" height="38" fill="#246f38"/>
-        <rect y="266" width="480" height="38" fill="#246f38"/>
-        <rect y="342" width="480" height="38" fill="#246f38"/>
-        <rect y="418" width="480" height="38" fill="#246f38"/>
-        <rect y="494" width="480" height="38" fill="#246f38"/>
-        <rect y="570" width="480" height="38" fill="#246f38"/>
-        <!-- halfway -->
-        <line x1="0" y1="320" x2="480" y2="320" stroke="rgba(255,255,255,.5)" stroke-width="2"/>
-        <circle cx="240" cy="320" r="73" fill="none" stroke="rgba(255,255,255,.45)" stroke-width="2.5"/>
-        <circle cx="240" cy="320" r="4" fill="rgba(255,255,255,.55)"/>
-        <!-- top penalty area -->
-        <rect x="100" y="0" width="280" height="105" fill="none" stroke="rgba(255,255,255,.45)" stroke-width="2.5"/>
-        <rect x="180" y="0" width="120" height="45" fill="none" stroke="rgba(255,255,255,.45)" stroke-width="2.5"/>
-        <circle cx="240" cy="65" r="4" fill="rgba(255,255,255,.55)"/>
-        <path d="M210 105 A30 30 0 0 0 270 105" fill="none" stroke="rgba(255,255,255,.45)" stroke-width="2.5"/>
-        <!-- bottom penalty area -->
-        <rect x="100" y="535" width="280" height="105" fill="none" stroke="rgba(255,255,255,.45)" stroke-width="2.5"/>
-        <rect x="180" y="595" width="120" height="45" fill="none" stroke="rgba(255,255,255,.45)" stroke-width="2.5"/>
-        <circle cx="240" cy="575" r="4" fill="rgba(255,255,255,.55)"/>
-        <path d="M210 535 A30 30 0 0 1 270 535" fill="none" stroke="rgba(255,255,255,.45)" stroke-width="2.5"/>
-        <!-- corner flags - sharp corners, no border -->
-        <line x1="0" y1="0" x2="480" y2="0" stroke="rgba(255,255,255,.3)" stroke-width="2"/>
-        <line x1="0" y1="640" x2="480" y2="640" stroke="rgba(255,255,255,.3)" stroke-width="2"/>
-        <line x1="0" y1="0" x2="0" y2="640" stroke="rgba(255,255,255,.3)" stroke-width="2"/>
-        <line x1="480" y1="0" x2="480" y2="640" stroke="rgba(255,255,255,.3)" stroke-width="2"/>
-      </svg>
-    </div>
-    <!-- LED scoreboard -->
-    <div id="ledBoard" class="led-board">
-      <div id="ledText" class="led-text">GOAL2GOAT · MONTA TU EQUIPO LEGENDARIO Y CONQUISTA EL MUNDIAL</div>
-    </div>
-    <!-- GO button + next rival compact strip under pitch -->
-    <div id="centerBottom">
-      <button id="rollBtn" class="main-action-btn">SELECCIONAR JUGADOR</button>
-      <button id="playMatchBtn" class="main-action-btn" style="display:none">JUGAR</button>
-    </div>
-    <div id="quickBuildWrap">
-      <button id="quickBuildBtn" class="main-action-btn quick-build-btn">EQUIPO RÁPIDO</button>
-    </div>
-    </div>
-    <!-- Selection / roster modal goes here on mobile -->
-    <div id="playerCard"></div>
-    <!-- Quick-glance team summary, shown once squad is ready -->
-
-  </div>
-
-  <!-- RIGHT PANEL -->
-  <div class="panel right-panel">
-
-    <!-- Shows the currently selected player until placed on the pitch -->
-    <div id="selectedPlayerBanner" style="display:none"></div>
-
-    <!-- Show player selection modal here on desktop -->
-    <div id="playerCardDesktop"></div>
-
-    <!-- Rival box (during match phase) -->
-    <div class="box" id="rivalBox" style="display:none">
-      <h3>PRÓXIMO RIVAL</h3>
-      <div id="weatherDisplay" class="weather-display" style="display:none"></div>
-      <div id="rivalInfo"></div>
-      <div id="rivalHint" class="rival-hint"></div>
-      <div id="strategySelector" class="strategy-selector"></div>
-    </div>
-
-    <!-- Match history -->
-    <div class="box" id="matchHistoryBox" style="display:none">
-      <h3>RESULTADOS <span id="matchProgress">FASE DE GRUPOS</span></h3>
-      <div id="matchHistoryTable"></div>
     </div>
 
     <!-- Team stats -->
@@ -364,6 +285,87 @@
         </div>
       </div>
     </div>
+  </div>
+
+  <!-- CENTER PANEL -->
+  <div class="center-panel">
+    <div id="pitchBox">
+    <div id="pitch">
+      <svg class="pitch-svg" viewBox="0 0 480 640" xmlns="http://www.w3.org/2000/svg">
+        <rect width="480" height="640" fill="#2f7c42"/>
+        <rect y="38" width="480" height="38" fill="#246f38"/>
+        <rect y="114" width="480" height="38" fill="#246f38"/>
+        <rect y="190" width="480" height="38" fill="#246f38"/>
+        <rect y="266" width="480" height="38" fill="#246f38"/>
+        <rect y="342" width="480" height="38" fill="#246f38"/>
+        <rect y="418" width="480" height="38" fill="#246f38"/>
+        <rect y="494" width="480" height="38" fill="#246f38"/>
+        <rect y="570" width="480" height="38" fill="#246f38"/>
+        <!-- halfway -->
+        <line x1="0" y1="320" x2="480" y2="320" stroke="rgba(255,255,255,.5)" stroke-width="2"/>
+        <circle cx="240" cy="320" r="73" fill="none" stroke="rgba(255,255,255,.45)" stroke-width="2.5"/>
+        <circle cx="240" cy="320" r="4" fill="rgba(255,255,255,.55)"/>
+        <!-- top penalty area -->
+        <rect x="100" y="0" width="280" height="105" fill="none" stroke="rgba(255,255,255,.45)" stroke-width="2.5"/>
+        <rect x="180" y="0" width="120" height="45" fill="none" stroke="rgba(255,255,255,.45)" stroke-width="2.5"/>
+        <circle cx="240" cy="65" r="4" fill="rgba(255,255,255,.55)"/>
+        <path d="M210 105 A30 30 0 0 0 270 105" fill="none" stroke="rgba(255,255,255,.45)" stroke-width="2.5"/>
+        <!-- bottom penalty area -->
+        <rect x="100" y="535" width="280" height="105" fill="none" stroke="rgba(255,255,255,.45)" stroke-width="2.5"/>
+        <rect x="180" y="595" width="120" height="45" fill="none" stroke="rgba(255,255,255,.45)" stroke-width="2.5"/>
+        <circle cx="240" cy="575" r="4" fill="rgba(255,255,255,.55)"/>
+        <path d="M210 535 A30 30 0 0 1 270 535" fill="none" stroke="rgba(255,255,255,.45)" stroke-width="2.5"/>
+        <!-- corner flags - sharp corners, no border -->
+        <line x1="0" y1="0" x2="480" y2="0" stroke="rgba(255,255,255,.3)" stroke-width="2"/>
+        <line x1="0" y1="640" x2="480" y2="640" stroke="rgba(255,255,255,.3)" stroke-width="2"/>
+        <line x1="0" y1="0" x2="0" y2="640" stroke="rgba(255,255,255,.3)" stroke-width="2"/>
+        <line x1="480" y1="0" x2="480" y2="640" stroke="rgba(255,255,255,.3)" stroke-width="2"/>
+      </svg>
+    </div>
+    <!-- Mobile-only: brief formation summary shown under the pitch -->
+    <div id="mobileFormationInfo" class="mobile-formation-info"></div>
+    <!-- LED scoreboard -->
+    <div id="ledBoard" class="led-board">
+      <div id="ledText" class="led-text">GOAL2GOAT · MONTA TU EQUIPO LEGENDARIO Y CONQUISTA EL MUNDIAL</div>
+    </div>
+    <!-- GO button + next rival compact strip under pitch -->
+    <div id="centerBottom">
+      <button id="rollBtn" class="main-action-btn">SELECCIONAR JUGADOR</button>
+      <button id="playMatchBtn" class="main-action-btn" style="display:none">JUGAR</button>
+    </div>
+    <div id="quickBuildWrap">
+      <button id="quickBuildBtn" class="main-action-btn quick-build-btn">EQUIPO RÁPIDO</button>
+    </div>
+    </div>
+    <!-- Selection / roster modal goes here on mobile -->
+    <div id="playerCard"></div>
+    <!-- Quick-glance team summary, shown once squad is ready -->
+
+  </div>
+
+  <!-- RIGHT PANEL -->
+  <div class="panel right-panel">
+
+    <!-- Shows the currently selected player until placed on the pitch -->
+    <div id="selectedPlayerBanner" style="display:none"></div>
+
+    <!-- Show player selection modal here on desktop -->
+    <div id="playerCardDesktop"></div>
+
+    <!-- Rival box (during match phase) -->
+    <div class="box" id="rivalBox" style="display:none">
+      <h3>PRÓXIMO RIVAL</h3>
+      <div id="weatherDisplay" class="weather-display" style="display:none"></div>
+      <div id="rivalInfo"></div>
+      <div id="rivalHint" class="rival-hint"></div>
+      <div id="strategySelector" class="strategy-selector"></div>
+    </div>
+
+    <!-- Match history -->
+    <div class="box" id="matchHistoryBox" style="display:none">
+      <h3>RESULTADOS <span id="matchProgress">FASE DE GRUPOS</span></h3>
+      <div id="matchHistoryTable"></div>
+    </div>
 
   </div>
 </div>
@@ -392,7 +394,7 @@
 <nav id="mobileTabBar">
   <button class="mob-tab active" data-tab="campo" onclick="switchMobileTab('campo')">
     <svg class="mob-tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="12" y1="4" x2="12" y2="20"/><circle cx="12" cy="12" r="2.5"/></svg>
-    <span class="mob-tab-label">ESTRATEGIA</span>
+    <span class="mob-tab-label">FORMACIÓN</span>
   </button>
   <button class="mob-tab" data-tab="equipo" onclick="switchMobileTab('equipo')">
     <svg class="mob-tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="7" r="3"/><path d="M2 21v-1.5C2 16 5 14 9 14s7 2 7 5.5V21z"/><circle cx="17" cy="8" r="2.3" opacity=".8"/><path d="M22 21v-1.2c0-2.5-2-4.2-4.5-4.5"/></svg>

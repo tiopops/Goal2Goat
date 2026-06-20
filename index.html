@@ -17,7 +17,7 @@
 <header id="appHeader">
   <div class="app-header-logo">
     <div class="logo" onclick="location.reload()" style="cursor:pointer" title="Volver al inicio">GOAL2GOAT</div>
-    <div class="version-tag">v0.31</div>
+    <div class="version-tag">v0.32</div>
   </div>
   <div class="app-header-actions">
     <button class="support-btn" onclick="showSupportModal()">APOYA A GOAL2GOAT</button>
@@ -159,7 +159,7 @@
 
   <!-- LEFT PANEL -->
   <div class="panel left-panel">
-    <div class="box">
+    <div class="box pre-draft" id="convocadosBox">
       <h3>CONVOCADOS <span id="draftCounter" class="counter-badge">0/11</span></h3>
       <div id="convocadosTable"></div>
       <div id="swapHint" class="swap-hint" style="display:none"></div>
@@ -181,65 +181,7 @@
       </div>
     </div>
 
-    <div class="box" id="formationBox">
-      <h3 id="formationBoxTitle">FORMACIÓN</h3>
-      <!-- Interactive picker: only visible during draft, before squad is complete -->
-      <div id="formationPicker">
-        <div class="formation-tabs">
-          <button class="formation-tab" data-cat="ofensiva">Ofensiva</button>
-          <button class="formation-tab active" data-cat="equilibrada">Equilibrada</button>
-          <button class="formation-tab" data-cat="defensiva">Defensiva</button>
-        </div>
-        <div id="formationList"></div>
-        <p class="hint-line">Elige tu formación ahora — una vez completes el equipo, quedará fijada para todo el torneo.</p>
-      </div>
-      <!-- Read-only info: shown once the squad is locked in (match phase) -->
-      <div id="formationInfo" style="display:none">
-        <p id="currentFormation" class="hint-line">4-4-2 · Equilibrada</p>
-        <p id="formationDesc" class="hint-line" style="margin-top:4px;color:var(--text-muted)"></p>
-      </div>
-    </div>
-
-    <div class="box" id="howToPlayBox">
-      <h3>CÓMO JUGAR</h3>
-      <div class="howto-content">
-        <div class="howto-step">
-          <span class="howto-num">1</span>
-          <div>Elige tu <strong>formación</strong> (4-4-2, 3-4-3...) antes de empezar. Solo se puede elegir ahora — define la disposición de tu once para todo el torneo.</div>
-        </div>
-        <div class="howto-step">
-          <span class="howto-num">2</span>
-          <div><strong>SELECCIONAR JUGADOR</strong> baraja dos selecciones al azar. Elige una y selecciona uno de sus 5 jugadores para colocarlo en el campo. O usa <strong>EQUIPO RÁPIDO</strong> para generar toda la plantilla de golpe.</div>
-        </div>
-        <div class="howto-step">
-          <span class="howto-num">3</span>
-          <div>Coloca a cada jugador en su <strong>posición ★</strong> para que rinda al 100%. Fuera de posición pierde un 15% y no suma al bonus de posición.</div>
-        </div>
-        <div class="howto-step">
-          <span class="howto-num">4</span>
-          <div>Completa <strong>11 titulares + 3 en el banquillo 🪑</strong>. Ponle nombre a tu equipo y empieza el torneo.</div>
-        </div>
-        <div class="howto-step">
-          <span class="howto-num">5</span>
-          <div><strong>Fase de Grupos</strong> (3 partidos, pasan los 2 primeros) → <strong>Octavos → Cuartos → Semis → Final</strong>. Antes de cada partido elige una <strong>estrategia</strong> (Tiki-Taka, Catenaccio...) que contrarreste el estilo del rival para ganar ventaja táctica.</div>
-        </div>
-        <div class="howto-step">
-          <span class="howto-num">6</span>
-          <div>Puedes hacer hasta <strong>2 cambios 🪑</strong> entre titulares y suplentes antes de cada partido. Imprescindible si hay lesionados ✚.</div>
-        </div>
-        <div class="howto-step">
-          <span class="howto-num">7</span>
-          <div>La <strong>moral</strong> sube con goles a favor (+3 cada uno) y buenas respuestas en rueda de prensa, y baja con goles en contra (-4 cada uno) y derrotas. El <strong>clima ☁</strong> afecta a las estadísticas. Los goleadores en racha muestran 🔥 y dan ventaja en partido.</div>
-        </div>
-        <div class="howto-step">
-          <span class="howto-num">8</span>
-          <div>Cada partida puntúa de <strong>0 a 1000</strong>. Ganar el Mundial de forma brillante es la única forma de acercarse al máximo. Tu puntuación se guarda en tu perfil si estás registrado.</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Team stats -->
-    <div class="team-profile box">
+    <div class="team-profile box pre-draft" id="teamProfileBox">
       <h3>PERFIL DEL EQUIPO</h3>
       <div class="ovr-team"><span class="team-stat-title">NOTA MEDIA</span><span id="teamOVR">—</span></div>
       <div class="stat-row"><span>ATAQUE</span><span id="attackValue">0</span></div>
@@ -257,34 +199,6 @@
       </div>
     </div>
 
-    <div class="box" id="statsGuideBox">
-      <h3>PARA QUÉ SIRVE CADA ESTADÍSTICA</h3>
-      <div class="howto-content">
-        <div class="howto-step">
-          <span class="howto-num stat-num stat-attack">A</span>
-          <div><strong>ATAQUE</strong> — cuanto más alto frente a la defensa rival, más posibilidades de marcar goles.</div>
-        </div>
-        <div class="howto-step">
-          <span class="howto-num stat-num stat-defense">D</span>
-          <div><strong>DEFENSA</strong> — frena el ataque rival: cuanto más alta, menos goles encajas.</div>
-        </div>
-        <div class="howto-step">
-          <span class="howto-num stat-num stat-pace">R</span>
-          <div><strong>RITMO</strong> — aporta un extra de peligro ofensivo cuando supera al rival en velocidad.</div>
-        </div>
-        <div class="howto-step">
-          <span class="howto-num stat-num stat-passing">P</span>
-          <div><strong>PASE</strong> — mejora tu juego colectivo y ayuda a crear más ocasiones de gol.</div>
-        </div>
-        <div class="howto-step">
-          <span class="howto-num stat-num stat-technique">T</span>
-          <div><strong>TÉCNICA</strong> — calidad individual: suma un plus de peligro tanto en ataque como en el control del partido.</div>
-        </div>
-        <div class="howto-step">
-          <div class="howto-tip">Los <strong>jugadores ★ en su posición</strong> y la <strong>estrategia</strong> elegida frente a cada rival son lo que más mueve estas estadísticas. ¡Elige bien para inclinar la balanza a tu favor!</div>
-        </div>
-      </div>
-    </div>
   </div>
 
   <!-- CENTER PANEL -->
@@ -328,6 +242,28 @@
     <div id="ledBoard" class="led-board">
       <div id="ledText" class="led-text">GOAL2GOAT · MONTA TU EQUIPO LEGENDARIO Y CONQUISTA EL MUNDIAL</div>
     </div>
+
+    <!-- Formation: chosen before drafting starts (desktop). On mobile this box
+         is hidden — #mobileFormationInfo above shows the compact equivalent. -->
+    <div class="box formation-box-desktop" id="formationBox">
+      <h3 id="formationBoxTitle">FORMACIÓN</h3>
+      <!-- Interactive picker: only visible during draft, before squad is complete -->
+      <div id="formationPicker">
+        <div class="formation-tabs">
+          <button class="formation-tab" data-cat="ofensiva">Ofensiva</button>
+          <button class="formation-tab active" data-cat="equilibrada">Equilibrada</button>
+          <button class="formation-tab" data-cat="defensiva">Defensiva</button>
+        </div>
+        <div id="formationList"></div>
+        <p class="hint-line formation-picker-hint">Elige tu formación ahora — una vez completes el equipo, quedará fijada para todo el torneo.</p>
+      </div>
+      <!-- Read-only info: shown once the squad is locked in (match phase) -->
+      <div id="formationInfo" style="display:none">
+        <p id="currentFormation" class="hint-line">4-4-2 · Equilibrada</p>
+        <p id="formationDesc" class="hint-line" style="margin-top:4px;color:var(--text-muted)"></p>
+      </div>
+    </div>
+
     <!-- GO button + next rival compact strip under pitch -->
     <div id="centerBottom">
       <button id="rollBtn" class="main-action-btn">SELECCIONAR JUGADOR</button>
@@ -365,6 +301,73 @@
     <div class="box" id="matchHistoryBox" style="display:none">
       <h3>RESULTADOS <span id="matchProgress">FASE DE GRUPOS</span></h3>
       <div id="matchHistoryTable"></div>
+    </div>
+
+    <div class="box" id="howToPlayBox">
+      <h3>CÓMO JUGAR</h3>
+      <div class="howto-content">
+        <div class="howto-step">
+          <span class="howto-num">1</span>
+          <div>Elige tu <strong>formación</strong> (4-4-2, 3-4-3...) antes de empezar. Solo se puede elegir ahora — define la disposición de tu once para todo el torneo.</div>
+        </div>
+        <div class="howto-step">
+          <span class="howto-num">2</span>
+          <div><strong>SELECCIONAR JUGADOR</strong> baraja dos selecciones al azar. Elige una y selecciona uno de sus 5 jugadores para colocarlo en el campo. O usa <strong>EQUIPO RÁPIDO</strong> para generar toda la plantilla de golpe.</div>
+        </div>
+        <div class="howto-step">
+          <span class="howto-num">3</span>
+          <div>Coloca a cada jugador en su <strong>posición ★</strong> para que rinda al 100%. Fuera de posición pierde un 15% y no suma al bonus de posición.</div>
+        </div>
+        <div class="howto-step">
+          <span class="howto-num">4</span>
+          <div>Completa <strong>11 titulares + 3 en el banquillo 🪑</strong>. Ponle nombre a tu equipo y empieza el torneo.</div>
+        </div>
+        <div class="howto-step">
+          <span class="howto-num">5</span>
+          <div><strong>Fase de Grupos</strong> (3 partidos, pasan los 2 primeros) → <strong>Octavos → Cuartos → Semis → Final</strong>. Antes de cada partido elige una <strong>estrategia</strong> (Tiki-Taka, Catenaccio...) que contrarreste el estilo del rival para ganar ventaja táctica.</div>
+        </div>
+        <div class="howto-step">
+          <span class="howto-num">6</span>
+          <div>Puedes hacer hasta <strong>2 cambios 🪑</strong> entre titulares y suplentes antes de cada partido. Imprescindible si hay lesionados ✚.</div>
+        </div>
+        <div class="howto-step">
+          <span class="howto-num">7</span>
+          <div>La <strong>moral</strong> sube con goles a favor (+3 cada uno) y buenas respuestas en rueda de prensa, y baja con goles en contra (-4 cada uno) y derrotas. El <strong>clima ☁</strong> afecta a las estadísticas. Los goleadores en racha muestran 🔥 y dan ventaja en partido.</div>
+        </div>
+        <div class="howto-step">
+          <span class="howto-num">8</span>
+          <div>Cada partida puntúa de <strong>0 a 1000</strong>. Ganar el Mundial de forma brillante es la única forma de acercarse al máximo. Tu puntuación se guarda en tu perfil si estás registrado.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="box" id="statsGuideBox">
+      <h3>PARA QUÉ SIRVE CADA ESTADÍSTICA</h3>
+      <div class="howto-content">
+        <div class="howto-step">
+          <span class="howto-num stat-num stat-attack">A</span>
+          <div><strong>ATAQUE</strong> — cuanto más alto frente a la defensa rival, más posibilidades de marcar goles.</div>
+        </div>
+        <div class="howto-step">
+          <span class="howto-num stat-num stat-defense">D</span>
+          <div><strong>DEFENSA</strong> — frena el ataque rival: cuanto más alta, menos goles encajas.</div>
+        </div>
+        <div class="howto-step">
+          <span class="howto-num stat-num stat-pace">R</span>
+          <div><strong>RITMO</strong> — aporta un extra de peligro ofensivo cuando supera al rival en velocidad.</div>
+        </div>
+        <div class="howto-step">
+          <span class="howto-num stat-num stat-passing">P</span>
+          <div><strong>PASE</strong> — mejora tu juego colectivo y ayuda a crear más ocasiones de gol.</div>
+        </div>
+        <div class="howto-step">
+          <span class="howto-num stat-num stat-technique">T</span>
+          <div><strong>TÉCNICA</strong> — calidad individual: suma un plus de peligro tanto en ataque como en el control del partido.</div>
+        </div>
+        <div class="howto-step">
+          <div class="howto-tip">Los <strong>jugadores ★ en su posición</strong> y la <strong>estrategia</strong> elegida frente a cada rival son lo que más mueve estas estadísticas. ¡Elige bien para inclinar la balanza a tu favor!</div>
+        </div>
+      </div>
     </div>
 
   </div>

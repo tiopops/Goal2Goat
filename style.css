@@ -1002,7 +1002,7 @@ body.dark-theme .settings-item:hover{background:#111;color:var(--gold)}
 .strategy-btn{
   background:var(--dark);color:#ccc;border:1px solid var(--line);
   font-family:'Bebas Neue',Impact,sans-serif;
-  font-size:12px;letter-spacing:.3px;
+  font-size:14px;letter-spacing:.3px;
   padding:8px 6px;cursor:pointer;transition:.15s;
   text-align:center;
 }
@@ -1051,4 +1051,26 @@ body.dark-theme .strategy-desc{background:#0a0c0d}
   .mobile-formation-info.empty{
     color:var(--text-muted);font-style:italic;border-left-color:#555;
   }
+}
+
+@media(max-width:1050px){
+  .formation-picker-hint{display:none}
+}
+
+/* Desktop only: hide CONVOCADOS and PERFIL DEL EQUIPO until the squad-building
+   has actually started (SELECCIONAR JUGADOR / EQUIPO RÁPIDO pressed) */
+@media(min-width:1051px){
+  #convocadosBox.pre-draft,
+  #teamProfileBox.pre-draft{display:none}
+}
+
+/* FORMACIÓN box: lives in center-panel under the LED on desktop.
+   On mobile it's hidden — #mobileFormationInfo (compact) is shown instead. */
+.formation-box-desktop{
+  width:100%;max-width:420px;
+  margin:8px 0 0;box-sizing:border-box;
+  flex-shrink:0;
+}
+@media(max-width:1050px){
+  .formation-box-desktop{display:none!important}
 }

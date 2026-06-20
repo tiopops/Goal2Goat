@@ -1008,7 +1008,7 @@ body.dark-theme .settings-item:hover{background:#111;color:var(--gold)}
 }
 .strategy-btn:hover{border-color:var(--gold);color:#fff}
 .strategy-btn.selected{
-  background:var(--gold);color:#000;border-color:var(--gold);
+  background:var(--dark);color:var(--gold);border-color:var(--gold);
   font-weight:700;
 }
 .strategy-desc{
@@ -1017,6 +1017,7 @@ body.dark-theme .settings-item:hover{background:#111;color:var(--gold)}
 }
 .strategy-desc-empty{border-left-color:#555;color:var(--text-muted);font-style:italic}
 body.dark-theme .strategy-btn{background:#0a0c0d;border-color:var(--line)}
+body.dark-theme .strategy-btn.selected{background:#0a0c0d}
 body.dark-theme .strategy-desc{background:#0a0c0d}
 
 /* Pulsing badge to draw attention to formation choice during draft (mobile) */
@@ -1036,3 +1037,18 @@ body.dark-theme .strategy-desc{background:#0a0c0d}
 .strategy-feedback-good{border-left-color:var(--accent);background:#0f2a1a;color:#9fe8b8}
 .strategy-feedback-bad{border-left-color:var(--red);background:#2a0f0f;color:#f0a8a8}
 .strategy-feedback-neutral{border-left-color:#888;background:#1a1a1a;color:#bbb}
+
+/* Mobile-only formation summary under the pitch (FORMACIÓN tab) */
+.mobile-formation-info{display:none}
+@media(max-width:1050px){
+  .mobile-formation-info{
+    display:block;width:100%;box-sizing:border-box;
+    padding:8px 12px;margin:6px 0 2px;
+    background:var(--dark);border-left:3px solid var(--gold);
+    font-size:11px;color:#ccc;line-height:1.4;
+  }
+  .mobile-formation-info strong{color:var(--gold);font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:.5px;font-size:13px}
+  .mobile-formation-info.empty{
+    color:var(--text-muted);font-style:italic;border-left-color:#555;
+  }
+}
