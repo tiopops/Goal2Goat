@@ -1153,14 +1153,20 @@ function applyFormationBonus(bonus){
   updateStats();
 }
 function updateStats(){
-  // Formation stat bonus is now part of the visible team profile — the
-  // player should see how their formation choice shapes ATAQUE/DEFENSA/etc.
+  // Formation (and later, drafted players) shape ATAQUE/DEFENSA/etc. directly.
+  // The NUMBER shown is always the real value (can be negative — e.g. a very
+  // defensive formation before any player is drafted). Only the BAR's width
+  // is clamped to 0-100%, since a bar can't visually go negative.
   ["attack","defense","pace","passing","technique"].forEach(k=>{
-    const val=Math.max(0,Math.min(100,Math.round(teamStats[k]||0)));
+    const real=Math.round(teamStats[k]||0);
+    const barPct=Math.max(0,Math.min(100,real));
     const v=document.getElementById(k+"Value");
     const b=document.getElementById(k+"Bar");
-    if(v) v.textContent=val;
-    if(b) b.style.width=val+"%";
+    if(v){
+      v.textContent=real;
+      v.classList.toggle("stat-negative", real<0);
+    }
+    if(b) b.style.width=barPct+"%";
   });
 }
 
