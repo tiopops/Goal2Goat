@@ -291,16 +291,9 @@ const STYLE_HINTS = {
 /* ---------- TEAM SCOUT HINTS ---------- */
 function getScoutHint(team){
   const s = team._styleKey || '';
-  const flavor = STYLE_HINTS[s] || "Información de scouting no disponible. Prepárate para cualquier escenario.";
-  const rivalKey = getRivalStrategyKey(team);
-  const rivalStratName = STRATEGIES[rivalKey] ? STRATEGIES[rivalKey].name : "desconocida";
-  // Find which of our 10 strategies counters the rival's strategy
-  const bestCounterKey = STRATEGY_ORDER.find(k => STRATEGIES[k].counters === rivalKey);
-  const bestCounterName = bestCounterKey ? STRATEGIES[bestCounterKey].name : null;
-  const tip = bestCounterName
-    ? ` Su enfoque se asemeja a ${rivalStratName}. Para contrarrestarlo, prueba con ${bestCounterName}.`
-    : ` Su enfoque se asemeja a ${rivalStratName}.`;
-  return flavor + tip;
+  // Purely descriptive — never names the strategy or tells the player what to pick.
+  // The player must read between the lines and deduce the right counter themselves.
+  return STYLE_HINTS[s] || "Información de scouting no disponible. Prepárate para cualquier escenario.";
 }
 
 /* ---------- STATE ---------- */
@@ -442,6 +435,25 @@ const FORMATIONS = {
   ]
 };
 const CAT_NAMES={ofensiva:"Ofensiva",equilibrada:"Equilibrada",defensiva:"Defensiva"};
+// Short, neutral one-line description per formation code (shown after the squad is locked)
+const FORMATION_DESC={
+  "3-4-3":"Tres centrales y tres delanteros: máxima presencia ofensiva.",
+  "3-4-1-2":"Línea de 3 con un mediapunta libre entre líneas.",
+  "4-2-4":"Cuatro atacantes apoyados por solo dos centrocampistas.",
+  "4-3-3":"Equilibrio clásico entre posesión y ancho ofensivo.",
+  "4-2-3-1":"Doble pivote y un enganche que conecta con la punta.",
+  "3-5-2":"Carrileros que suben por banda y dos puntas arriba.",
+  "2-3-5":"Formación vintage con cinco hombres en ataque.",
+  "4-4-2":"El dibujo más clásico: simetría y bloques compactos.",
+  "4-1-4-1":"Pivote defensivo que protege la línea de cuatro.",
+  "4-3-1-2":"Mediocentro creativo entre la medular y la delantera.",
+  "4-5-1":"Línea de cinco en el centro, un único punta de referencia.",
+  "5-4-1":"Cinco defensas para cerrar todos los espacios.",
+  "5-3-2":"Bloque de cinco atrás con doble delantero al contragolpe.",
+  "3-6-1":"Seis hombres en el medio, máxima cautela ofensiva.",
+  "5-2-2-1":"Defensa numerosa pensada para salir rápido a la contra.",
+  "6-3-1":"El mayor número de defensas posible en el campo.",
+};
 let currentFormation={category:"equilibrada",code:"4-4-2"};
 let currentFormationBonus={};
 
@@ -475,16 +487,58 @@ renderPitch("4-4-2");
 renderFormationList("equilibrada");
 updateStats();
 updateDraftCounter();
+renderMobileFormationInfo();
 
 /* ---------- ROLL BUTTON ---------- */
 rollBtn.addEventListener("click",()=>{
   if(rollBtn.disabled) return;
+  if(maybeShowMobileFormationGate(()=>rollBtn.click())) return; // pauses for confirmation on mobile, first time only
   // Hide quick-build option once player starts manual draft
   const qbw=document.getElementById("quickBuildWrap");
   if(qbw) qbw.style.display="none";
   if(phase==="draft") rollTeams();
   else if(phase==="bench") rollBench();
 });
+
+/* Mobile-only safeguard: before the FIRST draft action (manual or quick-build),
+   make sure the player has consciously seen/confirmed their formation choice.
+   Shown only once per session — never interrupts again afterwards. */
+let _formationGateShown=false;
+function maybeShowMobileFormationGate(retryFn){
+  if(window.innerWidth>1050) return false;       // desktop: never show
+  if(_formationGateShown) return false;           // already shown this session
+  if(phase!=="draft"||draftedCount>0) return false; // only before drafting starts
+  _formationGateShown=true;
+  playSound('select');
+  document.getElementById("matchOverlay").innerHTML=`
+  <div class="match-modal">
+    <h3>Confirma tu formación</h3>
+    <div class="match-summary">
+      Vas a jugar con <strong>${currentFormation.code} · ${CAT_NAMES[currentFormation.category]}</strong>.
+      ${FORMATION_DESC[currentFormation.code]?`<br>${FORMATION_DESC[currentFormation.code]}`:''}
+      <br><br>Recuerda: la formación <strong>solo puede elegirse ahora</strong>, antes de empezar a fichar jugadores. Después quedará fija para todo el torneo.
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+      <button class="modal-btn" id="gateContinueBtn">CONTINUAR CON ESTA FORMACIÓN</button>
+      <button class="modal-btn danger" id="gateChangeBtn">CAMBIAR FORMACIÓN</button>
+    </div>
+  </div>`;
+  document.getElementById("gateContinueBtn").addEventListener("click",()=>{
+    playSound('select');
+    document.getElementById("matchOverlay").innerHTML="";
+    retryFn();
+  });
+  document.getElementById("gateChangeBtn").addEventListener("click",()=>{
+    playSound('select');
+    document.getElementById("matchOverlay").innerHTML="";
+    switchMobileTab('equipo');
+    setTimeout(()=>{
+      const fb=document.getElementById('formationBox');
+      if(fb) fb.scrollIntoView({behavior:'smooth',block:'start'});
+    },80);
+  });
+  return true;
+}
 
 /* ---------- FORMATION TABS ---------- */
 document.querySelectorAll(".formation-tab").forEach(tab=>{
@@ -1087,6 +1141,7 @@ function selectFormation(cat,code){
   renderFormationList(cat);
   const el=document.getElementById("currentFormation");
   if(el) el.textContent=`${code} · ${CAT_NAMES[cat]}`;
+  renderMobileFormationInfo();
 }
 function lockFormationDisplay(){
   // Called once the squad is fully built — formation can no longer change.
@@ -1099,8 +1154,25 @@ function lockFormationDisplay(){
   if(title)  title.textContent="FORMACIÓN ELEGIDA";
   const el=document.getElementById("currentFormation");
   if(el) el.textContent=`${currentFormation.code} · ${CAT_NAMES[currentFormation.category]}`;
+  const descEl=document.getElementById("formationDesc");
+  if(descEl) descEl.textContent=FORMATION_DESC[currentFormation.code]||"";
   const badge=document.getElementById("formationBadge");
   if(badge) badge.style.display="none";
+  renderMobileFormationInfo();
+}
+
+function renderMobileFormationInfo(){
+  // Mobile-only compact card shown under the pitch, in the FORMACIÓN tab
+  const el=document.getElementById("mobileFormationInfo");
+  if(!el) return;
+  if(phase==="draft" && draftedCount===0){
+    el.classList.add("empty");
+    el.innerHTML=`Elige tu <strong>formación</strong> abajo, en la pestaña EQUIPO, antes de empezar a seleccionar jugadores.`;
+  } else {
+    el.classList.remove("empty");
+    const desc=FORMATION_DESC[currentFormation.code]||"";
+    el.innerHTML=`<strong>${currentFormation.code} · ${CAT_NAMES[currentFormation.category]}</strong><br>${desc}`;
+  }
 }
 
 function resetDraft(){
@@ -2321,6 +2393,7 @@ teams=teams.map(t=>{
 
 function quickBuild(){
   if(phase!=="draft"&&phase!=="bench") return;
+  if(maybeShowMobileFormationGate(()=>quickBuild())) return; // pauses for confirmation on mobile, first time only
   const btn=document.getElementById("quickBuildWrap");
   if(btn){ btn.disabled=true; btn.textContent="Generando..."; }
 
@@ -2888,6 +2961,7 @@ function switchMobileTab(tab){
   if(tab==='campo'){
     // Just hide other panels — don't force scroll, let user scroll freely
     // The pitch is always at top of page so it's naturally visible
+    if(typeof renderMobileFormationInfo==='function') renderMobileFormationInfo();
   } else if(tab==='equipo'){
     if(left) left.classList.add('mob-active');
     setTimeout(()=>{
