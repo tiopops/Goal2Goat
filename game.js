@@ -508,12 +508,15 @@ function relocateFormationPickerForViewport(){
   const picker=document.getElementById("formationPickerBox");
   const teamProfile=document.getElementById("teamProfileBox");
   const isMobile=window.innerWidth<=1050;
-  const mobileAnchor=document.getElementById("mobileFormationInfo");
+  const centerPanel=document.querySelector(".center-panel");
   const leftPanel=document.querySelector(".left-panel");
 
   if(picker){
-    if(isMobile && mobileAnchor && picker.parentElement!==mobileAnchor.parentElement){
-      mobileAnchor.insertAdjacentElement("afterend", picker);
+    if(isMobile && centerPanel && picker.parentElement!==centerPanel){
+      // Append at the END of center-panel — keeps pitch, LED scoreboard
+      // and SELECCIONAR JUGADOR/JUGAR right after the pitch, with the
+      // formation picker (and team profile) below all of that.
+      centerPanel.appendChild(picker);
     } else if(!isMobile && leftPanel && picker.parentElement!==leftPanel){
       if(teamProfile) teamProfile.insertAdjacentElement("beforebegin", picker);
       else leftPanel.appendChild(picker);
@@ -554,6 +557,10 @@ rollBtn.addEventListener("click",()=>{
   // Hide quick-build option once player starts manual draft
   const qbw=document.getElementById("quickBuildWrap");
   if(qbw) qbw.style.display="none";
+  // Lock the formation choice the moment drafting actually begins —
+  // not just once the squad is fully built. The player should see
+  // immediately that they can no longer change it.
+  if(phase==="draft"&&draftedCount===0) lockFormationDisplay();
   if(phase==="draft") rollTeams();
   else if(phase==="bench") rollBench();
 });
@@ -1216,7 +1223,8 @@ function selectFormation(cat,code){
   renderMobileFormationInfo();
 }
 function lockFormationDisplay(){
-  // Called once the squad is fully built — formation can no longer change.
+  // Called as soon as drafting starts (SELECCIONAR JUGADOR / EQUIPO RÁPIDO
+  // pressed for the first time) — formation can no longer change from here.
   // Hide the picker box (left panel), show the read-only info card instead
   // (center panel, below the LED board).
   const picker=document.getElementById("formationPickerBox");
@@ -2465,6 +2473,9 @@ teams=teams.map(t=>{
 function quickBuild(){
   if(phase!=="draft"&&phase!=="bench") return;
   if(maybeShowMobileFormationGate(()=>quickBuild())) return; // pauses for confirmation on mobile, first time only
+  // Lock the formation choice the moment quick-build is used, same as
+  // manual drafting — the formation is no longer changeable from here on.
+  if(phase==="draft"&&draftedCount===0) lockFormationDisplay();
   revealPreDraftBoxes();
   const btn=document.getElementById("quickBuildWrap");
   if(btn){ btn.disabled=true; btn.textContent="Generando..."; }
@@ -3057,14 +3068,14 @@ function switchMobileTab(tab){
   if(info)    info.classList.remove('mob-active');
 
   if(tab==='campo'){
-    // Just hide other panels — don't force scroll, let user scroll freely
-    // The pitch is always at top of page so it's naturally visible
     if(typeof renderMobileFormationInfo==='function') renderMobileFormationInfo();
+    setTimeout(()=>{
+      const fp=document.getElementById('formationPickerBox')||document.getElementById('mobileFormationInfo');
+      if(fp) fp.scrollIntoView({behavior:'smooth',block:'start'});
+    },50);
   } else if(tab==='equipo'){
     if(left) left.classList.add('mob-active');
-    setTimeout(()=>{
-      if(left) left.scrollIntoView({behavior:'smooth',block:'start'});
-    },50);
+    // Just show the panel — don't force scroll, let the user scroll freely
   } else if(tab==='rival'){
     if(right) right.classList.add('mob-active');
     const badge=document.querySelector('.mob-tab[data-tab="rival"] .mob-tab-badge');
