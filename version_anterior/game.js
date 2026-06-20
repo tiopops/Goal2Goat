@@ -552,8 +552,17 @@ document.querySelectorAll(".formation-tab").forEach(tab=>{
 });
 
 /* ========= ROLL TEAMS (show 2 random teams, 8 random players each) ========= */
+function revealPreDraftBoxes(){
+  // Once the player actually starts building the squad (manual or quick-build),
+  // show CONVOCADOS and PERFIL DEL EQUIPO on desktop (mobile shows them via tabs already).
+  const a=document.getElementById("convocadosBox");
+  const b=document.getElementById("teamProfileBox");
+  if(a) a.classList.remove("pre-draft");
+  if(b) b.classList.remove("pre-draft");
+}
 function rollTeams(){
   rollBtn.disabled=true;
+  revealPreDraftBoxes();
   const pool=teams.slice();
   shuffle(pool);
   const t1=pool[0], t2=pool[1];
@@ -2394,6 +2403,7 @@ teams=teams.map(t=>{
 function quickBuild(){
   if(phase!=="draft"&&phase!=="bench") return;
   if(maybeShowMobileFormationGate(()=>quickBuild())) return; // pauses for confirmation on mobile, first time only
+  revealPreDraftBoxes();
   const btn=document.getElementById("quickBuildWrap");
   if(btn){ btn.disabled=true; btn.textContent="Generando..."; }
 

@@ -946,6 +946,13 @@ body.dark-theme .settings-item:hover{background:#111;color:var(--gold)}
   }
   .left-panel.mob-active,.right-panel.mob-active{display:block!important}
 
+  /* Formation picker: relocated via JS into the center-panel (always visible
+     on mobile) so it's reachable from the FORMACIÓN tab without living
+     inside the EQUIPO tab's hidden left-panel. */
+  #formationPickerBox{
+    width:100%;box-sizing:border-box;margin:8px 0 0;
+  }
+
   .team-choice{flex-direction:column}
 
   .desktop-only{display:none!important}
@@ -1073,4 +1080,21 @@ body.dark-theme .strategy-desc{background:#0a0c0d}
 }
 @media(max-width:1050px){
   .formation-box-desktop{display:none!important}
+}
+
+/* COLLAPSIBLE TUTORIAL BOXES (desktop) */
+.collapsible-header{
+  cursor:pointer;user-select:none;
+  display:flex!important;align-items:center;justify-content:space-between;
+}
+.collapse-arrow{
+  font-size:10px;color:var(--text-muted);transition:transform .2s;
+  flex-shrink:0;margin-left:8px;
+}
+.collapsible-box.collapsed .collapse-arrow{transform:rotate(-90deg)}
+.collapsible-box.collapsed .howto-content{
+  display:none;
+}
+.collapsible-box.collapsed{
+  padding-bottom:10px;
 }

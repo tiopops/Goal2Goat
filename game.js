@@ -488,6 +488,52 @@ renderFormationList("equilibrada");
 updateStats();
 updateDraftCounter();
 renderMobileFormationInfo();
+relocateFormationPickerForViewport();
+window.addEventListener("resize", relocateFormationPickerForViewport);
+
+/* On mobile, the formation picker must be reachable from the FORMACIÓN tab
+   (center-panel, which is always visible) — not buried inside the EQUIPO
+   tab's left-panel (hidden by default). We physically move the DOM node. */
+/* On desktop, CÓMO JUGAR and PARA QUÉ SIRVE are collapsible accordions —
+   open by default, collapse to a compact title bar on click. Mobile shows
+   the same content inside the INFORMACIÓN tab instead (always expanded). */
+function toggleCollapsible(boxId){
+  const box=document.getElementById(boxId);
+  if(!box) return;
+  playSound('select');
+  box.classList.toggle("collapsed");
+}
+
+function relocateFormationPickerForViewport(){
+  const picker=document.getElementById("formationPickerBox");
+  const isMobile=window.innerWidth<=1050;
+  if(picker){
+    const mobileAnchor=document.getElementById("mobileFormationInfo");
+    const leftPanel=document.querySelector(".left-panel");
+    if(isMobile && mobileAnchor && picker.parentElement!==mobileAnchor.parentElement){
+      mobileAnchor.insertAdjacentElement("afterend", picker);
+    } else if(!isMobile && leftPanel && picker.parentElement!==leftPanel){
+      const teamProfile=document.getElementById("teamProfileBox");
+      if(teamProfile) teamProfile.insertAdjacentElement("beforebegin", picker);
+      else leftPanel.appendChild(picker);
+    }
+  }
+
+  // CÓMO JUGAR + PARA QUÉ SIRVE: live in the right panel on desktop (as
+  // collapsible accordions), but move into the dedicated INFORMACIÓN tab
+  // panel on mobile, always expanded there.
+  const howTo=document.getElementById("howToPlayBox");
+  const statsGuide=document.getElementById("statsGuideBox");
+  const infoPanel=document.getElementById("infoPanel");
+  const rightPanel=document.querySelector(".right-panel");
+  if(isMobile && infoPanel){
+    if(howTo && howTo.parentElement!==infoPanel){ howTo.classList.remove("collapsed"); infoPanel.appendChild(howTo); }
+    if(statsGuide && statsGuide.parentElement!==infoPanel){ statsGuide.classList.remove("collapsed"); infoPanel.appendChild(statsGuide); }
+  } else if(!isMobile && rightPanel){
+    if(howTo && howTo.parentElement!==rightPanel) rightPanel.appendChild(howTo);
+    if(statsGuide && statsGuide.parentElement!==rightPanel) rightPanel.appendChild(statsGuide);
+  }
+}
 
 /* ---------- ROLL BUTTON ---------- */
 rollBtn.addEventListener("click",()=>{
@@ -531,9 +577,9 @@ function maybeShowMobileFormationGate(retryFn){
   document.getElementById("gateChangeBtn").addEventListener("click",()=>{
     playSound('select');
     document.getElementById("matchOverlay").innerHTML="";
-    switchMobileTab('equipo');
+    switchMobileTab('campo');
     setTimeout(()=>{
-      const fb=document.getElementById('formationBox');
+      const fb=document.getElementById('formationPickerBox');
       if(fb) fb.scrollIntoView({behavior:'smooth',block:'start'});
     },80);
   });
@@ -1154,13 +1200,12 @@ function selectFormation(cat,code){
 }
 function lockFormationDisplay(){
   // Called once the squad is fully built — formation can no longer change.
-  // Hide the interactive picker, show the read-only info panel instead.
-  const picker=document.getElementById("formationPicker");
-  const info=document.getElementById("formationInfo");
-  const title=document.getElementById("formationBoxTitle");
-  if(picker) picker.style.display="none";
-  if(info)   info.style.display="block";
-  if(title)  title.textContent="FORMACIÓN ELEGIDA";
+  // Hide the picker box (left panel), show the read-only info card instead
+  // (center panel, below the LED board).
+  const picker=document.getElementById("formationPickerBox");
+  const infoCard=document.getElementById("formationInfoCard");
+  if(picker)   picker.style.display="none";
+  if(infoCard) infoCard.style.display="block";
   const el=document.getElementById("currentFormation");
   if(el) el.textContent=`${currentFormation.code} · ${CAT_NAMES[currentFormation.category]}`;
   const descEl=document.getElementById("formationDesc");
@@ -1176,7 +1221,7 @@ function renderMobileFormationInfo(){
   if(!el) return;
   if(phase==="draft" && draftedCount===0){
     el.classList.add("empty");
-    el.innerHTML=`Elige tu <strong>formación</strong> abajo, en la pestaña EQUIPO, antes de empezar a seleccionar jugadores.`;
+    el.innerHTML=`Elige tu <strong>formación</strong> justo debajo, antes de empezar a seleccionar jugadores.`;
   } else {
     el.classList.remove("empty");
     const desc=FORMATION_DESC[currentFormation.code]||"";
@@ -2986,9 +3031,11 @@ function switchMobileTab(tab){
   const left=document.querySelector('.left-panel');
   const right=document.querySelector('.right-panel');
   const ranking=document.getElementById('rankingPanel');
+  const info=document.getElementById('infoPanel');
   if(left)    left.classList.remove('mob-active');
   if(right)   right.classList.remove('mob-active');
   if(ranking) ranking.classList.remove('mob-active');
+  if(info)    info.classList.remove('mob-active');
 
   if(tab==='campo'){
     // Just hide other panels — don't force scroll, let user scroll freely
@@ -3015,6 +3062,11 @@ function switchMobileTab(tab){
       if(mh) mh.scrollIntoView({behavior:'smooth',block:'start'});
       else if(right) right.scrollIntoView({behavior:'smooth',block:'start'});
     },80);
+  } else if(tab==='info'){
+    if(info){
+      info.classList.add('mob-active');
+      setTimeout(()=>info.scrollIntoView({behavior:'smooth',block:'start'}),50);
+    }
   } else if(tab==='ranking'){
     if(ranking){
       ranking.classList.add('mob-active');
