@@ -934,7 +934,7 @@ body.dark-theme .settings-item:hover{background:#111;color:var(--gold)}
   .led-board{max-width:100%!important;height:44px!important}
   .led-text{font-size:11px!important;line-height:44px!important}
   #centerBottom{width:100%!important;max-width:100%!important}
-  #quickBuildWrap{width:100%!important;max-width:100%!important;padding:0 0 4px!important}
+  #quickBuildWrap{width:100%!important;max-width:100%!important;padding:0 12px 8px!important}
   .main-action-btn,.quick-build-btn{max-width:100%!important;width:100%!important}
 
   /* Left/right panels: hidden by default, shown by tab JS */
@@ -1085,10 +1085,11 @@ body.dark-theme .strategy-desc{background:#0a0c0d}
 .collapsible-header{
   cursor:pointer;user-select:none;
   display:flex!important;align-items:center;justify-content:space-between;
+  color:var(--gold)!important;
 }
 .collapse-arrow{
-  font-size:10px;color:var(--text-muted);transition:transform .2s;
-  flex-shrink:0;margin-left:8px;
+  font-size:18px;color:var(--gold);transition:transform .2s;
+  flex-shrink:0;margin-left:8px;line-height:1;
 }
 .collapsible-box.collapsed .collapse-arrow{transform:rotate(-90deg)}
 .collapsible-box.collapsed .howto-content{

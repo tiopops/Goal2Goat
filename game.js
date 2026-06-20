@@ -3070,12 +3070,15 @@ function switchMobileTab(tab){
   if(tab==='campo'){
     if(typeof renderMobileFormationInfo==='function') renderMobileFormationInfo();
     setTimeout(()=>{
-      const fp=document.getElementById('formationPickerBox')||document.getElementById('mobileFormationInfo');
-      if(fp) fp.scrollIntoView({behavior:'smooth',block:'start'});
+      const p=document.getElementById('pitchBox')||document.getElementById('pitch');
+      if(p) p.scrollIntoView({behavior:'smooth',block:'start'});
     },50);
   } else if(tab==='equipo'){
     if(left) left.classList.add('mob-active');
-    // Just show the panel — don't force scroll, let the user scroll freely
+    setTimeout(()=>{
+      const cb=document.getElementById('convocadosBox')||left;
+      if(cb) cb.scrollIntoView({behavior:'smooth',block:'start'});
+    },50);
   } else if(tab==='rival'){
     if(right) right.classList.add('mob-active');
     const badge=document.querySelector('.mob-tab[data-tab="rival"] .mob-tab-badge');
