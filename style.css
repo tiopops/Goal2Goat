@@ -949,8 +949,10 @@ body.dark-theme .settings-item:hover{background:#111;color:var(--gold)}
 
   /* Formation picker: relocated via JS into the center-panel (always visible
      on mobile) so it's reachable from the FORMACIÓN tab without living
-     inside the EQUIPO tab's hidden left-panel. */
-  #formationPickerBox{
+     inside the EQUIPO tab's hidden left-panel. PERFIL DEL EQUIPO follows
+     right below it, in the same tab. */
+  #formationPickerBox,
+  #teamProfileBox{
     width:100%;box-sizing:border-box;margin:8px 0 0;
   }
 

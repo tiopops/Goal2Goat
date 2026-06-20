@@ -407,31 +407,31 @@ let matchResults = [];       // flat history of all matches played, for display
 // the per-match STRATEGY chosen against each rival (see STRATEGIES above).
 const FORMATIONS = {
   ofensiva:[
-    {code:"3-4-3",label:"Ataque total",bonus:{attack:14,defense:-13,passing:1,pace:11,technique:1}},
-    {code:"3-4-1-2",label:"Mediapunta creativo",bonus:{attack:4,defense:-15,passing:11,pace:3,technique:7}},
-    {code:"4-2-4",label:"Brasil clásico",bonus:{attack:18,defense:-2,passing:-9,pace:9,technique:-2}},
-    {code:"4-3-3",label:"Barcelona style",bonus:{attack:12,defense:2,passing:-12,pace:7,technique:7}},
-    {code:"4-2-3-1",label:"Extremos al ataque",bonus:{attack:-10,defense:3,passing:11,pace:-11,technique:5}},
-    {code:"3-5-2",label:"Superioridad central",bonus:{attack:2,defense:-19,passing:9,pace:5,technique:5}},
-    {code:"2-3-5",label:"Vintage ofensivo",bonus:{attack:16,defense:-9,passing:-4,pace:10,technique:1}},
+    {code:"3-4-3",label:"Ataque total",bonus:{attack:13,defense:3,passing:7,pace:11,technique:6}},
+    {code:"3-4-1-2",label:"Mediapunta creativo",bonus:{attack:9,defense:4,passing:12,pace:7,technique:8}},
+    {code:"4-2-4",label:"Brasil clásico",bonus:{attack:16,defense:6,passing:4,pace:10,technique:4}},
+    {code:"4-3-3",label:"Barcelona style",bonus:{attack:11,defense:5,passing:8,pace:7,technique:9}},
+    {code:"4-2-3-1",label:"Extremos al ataque",bonus:{attack:8,defense:6,passing:11,pace:9,technique:6}},
+    {code:"3-5-2",label:"Superioridad central",bonus:{attack:7,defense:4,passing:13,pace:8,technique:8}},
+    {code:"2-3-5",label:"Vintage ofensivo",bonus:{attack:15,defense:2,passing:6,pace:13,technique:4}},
   ],
   equilibrada:[
     {code:"4-4-2",label:"El clásico",bonus:{attack:8,defense:8,passing:8,pace:8,technique:8}},
-    {code:"4-3-3",label:"Posesión y ataque",bonus:{attack:15,defense:0,passing:-8,pace:12,technique:-5}},
-    {code:"4-1-4-1",label:"Sólido en todo",bonus:{attack:-12,defense:6,passing:10,pace:-7,technique:5}},
-    {code:"4-2-3-1",label:"Fútbol moderno",bonus:{attack:-8,defense:2,passing:13,pace:-10,technique:7}},
-    {code:"4-3-1-2",label:"Control + 2 puntas",bonus:{attack:9,defense:7,passing:7,pace:9,technique:8}},
-    {code:"3-5-2",label:"Carrileros activos",bonus:{attack:5,defense:-15,passing:8,pace:7,technique:5}},
-    {code:"4-5-1",label:"Defensivo+contragol",bonus:{attack:-15,defense:5,passing:8,pace:-8,technique:4}},
+    {code:"4-3-3",label:"Posesión y ataque",bonus:{attack:12,defense:5,passing:9,pace:8,technique:6}},
+    {code:"4-1-4-1",label:"Sólido en todo",bonus:{attack:6,defense:10,passing:12,pace:5,technique:7}},
+    {code:"4-2-3-1",label:"Fútbol moderno",bonus:{attack:7,defense:7,passing:13,pace:6,technique:7}},
+    {code:"4-3-1-2",label:"Control + 2 puntas",bonus:{attack:10,defense:6,passing:10,pace:7,technique:7}},
+    {code:"3-5-2",label:"Carrileros activos",bonus:{attack:8,defense:5,passing:11,pace:9,technique:7}},
+    {code:"4-5-1",label:"Defensivo+contragol",bonus:{attack:5,defense:11,passing:10,pace:6,technique:8}},
   ],
   defensiva:[
-    {code:"5-4-1",label:"Fortaleza",bonus:{attack:-16,defense:15,passing:-1,pace:-8,technique:0}},
-    {code:"5-3-2",label:"5 atrás + 2 arriba",bonus:{attack:0,defense:20,passing:-9,pace:-5,technique:-6}},
-    {code:"4-5-1",label:"Bloque compacto",bonus:{attack:-9,defense:4,passing:12,pace:-12,technique:3}},
-    {code:"4-1-4-1",label:"Pivote protector",bonus:{attack:-14,defense:8,passing:7,pace:-6,technique:5}},
-    {code:"3-6-1",label:"Muro defensivo",bonus:{attack:-6,defense:-9,passing:14,pace:-3,technique:8}},
-    {code:"5-2-2-1",label:"Contragolpe",bonus:{attack:-12,defense:13,passing:1,pace:-13,technique:1}},
-    {code:"6-3-1",label:"Ultra defensivo",bonus:{attack:-7,defense:22,passing:-4,pace:-5,technique:-2}},
+    {code:"5-4-1",label:"Fortaleza",bonus:{attack:4,defense:16,passing:8,pace:5,technique:7}},
+    {code:"5-3-2",label:"5 atrás + 2 arriba",bonus:{attack:7,defense:18,passing:6,pace:5,technique:4}},
+    {code:"4-5-1",label:"Bloque compacto",bonus:{attack:4,defense:12,passing:11,pace:4,technique:9}},
+    {code:"4-1-4-1",label:"Pivote protector",bonus:{attack:5,defense:14,passing:9,pace:4,technique:8}},
+    {code:"3-6-1",label:"Muro defensivo",bonus:{attack:3,defense:9,passing:15,pace:3,technique:10}},
+    {code:"5-2-2-1",label:"Contragolpe",bonus:{attack:6,defense:17,passing:5,pace:8,technique:4}},
+    {code:"6-3-1",label:"Ultra defensivo",bonus:{attack:3,defense:22,passing:6,pace:4,technique:5}},
   ]
 };
 const CAT_NAMES={ofensiva:"Ofensiva",equilibrada:"Equilibrada",defensiva:"Defensiva"};
@@ -506,16 +506,28 @@ function toggleCollapsible(boxId){
 
 function relocateFormationPickerForViewport(){
   const picker=document.getElementById("formationPickerBox");
+  const teamProfile=document.getElementById("teamProfileBox");
   const isMobile=window.innerWidth<=1050;
+  const mobileAnchor=document.getElementById("mobileFormationInfo");
+  const leftPanel=document.querySelector(".left-panel");
+
   if(picker){
-    const mobileAnchor=document.getElementById("mobileFormationInfo");
-    const leftPanel=document.querySelector(".left-panel");
     if(isMobile && mobileAnchor && picker.parentElement!==mobileAnchor.parentElement){
       mobileAnchor.insertAdjacentElement("afterend", picker);
     } else if(!isMobile && leftPanel && picker.parentElement!==leftPanel){
-      const teamProfile=document.getElementById("teamProfileBox");
       if(teamProfile) teamProfile.insertAdjacentElement("beforebegin", picker);
       else leftPanel.appendChild(picker);
+    }
+  }
+
+  // PERFIL DEL EQUIPO follows the formation picker on mobile — same tab
+  // (FORMACIÓN/CAMPO), positioned right below it. On desktop it returns
+  // to its normal place in the left panel (after CONVOCADOS).
+  if(teamProfile){
+    if(isMobile && picker && teamProfile.parentElement!==picker.parentElement){
+      picker.insertAdjacentElement("afterend", teamProfile);
+    } else if(!isMobile && leftPanel && teamProfile.parentElement!==leftPanel){
+      leftPanel.appendChild(teamProfile);
     }
   }
 
