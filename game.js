@@ -2776,6 +2776,19 @@ function initFirebaseAuth(){
           "stats.titles":s.titles||0
         });
       }
+      // Self-heal: reconcile bestScore against this user's actual run history,
+      // in case an old race condition left a stale (too low) bestScore stored.
+      let displayBest=s.bestScore||0;
+      try{
+        const myScoresSnap=await db.collection("scores").where("uid","==",user.uid).get();
+        let actualBest=0;
+        myScoresSnap.forEach(d=>{ const sc=d.data().score||0; if(sc>actualBest) actualBest=sc; });
+        if(actualBest>displayBest){
+          displayBest=actualBest;
+          await db.collection("users").doc(user.uid).set({stats:{bestScore:actualBest}},{merge:true});
+          console.log("Reconciled bestScore:", actualBest);
+        }
+      }catch(e){ console.warn("bestScore reconciliation skipped:", e.code); }
       const n=(v)=>v||0;
       const set=(id,v)=>{ const el=$id(id); if(el) el.textContent=n(v); };
       set("pstat-games",  s.gamesPlayed);
@@ -2784,7 +2797,7 @@ function initFirebaseAuth(){
       set("pstat-losses", s.losses);
       set("pstat-gf",     s.goalsFor);
       set("pstat-ga",     s.goalsAgainst);
-      set("pstat-best",   s.bestScore);
+      set("pstat-best",   displayBest);
       set("pstat-titles", s.titles);
     }catch(e){
       console.warn("Stats load error:", e);
@@ -2828,22 +2841,31 @@ function initFirebaseAuth(){
   };
 
   // Save score for any run — updates bestScore only if better, always adds to scores collection
+  // Save score for any run — updates bestScore only if better (atomic via transaction
+  // to avoid race conditions when multiple runs finish in quick succession), always
+  // adds this run's score to the global 'scores' collection.
   window.saveFinalScore=async function(score){
     const user=auth.currentUser; if(!user) return;
     if(!score||score<=0) return;
     try{
       const userRef=db.collection("users").doc(user.uid);
-      const snap=await userRef.get();
-      const s=snap.exists?(snap.data().stats||{}):{};
-      const username=snap.exists?snap.data().username:'—';
 
-      // 1. Update bestScore in user profile only if this score is better
-      if((score)>(s.bestScore||0)){
-        await userRef.set({
-          stats:{bestScore:score},
-          bestTeamName:typeof myTeamName!=='undefined'?myTeamName:'—'
-        },{merge:true});
-      }
+      // 1. Atomically update bestScore only if this score is higher than whatever
+      //    is currently stored — a transaction prevents two near-simultaneous
+      //    runs from both reading a stale value and one overwriting the other.
+      const username = await db.runTransaction(async (tx)=>{
+        const snap=await tx.get(userRef);
+        const data=snap.exists?snap.data():{};
+        const s=data.stats||{};
+        const currentBest=s.bestScore||0;
+        if(score>currentBest){
+          tx.set(userRef,{
+            stats:{bestScore:score},
+            bestTeamName:typeof myTeamName!=='undefined'?myTeamName:'—'
+          },{merge:true});
+        }
+        return data.username||'—';
+      });
 
       // 2. Always add this score to the global 'scores' collection (one doc per run)
       //    The ranking reads from this collection, so ALL scores are preserved
