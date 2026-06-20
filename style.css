@@ -934,7 +934,7 @@ body.dark-theme .settings-item:hover{background:#111;color:var(--gold)}
   .led-text{font-size:11px!important;line-height:44px!important}
   #centerBottom{width:100%!important;max-width:100%!important}
   #quickBuildWrap{width:100%!important;max-width:100%!important;padding:0 0 4px!important}
-  .main-action-btn{max-width:100%!important}
+  .main-action-btn,.quick-build-btn{max-width:100%!important;width:100%!important}
 
   /* Left/right panels: hidden by default, shown by tab JS */
   .left-panel,.right-panel{
@@ -1064,12 +1064,8 @@ body.dark-theme .strategy-desc{background:#0a0c0d}
   .formation-picker-hint{display:none}
 }
 
-/* Desktop only: hide CONVOCADOS and PERFIL DEL EQUIPO until the squad-building
-   has actually started (SELECCIONAR JUGADOR / EQUIPO RÁPIDO pressed) */
-@media(min-width:1051px){
-  #convocadosBox.pre-draft,
-  #teamProfileBox.pre-draft{display:none}
-}
+/* CONVOCADOS and PERFIL DEL EQUIPO are visible from the start (desktop) —
+   the player can already see formation-driven base stats before drafting. */
 
 /* FORMACIÓN box: lives in center-panel under the LED on desktop.
    On mobile it's hidden — #mobileFormationInfo (compact) is shown instead. */
@@ -1097,4 +1093,16 @@ body.dark-theme .strategy-desc{background:#0a0c0d}
 }
 .collapsible-box.collapsed{
   padding-bottom:10px;
+}
+
+/* Desktop: put the LEFT panel's scrollbar on the screen's left edge
+   (not in the middle, next to the center column) using the classic
+   direction:rtl trick — content stays normal (ltr) inside. */
+@media(min-width:1051px){
+  .left-panel{
+    direction:rtl;
+  }
+  .left-panel > *{
+    direction:ltr;
+  }
 }

@@ -407,31 +407,31 @@ let matchResults = [];       // flat history of all matches played, for display
 // the per-match STRATEGY chosen against each rival (see STRATEGIES above).
 const FORMATIONS = {
   ofensiva:[
-    {code:"3-4-3",label:"Ataque total",bonus:{}},
-    {code:"3-4-1-2",label:"Mediapunta creativo",bonus:{}},
-    {code:"4-2-4",label:"Brasil clásico",bonus:{}},
-    {code:"4-3-3",label:"Barcelona style",bonus:{}},
-    {code:"4-2-3-1",label:"Extremos al ataque",bonus:{}},
-    {code:"3-5-2",label:"Superioridad central",bonus:{}},
-    {code:"2-3-5",label:"Vintage ofensivo",bonus:{}},
+    {code:"3-4-3",label:"Ataque total",bonus:{attack:14,defense:-13,passing:0,pace:11,technique:2}},
+    {code:"3-4-1-2",label:"Mediapunta creativo",bonus:{attack:3,defense:-17,passing:10,pace:4,technique:6}},
+    {code:"4-2-4",label:"Brasil clásico",bonus:{attack:17,defense:0,passing:-10,pace:10,technique:-3}},
+    {code:"4-3-3",label:"Barcelona style",bonus:{attack:17,defense:0,passing:-10,pace:10,technique:-3}},
+    {code:"4-2-3-1",label:"Extremos al ataque",bonus:{attack:-13,defense:4,passing:9,pace:-9,technique:5}},
+    {code:"3-5-2",label:"Superioridad central",bonus:{attack:3,defense:-17,passing:10,pace:4,technique:6}},
+    {code:"2-3-5",label:"Vintage ofensivo",bonus:{attack:15,defense:-10,passing:-3,pace:11,technique:1}},
   ],
   equilibrada:[
-    {code:"4-4-2",label:"El clásico",bonus:{}},
-    {code:"4-3-3",label:"Posesión y ataque",bonus:{}},
-    {code:"4-1-4-1",label:"Sólido en todo",bonus:{}},
-    {code:"4-2-3-1",label:"Fútbol moderno",bonus:{}},
-    {code:"4-3-1-2",label:"Control + 2 puntas",bonus:{}},
-    {code:"3-5-2",label:"Carrileros activos",bonus:{}},
-    {code:"4-5-1",label:"Defensivo+contragol",bonus:{}},
+    {code:"4-4-2",label:"El clásico",bonus:{attack:8,defense:8,passing:8,pace:8,technique:8}},
+    {code:"4-3-3",label:"Posesión y ataque",bonus:{attack:17,defense:0,passing:-10,pace:10,technique:-3}},
+    {code:"4-1-4-1",label:"Sólido en todo",bonus:{attack:-13,defense:4,passing:9,pace:-9,technique:5}},
+    {code:"4-2-3-1",label:"Fútbol moderno",bonus:{attack:-13,defense:4,passing:9,pace:-9,technique:5}},
+    {code:"4-3-1-2",label:"Control + 2 puntas",bonus:{attack:8,defense:8,passing:8,pace:8,technique:8}},
+    {code:"3-5-2",label:"Carrileros activos",bonus:{attack:3,defense:-17,passing:10,pace:4,technique:6}},
+    {code:"4-5-1",label:"Defensivo+contragol",bonus:{attack:-13,defense:4,passing:9,pace:-9,technique:5}},
   ],
   defensiva:[
-    {code:"5-4-1",label:"Fortaleza",bonus:{}},
-    {code:"5-3-2",label:"5 atrás + 2 arriba",bonus:{}},
-    {code:"4-5-1",label:"Bloque compacto",bonus:{}},
-    {code:"4-1-4-1",label:"Pivote protector",bonus:{}},
-    {code:"3-6-1",label:"Muro defensivo",bonus:{}},
-    {code:"5-2-2-1",label:"Contragolpe",bonus:{}},
-    {code:"6-3-1",label:"Ultra defensivo",bonus:{}},
+    {code:"5-4-1",label:"Fortaleza",bonus:{attack:-14,defense:15,passing:0,pace:-11,technique:0}},
+    {code:"5-3-2",label:"5 atrás + 2 arriba",bonus:{attack:0,defense:18,passing:-11,pace:-4,technique:-7}},
+    {code:"4-5-1",label:"Bloque compacto",bonus:{attack:-13,defense:4,passing:9,pace:-9,technique:5}},
+    {code:"4-1-4-1",label:"Pivote protector",bonus:{attack:-13,defense:4,passing:9,pace:-9,technique:5}},
+    {code:"3-6-1",label:"Muro defensivo",bonus:{attack:-8,defense:-8,passing:12,pace:-4,technique:8}},
+    {code:"5-2-2-1",label:"Contragolpe",bonus:{attack:-14,defense:15,passing:0,pace:-11,technique:0}},
+    {code:"6-3-1",label:"Ultra defensivo",bonus:{attack:-8,defense:17,passing:-4,pace:-8,technique:-3}},
   ]
 };
 const CAT_NAMES={ofensiva:"Ofensiva",equilibrada:"Equilibrada",defensiva:"Defensiva"};
@@ -599,12 +599,8 @@ document.querySelectorAll(".formation-tab").forEach(tab=>{
 
 /* ========= ROLL TEAMS (show 2 random teams, 8 random players each) ========= */
 function revealPreDraftBoxes(){
-  // Once the player actually starts building the squad (manual or quick-build),
-  // show CONVOCADOS and PERFIL DEL EQUIPO on desktop (mobile shows them via tabs already).
-  const a=document.getElementById("convocadosBox");
-  const b=document.getElementById("teamProfileBox");
-  if(a) a.classList.remove("pre-draft");
-  if(b) b.classList.remove("pre-draft");
+  // CONVOCADOS and PERFIL DEL EQUIPO are visible from the start now —
+  // kept as a no-op so existing call sites don't need to change.
 }
 function rollTeams(){
   rollBtn.disabled=true;
@@ -771,8 +767,10 @@ function pickPlayer(player){
       const howTo=document.getElementById("howToPlayBox");
       const statsGuide=document.getElementById("statsGuideBox");
       lockFormationDisplay();
-      if(howTo) howTo.style.display="none";
-      if(statsGuide) statsGuide.style.display="none";
+      // Collapse (don't hide) the tutorial boxes — still consultable on
+      // desktop once the squad is built, just compact at the bottom.
+      if(howTo) howTo.classList.add("collapsed");
+      if(statsGuide) statsGuide.classList.add("collapsed");
       updateConvocadosTable();
       updateBenchTable();
       startMatchPhase();
@@ -1155,9 +1153,10 @@ function applyFormationBonus(bonus){
   updateStats();
 }
 function updateStats(){
+  // Formation stat bonus is now part of the visible team profile — the
+  // player should see how their formation choice shapes ATAQUE/DEFENSA/etc.
   ["attack","defense","pace","passing","technique"].forEach(k=>{
-    const displayVal=(teamStats[k]||0)-(currentFormationBonus[k]||0);
-    const val=Math.max(0,Math.min(100,Math.round(displayVal)));
+    const val=Math.max(0,Math.min(100,Math.round(teamStats[k]||0)));
     const v=document.getElementById(k+"Value");
     const b=document.getElementById(k+"Bar");
     if(v) v.textContent=val;
@@ -2572,8 +2571,10 @@ function _executeQuickBuild(){
   const howTo=document.getElementById("howToPlayBox");
   const statsGuide=document.getElementById("statsGuideBox");
   lockFormationDisplay();
-  if(howTo) howTo.style.display="none";
-  if(statsGuide) statsGuide.style.display="none";
+  // Collapse (don't hide) the tutorial boxes — still consultable on
+  // desktop once the squad is built, just compact at the bottom.
+  if(howTo) howTo.classList.add("collapsed");
+  if(statsGuide) statsGuide.classList.add("collapsed");
 
   updateDraftCounter();
   updateConvocadosTable();
