@@ -3459,14 +3459,16 @@ function initFirebaseAuth(){
     const o=$id("profileOverlay"); if(o) o.style.display="none";
   };
 
-  // Save the team-name preference (preferredTeamName + useFixedTeamName)
-  window.saveTeamNamePreference=async function(){
+  // Save the team-name preference (preferredTeamName + useFixedTeamName).
+  // Auto-saves on checkbox toggle / input blur — no separate button needed.
+  window.saveTeamNamePreference=async function(silent){
     const user=auth.currentUser; if(!user) return;
     const nameInp=$id("preferredTeamNameInput");
     const checkbox=$id("useFixedTeamNameCheckbox");
     const preferredTeamName=(nameInp?nameInp.value.trim():"").toUpperCase();
     const useFixedTeamName=!!(checkbox&&checkbox.checked);
     if(useFixedTeamName&&!preferredTeamName){
+      if(checkbox) checkbox.checked=false; // can't activate without a name
       showToast("Escribe un nombre de equipo antes de activar la opción.", "toast-neg");
       return;
     }
@@ -3474,7 +3476,11 @@ function initFirebaseAuth(){
       await db.collection("users").doc(user.uid).set({
         preferredTeamName, useFixedTeamName
       },{merge:true});
-      showToast("Preferencia guardada.", "toast-pos");
+      // CRITICAL: also update the live global variables — showTeamNameModal
+      // reads these directly, and they're otherwise only set once at login.
+      window.preferredTeamName=preferredTeamName;
+      window.useFixedTeamName=useFixedTeamName;
+      if(!silent) showToast(useFixedTeamName?"Nombre fijo activado.":"Preferencia guardada.", "toast-pos");
     }catch(e){
       console.warn("saveTeamNamePreference error:", e);
       showToast("No se pudo guardar la preferencia.", "toast-neg");
@@ -3632,7 +3638,17 @@ function initFirebaseAuth(){
   wire("profileLogoutBtn", ()=>{ window.authLogout(); window.closeProfileModal(); });
   wire("profileTabStats",  ()=>window.switchProfileTab("stats"));
   wire("profileTabUser",   ()=>window.switchProfileTab("user"));
-  wire("saveTeamNamePrefBtn", ()=>window.saveTeamNamePreference());
+  // Auto-save the team-name preference: checkbox toggles save immediately,
+  // the text field saves when the user leaves it (blur) or presses Enter.
+  (function(){
+    const checkbox=$id("useFixedTeamNameCheckbox");
+    const nameInp=$id("preferredTeamNameInput");
+    if(checkbox) checkbox.addEventListener("change", ()=>window.saveTeamNamePreference());
+    if(nameInp){
+      nameInp.addEventListener("blur", ()=>window.saveTeamNamePreference(true));
+      nameInp.addEventListener("keydown", e=>{ if(e.key==="Enter") window.saveTeamNamePreference(); });
+    }
+  })();
   wire("tabLogin",         ()=>window.switchAuthTab("login"));
   wire("tabRegister",      ()=>window.switchAuthTab("register"));
   wire("loginSubmitBtn",   ()=>window.submitLogin());
