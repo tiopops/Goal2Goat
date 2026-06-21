@@ -21,7 +21,7 @@ const map={
 'méxico':'mx','mexico':'mx','nigeria':'ng','noruega':'no',
 'paraguay':'py','perú':'pe','peru':'pe','rumanía':'ro','rumania':'ro',
 'rusia':'ru','suecia':'se','suiza':'ch','turquía':'tr','turquia':'tr',
-'ucrania':'ua'
+'ucrania':'ua','senegal':'sn','costa rica':'cr','ghana':'gh'
 };
 for (const k in map){ if(n.includes(k)) return map[k]; }
 return 'un';
@@ -486,7 +486,7 @@ const FORMATIONS = {
     {code:"3-4-3",label:"Ataque total",bonus:{attack:13,defense:3,passing:7,pace:11,technique:6}},
     {code:"3-4-1-2",label:"Mediapunta creativo",bonus:{attack:9,defense:4,passing:12,pace:7,technique:8}},
     {code:"4-2-4",label:"Brasil clásico",bonus:{attack:16,defense:6,passing:4,pace:10,technique:4}},
-    {code:"4-3-3",label:"Barcelona style",bonus:{attack:11,defense:5,passing:8,pace:7,technique:9}},
+    {code:"4-3-3",label:"Tridente Ofensivo",bonus:{attack:11,defense:5,passing:8,pace:7,technique:9}},
     {code:"4-2-3-1",label:"Extremos al ataque",bonus:{attack:8,defense:6,passing:11,pace:9,technique:6}},
     {code:"3-5-2",label:"Superioridad central",bonus:{attack:7,defense:4,passing:13,pace:8,technique:8}},
     {code:"2-3-5",label:"Vintage ofensivo",bonus:{attack:15,defense:2,passing:6,pace:13,technique:4}},
@@ -589,6 +589,13 @@ const FORMATION_LAYOUTS = {
 
 
 /* ---------- INIT ---------- */
+// Sync the profile's "NOTAS DE LA VERSIÓN" tab label with the actual
+// version tag in the header, so they never go out of sync.
+(function(){
+  const versionTagEl=document.querySelector(".version-tag");
+  const profileVersionEl=document.getElementById("profileVersionLabel");
+  if(versionTagEl && profileVersionEl) profileVersionEl.textContent=versionTagEl.textContent;
+})();
 const inheritedBonus=restoreInheritedFormation();
 applyFormationBonus(inheritedBonus || FORMATIONS.equilibrada.find(f=>f.code==="4-4-2").bonus);
 renderPitch(currentFormation.code);
@@ -616,6 +623,42 @@ function toggleCollapsible(boxId){
   playSound('select');
   box.classList.toggle("collapsed");
 }
+
+/* ========= ¿SABÍAS QUÉ...? TIPS ========= */
+const GAME_TIPS=[
+  "💡 Regístrate para guardar tu progreso y acceder a contenido exclusivo.",
+  "💡 Un jugador cansado rendirá peor en el campo, controla su resistencia.",
+  "💡 Conoce a tu rival. Elegir una buena estrategia puede marcar la diferencia.",
+];
+let currentTipIndex=0;
+let tipRotationTimer=null;
+function renderCurrentTip(){
+  const el=document.getElementById("tipText");
+  if(!el) return;
+  el.classList.add("tip-fading");
+  setTimeout(()=>{
+    el.textContent=GAME_TIPS[currentTipIndex];
+    el.classList.remove("tip-fading");
+  },200);
+}
+function showNextTip(){
+  currentTipIndex=(currentTipIndex+1)%GAME_TIPS.length;
+  renderCurrentTip();
+  // Clicking manually resets the 15s auto-rotation timer, so it doesn't
+  // immediately jump again right after a manual click.
+  restartTipRotation();
+}
+function restartTipRotation(){
+  if(tipRotationTimer) clearInterval(tipRotationTimer);
+  tipRotationTimer=setInterval(()=>{
+    currentTipIndex=(currentTipIndex+1)%GAME_TIPS.length;
+    renderCurrentTip();
+  },15000);
+}
+window.showNextTip=showNextTip;
+// Start the rotation now that the whole tip system is defined.
+renderCurrentTip();
+restartTipRotation();
 
 function relocateFormationPickerForViewport(){
   const picker=document.getElementById("formationPickerBox");
@@ -653,17 +696,21 @@ function relocateFormationPickerForViewport(){
     }
   }
 
-  // CÓMO JUGAR + PARA QUÉ SIRVE: live in the right panel on desktop (as
-  // collapsible accordions), but move into the dedicated INFORMACIÓN tab
-  // panel on mobile, always expanded there.
+  // ¿SABÍAS QUÉ...? + CÓMO JUGAR + PARA QUÉ SIRVE: live in the right panel
+  // on desktop (as collapsible accordions), but move into the dedicated
+  // INFORMACIÓN tab panel on mobile, always expanded there. The tip box
+  // goes in FIRST, so it sits above the other two tutorials.
+  const tipsBox=document.getElementById("tipsBox");
   const howTo=document.getElementById("howToPlayBox");
   const statsGuide=document.getElementById("statsGuideBox");
   const infoPanel=document.getElementById("infoPanel");
   const rightPanel=document.querySelector(".right-panel");
   if(isMobile && infoPanel){
+    if(tipsBox && tipsBox.parentElement!==infoPanel){ tipsBox.classList.remove("collapsed"); infoPanel.appendChild(tipsBox); }
     if(howTo && howTo.parentElement!==infoPanel){ howTo.classList.remove("collapsed"); infoPanel.appendChild(howTo); }
     if(statsGuide && statsGuide.parentElement!==infoPanel){ statsGuide.classList.remove("collapsed"); infoPanel.appendChild(statsGuide); }
   } else if(!isMobile && rightPanel){
+    if(tipsBox && tipsBox.parentElement!==rightPanel) rightPanel.appendChild(tipsBox);
     if(howTo && howTo.parentElement!==rightPanel) rightPanel.appendChild(howTo);
     if(statsGuide && statsGuide.parentElement!==rightPanel) rightPanel.appendChild(statsGuide);
   }
@@ -894,19 +941,22 @@ function showRosterModal(team,players){
 /* ========= PICK PLAYER ========= */
 function pickPlayer(player){
   playSound('select');
+  const rosterTarget=window.innerWidth<=1050?document.getElementById("playerCard"):playerCardEl;
   if(phase==="bench"){
     bench.push({...player});
     benchCount++;
-    playerCardEl.innerHTML="";
+    if(rosterTarget) rosterTarget.innerHTML="";
     updateBenchTable();
     if(benchCount>=5){
       phase="ready";
       rollBtn.style.display="none";
+      const tipsBox=document.getElementById("tipsBox");
       const howTo=document.getElementById("howToPlayBox");
       const statsGuide=document.getElementById("statsGuideBox");
       lockFormationDisplay();
       // Collapse (don't hide) the tutorial boxes — still consultable on
       // desktop once the squad is built, just compact at the bottom.
+      if(tipsBox) tipsBox.classList.add("collapsed");
       if(howTo) howTo.classList.add("collapsed");
       if(statsGuide) statsGuide.classList.add("collapsed");
       updateConvocadosTable();
@@ -920,9 +970,11 @@ function pickPlayer(player){
     }
     return;
   }
-  // Draft phase: select for pitch
+  // Draft phase: select for pitch — hide the roster (whichever container
+  // it's currently shown in) and show the "JUGADOR SELECCIONADO" banner
+  // in its place.
   selectedPlayer={...player};
-  playerCardEl.innerHTML="";
+  if(rosterTarget) rosterTarget.innerHTML="";
   highlightPos(selectedPlayer.positions||[]);
   showSelectedPlayerBanner(selectedPlayer);
   scrollToEl("pitch");
@@ -963,6 +1015,11 @@ function volverASeleccion(){
     const {team, players}=window._lastRoster;
     showRosterModal(team, players);
   }
+  // Same as when teams are first shuffled: the active tab becomes RIVAL,
+  // since that's where the team/player selection card is shown on mobile.
+  if(window.innerWidth<=1050 && typeof switchMobileTab==='function'){
+    switchMobileTab('rival');
+  }
 }
 
 /* ========= POSITION SLOTS ========= */
@@ -975,7 +1032,7 @@ function renderSlotContent(slot, player, label, rating, starHTML){
    having to check the convocados table. */
 function getSlotStatusIconsHTML(p){
   const icons=[];
-  if(p.injury) icons.push(`<span class="pitch-status-icon" title="Lesionado">✚</span>`);
+  if(p.injury) icons.push(`<span class="pitch-status-icon pitch-status-injury" title="Lesionado">✚</span>`);
   if(p.suspended) icons.push(`<span class="pitch-status-icon" title="Sancionado">🚫</span>`);
   else if((p.yellowCount||0)>=1) icons.push(`<span class="pitch-status-icon" title="Tarjeta amarilla acumulada">🟨</span>`);
   const streak=scorerStreaks[p.name]||0;
@@ -1014,55 +1071,79 @@ function lineLabels(n,isDef,isAtt){
 }
 function buildFormationSlots(code){
   const layout=FORMATION_LAYOUTS[code];
+  const GK_TOP=88;
   if(!layout){
     // Fallback for any unmapped code: keep the old generic behaviour so
     // nothing crashes, though every formation actually used in the game
     // is covered above.
     const lines=code.split("-").map(Number);
-    const slots=[{label:"POR",left:50,top:91.4}];
+    const slots=[{label:"POR",left:50,top:GK_TOP}];
     const T=lines.length;
     lines.forEach((n,i)=>{
       const isDef=i===0,isAtt=i===T-1;
       const labels=lineLabels(n,isDef,isAtt);
       const top=T===1?45:78-i*(78-14)/(T-1);
-      addArcedLine(slots,labels,top,i===0);
+      addArcedLine(slots,labels,top,i===0,isAtt);
     });
     return slots;
   }
   const slots=[];
-  const T=layout.length; // includes goalkeeper line
+  const fieldLines=layout.length-1; // excludes goalkeeper
+  // Explicit zone tops per line count — every formation in this game has
+  // either 3 field lines (def/mid/att) or 4 (def/mid/mid-or-AMC/att).
+  // The midfield line sits right at the halfway line (50%) when there's
+  // only one midfield line, straddling it when there are two.
+  let zoneTops;
+  if(fieldLines===3)      zoneTops=[74, 50, 22];
+  else if(fieldLines===4) zoneTops=[74, 58, 42, 22];
+  else {
+    // Safety fallback for any unexpected line count: spread evenly.
+    zoneTops=[];
+    for(let i=0;i<fieldLines;i++) zoneTops.push(74-(i*(74-22))/(fieldLines-1||1));
+  }
   layout.forEach((labels,i)=>{
-    let top;
-    if(i===0){ slots.push({label:"POR",left:50,top:91.4}); return; } // goalkeeper always centered, no arc
-    top=78-(i-1)*(78-14)/(T-2<=0?1:T-2);
-    addArcedLine(slots,labels,top,false);
+    if(i===0){ slots.push({label:"POR",left:50,top:GK_TOP}); return; }
+    const top=zoneTops[i-1];
+    const isAttackLine=(i===layout.length-1);
+    addArcedLine(slots,labels,top,false,isAttackLine);
   });
   return slots;
 }
-/* Adds a line of players with a natural arc instead of a flat row — the
-   CENTER of each line bulges slightly toward the opponent's goal, while
-   the players closer to the touchlines stay a bit further back, exactly
-   how tactical boards in other football games draw formations (e.g. in
-   a back four the two center-backs sit a touch deeper than the full-backs
-   relative to... actually the opposite: widest players sit deeper, central
-   players push forward — same logic for every line on the pitch). */
-function addArcedLine(slots,labels,baseTop,isGoalkeeperLine){
+/* Adds a line of players with a natural arc instead of a flat row. The
+   curve is based on each player's horizontal distance from the pitch's
+   absolute center (50% width) — NOT from the line's own midpoint — so the
+   whole line forms one smooth, continuous arc regardless of player count
+   (odd or even).
+
+   Defense and midfield lines curve CONCAVE toward their own goal: the
+   wide players (touchline side) push forward, the central players stay
+   back — like a smile opening toward the opponent's goal.
+
+   The ATTACK line curves the OPPOSITE way (CONVEX): the central striker(s)
+   push forward toward goal, the wide forwards stay back — forming a spear
+   point toward the opponent's goal, matching real tactical board visuals. */
+function addArcedLine(slots,labels,baseTop,isGoalkeeperLine,isAttackLine){
   const n=labels.length;
+  // The opponent's penalty box top edge sits at 16.4% of pitch height —
+  // no attacking player should be pushed further forward than that, or
+  // they'd visually sit on top of / past the box line.
+  const ATTACK_MIN_TOP=17;
   labels.forEach((label,j)=>{
     const left=(j+1)/(n+1)*100;
     let top=baseTop;
     if(!isGoalkeeperLine && n>1){
-      // Distance from the horizontal center of the line, normalized 0..1
-      // (0 = dead center, 1 = at the touchline edge of the line)
-      const center=(n+1)/2;
-      const distFromCenter=Math.abs(j+1-center)/((n-1)/2 || 1);
-      // Arc depth: wider lines (more players) get a more pronounced curve.
-      const arcDepth=Math.min(6, 2.5+n*0.6);
-      // The center of the line always pushes TOWARD the opponent's goal
-      // (i.e. toward smaller top% if this is an attacking line near top:14,
-      // or toward smaller top% — i.e. forward — for a defensive line near
-      // top:78 too, since "forward" always means a smaller top value).
-      top=baseTop - (1-distFromCenter)*arcDepth*0.85;
+      // Distance from the pitch's horizontal center (50%), normalized 0..1
+      const distFromPitchCenter=Math.abs(left-50)/50;
+      // Stronger, more visible curvature than before.
+      const arcDepth=Math.min(11, 5+n*0.9);
+      // Concave (defense/midfield): wide players forward -> -depth*dist
+      // Convex (attack): central players forward -> -depth*(1-dist)
+      if(isAttackLine){
+        top=baseTop - (1-distFromPitchCenter)*arcDepth;
+        top=Math.max(ATTACK_MIN_TOP, top); // never push past the box edge
+      } else {
+        top=baseTop - distFromPitchCenter*arcDepth;
+      }
     }
     slots.push({label,left,top});
   });
@@ -1564,6 +1645,22 @@ function startMatchPhase(){
   showTeamNameModal();
 }
 function showTeamNameModal(){
+  // If the logged-in user has chosen to always use a fixed team name,
+  // skip the popup entirely and use that name directly.
+  if(window.useFixedTeamName && window.preferredTeamName){
+    myTeamName=window.preferredTeamName;
+    if(typeof firebase!=='undefined'){
+      try{
+        const user=firebase.auth().currentUser;
+        if(user) firebase.firestore().collection("users").doc(user.uid)
+          .set({lastTeamName:myTeamName},{merge:true});
+      }catch(e){}
+    }
+    setupGroupStage();
+    renderCenterSummary();
+    pickNextOpponent();
+    return;
+  }
   document.getElementById("matchOverlay").innerHTML=`
   <div class="match-modal">
     <h3>¡Equipo completo!</h3>
@@ -2680,8 +2777,19 @@ function showPressEventModal(event, callback){
   const DURATION=8000;
   const fill=document.getElementById("pressTimerFill");
   if(fill){
-    fill.style.transition=`width ${DURATION}ms linear`;
-    requestAnimationFrame(()=>{ fill.style.width="0%"; });
+    // Force the browser to paint the initial width:100% state BEFORE
+    // starting the transition — a single requestAnimationFrame can fire
+    // before the first paint on slower devices (common on mobile), which
+    // skips the animation entirely and makes the bar invisible. Double
+    // rAF guarantees one full paint cycle has happened first.
+    fill.style.transition="none";
+    fill.style.width="100%";
+    requestAnimationFrame(()=>{
+      requestAnimationFrame(()=>{
+        fill.style.transition=`width ${DURATION}ms linear`;
+        fill.style.width="0%";
+      });
+    });
   }
   window._pressTimerId=setTimeout(()=>{
     if(window._pressAnswered) return;
@@ -3131,11 +3239,13 @@ function _executeQuickBuild(){
   baseTeamOVR=computeTeamOVR();
   phase="ready";
   rollBtn.style.display="none";
+  const tipsBox=document.getElementById("tipsBox");
   const howTo=document.getElementById("howToPlayBox");
   const statsGuide=document.getElementById("statsGuideBox");
   lockFormationDisplay();
   // Collapse (don't hide) the tutorial boxes — still consultable on
   // desktop once the squad is built, just compact at the bottom.
+  if(tipsBox) tipsBox.classList.add("collapsed");
   if(howTo) howTo.classList.add("collapsed");
   if(statsGuide) statsGuide.classList.add("collapsed");
 
@@ -3200,34 +3310,6 @@ if(themeToggleBtn){
 
 // Apply inherited players from a chain run (runs after DOM is fully ready)
 setTimeout(applyInheritedPlayers, 100);
-
-function showSupportModal(){
-  const el=document.getElementById("supportOverlay");
-  if(el){ el.style.display="flex"; }
-}
-
-/* ========= SETTINGS DROPDOWN ========= */
-function toggleSettingsMenu(){
-  const dd=document.getElementById("settingsDropdown");
-  const btn=document.getElementById("settingsToggle");
-  if(!dd||!btn) return;
-  if(dd.classList.contains("open")){
-    dd.classList.remove("open");
-    return;
-  }
-  const rect=btn.getBoundingClientRect();
-  dd.style.top=(rect.bottom+6)+"px";
-  dd.style.right=(window.innerWidth-rect.right)+"px";
-  dd.classList.add("open");
-}
-// Close dropdown when clicking outside
-document.addEventListener("click", function(e){
-  const menu=document.getElementById("settingsMenu");
-  if(menu && !menu.contains(e.target)){
-    const dd=document.getElementById("settingsDropdown");
-    if(dd) dd.classList.remove("open");
-  }
-});
 
 /* ========= FIREBASE AUTH ========= */
 function initFirebaseAuth(){
@@ -3366,10 +3448,17 @@ function initFirebaseAuth(){
       if(profileBtn){ profileBtn.style.display=""; profileBtn.textContent="👤 "+username; }
       const pun=$id("profileUsername"); if(pun) pun.textContent=username;
       window.currentUsername=username;
+      // Load the player's team-name preference, so showTeamNameModal can
+      // skip the popup entirely if they've set it to always use one name.
+      const data=snap.exists?snap.data():{};
+      window.preferredTeamName=data.preferredTeamName||"";
+      window.useFixedTeamName=!!data.useFixedTeamName;
     }else{
       if(authBtn)    authBtn.style.display="";
       if(profileBtn) profileBtn.style.display="none";
       window.currentUsername=null;
+      window.preferredTeamName="";
+      window.useFixedTeamName=false;
     }
   });
 
@@ -3418,6 +3507,13 @@ function initFirebaseAuth(){
       set("pstat-ga",     s.goalsAgainst);
       set("pstat-best",   displayBest);
       set("pstat-titles", s.titles);
+
+      // Load team-name preference (USUARIO tab)
+      const data=snap.data();
+      const nameInp=$id("preferredTeamNameInput");
+      const checkbox=$id("useFixedTeamNameCheckbox");
+      if(nameInp)  nameInp.value=data.preferredTeamName||"";
+      if(checkbox) checkbox.checked=!!data.useFixedTeamName;
     }catch(e){
       console.warn("Stats load error:", e);
       ["pstat-games","pstat-wins","pstat-draws","pstat-losses",
@@ -3427,6 +3523,47 @@ function initFirebaseAuth(){
   };
   window.closeProfileModal=function(){
     const o=$id("profileOverlay"); if(o) o.style.display="none";
+  };
+
+  // Save the team-name preference (preferredTeamName + useFixedTeamName).
+  // Auto-saves on checkbox toggle / input blur — no separate button needed.
+  window.saveTeamNamePreference=async function(silent){
+    const user=auth.currentUser; if(!user) return;
+    const nameInp=$id("preferredTeamNameInput");
+    const checkbox=$id("useFixedTeamNameCheckbox");
+    const preferredTeamName=(nameInp?nameInp.value.trim():"").toUpperCase();
+    const useFixedTeamName=!!(checkbox&&checkbox.checked);
+    if(useFixedTeamName&&!preferredTeamName){
+      if(checkbox) checkbox.checked=false; // can't activate without a name
+      showToast("Escribe un nombre de equipo antes de activar la opción.", "toast-neg");
+      return;
+    }
+    try{
+      await db.collection("users").doc(user.uid).set({
+        preferredTeamName, useFixedTeamName
+      },{merge:true});
+      // CRITICAL: also update the live global variables — showTeamNameModal
+      // reads these directly, and they're otherwise only set once at login.
+      window.preferredTeamName=preferredTeamName;
+      window.useFixedTeamName=useFixedTeamName;
+      if(!silent) showToast(useFixedTeamName?"Nombre fijo activado.":"Preferencia guardada.", "toast-pos");
+    }catch(e){
+      console.warn("saveTeamNamePreference error:", e);
+      showToast("No se pudo guardar la preferencia.", "toast-neg");
+    }
+  };
+
+  window.switchProfileTab=function(tab){
+    const tabs={
+      stats: {btn:$id("profileTabStats"), pane:$id("profileStatsPane")},
+      user:  {btn:$id("profileTabUser"),  pane:$id("profileUserPane")},
+      notes: {btn:$id("profileTabNotes"), pane:$id("profileNotesPane")},
+    };
+    Object.entries(tabs).forEach(([key,{btn,pane}])=>{
+      const active=(key===tab);
+      btn?.classList.toggle("auth-tab-active", active);
+      pane?.classList.toggle("profile-tab-pane-active", active);
+    });
   };
 
   // Save match result to Firestore
@@ -3562,6 +3699,20 @@ function initFirebaseAuth(){
   wire("authCloseBtn",     ()=>window.closeAuthModal());
   wire("profileCloseBtn",  ()=>window.closeProfileModal());
   wire("profileLogoutBtn", ()=>{ window.authLogout(); window.closeProfileModal(); });
+  wire("profileTabStats",  ()=>window.switchProfileTab("stats"));
+  wire("profileTabUser",   ()=>window.switchProfileTab("user"));
+  wire("profileTabNotes",  ()=>window.switchProfileTab("notes"));
+  // Auto-save the team-name preference: checkbox toggles save immediately,
+  // the text field saves when the user leaves it (blur) or presses Enter.
+  (function(){
+    const checkbox=$id("useFixedTeamNameCheckbox");
+    const nameInp=$id("preferredTeamNameInput");
+    if(checkbox) checkbox.addEventListener("change", ()=>window.saveTeamNamePreference());
+    if(nameInp){
+      nameInp.addEventListener("blur", ()=>window.saveTeamNamePreference(true));
+      nameInp.addEventListener("keydown", e=>{ if(e.key==="Enter") window.saveTeamNamePreference(); });
+    }
+  })();
   wire("tabLogin",         ()=>window.switchAuthTab("login"));
   wire("tabRegister",      ()=>window.switchAuthTab("register"));
   wire("loginSubmitBtn",   ()=>window.submitLogin());
@@ -3642,17 +3793,21 @@ function switchMobileTab(tab){
       info.classList.add('mob-active');
       setTimeout(()=>info.scrollIntoView({behavior:'smooth',block:'start'}),50);
     }
-    // Auto-expand both tutorial boxes when entering INFORMACIÓN
+    // Auto-expand all three tutorial boxes when entering INFORMACIÓN
+    const tipsBox=document.getElementById("tipsBox");
     const howTo=document.getElementById("howToPlayBox");
     const statsGuide=document.getElementById("statsGuideBox");
+    if(tipsBox) tipsBox.classList.remove("collapsed");
     if(howTo) howTo.classList.remove("collapsed");
     if(statsGuide) statsGuide.classList.remove("collapsed");
   } else {
     // Any other tab: re-collapse the tutorial boxes (they live off-screen
     // in infoPanel, but keep the collapsed state consistent for next visit
     // and for when they relocate back to the right panel on desktop).
+    const tipsBox=document.getElementById("tipsBox");
     const howTo=document.getElementById("howToPlayBox");
     const statsGuide=document.getElementById("statsGuideBox");
+    if(tipsBox) tipsBox.classList.add("collapsed");
     if(howTo) howTo.classList.add("collapsed");
     if(statsGuide) statsGuide.classList.add("collapsed");
   }

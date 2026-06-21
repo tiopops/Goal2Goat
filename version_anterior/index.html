@@ -17,75 +17,118 @@
 <header id="appHeader">
   <div class="app-header-logo">
     <div class="logo" onclick="location.reload()" style="cursor:pointer" title="Volver al inicio">GOAL2GOAT</div>
-    <div class="version-tag">v0.332</div>
+    <div class="version-tag">v0.342</div>
   </div>
   <div class="app-header-actions">
-    <button class="support-btn" onclick="showSupportModal()">APOYA A GOAL2GOAT</button>
+    <a href="https://ko-fi.com/goal2goat" target="_blank" class="support-btn" style="text-decoration:none;display:inline-flex;align-items:center;justify-content:center">APOYA A GOAL2GOAT</a>
     <button class="support-btn desktop-only" style="background:#1a1a1a;border:1px solid var(--gold);color:var(--gold)" onclick="showRankingModal()">🏆 RANKING</button>
     <button class="header-auth-btn register-btn" id="authBtn">LOGIN / REGISTRO</button>
     <button class="header-auth-btn profile-btn" id="profileBtn" style="display:none">PERFIL</button>
-    <div class="settings-menu" id="settingsMenu">
-      <button class="settings-toggle" id="settingsToggle" onclick="toggleSettingsMenu()" title="Ajustes">⚙</button>
-      <div class="settings-dropdown" id="settingsDropdown">
-        <button id="audioToggle" class="settings-item" title="Activar/desactivar sonido">
-          <span class="topbar-dot on"></span><span class="topbar-label">SONIDO</span>
-        </button>
-        <button id="themeToggle" class="settings-item" title="Cambiar tema claro/oscuro">
-          <span class="topbar-dot on"></span><span class="topbar-label">TEMA OSCURO</span>
-        </button>
-      </div>
-    </div>
   </div>
 </header>
-
-<div id="supportOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:30000;display:none;align-items:center;justify-content:center;">
-  <div class="support-modal">
-    <p class="support-text">Apoya al proyecto Goal2Goat para que siga recibiendo actualizaciones y mejoras.</p>
-    <a href="https://paypal.me/goal2goat" target="_blank" class="support-pay-btn">APOYA A GOAL2GOAT</a>
-    <button class="modal-btn danger" onclick="document.getElementById('supportOverlay').style.display='none'">CANCELAR</button>
-  </div>
-</div>
 
 <!-- PROFILE MODAL -->
 <div id="profileOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:40000;align-items:center;justify-content:center;">
   <div class="auth-modal" style="max-width:380px">
     <button class="auth-close" id="profileCloseBtn">✕</button>
     <div class="auth-logo">👤 <span id="profileUsername"></span></div>
-    <div class="profile-stats-grid">
-      <div class="profile-stat-card">
-        <div class="pstat-val" id="pstat-games">—</div>
-        <div class="pstat-label">PARTIDAS</div>
-      </div>
-      <div class="profile-stat-card wins">
-        <div class="pstat-val" id="pstat-wins">—</div>
-        <div class="pstat-label">VICTORIAS</div>
-      </div>
-      <div class="profile-stat-card">
-        <div class="pstat-val" id="pstat-draws">—</div>
-        <div class="pstat-label">EMPATES</div>
-      </div>
-      <div class="profile-stat-card losses">
-        <div class="pstat-val" id="pstat-losses">—</div>
-        <div class="pstat-label">DERROTAS</div>
-      </div>
-      <div class="profile-stat-card">
-        <div class="pstat-val" id="pstat-gf">—</div>
-        <div class="pstat-label">GOLES A FAVOR</div>
-      </div>
-      <div class="profile-stat-card">
-        <div class="pstat-val" id="pstat-ga">—</div>
-        <div class="pstat-label">GOLES EN CONTRA</div>
-      </div>
-      <div class="profile-stat-card best">
-        <div class="pstat-val" id="pstat-best">—</div>
-        <div class="pstat-label">MEJOR PUNTUACIÓN</div>
-      </div>
-      <div class="profile-stat-card titles">
-        <div class="pstat-val">🏆 <span id="pstat-titles">—</span></div>
-        <div class="pstat-label">TÍTULOS</div>
-      </div>
+
+    <!-- TABS -->
+    <div class="auth-tabs">
+      <button class="auth-tab auth-tab-active" id="profileTabStats">ESTADÍSTICAS</button>
+      <button class="auth-tab" id="profileTabUser">AJUSTES</button>
+      <button class="auth-tab" id="profileTabNotes">NOTAS DE LA VERSIÓN <span id="profileVersionLabel"></span></button>
     </div>
-    <button class="auth-submit-btn" style="background:#c0392b;margin-top:14px" id="profileLogoutBtn">CERRAR SESIÓN</button>
+
+    <!-- All panes stack in the same grid cell, so the modal always sizes
+         itself to whichever pane is tallest — no resizing jump on tab switch. -->
+    <div class="profile-tab-stack">
+
+      <!-- ESTADÍSTICAS TAB -->
+      <div id="profileStatsPane" class="profile-tab-pane profile-tab-pane-active">
+        <div class="profile-stats-grid">
+          <div class="profile-stat-card">
+            <div class="pstat-val" id="pstat-games">—</div>
+            <div class="pstat-label">PARTIDAS</div>
+          </div>
+          <div class="profile-stat-card wins">
+            <div class="pstat-val" id="pstat-wins">—</div>
+            <div class="pstat-label">VICTORIAS</div>
+          </div>
+          <div class="profile-stat-card">
+            <div class="pstat-val" id="pstat-draws">—</div>
+            <div class="pstat-label">EMPATES</div>
+          </div>
+          <div class="profile-stat-card losses">
+            <div class="pstat-val" id="pstat-losses">—</div>
+            <div class="pstat-label">DERROTAS</div>
+          </div>
+          <div class="profile-stat-card">
+            <div class="pstat-val" id="pstat-gf">—</div>
+            <div class="pstat-label">GOLES A FAVOR</div>
+          </div>
+          <div class="profile-stat-card">
+            <div class="pstat-val" id="pstat-ga">—</div>
+            <div class="pstat-label">GOLES EN CONTRA</div>
+          </div>
+          <div class="profile-stat-card best">
+            <div class="pstat-val" id="pstat-best">—</div>
+            <div class="pstat-label">MEJOR PUNTUACIÓN</div>
+          </div>
+          <div class="profile-stat-card titles">
+            <div class="pstat-val">🏆 <span id="pstat-titles">—</span></div>
+            <div class="pstat-label">TÍTULOS</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- USUARIO TAB -->
+      <div id="profileUserPane" class="profile-tab-pane">
+        <label class="profile-field-label">PREFERENCIAS</label>
+        <div class="profile-settings-row">
+          <button id="audioToggle" class="settings-item" title="Activar/desactivar sonido">
+            <span class="topbar-dot on"></span><span class="topbar-label">SONIDO</span>
+          </button>
+          <button id="themeToggle" class="settings-item" title="Cambiar tema claro/oscuro">
+            <span class="topbar-dot on"></span><span class="topbar-label">TEMA OSCURO</span>
+          </button>
+        </div>
+        <label class="profile-field-label" for="preferredTeamNameInput">NOMBRE DEL EQUIPO</label>
+        <input type="text" id="preferredTeamNameInput" maxlength="24" placeholder="Ej: Dream Team FC" class="team-name-input">
+        <label class="profile-checkbox-row">
+          <input type="checkbox" id="useFixedTeamNameCheckbox">
+          <span>Usar siempre como nombre de equipo</span>
+        </label>
+        <p class="profile-field-hint">Si lo activas, no se te preguntará el nombre del equipo al formarlo — se usará este automáticamente.</p>
+        <button class="auth-submit-btn" style="background:#c0392b;margin-top:14px" id="profileLogoutBtn">CERRAR SESIÓN</button>
+      </div>
+
+      <!-- NOTAS DE LA VERSIÓN TAB -->
+      <div id="profileNotesPane" class="profile-tab-pane">
+        <div class="version-notes-scroll">
+          <h4>Sistema de resistencia/cansancio</h4>
+          <ul>
+            <li>Los jugadores sufren desgaste durante los partidos dependiendo de la estrategia elegida y la posición que ocupen.</li>
+            <li>El cansancio penaliza el rendimiento del jugador gradualmente.</li>
+            <li>Un partido en el banquillo recupera completamente la energía del jugador.</li>
+          </ul>
+          <h4>Sistema de tarjetas</h4>
+          <ul>
+            <li>Ahora los jugadores pueden recibir tarjetas durante los partidos.</li>
+            <li>Acumulación: 2 amarillas en partidos distintos → sanción.</li>
+            <li>Doble amarilla en el mismo partido → expulsión y sanción.</li>
+            <li>Roja directa → sanción automática.</li>
+            <li>Limpieza automática de tarjetas acumuladas al pasar de cuartos de final.</li>
+            <li>Los jugadores sancionados se mueven directamente al banquillo.</li>
+          </ul>
+          <h4>Otros</h4>
+          <ul>
+            <li>Correcciones de bugs y ajustes.</li>
+          </ul>
+        </div>
+      </div>
+
+    </div>
   </div>
 </div>
 
@@ -96,7 +139,7 @@
     <p style="font-size:13px;color:var(--text);line-height:1.6;margin-bottom:20px">
       Bienvenido a <strong style="color:var(--gold)">Goal2Goat</strong>, un manager de fútbol con alma de roguelike. Tu apoyo nos ayuda a seguir mejorando el juego, añadiendo contenido nuevo y manteniéndolo libre de publicidad invasiva.
     </p>
-    <a href="https://paypal.me/goal2goat" target="_blank" class="support-pay-btn" style="display:block;margin-bottom:10px">APOYA A GOAL2GOAT</a>
+    <a href="https://ko-fi.com/goal2goat" target="_blank" class="support-pay-btn" style="display:block;margin-bottom:10px">APOYA A GOAL2GOAT</a>
     <button class="auth-submit-btn" id="welcomeStartBtn" style="background:#1a2a1a;border:1px solid var(--gold);color:var(--gold)">EMPEZAR A JUGAR</button>
   </div>
 </div>
@@ -257,6 +300,12 @@
       <div id="ledText" class="led-text">GOAL2GOAT · MONTA TU EQUIPO LEGENDARIO Y CONQUISTA EL MUNDIAL</div>
     </div>
 
+    <!-- Shows the currently selected player until placed on the pitch.
+         Lives in the center panel (CAMPO tab on mobile), right below the
+         LED board, so it's always visible while choosing where to place
+         the picked player. -->
+    <div id="selectedPlayerBanner" style="display:none"></div>
+
     <!-- Formation info: read-only card shown once the squad is locked in.
          The interactive picker lives in the LEFT panel (only during draft). -->
     <div class="box formation-box-desktop" id="formationInfoCard" style="display:none">
@@ -283,9 +332,6 @@
   <!-- RIGHT PANEL -->
   <div class="panel right-panel">
 
-    <!-- Shows the currently selected player until placed on the pitch -->
-    <div id="selectedPlayerBanner" style="display:none"></div>
-
     <!-- Show player selection modal here on desktop -->
     <div id="playerCardDesktop"></div>
 
@@ -302,6 +348,13 @@
     <div class="box" id="matchHistoryBox" style="display:none">
       <h3>RESULTADOS <span id="matchProgress">FASE DE GRUPOS</span></h3>
       <div id="matchHistoryTable"></div>
+    </div>
+
+    <div class="box collapsible-box" id="tipsBox">
+      <h3 class="collapsible-header" onclick="toggleCollapsible('tipsBox')">¿SABÍAS QUÉ...? <span class="collapse-arrow">▾</span></h3>
+      <div class="howto-content">
+        <p id="tipText" class="tip-text" onclick="showNextTip()"></p>
+      </div>
     </div>
 
     <div class="box collapsible-box" id="howToPlayBox">

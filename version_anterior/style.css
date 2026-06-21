@@ -125,14 +125,14 @@ body.dark-theme .version-tag{color:#555}
 }
 .settings-dropdown.open{display:flex}
 .settings-item{
-  background:transparent;color:#ddd;border:none;border-bottom:1px solid #333;
+  background:transparent;color:var(--text);border:none;border-bottom:1px solid var(--line);
   font-size:11px;font-weight:700;letter-spacing:.5px;
   padding:10px 14px;cursor:pointer;transition:.15s;
   display:flex;align-items:center;gap:8px;text-align:left;
   font-family:'Bebas Neue',Impact,sans-serif;font-size:14px;
 }
 .settings-item:last-child{border-bottom:none}
-.settings-item:hover{background:#2a2a2a;color:var(--gold)}
+.settings-item:hover{background:var(--row-hover);color:var(--gold)}
 .topbar-dot{
   width:7px;height:7px;border-radius:50%;background:#666;
   display:inline-block;transition:background .15s,box-shadow .15s;flex-shrink:0;
@@ -158,10 +158,10 @@ body.dark-theme .version-tag{color:#555}
 /* POSITIONS */
 .position{
   position:absolute;
-  width:44px;height:44px;border-radius:50%;
+  width:52px;height:52px;border-radius:50%;
   border:2.5px dashed rgba(255,255,255,.7);
   color:#fff;display:flex;align-items:center;justify-content:center;
-  font-size:10px;font-weight:700;
+  font-size:12px;font-weight:700;
   background:rgba(0,0,0,.15);backdrop-filter:blur(2px);
   cursor:pointer;z-index:5;
   transition:transform .15s ease,border-color .15s ease,box-shadow .15s ease;
@@ -171,7 +171,7 @@ body.dark-theme .version-tag{color:#555}
 .position:hover:not(.locked){transform:translate(-50%,-50%) scale(1.1);border-color:#ffd700}
 .position.locked{
   background:rgba(0,80,30,.75);border:2px solid rgba(255,255,255,.85);
-  font-size:16px;font-weight:800;
+  font-size:19px;font-weight:800;
 }
 .position.highlight-pos{border-color:#ffd700;box-shadow:0 0 12px #ffd700}
 .position.empty-slot{
@@ -180,13 +180,13 @@ body.dark-theme .version-tag{color:#555}
 }
 @keyframes pulseRed{0%{box-shadow:0 0 0 0 rgba(255,68,68,.6)}70%{box-shadow:0 0 0 8px rgba(255,68,68,0)}100%{box-shadow:0 0 0 0 rgba(255,68,68,0)}}
 .player-info{
-  position:absolute;top:46px;left:50%;transform:translateX(-50%);
-  width:78px;text-align:center;color:#fff;font-size:9px;font-weight:700;
-  text-shadow:1px 1px 2px #000;line-height:1.2;pointer-events:none;
+  position:absolute;top:53px;left:50%;transform:translateX(-50%);
+  width:88px;text-align:center;color:#fff;font-size:11px;font-weight:700;
+  text-shadow:1px 1px 2px #000;line-height:1.25;pointer-events:none;
 }
-.player-pos-label{font-size:8px;font-weight:600;color:#ffd700;opacity:.9;margin-top:1px}
-.pos-label-inside{font-size:9px;font-weight:700}
-.pos-rating{font-size:14px;font-weight:800}
+.player-pos-label{font-size:10px;font-weight:600;color:#ffd700;opacity:.9;margin-top:1px}
+.pos-label-inside{font-size:11px;font-weight:700}
+.pos-rating{font-size:16px;font-weight:800}
 
 /* CENTER BOTTOM STRIP */
 #centerBottom{
@@ -318,8 +318,8 @@ body.dark-theme .version-tag{color:#555}
   .app-header-logo{gap:6px}
   .support-btn{font-size:10px;padding:4px 8px;letter-spacing:.5px}
   .box{padding:8px}
-  .position{width:36px;height:36px;font-size:8px}
-  .player-info{width:60px;font-size:8px;top:38px}
+  .position{width:42px;height:42px;font-size:9px}
+  .player-info{width:70px;font-size:9px;top:43px}
   .match-scoreline{font-size:28px}
   .main-action-btn{font-size:18px;padding:8px 16px}
 }
@@ -485,6 +485,7 @@ body.dark-theme .no-goal{color:var(--text-muted)}
 
 /* SELECTED PLAYER BANNER */
 .selected-player-banner{border-color:var(--gold)}
+#selectedPlayerBanner{width:100%;max-width:420px;margin:8px auto 0;box-sizing:border-box}
 .spb-row{display:flex;justify-content:space-between;align-items:center;margin:4px 0}
 .spb-name{font-family:'Bebas Neue',Impact,sans-serif;font-size:18px;letter-spacing:.5px;color:var(--text)}
 .spb-rating{font-family:'Bebas Neue',Impact,sans-serif;font-size:20px;color:var(--gold)}
@@ -730,8 +731,7 @@ body.dark-theme .vb-row:nth-child(even){background:transparent}
 /* Dark theme settings dropdown */
 body.dark-theme .settings-toggle{background:#0a0c0d;border-color:#444}
 body.dark-theme .settings-dropdown{background:#0a0c0d;border-color:var(--gold)}
-body.dark-theme .settings-item{color:#ccc;border-bottom-color:#222}
-body.dark-theme .settings-item:hover{background:#111;color:var(--gold)}
+body.dark-theme .settings-item:hover{background:var(--row-hover);color:var(--gold)}
 
 /* ===== AUTH HEADER BUTTONS ===== */
 .header-auth-btn{
@@ -1158,19 +1158,95 @@ body.dark-theme .press-prediction-neutral{background:#1a1a1a;border-color:#333;c
 /* PITCH STATUS ICONS — shown above the player circle (injury/card/streak) */
 .pitch-status-row{
   position:absolute;
-  top:-16px;left:50%;
+  top:-23px;left:50%;
   transform:translateX(-50%);
-  display:flex;gap:2px;
+  display:flex;gap:3px;
   white-space:nowrap;
   pointer-events:none;
   z-index:6;
 }
 .pitch-status-icon{
-  font-size:11px;
+  font-size:15px;
   line-height:1;
   filter:drop-shadow(0 1px 2px rgba(0,0,0,.8));
 }
-@media(max-width:1050px){
-  .pitch-status-row{top:-13px}
-  .pitch-status-icon{font-size:9px}
+.pitch-status-injury{
+  color:#e74c3c;
+  font-weight:900;
+  -webkit-text-stroke:.5px #e74c3c;
 }
+@media(max-width:1050px){
+  .pitch-status-row{top:-18px}
+  .pitch-status-icon{font-size:12px}
+}
+
+/* PROFILE USER TAB */
+.profile-field-label{
+  display:block;font-size:11px;font-weight:700;letter-spacing:.5px;
+  color:var(--text-muted);margin:10px 0 6px;text-transform:uppercase;
+}
+.profile-field-hint{
+  font-size:11px;color:var(--text-muted);line-height:1.4;margin-top:6px;
+}
+.profile-checkbox-row{
+  display:flex;align-items:center;gap:8px;margin-top:10px;
+  font-size:12px;color:var(--text);cursor:pointer;
+}
+.profile-checkbox-row input[type="checkbox"]{
+  width:16px;height:16px;cursor:pointer;accent-color:var(--gold);
+}
+
+/* PROFILE TAB STACK — all panes occupy the same grid cell, so the modal
+   always sizes itself to the TALLEST pane, regardless of which tab is
+   active. Switching tabs never resizes the modal. */
+.profile-tab-stack{
+  display:grid;
+}
+.profile-tab-pane{
+  grid-area:1/1;
+  visibility:hidden;
+  pointer-events:none;
+  opacity:0;
+}
+.profile-tab-pane.profile-tab-pane-active{
+  visibility:visible;
+  pointer-events:auto;
+  opacity:1;
+}
+
+/* VERSION NOTES TAB */
+.version-notes-scroll{
+  max-height:280px;overflow-y:auto;
+  padding-right:6px;
+  font-size:12px;color:var(--text);line-height:1.5;
+}
+.version-notes-scroll h4{
+  font-family:'Bebas Neue',Impact,sans-serif;
+  font-size:14px;letter-spacing:.5px;color:var(--gold);
+  margin:14px 0 6px;
+}
+.version-notes-scroll h4:first-child{margin-top:0}
+.version-notes-scroll ul{margin:0 0 4px;padding-left:18px}
+.version-notes-scroll li{margin-bottom:4px}
+
+/* ¿SABÍAS QUÉ...? TIP BOX */
+.tip-text{
+  font-size:12px;line-height:1.5;color:var(--text);
+  cursor:pointer;padding:4px 0;
+  transition:opacity .2s ease;
+}
+.tip-text:hover{opacity:.75}
+.tip-text.tip-fading{opacity:0}
+
+/* PROFILE AJUSTES TAB — sound/theme toggles row */
+.profile-settings-row{
+  display:flex;flex-direction:column;gap:0;
+  border:1px solid var(--line);border-radius:2px;
+  margin-bottom:14px;overflow:hidden;
+}
+.profile-settings-row .settings-item{
+  border-bottom:1px solid var(--line);
+}
+.profile-settings-row .settings-item:last-child{border-bottom:none}
+body.dark-theme .profile-settings-row{border-color:#333}
+body.dark-theme .profile-settings-row .settings-item{border-bottom-color:#333}

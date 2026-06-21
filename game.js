@@ -2945,6 +2945,28 @@ loadInheritedPlayers();
 
 /* If there are inherited players from a chain run, auto-place them on the
    pitch at their primary position, skipping that many draft picks. */
+/* ========= SETTINGS DROPDOWN (header, shown only when logged out) ========= */
+function toggleSettingsMenu(){
+  const dd=document.getElementById("settingsDropdown");
+  const btn=document.getElementById("settingsToggle");
+  if(!dd||!btn) return;
+  if(dd.classList.contains("open")){
+    dd.classList.remove("open");
+    return;
+  }
+  const rect=btn.getBoundingClientRect();
+  dd.style.top=(rect.bottom+6)+"px";
+  dd.style.right=(window.innerWidth-rect.right)+"px";
+  dd.classList.add("open");
+}
+document.addEventListener("click", function(e){
+  const menu=document.getElementById("settingsMenu");
+  if(menu && !menu.contains(e.target)){
+    const dd=document.getElementById("settingsDropdown");
+    if(dd) dd.classList.remove("open");
+  }
+});
+
 function applyInheritedPlayers(){
   if(!inheritedPlayers.length) return;
   const slots=getPitchSlots();
@@ -3261,8 +3283,29 @@ function _executeQuickBuild(){
 }
 
 /* ========= TOP BAR: AUDIO & THEME TOGGLES ========= */
+// Two sets of buttons control the same preferences: one inside the
+// profile modal (AJUSTES tab, for logged-in users) and one in the header
+// (visible only when logged OUT — see the auth state listener below).
+// Both are kept in sync on every interaction.
 const audioToggleBtn=document.getElementById("audioToggle");
 const themeToggleBtn=document.getElementById("themeToggle");
+const audioToggleHeaderBtn=document.getElementById("audioToggleHeader");
+const themeToggleHeaderBtn=document.getElementById("themeToggleHeader");
+const audioToggleBtns=[audioToggleBtn, audioToggleHeaderBtn].filter(Boolean);
+const themeToggleBtns=[themeToggleBtn, themeToggleHeaderBtn].filter(Boolean);
+
+function syncAudioToggleUI(){
+  audioToggleBtns.forEach(btn=>{
+    btn.querySelector(".topbar-dot").classList.toggle("on",audioEnabled);
+    btn.classList.toggle("off",!audioEnabled);
+  });
+}
+function syncThemeToggleUI(isDark){
+  themeToggleBtns.forEach(btn=>{
+    btn.querySelector(".topbar-dot").classList.toggle("on",isDark);
+    btn.querySelector(".topbar-label").textContent=isDark?"TEMA OSCURO":"TEMA CLARO";
+  });
+}
 
 // Restore saved preferences on load
 (function restorePrefs(){
@@ -3271,10 +3314,7 @@ const themeToggleBtn=document.getElementById("themeToggle");
     const o=document.getElementById("welcomeOverlay");
     if(o) o.style.display="flex";
   }catch(e){}
-  if(audioToggleBtn){
-    audioToggleBtn.querySelector(".topbar-dot").classList.toggle("on",audioEnabled);
-    audioToggleBtn.classList.toggle("off",!audioEnabled);
-  }
+  syncAudioToggleUI();
   // Theme: dark is the default; only go light if explicitly saved as light
   let isDark=true;
   try{
@@ -3283,30 +3323,25 @@ const themeToggleBtn=document.getElementById("themeToggle");
   }catch(e){}
   if(isDark) document.body.classList.add("dark-theme");
   else document.body.classList.remove("dark-theme");
-  if(themeToggleBtn){
-    themeToggleBtn.querySelector(".topbar-dot").classList.toggle("on",isDark);
-    themeToggleBtn.querySelector(".topbar-label").textContent=isDark?"TEMA OSCURO":"TEMA CLARO";
-  }
+  syncThemeToggleUI(isDark);
 })();
 
-if(audioToggleBtn){
-  audioToggleBtn.addEventListener("click",()=>{
+audioToggleBtns.forEach(btn=>{
+  btn.addEventListener("click",()=>{
     audioEnabled=!audioEnabled;
-    audioToggleBtn.querySelector(".topbar-dot").classList.toggle("on",audioEnabled);
-    audioToggleBtn.classList.toggle("off",!audioEnabled);
+    syncAudioToggleUI();
     try{ localStorage.setItem('g2g_audioEnabled', audioEnabled); }catch(e){}
     if(audioEnabled) playSound('select');
   });
-}
-if(themeToggleBtn){
-  themeToggleBtn.addEventListener("click",()=>{
+});
+themeToggleBtns.forEach(btn=>{
+  btn.addEventListener("click",()=>{
     const isDark=document.body.classList.toggle("dark-theme");
-    themeToggleBtn.querySelector(".topbar-dot").classList.toggle("on",isDark);
-    themeToggleBtn.querySelector(".topbar-label").textContent=isDark?"TEMA OSCURO":"TEMA CLARO";
+    syncThemeToggleUI(isDark);
     try{ localStorage.setItem('g2g_darkTheme', isDark); }catch(e){}
     playSound('select');
   });
-}
+});
 
 // Apply inherited players from a chain run (runs after DOM is fully ready)
 setTimeout(applyInheritedPlayers, 100);
@@ -3441,11 +3476,15 @@ function initFirebaseAuth(){
   auth.onAuthStateChanged(async user=>{
     const authBtn=$id("authBtn");
     const profileBtn=$id("profileBtn");
+    const settingsMenu=$id("settingsMenu");
     if(user){
       const snap=await db.collection("users").doc(user.uid).get();
       const username=snap.exists?snap.data().username:user.email;
       if(authBtn)    authBtn.style.display="none";
       if(profileBtn){ profileBtn.style.display=""; profileBtn.textContent="👤 "+username; }
+      // Sound/theme settings now live inside the profile's AJUSTES tab —
+      // hide the header dropdown once the user is logged in.
+      if(settingsMenu) settingsMenu.style.display="none";
       const pun=$id("profileUsername"); if(pun) pun.textContent=username;
       window.currentUsername=username;
       // Load the player's team-name preference, so showTeamNameModal can
@@ -3456,6 +3495,9 @@ function initFirebaseAuth(){
     }else{
       if(authBtn)    authBtn.style.display="";
       if(profileBtn) profileBtn.style.display="none";
+      // Logged out: no profile/AJUSTES tab to reach sound/theme from —
+      // show the header settings dropdown so they're still accessible.
+      if(settingsMenu) settingsMenu.style.display="";
       window.currentUsername=null;
       window.preferredTeamName="";
       window.useFixedTeamName=false;
