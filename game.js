@@ -949,11 +949,13 @@ function pickPlayer(player){
     if(benchCount>=5){
       phase="ready";
       rollBtn.style.display="none";
+      const tipsBox=document.getElementById("tipsBox");
       const howTo=document.getElementById("howToPlayBox");
       const statsGuide=document.getElementById("statsGuideBox");
       lockFormationDisplay();
       // Collapse (don't hide) the tutorial boxes — still consultable on
       // desktop once the squad is built, just compact at the bottom.
+      if(tipsBox) tipsBox.classList.add("collapsed");
       if(howTo) howTo.classList.add("collapsed");
       if(statsGuide) statsGuide.classList.add("collapsed");
       updateConvocadosTable();
@@ -3229,11 +3231,13 @@ function _executeQuickBuild(){
   baseTeamOVR=computeTeamOVR();
   phase="ready";
   rollBtn.style.display="none";
+  const tipsBox=document.getElementById("tipsBox");
   const howTo=document.getElementById("howToPlayBox");
   const statsGuide=document.getElementById("statsGuideBox");
   lockFormationDisplay();
   // Collapse (don't hide) the tutorial boxes — still consultable on
   // desktop once the squad is built, just compact at the bottom.
+  if(tipsBox) tipsBox.classList.add("collapsed");
   if(howTo) howTo.classList.add("collapsed");
   if(statsGuide) statsGuide.classList.add("collapsed");
 
