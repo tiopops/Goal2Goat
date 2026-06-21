@@ -485,6 +485,7 @@ body.dark-theme .no-goal{color:var(--text-muted)}
 
 /* SELECTED PLAYER BANNER */
 .selected-player-banner{border-color:var(--gold)}
+#selectedPlayerBanner{width:100%;max-width:420px;margin:8px auto 0;box-sizing:border-box}
 .spb-row{display:flex;justify-content:space-between;align-items:center;margin:4px 0}
 .spb-name{font-family:'Bebas Neue',Impact,sans-serif;font-size:18px;letter-spacing:.5px;color:var(--text)}
 .spb-rating{font-family:'Bebas Neue',Impact,sans-serif;font-size:20px;color:var(--gold)}

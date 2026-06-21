@@ -300,6 +300,12 @@
       <div id="ledText" class="led-text">GOAL2GOAT · MONTA TU EQUIPO LEGENDARIO Y CONQUISTA EL MUNDIAL</div>
     </div>
 
+    <!-- Shows the currently selected player until placed on the pitch.
+         Lives in the center panel (CAMPO tab on mobile), right below the
+         LED board, so it's always visible while choosing where to place
+         the picked player. -->
+    <div id="selectedPlayerBanner" style="display:none"></div>
+
     <!-- Formation info: read-only card shown once the squad is locked in.
          The interactive picker lives in the LEFT panel (only during draft). -->
     <div class="box formation-box-desktop" id="formationInfoCard" style="display:none">
@@ -325,9 +331,6 @@
 
   <!-- RIGHT PANEL -->
   <div class="panel right-panel">
-
-    <!-- Shows the currently selected player until placed on the pitch -->
-    <div id="selectedPlayerBanner" style="display:none"></div>
 
     <!-- Show player selection modal here on desktop -->
     <div id="playerCardDesktop"></div>

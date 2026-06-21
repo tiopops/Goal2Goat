@@ -1015,6 +1015,11 @@ function volverASeleccion(){
     const {team, players}=window._lastRoster;
     showRosterModal(team, players);
   }
+  // Same as when teams are first shuffled: the active tab becomes RIVAL,
+  // since that's where the team/player selection card is shown on mobile.
+  if(window.innerWidth<=1050 && typeof switchMobileTab==='function'){
+    switchMobileTab('rival');
+  }
 }
 
 /* ========= POSITION SLOTS ========= */
