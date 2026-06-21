@@ -1564,6 +1564,22 @@ function startMatchPhase(){
   showTeamNameModal();
 }
 function showTeamNameModal(){
+  // If the logged-in user has chosen to always use a fixed team name,
+  // skip the popup entirely and use that name directly.
+  if(window.useFixedTeamName && window.preferredTeamName){
+    myTeamName=window.preferredTeamName;
+    if(typeof firebase!=='undefined'){
+      try{
+        const user=firebase.auth().currentUser;
+        if(user) firebase.firestore().collection("users").doc(user.uid)
+          .set({lastTeamName:myTeamName},{merge:true});
+      }catch(e){}
+    }
+    setupGroupStage();
+    renderCenterSummary();
+    pickNextOpponent();
+    return;
+  }
   document.getElementById("matchOverlay").innerHTML=`
   <div class="match-modal">
     <h3>¡Equipo completo!</h3>
@@ -3366,10 +3382,17 @@ function initFirebaseAuth(){
       if(profileBtn){ profileBtn.style.display=""; profileBtn.textContent="👤 "+username; }
       const pun=$id("profileUsername"); if(pun) pun.textContent=username;
       window.currentUsername=username;
+      // Load the player's team-name preference, so showTeamNameModal can
+      // skip the popup entirely if they've set it to always use one name.
+      const data=snap.exists?snap.data():{};
+      window.preferredTeamName=data.preferredTeamName||"";
+      window.useFixedTeamName=!!data.useFixedTeamName;
     }else{
       if(authBtn)    authBtn.style.display="";
       if(profileBtn) profileBtn.style.display="none";
       window.currentUsername=null;
+      window.preferredTeamName="";
+      window.useFixedTeamName=false;
     }
   });
 
@@ -3418,6 +3441,13 @@ function initFirebaseAuth(){
       set("pstat-ga",     s.goalsAgainst);
       set("pstat-best",   displayBest);
       set("pstat-titles", s.titles);
+
+      // Load team-name preference (USUARIO tab)
+      const data=snap.data();
+      const nameInp=$id("preferredTeamNameInput");
+      const checkbox=$id("useFixedTeamNameCheckbox");
+      if(nameInp)  nameInp.value=data.preferredTeamName||"";
+      if(checkbox) checkbox.checked=!!data.useFixedTeamName;
     }catch(e){
       console.warn("Stats load error:", e);
       ["pstat-games","pstat-wins","pstat-draws","pstat-losses",
@@ -3427,6 +3457,44 @@ function initFirebaseAuth(){
   };
   window.closeProfileModal=function(){
     const o=$id("profileOverlay"); if(o) o.style.display="none";
+  };
+
+  // Save the team-name preference (preferredTeamName + useFixedTeamName)
+  window.saveTeamNamePreference=async function(){
+    const user=auth.currentUser; if(!user) return;
+    const nameInp=$id("preferredTeamNameInput");
+    const checkbox=$id("useFixedTeamNameCheckbox");
+    const preferredTeamName=(nameInp?nameInp.value.trim():"").toUpperCase();
+    const useFixedTeamName=!!(checkbox&&checkbox.checked);
+    if(useFixedTeamName&&!preferredTeamName){
+      showToast("Escribe un nombre de equipo antes de activar la opción.", "toast-neg");
+      return;
+    }
+    try{
+      await db.collection("users").doc(user.uid).set({
+        preferredTeamName, useFixedTeamName
+      },{merge:true});
+      showToast("Preferencia guardada.", "toast-pos");
+    }catch(e){
+      console.warn("saveTeamNamePreference error:", e);
+      showToast("No se pudo guardar la preferencia.", "toast-neg");
+    }
+  };
+
+  window.switchProfileTab=function(tab){
+    const statsTab=$id("profileTabStats"), userTab=$id("profileTabUser");
+    const statsPane=$id("profileStatsPane"), userPane=$id("profileUserPane");
+    if(tab==="stats"){
+      statsTab?.classList.add("auth-tab-active");
+      userTab?.classList.remove("auth-tab-active");
+      if(statsPane) statsPane.style.display="block";
+      if(userPane) userPane.style.display="none";
+    } else {
+      userTab?.classList.add("auth-tab-active");
+      statsTab?.classList.remove("auth-tab-active");
+      if(userPane) userPane.style.display="block";
+      if(statsPane) statsPane.style.display="none";
+    }
   };
 
   // Save match result to Firestore
@@ -3562,6 +3630,9 @@ function initFirebaseAuth(){
   wire("authCloseBtn",     ()=>window.closeAuthModal());
   wire("profileCloseBtn",  ()=>window.closeProfileModal());
   wire("profileLogoutBtn", ()=>{ window.authLogout(); window.closeProfileModal(); });
+  wire("profileTabStats",  ()=>window.switchProfileTab("stats"));
+  wire("profileTabUser",   ()=>window.switchProfileTab("user"));
+  wire("saveTeamNamePrefBtn", ()=>window.saveTeamNamePreference());
   wire("tabLogin",         ()=>window.switchAuthTab("login"));
   wire("tabRegister",      ()=>window.switchAuthTab("register"));
   wire("loginSubmitBtn",   ()=>window.submitLogin());

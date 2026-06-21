@@ -1174,3 +1174,19 @@ body.dark-theme .press-prediction-neutral{background:#1a1a1a;border-color:#333;c
   .pitch-status-row{top:-13px}
   .pitch-status-icon{font-size:9px}
 }
+
+/* PROFILE USER TAB */
+.profile-field-label{
+  display:block;font-size:11px;font-weight:700;letter-spacing:.5px;
+  color:var(--text-muted);margin:10px 0 6px;text-transform:uppercase;
+}
+.profile-field-hint{
+  font-size:11px;color:var(--text-muted);line-height:1.4;margin-top:6px;
+}
+.profile-checkbox-row{
+  display:flex;align-items:center;gap:8px;margin-top:10px;
+  font-size:12px;color:var(--text);cursor:pointer;
+}
+.profile-checkbox-row input[type="checkbox"]{
+  width:16px;height:16px;cursor:pointer;accent-color:var(--gold);
+}

@@ -127,16 +127,16 @@ const STAT_LABELS={attack:"ATAQUE",defense:"DEFENSA",pace:"RITMO",passing:"PASE"
 //  - Gegenpressing is broken by Juego Directo (skip the press with long balls)
 //  - etc.
 const STRATEGIES = {
-  tiki_taka:      { name:"Tiki-Taka",          desc:"Prioriza los pases cortos y la posesión para desgastar al rival y crear espacios.", counters:"bloque_bajo" },
-  contraataque:   { name:"Contraataque",        desc:"Defiende con orden y busca atacar rápidamente tras recuperar el balón.", counters:"ataque_bandas" },
-  catenaccio:     { name:"Catenaccio",          desc:"Centra sus esfuerzos en la defensa y aprovecha las pocas oportunidades de ataque.", counters:"juego_directo" },
-  presion_alta:   { name:"Presión Alta",        desc:"Presiona al rival en su campo para recuperar el balón cuanto antes.", counters:"tiki_taka" },
-  gegenpressing:  { name:"Gegenpressing",       desc:"Tras perder la posesión, todo el equipo intenta recuperarla inmediatamente.", counters:"posesion" },
-  posesion:       { name:"Juego de Posesión",   desc:"Mantiene el control del balón para dominar el ritmo del partido.", counters:"contraataque" },
-  juego_directo:  { name:"Juego Directo",       desc:"Busca llegar al área rival con rapidez y el menor número de pases posible.", counters:"gegenpressing" },
-  futbol_total:   { name:"Fútbol Total",        desc:"Los jugadores intercambian posiciones constantemente para generar superioridades.", counters:"catenaccio" },
-  bloque_bajo:    { name:"Bloque Bajo",         desc:"Repliega al equipo cerca de su área para cerrar espacios y dificultar los ataques rivales.", counters:"futbol_total" },
-  ataque_bandas:  { name:"Ataque por Bandas",   desc:"Utiliza las bandas para crear peligro mediante desbordes y centros al área.", counters:"presion_alta" },
+  tiki_taka:      { name:"Tiki-Taka",          desc:"Prioriza los pases cortos y la posesión para desgastar al rival y crear espacios.", counters:"bloque_bajo", partialCounters:["gegenpressing","presion_alta"] },
+  contraataque:   { name:"Contraataque",        desc:"Defiende con orden y busca atacar rápidamente tras recuperar el balón.", counters:"ataque_bandas", partialCounters:["posesion","presion_alta"] },
+  catenaccio:     { name:"Catenaccio",          desc:"Centra sus esfuerzos en la defensa y aprovecha las pocas oportunidades de ataque.", counters:"juego_directo", partialCounters:["ataque_bandas","presion_alta"] },
+  presion_alta:   { name:"Presión Alta",        desc:"Presiona al rival en su campo para recuperar el balón cuanto antes.", counters:"tiki_taka", partialCounters:["juego_directo","catenaccio"] },
+  gegenpressing:  { name:"Gegenpressing",       desc:"Tras perder la posesión, todo el equipo intenta recuperarla inmediatamente.", counters:"posesion", partialCounters:["catenaccio","juego_directo"] },
+  posesion:       { name:"Juego de Posesión",   desc:"Mantiene el control del balón para dominar el ritmo del partido.", counters:"contraataque", partialCounters:["presion_alta","gegenpressing"] },
+  juego_directo:  { name:"Juego Directo",       desc:"Busca llegar al área rival con rapidez y el menor número de pases posible.", counters:"gegenpressing", partialCounters:["catenaccio","bloque_bajo"] },
+  futbol_total:   { name:"Fútbol Total",        desc:"Los jugadores intercambian posiciones constantemente para generar superioridades.", counters:"catenaccio", partialCounters:["bloque_bajo","contraataque"] },
+  bloque_bajo:    { name:"Bloque Bajo",         desc:"Repliega al equipo cerca de su área para cerrar espacios y dificultar los ataques rivales.", counters:"futbol_total", partialCounters:["posesion","catenaccio"] },
+  ataque_bandas:  { name:"Ataque por Bandas",   desc:"Utiliza las bandas para crear peligro mediante desbordes y centros al área.", counters:"presion_alta", partialCounters:["contraataque","gegenpressing"] },
 };
 const STRATEGY_ORDER=["tiki_taka","contraataque","catenaccio","presion_alta","gegenpressing","posesion","juego_directo","futbol_total","bloque_bajo","ataque_bandas"];
 
@@ -967,7 +967,21 @@ function volverASeleccion(){
 
 /* ========= POSITION SLOTS ========= */
 function renderSlotContent(slot, player, label, rating, starHTML){
-  slot.innerHTML=`<span class="pos-rating">${rating}</span><div class="player-info">${player.name}${starHTML}<div class="player-pos-label">${label}</div></div>`;
+  const statusIcons=getSlotStatusIconsHTML(player);
+  slot.innerHTML=`${statusIcons}<span class="pos-rating">${rating}</span><div class="player-info">${player.name}${starHTML}<div class="player-pos-label">${label}</div></div>`;
+}
+/* Small status icon row shown ABOVE the pitch circle — injury, card, and
+   scorer streak, so the player's situation is visible at a glance without
+   having to check the convocados table. */
+function getSlotStatusIconsHTML(p){
+  const icons=[];
+  if(p.injury) icons.push(`<span class="pitch-status-icon" title="Lesionado">✚</span>`);
+  if(p.suspended) icons.push(`<span class="pitch-status-icon" title="Sancionado">🚫</span>`);
+  else if((p.yellowCount||0)>=1) icons.push(`<span class="pitch-status-icon" title="Tarjeta amarilla acumulada">🟨</span>`);
+  const streak=scorerStreaks[p.name]||0;
+  if(streak>0) icons.push(`<span class="pitch-status-icon" title="Racha goleadora">🔥</span>`);
+  if(!icons.length) return "";
+  return `<div class="pitch-status-row">${icons.join("")}</div>`;
 }
 
 /* Refresh the on-pitch rating/star display for every starter based on their
@@ -1011,9 +1025,7 @@ function buildFormationSlots(code){
       const isDef=i===0,isAtt=i===T-1;
       const labels=lineLabels(n,isDef,isAtt);
       const top=T===1?45:78-i*(78-14)/(T-1);
-      labels.forEach((label,j)=>{
-        slots.push({label,left:(j+1)/(labels.length+1)*100,top});
-      });
+      addArcedLine(slots,labels,top,i===0);
     });
     return slots;
   }
@@ -1021,13 +1033,39 @@ function buildFormationSlots(code){
   const T=layout.length; // includes goalkeeper line
   layout.forEach((labels,i)=>{
     let top;
-    if(i===0) top=91.4; // goalkeeper always at the very back
-    else top=78-(i-1)*(78-14)/(T-2<=0?1:T-2);
-    labels.forEach((label,j)=>{
-      slots.push({label,left:(j+1)/(labels.length+1)*100,top});
-    });
+    if(i===0){ slots.push({label:"POR",left:50,top:91.4}); return; } // goalkeeper always centered, no arc
+    top=78-(i-1)*(78-14)/(T-2<=0?1:T-2);
+    addArcedLine(slots,labels,top,false);
   });
   return slots;
+}
+/* Adds a line of players with a natural arc instead of a flat row — the
+   CENTER of each line bulges slightly toward the opponent's goal, while
+   the players closer to the touchlines stay a bit further back, exactly
+   how tactical boards in other football games draw formations (e.g. in
+   a back four the two center-backs sit a touch deeper than the full-backs
+   relative to... actually the opposite: widest players sit deeper, central
+   players push forward — same logic for every line on the pitch). */
+function addArcedLine(slots,labels,baseTop,isGoalkeeperLine){
+  const n=labels.length;
+  labels.forEach((label,j)=>{
+    const left=(j+1)/(n+1)*100;
+    let top=baseTop;
+    if(!isGoalkeeperLine && n>1){
+      // Distance from the horizontal center of the line, normalized 0..1
+      // (0 = dead center, 1 = at the touchline edge of the line)
+      const center=(n+1)/2;
+      const distFromCenter=Math.abs(j+1-center)/((n-1)/2 || 1);
+      // Arc depth: wider lines (more players) get a more pronounced curve.
+      const arcDepth=Math.min(6, 2.5+n*0.6);
+      // The center of the line always pushes TOWARD the opponent's goal
+      // (i.e. toward smaller top% if this is an attacking line near top:14,
+      // or toward smaller top% — i.e. forward — for a defensive line near
+      // top:78 too, since "forward" always means a smaller top value).
+      top=baseTop - (1-distFromCenter)*arcDepth*0.85;
+    }
+    slots.push({label,left,top});
+  });
 }
 function renderPitch(code){
   pitchEl.querySelectorAll(".position").forEach(el=>el.remove());
@@ -1268,7 +1306,8 @@ function updateBenchTable(){
     const cardBadge=getCardBadge(p);
     const fatigueBar=getFatigueBarHTML(p);
     const sel=(swapSelection&&swapSelection.source==='bench'&&swapSelection.index===i)?' class="row-selected"':'';
-    const clickable=canSwap?` onclick="onBenchClick(${i})" style="cursor:pointer"`:'';
+    const isBlocked=p.suspended;
+    const clickable=(canSwap&&!isBlocked)?` onclick="onBenchClick(${i})" style="cursor:pointer"`:(isBlocked?` style="opacity:.55;cursor:not-allowed"`:'');
     rows+=`<tr${sel}${clickable}><td>${p.name}${cross}${cardBadge}</td><td>${fatigueBar}</td><td>${(p.positions||[]).join('/')}</td><td>${p.rating||0}</td></tr>`;
   });
   el.innerHTML=rows?`<table><thead><tr><th>Jugador</th><th title="Resistencia">Resistencia</th><th>Pos</th><th>★</th></tr></thead><tbody>${rows}</tbody></table>`:"";
@@ -1303,6 +1342,9 @@ function onConvocadoClick(i){
 }
 function onBenchClick(i){
   if(phase!=='ready'||swapsUsedThisMatch>=MAX_SWAPS_PER_MATCH) return;
+  // A suspended player cannot be brought onto the pitch — they must serve
+  // their sanction. Clicking them does nothing until the suspension lifts.
+  if(bench[i]&&bench[i].suspended) return;
   if(swapSelection&&swapSelection.source==='conv'){
     const convIdx=swapSelection.index;
     swapSelection=null;
@@ -1789,13 +1831,17 @@ function counterStrategyModifier(){
   const rivalKey=getRivalStrategyKey(nextOpponent);
   const myKey=selectedMatchStrategy;
   if(!myKey) return {myScoreMod:0, oppScoreMod:0}; // no strategy chosen = neutral
-  const rivalCountersMe = STRATEGIES[rivalKey] && STRATEGIES[rivalKey].counters===myKey;
-  const iCounterRival    = STRATEGIES[myKey] && STRATEGIES[myKey].counters===rivalKey;
+  const rivalStrat=STRATEGIES[rivalKey];
+  const myStrat=STRATEGIES[myKey];
+  const rivalCountersMe = rivalStrat && rivalStrat.counters===myKey;
+  const iCounterRival    = myStrat && myStrat.counters===rivalKey;
+  const iPartiallyCounterRival = myStrat && myStrat.partialCounters && myStrat.partialCounters.includes(rivalKey);
   let mod=0;
-  if(iCounterRival)    mod=+0.16;  // good read of the opponent
-  else if(rivalCountersMe) mod=-0.10; // picked the strategy the rival naturally beats
-  else if(myKey===rivalKey) mod=-0.04; // mirroring rarely pays off
-  return { myScoreMod:mod, oppScoreMod:-mod*0.5 };
+  if(iCounterRival)             mod=+0.16;  // perfect read of the opponent
+  else if(iPartiallyCounterRival) mod=+0.08; // good read, but not the ideal answer
+  else if(rivalCountersMe)      mod=-0.10; // picked the strategy the rival naturally beats
+  else if(myKey===rivalKey)     mod=-0.04; // mirroring rarely pays off
+  return { myScoreMod:mod, oppScoreMod:-mod*0.5, level: iCounterRival?'perfect':iPartiallyCounterRival?'partial':(rivalCountersMe?'countered':(myKey===rivalKey?'mirror':'neutral')) };
 }
 function poissonSample(lambda){
   const L=Math.exp(-lambda); let k=0,p=1;
@@ -2155,6 +2201,39 @@ function applyPendingSuspensions(){
       p.cardStatus=null;
     }
   });
+  // Any starting player who is now suspended must be moved to the bench
+  // automatically — this does NOT consume one of the player's swaps, since
+  // it's outside their control. If no bench player is free to swap in,
+  // the slot is simply left empty until the user manually resolves it.
+  forceSwapSuspendedStarters();
+}
+
+function forceSwapSuspendedStarters(){
+  const slots=getPitchSlots();
+  usedPlayers.forEach((convPlayer,convIdx)=>{
+    if(!convPlayer || !convPlayer.suspended) return;
+    // Find a bench player who is NOT suspended/injured to bring on
+    const benchIdx=bench.findIndex(b=>b && !b.suspended);
+    const slot=slots.find(s=>s._player===convPlayer);
+    if(!slot) return;
+    const label=slot.dataset.label;
+    if(benchIdx===-1){
+      // No eligible bench replacement — leave the slot, but it stays
+      // visibly flagged as suspended in the table so the user notices.
+      return;
+    }
+    const benchPlayer=bench[benchIdx];
+    benchPlayer.placedPos=label;
+    delete convPlayer.placedPos;
+    bench[benchIdx]=convPlayer;
+    usedPlayers[convIdx]=benchPlayer;
+    slot._player=benchPlayer;
+    const inPos=benchPlayer.positions&&benchPlayer.positions.includes(label);
+    const r=inPos?(benchPlayer.rating||70):Math.round((benchPlayer.rating||70)*0.85);
+    const star=inPos&&benchPlayer.positions[0]===label?' <span class="star">★</span>':'';
+    renderSlotContent(slot, benchPlayer, label, r, star);
+  });
+  baseTeamOVR=computeTeamOVR();
 }
 
 function showMatchModal(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,penaltyInfo,newCards,predictionResult){
@@ -2196,13 +2275,16 @@ function showMatchModal(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,
   if(selectedMatchStrategy && nextOpponent){
     const rivalKey=getRivalStrategyKey(nextOpponent);
     const myKey=selectedMatchStrategy;
-    const iCounter = STRATEGIES[myKey] && STRATEGIES[myKey].counters===rivalKey;
+    const myStrat=STRATEGIES[myKey];
+    const iCounter = myStrat && myStrat.counters===rivalKey;
+    const iPartialCounter = myStrat && myStrat.partialCounters && myStrat.partialCounters.includes(rivalKey);
     const counteredByRival = STRATEGIES[rivalKey] && STRATEGIES[rivalKey].counters===myKey;
     let stratMsg, stratClass;
-    if(iCounter){ stratMsg=`✓ Tu estrategia (${STRATEGIES[myKey].name}) contrarrestó perfectamente a ${nextOpponent.name}.`; stratClass="strategy-feedback-good"; }
+    if(iCounter){ stratMsg=`✓ Tu estrategia (${myStrat.name}) contrarrestó perfectamente a ${nextOpponent.name}.`; stratClass="strategy-feedback-good"; }
+    else if(iPartialCounter){ stratMsg=`✓ Tu estrategia (${myStrat.name}) controló bien a ${nextOpponent.name}, aunque no era la elección perfecta.`; stratClass="strategy-feedback-good"; }
     else if(counteredByRival){ stratMsg=`✗ ${nextOpponent.name} aprovechó mejor el enfrentamiento táctico esta vez.`; stratClass="strategy-feedback-bad"; }
-    else if(myKey===rivalKey){ stratMsg=`= Ambos equipos jugaron con un enfoque similar (${STRATEGIES[myKey].name}).`; stratClass="strategy-feedback-neutral"; }
-    else { stratMsg=`Estrategia neutral: ${STRATEGIES[myKey].name}, sin ventaja táctica clara.`; stratClass="strategy-feedback-neutral"; }
+    else if(myKey===rivalKey){ stratMsg=`= Ambos equipos jugaron con un enfoque similar (${myStrat.name}).`; stratClass="strategy-feedback-neutral"; }
+    else { stratMsg=`Estrategia neutral: ${myStrat.name}, sin ventaja táctica clara.`; stratClass="strategy-feedback-neutral"; }
     extraHTML+=`<div class="strategy-feedback ${stratClass}">${stratMsg}</div>`;
   }
 
@@ -2586,11 +2668,34 @@ function showPressEventModal(event, callback){
           <span class="press-answer-label">${a.label}</span>
         </button>`).join('')}
     </div>
+    <div class="press-timer-track"><div class="press-timer-fill" id="pressTimerFill"></div></div>
   </div>`;
   window._pressCallback=callback;
   window._pressEvent=event;
+  window._pressAnswered=false;
+
+  // 8-second countdown — if the player doesn't answer in time, the press
+  // conference closes as if it never happened: no prediction is stored,
+  // so the result later carries no morale effect at all.
+  const DURATION=8000;
+  const fill=document.getElementById("pressTimerFill");
+  if(fill){
+    fill.style.transition=`width ${DURATION}ms linear`;
+    requestAnimationFrame(()=>{ fill.style.width="0%"; });
+  }
+  window._pressTimerId=setTimeout(()=>{
+    if(window._pressAnswered) return;
+    window._pressAnswered=true;
+    document.getElementById("matchOverlay").innerHTML="";
+    pendingPrediction=null; // no answer given — no prediction to resolve later
+    showToast("No respondiste a tiempo — la prensa se queda sin declaraciones.", "toast-neutral");
+    if(window._pressCallback) window._pressCallback();
+  }, DURATION);
 }
 window.choosePressAnswer=function(idx){
+  if(window._pressAnswered) return; // already timed out or answered
+  window._pressAnswered=true;
+  if(window._pressTimerId){ clearTimeout(window._pressTimerId); window._pressTimerId=null; }
   const event=window._pressEvent;
   const answer=event.answers[idx];
   document.getElementById("matchOverlay").innerHTML="";
