@@ -967,7 +967,21 @@ function volverASeleccion(){
 
 /* ========= POSITION SLOTS ========= */
 function renderSlotContent(slot, player, label, rating, starHTML){
-  slot.innerHTML=`<span class="pos-rating">${rating}</span><div class="player-info">${player.name}${starHTML}<div class="player-pos-label">${label}</div></div>`;
+  const statusIcons=getSlotStatusIconsHTML(player);
+  slot.innerHTML=`${statusIcons}<span class="pos-rating">${rating}</span><div class="player-info">${player.name}${starHTML}<div class="player-pos-label">${label}</div></div>`;
+}
+/* Small status icon row shown ABOVE the pitch circle — injury, card, and
+   scorer streak, so the player's situation is visible at a glance without
+   having to check the convocados table. */
+function getSlotStatusIconsHTML(p){
+  const icons=[];
+  if(p.injury) icons.push(`<span class="pitch-status-icon" title="Lesionado">✚</span>`);
+  if(p.suspended) icons.push(`<span class="pitch-status-icon" title="Sancionado">🚫</span>`);
+  else if((p.yellowCount||0)>=1) icons.push(`<span class="pitch-status-icon" title="Tarjeta amarilla acumulada">🟨</span>`);
+  const streak=scorerStreaks[p.name]||0;
+  if(streak>0) icons.push(`<span class="pitch-status-icon" title="Racha goleadora">🔥</span>`);
+  if(!icons.length) return "";
+  return `<div class="pitch-status-row">${icons.join("")}</div>`;
 }
 
 /* Refresh the on-pitch rating/star display for every starter based on their
@@ -1011,9 +1025,7 @@ function buildFormationSlots(code){
       const isDef=i===0,isAtt=i===T-1;
       const labels=lineLabels(n,isDef,isAtt);
       const top=T===1?45:78-i*(78-14)/(T-1);
-      labels.forEach((label,j)=>{
-        slots.push({label,left:(j+1)/(labels.length+1)*100,top});
-      });
+      addArcedLine(slots,labels,top,i===0);
     });
     return slots;
   }
@@ -1021,13 +1033,39 @@ function buildFormationSlots(code){
   const T=layout.length; // includes goalkeeper line
   layout.forEach((labels,i)=>{
     let top;
-    if(i===0) top=91.4; // goalkeeper always at the very back
-    else top=78-(i-1)*(78-14)/(T-2<=0?1:T-2);
-    labels.forEach((label,j)=>{
-      slots.push({label,left:(j+1)/(labels.length+1)*100,top});
-    });
+    if(i===0){ slots.push({label:"POR",left:50,top:91.4}); return; } // goalkeeper always centered, no arc
+    top=78-(i-1)*(78-14)/(T-2<=0?1:T-2);
+    addArcedLine(slots,labels,top,false);
   });
   return slots;
+}
+/* Adds a line of players with a natural arc instead of a flat row — the
+   CENTER of each line bulges slightly toward the opponent's goal, while
+   the players closer to the touchlines stay a bit further back, exactly
+   how tactical boards in other football games draw formations (e.g. in
+   a back four the two center-backs sit a touch deeper than the full-backs
+   relative to... actually the opposite: widest players sit deeper, central
+   players push forward — same logic for every line on the pitch). */
+function addArcedLine(slots,labels,baseTop,isGoalkeeperLine){
+  const n=labels.length;
+  labels.forEach((label,j)=>{
+    const left=(j+1)/(n+1)*100;
+    let top=baseTop;
+    if(!isGoalkeeperLine && n>1){
+      // Distance from the horizontal center of the line, normalized 0..1
+      // (0 = dead center, 1 = at the touchline edge of the line)
+      const center=(n+1)/2;
+      const distFromCenter=Math.abs(j+1-center)/((n-1)/2 || 1);
+      // Arc depth: wider lines (more players) get a more pronounced curve.
+      const arcDepth=Math.min(6, 2.5+n*0.6);
+      // The center of the line always pushes TOWARD the opponent's goal
+      // (i.e. toward smaller top% if this is an attacking line near top:14,
+      // or toward smaller top% — i.e. forward — for a defensive line near
+      // top:78 too, since "forward" always means a smaller top value).
+      top=baseTop - (1-distFromCenter)*arcDepth*0.85;
+    }
+    slots.push({label,left,top});
+  });
 }
 function renderPitch(code){
   pitchEl.querySelectorAll(".position").forEach(el=>el.remove());

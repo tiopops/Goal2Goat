@@ -1154,3 +1154,23 @@ body.dark-theme .press-prediction-neutral{background:#1a1a1a;border-color:#333;c
   width:100%;height:100%;background:var(--gold);
   border-radius:3px;
 }
+
+/* PITCH STATUS ICONS — shown above the player circle (injury/card/streak) */
+.pitch-status-row{
+  position:absolute;
+  top:-16px;left:50%;
+  transform:translateX(-50%);
+  display:flex;gap:2px;
+  white-space:nowrap;
+  pointer-events:none;
+  z-index:6;
+}
+.pitch-status-icon{
+  font-size:11px;
+  line-height:1;
+  filter:drop-shadow(0 1px 2px rgba(0,0,0,.8));
+}
+@media(max-width:1050px){
+  .pitch-status-row{top:-13px}
+  .pitch-status-icon{font-size:9px}
+}
