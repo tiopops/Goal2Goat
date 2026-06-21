@@ -975,7 +975,7 @@ function renderSlotContent(slot, player, label, rating, starHTML){
    having to check the convocados table. */
 function getSlotStatusIconsHTML(p){
   const icons=[];
-  if(p.injury) icons.push(`<span class="pitch-status-icon" title="Lesionado">✚</span>`);
+  if(p.injury) icons.push(`<span class="pitch-status-icon pitch-status-injury" title="Lesionado">✚</span>`);
   if(p.suspended) icons.push(`<span class="pitch-status-icon" title="Sancionado">🚫</span>`);
   else if((p.yellowCount||0)>=1) icons.push(`<span class="pitch-status-icon" title="Tarjeta amarilla acumulada">🟨</span>`);
   const streak=scorerStreaks[p.name]||0;
@@ -1025,7 +1025,7 @@ function buildFormationSlots(code){
       const isDef=i===0,isAtt=i===T-1;
       const labels=lineLabels(n,isDef,isAtt);
       const top=T===1?45:78-i*(78-14)/(T-1);
-      addArcedLine(slots,labels,top,i===0);
+      addArcedLine(slots,labels,top,i===0,isAtt);
     });
     return slots;
   }
@@ -1035,31 +1035,42 @@ function buildFormationSlots(code){
     let top;
     if(i===0){ slots.push({label:"POR",left:50,top:91.4}); return; } // goalkeeper always centered, no arc
     top=78-(i-1)*(78-14)/(T-2<=0?1:T-2);
-    addArcedLine(slots,labels,top,false);
+    const isAttackLine=(i===T-1);
+    addArcedLine(slots,labels,top,false,isAttackLine);
   });
   return slots;
 }
 /* Adds a line of players with a natural arc instead of a flat row. The
    curve is based on each player's horizontal distance from the pitch's
    absolute center (50% width) — NOT from the line's own midpoint — so the
-   whole line forms one smooth, continuous arc. Players near the touchlines
-   push toward the opponent's goal (smaller top%); players near the center
-   of the pitch stay further back at baseTop. This avoids the previous bug
-   where lines with an even player count (e.g. two strikers EI/DC/DC/ED)
-   produced a broken double-dip instead of one clean arc. */
-function addArcedLine(slots,labels,baseTop,isGoalkeeperLine){
+   whole line forms one smooth, continuous arc regardless of player count
+   (odd or even).
+
+   Defense and midfield lines curve CONCAVE toward their own goal: the
+   wide players (touchline side) push forward, the central players stay
+   back — like a smile opening toward the opponent's goal.
+
+   The ATTACK line curves the OPPOSITE way (CONVEX): the central striker(s)
+   push forward toward goal, the wide forwards stay back — forming a spear
+   point toward the opponent's goal, matching real tactical board visuals. */
+function addArcedLine(slots,labels,baseTop,isGoalkeeperLine,isAttackLine){
   const n=labels.length;
   labels.forEach((label,j)=>{
     const left=(j+1)/(n+1)*100;
     let top=baseTop;
     if(!isGoalkeeperLine && n>1){
       // Distance from the pitch's horizontal center (50%), normalized 0..1
-      // (0 = dead center of the pitch, 1 = at the touchline)
       const distFromPitchCenter=Math.abs(left-50)/50;
-      // Arc depth: wider lines get a slightly more pronounced curve, but
-      // every line — odd or even player count — now forms one smooth arc.
-      const arcDepth=Math.min(7, 3+n*0.55);
-      top=baseTop - distFromPitchCenter*arcDepth;
+      // Stronger, more visible curvature than before.
+      const arcDepth=Math.min(11, 5+n*0.9);
+      const direction=isAttackLine ? -1 : 1;
+      // Concave (defense/midfield): wide players forward -> -depth*dist
+      // Convex (attack): central players forward -> -depth*(1-dist)
+      if(isAttackLine){
+        top=baseTop - (1-distFromPitchCenter)*arcDepth;
+      } else {
+        top=baseTop - distFromPitchCenter*arcDepth;
+      }
     }
     slots.push({label,left,top});
   });
