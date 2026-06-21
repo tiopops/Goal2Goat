@@ -1019,7 +1019,7 @@ function buildFormationSlots(code){
     // nothing crashes, though every formation actually used in the game
     // is covered above.
     const lines=code.split("-").map(Number);
-    const slots=[{label:"POR",left:50,top:91.4}];
+    const slots=[{label:"POR",left:50,top:85}];
     const T=lines.length;
     lines.forEach((n,i)=>{
       const isDef=i===0,isAtt=i===T-1;
@@ -1033,7 +1033,7 @@ function buildFormationSlots(code){
   const T=layout.length; // includes goalkeeper line
   layout.forEach((labels,i)=>{
     let top;
-    if(i===0){ slots.push({label:"POR",left:50,top:91.4}); return; } // goalkeeper always centered, no arc
+    if(i===0){ slots.push({label:"POR",left:50,top:85}); return; } // goalkeeper always centered, no arc
     top=78-(i-1)*(78-14)/(T-2<=0?1:T-2);
     const isAttackLine=(i===T-1);
     addArcedLine(slots,labels,top,false,isAttackLine);
