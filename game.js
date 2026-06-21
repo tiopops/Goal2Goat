@@ -558,6 +558,36 @@ function scrollToCenter(id, delay){
   scrollToEl(id, delay, "center");
 }
 
+/* Explicit, tactically-correct layout per formation code. Each entry lists
+   the line-by-line position labels exactly as a real formation would be
+   drawn — e.g. a 4-3-3's midfield trio is three central midfielders (MC),
+   not a winger-mediocentro-winger line (that would be a 4-3-3 with wide
+   forwards instead, which is already represented by the EI/DC/ED attack
+   line). This replaces the old generic n-based heuristic that mislabeled
+   several formations (e.g. 4-3-3 showed EI/MC/ED instead of MC/MC/MC).
+   Only the 8 position codes that exist in the player database are used
+   (POR, DFC, LI, LD, MC, EI, ED, DC) — no MCD/MP, since no player owns
+   those labels and it would make those slots impossible to fill with a★. */
+const FORMATION_LAYOUTS = {
+  "2-3-5":    [["POR"],["DFC","DFC"],["MC","MC","MC"],["EI","DC","DC","DC","ED"]],
+  "3-4-3":    [["POR"],["DFC","DFC","DFC"],["LI","MC","MC","LD"],["EI","DC","ED"]],
+  "3-4-1-2":  [["POR"],["DFC","DFC","DFC"],["LI","MC","MC","LD"],["MC"],["DC","DC"]],
+  "3-5-2":    [["POR"],["DFC","DFC","DFC"],["LI","MC","MC","MC","LD"],["DC","DC"]],
+  "3-6-1":    [["POR"],["DFC","DFC","DFC"],["LI","MC","MC","MC","MC","LD"],["DC"]],
+  "4-1-4-1":  [["POR"],["LI","DFC","DFC","LD"],["MC"],["EI","MC","MC","ED"],["DC"]],
+  "4-2-3-1":  [["POR"],["LI","DFC","DFC","LD"],["MC","MC"],["EI","MC","ED"],["DC"]],
+  "4-2-4":    [["POR"],["LI","DFC","DFC","LD"],["MC","MC"],["EI","DC","DC","ED"]],
+  "4-3-1-2":  [["POR"],["LI","DFC","DFC","LD"],["MC","MC","MC"],["MC"],["DC","DC"]],
+  "4-3-3":    [["POR"],["LI","DFC","DFC","LD"],["MC","MC","MC"],["EI","DC","ED"]],
+  "4-4-2":    [["POR"],["LI","DFC","DFC","LD"],["EI","MC","MC","ED"],["DC","DC"]],
+  "4-5-1":    [["POR"],["LI","DFC","DFC","LD"],["LI","MC","MC","MC","LD"],["DC"]],
+  "5-2-2-1":  [["POR"],["LI","DFC","DFC","DFC","LD"],["MC","MC"],["EI","ED"],["DC"]],
+  "5-3-2":    [["POR"],["LI","DFC","DFC","DFC","LD"],["MC","MC","MC"],["DC","DC"]],
+  "5-4-1":    [["POR"],["LI","DFC","DFC","DFC","LD"],["LI","MC","MC","LD"],["DC"]],
+  "6-3-1":    [["POR"],["LI","DFC","DFC","DFC","DFC","LD"],["MC","MC","MC"],["DC"]],
+};
+
+
 /* ---------- INIT ---------- */
 applyFormationBonus(FORMATIONS.equilibrada.find(f=>f.code==="4-4-2").bonus);
 renderPitch("4-4-2");
@@ -962,34 +992,6 @@ function lineLabels(n,isDef,isAtt){
   if(n===6)return["EI","MC","MC","MC","MC","ED"];
   return Array(n).fill("MC");
 }
-/* Explicit, tactically-correct layout per formation code. Each entry lists
-   the line-by-line position labels exactly as a real formation would be
-   drawn — e.g. a 4-3-3's midfield trio is three central midfielders (MC),
-   not a winger-mediocentro-winger line (that would be a 4-3-3 with wide
-   forwards instead, which is already represented by the EI/DC/ED attack
-   line). This replaces the old generic n-based heuristic that mislabeled
-   several formations (e.g. 4-3-3 showed EI/MC/ED instead of MC/MC/MC).
-   Only the 8 position codes that exist in the player database are used
-   (POR, DFC, LI, LD, MC, EI, ED, DC) — no MCD/MP, since no player owns
-   those labels and it would make those slots impossible to fill with a★. */
-const FORMATION_LAYOUTS = {
-  "2-3-5":    [["POR"],["DFC","DFC"],["MC","MC","MC"],["EI","DC","DC","DC","ED"]],
-  "3-4-3":    [["POR"],["DFC","DFC","DFC"],["LI","MC","MC","LD"],["EI","DC","ED"]],
-  "3-4-1-2":  [["POR"],["DFC","DFC","DFC"],["LI","MC","MC","LD"],["MC"],["DC","DC"]],
-  "3-5-2":    [["POR"],["DFC","DFC","DFC"],["LI","MC","MC","MC","LD"],["DC","DC"]],
-  "3-6-1":    [["POR"],["DFC","DFC","DFC"],["LI","MC","MC","MC","MC","LD"],["DC"]],
-  "4-1-4-1":  [["POR"],["LI","DFC","DFC","LD"],["MC"],["EI","MC","MC","ED"],["DC"]],
-  "4-2-3-1":  [["POR"],["LI","DFC","DFC","LD"],["MC","MC"],["EI","MC","ED"],["DC"]],
-  "4-2-4":    [["POR"],["LI","DFC","DFC","LD"],["MC","MC"],["EI","DC","DC","ED"]],
-  "4-3-1-2":  [["POR"],["LI","DFC","DFC","LD"],["MC","MC","MC"],["MC"],["DC","DC"]],
-  "4-3-3":    [["POR"],["LI","DFC","DFC","LD"],["MC","MC","MC"],["EI","DC","ED"]],
-  "4-4-2":    [["POR"],["LI","DFC","DFC","LD"],["EI","MC","MC","ED"],["DC","DC"]],
-  "4-5-1":    [["POR"],["LI","DFC","DFC","LD"],["LI","MC","MC","MC","LD"],["DC"]],
-  "5-2-2-1":  [["POR"],["LI","DFC","DFC","DFC","LD"],["MC","MC"],["EI","ED"],["DC"]],
-  "5-3-2":    [["POR"],["LI","DFC","DFC","DFC","LD"],["MC","MC","MC"],["DC","DC"]],
-  "5-4-1":    [["POR"],["LI","DFC","DFC","DFC","LD"],["LI","MC","MC","LD"],["DC"]],
-  "6-3-1":    [["POR"],["LI","DFC","DFC","DFC","DFC","LD"],["MC","MC","MC"],["DC"]],
-};
 function buildFormationSlots(code){
   const layout=FORMATION_LAYOUTS[code];
   if(!layout){
