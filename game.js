@@ -388,25 +388,25 @@ const PRESS_PREDICTIONS = [
     ]
   },
   {
-    q: "«¿Resolveréis esto en los 90 minutos, sin penaltis?»",
+    q: "«¿Se va a decidir esto en los 90 minutos, sin penaltis?»",
     answers: [
       { text: "«Sí, lo resolveremos en el tiempo reglamentario.»", stance: "positive", label: "Seguro",
-        check: (r) => r.won && !r.penalties },
-      { text: "«Lo importante es pasar la eliminatoria, como sea.»", stance: "neutral", label: "Pragmático",
+        check: (r) => !r.penalties },
+      { text: "«Lo importante es resolverlo, como sea.»", stance: "neutral", label: "Pragmático",
         check: () => null },
       { text: "«Puede decidirse en los detalles, incluso en penaltis.»", stance: "negative", label: "Cauteloso",
-        check: (r) => r.penalties || !r.won },
+        check: (r) => r.penalties },
     ]
   },
   {
-    q: "«¿Os lleváis los tres puntos hoy?»",
+    q: "«¿Vais a marcar más de un gol en este partido?»",
     answers: [
-      { text: "«Sí, vamos a ganar este partido.»", stance: "positive", label: "Determinado",
-        check: (r) => r.won },
-      { text: "«Iremos paso a paso, sin adelantarnos.»", stance: "neutral", label: "Cauto",
+      { text: "«Sí, tenemos gol en las botas.»", stance: "positive", label: "Ofensivo",
+        check: (r) => r.myGoals > 1 },
+      { text: "«Con uno nos conformamos si hace falta.»", stance: "neutral", label: "Pragmático",
         check: () => null },
-      { text: "«Va a ser un partido muy igualado.»", stance: "negative", label: "Mesurado",
-        check: (r) => !r.won },
+      { text: "«Va a costarnos encontrar el gol hoy.»", stance: "negative", label: "Cauteloso",
+        check: (r) => r.myGoals <= 1 },
     ]
   },
   {
@@ -454,14 +454,14 @@ const PRESS_PREDICTIONS = [
     ]
   },
   {
-    q: "«¿Es este el partido más importante de vuestro Mundial hasta ahora?»",
+    q: "«¿Va a ser un partido de muchas ocasiones para ambos equipos?»",
     answers: [
-      { text: "«Sí, y vamos a estar a la altura.»", stance: "positive", label: "Consciente",
-        check: (r) => r.won },
-      { text: "«Todos los partidos del Mundial son igual de importantes.»", stance: "neutral", label: "Diplomático",
+      { text: "«Sí, esto va a ser ida y vuelta.»", stance: "positive", label: "Espectáculo",
+        check: (r) => (r.myGoals + r.oppGoals) >= 3 },
+      { text: "«Depende de cómo se plantee el partido.»", stance: "neutral", label: "Flexible",
         check: () => null },
-      { text: "«La presión puede jugarnos una mala pasada.»", stance: "negative", label: "Honesto",
-        check: (r) => !r.won },
+      { text: "«Va a ser un partido cerrado y táctico.»", stance: "negative", label: "Realista",
+        check: (r) => (r.myGoals + r.oppGoals) < 3 },
     ]
   },
 ];
@@ -589,9 +589,15 @@ const FORMATION_LAYOUTS = {
 
 
 /* ---------- INIT ---------- */
-applyFormationBonus(FORMATIONS.equilibrada.find(f=>f.code==="4-4-2").bonus);
-renderPitch("4-4-2");
-renderFormationList("equilibrada");
+const inheritedBonus=restoreInheritedFormation();
+applyFormationBonus(inheritedBonus || FORMATIONS.equilibrada.find(f=>f.code==="4-4-2").bonus);
+renderPitch(currentFormation.code);
+renderFormationList(currentFormation.category);
+// Sync the category tab buttons (Ofensiva/Equilibrada/Defensiva) with
+// whichever category the restored (or default) formation belongs to.
+document.querySelectorAll(".formation-tab").forEach(tab=>{
+  tab.classList.toggle("active", tab.dataset.cat===currentFormation.category);
+});
 updateStats();
 updateDraftCounter();
 renderMobileFormationInfo();
@@ -1129,18 +1135,37 @@ function applyMatchFatigue(){
   const attackingStrategies=['tiki_taka','presion_alta','gegenpressing','futbol_total','ataque_bandas','juego_directo'];
   const isAttackingStrategy=myKey&&attackingStrategies.includes(myKey);
 
+  // Track which player(s) scored this match — they tire a bit more from
+  // the extra effort (sprints, pressing to get the goal), a nod to the
+  // "tired goalscorer" pattern without overdoing it.
+  const scorers=new Set(generateMatchSummary._scorers||[]);
+
   usedPlayers.forEach(p=>{
     if(!p.placedPos) return;
-    // Base random fatigue loss per match: 8-22 points
-    let loss=8+Math.random()*14;
-    // Positions that run more in attacking systems tire faster when one is active
-    const runningPositions=['EI','ED','DC','MC'];
-    if(isAttackingStrategy&&runningPositions.includes(p.placedPos)){
-      loss+=Math.random()*10; // extra 0-10 fatigue
+
+    // Goalkeepers barely tire — minimal running involved in a real match.
+    if(p.placedPos==='POR'){
+      p.fatigue=Math.max(0, Math.round((p.fatigue===undefined?100:p.fatigue)-(2+Math.random()*3)));
+      return;
     }
-    // Defenders tire a bit less in general (less ground covered historically)
-    if(['DFC','LI','LD'].includes(p.placedPos)){
-      loss*=0.8;
+
+    // Base random fatigue loss per match: gentle, 4-9 points — a player
+    // can comfortably go 6-8 matches before needing real concern.
+    let loss=4+Math.random()*5;
+
+    // Central defenders cover the least ground — lightest loss.
+    if(p.placedPos==='DFC'){
+      loss*=0.6;
+    }
+    // Full-backs/wingers/forwards/midfielders run more, especially when
+    // the active strategy demands it.
+    const runningPositions=['EI','ED','DC','MC','LI','LD'];
+    if(isAttackingStrategy&&runningPositions.includes(p.placedPos)){
+      loss+=Math.random()*4; // small extra, 0-4
+    }
+    // A player who scored works a bit harder than average that match.
+    if(scorers.has(p.name)){
+      loss+=Math.random()*3;
     }
     p.fatigue=Math.max(0, Math.round((p.fatigue===undefined?100:p.fatigue)-loss));
   });
@@ -1183,7 +1208,7 @@ function stageLabel(){
 function getFatigueBarHTML(p){
   const f=(p.fatigue===undefined)?100:p.fatigue;
   const color=getFatigueColor(p);
-  return `<div class="fatigue-bar-wrap" title="Cansancio: ${f}%"><div class="fatigue-bar fatigue-${color}" style="width:${f}%"></div></div>`;
+  return `<div class="fatigue-bar-wrap" title="Resistencia: ${f}%"><div class="fatigue-bar fatigue-${color}" style="width:${f}%"></div></div>`;
 }
 function updateConvocadosTable(){
   const el=document.getElementById("convocadosTable");
@@ -1205,7 +1230,7 @@ function updateConvocadosTable(){
     const clickable=canSwap?` onclick="onConvocadoClick(${i})" style="cursor:pointer"`:'';
     rows+=`<tr${sel}${clickable}><td>${i+1}</td><td>${p.name}${cross}${cardBadge}${streak}</td><td>${fatigueBar}</td><td>${p.placedPos||'?'} ${star}</td><td>${r}</td></tr>`;
   });
-  el.innerHTML=rows?`<table><thead><tr><th>#</th><th>Jugador</th><th title="Cansancio">⚡</th><th>Pos</th><th>★</th></tr></thead><tbody>${rows}</tbody></table>`:"";
+  el.innerHTML=rows?`<table><thead><tr><th>#</th><th>Jugador</th><th title="Resistencia">Resistencia</th><th>Pos</th><th>★</th></tr></thead><tbody>${rows}</tbody></table>`:"";
   // Update star bonus display
   const sbEl=document.getElementById("starBonus");
   const sbVal=document.getElementById("starBonusVal");
@@ -1246,7 +1271,7 @@ function updateBenchTable(){
     const clickable=canSwap?` onclick="onBenchClick(${i})" style="cursor:pointer"`:'';
     rows+=`<tr${sel}${clickable}><td>${p.name}${cross}${cardBadge}</td><td>${fatigueBar}</td><td>${(p.positions||[]).join('/')}</td><td>${p.rating||0}</td></tr>`;
   });
-  el.innerHTML=rows?`<table><thead><tr><th>Jugador</th><th title="Cansancio">⚡</th><th>Pos</th><th>★</th></tr></thead><tbody>${rows}</tbody></table>`:"";
+  el.innerHTML=rows?`<table><thead><tr><th>Jugador</th><th title="Resistencia">Resistencia</th><th>Pos</th><th>★</th></tr></thead><tbody>${rows}</tbody></table>`:"";
 }
 
 /* ========= PRE-MATCH SWAPS (convocados <-> bench) ========= */
@@ -2590,12 +2615,12 @@ function resolvePendingPrediction(matchResult){
   }
   const correct=answer.check(matchResult);
   if(correct===true){
-    const delta=14;
+    const delta=8;
     changeMorale(delta);
     return {label:answer.label, outcome:"correct", delta,
       text:`🎙 Promesa cumplida ("${answer.label}"): +${delta} moral.`};
   } else {
-    const delta=-12;
+    const delta=-8;
     changeMorale(delta);
     return {label:answer.label, outcome:"wrong", delta,
       text:`🎙 Promesa incumplida ("${answer.label}"): ${delta} moral.`};
@@ -2667,10 +2692,33 @@ window.toggleChainPlayer=function(idx, slots){
 };
 window.confirmChainRun=function(){
   const selected=window._chainSelected.map(i=>window._chainPlayers[i]);
-  // Save full player objects so the next run can pre-place them
-  try{ sessionStorage.setItem('g2g_inherited', JSON.stringify(selected)); }catch(e){}
+  // Save full player objects so the next run can pre-place them, plus the
+  // formation that was used — the new run will suggest the same one.
+  try{
+    sessionStorage.setItem('g2g_inherited', JSON.stringify(selected));
+    sessionStorage.setItem('g2g_inherited_formation', JSON.stringify(currentFormation));
+  }catch(e){}
   location.reload();
 };
+function restoreInheritedFormation(){
+  // Restore the formation used in the previous run, if this is a chain
+  // run continuation — called BEFORE the initial pitch render, so the
+  // correct formation shows from the very first frame.
+  try{
+    const rawF=sessionStorage.getItem('g2g_inherited_formation');
+    if(rawF){
+      const savedFormation=JSON.parse(rawF);
+      if(savedFormation && savedFormation.category && savedFormation.code){
+        const f=FORMATIONS[savedFormation.category]?.find(x=>x.code===savedFormation.code);
+        if(f){
+          currentFormation={category:savedFormation.category, code:savedFormation.code};
+          return f.bonus;
+        }
+      }
+    }
+  }catch(e){}
+  return null;
+}
 function loadInheritedPlayers(){
   try{
     const raw=sessionStorage.getItem('g2g_inherited');
@@ -2678,6 +2726,7 @@ function loadInheritedPlayers(){
     inheritedPlayers=JSON.parse(raw);
     sessionStorage.removeItem('g2g_inherited');
   }catch(e){ inheritedPlayers=[]; }
+  try{ sessionStorage.removeItem('g2g_inherited_formation'); }catch(e){}
 }
 loadInheritedPlayers();
 
@@ -2738,7 +2787,8 @@ function applyInheritedPlayers(){
     const star=inPos&&positions[0]===label?' <span class="star">★</span>':'';
     const r=inPos?(p.rating||70):Math.round((p.rating||70)*0.85);
     p.placedPos=label;
-    const playerObj={...p, placedPos:label};
+    // Fresh start for a new chain run — fully rested, no carried-over injury/cards.
+    const playerObj={...p, placedPos:label, fatigue:100, injury:null, suspended:false, suspendedNextMatch:false, yellowCount:0, cardStatus:null};
     slot._player=playerObj;
     slot.classList.add('locked');
     renderSlotContent(slot, playerObj, label, r, star);
