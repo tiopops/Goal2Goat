@@ -941,10 +941,11 @@ function showRosterModal(team,players){
 /* ========= PICK PLAYER ========= */
 function pickPlayer(player){
   playSound('select');
+  const rosterTarget=window.innerWidth<=1050?document.getElementById("playerCard"):playerCardEl;
   if(phase==="bench"){
     bench.push({...player});
     benchCount++;
-    playerCardEl.innerHTML="";
+    if(rosterTarget) rosterTarget.innerHTML="";
     updateBenchTable();
     if(benchCount>=5){
       phase="ready";
@@ -969,9 +970,11 @@ function pickPlayer(player){
     }
     return;
   }
-  // Draft phase: select for pitch
+  // Draft phase: select for pitch — hide the roster (whichever container
+  // it's currently shown in) and show the "JUGADOR SELECCIONADO" banner
+  // in its place.
   selectedPlayer={...player};
-  playerCardEl.innerHTML="";
+  if(rosterTarget) rosterTarget.innerHTML="";
   highlightPos(selectedPlayer.positions||[]);
   showSelectedPlayerBanner(selectedPlayer);
   scrollToEl("pitch");
