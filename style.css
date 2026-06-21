@@ -158,10 +158,10 @@ body.dark-theme .version-tag{color:#555}
 /* POSITIONS */
 .position{
   position:absolute;
-  width:44px;height:44px;border-radius:50%;
+  width:52px;height:52px;border-radius:50%;
   border:2.5px dashed rgba(255,255,255,.7);
   color:#fff;display:flex;align-items:center;justify-content:center;
-  font-size:10px;font-weight:700;
+  font-size:12px;font-weight:700;
   background:rgba(0,0,0,.15);backdrop-filter:blur(2px);
   cursor:pointer;z-index:5;
   transition:transform .15s ease,border-color .15s ease,box-shadow .15s ease;
@@ -171,7 +171,7 @@ body.dark-theme .version-tag{color:#555}
 .position:hover:not(.locked){transform:translate(-50%,-50%) scale(1.1);border-color:#ffd700}
 .position.locked{
   background:rgba(0,80,30,.75);border:2px solid rgba(255,255,255,.85);
-  font-size:16px;font-weight:800;
+  font-size:19px;font-weight:800;
 }
 .position.highlight-pos{border-color:#ffd700;box-shadow:0 0 12px #ffd700}
 .position.empty-slot{
@@ -180,13 +180,13 @@ body.dark-theme .version-tag{color:#555}
 }
 @keyframes pulseRed{0%{box-shadow:0 0 0 0 rgba(255,68,68,.6)}70%{box-shadow:0 0 0 8px rgba(255,68,68,0)}100%{box-shadow:0 0 0 0 rgba(255,68,68,0)}}
 .player-info{
-  position:absolute;top:46px;left:50%;transform:translateX(-50%);
-  width:78px;text-align:center;color:#fff;font-size:9px;font-weight:700;
-  text-shadow:1px 1px 2px #000;line-height:1.2;pointer-events:none;
+  position:absolute;top:53px;left:50%;transform:translateX(-50%);
+  width:88px;text-align:center;color:#fff;font-size:11px;font-weight:700;
+  text-shadow:1px 1px 2px #000;line-height:1.25;pointer-events:none;
 }
-.player-pos-label{font-size:8px;font-weight:600;color:#ffd700;opacity:.9;margin-top:1px}
-.pos-label-inside{font-size:9px;font-weight:700}
-.pos-rating{font-size:14px;font-weight:800}
+.player-pos-label{font-size:10px;font-weight:600;color:#ffd700;opacity:.9;margin-top:1px}
+.pos-label-inside{font-size:11px;font-weight:700}
+.pos-rating{font-size:16px;font-weight:800}
 
 /* CENTER BOTTOM STRIP */
 #centerBottom{
@@ -318,8 +318,8 @@ body.dark-theme .version-tag{color:#555}
   .app-header-logo{gap:6px}
   .support-btn{font-size:10px;padding:4px 8px;letter-spacing:.5px}
   .box{padding:8px}
-  .position{width:36px;height:36px;font-size:8px}
-  .player-info{width:60px;font-size:8px;top:38px}
+  .position{width:42px;height:42px;font-size:9px}
+  .player-info{width:70px;font-size:9px;top:43px}
   .match-scoreline{font-size:28px}
   .main-action-btn{font-size:18px;padding:8px 16px}
 }
@@ -1158,7 +1158,7 @@ body.dark-theme .press-prediction-neutral{background:#1a1a1a;border-color:#333;c
 /* PITCH STATUS ICONS — shown above the player circle (injury/card/streak) */
 .pitch-status-row{
   position:absolute;
-  top:-19px;left:50%;
+  top:-23px;left:50%;
   transform:translateX(-50%);
   display:flex;gap:3px;
   white-space:nowrap;
@@ -1176,7 +1176,7 @@ body.dark-theme .press-prediction-neutral{background:#1a1a1a;border-color:#333;c
   -webkit-text-stroke:.5px #e74c3c;
 }
 @media(max-width:1050px){
-  .pitch-status-row{top:-15px}
+  .pitch-status-row{top:-18px}
   .pitch-status-icon{font-size:12px}
 }
 

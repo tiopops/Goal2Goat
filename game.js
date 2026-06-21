@@ -1055,6 +1055,10 @@ function buildFormationSlots(code){
    point toward the opponent's goal, matching real tactical board visuals. */
 function addArcedLine(slots,labels,baseTop,isGoalkeeperLine,isAttackLine){
   const n=labels.length;
+  // The opponent's penalty box top edge sits at 16.4% of pitch height —
+  // no attacking player should be pushed further forward than that, or
+  // they'd visually sit on top of / past the box line.
+  const ATTACK_MIN_TOP=17;
   labels.forEach((label,j)=>{
     const left=(j+1)/(n+1)*100;
     let top=baseTop;
@@ -1063,11 +1067,11 @@ function addArcedLine(slots,labels,baseTop,isGoalkeeperLine,isAttackLine){
       const distFromPitchCenter=Math.abs(left-50)/50;
       // Stronger, more visible curvature than before.
       const arcDepth=Math.min(11, 5+n*0.9);
-      const direction=isAttackLine ? -1 : 1;
       // Concave (defense/midfield): wide players forward -> -depth*dist
       // Convex (attack): central players forward -> -depth*(1-dist)
       if(isAttackLine){
         top=baseTop - (1-distFromPitchCenter)*arcDepth;
+        top=Math.max(ATTACK_MIN_TOP, top); // never push past the box edge
       } else {
         top=baseTop - distFromPitchCenter*arcDepth;
       }
