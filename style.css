@@ -125,14 +125,14 @@ body.dark-theme .version-tag{color:#555}
 }
 .settings-dropdown.open{display:flex}
 .settings-item{
-  background:transparent;color:#ddd;border:none;border-bottom:1px solid #333;
+  background:transparent;color:var(--text);border:none;border-bottom:1px solid var(--line);
   font-size:11px;font-weight:700;letter-spacing:.5px;
   padding:10px 14px;cursor:pointer;transition:.15s;
   display:flex;align-items:center;gap:8px;text-align:left;
   font-family:'Bebas Neue',Impact,sans-serif;font-size:14px;
 }
 .settings-item:last-child{border-bottom:none}
-.settings-item:hover{background:#2a2a2a;color:var(--gold)}
+.settings-item:hover{background:var(--row-hover);color:var(--gold)}
 .topbar-dot{
   width:7px;height:7px;border-radius:50%;background:#666;
   display:inline-block;transition:background .15s,box-shadow .15s;flex-shrink:0;
@@ -730,8 +730,7 @@ body.dark-theme .vb-row:nth-child(even){background:transparent}
 /* Dark theme settings dropdown */
 body.dark-theme .settings-toggle{background:#0a0c0d;border-color:#444}
 body.dark-theme .settings-dropdown{background:#0a0c0d;border-color:var(--gold)}
-body.dark-theme .settings-item{color:#ccc;border-bottom-color:#222}
-body.dark-theme .settings-item:hover{background:#111;color:var(--gold)}
+body.dark-theme .settings-item:hover{background:var(--row-hover);color:var(--gold)}
 
 /* ===== AUTH HEADER BUTTONS ===== */
 .header-auth-btn{
