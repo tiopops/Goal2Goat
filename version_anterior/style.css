@@ -649,6 +649,7 @@ body.dark-theme .chain-player-card.selected{background:#1a1600}
 }
 .toast-pos{background:var(--accent);color:#fff;box-shadow:0 0 12px rgba(15,107,59,.5)}
 .toast-neg{background:var(--red);color:#fff;box-shadow:0 0 12px rgba(192,57,43,.5)}
+.toast-neutral{background:#444;color:#fff;box-shadow:0 0 12px rgba(0,0,0,.5)}
 
 /* Recovered players box in match modal */
 .recovered-box{
@@ -1110,3 +1111,36 @@ body.dark-theme .strategy-desc{background:#0a0c0d}
     direction:ltr;
   }
 }
+
+/* CARD SECTION (yellow/red cards in match result modal) */
+.card-section{background:#fffaf0;border:1px solid #e6d6a8;padding:10px;margin-bottom:12px}
+.card-section p{font-size:12px;font-weight:700;margin-bottom:4px}
+.card-section ul{margin:0;padding-left:18px;font-size:12px}
+body.dark-theme .card-section{background:#3a3322;border-color:#5a5030}
+
+/* CARD BADGE in convocados/bench tables */
+.card-badge{font-size:11px;margin-left:3px;cursor:help}
+.card-badge-suspended{filter:none}
+
+/* FATIGUE BAR (cansancio) */
+.fatigue-bar-wrap{
+  width:30px;height:6px;background:#e0d9ce;border-radius:3px;overflow:hidden;
+  display:inline-block;cursor:help;
+}
+.fatigue-bar{height:100%;border-radius:3px;transition:width .3s,background .3s}
+.fatigue-bar.fatigue-green{background:#2ecc71}
+.fatigue-bar.fatigue-yellow{background:#f1c40f}
+.fatigue-bar.fatigue-red{background:#e74c3c}
+body.dark-theme .fatigue-bar-wrap{background:#333}
+
+/* PRESS PREDICTION RESULT (resolved post-match) */
+.press-prediction-section{
+  padding:10px;margin-bottom:12px;font-size:12px;font-weight:600;
+  border-radius:2px;
+}
+.press-prediction-good{background:#eafaf0;border:1px solid #b8e6c8;color:#0f6b3b}
+.press-prediction-bad{background:#fff0f0;border:1px solid #f5c6c6;color:#a02020}
+.press-prediction-neutral{background:#f4f4f4;border:1px solid #ddd;color:#666}
+body.dark-theme .press-prediction-good{background:#0f2a1a;border-color:#1a4a2a;color:#9fe8b8}
+body.dark-theme .press-prediction-bad{background:#2a0f0f;border-color:#4a1a1a;color:#f0a8a8}
+body.dark-theme .press-prediction-neutral{background:#1a1a1a;border-color:#333;color:#aaa}

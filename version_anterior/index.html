@@ -17,7 +17,7 @@
 <header id="appHeader">
   <div class="app-header-logo">
     <div class="logo" onclick="location.reload()" style="cursor:pointer" title="Volver al inicio">GOAL2GOAT</div>
-    <div class="version-tag">v0.325</div>
+    <div class="version-tag">v0.331</div>
   </div>
   <div class="app-header-actions">
     <button class="support-btn" onclick="showSupportModal()">APOYA A GOAL2GOAT</button>
@@ -94,7 +94,7 @@
   <div class="auth-modal" style="max-width:420px;text-align:center">
     <div class="auth-logo">🐐 GOAL2GOAT</div>
     <p style="font-size:13px;color:var(--text);line-height:1.6;margin-bottom:20px">
-      Bienvenido a <strong style="color:var(--gold)">Goal2Goat</strong>, un proyecto en desarrollo de un juego de fútbol con toques de roguelike. Si quieres que siga creciendo y añadiendo actualizaciones y mejoras sin que la publicidad entre en el once titular, ¡no dudes en apoyarnos!
+      Bienvenido a <strong style="color:var(--gold)">Goal2Goat</strong>, un manager de fútbol con alma de roguelike. Tu apoyo nos ayuda a seguir mejorando el juego, añadiendo contenido nuevo y manteniéndolo libre de publicidad invasiva.
     </p>
     <a href="https://paypal.me/goal2goat" target="_blank" class="support-pay-btn" style="display:block;margin-bottom:10px">APOYA A GOAL2GOAT</a>
     <button class="auth-submit-btn" id="welcomeStartBtn" style="background:#1a2a1a;border:1px solid var(--gold);color:var(--gold)">EMPEZAR A JUGAR</button>
@@ -176,7 +176,7 @@
         </div>
       </div>
       <div id="benchSection" style="display:none">
-        <div class="bench-title">BANQUILLO 🪑 <span id="benchCounter">0/3</span></div>
+        <div class="bench-title">BANQUILLO 🪑 <span id="benchCounter">0/5</span></div>
         <div id="benchTable"></div>
       </div>
     </div>
@@ -309,35 +309,23 @@
       <div class="howto-content">
         <div class="howto-step">
           <span class="howto-num">1</span>
-          <div>Elige tu <strong>formación</strong> (4-4-2, 3-4-3...) antes de empezar. Solo se puede elegir ahora — define la disposición de tu once para todo el torneo.</div>
+          <div>Elige tu <strong>formación</strong> (queda fija todo el torneo) y arma tu once: <strong>SELECCIONAR JUGADOR</strong> o <strong>EQUIPO RÁPIDO</strong>. Coloca cada jugador en su <strong>posición ★</strong> para el 100% de rendimiento.</div>
         </div>
         <div class="howto-step">
           <span class="howto-num">2</span>
-          <div><strong>SELECCIONAR JUGADOR</strong> baraja dos selecciones al azar. Elige una y selecciona uno de sus 5 jugadores para colocarlo en el campo. O usa <strong>EQUIPO RÁPIDO</strong> para generar toda la plantilla de golpe.</div>
+          <div><strong>Grupos → Octavos → Cuartos → Semis → Final.</strong> Antes de cada partido: rueda de prensa (predicción → moral) y elige una <strong>estrategia</strong> que contrarreste al rival.</div>
         </div>
         <div class="howto-step">
           <span class="howto-num">3</span>
-          <div>Coloca a cada jugador en su <strong>posición ★</strong> para que rinda al 100%. Fuera de posición pierde un 15% y no suma al bonus de posición.</div>
+          <div>Hasta <strong>5 cambios 🪑</strong> por partido. Vigila lesiones ✚, sanciones 🚫 y la barra de <strong>Resistencia</strong> — descansa en el banquillo para recuperarla.</div>
         </div>
         <div class="howto-step">
           <span class="howto-num">4</span>
-          <div>Completa <strong>11 titulares + 3 en el banquillo 🪑</strong>. Ponle nombre a tu equipo y empieza el torneo.</div>
+          <div>La <strong>moral</strong> sube con goles/aciertos y baja con derrotas/fallos. El <strong>clima</strong> y las <strong>rachas 🔥</strong> también influyen en cada partido.</div>
         </div>
         <div class="howto-step">
           <span class="howto-num">5</span>
-          <div><strong>Fase de Grupos</strong> (3 partidos, pasan los 2 primeros) → <strong>Octavos → Cuartos → Semis → Final</strong>. Antes de cada partido elige una <strong>estrategia</strong> (Tiki-Taka, Catenaccio...) que contrarreste el estilo del rival para ganar ventaja táctica.</div>
-        </div>
-        <div class="howto-step">
-          <span class="howto-num">6</span>
-          <div>Puedes hacer hasta <strong>2 cambios 🪑</strong> entre titulares y suplentes antes de cada partido. Imprescindible si hay lesionados ✚.</div>
-        </div>
-        <div class="howto-step">
-          <span class="howto-num">7</span>
-          <div>La <strong>moral</strong> sube con goles a favor (+3 cada uno) y buenas respuestas en rueda de prensa, y baja con goles en contra (-4 cada uno) y derrotas. El <strong>clima ☁</strong> afecta a las estadísticas. Los goleadores en racha muestran 🔥 y dan ventaja en partido.</div>
-        </div>
-        <div class="howto-step">
-          <span class="howto-num">8</span>
-          <div>Cada partida puntúa de <strong>0 a 1000</strong>. Ganar el Mundial de forma brillante es la única forma de acercarse al máximo. Tu puntuación se guarda en tu perfil si estás registrado.</div>
+          <div>Cada run puntúa de <strong>0 a 1000</strong>. Gana el Mundial para acercarte al máximo — tu mejor puntuación se guarda si estás registrado.</div>
         </div>
       </div>
     </div>

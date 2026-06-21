@@ -326,70 +326,146 @@ const WEATHER_TYPES = [
   { id:'wind',     label:'💨 Viento fuerte',    desc:'Juego directo · PASE -15%',                   effect:{passing:-0.12} },
   { id:'hot',      label:'🌡 Calor extremo',    desc:'Fatiga máxima · RITMO -25%, DEFENSA -10%',    effect:{pace:-0.20, defense:-0.08} },
 ];
-const PRESS_EVENTS = {
-  win: [
-    { q:"«¿Crees que el rival no estaba a vuestro nivel en este Mundial?»", answers:[
-      { text:"«Fueron un rival duro. El resultado es merecido para ambos.»", moral:+15, label:"Humilde" },
-      { text:"«Sinceramente, esperábamos más dificultades de ellos.»",        moral:+3,  label:"Arrogante" },
-      { text:"«Hemos tenido algo de suerte. Hay que reconocerlo.»",           moral:-6,  label:"Inseguro" },
-    ]},
-    { q:"«¿Es este el mejor partido que habéis jugado en el torneo?»", answers:[
-      { text:"«Todavía hay margen de mejora. El Mundial no ha terminado.»",   moral:+12, label:"Exigente" },
-      { text:"«Sí, creo que hemos jugado un fútbol extraordinario hoy.»",     moral:+5,  label:"Satisfecho" },
-      { text:"«Es pronto para hacer valoraciones. Vamos paso a paso.»",       moral:+3,  label:"Cauto" },
-    ]},
-    { q:"«¿Sois favoritos para ganar el Mundial tras esta victoria?»", answers:[
-      { text:"«Partido a partido. El siguiente rival es lo único que importa.»",moral:+14, label:"Profesional" },
-      { text:"«Podemos ganar este Mundial, no lo dudo.»",                      moral:+2,  label:"Arrogante" },
-      { text:"«Hay selecciones muy fuertes. Seamos cautos.»",                  moral:+10, label:"Sensato" },
-    ]},
-    { q:"«Los aficionados de todo el mundo siguen vuestra aventura. ¿Qué les dices?»", answers:[
-      { text:"«Que sigan creyendo en nosotros. Lo damos todo por ellos.»",    moral:+18, label:"Emotivo" },
-      { text:"«Que esperen a ver qué hacemos en la siguiente eliminatoria.»",  moral:+8,  label:"Comedido" },
-      { text:"«Este escudo y este torneo merecen lo mejor de nosotros.»",     moral:+10, label:"Apasionado" },
-    ]},
-  ],
-  draw: [
-    { q:"«¿Os ha faltado fuerza para cerrar el partido en el Mundial?»", answers:[
-      { text:"«Nos faltó un punto de acierto, pero el grupo está fuerte.»",   moral:+8,  label:"Analítico" },
-      { text:"«El empate es un resultado justo, ambos equipos lucharon bien.»",moral:+5,  label:"Ecuánime" },
-      { text:"«Deberíamos haber ganado. Es muy frustrante en un torneo así.»", moral:-5,  label:"Frustrado" },
-    ]},
-    { q:"«¿El empate complica vuestra clasificación en el grupo?»", answers:[
-      { text:"«La clasificación depende de nosotros. Seguimos concentrados.»", moral:+10, label:"Sereno" },
-      { text:"«Sí, nos complica. Tenemos que ganar el próximo partido sí o sí.»",moral:-8, label:"Preocupado" },
-      { text:"«Un punto en el Mundial siempre tiene valor. Seguimos vivos.»",  moral:+6,  label:"Positivo" },
-    ]},
-    { q:"«¿Le faltó ambición al equipo para buscar la victoria?»", answers:[
-      { text:"«Quizás sí. Es algo que hablaremos en el vestuario.»",           moral:+4,  label:"Honesto" },
-      { text:"«No, el rival fue muy ordenado defensivamente.»",                moral:+7,  label:"Objetivo" },
-      { text:"«El equipo lo ha dado absolutamente todo. Sin dudarlo.»",        moral:+10, label:"Defensor" },
-    ]},
-  ],
-  loss: [
-    { q:"«¿Qué ha fallado hoy en el partido?»", answers:[
-      { text:"«El rival fue mejor hoy. En el fútbol pasa. Seguimos adelante.»",moral:+12, label:"Maduro" },
-      { text:"«Los árbitros nos perjudicaron en momentos clave.»",             moral:-8,  label:"Excusas" },
-      { text:"«Ha sido un desastre. No encuentro palabras para explicarlo.»",  moral:-18, label:"Hundido" },
-    ]},
-    { q:"«¿Quedan fuerzas en el grupo tras este golpe en el Mundial?»", answers:[
-      { text:"«Absolutamente. Las adversidades forjan equipos grandes.»",      moral:+16, label:"Convicción" },
-      { text:"«Necesito tiempo para procesar lo que ha pasado hoy.»",          moral:-3,  label:"Dubitativo" },
-      { text:"«Hay cosas que replantear internamente, sin duda.»",             moral:-10, label:"Cuestionador" },
-    ]},
-    { q:"«¿El equipo bajó los brazos en algún momento del partido?»", answers:[
-      { text:"«Jamás. El compromiso del grupo es total e indiscutible.»",      moral:+10, label:"Defensor" },
-      { text:"«Algunos jugadores perdieron la concentración. Hay que mejorar.»",moral:-5, label:"Crítico" },
-      { text:"«Es una pregunta difícil que yo mismo me estoy haciendo.»",      moral:-14, label:"Cuestionador" },
-    ]},
-    { q:"«¿Hay tensión en el vestuario tras la derrota?»", answers:[
-      { text:"«El grupo está unido. Una derrota en el Mundial no nos rompe.»", moral:+14, label:"Unidad" },
-      { text:"«Hay reflexión, que es sano y necesario tras esto.»",            moral:+6,  label:"Diplomático" },
-      { text:"«Lo que ocurre en el vestuario se queda en el vestuario.»",      moral:-2,  label:"Evasivo" },
-    ]},
-  ],
-};
-const MAX_SWAPS_PER_MATCH = 2;
+/* Predictive pre-match press questions: shown when the rival is revealed,
+   BEFORE the match is played. Each answer is a prediction (positive/neutral/
+   negative). After the match, the prediction is checked against the real
+   result: correct guess -> moral up, wrong guess -> moral down, neutral
+   answer -> moral stays the same regardless of outcome. */
+const PRESS_PREDICTIONS = [
+  {
+    q: "«¿Dejaréis la portería a cero en este encuentro?»",
+    answers: [
+      { text: "«Sí, vamos a por la portería a cero.»", stance: "positive", label: "Confiado",
+        check: (r) => r.oppGoals === 0 },
+      { text: "«Es difícil de prometer, ya veremos.»", stance: "neutral", label: "Prudente",
+        check: () => null },
+      { text: "«Lo veo complicado, encajaremos.»", stance: "negative", label: "Pesimista",
+        check: (r) => r.oppGoals > 0 },
+    ]
+  },
+  {
+    q: "«¿Vais a ganar por tres goles o más?»",
+    answers: [
+      { text: "«Sí, vamos a golear.»", stance: "positive", label: "Ambicioso",
+        check: (r) => (r.myGoals - r.oppGoals) >= 3 },
+      { text: "«No me atrevo a predecir el marcador.»", stance: "neutral", label: "Cauto",
+        check: () => null },
+      { text: "«No, será un partido ajustado.»", stance: "negative", label: "Realista",
+        check: (r) => (r.myGoals - r.oppGoals) < 3 },
+    ]
+  },
+  {
+    q: "«Lleváis varios partidos viendo tarjetas. ¿Seguiréis acumulando en este encuentro?»",
+    answers: [
+      { text: "«No, vamos a jugar limpio esta vez.»", stance: "positive", label: "Comprometido",
+        check: (r) => r.cardsCount === 0 },
+      { text: "«No puedo controlar lo que pite el árbitro.»", stance: "neutral", label: "Evasivo",
+        check: () => null },
+      { text: "«Es probable, el rival nos hará cometer faltas.»", stance: "negative", label: "Sincero",
+        check: (r) => r.cardsCount > 0 },
+    ]
+  },
+  {
+    q: "«¿Marcaréis en la primera mitad?»",
+    answers: [
+      { text: "«Sí, saldremos a por todas desde el inicio.»", stance: "positive", label: "Decidido",
+        check: (r) => r.myGoals > 0 },
+      { text: "«El plan de partido lo decide el míster.»", stance: "neutral", label: "Diplomático",
+        check: () => null },
+      { text: "«Seremos pacientes, no hay prisa por marcar.»", stance: "negative", label: "Paciente",
+        check: (r) => r.myGoals === 0 },
+    ]
+  },
+  {
+    q: "«¿Va a generar más ocasiones el rival que vosotros?»",
+    answers: [
+      { text: "«No, vamos a dominar nosotros el partido.»", stance: "positive", label: "Dominante",
+        check: (r) => r.myGoals >= r.oppGoals },
+      { text: "«Cada partido es distinto, lo veremos en el campo.»", stance: "neutral", label: "Flexible",
+        check: () => null },
+      { text: "«Es un rival fuerte, nos costará contenerlo.»", stance: "negative", label: "Respetuoso",
+        check: (r) => r.oppGoals > r.myGoals },
+    ]
+  },
+  {
+    q: "«¿Se va a decidir esto en los 90 minutos, sin penaltis?»",
+    answers: [
+      { text: "«Sí, lo resolveremos en el tiempo reglamentario.»", stance: "positive", label: "Seguro",
+        check: (r) => !r.penalties },
+      { text: "«Lo importante es resolverlo, como sea.»", stance: "neutral", label: "Pragmático",
+        check: () => null },
+      { text: "«Puede decidirse en los detalles, incluso en penaltis.»", stance: "negative", label: "Cauteloso",
+        check: (r) => r.penalties },
+    ]
+  },
+  {
+    q: "«¿Vais a marcar más de un gol en este partido?»",
+    answers: [
+      { text: "«Sí, tenemos gol en las botas.»", stance: "positive", label: "Ofensivo",
+        check: (r) => r.myGoals > 1 },
+      { text: "«Con uno nos conformamos si hace falta.»", stance: "neutral", label: "Pragmático",
+        check: () => null },
+      { text: "«Va a costarnos encontrar el gol hoy.»", stance: "negative", label: "Cauteloso",
+        check: (r) => r.myGoals <= 1 },
+    ]
+  },
+  {
+    q: "«¿Encajaréis dos goles o más en este partido?»",
+    answers: [
+      { text: "«No, vamos a estar sólidos atrás.»", stance: "positive", label: "Defensivo",
+        check: (r) => r.oppGoals < 2 },
+      { text: "«El fútbol siempre da sorpresas.»", stance: "neutral", label: "Filosófico",
+        check: () => null },
+      { text: "«El rival tiene mucho gol, puede pasar.»", stance: "negative", label: "Realista",
+        check: (r) => r.oppGoals >= 2 },
+    ]
+  },
+  {
+    q: "«¿Terminará el partido en empate?»",
+    answers: [
+      { text: "«No, vamos a buscar la victoria hasta el final.»", stance: "positive", label: "Ambicioso",
+        check: (r) => !r.draw },
+      { text: "«Cualquier resultado es posible en este torneo.»", stance: "neutral", label: "Realista",
+        check: () => null },
+      { text: "«Puede que ninguno consiga abrir la lata.»", stance: "negative", label: "Cauteloso",
+        check: (r) => r.draw },
+    ]
+  },
+  {
+    q: "«¿Marcará alguno de vuestros delanteros estrella?»",
+    answers: [
+      { text: "«Sí, va a estar fino delante de la portería.»", stance: "positive", label: "Confiado",
+        check: (r) => r.myGoals > 0 },
+      { text: "«El gol es cosa de todo el equipo.»", stance: "neutral", label: "Colectivo",
+        check: () => null },
+      { text: "«El rival lo va a tener vigilado de cerca.»", stance: "negative", label: "Precavido",
+        check: (r) => r.myGoals === 0 },
+    ]
+  },
+  {
+    q: "«¿Va a ser un partido con mucho juego físico?»",
+    answers: [
+      { text: "«No, queremos jugar al fútbol, no a la guerra.»", stance: "positive", label: "Conciliador",
+        check: (r) => r.cardsCount === 0 },
+      { text: "«Eso lo decide el árbitro, no nosotros.»", stance: "neutral", label: "Evasivo",
+        check: () => null },
+      { text: "«Va a ser un partido muy disputado, sin duda.»", stance: "negative", label: "Realista",
+        check: (r) => r.cardsCount > 0 },
+    ]
+  },
+  {
+    q: "«¿Va a ser un partido de muchas ocasiones para ambos equipos?»",
+    answers: [
+      { text: "«Sí, esto va a ser ida y vuelta.»", stance: "positive", label: "Espectáculo",
+        check: (r) => (r.myGoals + r.oppGoals) >= 3 },
+      { text: "«Depende de cómo se plantee el partido.»", stance: "neutral", label: "Flexible",
+        check: () => null },
+      { text: "«Va a ser un partido cerrado y táctico.»", stance: "negative", label: "Realista",
+        check: (r) => (r.myGoals + r.oppGoals) < 3 },
+    ]
+  },
+];
+const MAX_SWAPS_PER_MATCH = 5;
 
 /* ========= COMPETITION STATE (World Cup format) ========= */
 const ROUND_NAMES = ["Octavos de Final","Cuartos de Final","Semifinal","Final"];
@@ -482,10 +558,46 @@ function scrollToCenter(id, delay){
   scrollToEl(id, delay, "center");
 }
 
+/* Explicit, tactically-correct layout per formation code. Each entry lists
+   the line-by-line position labels exactly as a real formation would be
+   drawn — e.g. a 4-3-3's midfield trio is three central midfielders (MC),
+   not a winger-mediocentro-winger line (that would be a 4-3-3 with wide
+   forwards instead, which is already represented by the EI/DC/ED attack
+   line). This replaces the old generic n-based heuristic that mislabeled
+   several formations (e.g. 4-3-3 showed EI/MC/ED instead of MC/MC/MC).
+   Only the 8 position codes that exist in the player database are used
+   (POR, DFC, LI, LD, MC, EI, ED, DC) — no MCD/MP, since no player owns
+   those labels and it would make those slots impossible to fill with a★. */
+const FORMATION_LAYOUTS = {
+  "2-3-5":    [["POR"],["DFC","DFC"],["MC","MC","MC"],["EI","DC","DC","DC","ED"]],
+  "3-4-3":    [["POR"],["DFC","DFC","DFC"],["LI","MC","MC","LD"],["EI","DC","ED"]],
+  "3-4-1-2":  [["POR"],["DFC","DFC","DFC"],["LI","MC","MC","LD"],["MC"],["DC","DC"]],
+  "3-5-2":    [["POR"],["DFC","DFC","DFC"],["LI","MC","MC","MC","LD"],["DC","DC"]],
+  "3-6-1":    [["POR"],["DFC","DFC","DFC"],["LI","MC","MC","MC","MC","LD"],["DC"]],
+  "4-1-4-1":  [["POR"],["LI","DFC","DFC","LD"],["MC"],["EI","MC","MC","ED"],["DC"]],
+  "4-2-3-1":  [["POR"],["LI","DFC","DFC","LD"],["MC","MC"],["EI","MC","ED"],["DC"]],
+  "4-2-4":    [["POR"],["LI","DFC","DFC","LD"],["MC","MC"],["EI","DC","DC","ED"]],
+  "4-3-1-2":  [["POR"],["LI","DFC","DFC","LD"],["MC","MC","MC"],["MC"],["DC","DC"]],
+  "4-3-3":    [["POR"],["LI","DFC","DFC","LD"],["MC","MC","MC"],["EI","DC","ED"]],
+  "4-4-2":    [["POR"],["LI","DFC","DFC","LD"],["EI","MC","MC","ED"],["DC","DC"]],
+  "4-5-1":    [["POR"],["LI","DFC","DFC","LD"],["LI","MC","MC","MC","LD"],["DC"]],
+  "5-2-2-1":  [["POR"],["LI","DFC","DFC","DFC","LD"],["MC","MC"],["EI","ED"],["DC"]],
+  "5-3-2":    [["POR"],["LI","DFC","DFC","DFC","LD"],["MC","MC","MC"],["DC","DC"]],
+  "5-4-1":    [["POR"],["LI","DFC","DFC","DFC","LD"],["LI","MC","MC","LD"],["DC"]],
+  "6-3-1":    [["POR"],["LI","DFC","DFC","DFC","DFC","LD"],["MC","MC","MC"],["DC"]],
+};
+
+
 /* ---------- INIT ---------- */
-applyFormationBonus(FORMATIONS.equilibrada.find(f=>f.code==="4-4-2").bonus);
-renderPitch("4-4-2");
-renderFormationList("equilibrada");
+const inheritedBonus=restoreInheritedFormation();
+applyFormationBonus(inheritedBonus || FORMATIONS.equilibrada.find(f=>f.code==="4-4-2").bonus);
+renderPitch(currentFormation.code);
+renderFormationList(currentFormation.category);
+// Sync the category tab buttons (Ofensiva/Equilibrada/Defensiva) with
+// whichever category the restored (or default) formation belongs to.
+document.querySelectorAll(".formation-tab").forEach(tab=>{
+  tab.classList.toggle("active", tab.dataset.cat===currentFormation.category);
+});
 updateStats();
 updateDraftCounter();
 renderMobileFormationInfo();
@@ -787,7 +899,7 @@ function pickPlayer(player){
     benchCount++;
     playerCardEl.innerHTML="";
     updateBenchTable();
-    if(benchCount>=3){
+    if(benchCount>=5){
       phase="ready";
       rollBtn.style.display="none";
       const howTo=document.getElementById("howToPlayBox");
@@ -803,7 +915,7 @@ function pickPlayer(player){
       startLedLoop();
     } else {
       rollBtn.disabled=false;
-      rollBtn.textContent=`BANQUILLO ${benchCount}/3`;
+      rollBtn.textContent=`BANQUILLO ${benchCount}/5`;
       scrollToCenter("rollBtn");
     }
     return;
@@ -887,13 +999,30 @@ function lineLabels(n,isDef,isAtt){
   return Array(n).fill("MC");
 }
 function buildFormationSlots(code){
-  const lines=code.split("-").map(Number);
-  const slots=[{label:"POR",left:50,top:91.4}];
-  const T=lines.length;
-  lines.forEach((n,i)=>{
-    const isDef=i===0,isAtt=i===T-1;
-    const labels=lineLabels(n,isDef,isAtt);
-    const top=T===1?45:78-i*(78-14)/(T-1);
+  const layout=FORMATION_LAYOUTS[code];
+  if(!layout){
+    // Fallback for any unmapped code: keep the old generic behaviour so
+    // nothing crashes, though every formation actually used in the game
+    // is covered above.
+    const lines=code.split("-").map(Number);
+    const slots=[{label:"POR",left:50,top:91.4}];
+    const T=lines.length;
+    lines.forEach((n,i)=>{
+      const isDef=i===0,isAtt=i===T-1;
+      const labels=lineLabels(n,isDef,isAtt);
+      const top=T===1?45:78-i*(78-14)/(T-1);
+      labels.forEach((label,j)=>{
+        slots.push({label,left:(j+1)/(labels.length+1)*100,top});
+      });
+    });
+    return slots;
+  }
+  const slots=[];
+  const T=layout.length; // includes goalkeeper line
+  layout.forEach((labels,i)=>{
+    let top;
+    if(i===0) top=91.4; // goalkeeper always at the very back
+    else top=78-(i-1)*(78-14)/(T-2<=0?1:T-2);
     labels.forEach((label,j)=>{
       slots.push({label,left:(j+1)/(labels.length+1)*100,top});
     });
@@ -939,7 +1068,7 @@ function onSlotClick(slot){
   if(draftedCount>=11){
     baseTeamOVR=computeTeamOVR();
     phase="bench";
-    rollBtn.textContent="BANQUILLO 0/3";
+    rollBtn.textContent="BANQUILLO 0/5";
     rollBtn.disabled=false;
     document.getElementById("benchSection").style.display="block";
     playerCardEl.innerHTML="";
@@ -977,7 +1106,71 @@ function effRating(p){
   const inPos=p.positions&&p.positions.includes(p.placedPos);
   const positionFactor=inPos?1:0.85; // 15% penalty when out of position
   const injuryFactor=p.injury?0.6:1;
-  return Math.round(r*positionFactor*injuryFactor);
+  const fatigueFactor=getFatigueFactor(p);
+  return Math.round(r*positionFactor*injuryFactor*fatigueFactor);
+}
+
+/* ========= FATIGUE SYSTEM ========= */
+// Each player has a 0-100 "freshness" bar. 100 = fully rested (green).
+// Above 75: no penalty at all. Below that, rating decays gradually down
+// to a maximum -30% penalty once fatigue is fully in the red (≤25).
+function getFatigueFactor(p){
+  const f=(p.fatigue===undefined)?100:p.fatigue;
+  if(f>=75) return 1;
+  // Linear decay from 1.0 at f=75 down to 0.70 at f=0
+  const factor=0.70+(f/75)*0.30;
+  return Math.max(0.70, Math.min(1, factor));
+}
+function getFatigueColor(p){
+  const f=(p.fatigue===undefined)?100:p.fatigue;
+  if(f>=75) return 'green';
+  if(f>=40) return 'yellow';
+  return 'red';
+}
+// Positions more involved in attacking strategies tire faster when those
+// strategies are actually used — wingers/forwards covering more ground
+// in an offensive setup, defenders working harder under defensive ones.
+function applyMatchFatigue(){
+  const myKey=selectedMatchStrategy;
+  const attackingStrategies=['tiki_taka','presion_alta','gegenpressing','futbol_total','ataque_bandas','juego_directo'];
+  const isAttackingStrategy=myKey&&attackingStrategies.includes(myKey);
+
+  // Track which player(s) scored this match — they tire a bit more from
+  // the extra effort (sprints, pressing to get the goal), a nod to the
+  // "tired goalscorer" pattern without overdoing it.
+  const scorers=new Set(generateMatchSummary._scorers||[]);
+
+  usedPlayers.forEach(p=>{
+    if(!p.placedPos) return;
+
+    // Goalkeepers barely tire — minimal running involved in a real match.
+    if(p.placedPos==='POR'){
+      p.fatigue=Math.max(0, Math.round((p.fatigue===undefined?100:p.fatigue)-(2+Math.random()*3)));
+      return;
+    }
+
+    // Base random fatigue loss per match: gentle, 4-9 points — a player
+    // can comfortably go 6-8 matches before needing real concern.
+    let loss=4+Math.random()*5;
+
+    // Central defenders cover the least ground — lightest loss.
+    if(p.placedPos==='DFC'){
+      loss*=0.6;
+    }
+    // Full-backs/wingers/forwards/midfielders run more, especially when
+    // the active strategy demands it.
+    const runningPositions=['EI','ED','DC','MC','LI','LD'];
+    if(isAttackingStrategy&&runningPositions.includes(p.placedPos)){
+      loss+=Math.random()*4; // small extra, 0-4
+    }
+    // A player who scored works a bit harder than average that match.
+    if(scorers.has(p.name)){
+      loss+=Math.random()*3;
+    }
+    p.fatigue=Math.max(0, Math.round((p.fatigue===undefined?100:p.fatigue)-loss));
+  });
+  // Bench players who DIDN'T play fully recover
+  bench.forEach(p=>{ p.fatigue=100; });
 }
 function computeTeamOVR(){
   if(!usedPlayers.length) return null;
@@ -1012,6 +1205,11 @@ function stageLabel(){
   return "Torneo completado";
 }
 
+function getFatigueBarHTML(p){
+  const f=(p.fatigue===undefined)?100:p.fatigue;
+  const color=getFatigueColor(p);
+  return `<div class="fatigue-bar-wrap" title="Resistencia: ${f}%"><div class="fatigue-bar fatigue-${color}" style="width:${f}%"></div></div>`;
+}
 function updateConvocadosTable(){
   const el=document.getElementById("convocadosTable");
   if(!el) return;
@@ -1023,14 +1221,16 @@ function updateConvocadosTable(){
     if(inPrimary) stars++;
     const injuryTag=p.injury?` <span class="cross" title="Lesionado">✚(-${p.injury.remaining})</span> `:'';
     const cross=p.injury?injuryTag:'';
+    const cardBadge=getCardBadge(p);
     const star=inPrimary?'<span class="star" title="Posición principal ★">★</span>':'';
     const r=effRating(p);
     const streak=getStreakBadge(p.name);
+    const fatigueBar=getFatigueBarHTML(p);
     const sel=(swapSelection&&swapSelection.source==='conv'&&swapSelection.index===i)?' class="row-selected"':'';
     const clickable=canSwap?` onclick="onConvocadoClick(${i})" style="cursor:pointer"`:'';
-    rows+=`<tr${sel}${clickable}><td>${i+1}</td><td>${p.name}${cross}${streak}</td><td>${p.placedPos||'?'} ${star}</td><td>${r}</td></tr>`;
+    rows+=`<tr${sel}${clickable}><td>${i+1}</td><td>${p.name}${cross}${cardBadge}${streak}</td><td>${fatigueBar}</td><td>${p.placedPos||'?'} ${star}</td><td>${r}</td></tr>`;
   });
-  el.innerHTML=rows?`<table><thead><tr><th>#</th><th>Jugador</th><th>Pos</th><th>★</th></tr></thead><tbody>${rows}</tbody></table>`:"";
+  el.innerHTML=rows?`<table><thead><tr><th>#</th><th>Jugador</th><th title="Resistencia">Resistencia</th><th>Pos</th><th>★</th></tr></thead><tbody>${rows}</tbody></table>`:"";
   // Update star bonus display
   const sbEl=document.getElementById("starBonus");
   const sbVal=document.getElementById("starBonusVal");
@@ -1057,7 +1257,7 @@ function updateConvocadosTable(){
 function updateBenchTable(){
   const el=document.getElementById("benchTable");
   const cnt=document.getElementById("benchCounter");
-  if(cnt) cnt.textContent=bench.length+"/3";
+  if(cnt) cnt.textContent=bench.length+"/5";
   if(!el) return;
   const swapsLeft=MAX_SWAPS_PER_MATCH-swapsUsedThisMatch;
   const canSwap=(phase==='ready')&&swapsLeft>0;
@@ -1065,11 +1265,13 @@ function updateBenchTable(){
   bench.forEach((p,i)=>{
     const injuryTag=p.injury?` <span class="cross">✚(-${p.injury.remaining})</span> `:'';
     const cross=p.injury?injuryTag:'';
+    const cardBadge=getCardBadge(p);
+    const fatigueBar=getFatigueBarHTML(p);
     const sel=(swapSelection&&swapSelection.source==='bench'&&swapSelection.index===i)?' class="row-selected"':'';
     const clickable=canSwap?` onclick="onBenchClick(${i})" style="cursor:pointer"`:'';
-    rows+=`<tr${sel}${clickable}><td>${p.name}${cross}</td><td>${(p.positions||[]).join('/')}</td><td>${p.rating||0}</td></tr>`;
+    rows+=`<tr${sel}${clickable}><td>${p.name}${cross}${cardBadge}</td><td>${fatigueBar}</td><td>${(p.positions||[]).join('/')}</td><td>${p.rating||0}</td></tr>`;
   });
-  el.innerHTML=rows?`<table><thead><tr><th>Jugador</th><th>Pos</th><th>★</th></tr></thead><tbody>${rows}</tbody></table>`:"";
+  el.innerHTML=rows?`<table><thead><tr><th>Jugador</th><th title="Resistencia">Resistencia</th><th>Pos</th><th>★</th></tr></thead><tbody>${rows}</tbody></table>`:"";
 }
 
 /* ========= PRE-MATCH SWAPS (convocados <-> bench) ========= */
@@ -1374,6 +1576,9 @@ function setupGroupStage(){
 /* ---------- OPPONENT SELECTION ---------- */
 function pickNextOpponent(){
   selectedMatchStrategy=null; // fresh strategy choice for each new match
+  applyPendingSuspensions(); // activate/lift card suspensions for the upcoming match
+  updateConvocadosTable();
+  updateBenchTable();
   if(stage==="group"){
     nextOpponent=groupOpponents[groupMatchIdx];
   } else if(stage==="knockout"){
@@ -1410,6 +1615,10 @@ function spinRivalReveal(){
     updateLed();
     if(typeof notifyMobileRivalTab==='function') notifyMobileRivalTab();
     updateLed();
+    // Predictive press conference: shown right as the rival appears,
+    // BEFORE the match is played — the prediction is resolved against
+    // the real result once this match finishes.
+    setTimeout(()=>{ maybeShowPressConference(()=>{}); }, 600);
   },900);
 }
 function renderRivalBox(){
@@ -1638,6 +1847,10 @@ function playMatch(){
   updateScorerStreaks(generateMatchSummary._scorers||[]);
   // Injuries
   const newInjuries=rollInjuries(myPower,oppPower);
+  // Cards (yellow/red)
+  const newCards=rollCards();
+  // Fatigue (titulares lose freshness, bench fully recovers)
+  applyMatchFatigue();
   refreshPitchRatings();
   baseTeamOVR=computeTeamOVR();
   updateConvocadosTable();
@@ -1698,9 +1911,16 @@ function playMatch(){
   if(stage==="group") bestRoundReached=Math.max(bestRoundReached,0);
   else bestRoundReached=Math.max(bestRoundReached, knockoutRound+1);
 
+  // Resolve any pending press prediction against the real match result
+  const predictionResult=resolvePendingPrediction({
+    myGoals, oppGoals, won, draw,
+    penalties: !!penaltyInfo,
+    cardsCount: newCards.length,
+  });
+
   renderMatchHistory();
   updateLed();
-  showMatchModal(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,penaltyInfo);
+  showMatchModal(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,penaltyInfo,newCards,predictionResult);
 }
 document.getElementById("playMatchBtn").addEventListener("click",playMatch);
 
@@ -1841,10 +2061,13 @@ ${goalsHTML}`;
 
 function rollInjuries(myPower,oppPower){
   const fb=currentFormationBonus||{};
-  const extreme=Math.abs(fb.attack||0)+Math.abs(fb.defense||0);
-  let risk=0.034;
-  if(extreme>=12) risk=0.075;
-  if((fb.defense||0)<0&&oppPower>myPower) risk+=0.02;
+  // Recalibrated for the 40-point formation system, where almost every
+  // formation has SOME skew — using a higher, fixed threshold so only
+  // truly extreme picks (very lopsided attack/defense split) count as risky.
+  const extreme=Math.abs((fb.attack||0)-(fb.defense||0));
+  let risk=0.02;
+  if(extreme>=16) risk=0.032;
+  if((fb.defense||0)<(fb.attack||0)&&oppPower>myPower) risk+=0.008;
   const injured=[];
   usedPlayers.forEach(p=>{
     if(injured.length>=1||p.injury) return;
@@ -1861,7 +2084,80 @@ function rollInjuries(myPower,oppPower){
   return injured;
 }
 
-function showMatchModal(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,penaltyInfo){
+/* ========= CARD SYSTEM (yellow/red, real World Cup rules) ========= */
+// Per-player risk calibrated to real World Cup averages: ~1.8 yellow cards
+// and ~0.1 red cards per TEAM per match (11 players), based on historical
+// editions (1990: 3.71 yellows/match total both teams; 2006: ~5.4 — we use
+// a middle-ground average, split evenly between both teams).
+const YELLOW_RISK_PER_PLAYER = 0.017;
+const RED_RISK_PER_PLAYER    = 0.010;
+
+function rollCards(){
+  const cardedThisMatch=[]; // {player, type: 'yellow'|'second_yellow_match'|'yellow2'|'red'}
+  const yellowedThisMatch=new Set();
+  usedPlayers.forEach(p=>{
+    if(p.suspended) return; // already suspended this match, can't play/get carded (shouldn't be on pitch anyway)
+    const r=Math.random();
+    if(r<RED_RISK_PER_PLAYER){
+      // Straight red — automatic suspension for the NEXT match
+      p.suspendedNextMatch=true;
+      p.cardStatus='red';
+      cardedThisMatch.push({player:p, type:'red'});
+    } else if(r<RED_RISK_PER_PLAYER+YELLOW_RISK_PER_PLAYER){
+      yellowedThisMatch.add(p);
+      p.yellowCount=(p.yellowCount||0)+1;
+      if(p.yellowCount>=2){
+        // Second yellow in DIFFERENT matches = accumulation suspension
+        p.suspendedNextMatch=true;
+        p.cardStatus='yellow2';
+        cardedThisMatch.push({player:p, type:'yellow2'});
+        p.yellowCount=0; // reset after serving the suspension trigger
+      } else {
+        p.cardStatus='yellow1';
+        cardedThisMatch.push({player:p, type:'yellow'});
+      }
+    }
+  });
+  // Rare second pass: a player already booked this match has a small chance
+  // of picking up a SECOND yellow in the SAME match (real "doble amarilla"
+  // rule) — straight expulsion + suspension for the next match, regardless
+  // of their accumulation count.
+  const SAME_MATCH_SECOND_YELLOW_RISK=0.05; // 5% of those already booked this match
+  yellowedThisMatch.forEach(p=>{
+    if(p.suspendedNextMatch) return; // already sent off via accumulation or red
+    if(Math.random()<SAME_MATCH_SECOND_YELLOW_RISK){
+      p.suspendedNextMatch=true;
+      p.cardStatus='double_yellow';
+      cardedThisMatch.push({player:p, type:'double_yellow'});
+    }
+  });
+  return cardedThisMatch;
+}
+
+function clearYellowCardsAfterQuarterfinals(){
+  // FIFA rule: accumulated yellow cards are wiped after the quarterfinals,
+  // so nobody misses a final purely from earlier accumulation.
+  usedPlayers.forEach(p=>{ p.yellowCount=0; if(p.cardStatus==='yellow1') p.cardStatus=null; });
+  bench.forEach(p=>{ p.yellowCount=0; if(p.cardStatus==='yellow1') p.cardStatus=null; });
+}
+
+function applyPendingSuspensions(){
+  // Called right before a new match starts — converts "suspended for next
+  // match" flags into an active suspension that blocks that player from
+  // being fielded, then clears the flag once served.
+  [...usedPlayers, ...bench].forEach(p=>{
+    if(p.suspendedNextMatch){
+      p.suspended=true;
+      p.suspendedNextMatch=false;
+    } else if(p.suspended){
+      // Suspension already served last match — lift it now
+      p.suspended=false;
+      p.cardStatus=null;
+    }
+  });
+}
+
+function showMatchModal(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,penaltyInfo,newCards,predictionResult){
   const wasShootout=!!penaltyInfo;
   let resultText, resultClass;
   if(draw){
@@ -1877,7 +2173,24 @@ function showMatchModal(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,
   }
   if(newInjuries.length){
     const ILABELS={leve:"leve (1 partido)",básica:"básica (2 partidos)",grave:"grave (3 partidos)"};
-    extraHTML+=`<div class="injury-section"><p>⚠ Lesiones en ${myTeamName} tras el partido:</p><ul>${newInjuries.map(p=>`<li>${p.name}: lesión ${ILABELS[p.injury.type]}</li>`).join('')}</ul><p class="injury-note">Recuerda: puedes hacer hasta <strong>2 cambios</strong> entre Convocados y Banquillo antes del próximo partido. Hazlo manualmente desde las tablas de la izquierda.</p></div>`;
+    extraHTML+=`<div class="injury-section"><p>⚠ Lesiones en ${myTeamName} tras el partido:</p><ul>${newInjuries.map(p=>`<li>${p.name}: lesión ${ILABELS[p.injury.type]}</li>`).join('')}</ul><p class="injury-note">Recuerda: puedes hacer hasta <strong>5 cambios</strong> entre Convocados y Banquillo antes del próximo partido. Hazlo manualmente desde las tablas de la izquierda.</p></div>`;
+  }
+  if(newCards&&newCards.length){
+    const CARD_LABELS={
+      yellow:       {icon:"🟨", text:"amarilla"},
+      yellow2:      {icon:"🟨🟨", text:"2ª amarilla (acumulación) — sancionado el próximo partido"},
+      double_yellow:{icon:"🟨🟥", text:"doble amarilla — expulsado, sancionado el próximo partido"},
+      red:          {icon:"🟥", text:"roja directa — sancionado el próximo partido"},
+    };
+    extraHTML+=`<div class="card-section"><p>📋 Tarjetas en ${myTeamName} tras el partido:</p><ul>${newCards.map(c=>{
+      const lbl=CARD_LABELS[c.type];
+      return `<li>${lbl.icon} ${c.player.name}: ${lbl.text}</li>`;
+    }).join('')}</ul></div>`;
+  }
+  if(predictionResult){
+    const cls=predictionResult.outcome==='correct'?'press-prediction-good':
+               predictionResult.outcome==='wrong'?'press-prediction-bad':'press-prediction-neutral';
+    extraHTML+=`<div class="press-prediction-section ${cls}">${predictionResult.text}</div>`;
   }
   // Strategy result feedback
   if(selectedMatchStrategy && nextOpponent){
@@ -1926,15 +2239,19 @@ function showMatchModal(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,
     document.getElementById("matchOverlay").innerHTML="";
     switch(outcome){
       case "nextGroupMatch":
-        maybeShowPressEvent(()=>pickNextOpponent(), won, draw);
+        pickNextOpponent();
         break;
       case "groupDone":
         renderMatchHistory();
         showGroupResultsPopup();
         break;
       case "nextKnockoutMatch":
+        // If we're moving FROM Cuartos de Final (index 1) TO Semifinal (index 2),
+        // wipe accumulated yellow cards per FIFA rules — nobody should miss
+        // a final purely from earlier-round accumulation.
+        if(knockoutRound===1) clearYellowCardsAfterQuarterfinals();
         knockoutRound++;
-        maybeShowPressEvent(()=>pickNextOpponent(), won, draw);
+        pickNextOpponent();
         break;
       case "champion":
         showVictory();
@@ -2235,21 +2552,32 @@ function getStreakBadge(playerName){
   const fire="🔥".repeat(Math.min(s,MAX_STREAK_BONUS));
   return `<span class="streak-badge" title="Racha Goleadora">${fire}+${Math.min(s,MAX_STREAK_BONUS)}</span>`;
 }
+function getCardBadge(p){
+  // Shows the player's active card status: a single yellow on file (not
+  // yet suspended), or an active suspension (yellow2/double_yellow/red).
+  if(p.suspended){
+    return `<span class="card-badge card-badge-suspended" title="Sancionado este partido">🚫</span>`;
+  }
+  if((p.yellowCount||0)>=1){
+    return `<span class="card-badge card-badge-yellow" title="Tarjeta amarilla acumulada">🟨</span>`;
+  }
+  return "";
+}
 
-/* ========= PRESS EVENT SYSTEM ========= */
-function maybeShowPressEvent(callback, won, draw){
+/* ========= PRE-MATCH PREDICTIVE PRESS CONFERENCE ========= */
+let pendingPrediction=null; // {event, answerIdx} set when player answers, resolved after the match
+
+function maybeShowPressConference(callback){
   const chance=stage==="knockout"?0.40:0.25;
   if(Math.random()>chance){ callback(); return; }
-  const key=won?"win":draw?"draw":"loss";
-  const pool=PRESS_EVENTS[key];
-  const event=pool[Math.floor(Math.random()*pool.length)];
+  const event=PRESS_PREDICTIONS[Math.floor(Math.random()*PRESS_PREDICTIONS.length)];
   showPressEventModal(event, callback);
 }
 function showPressEventModal(event, callback){
   document.getElementById("matchOverlay").innerHTML=`
   <div class="press-modal">
     <span class="press-icon">🎙</span>
-    <h3>RUEDA DE PRENSA</h3>
+    <h3>RUEDA DE PRENSA · ANTES DEL PARTIDO</h3>
     <p class="press-question">${event.q}</p>
     <div class="press-answers">
       ${event.answers.map((a,i)=>`
@@ -2265,14 +2593,39 @@ function showPressEventModal(event, callback){
 window.choosePressAnswer=function(idx){
   const event=window._pressEvent;
   const answer=event.answers[idx];
-  const delta=answer.moral;
   document.getElementById("matchOverlay").innerHTML="";
-  changeMorale(delta);
-  // Brief feedback toast
-  const sign=delta>0?"+":"";
-  showToast(`${answer.label} · Moral ${sign}${delta}`, delta>0?"toast-pos":"toast-neg");
-  setTimeout(()=>{ if(window._pressCallback) window._pressCallback(); }, 900);
+  // Store the prediction — it will be checked against the real result
+  // once this match is played, and resolved in the match result modal.
+  pendingPrediction={event, answer};
+  showToast(`Promesa hecha: "${answer.label}"`, "toast-neutral");
+  setTimeout(()=>{ if(window._pressCallback) window._pressCallback(); }, 700);
 };
+
+/* Resolves the pending prediction against the real match result.
+   Returns {label, text, delta} for display, or null if there was no
+   pending prediction for this match. */
+function resolvePendingPrediction(matchResult){
+  if(!pendingPrediction) return null;
+  const {event, answer}=pendingPrediction;
+  pendingPrediction=null; // consume it — one prediction per match
+
+  if(answer.stance==="neutral"){
+    return {label:answer.label, outcome:"neutral", delta:0,
+      text:`🎙 Respuesta neutral: la moral no se ve afectada.`};
+  }
+  const correct=answer.check(matchResult);
+  if(correct===true){
+    const delta=8;
+    changeMorale(delta);
+    return {label:answer.label, outcome:"correct", delta,
+      text:`🎙 Promesa cumplida ("${answer.label}"): +${delta} moral.`};
+  } else {
+    const delta=-8;
+    changeMorale(delta);
+    return {label:answer.label, outcome:"wrong", delta,
+      text:`🎙 Promesa incumplida ("${answer.label}"): ${delta} moral.`};
+  }
+}
 
 /* ========= TOAST NOTIFICATION ========= */
 function showToast(msg, cls){
@@ -2339,10 +2692,33 @@ window.toggleChainPlayer=function(idx, slots){
 };
 window.confirmChainRun=function(){
   const selected=window._chainSelected.map(i=>window._chainPlayers[i]);
-  // Save full player objects so the next run can pre-place them
-  try{ sessionStorage.setItem('g2g_inherited', JSON.stringify(selected)); }catch(e){}
+  // Save full player objects so the next run can pre-place them, plus the
+  // formation that was used — the new run will suggest the same one.
+  try{
+    sessionStorage.setItem('g2g_inherited', JSON.stringify(selected));
+    sessionStorage.setItem('g2g_inherited_formation', JSON.stringify(currentFormation));
+  }catch(e){}
   location.reload();
 };
+function restoreInheritedFormation(){
+  // Restore the formation used in the previous run, if this is a chain
+  // run continuation — called BEFORE the initial pitch render, so the
+  // correct formation shows from the very first frame.
+  try{
+    const rawF=sessionStorage.getItem('g2g_inherited_formation');
+    if(rawF){
+      const savedFormation=JSON.parse(rawF);
+      if(savedFormation && savedFormation.category && savedFormation.code){
+        const f=FORMATIONS[savedFormation.category]?.find(x=>x.code===savedFormation.code);
+        if(f){
+          currentFormation={category:savedFormation.category, code:savedFormation.code};
+          return f.bonus;
+        }
+      }
+    }
+  }catch(e){}
+  return null;
+}
 function loadInheritedPlayers(){
   try{
     const raw=sessionStorage.getItem('g2g_inherited');
@@ -2350,6 +2726,7 @@ function loadInheritedPlayers(){
     inheritedPlayers=JSON.parse(raw);
     sessionStorage.removeItem('g2g_inherited');
   }catch(e){ inheritedPlayers=[]; }
+  try{ sessionStorage.removeItem('g2g_inherited_formation'); }catch(e){}
 }
 loadInheritedPlayers();
 
@@ -2358,19 +2735,60 @@ loadInheritedPlayers();
 function applyInheritedPlayers(){
   if(!inheritedPlayers.length) return;
   const slots=getPitchSlots();
-  inheritedPlayers.forEach(p=>{
-    // Find the first unlocked slot matching their primary position
-    const primaryPos=(p.positions&&p.positions[0])||null;
-    let slot=primaryPos?slots.find(s=>!s.classList.contains('locked')&&s.dataset.label===primaryPos):null;
-    // Fallback: any unlocked slot
-    if(!slot) slot=slots.find(s=>!s.classList.contains('locked'));
-    if(!slot) return;
+
+  // Process highest-rated players FIRST, so when two inherited players
+  // compete for the same primary position, the better one gets it and
+  // the other is reassigned sensibly (their own secondary position, or
+  // a position they can actually play) — never an unrelated slot like
+  // POR for an outfield player.
+  const ordered=[...inheritedPlayers].sort((a,b)=>(b.rating||0)-(a.rating||0));
+
+  ordered.forEach(p=>{
+    const positions=p.positions||[];
+    let slot=null;
+
+    // 1) Try every position this player can actually play, in priority
+    //    order (primary first, then secondary), picking the first free slot.
+    for(const pos of positions){
+      slot=slots.find(s=>!s.classList.contains('locked')&&s.dataset.label===pos);
+      if(slot) break;
+    }
+
+    // 2) If none of the player's own positions are free, find the closest
+    //    sensible alternative: prefer a slot in the same "zone" as their
+    //    primary position (defense/midfield/attack), never goalkeeper for
+    //    an outfield player and never an outfield slot for a keeper.
+    if(!slot && positions.length){
+      const ZONES={
+        POR:['POR'],
+        DFC:['DFC','LI','LD'], LI:['LI','DFC','LD'], LD:['LD','DFC','LI'],
+        MC:['MC','EI','ED'], EI:['EI','MC','ED'], ED:['ED','MC','EI'],
+        DC:['DC','EI','ED'],
+      };
+      const zone=ZONES[positions[0]]||[];
+      for(const pos of zone){
+        slot=slots.find(s=>!s.classList.contains('locked')&&s.dataset.label===pos);
+        if(slot) break;
+      }
+    }
+
+    // 3) Absolute last resort: any free slot that is NOT goalkeeper unless
+    //    the player actually is a keeper, and not an outfield slot for a
+    //    keeper either. This avoids the "Maradona en portería" bug.
+    if(!slot){
+      const isKeeper=positions.includes('POR');
+      slot=slots.find(s=>!s.classList.contains('locked') &&
+        (isKeeper ? s.dataset.label==='POR' : s.dataset.label!=='POR'));
+    }
+    if(!slot) return; // no sensible slot available at all — skip
+
     const label=slot.dataset.label;
-    const inPos=p.positions&&p.positions.includes(label);
-    const star=inPos&&p.positions[0]===label?' <span class="star">★</span>':'';
+    const inPos=positions.includes(label);
+    const star=inPos&&positions[0]===label?' <span class="star">★</span>':'';
     const r=inPos?(p.rating||70):Math.round((p.rating||70)*0.85);
     p.placedPos=label;
-    const playerObj={...p, placedPos:label};
+    // Fresh start for a new chain run — fully rested, no carried-over injury/cards.
+    const playerObj={...p, placedPos:label, fatigue:100, injury:null, suspended:false, suspendedNextMatch:false, yellowCount:0, cardStatus:null};
     slot._player=playerObj;
     slot.classList.add('locked');
     renderSlotContent(slot, playerObj, label, r, star);
@@ -2589,7 +3007,7 @@ function _executeQuickBuild(){
   });
 
   // Fill bench (3 players) — simulate 3 more draws
-  const benchNeeded=3-bench.length;
+  const benchNeeded=5-bench.length;
   for(let i=0;i<benchNeeded;i++){
     const [t1,t2]=drawTeamPair();
     const pool1=t1.players.filter(p=>!usedNames.has(p.name));
