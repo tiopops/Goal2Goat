@@ -1195,3 +1195,36 @@ body.dark-theme .press-prediction-neutral{background:#1a1a1a;border-color:#333;c
 .profile-checkbox-row input[type="checkbox"]{
   width:16px;height:16px;cursor:pointer;accent-color:var(--gold);
 }
+
+/* PROFILE TAB STACK — all panes occupy the same grid cell, so the modal
+   always sizes itself to the TALLEST pane, regardless of which tab is
+   active. Switching tabs never resizes the modal. */
+.profile-tab-stack{
+  display:grid;
+}
+.profile-tab-pane{
+  grid-area:1/1;
+  visibility:hidden;
+  pointer-events:none;
+  opacity:0;
+}
+.profile-tab-pane.profile-tab-pane-active{
+  visibility:visible;
+  pointer-events:auto;
+  opacity:1;
+}
+
+/* VERSION NOTES TAB */
+.version-notes-scroll{
+  max-height:280px;overflow-y:auto;
+  padding-right:6px;
+  font-size:12px;color:var(--text);line-height:1.5;
+}
+.version-notes-scroll h4{
+  font-family:'Bebas Neue',Impact,sans-serif;
+  font-size:14px;letter-spacing:.5px;color:var(--gold);
+  margin:14px 0 6px;
+}
+.version-notes-scroll h4:first-child{margin-top:0}
+.version-notes-scroll ul{margin:0 0 4px;padding-left:18px}
+.version-notes-scroll li{margin-bottom:4px}

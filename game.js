@@ -21,7 +21,7 @@ const map={
 'méxico':'mx','mexico':'mx','nigeria':'ng','noruega':'no',
 'paraguay':'py','perú':'pe','peru':'pe','rumanía':'ro','rumania':'ro',
 'rusia':'ru','suecia':'se','suiza':'ch','turquía':'tr','turquia':'tr',
-'ucrania':'ua'
+'ucrania':'ua','senegal':'sn','costa rica':'cr','ghana':'gh'
 };
 for (const k in map){ if(n.includes(k)) return map[k]; }
 return 'un';
@@ -589,6 +589,13 @@ const FORMATION_LAYOUTS = {
 
 
 /* ---------- INIT ---------- */
+// Sync the profile's "NOTAS DE LA VERSIÓN" tab label with the actual
+// version tag in the header, so they never go out of sync.
+(function(){
+  const versionTagEl=document.querySelector(".version-tag");
+  const profileVersionEl=document.getElementById("profileVersionLabel");
+  if(versionTagEl && profileVersionEl) profileVersionEl.textContent=versionTagEl.textContent;
+})();
 const inheritedBonus=restoreInheritedFormation();
 applyFormationBonus(inheritedBonus || FORMATIONS.equilibrada.find(f=>f.code==="4-4-2").bonus);
 renderPitch(currentFormation.code);
@@ -2720,8 +2727,19 @@ function showPressEventModal(event, callback){
   const DURATION=8000;
   const fill=document.getElementById("pressTimerFill");
   if(fill){
-    fill.style.transition=`width ${DURATION}ms linear`;
-    requestAnimationFrame(()=>{ fill.style.width="0%"; });
+    // Force the browser to paint the initial width:100% state BEFORE
+    // starting the transition — a single requestAnimationFrame can fire
+    // before the first paint on slower devices (common on mobile), which
+    // skips the animation entirely and makes the bar invisible. Double
+    // rAF guarantees one full paint cycle has happened first.
+    fill.style.transition="none";
+    fill.style.width="100%";
+    requestAnimationFrame(()=>{
+      requestAnimationFrame(()=>{
+        fill.style.transition=`width ${DURATION}ms linear`;
+        fill.style.width="0%";
+      });
+    });
   }
   window._pressTimerId=setTimeout(()=>{
     if(window._pressAnswered) return;
@@ -3507,19 +3525,16 @@ function initFirebaseAuth(){
   };
 
   window.switchProfileTab=function(tab){
-    const statsTab=$id("profileTabStats"), userTab=$id("profileTabUser");
-    const statsPane=$id("profileStatsPane"), userPane=$id("profileUserPane");
-    if(tab==="stats"){
-      statsTab?.classList.add("auth-tab-active");
-      userTab?.classList.remove("auth-tab-active");
-      if(statsPane) statsPane.style.display="block";
-      if(userPane) userPane.style.display="none";
-    } else {
-      userTab?.classList.add("auth-tab-active");
-      statsTab?.classList.remove("auth-tab-active");
-      if(userPane) userPane.style.display="block";
-      if(statsPane) statsPane.style.display="none";
-    }
+    const tabs={
+      stats: {btn:$id("profileTabStats"), pane:$id("profileStatsPane")},
+      user:  {btn:$id("profileTabUser"),  pane:$id("profileUserPane")},
+      notes: {btn:$id("profileTabNotes"), pane:$id("profileNotesPane")},
+    };
+    Object.entries(tabs).forEach(([key,{btn,pane}])=>{
+      const active=(key===tab);
+      btn?.classList.toggle("auth-tab-active", active);
+      pane?.classList.toggle("profile-tab-pane-active", active);
+    });
   };
 
   // Save match result to Firestore
@@ -3657,6 +3672,7 @@ function initFirebaseAuth(){
   wire("profileLogoutBtn", ()=>{ window.authLogout(); window.closeProfileModal(); });
   wire("profileTabStats",  ()=>window.switchProfileTab("stats"));
   wire("profileTabUser",   ()=>window.switchProfileTab("user"));
+  wire("profileTabNotes",  ()=>window.switchProfileTab("notes"));
   // Auto-save the team-name preference: checkbox toggles save immediately,
   // the text field saves when the user leaves it (blur) or presses Enter.
   (function(){

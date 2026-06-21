@@ -48,56 +48,88 @@
     <div class="auth-tabs">
       <button class="auth-tab auth-tab-active" id="profileTabStats">ESTADÍSTICAS</button>
       <button class="auth-tab" id="profileTabUser">USUARIO</button>
+      <button class="auth-tab" id="profileTabNotes">NOTAS DE LA VERSIÓN <span id="profileVersionLabel"></span></button>
     </div>
 
-    <!-- ESTADÍSTICAS TAB -->
-    <div id="profileStatsPane">
-      <div class="profile-stats-grid">
-        <div class="profile-stat-card">
-          <div class="pstat-val" id="pstat-games">—</div>
-          <div class="pstat-label">PARTIDAS</div>
-        </div>
-        <div class="profile-stat-card wins">
-          <div class="pstat-val" id="pstat-wins">—</div>
-          <div class="pstat-label">VICTORIAS</div>
-        </div>
-        <div class="profile-stat-card">
-          <div class="pstat-val" id="pstat-draws">—</div>
-          <div class="pstat-label">EMPATES</div>
-        </div>
-        <div class="profile-stat-card losses">
-          <div class="pstat-val" id="pstat-losses">—</div>
-          <div class="pstat-label">DERROTAS</div>
-        </div>
-        <div class="profile-stat-card">
-          <div class="pstat-val" id="pstat-gf">—</div>
-          <div class="pstat-label">GOLES A FAVOR</div>
-        </div>
-        <div class="profile-stat-card">
-          <div class="pstat-val" id="pstat-ga">—</div>
-          <div class="pstat-label">GOLES EN CONTRA</div>
-        </div>
-        <div class="profile-stat-card best">
-          <div class="pstat-val" id="pstat-best">—</div>
-          <div class="pstat-label">MEJOR PUNTUACIÓN</div>
-        </div>
-        <div class="profile-stat-card titles">
-          <div class="pstat-val">🏆 <span id="pstat-titles">—</span></div>
-          <div class="pstat-label">TÍTULOS</div>
+    <!-- All panes stack in the same grid cell, so the modal always sizes
+         itself to whichever pane is tallest — no resizing jump on tab switch. -->
+    <div class="profile-tab-stack">
+
+      <!-- ESTADÍSTICAS TAB -->
+      <div id="profileStatsPane" class="profile-tab-pane profile-tab-pane-active">
+        <div class="profile-stats-grid">
+          <div class="profile-stat-card">
+            <div class="pstat-val" id="pstat-games">—</div>
+            <div class="pstat-label">PARTIDAS</div>
+          </div>
+          <div class="profile-stat-card wins">
+            <div class="pstat-val" id="pstat-wins">—</div>
+            <div class="pstat-label">VICTORIAS</div>
+          </div>
+          <div class="profile-stat-card">
+            <div class="pstat-val" id="pstat-draws">—</div>
+            <div class="pstat-label">EMPATES</div>
+          </div>
+          <div class="profile-stat-card losses">
+            <div class="pstat-val" id="pstat-losses">—</div>
+            <div class="pstat-label">DERROTAS</div>
+          </div>
+          <div class="profile-stat-card">
+            <div class="pstat-val" id="pstat-gf">—</div>
+            <div class="pstat-label">GOLES A FAVOR</div>
+          </div>
+          <div class="profile-stat-card">
+            <div class="pstat-val" id="pstat-ga">—</div>
+            <div class="pstat-label">GOLES EN CONTRA</div>
+          </div>
+          <div class="profile-stat-card best">
+            <div class="pstat-val" id="pstat-best">—</div>
+            <div class="pstat-label">MEJOR PUNTUACIÓN</div>
+          </div>
+          <div class="profile-stat-card titles">
+            <div class="pstat-val">🏆 <span id="pstat-titles">—</span></div>
+            <div class="pstat-label">TÍTULOS</div>
+          </div>
         </div>
       </div>
-    </div>
 
-    <!-- USUARIO TAB -->
-    <div id="profileUserPane" style="display:none">
-      <label class="profile-field-label" for="preferredTeamNameInput">NOMBRE DEL EQUIPO</label>
-      <input type="text" id="preferredTeamNameInput" maxlength="24" placeholder="Ej: Dream Team FC" class="team-name-input">
-      <label class="profile-checkbox-row">
-        <input type="checkbox" id="useFixedTeamNameCheckbox">
-        <span>Usar siempre como nombre de equipo</span>
-      </label>
-      <p class="profile-field-hint">Si lo activas, no se te preguntará el nombre del equipo al formarlo — se usará este automáticamente.</p>
-      <button class="auth-submit-btn" style="background:#c0392b;margin-top:14px" id="profileLogoutBtn">CERRAR SESIÓN</button>
+      <!-- USUARIO TAB -->
+      <div id="profileUserPane" class="profile-tab-pane">
+        <label class="profile-field-label" for="preferredTeamNameInput">NOMBRE DEL EQUIPO</label>
+        <input type="text" id="preferredTeamNameInput" maxlength="24" placeholder="Ej: Dream Team FC" class="team-name-input">
+        <label class="profile-checkbox-row">
+          <input type="checkbox" id="useFixedTeamNameCheckbox">
+          <span>Usar siempre como nombre de equipo</span>
+        </label>
+        <p class="profile-field-hint">Si lo activas, no se te preguntará el nombre del equipo al formarlo — se usará este automáticamente.</p>
+        <button class="auth-submit-btn" style="background:#c0392b;margin-top:14px" id="profileLogoutBtn">CERRAR SESIÓN</button>
+      </div>
+
+      <!-- NOTAS DE LA VERSIÓN TAB -->
+      <div id="profileNotesPane" class="profile-tab-pane">
+        <div class="version-notes-scroll">
+          <h4>Sistema de resistencia/cansancio</h4>
+          <ul>
+            <li>Los jugadores sufren desgaste durante los partidos dependiendo de la estrategia elegida y la posición que ocupen.</li>
+            <li>El cansancio penaliza el rendimiento del jugador gradualmente.</li>
+            <li>Un partido en el banquillo recupera completamente la energía del jugador.</li>
+          </ul>
+          <h4>Sistema de tarjetas</h4>
+          <ul>
+            <li>Ahora los jugadores pueden recibir tarjetas durante los partidos.</li>
+            <li>Acumulación: 2 amarillas en partidos distintos → sanción.</li>
+            <li>Doble amarilla en el mismo partido → expulsión y sanción.</li>
+            <li>Roja directa → sanción automática.</li>
+            <li>Limpieza automática de tarjetas acumuladas al pasar de cuartos de final.</li>
+            <li>Los jugadores sancionados se mueven directamente al banquillo.</li>
+          </ul>
+          <h4>Otros</h4>
+          <ul>
+            <li>Correcciones de bugs y ajustes.</li>
+          </ul>
+        </div>
+      </div>
+
     </div>
   </div>
 </div>
