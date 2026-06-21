@@ -20,7 +20,7 @@
     <div class="version-tag">v0.34</div>
   </div>
   <div class="app-header-actions">
-    <button class="support-btn" onclick="showSupportModal()">APOYA A GOAL2GOAT</button>
+    <a href="https://ko-fi.com/goal2goat" target="_blank" class="support-btn" style="text-decoration:none;display:inline-flex;align-items:center;justify-content:center">APOYA A GOAL2GOAT</a>
     <button class="support-btn desktop-only" style="background:#1a1a1a;border:1px solid var(--gold);color:var(--gold)" onclick="showRankingModal()">🏆 RANKING</button>
     <button class="header-auth-btn register-btn" id="authBtn">LOGIN / REGISTRO</button>
     <button class="header-auth-btn profile-btn" id="profileBtn" style="display:none">PERFIL</button>
@@ -37,14 +37,6 @@
     </div>
   </div>
 </header>
-
-<div id="supportOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:30000;display:none;align-items:center;justify-content:center;">
-  <div class="support-modal">
-    <p class="support-text">Apoya al proyecto Goal2Goat para que siga recibiendo actualizaciones y mejoras.</p>
-    <a href="https://ko-fi.com/goal2goat" target="_blank" class="support-pay-btn">APOYA A GOAL2GOAT</a>
-    <button class="modal-btn danger" onclick="document.getElementById('supportOverlay').style.display='none'">CANCELAR</button>
-  </div>
-</div>
 
 <!-- PROFILE MODAL -->
 <div id="profileOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:40000;align-items:center;justify-content:center;">

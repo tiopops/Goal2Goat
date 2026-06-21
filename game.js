@@ -3229,11 +3229,6 @@ if(themeToggleBtn){
 // Apply inherited players from a chain run (runs after DOM is fully ready)
 setTimeout(applyInheritedPlayers, 100);
 
-function showSupportModal(){
-  const el=document.getElementById("supportOverlay");
-  if(el){ el.style.display="flex"; }
-}
-
 /* ========= SETTINGS DROPDOWN ========= */
 function toggleSettingsMenu(){
   const dd=document.getElementById("settingsDropdown");
