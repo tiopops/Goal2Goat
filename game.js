@@ -1039,28 +1039,27 @@ function buildFormationSlots(code){
   });
   return slots;
 }
-/* Adds a line of players with a natural arc instead of a flat row — the
-   EDGES of each line (wide players, closer to the touchlines) push
-   slightly toward the opponent's goal, while the CENTER of the line stays
-   a touch further back. This matches how other football games draw their
-   tactical boards (e.g. full-backs sit higher than center-backs, wingers
-   sit higher than the central striker), rather than a perfectly flat row
-   of evenly-spaced dots. */
+/* Adds a line of players with a natural arc instead of a flat row. The
+   curve is based on each player's horizontal distance from the pitch's
+   absolute center (50% width) — NOT from the line's own midpoint — so the
+   whole line forms one smooth, continuous arc. Players near the touchlines
+   push toward the opponent's goal (smaller top%); players near the center
+   of the pitch stay further back at baseTop. This avoids the previous bug
+   where lines with an even player count (e.g. two strikers EI/DC/DC/ED)
+   produced a broken double-dip instead of one clean arc. */
 function addArcedLine(slots,labels,baseTop,isGoalkeeperLine){
   const n=labels.length;
   labels.forEach((label,j)=>{
     const left=(j+1)/(n+1)*100;
     let top=baseTop;
     if(!isGoalkeeperLine && n>1){
-      // Distance from the horizontal center of the line, normalized 0..1
-      // (0 = dead center, 1 = at the touchline edge of the line)
-      const center=(n+1)/2;
-      const distFromCenter=Math.abs(j+1-center)/((n-1)/2 || 1);
-      // Arc depth: wider lines (more players) get a more pronounced curve.
-      const arcDepth=Math.min(6, 2.5+n*0.6);
-      // The EDGES of the line push TOWARD the opponent's goal (smaller
-      // top% = further forward), while the center stays at baseTop.
-      top=baseTop - distFromCenter*arcDepth*0.85;
+      // Distance from the pitch's horizontal center (50%), normalized 0..1
+      // (0 = dead center of the pitch, 1 = at the touchline)
+      const distFromPitchCenter=Math.abs(left-50)/50;
+      // Arc depth: wider lines get a slightly more pronounced curve, but
+      // every line — odd or even player count — now forms one smooth arc.
+      const arcDepth=Math.min(7, 3+n*0.55);
+      top=baseTop - distFromPitchCenter*arcDepth;
     }
     slots.push({label,left,top});
   });
