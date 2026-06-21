@@ -696,17 +696,21 @@ function relocateFormationPickerForViewport(){
     }
   }
 
-  // CÓMO JUGAR + PARA QUÉ SIRVE: live in the right panel on desktop (as
-  // collapsible accordions), but move into the dedicated INFORMACIÓN tab
-  // panel on mobile, always expanded there.
+  // ¿SABÍAS QUÉ...? + CÓMO JUGAR + PARA QUÉ SIRVE: live in the right panel
+  // on desktop (as collapsible accordions), but move into the dedicated
+  // INFORMACIÓN tab panel on mobile, always expanded there. The tip box
+  // goes in FIRST, so it sits above the other two tutorials.
+  const tipsBox=document.getElementById("tipsBox");
   const howTo=document.getElementById("howToPlayBox");
   const statsGuide=document.getElementById("statsGuideBox");
   const infoPanel=document.getElementById("infoPanel");
   const rightPanel=document.querySelector(".right-panel");
   if(isMobile && infoPanel){
+    if(tipsBox && tipsBox.parentElement!==infoPanel){ tipsBox.classList.remove("collapsed"); infoPanel.appendChild(tipsBox); }
     if(howTo && howTo.parentElement!==infoPanel){ howTo.classList.remove("collapsed"); infoPanel.appendChild(howTo); }
     if(statsGuide && statsGuide.parentElement!==infoPanel){ statsGuide.classList.remove("collapsed"); infoPanel.appendChild(statsGuide); }
   } else if(!isMobile && rightPanel){
+    if(tipsBox && tipsBox.parentElement!==rightPanel) rightPanel.appendChild(tipsBox);
     if(howTo && howTo.parentElement!==rightPanel) rightPanel.appendChild(howTo);
     if(statsGuide && statsGuide.parentElement!==rightPanel) rightPanel.appendChild(statsGuide);
   }
@@ -3777,17 +3781,21 @@ function switchMobileTab(tab){
       info.classList.add('mob-active');
       setTimeout(()=>info.scrollIntoView({behavior:'smooth',block:'start'}),50);
     }
-    // Auto-expand both tutorial boxes when entering INFORMACIÓN
+    // Auto-expand all three tutorial boxes when entering INFORMACIÓN
+    const tipsBox=document.getElementById("tipsBox");
     const howTo=document.getElementById("howToPlayBox");
     const statsGuide=document.getElementById("statsGuideBox");
+    if(tipsBox) tipsBox.classList.remove("collapsed");
     if(howTo) howTo.classList.remove("collapsed");
     if(statsGuide) statsGuide.classList.remove("collapsed");
   } else {
     // Any other tab: re-collapse the tutorial boxes (they live off-screen
     // in infoPanel, but keep the collapsed state consistent for next visit
     // and for when they relocate back to the right panel on desktop).
+    const tipsBox=document.getElementById("tipsBox");
     const howTo=document.getElementById("howToPlayBox");
     const statsGuide=document.getElementById("statsGuideBox");
+    if(tipsBox) tipsBox.classList.add("collapsed");
     if(howTo) howTo.classList.add("collapsed");
     if(statsGuide) statsGuide.classList.add("collapsed");
   }
