@@ -1014,12 +1014,13 @@ function lineLabels(n,isDef,isAtt){
 }
 function buildFormationSlots(code){
   const layout=FORMATION_LAYOUTS[code];
+  const GK_TOP=88;
   if(!layout){
     // Fallback for any unmapped code: keep the old generic behaviour so
     // nothing crashes, though every formation actually used in the game
     // is covered above.
     const lines=code.split("-").map(Number);
-    const slots=[{label:"POR",left:50,top:85}];
+    const slots=[{label:"POR",left:50,top:GK_TOP}];
     const T=lines.length;
     lines.forEach((n,i)=>{
       const isDef=i===0,isAtt=i===T-1;
@@ -1030,12 +1031,23 @@ function buildFormationSlots(code){
     return slots;
   }
   const slots=[];
-  const T=layout.length; // includes goalkeeper line
+  const fieldLines=layout.length-1; // excludes goalkeeper
+  // Explicit zone tops per line count — every formation in this game has
+  // either 3 field lines (def/mid/att) or 4 (def/mid/mid-or-AMC/att).
+  // The midfield line sits right at the halfway line (50%) when there's
+  // only one midfield line, straddling it when there are two.
+  let zoneTops;
+  if(fieldLines===3)      zoneTops=[74, 50, 22];
+  else if(fieldLines===4) zoneTops=[74, 58, 42, 22];
+  else {
+    // Safety fallback for any unexpected line count: spread evenly.
+    zoneTops=[];
+    for(let i=0;i<fieldLines;i++) zoneTops.push(74-(i*(74-22))/(fieldLines-1||1));
+  }
   layout.forEach((labels,i)=>{
-    let top;
-    if(i===0){ slots.push({label:"POR",left:50,top:85}); return; } // goalkeeper always centered, no arc
-    top=78-(i-1)*(78-14)/(T-2<=0?1:T-2);
-    const isAttackLine=(i===T-1);
+    if(i===0){ slots.push({label:"POR",left:50,top:GK_TOP}); return; }
+    const top=zoneTops[i-1];
+    const isAttackLine=(i===layout.length-1);
     addArcedLine(slots,labels,top,false,isAttackLine);
   });
   return slots;
