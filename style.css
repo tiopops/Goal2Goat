@@ -1228,3 +1228,25 @@ body.dark-theme .press-prediction-neutral{background:#1a1a1a;border-color:#333;c
 .version-notes-scroll h4:first-child{margin-top:0}
 .version-notes-scroll ul{margin:0 0 4px;padding-left:18px}
 .version-notes-scroll li{margin-bottom:4px}
+
+/* ¿SABÍAS QUÉ...? TIP BOX */
+.tip-text{
+  font-size:12px;line-height:1.5;color:var(--text);
+  cursor:pointer;padding:4px 0;
+  transition:opacity .2s ease;
+}
+.tip-text:hover{opacity:.75}
+.tip-text.tip-fading{opacity:0}
+
+/* PROFILE AJUSTES TAB — sound/theme toggles row */
+.profile-settings-row{
+  display:flex;flex-direction:column;gap:0;
+  border:1px solid var(--line);border-radius:2px;
+  margin-bottom:14px;overflow:hidden;
+}
+.profile-settings-row .settings-item{
+  border-bottom:1px solid var(--line);
+}
+.profile-settings-row .settings-item:last-child{border-bottom:none}
+body.dark-theme .profile-settings-row{border-color:#333}
+body.dark-theme .profile-settings-row .settings-item{border-bottom-color:#333}

@@ -486,7 +486,7 @@ const FORMATIONS = {
     {code:"3-4-3",label:"Ataque total",bonus:{attack:13,defense:3,passing:7,pace:11,technique:6}},
     {code:"3-4-1-2",label:"Mediapunta creativo",bonus:{attack:9,defense:4,passing:12,pace:7,technique:8}},
     {code:"4-2-4",label:"Brasil clásico",bonus:{attack:16,defense:6,passing:4,pace:10,technique:4}},
-    {code:"4-3-3",label:"Barcelona style",bonus:{attack:11,defense:5,passing:8,pace:7,technique:9}},
+    {code:"4-3-3",label:"Tridente Ofensivo",bonus:{attack:11,defense:5,passing:8,pace:7,technique:9}},
     {code:"4-2-3-1",label:"Extremos al ataque",bonus:{attack:8,defense:6,passing:11,pace:9,technique:6}},
     {code:"3-5-2",label:"Superioridad central",bonus:{attack:7,defense:4,passing:13,pace:8,technique:8}},
     {code:"2-3-5",label:"Vintage ofensivo",bonus:{attack:15,defense:2,passing:6,pace:13,technique:4}},
@@ -623,6 +623,42 @@ function toggleCollapsible(boxId){
   playSound('select');
   box.classList.toggle("collapsed");
 }
+
+/* ========= ¿SABÍAS QUÉ...? TIPS ========= */
+const GAME_TIPS=[
+  "💡 Regístrate para guardar tu progreso y acceder a contenido exclusivo.",
+  "💡 Un jugador cansado rendirá peor en el campo, controla su resistencia.",
+  "💡 Conoce a tu rival. Elegir una buena estrategia puede marcar la diferencia.",
+];
+let currentTipIndex=0;
+let tipRotationTimer=null;
+function renderCurrentTip(){
+  const el=document.getElementById("tipText");
+  if(!el) return;
+  el.classList.add("tip-fading");
+  setTimeout(()=>{
+    el.textContent=GAME_TIPS[currentTipIndex];
+    el.classList.remove("tip-fading");
+  },200);
+}
+function showNextTip(){
+  currentTipIndex=(currentTipIndex+1)%GAME_TIPS.length;
+  renderCurrentTip();
+  // Clicking manually resets the 15s auto-rotation timer, so it doesn't
+  // immediately jump again right after a manual click.
+  restartTipRotation();
+}
+function restartTipRotation(){
+  if(tipRotationTimer) clearInterval(tipRotationTimer);
+  tipRotationTimer=setInterval(()=>{
+    currentTipIndex=(currentTipIndex+1)%GAME_TIPS.length;
+    renderCurrentTip();
+  },15000);
+}
+window.showNextTip=showNextTip;
+// Start the rotation now that the whole tip system is defined.
+renderCurrentTip();
+restartTipRotation();
 
 function relocateFormationPickerForViewport(){
   const picker=document.getElementById("formationPickerBox");
@@ -3258,29 +3294,6 @@ if(themeToggleBtn){
 
 // Apply inherited players from a chain run (runs after DOM is fully ready)
 setTimeout(applyInheritedPlayers, 100);
-
-/* ========= SETTINGS DROPDOWN ========= */
-function toggleSettingsMenu(){
-  const dd=document.getElementById("settingsDropdown");
-  const btn=document.getElementById("settingsToggle");
-  if(!dd||!btn) return;
-  if(dd.classList.contains("open")){
-    dd.classList.remove("open");
-    return;
-  }
-  const rect=btn.getBoundingClientRect();
-  dd.style.top=(rect.bottom+6)+"px";
-  dd.style.right=(window.innerWidth-rect.right)+"px";
-  dd.classList.add("open");
-}
-// Close dropdown when clicking outside
-document.addEventListener("click", function(e){
-  const menu=document.getElementById("settingsMenu");
-  if(menu && !menu.contains(e.target)){
-    const dd=document.getElementById("settingsDropdown");
-    if(dd) dd.classList.remove("open");
-  }
-});
 
 /* ========= FIREBASE AUTH ========= */
 function initFirebaseAuth(){

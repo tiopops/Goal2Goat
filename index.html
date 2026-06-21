@@ -24,17 +24,6 @@
     <button class="support-btn desktop-only" style="background:#1a1a1a;border:1px solid var(--gold);color:var(--gold)" onclick="showRankingModal()">🏆 RANKING</button>
     <button class="header-auth-btn register-btn" id="authBtn">LOGIN / REGISTRO</button>
     <button class="header-auth-btn profile-btn" id="profileBtn" style="display:none">PERFIL</button>
-    <div class="settings-menu" id="settingsMenu">
-      <button class="settings-toggle" id="settingsToggle" onclick="toggleSettingsMenu()" title="Ajustes">⚙</button>
-      <div class="settings-dropdown" id="settingsDropdown">
-        <button id="audioToggle" class="settings-item" title="Activar/desactivar sonido">
-          <span class="topbar-dot on"></span><span class="topbar-label">SONIDO</span>
-        </button>
-        <button id="themeToggle" class="settings-item" title="Cambiar tema claro/oscuro">
-          <span class="topbar-dot on"></span><span class="topbar-label">TEMA OSCURO</span>
-        </button>
-      </div>
-    </div>
   </div>
 </header>
 
@@ -47,7 +36,7 @@
     <!-- TABS -->
     <div class="auth-tabs">
       <button class="auth-tab auth-tab-active" id="profileTabStats">ESTADÍSTICAS</button>
-      <button class="auth-tab" id="profileTabUser">USUARIO</button>
+      <button class="auth-tab" id="profileTabUser">AJUSTES</button>
       <button class="auth-tab" id="profileTabNotes">NOTAS DE LA VERSIÓN <span id="profileVersionLabel"></span></button>
     </div>
 
@@ -95,6 +84,15 @@
 
       <!-- USUARIO TAB -->
       <div id="profileUserPane" class="profile-tab-pane">
+        <label class="profile-field-label">PREFERENCIAS</label>
+        <div class="profile-settings-row">
+          <button id="audioToggle" class="settings-item" title="Activar/desactivar sonido">
+            <span class="topbar-dot on"></span><span class="topbar-label">SONIDO</span>
+          </button>
+          <button id="themeToggle" class="settings-item" title="Cambiar tema claro/oscuro">
+            <span class="topbar-dot on"></span><span class="topbar-label">TEMA OSCURO</span>
+          </button>
+        </div>
         <label class="profile-field-label" for="preferredTeamNameInput">NOMBRE DEL EQUIPO</label>
         <input type="text" id="preferredTeamNameInput" maxlength="24" placeholder="Ej: Dream Team FC" class="team-name-input">
         <label class="profile-checkbox-row">
@@ -347,6 +345,13 @@
     <div class="box" id="matchHistoryBox" style="display:none">
       <h3>RESULTADOS <span id="matchProgress">FASE DE GRUPOS</span></h3>
       <div id="matchHistoryTable"></div>
+    </div>
+
+    <div class="box collapsible-box" id="tipsBox">
+      <h3 class="collapsible-header" onclick="toggleCollapsible('tipsBox')">¿SABÍAS QUÉ...? <span class="collapse-arrow">▾</span></h3>
+      <div class="howto-content">
+        <p id="tipText" class="tip-text" onclick="showNextTip()"></p>
+      </div>
     </div>
 
     <div class="box collapsible-box" id="howToPlayBox">
