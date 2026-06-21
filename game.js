@@ -1040,12 +1040,12 @@ function buildFormationSlots(code){
   return slots;
 }
 /* Adds a line of players with a natural arc instead of a flat row — the
-   CENTER of each line bulges slightly toward the opponent's goal, while
-   the players closer to the touchlines stay a bit further back, exactly
-   how tactical boards in other football games draw formations (e.g. in
-   a back four the two center-backs sit a touch deeper than the full-backs
-   relative to... actually the opposite: widest players sit deeper, central
-   players push forward — same logic for every line on the pitch). */
+   EDGES of each line (wide players, closer to the touchlines) push
+   slightly toward the opponent's goal, while the CENTER of the line stays
+   a touch further back. This matches how other football games draw their
+   tactical boards (e.g. full-backs sit higher than center-backs, wingers
+   sit higher than the central striker), rather than a perfectly flat row
+   of evenly-spaced dots. */
 function addArcedLine(slots,labels,baseTop,isGoalkeeperLine){
   const n=labels.length;
   labels.forEach((label,j)=>{
@@ -1058,11 +1058,9 @@ function addArcedLine(slots,labels,baseTop,isGoalkeeperLine){
       const distFromCenter=Math.abs(j+1-center)/((n-1)/2 || 1);
       // Arc depth: wider lines (more players) get a more pronounced curve.
       const arcDepth=Math.min(6, 2.5+n*0.6);
-      // The center of the line always pushes TOWARD the opponent's goal
-      // (i.e. toward smaller top% if this is an attacking line near top:14,
-      // or toward smaller top% — i.e. forward — for a defensive line near
-      // top:78 too, since "forward" always means a smaller top value).
-      top=baseTop - (1-distFromCenter)*arcDepth*0.85;
+      // The EDGES of the line push TOWARD the opponent's goal (smaller
+      // top% = further forward), while the center stays at baseTop.
+      top=baseTop - distFromCenter*arcDepth*0.85;
     }
     slots.push({label,left,top});
   });
