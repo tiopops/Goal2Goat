@@ -311,6 +311,8 @@ let swapsUsedThisMatch = 0;
 /* ========= ROGUELIKE SYSTEMS STATE ========= */
 // Morale: -50 to +50, starts at 0, affects match lambda
 let teamMorale = 0;
+let CHEATS_ACTIVE = false;
+const CHEAT_USER = 'jesuslor85@gmail.com';
 // Scorer streaks: map playerName -> consecutive matches scored
 let scorerStreaks = {};
 // Current match weather
@@ -1893,7 +1895,18 @@ function computeOppPower(team){
   const pl=team.players.slice(0,11);
   const avg=pl.length?pl.reduce((s,p)=>s+(p.rating||75),0)/pl.length:75;
   const bonusBoost=Object.values(team.bonuses||{}).reduce((a,b)=>a+(Math.abs(b)||0),0)*0.12;
-  return avg + bonusBoost;
+  // Rival fatigue: mirrors player fatigue accumulation across the tournament.
+  // Group stage: slight fatigue by match 2-3. Knockout: accumulates each round.
+  // This balances the fact that the player manages fatigue but the AI doesn't.
+  let fatiguePenalty=0;
+  if(stage==='group'){
+    // Match 1: fresh (0), Match 2: minor (-0.4), Match 3: noticeable (-0.9)
+    fatiguePenalty=[0,0.4,0.9][groupMatchIdx]||0;
+  } else {
+    // Octavos(0):-1.2, Cuartos(1):-2.0, Semis(2):-2.8, Final(3):-3.5
+    fatiguePenalty=[1.2,2.0,2.8,3.5][knockoutRound]||1.2;
+  }
+  return avg + bonusBoost - fatiguePenalty;
 }
 /* Tactical matchup: returns a small lambda modifier for each side based on
    attack-vs-defense and supporting stats. Capped so it nudges, not dominates. */
@@ -1983,8 +1996,8 @@ function playMatch(){
   const weatherDelta=weatherLambdaEffect(); // weather was rolled when rival was revealed
   const myLambda=Math.max(0.25, 1.15+diff+tactical.myScoreMod+counter.myScoreMod+earlyBoost+groupNudge+starBonus+moraleBonus+streakBonus+weatherDelta);
   const oppLambda=Math.max(0.25, 1.15-diff+tactical.oppScoreMod+counter.oppScoreMod-earlyBoost*0.6-groupNudge*0.6+weatherDelta);
-  const myGoals=poissonSample(myLambda);
-  const oppGoals=poissonSample(oppLambda);
+  let myGoals=CHEATS_ACTIVE ? (3+Math.floor(Math.random()*3)) : poissonSample(myLambda);
+  let oppGoals=CHEATS_ACTIVE ? 0 : poissonSample(oppLambda);
   // Match narrative
   let summary=generateMatchSummary(myGoals,oppGoals,nextOpponent.name);
   updateScorerStreaks(generateMatchSummary._scorers||[]);
@@ -2364,7 +2377,7 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
     newCards.forEach(c=>allEvents.push({minute:Math.floor(5+Math.random()*80),type:'card',icon:CICONS[c.type]||'🟨',text:`<strong>${c.player.name}</strong>`}));
   }
   if(newInjuries&&newInjuries.length){
-    newInjuries.forEach(p=>allEvents.push({minute:Math.floor(30+Math.random()*55),type:'injury',icon:'🚑',text:`<strong>${p.name}</strong>`}));
+    newInjuries.forEach(p=>allEvents.push({minute:Math.floor(30+Math.random()*55),type:'injury',icon:'✚',text:`<strong>${p.name}</strong>`}));
   }
   allEvents.sort((a,b)=>a.minute-b.minute);
 
@@ -2484,7 +2497,8 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
       setTimeout(startExtraTime, 900);
     } else {
       halfEl.textContent='FIN';
-      setTimeout(()=>showMatchModal(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,penaltyInfo,newCards,predictionResult), 800);
+      playSound(won||draw?'victory':'defeat');
+      setTimeout(()=>showPostMatchSummary(), 800);
     }
   }
   requestAnimationFrame(tickRegulation);
@@ -2804,7 +2818,10 @@ function showEliminated(){
   const sc=computeFinalScore(false);
   if(typeof window.saveFinalScore==="function") window.saveFinalScore(sc.total);
   const grade=sc.total>=750?"ÉLITE":sc.total>=550?"MUY BUENO":sc.total>=350?"BUENO":"MEJORABLE";
-  const slots=getChainSlots();
+  // Run encadenada según la ronda alcanzada:
+  // Cuartos (1) → 1 slot, Semis (2) → 2 slots, Final (3) → 3 slots
+  const chainSlotsByRound={1:1, 2:2, 3:3};
+  const slots=chainSlotsByRound[knockoutRound]||0;
   const chainBtn=slots>0
     ?`<button class="modal-btn" onclick="document.getElementById('matchOverlay').innerHTML='';showChainRunModal()">🔗 CONSERVAR ${slots} JUGADOR${slots>1?"ES":""}</button>`
     :"";
@@ -2883,7 +2900,6 @@ function computeFinalScore(champion){
 }
 function showVictory(){
   const sc=computeFinalScore(true);
-  // Save to Firebase — victory saves titles+bestScore, saveFinalScore updates bestScore
   if(typeof window.saveVictoryStat==="function") window.saveVictoryStat(sc.total);
   if(typeof window.saveFinalScore==="function") window.saveFinalScore(sc.total);
   const grade=sc.total>=900?"LEGENDARIO":sc.total>=750?"ÉLITE":sc.total>=600?"EXCELENTE":sc.total>=450?"MUY BUENO":"BUENO";
@@ -2909,6 +2925,186 @@ function showVictory(){
     </div>
     <button class="modal-btn" onclick="location.reload()">NUEVA PARTIDA</button>
   </div>`;
+
+  // Lanzar ticket dorado tras breve pausa para que el jugador vea la pantalla de victoria
+  setTimeout(showGoldenTicket, 1800);
+}
+
+/* ── TICKET DORADO: solo cabras y una X roja. Se gasta al instante. ── */
+function showGoldenTicket(){
+  const GOLD_GRID=9;
+  // 1 bomba, 8 cabras (3pts cada una → max 24pts)
+  const bombIdx=Math.floor(Math.random()*GOLD_GRID);
+  const cellsData=[];
+  for(let i=0;i<GOLD_GRID;i++){
+    cellsData.push(i===bombIdx ? {type:'bomb',value:0} : {type:'star',value:3});
+  }
+
+  // Crear overlay encima del modal de victoria
+  const wrap=document.createElement('div');
+  wrap.id='goldenTicketWrap';
+  wrap.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:60000;display:flex;align-items:center;justify-content:center;overflow-y:auto;padding:20px 0;';
+
+  const serial=String(Math.floor(1000+Math.random()*8999))+'-'+String(Math.floor(1000+Math.random()*8999));
+  wrap.innerHTML=`
+  <div style="position:relative;width:340px;background:linear-gradient(180deg,#3a2a00 0%,#1a1200 100%);border-radius:18px;box-shadow:0 0 0 2px #f0c419,0 30px 60px -10px rgba(0,0,0,.9);overflow:hidden;">
+    <div style="padding:26px 22px 22px;">
+      <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:2px;">
+        <span style="font-size:18px">🏆</span>
+        <span style="font-family:'Bebas Neue',Impact,sans-serif;font-size:22px;letter-spacing:2px;color:#f0c419;text-shadow:0 0 12px rgba(240,196,25,.6)">BOLETO CAMPEÓN</span>
+        <span style="font-size:18px">🏆</span>
+      </div>
+      <div style="text-align:center;font-size:10px;letter-spacing:3px;color:rgba(240,196,25,.6);text-transform:uppercase;margin-bottom:16px;font-weight:700">Premio por ganar el Mundial</div>
+      <div style="height:1px;background:repeating-linear-gradient(90deg,rgba(240,196,25,.5) 0 6px,transparent 6px 12px);margin:14px 0"></div>
+      <div style="display:flex;justify-content:space-between;font-size:9px;letter-spacing:1px;color:rgba(240,196,25,.4);text-transform:uppercase;margin-bottom:14px;">
+        <span>Nº <b style="color:rgba(240,196,25,.7)">${serial}</b></span><span>EDICIÓN ORO</span>
+      </div>
+      <div style="text-align:center;margin-bottom:18px;">
+        <div style="font-size:9px;letter-spacing:3px;text-transform:uppercase;color:rgba(240,196,25,.5);margin-bottom:4px;font-weight:700">Puntos acumulados</div>
+        <div id="gtPrize" style="font-family:'Bebas Neue',Impact,sans-serif;font-size:40px;color:#f0c419;text-shadow:0 0 12px rgba(240,196,25,.4);">0 <span style="font-size:20px;opacity:.85">PTS</span></div>
+      </div>
+      <div id="gtGrid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px;"></div>
+      <div id="gtDots" style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
+        <span style="font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:rgba(240,196,25,.5);font-weight:700;margin-right:4px;">Casillas rascadas</span>
+      </div>
+      <button id="gtCashBtn" disabled onclick="gtCashOut(false)" style="width:100%;border:none;border-radius:10px;font-family:'Bebas Neue',Impact,sans-serif;font-size:16px;letter-spacing:1.5px;padding:13px;cursor:pointer;background:linear-gradient(180deg,#ffe27a,#f0c419 55%,#c9960c);color:#08160d;box-shadow:0 6px 0 #8a6a08;opacity:.35;pointer-events:none;">💰 COBRAR <span id="gtCashAmt">0</span> PTS</button>
+      <div style="text-align:center;font-size:9px;color:rgba(240,196,25,.35);margin-top:14px;letter-spacing:.5px;line-height:1.5">
+        Solo cabras 🐐 (+3 pts) y una casilla ❌.<br>Premio especial por ganar el Mundial. ¡No se acumula!
+      </div>
+    </div>
+  </div>
+  <div id="gtResultOverlay" style="display:none;position:fixed;inset:0;z-index:70000;background:rgba(0,0,0,.8);align-items:center;justify-content:center;padding:20px;"></div>`;
+  document.body.appendChild(wrap);
+
+  let gtPoints=0, gtScratched=0, gtOver=false;
+
+  function gtUpdateUI(){
+    const p=$id('gtPrize'); if(p) p.innerHTML=`${gtPoints} <span style="font-size:20px;opacity:.85">PTS</span>`;
+    const cb=$id('gtCashBtn'); const ca=$id('gtCashAmt');
+    if(ca) ca.textContent=gtPoints;
+    if(cb){
+      const ok=gtPoints>0&&!gtOver;
+      cb.disabled=!ok; cb.style.opacity=ok?'1':'.35'; cb.style.pointerEvents=ok?'auto':'none';
+    }
+  }
+
+  const grid=$id('gtGrid');
+  const dotsRow=$id('gtDots');
+
+  for(let i=0;i<GOLD_GRID;i++){
+    const data=cellsData[i];
+    const cell=document.createElement('div');
+    cell.style.cssText='position:relative;aspect-ratio:1;border-radius:10px;overflow:hidden;background:#2a1f00;box-shadow:inset 0 0 0 2px rgba(240,196,25,.3);';
+    cell.dataset.index=i;
+    const res=document.createElement('div');
+    res.style.cssText='position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:2px;font-family:"Bebas Neue",Impact,sans-serif;background:#1a1200;';
+    if(data.type==='bomb'){
+      res.innerHTML=`<span style="font-size:26px">❌</span><span style="font-size:13px;color:#f87171;letter-spacing:.5px">PIERDE</span>`;
+    } else {
+      res.innerHTML=`<span style="font-size:26px">🐐</span><span style="font-size:13px;color:#f0c419;letter-spacing:.5px">+3 PTS</span>`;
+    }
+    cell.appendChild(res);
+    const canvas=document.createElement('canvas');
+    canvas.style.cssText='position:absolute;inset:0;width:100%;height:100%;cursor:pointer;touch-action:none;';
+    cell.appendChild(canvas);
+    grid.appendChild(cell);
+
+    const dot=document.createElement('span');
+    dot.style.cssText='width:9px;height:9px;border-radius:50%;background:rgba(240,196,25,.18);display:inline-block;transition:all .25s ease;';
+    dot.dataset.di=i;
+    dotsRow.appendChild(dot);
+
+    // Init canvas (misma lógica pero dorada)
+    const dpr=window.devicePixelRatio||1;
+    const rect=cell.getBoundingClientRect()||{width:80,height:80};
+    const w=Math.max(rect.width,80), h=Math.max(rect.height,80);
+    canvas.width=w*dpr; canvas.height=h*dpr;
+    canvas.style.width=w+'px'; canvas.style.height=h+'px';
+    const ctx=canvas.getContext('2d');
+    ctx.scale(dpr,dpr);
+    const grad=ctx.createLinearGradient(0,0,w,h);
+    grad.addColorStop(0,'#c9960c'); grad.addColorStop(.5,'#f0c419'); grad.addColorStop(1,'#c9960c');
+    ctx.fillStyle=grad; ctx.fillRect(0,0,w,h);
+    ctx.strokeStyle='rgba(255,220,50,.4)'; ctx.lineWidth=2;
+    for(let x=-h;x<w;x+=6){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x+h,h);ctx.stroke();}
+    ctx.font='20px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.globalAlpha=.5; ctx.fillStyle='#000'; ctx.fillText('🐐',w/2,h/2); ctx.globalAlpha=1;
+    ctx.globalCompositeOperation='destination-out';
+
+    let scratching=false;
+    function scratchAt(cx,cy){
+      const r=canvas.getBoundingClientRect();
+      ctx.beginPath(); ctx.arc(cx-r.left,cy-r.top,18,0,Math.PI*2); ctx.fill();
+      const d=ctx.getImageData(0,0,canvas.width,canvas.height).data;
+      let cl=0,s=0;
+      for(let p=3;p<d.length;p+=160){s++;if(d[p]<80)cl++;}
+      if(cl/s>0.5&&!cell.dataset.revealed) gtReveal(cell,i,canvas);
+    }
+    canvas.addEventListener('mousedown',e=>{scratching=true;scratchAt(e.clientX,e.clientY);e.preventDefault();});
+    canvas.addEventListener('mousemove',e=>{if(!scratching)return;scratchAt(e.clientX,e.clientY);e.preventDefault();});
+    window.addEventListener('mouseup',()=>{if(scratching&&!cell.dataset.revealed)gtReveal(cell,i,canvas);scratching=false;});
+    canvas.addEventListener('touchstart',e=>{scratching=true;scratchAt(e.touches[0].clientX,e.touches[0].clientY);e.preventDefault();},{passive:false});
+    canvas.addEventListener('touchmove',e=>{if(!scratching)return;scratchAt(e.touches[0].clientX,e.touches[0].clientY);e.preventDefault();},{passive:false});
+    canvas.addEventListener('touchend',()=>{if(scratching&&!cell.dataset.revealed)gtReveal(cell,i,canvas);scratching=false;});
+  }
+
+  function gtReveal(cell,idx,canvas){
+    if(cell.dataset.revealed) return;
+    cell.dataset.revealed='1';
+    canvas.style.opacity='0'; canvas.style.transition='opacity .35s ease'; canvas.style.pointerEvents='none';
+    const data=cellsData[idx];
+    const dot=dotsRow.querySelector(`[data-di="${idx}"]`);
+    gtScratched++;
+    if(data.type==='bomb'){
+      if(dot){dot.style.background='#f87171';dot.style.boxShadow='0 0 6px rgba(248,113,113,.7)';}
+      gtOver=true;
+      Array.from(grid.children).forEach(c=>{
+        if(!c.dataset.revealed){c.dataset.revealed='1';const cv=c.querySelector('canvas');if(cv){cv.style.opacity='0';cv.style.pointerEvents='none';}}
+      });
+      gtUpdateUI();
+      setTimeout(()=>gtShowResult(false,0),600);
+    } else {
+      gtPoints+=data.value;
+      if(dot){dot.style.background='#f0c419';dot.style.boxShadow='0 0 6px rgba(240,196,25,.7)';}
+      gtUpdateUI();
+      if(gtScratched>=GOLD_GRID) setTimeout(()=>gtCashOut(true),500);
+    }
+  }
+
+  window.gtCashOut=function(auto){
+    if(gtOver||gtPoints<=0) return;
+    gtOver=true; gtUpdateUI();
+    gtShowResult(true,gtPoints,auto);
+  };
+
+  function gtShowResult(win,pts,auto){
+    const ro=$id('gtResultOverlay'); if(!ro) return;
+    ro.style.display='flex';
+    ro.innerHTML=`
+    <div style="background:linear-gradient(180deg,#3a2a00,#1a1200);border-radius:18px;padding:30px 26px;text-align:center;max-width:300px;width:90%;box-shadow:0 0 0 2px #f0c419,0 30px 60px -10px rgba(0,0,0,.9);animation:popIn .3s cubic-bezier(.2,1.4,.4,1)">
+      <style>@keyframes popIn{0%{transform:scale(.7);opacity:0}100%{transform:scale(1);opacity:1}}</style>
+      <span style="font-size:54px;display:block;margin-bottom:10px">${win?(auto?'🏆':'💰'):'❌'}</span>
+      <h2 style="font-family:'Bebas Neue',Impact,sans-serif;font-size:26px;letter-spacing:1px;color:${win?'#f0c419':'#f87171'};margin-bottom:6px">${win?(auto?'¡BOLETO COMPLETO!':'¡PUNTOS A SALVO!'):'¡MALA SUERTE!'}</h2>
+      <p style="font-size:12px;color:rgba(240,196,25,.7);line-height:1.5;margin-bottom:12px">${win?'Tus puntos de campeón han sido guardados.':'La casilla mala te ha quitado los puntos. ¡Casi!'}</p>
+      <div style="font-family:'Bebas Neue',Impact,sans-serif;font-size:34px;color:${win?'#f0c419':'#f87171'};margin-bottom:18px">${win?'+':'−'}${pts} PTS</div>
+      <button onclick="gtClose(${win?pts:0})" style="width:100%;border:none;border-radius:10px;padding:12px;font-family:'Bebas Neue',Impact,sans-serif;font-size:15px;letter-spacing:1.5px;background:linear-gradient(180deg,#ffe27a,#f0c419 55%,#c9960c);color:#08160d;cursor:pointer;">CERRAR</button>
+    </div>`;
+  }
+
+  window.gtClose=async function(ptsEarned){
+    // Guardar puntos directamente (no consume boleto acumulado)
+    if(ptsEarned>0&&typeof firebase!=='undefined'&&firebase.auth().currentUser){
+      try{
+        const user=firebase.auth().currentUser;
+        const snap=await firebase.firestore().collection('users').doc(user.uid).get();
+        const current=snap.exists?(snap.data().scratchPoints||0):0;
+        const newPts=current+ptsEarned;
+        await firebase.firestore().collection('users').doc(user.uid).set({scratchPoints:newPts},{merge:true});
+        const pse=$id('pstat-scratch-pts'); if(pse) pse.textContent=newPts;
+      }catch(e){console.warn('Error guardando pts golden ticket:',e);}
+    }
+    const w=$id('goldenTicketWrap'); if(w) w.remove();
+  };
 }
 
 
@@ -3718,11 +3914,13 @@ function initFirebaseAuth(){
       const snap=await db.collection("users").where("username_lower","==",username.toLowerCase()).get();
       if(!snap.empty){setErr("regUsernameErr","Este nombre de usuario ya está en uso.");setBtnLoading("regSubmitBtn",false);return;}
       const cred=await auth.createUserWithEmailAndPassword(email,pass);
-      await db.collection("users").doc(cred.user.uid).set({
+      await db.collection('users').doc(cred.user.uid).set({
         username,username_lower:username.toLowerCase(),email,
         createdAt:new Date().toISOString(),
+        ticketCount:1, ticketLastRegen:Date.now(), scratchPoints:0,
         stats:{gamesPlayed:0,wins:0,draws:0,losses:0,goalsFor:0,goalsAgainst:0,bestScore:0,titles:0}
       });
+      if(window._initTicketSystem) window._initTicketSystem(cred.user, true);
       window.closeAuthModal();
     }catch(err){
       console.error('Firebase register error:', err.code, err.message);
@@ -3764,25 +3962,36 @@ function initFirebaseAuth(){
       const username=snap.exists?snap.data().username:user.email;
       if(authBtn)    authBtn.style.display="none";
       if(profileBtn){ profileBtn.style.display=""; profileBtn.textContent="👤 "+username; }
-      // Sound/theme settings now live inside the profile's AJUSTES tab —
-      // hide the header dropdown once the user is logged in.
       if(settingsMenu) settingsMenu.style.display="none";
+      // Mostrar botón de tickets en desktop
+      const hBtn=$id("headerTicketBtn"); if(hBtn) hBtn.style.display="";
       const pun=$id("profileUsername"); if(pun) pun.textContent=username;
       window.currentUsername=username;
-      // Load the player's team-name preference, so showTeamNameModal can
-      // skip the popup entirely if they've set it to always use one name.
       const data=snap.exists?snap.data():{};
       window.preferredTeamName=data.preferredTeamName||"";
       window.useFixedTeamName=!!data.useFixedTeamName;
+      // Inicializar sistema de boletos
+      if(window._initTicketSystem) window._initTicketSystem(user, false);
     }else{
       if(authBtn)    authBtn.style.display="";
       if(profileBtn) profileBtn.style.display="none";
-      // Logged out: no profile/AJUSTES tab to reach sound/theme from —
-      // show the header settings dropdown so they're still accessible.
       if(settingsMenu) settingsMenu.style.display="";
+      const hBtn=$id("headerTicketBtn"); if(hBtn) hBtn.style.display="none";
       window.currentUsername=null;
       window.preferredTeamName="";
       window.useFixedTeamName=false;
+      // Sin sesión: mensaje diferenciado en el welcome overlay
+      const wt=$id("welcomeText");
+      const wrb=$id("welcomeRegisterBtn");
+      if(wt) wt.innerHTML='Bienvenido a <strong style="color:var(--gold)">Goal2Goat</strong>, <strong style="color:var(--gold)">REGÍSTRATE</strong> para guardar tu progreso y tener acceso a contenido exclusivo.<br><br>Goal2Goat es un manager de fútbol con alma de roguelike. Tu apoyo nos ayuda a seguir mejorando el juego, añadiendo contenido nuevo y manteniéndolo libre de publicidad invasiva.';
+      if(wrb){
+        wrb.style.display='block';
+        wrb.onclick=()=>{
+          const wo=$id("welcomeOverlay"); if(wo) wo.style.display="none";
+          window.openAuthModal&&window.openAuthModal('register');
+        };
+      }
+      updateTicketBadge(0);
     }
   });
 
@@ -3831,6 +4040,9 @@ function initFirebaseAuth(){
       set("pstat-ga",     s.goalsAgainst);
       set("pstat-best",   displayBest);
       set("pstat-titles", s.titles);
+      // Puntos rasca y gana
+      const spEl=$id("pstat-scratch-pts");
+      if(spEl) spEl.textContent=snap.data().scratchPoints||0;
 
       // Load team-name preference (USUARIO tab)
       const data=snap.data();
@@ -3838,6 +4050,23 @@ function initFirebaseAuth(){
       const checkbox=$id("useFixedTeamNameCheckbox");
       if(nameInp)  nameInp.value=data.preferredTeamName||"";
       if(checkbox) checkbox.checked=!!data.useFixedTeamName;
+      // Cheats: solo para tiopops
+      const cheatsSection=$id("cheatsSection");
+      const cheatsCheckbox=$id("cheatsCheckbox");
+      if(cheatsSection&&auth.currentUser&&auth.currentUser.email===CHEAT_USER){
+        cheatsSection.style.display="block";
+        if(cheatsCheckbox){
+          cheatsCheckbox.checked=!!CHEATS_ACTIVE;
+          cheatsCheckbox.onchange=()=>{
+            CHEATS_ACTIVE=cheatsCheckbox.checked;
+            // Si cheats activos: tickets siempre a 3
+            if(CHEATS_ACTIVE) updateTicketBadge(3);
+            showToast(CHEATS_ACTIVE?"⚙️ Cheats ON — modo debug activo":"⚙️ Cheats OFF — juego normal","toast-pos");
+          };
+        }
+      } else if(cheatsSection){
+        cheatsSection.style.display="none";
+      }
     }catch(e){
       console.warn("Stats load error:", e);
       ["pstat-games","pstat-wins","pstat-draws","pstat-losses",
@@ -4169,3 +4398,479 @@ document.addEventListener('click', e=>{
     rivalTab.appendChild(badge);
   }
 })();
+
+/* ============================================================
+   SISTEMA DE BOLETOS RASCA Y GANA
+   - 1 boleto cada 4h, máximo 3 acumulados
+   - Al crear cuenta: 1 boleto inicial
+   - Premios: 🪙 moneda = 1 pt, 🐐 cabra = 3 pts, ❌ = pierde todo
+   - 2 casillas X roja, 1 cabra, resto monedas (9 casillas total)
+   - Puntos se guardan en Firestore: users/{uid}.scratchPoints
+   ============================================================ */
+
+const TICKET_MAX = 3;
+const TICKET_FIXED_HOURS = [0, 8, 12, 16, 20]; // horas locales de recarga
+
+/* Devuelve el timestamp local del próximo slot de recarga a partir de 'now' */
+function nextTicketSlot(now){
+  const d = new Date(now);
+  const h = d.getHours(), m = d.getMinutes(), s = d.getSeconds(), ms = d.getMilliseconds();
+  const minutesNow = h * 60 + m;
+  // Buscar el próximo slot en el mismo día
+  for(const fh of TICKET_FIXED_HOURS){
+    if(fh * 60 > minutesNow){
+      const next = new Date(d);
+      next.setHours(fh, 0, 0, 0);
+      return next.getTime();
+    }
+  }
+  // Si ya pasaron todos los slots de hoy → primer slot de mañana
+  const next = new Date(d);
+  next.setDate(next.getDate() + 1);
+  next.setHours(TICKET_FIXED_HOURS[0], 0, 0, 0);
+  return next.getTime();
+}
+
+/* Cuántos slots han pasado entre lastChecked y now */
+function slotsBetween(lastChecked, now){
+  let count = 0;
+  let cursor = lastChecked;
+  while(true){
+    const slot = nextTicketSlot(cursor);
+    if(slot > now) break;
+    count++;
+    cursor = slot;
+  }
+  return count;
+}
+
+function computeCurrentTickets(count, lastChecked){
+  const now = Date.now();
+  const gained = slotsBetween(lastChecked, now);
+  if(gained <= 0) return { count, lastChecked };
+  const newCount = Math.min(TICKET_MAX, count + gained);
+  // lastChecked avanza al último slot consumido
+  let cursor = lastChecked;
+  for(let i = 0; i < gained; i++) cursor = nextTicketSlot(cursor);
+  return { count: newCount, lastChecked: cursor };
+}
+
+/* ── Leer/escribir estado de boletos en Firestore ── */
+async function getTicketState(){
+  if(typeof firebase==='undefined') return null;
+  const user=firebase.auth().currentUser;
+  if(!user) return null;
+  if(CHEATS_ACTIVE) return {count:3, lastChecked:Date.now(), scratchPoints:999999};
+  const snap=await firebase.firestore().collection('users').doc(user.uid).get();
+  if(!snap.exists) return null;
+  const d=snap.data();
+  return {
+    count: d.ticketCount !== undefined ? d.ticketCount : 1,
+    lastChecked: d.ticketLastRegen || Date.now(),
+    scratchPoints: d.scratchPoints || 0,
+  };
+}
+
+async function saveTicketState(count, lastChecked, scratchPoints){
+  if(typeof firebase==='undefined') return;
+  const user=firebase.auth().currentUser;
+  if(!user) return;
+  await firebase.firestore().collection('users').doc(user.uid).set({
+    ticketCount: count,
+    ticketLastRegen: lastChecked,
+    scratchPoints: scratchPoints,
+  },{merge:true});
+}
+
+/* ── Actualizar badge en la tab de móvil ── */
+function updateTicketBadge(count){
+  // Mobile tab badge
+  const el=$id('ticketCountBadge');
+  if(el){
+    el.textContent=`${count}/${TICKET_MAX}`;
+    el.style.color=count>0?'var(--gold)':'#666';
+  }
+  // Desktop header button
+  const hBtn=$id('headerTicketBtn');
+  const hCount=$id('headerTicketCount');
+  const hAlert=$id('headerTicketAlert');
+  if(hBtn) hBtn.style.display=window.currentUsername?'':'none';
+  if(hCount) hCount.textContent=`${count}/${TICKET_MAX}`;
+  if(hAlert) hAlert.style.display=count>0?'block':'none';
+  // Mobile tab alert dot (reutilizamos el badge de color)
+  const mobAlert=document.querySelector('#ticketTabBtn .mob-tab-badge');
+  if(mobAlert){
+    mobAlert.style.display=count>0?'':'none';
+    mobAlert.textContent='';
+  } else if(count>0){
+    // Crear badge si no existe
+    const btn=$id('ticketTabBtn');
+    if(btn&&!btn.querySelector('.mob-tab-badge')){
+      const dot=document.createElement('span');
+      dot.className='mob-tab-badge mob-tab-badge-pulse';
+      dot.style.cssText='background:#f87171;width:8px;height:8px;border-radius:50%;padding:0;min-width:unset;';
+      btn.appendChild(dot);
+    }
+  }
+}
+
+/* ── Abrir overlay del boleto ── */
+window.openTicketOverlay=async function(){
+  if(typeof firebase==='undefined'||!firebase.auth().currentUser){
+    alert('Debes iniciar sesión para usar los boletos de rasca y gana.');
+    return;
+  }
+  const overlay=$id('ticketOverlay');
+  if(overlay) overlay.style.display='block';
+
+  const state=await getTicketState();
+  if(!state){ alert('Error cargando boletos.'); return; }
+
+  const updated=computeCurrentTickets(state.count, state.lastChecked);
+  if(updated.count!==state.count||updated.lastChecked!==state.lastChecked){
+    await saveTicketState(updated.count, updated.lastChecked, state.scratchPoints);
+  }
+
+  updateTicketBadge(updated.count);
+
+  const mount=$id('ticketMountPoint');
+  if(!mount) return;
+
+  if(updated.count<=0){
+    const nextSlot=nextTicketSlot(Date.now());
+    const d=new Date(nextSlot);
+    const hh=String(d.getHours()).padStart(2,'0');
+    const mm=String(d.getMinutes()).padStart(2,'0');
+    const msLeft=nextSlot-Date.now();
+    const minsLeft=Math.ceil(msLeft/60000);
+    const hLeft=Math.floor(minsLeft/60);
+    const mLeft=minsLeft%60;
+    mount.innerHTML=`
+      <div style="text-align:center;color:#ccc;padding:40px 20px;font-family:'Bebas Neue',Impact,sans-serif;">
+        <div style="font-size:60px;margin-bottom:16px">🎟️</div>
+        <div style="font-size:24px;color:var(--gold);margin-bottom:8px">SIN BOLETOS</div>
+        <div style="font-size:13px;font-family:'Inter',sans-serif;color:#aaa;line-height:1.8">
+          Próximo boleto a las<br>
+          <strong style="color:#fff;font-size:22px">${hh}:${mm}</strong><br>
+          <span style="font-size:11px;color:#666">(en ${hLeft>0?hLeft+'h ':''}${mLeft}min)</span><br><br>
+          Los boletos se generan a las<br>
+          <strong style="color:#aaa">8:00 · 12:00 · 16:00 · 20:00 · 00:00</strong><br><br>
+          Máximo ${TICKET_MAX} boletos acumulados.
+        </div>
+      </div>`;
+    return;
+  }
+
+  buildTicketInMount(mount, updated.count, updated.lastChecked, state.scratchPoints);
+  if(!mount) return;
+
+  // Construir el boleto interactivo (fallback — no debería llegar aquí si updated.count<=0)
+  buildTicketInMount(mount, updated.count, updated.lastChecked, state.scratchPoints);
+};
+
+window.closeTicketOverlay=function(){
+  const overlay=$id('ticketOverlay');
+  if(overlay) overlay.style.display='none';
+};
+
+/* ── Construir el boleto dentro del mount point ── */
+function buildTicketInMount(mount, ticketCount, lastRegen, currentScratchPts){
+  const GRID_SIZE=9;
+  // Composición fija: 2 X rojas, 1 cabra (5pts), 6 monedas (1pt cada una)
+  const indices=Array.from({length:GRID_SIZE},(_,i)=>i);
+  // Barajar Fisher-Yates
+  for(let i=indices.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [indices[i],indices[j]]=[indices[j],indices[i]];
+  }
+  const bombSet=new Set([indices[0],indices[1]]);
+  const starIdx=indices[2];
+
+  const cellsData=[];
+  for(let i=0;i<GRID_SIZE;i++){
+    if(bombSet.has(i))       cellsData.push({type:'bomb', value:0});
+    else if(i===starIdx)     cellsData.push({type:'star', value:3});
+    else                     cellsData.push({type:'coin', value:1});
+  }
+
+  let scratchedCount=0, totalPoints=0, gameOver=false;
+  const serial=String(Math.floor(1000+Math.random()*8999))+'-'+String(Math.floor(1000+Math.random()*8999));
+
+  mount.innerHTML=`
+  <div class="ticket" id="ticketCard" style="position:relative;width:340px;background:linear-gradient(180deg,#0f3d24 0%,#0c2e1c 100%);border-radius:18px;box-shadow:0 30px 60px -20px rgba(0,0,0,.7),0 0 0 1px rgba(240,196,25,.15);overflow:hidden;">
+    <div id="ticketStamp" style="position:absolute;top:54px;right:-34px;width:140px;text-align:center;background:#e8a020;color:#fff;font-family:'Bebas Neue',Impact,sans-serif;font-size:11px;letter-spacing:2px;padding:4px 0;transform:rotate(40deg);box-shadow:0 3px 8px rgba(0,0,0,.35);z-index:4;">EN JUEGO</div>
+    <div style="padding:26px 22px 22px;">
+      <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:2px;">
+        <span style="font-size:18px">⚽</span>
+        <span style="font-family:'Bebas Neue',Impact,sans-serif;font-size:22px;letter-spacing:2px;color:#f0c419;text-shadow:0 2px 0 rgba(0,0,0,.4)">GOAL2GOAT</span>
+      </div>
+      <div style="text-align:center;font-size:10px;letter-spacing:3px;color:rgba(246,241,227,.55);text-transform:uppercase;margin-bottom:16px;font-weight:700">Boleto de Recompensa</div>
+      <div style="height:1px;background:repeating-linear-gradient(90deg,rgba(240,196,25,.35) 0 6px,transparent 6px 12px);margin:14px 0"></div>
+      <div style="display:flex;justify-content:space-between;font-size:9px;letter-spacing:1px;color:rgba(246,241,227,.4);text-transform:uppercase;margin-bottom:14px;">
+        <span>Nº <b style="color:rgba(246,241,227,.65)">${serial}</b></span>
+        <span>Boleto ${TICKET_MAX+1-ticketCount}/${TICKET_MAX}</span>
+      </div>
+      <div style="text-align:center;margin-bottom:18px;">
+        <div style="font-size:9px;letter-spacing:3px;text-transform:uppercase;color:rgba(246,241,227,.5);margin-bottom:4px;font-weight:700">Puntos acumulados en el boleto</div>
+        <div id="tPrize" style="font-family:'Bebas Neue',Impact,sans-serif;font-size:40px;color:#f0c419;text-shadow:0 3px 0 rgba(0,0,0,.35);">0 <span style="font-size:20px;opacity:.85">PTS</span></div>
+      </div>
+      <div class="scratch-grid" id="tGrid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px;"></div>
+      <div id="tDots" style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
+        <span style="font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:rgba(246,241,227,.5);font-weight:700;margin-right:4px;">Casillas rascadas</span>
+      </div>
+      <div style="margin-bottom:18px;">
+        <div style="display:flex;justify-content:space-between;font-size:9px;letter-spacing:1px;text-transform:uppercase;color:rgba(246,241,227,.5);font-weight:700;margin-bottom:5px;">
+          <span>Riesgo de la próxima casilla</span>
+          <span style="color:#d94f3d;font-weight:800" id="tRiskVal">8%</span>
+        </div>
+        <div style="height:6px;border-radius:4px;background:rgba(246,241,227,.12);overflow:hidden;">
+          <div id="tRiskFill" style="height:100%;border-radius:4px;background:linear-gradient(90deg,#e8b923,#d94f3d);width:8%;transition:width .4s ease;"></div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <button id="tCashBtn" disabled onclick="ticketCashOut(false)" style="border:none;border-radius:10px;font-family:'Bebas Neue',Impact,sans-serif;font-size:16px;letter-spacing:1.5px;padding:13px;cursor:pointer;background:linear-gradient(180deg,#ffe27a,#f0c419 55%,#c9960c);color:#08160d;box-shadow:0 6px 0 #8a6a08,0 10px 18px -6px rgba(0,0,0,.5);opacity:.35;pointer-events:none;">💰 COBRAR <span id="tCashAmt">0</span> PTS</button>
+        <div id="tRiskBtn" style="border:1.5px solid rgba(246,241,227,.35);border-radius:10px;font-family:'Bebas Neue',Impact,sans-serif;font-size:13px;letter-spacing:1px;padding:13px;text-align:center;color:rgba(246,241,227,.7);">TOCA CUALQUIER CASILLA PARA RASCAR</div>
+      </div>
+      <div style="text-align:center;font-size:9px;color:rgba(246,241,227,.35);margin-top:14px;letter-spacing:.5px;line-height:1.5">
+        🪙 = 1 punto · 🐐 = 3 puntos · ❌ = pierdes lo acumulado<br>Dos casillas ❌ ocultas en el boleto.
+      </div>
+    </div>
+  </div>
+  <div id="tResultOverlay" style="display:none;position:fixed;inset:0;z-index:50000;background:rgba(0,0,0,.75);align-items:center;justify-content:center;padding:20px;"></div>`;
+
+  // Construir grid
+  const grid=$id('tGrid');
+  const dotsRow=$id('tDots');
+  for(let i=0;i<GRID_SIZE;i++){
+    const data=cellsData[i];
+    const cell=document.createElement('div');
+    cell.style.cssText='position:relative;aspect-ratio:1;border-radius:10px;overflow:hidden;background:#f6f1e3;box-shadow:inset 0 0 0 2px rgba(8,22,13,.25);';
+    cell.dataset.index=i;
+
+    const res=document.createElement('div');
+    res.style.cssText='position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:2px;font-family:"Bebas Neue",Impact,sans-serif;background:#fff;';
+    if(data.type==='bomb'){
+      res.style.background='#fff0ee';
+      res.innerHTML=`<span style="font-size:26px">❌</span><span style="font-size:13px;color:#d94f3d;letter-spacing:.5px">PIERDE</span>`;
+    } else if(data.type==='star'){
+      res.style.background='#fff9e0';
+      res.innerHTML=`<span style="font-size:26px">🐐</span><span style="font-size:13px;color:#0c2e1c;letter-spacing:.5px">+3 PTS</span>`;
+    } else {
+      res.innerHTML=`<span style="font-size:26px">🪙</span><span style="font-size:13px;color:#0c2e1c;letter-spacing:.5px">+1 PT</span>`;
+    }
+    cell.appendChild(res);
+
+    const canvas=document.createElement('canvas');
+    canvas.style.cssText='position:absolute;inset:0;width:100%;height:100%;cursor:pointer;touch-action:none;';
+    cell.appendChild(canvas);
+    grid.appendChild(cell);
+
+    // Dot indicador
+    const dot=document.createElement('span');
+    dot.style.cssText='width:9px;height:9px;border-radius:50%;background:rgba(246,241,227,.18);display:inline-block;transition:all .25s ease;';
+    dot.dataset.dotIdx=i;
+    dotsRow.appendChild(dot);
+
+    initTicketCell(cell, canvas, i);
+  }
+
+  function riskForAttempt(n){
+    return [8,16,26,38,52,68,86,99][Math.min(n,7)];
+  }
+
+  function updateUI(){
+    const prizeEl=$id('tPrize');
+    if(prizeEl) prizeEl.innerHTML=`${totalPoints} <span style="font-size:20px;opacity:.85">PTS</span>`;
+    const cashBtn=$id('tCashBtn');
+    const cashAmt=$id('tCashAmt');
+    const riskBtn=$id('tRiskBtn');
+    const riskVal=$id('tRiskVal');
+    const riskFill=$id('tRiskFill');
+    if(cashAmt) cashAmt.textContent=totalPoints;
+    if(cashBtn){
+      if(totalPoints>0&&!gameOver){
+        cashBtn.disabled=false;
+        cashBtn.style.opacity='1';
+        cashBtn.style.pointerEvents='auto';
+      } else {
+        cashBtn.disabled=true;
+        cashBtn.style.opacity='.35';
+        cashBtn.style.pointerEvents='none';
+      }
+    }
+    const risk=riskForAttempt(scratchedCount);
+    if(riskVal) riskVal.textContent=risk+'%';
+    if(riskFill) riskFill.style.width=risk+'%';
+    if(riskBtn){
+      if(gameOver) riskBtn.textContent='BOLETO CERRADO';
+      else if(scratchedCount>=GRID_SIZE) riskBtn.textContent='BOLETO COMPLETO';
+      else if(scratchedCount===0) riskBtn.textContent='TOCA CUALQUIER CASILLA PARA RASCAR';
+      else riskBtn.innerHTML=`SIGUIENTE RASCADO · <b style="color:#d94f3d">${risk}% riesgo</b>`;
+    }
+  }
+
+  function initTicketCell(cell, canvas, idx){
+    const dpr=window.devicePixelRatio||1;
+    const rect=cell.getBoundingClientRect();
+    canvas.width=Math.max(rect.width,80)*dpr;
+    canvas.height=Math.max(rect.height,80)*dpr;
+    canvas.style.width=(Math.max(rect.width,80))+'px';
+    canvas.style.height=(Math.max(rect.height,80))+'px';
+    const ctx=canvas.getContext('2d');
+    ctx.scale(dpr,dpr);
+    const w=canvas.width/dpr, h=canvas.height/dpr;
+    // Capa metálica
+    const grad=ctx.createLinearGradient(0,0,w,h);
+    grad.addColorStop(0,'#e3e8ea');
+    grad.addColorStop(.5,'#9aa5ab');
+    grad.addColorStop(1,'#c4cbce');
+    ctx.fillStyle=grad;
+    ctx.fillRect(0,0,w,h);
+    ctx.strokeStyle='rgba(180,190,195,.5)';
+    ctx.lineWidth=2;
+    for(let x=-h;x<w;x+=6){ ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x+h,h);ctx.stroke(); }
+    ctx.font='20px sans-serif';
+    ctx.textAlign='center';
+    ctx.textBaseline='middle';
+    ctx.globalAlpha=.5;
+    ctx.fillStyle='#333';
+    ctx.fillText('⚽',w/2,h/2);
+    ctx.globalAlpha=1;
+    ctx.globalCompositeOperation='destination-out';
+
+    let isScratching=false;
+    let hasMoved=false;
+
+    function scratchAt(cx,cy){
+      const r=canvas.getBoundingClientRect();
+      ctx.beginPath();
+      ctx.arc(cx-r.left,cy-r.top,18,0,Math.PI*2);
+      ctx.fill();
+      // Check reveal %
+      const imgData=ctx.getImageData(0,0,canvas.width,canvas.height).data;
+      let cleared=0,sampled=0;
+      for(let p=3;p<imgData.length;p+=160){sampled++;if(imgData[p]<80)cleared++;}
+      if(cleared/sampled>0.5&&!cell.dataset.revealed) revealTicketCell(cell,idx,canvas);
+    }
+
+    canvas.addEventListener('mousedown',e=>{isScratching=true;hasMoved=false;scratchAt(e.clientX,e.clientY);e.preventDefault();});
+    canvas.addEventListener('mousemove',e=>{if(!isScratching)return;hasMoved=true;scratchAt(e.clientX,e.clientY);e.preventDefault();});
+    window.addEventListener('mouseup',()=>{
+      if(isScratching&&!cell.dataset.revealed) revealTicketCell(cell,idx,canvas);
+      isScratching=false;
+    });
+    canvas.addEventListener('touchstart',e=>{isScratching=true;hasMoved=false;scratchAt(e.touches[0].clientX,e.touches[0].clientY);e.preventDefault();},{passive:false});
+    canvas.addEventListener('touchmove',e=>{if(!isScratching)return;hasMoved=true;scratchAt(e.touches[0].clientX,e.touches[0].clientY);e.preventDefault();},{passive:false});
+    canvas.addEventListener('touchend',()=>{
+      if(isScratching&&!cell.dataset.revealed) revealTicketCell(cell,idx,canvas);
+      isScratching=false;
+    });
+  }
+
+  function revealTicketCell(cell,idx,canvas){
+    if(cell.dataset.revealed) return;
+    cell.dataset.revealed='1';
+    canvas.style.opacity='0';
+    canvas.style.transition='opacity .35s ease';
+    canvas.style.pointerEvents='none';
+
+    const data=cellsData[idx];
+    const dot=dotsRow.querySelector(`[data-dot-idx="${idx}"]`);
+
+    scratchedCount++;
+    if(data.type==='bomb'){
+      if(dot){ dot.style.background='#d94f3d'; dot.style.boxShadow='0 0 6px rgba(217,79,61,.7)'; }
+      handleTicketBomb();
+    } else {
+      totalPoints+=data.value;
+      if(dot){ dot.style.background='#f0c419'; dot.style.boxShadow='0 0 6px rgba(240,196,25,.6)'; }
+      updateUI();
+      if(scratchedCount>=GRID_SIZE) setTimeout(()=>ticketCashOut(true),500);
+    }
+  }
+
+  function handleTicketBomb(){
+    gameOver=true;
+    const stamp=$id('ticketStamp');
+    if(stamp){stamp.textContent='PERDISTE';stamp.style.background='#d94f3d';}
+    // Revelar todas las celdas restantes
+    Array.from(grid.children).forEach(c=>{
+      if(!c.dataset.revealed){
+        c.dataset.revealed='1';
+        const cv=c.querySelector('canvas');
+        if(cv){cv.style.opacity='0';cv.style.pointerEvents='none';}
+      }
+    });
+    updateUI();
+    setTimeout(()=>showTicketResult(false,0),600);
+  }
+
+  window.ticketCashOut=function(auto){
+    if(gameOver||totalPoints<=0) return;
+    gameOver=true;
+    const stamp=$id('ticketStamp');
+    if(stamp){stamp.textContent='COBRADO';stamp.style.background='#3fae5c';}
+    const pts=totalPoints;
+    updateUI();
+    showTicketResult(true,pts,auto);
+  };
+
+  function showTicketResult(win,pts,auto){
+    const overlay=$id('tResultOverlay');
+    if(!overlay) return;
+    overlay.style.display='flex';
+    overlay.innerHTML=`
+    <div style="background:linear-gradient(180deg,#0f3d24,#0c2e1c);border-radius:18px;padding:30px 26px;text-align:center;max-width:300px;width:90%;box-shadow:0 30px 60px -10px rgba(0,0,0,.8),0 0 0 1px rgba(240,196,25,.2);animation:popIn .3s cubic-bezier(.2,1.4,.4,1)">
+      <style>@keyframes popIn{0%{transform:scale(.7);opacity:0}100%{transform:scale(1);opacity:1}}</style>
+      <span style="font-size:54px;display:block;margin-bottom:10px">${win?(auto?'🏆':'💰'):'❌'}</span>
+      <h2 style="font-family:'Bebas Neue',Impact,sans-serif;font-size:26px;letter-spacing:1px;color:${win?'#f0c419':'#d94f3d'};margin-bottom:6px">${win?(auto?'¡BOLETO COMPLETO!':'¡PUNTOS A SALVO!'):'¡CASILLA BOMBA!'}</h2>
+      <p style="font-size:12px;color:rgba(246,241,227,.7);line-height:1.5;margin-bottom:12px">${win?(auto?'Rascaste todo el boleto. Premio máximo.':'Has cobrado a tiempo. Decisión inteligente.'):'Has perdido los puntos acumulados en este boleto.'}</p>
+      <div style="font-family:'Bebas Neue',Impact,sans-serif;font-size:34px;color:${win?'#f0c419':'#d94f3d'};margin-bottom:18px">${win?'+':'−'}${pts} PTS</div>
+      <button onclick="closeTicketAndSave(${win?pts:0})" style="width:100%;border:none;border-radius:10px;padding:12px;font-family:'Bebas Neue',Impact,sans-serif;font-size:15px;letter-spacing:1.5px;background:linear-gradient(180deg,#ffe27a,#f0c419 55%,#c9960c);color:#08160d;cursor:pointer;">CERRAR</button>
+    </div>`;
+  }
+
+  window.closeTicketAndSave=async function(ptsEarned){
+    if(CHEATS_ACTIVE){ closeTicketOverlay(); updateTicketBadge(3); return; }
+    if(typeof firebase!=='undefined'&&firebase.auth().currentUser){
+      try{
+        const state=await getTicketState();
+        const updated=computeCurrentTickets(state.count,state.lastChecked);
+        const newCount=Math.max(0,updated.count-1);
+        const newPts=(state.scratchPoints||0)+ptsEarned;
+        await saveTicketState(newCount,updated.lastChecked,newPts);
+        updateTicketBadge(newCount);
+        const pse=$id('pstat-scratch-pts');
+        if(pse) pse.textContent=newPts;
+      }catch(e){ console.warn('Error guardando boleto:',e); }
+    }
+    closeTicketOverlay();
+  };
+}
+
+/* ── Inicializar boletos cuando el usuario se loguea ── */
+async function initTicketSystem(user, isNewUser){
+  if(!user) return;
+  const db=firebase.firestore();
+  const snap=await db.collection('users').doc(user.uid).get();
+  const data=snap.exists?snap.data():{};
+
+  if(isNewUser || data.ticketCount===undefined){
+    await db.collection('users').doc(user.uid).set({
+      ticketCount:1,
+      ticketLastRegen:Date.now(),
+      scratchPoints:0,
+    },{merge:true});
+    updateTicketBadge(1);
+  } else {
+    const updated=computeCurrentTickets(data.ticketCount, data.ticketLastRegen||Date.now());
+    if(updated.count!==data.ticketCount||updated.lastChecked!==data.ticketLastRegen){
+      await saveTicketState(updated.count, updated.lastChecked, data.scratchPoints||0);
+    }
+    updateTicketBadge(updated.count);
+  }
+}
+
+/* ── Hook en onAuthStateChanged para inicializar boletos ── */
+// Se llamará desde el listener de auth ya existente
+window._initTicketSystem=initTicketSystem;

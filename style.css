@@ -389,6 +389,20 @@ body.dark-theme .version-tag{color:#555}
 .live-event-text strong{color:#fff}
 .live-ht-separator{text-align:center;font-size:10px;font-weight:700;color:#1a5c30;background:#0a1f12;letter-spacing:2px;padding:4px 0;border-top:1px solid #1a5c30;border-bottom:1px solid #1a5c30;margin:4px 0}
 body.dark-theme .live-match-modal{border-color:#2a7a40}
+
+/* Post-match info blocks inside live feed */
+.live-result-banner{text-align:center;font-family:'Bebas Neue',Impact,sans-serif;font-size:28px;letter-spacing:2px;padding:10px 0 6px;animation:slideInEvent .4s ease forwards}
+.live-result-win{color:#7defa0}.live-result-draw{color:#f5c518}.live-result-lose{color:#f87171}
+.live-info-block{background:#0f2a1a;border-left:3px solid #1a5c30;padding:8px 10px;margin:4px 0;font-size:11px;line-height:1.6;color:#ccc;animation:slideInEvent .3s ease forwards}
+.live-info-block strong{color:#fff}
+.live-info-block.warn{background:#2a1a0a;border-color:#7a3a0a;color:#f5c095}
+.live-info-block.danger{background:#2a0f0f;border-color:#7a1a1a;color:#f0a8a8}
+.live-info-block.good{background:#0f2a1a;border-color:#1a7a3a;color:#9fe8b8}
+.live-info-block.neutral{background:#1a1a2a;border-color:#3a3a5a;color:#b8b8dd}
+.live-info-block ul{margin:4px 0 0 0;padding-left:16px}
+.live-info-block li{margin-bottom:2px}
+.live-continue-btn{width:100%;background:var(--accent);color:#fff;border:none;padding:13px;font-size:14px;font-weight:700;cursor:pointer;margin-top:10px;letter-spacing:1px;transition:.15s;animation:slideInEvent .3s ease forwards}
+.live-continue-btn:hover{background:#0c5a30}
 .row-selected td{background:#fff3c4 !important}
 .row-selected td:first-child{box-shadow:-2px 0 0 var(--gold), 0 -2px 0 var(--gold), 0 2px 0 var(--gold)}
 .row-selected td:last-child{box-shadow:2px 0 0 var(--gold), 0 -2px 0 var(--gold), 0 2px 0 var(--gold)}
@@ -861,6 +875,23 @@ body.dark-theme .settings-item:hover{background:var(--row-hover);color:var(--gol
   font-size:12px;letter-spacing:.5px;
 }
 .profile-btn:hover{background:var(--gold);color:#000}
+.header-ticket-btn{
+  position:relative;
+  background:#1a2a1a;color:var(--gold);
+  border:1px solid rgba(240,196,25,.4);
+  border-radius:6px;padding:5px 10px;
+  font-family:'Bebas Neue',Impact,sans-serif;
+  font-size:13px;letter-spacing:.5px;
+  cursor:pointer;transition:.15s;
+}
+.header-ticket-btn:hover{background:var(--gold);color:#000;border-color:var(--gold)}
+.header-ticket-alert{
+  position:absolute;top:-4px;right:-4px;
+  width:10px;height:10px;border-radius:50%;
+  background:#f87171;border:2px solid var(--card-bg);
+  animation:ticketPulse 1.5s ease-in-out infinite;
+}
+@keyframes ticketPulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.3);opacity:.7}}
 
 /* PROFILE STATS */
 .profile-stats-grid{

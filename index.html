@@ -23,6 +23,7 @@
     <a href="https://ko-fi.com/goal2goat" target="_blank" class="support-btn" style="text-decoration:none;display:inline-flex;align-items:center;justify-content:center">APOYA A GOAL2GOAT</a>
     <button class="support-btn desktop-only" style="background:#1a1a1a;border:1px solid var(--gold);color:var(--gold)" onclick="showRankingModal()">🏆 RANKING</button>
     <button class="header-auth-btn register-btn" id="authBtn">LOGIN / REGISTRO</button>
+    <button class="header-ticket-btn" id="headerTicketBtn" style="display:none" onclick="openTicketOverlay()">🎟️ <span id="headerTicketCount">0/3</span><span class="header-ticket-alert" id="headerTicketAlert" style="display:none"></span></button>
     <button class="header-auth-btn profile-btn" id="profileBtn" style="display:none">PERFIL</button>
     <div class="settings-menu" id="settingsMenu">
       <button class="settings-toggle" id="settingsToggle" onclick="toggleSettingsMenu()" title="Ajustes">⚙</button>
@@ -90,6 +91,10 @@
             <div class="pstat-val">🏆 <span id="pstat-titles">—</span></div>
             <div class="pstat-label">TÍTULOS</div>
           </div>
+          <div class="profile-stat-card" style="border-color:var(--gold)">
+            <div class="pstat-val" style="color:var(--gold)">🎟️ <span id="pstat-scratch-pts">—</span></div>
+            <div class="pstat-label">PTS RASCA Y GANA</div>
+          </div>
         </div>
       </div>
 
@@ -112,6 +117,15 @@
         </label>
         <p class="profile-field-hint">Si lo activas, no se te preguntará el nombre del equipo al formarlo — se usará este automáticamente.</p>
         <button class="auth-submit-btn" style="background:#c0392b;margin-top:14px" id="profileLogoutBtn">CERRAR SESIÓN</button>
+        <!-- CHEATS: solo visible para tiopops -->
+        <div id="cheatsSection" style="display:none;margin-top:18px;border-top:1px dashed #c0392b;padding-top:14px;">
+          <label class="profile-field-label" style="color:#c0392b">⚙️ MODO DEBUG</label>
+          <label class="profile-checkbox-row">
+            <input type="checkbox" id="cheatsCheckbox">
+            <span style="color:#c0392b;font-weight:700">CHEATS ACTIVADOS</span>
+          </label>
+          <p class="profile-field-hint" style="color:#c0392b;opacity:.7">Tickets siempre 3/3 · Gana todos los partidos · Puntos infinitos</p>
+        </div>
       </div>
 
       <!-- NOTAS DE LA VERSIÓN TAB -->
@@ -147,9 +161,10 @@
 <div id="welcomeOverlay" style="position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:50000;display:flex;align-items:center;justify-content:center;">
   <div class="auth-modal" style="max-width:420px;text-align:center">
     <div class="auth-logo">🐐 GOAL2GOAT</div>
-    <p style="font-size:13px;color:var(--text);line-height:1.6;margin-bottom:20px">
+    <p id="welcomeText" style="font-size:13px;color:var(--text);line-height:1.6;margin-bottom:20px">
       Bienvenido a <strong style="color:var(--gold)">Goal2Goat</strong>, un manager de fútbol con alma de roguelike. Tu apoyo nos ayuda a seguir mejorando el juego, añadiendo contenido nuevo y manteniéndolo libre de publicidad invasiva.
     </p>
+    <button id="welcomeRegisterBtn" class="auth-submit-btn" style="display:none;margin-bottom:10px">REGÍSTRATE GRATIS</button>
     <a href="https://ko-fi.com/goal2goat" target="_blank" class="support-pay-btn" style="display:block;margin-bottom:10px">APOYA A GOAL2GOAT</a>
     <button class="auth-submit-btn" id="welcomeStartBtn" style="background:#1a2a1a;border:1px solid var(--gold);color:var(--gold)">EMPEZAR A JUGAR</button>
   </div>
@@ -476,7 +491,17 @@
     <svg class="mob-tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4h10v6a5 5 0 0 1-10 0z"/><path d="M7 5H4.5A2.5 2.5 0 0 0 4 9.9C4.6 11 5.7 11.6 7 11.5"/><path d="M17 5h2.5A2.5 2.5 0 0 1 20 9.9c-.6 1.1-1.7 1.7-3 1.6"/><line x1="12" y1="14" x2="12" y2="18"/><path d="M8 21h8v-1.3c0-.9-.7-1.7-1.6-1.7H9.6c-.9 0-1.6.8-1.6 1.7z"/></svg>
     <span class="mob-tab-label">RANKING</span>
   </button>
+  <button class="mob-tab" id="ticketTabBtn" data-tab="ticket" onclick="openTicketOverlay()">
+    <svg class="mob-tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 9a1 1 0 0 1 0-2V5a1 1 0 0 1 1-1h18a1 1 0 0 1 1 1v2a1 1 0 0 1 0 2v2a1 1 0 0 1 0 2v2a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1v-2a1 1 0 0 1 0-2V9z"/><line x1="9" y1="4" x2="9" y2="20" stroke-dasharray="2 3"/></svg>
+    <span class="mob-tab-label">BOLETO <span id="ticketCountBadge" style="font-size:9px;font-weight:700;color:var(--gold)">0/3</span></span>
+  </button>
 </nav>
+
+<!-- TICKET OVERLAY -->
+<div id="ticketOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:30000;overflow-y:auto;padding:20px 0;">
+  <button onclick="closeTicketOverlay()" style="position:fixed;top:12px;right:14px;background:none;border:none;color:#fff;font-size:22px;cursor:pointer;z-index:30001;">✕</button>
+  <div id="ticketMountPoint" style="display:flex;justify-content:center;padding-top:10px;"></div>
+</div>
 <script>
   // Cache-busting: force fresh game.js on every page load/refresh
   document.write('<script src="game.js?v=' + Date.now() + '"><\/script>');
