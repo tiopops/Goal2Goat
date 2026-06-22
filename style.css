@@ -757,9 +757,10 @@ body.dark-theme .vb-row:nth-child(even){background:transparent}
   font-family:'Bebas Neue',Impact,sans-serif;
   font-size:18px;letter-spacing:1.5px;
   padding:12px 28px;text-decoration:none;width:100%;
-  transition:.15s;
+  transition:background .15s, transform .1s, box-shadow .15s;
+  box-sizing:border-box;text-align:center;
 }
-.support-pay-btn:hover{background:#e0b82a}
+.support-pay-btn:hover{background:#e0b82a;transform:translateY(-1px);box-shadow:0 4px 12px rgba(240,196,25,.3)}
 
 /* Dark theme settings dropdown */
 body.dark-theme .settings-toggle{background:#0a0c0d;border-color:#444}
