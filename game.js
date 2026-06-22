@@ -2346,15 +2346,14 @@ function forceSwapSuspendedStarters(){
   baseTeamOVR=computeTeamOVR();
 }
 
-/* ========= LIVE MATCH SIMULATION =========
-   Animates the match clock from 0' to 90'+X' over ~9 seconds,
-   showing goals and events as they happen. Then calls showMatchModal. */
+/* ========= LIVE MATCH SIMULATION — diseño match-modal + animación secuencial =========
+   Usa el diseño visual de match-modal pero muestra todo de forma secuencial.
+   Los eventos ocurren en sus minutos reales, incluyendo tiempo de descuento. */
 function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,penaltyInfo,newCards,predictionResult){
   const overlay=document.getElementById("matchOverlay");
   const oppName=nextOpponent?nextOpponent.name:'Rival';
-  const oppFlag=nextOpponent?flagEmoji(nextOpponent.name,36):'🏳️';
 
-  // --- Parse goal events from summary HTML ---
+  // ── Parsear eventos del resumen HTML ──
   const tempDiv=document.createElement('div');
   tempDiv.innerHTML=summary;
   const goalCols=tempDiv.querySelectorAll('.goals-col');
@@ -2362,51 +2361,73 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
   if(goalCols.length>=2){
     goalCols[0].querySelectorAll('li').forEach(li=>{
       const txt=li.textContent;
-      const m=txt.match(/\((\d+)'\)/);
-      if(m) allEvents.push({minute:parseInt(m[1]),type:'mygoal',icon:'⚽',text:`<strong>${txt.replace(/⚽/,'').replace(/\(\d+'\)/,'').trim()}</strong>`});
+      const m=txt.match(/(\d+)'\)/);
+      if(m) allEvents.push({minute:parseInt(m[1]),type:'mygoal',icon:'⚽',
+        text:`<strong>${txt.replace(/⚽/,'').replace(/\(\d+'\)/,'').trim()}</strong>`});
     });
     goalCols[1].querySelectorAll('li').forEach(li=>{
       const txt=li.textContent;
-      const m=txt.match(/\((\d+)'\)/);
-      if(m) allEvents.push({minute:parseInt(m[1]),type:'oppgoal',icon:'⚽',text:`<strong>${txt.replace(/⚽/,'').replace(/\(\d+'\)/,'').trim()}</strong> <span style="color:#f88;font-size:10px">(${oppName})</span>`});
+      const m=txt.match(/(\d+)'\)/);
+      if(m) allEvents.push({minute:parseInt(m[1]),type:'oppgoal',icon:'⚽',
+        text:`<strong>${txt.replace(/⚽/,'').replace(/\(\d+'\)/,'').trim()}</strong> <span style="color:var(--red);font-size:10px">(${oppName})</span>`});
     });
   }
-  // Cards and injuries with random minutes
+  // Tarjetas e lesiones con minutos realistas (pueden caer en descuento)
+  const CICONS={yellow:'🟨',yellow2:'🟨🟨',double_yellow:'🟨🟥',red:'🟥'};
   if(newCards&&newCards.length){
-    const CICONS={yellow:'🟨',yellow2:'🟨🟨',double_yellow:'🟨🟥',red:'🟥'};
-    newCards.forEach(c=>allEvents.push({minute:Math.floor(5+Math.random()*80),type:'card',icon:CICONS[c.type]||'🟨',text:`<strong>${c.player.name}</strong>`}));
+    newCards.forEach(c=>allEvents.push({
+      minute:Math.floor(5+Math.random()*90), // pueden llegar a 90+
+      type:'card',icon:CICONS[c.type]||'🟨',
+      text:`<strong>${c.player.name}</strong>`
+    }));
   }
   if(newInjuries&&newInjuries.length){
-    newInjuries.forEach(p=>allEvents.push({minute:Math.floor(30+Math.random()*55),type:'injury',icon:'✚',text:`<strong>${p.name}</strong>`}));
+    newInjuries.forEach(p=>allEvents.push({
+      minute:Math.floor(20+Math.random()*75),
+      type:'injury',icon:'✚',
+      text:`<strong>${p.name}</strong>`
+    }));
   }
   allEvents.sort((a,b)=>a.minute-b.minute);
 
-  // Stoppage times
+  // Tiempos de descuento
   const inj1=Math.floor(1+Math.random()*4);
   const inj2=Math.floor(2+Math.random()*5);
+  const MAX_MIN=90+inj2;
 
-  // --- Build modal HTML ---
+  // Resultado
+  const wasShootout=!!penaltyInfo;
+  let resultText,resultClass;
+  if(draw){ resultText="EMPATE"; resultClass="res-draw-tag"; }
+  else {
+    resultText=won?(wasShootout?"¡VICTORIA EN PENALTIS!":"¡VICTORIA!"):(wasShootout?"DERROTA EN PENALTIS":"DERROTA");
+    resultClass=won?"res-win-tag":"res-lose-tag";
+  }
+
+  // ── HTML inicial — diseño match-modal ──
   overlay.innerHTML=`
-  <div class="live-match-modal">
-    <div class="live-match-header">
-      <div class="live-match-side">
-        <span style="font-size:36px">🐐</span>
-        <span class="live-match-team">${myTeamName}</span>
+  <div class="match-modal" style="overflow:hidden;display:flex;flex-direction:column;max-height:85vh">
+    <div class="match-header">
+      <div class="match-side">
+        <span class="match-flag">🐐</span>
+        <span class="match-team-name">${myTeamName}</span>
       </div>
-      <div style="text-align:center">
-        <div class="live-scoreline" id="liveScore">0 – 0</div>
+      <div style="text-align:center;flex:0 0 auto">
+        <div class="match-scoreline" id="liveScore" style="font-size:42px;letter-spacing:4px">0 – 0</div>
+        <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-top:4px">
+          <div style="font-family:'Bebas Neue',Impact,sans-serif;font-size:20px;color:var(--gold)" id="liveClock">0'</div>
+          <div style="font-size:9px;font-weight:700;background:var(--accent);color:#fff;padding:2px 7px;letter-spacing:1px;text-transform:uppercase" id="liveHalf">1ª PARTE</div>
+        </div>
+        <div style="height:4px;background:#eee;border-radius:2px;margin-top:6px;overflow:hidden">
+          <div id="liveFill" style="height:100%;background:var(--accent);border-radius:2px;width:0%;transition:width .15s linear"></div>
+        </div>
       </div>
-      <div class="live-match-side">
-        <span style="font-size:36px">${oppFlag}</span>
-        <span class="live-match-team">${oppName}</span>
+      <div class="match-side">
+        ${flagEmoji(nextOpponent.name)}
+        <span class="match-team-name">${oppName}</span>
       </div>
     </div>
-    <div class="live-clock-row">
-      <div class="live-clock" id="liveClock">0'</div>
-      <div class="live-half-badge" id="liveHalf">1ª PARTE</div>
-    </div>
-    <div class="live-pitch-bar"><div class="live-pitch-fill" id="liveFill" style="width:0%"></div></div>
-    <div class="live-events" id="liveEvents"></div>
+    <div id="liveEvents" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:6px;padding:4px 0;min-height:80px;max-height:260px"></div>
   </div>`;
 
   const eventsEl=document.getElementById('liveEvents');
@@ -2414,222 +2435,260 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
   const halfEl=document.getElementById('liveHalf');
   const fillEl=document.getElementById('liveFill');
   const scoreEl=document.getElementById('liveScore');
-  let curMy=0, curOpp=0;
+  let curMy=0,curOpp=0;
 
-  function updateScore(my,opp){
-    scoreEl.textContent=`${my} – ${opp}`;
-    scoreEl.classList.remove('goal-flash');
-    void scoreEl.offsetWidth;
-    scoreEl.classList.add('goal-flash');
-  }
+  function flashScore(){ scoreEl.classList.remove('goal-flash'); void scoreEl.offsetWidth; scoreEl.classList.add('goal-flash'); }
 
-  function addSeparator(text){
+  function addSep(text){
     const sep=document.createElement('div');
-    sep.className='live-ht-separator';
+    sep.style.cssText='text-align:center;font-size:10px;font-weight:700;color:var(--accent);letter-spacing:2px;padding:4px 0;border-top:1px solid #eee;border-bottom:1px solid #eee;margin:2px 0;text-transform:uppercase';
     sep.textContent=text;
     eventsEl.appendChild(sep);
     eventsEl.scrollTop=eventsEl.scrollHeight;
   }
 
-  function addEvent(icon,text,minLabel){
+  function addEvt(icon,text,minLabel,type){
     const item=document.createElement('div');
-    item.className='live-event';
-    item.innerHTML=`<span class="live-event-min">${minLabel}</span><span class="live-event-icon">${icon}</span><span class="live-event-text">${text}</span>`;
+    item.style.cssText='display:flex;align-items:center;gap:8px;font-size:12px;animation:slideInEvent .3s ease;opacity:0;animation-fill-mode:forwards;padding:2px 0';
+    const color=type==='mygoal'?'var(--accent)':type==='oppgoal'?'var(--red)':type==='card'?'#a07a00':'#888';
+    item.innerHTML=`<span style="font-family:'Bebas Neue',Impact,sans-serif;font-size:13px;color:${color};min-width:34px">${minLabel}</span><span style="font-size:15px">${icon}</span><span style="color:var(--text);line-height:1.3">${text}</span>`;
     eventsEl.appendChild(item);
     eventsEl.scrollTop=eventsEl.scrollHeight;
   }
 
-  // ── PHASE 1 & 2: Reglamento (90') — 9 segundos ──────────────────────────
-  // Fracciones del timeline de 9s: HT pause en 47%-53%
+  // ── Animación — fase 1 reglamento (9s) ──────────────────────────────────
   const REG_DURATION=9000;
-  const HT_S=0.47, HT_E=0.53;
-  let eventIdx=0, htShown=false;
+  const HT_S=0.47,HT_E=0.53;
+  let eventIdx=0,htShown=false;
   const regStart=performance.now();
 
-  function tickRegulation(now){
+  function tickReg(now){
     const frac=Math.min((now-regStart)/REG_DURATION,1);
-
-    // HT pause
-    if(frac>=HT_S && frac<HT_E){
+    if(frac>=HT_S&&frac<HT_E){
       if(!htShown){
         htShown=true;
         clockEl.textContent=`45+${inj1}'`;
         halfEl.textContent='DESCANSO';
+        halfEl.style.background='#a07a00';
         fillEl.style.width='50%';
-        addSeparator(`— DESCANSO (45+${inj1}') —`);
+        addSep(`Descanso — 45+${inj1}'`);
         playSound('whistle');
       }
-      requestAnimationFrame(tickRegulation);
-      return;
+      requestAnimationFrame(tickReg); return;
     }
-
     let minute;
     if(frac<HT_S){
-      minute=Math.min(45,Math.floor(frac/HT_S*(45+inj1)));
-      halfEl.textContent='1ª PARTE';
+      minute=Math.min(45+inj1,Math.floor(frac/HT_S*(45+inj1)));
+      halfEl.textContent='1ª PARTE'; halfEl.style.background='var(--accent)';
       fillEl.style.width=`${(frac/HT_S)*50}%`;
-      clockEl.textContent=`${minute}'`;
+      clockEl.textContent=minute>45?`45+${minute-45}'`:`${minute}'`;
     } else {
       const f2=(frac-HT_E)/(1-HT_E);
-      minute=46+Math.floor(f2*(90+inj2-46));
-      minute=Math.min(minute,90+inj2);
-      halfEl.textContent='2ª PARTE';
+      minute=46+Math.floor(f2*(MAX_MIN-46));
+      minute=Math.min(minute,MAX_MIN);
+      halfEl.textContent='2ª PARTE'; halfEl.style.background='var(--accent)';
       fillEl.style.width=`${50+f2*50}%`;
       clockEl.textContent=minute>90?`90+${minute-90}'`:`${minute}'`;
     }
-
-    while(eventIdx<allEvents.length && allEvents[eventIdx].minute<=minute){
+    while(eventIdx<allEvents.length&&allEvents[eventIdx].minute<=minute){
       const ev=allEvents[eventIdx++];
-      addEvent(ev.icon,ev.text,`${ev.minute}'`);
-      if(ev.type==='mygoal'){ curMy++; updateScore(curMy,curOpp); playSound('goal'); }
-      else if(ev.type==='oppgoal'){ curOpp++; updateScore(curMy,curOpp); playSound('goal'); }
+      const label=ev.minute>90?`90+${ev.minute-90}'`:ev.minute>45&&ev.minute<=45+inj1?`45+${ev.minute-45}'`:`${ev.minute}'`;
+      addEvt(ev.icon,ev.text,label,ev.type);
+      if(ev.type==='mygoal'){ curMy++; scoreEl.textContent=`${curMy} – ${curOpp}`; flashScore(); playSound('goal'); }
+      else if(ev.type==='oppgoal'){ curOpp++; scoreEl.textContent=`${curMy} – ${curOpp}`; flashScore(); playSound('goal'); }
     }
-
-    if(frac<1){ requestAnimationFrame(tickRegulation); return; }
-
-    // Regulation finished
-    clockEl.textContent=`90+${inj2}'`;
-    fillEl.style.width='100%';
+    if(frac<1){ requestAnimationFrame(tickReg); return; }
+    // Fin reglamento
+    clockEl.textContent=`90+${inj2}'`; fillEl.style.width='100%';
+    halfEl.textContent='FIN'; halfEl.style.background='#555';
     playSound('whistle');
-
-    if(penaltyInfo){
-      // Draw after 90' → show extra time then penalties
-      setTimeout(startExtraTime, 900);
-    } else {
-      halfEl.textContent='FIN';
-      playSound(won||draw?'victory':'defeat');
-      halfEl.textContent='FIN';
-      playSound(won||draw?'victory':'defeat');
-      setTimeout(()=>showMatchModal(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,penaltyInfo,newCards,predictionResult), 800);
-    }
+    if(penaltyInfo) setTimeout(startExtraTime,900);
+    else { playSound(won||draw?'victory':'defeat'); setTimeout(showPostMatch,800); }
   }
-  requestAnimationFrame(tickRegulation);
+  requestAnimationFrame(tickReg);
 
-  // ── PHASE 3: Prórroga (30') — 4 segundos ────────────────────────────────
-  // Mundial 2026: 2×15', sin gol de oro, ambas partes completas
+  // ── Fase 3: Prórroga ────────────────────────────────────────────────────
   function startExtraTime(){
-    halfEl.textContent='PRÓRROGA';
-    addSeparator('— PRÓRROGA —');
-    const ET_DURATION=4000;
-    const ET_HT_S=0.47, ET_HT_E=0.53;
-    let etHtShown=false;
+    halfEl.textContent='PRÓRROGA'; halfEl.style.background='#7a3a0a';
+    addSep('— PRÓRROGA —');
+    const ET=4000,ET_S=0.47,ET_E=0.53;
+    let etHt=false;
     const etStart=performance.now();
-
     function tickET(now){
-      const frac=Math.min((now-etStart)/ET_DURATION,1);
-
-      if(frac>=ET_HT_S && frac<ET_HT_E){
-        if(!etHtShown){
-          etHtShown=true;
-          clockEl.textContent="105'";
-          halfEl.textContent='DESCANSO P.';
-          addSeparator('— DESCANSO PRÓRROGA (105\') —');
-          playSound('whistle');
-        }
-        requestAnimationFrame(tickET);
-        return;
+      const frac=Math.min((now-etStart)/ET,1);
+      if(frac>=ET_S&&frac<ET_E){
+        if(!etHt){ etHt=true; clockEl.textContent="105'"; halfEl.textContent='DESCANSO P.'; halfEl.style.background='#a07a00'; addSep("Descanso prórroga — 105'"); playSound('whistle'); }
+        requestAnimationFrame(tickET); return;
       }
-
-      if(frac<ET_HT_S){
-        const m=91+Math.floor((frac/ET_HT_S)*14);
-        halfEl.textContent='PRÓRROGA 1ª';
-        clockEl.textContent=`${Math.min(m,105)}'`;
-      } else {
-        const f2=(frac-ET_HT_E)/(1-ET_HT_E);
-        const m=106+Math.floor(f2*14);
-        halfEl.textContent='PRÓRROGA 2ª';
-        clockEl.textContent=`${Math.min(m,120)}'`;
-      }
-
+      if(frac<ET_S){ clockEl.textContent=`${91+Math.floor((frac/ET_S)*14)}'`; halfEl.textContent='PRÓRROGA 1ª'; halfEl.style.background='#7a3a0a'; }
+      else { const f2=(frac-ET_E)/(1-ET_E); clockEl.textContent=`${106+Math.floor(f2*14)}'`; halfEl.textContent='PRÓRROGA 2ª'; halfEl.style.background='#7a3a0a'; }
       if(frac<1){ requestAnimationFrame(tickET); return; }
-
-      clockEl.textContent="120'";
-      halfEl.textContent='FIN PRÓRROGA';
-      playSound('whistle');
-      setTimeout(startPenalties, 900);
+      clockEl.textContent="120'"; halfEl.textContent='FIN PRÓRROGA'; halfEl.style.background='#555';
+      playSound('whistle'); setTimeout(startPenalties,900);
     }
     requestAnimationFrame(tickET);
   }
 
-  // ── PHASE 4: Tanda de penaltis ───────────────────────────────────────────
-  // ABAB alternando, 5 rondas + muerte súbita si empate
-  // (Mundial 2026 usa ABAB estándar — ABBA sólo fue piloto experimental)
+  // ── Fase 4: Penaltis ────────────────────────────────────────────────────
   function startPenalties(){
-    halfEl.textContent='PENALTIS';
-    clockEl.textContent='—';
-    fillEl.style.width='100%';
-    addSeparator('— TANDA DE PENALTIS —');
-
-    const myShots=penaltyInfo.myShots;    // [{name, scored}, ...]
-    const oppShots=penaltyInfo.oppShots;
-    // Interleave ABAB: [my0, opp0, my1, opp1, ...]
-    const maxLen=Math.max(myShots.length, oppShots.length);
+    halfEl.textContent='PENALTIS'; halfEl.style.background='#3a0a5a'; clockEl.textContent='—';
+    addSep('— TANDA DE PENALTIS —');
+    const myShots=penaltyInfo.myShots,oppShots=penaltyInfo.oppShots;
+    const maxLen=Math.max(myShots.length,oppShots.length);
     const sequence=[];
     for(let i=0;i<maxLen;i++){
-      if(i<myShots.length) sequence.push({team:'me',  shot:myShots[i],  round:i+1});
-      if(i<oppShots.length) sequence.push({team:'opp', shot:oppShots[i], round:i+1});
+      if(i<myShots.length) sequence.push({team:'me',shot:myShots[i],round:i+1});
+      if(i<oppShots.length) sequence.push({team:'opp',shot:oppShots[i],round:i+1});
     }
-
-    let penMyScore=0, penOppScore=0;
-    let seqIdx=0;
-
-    // Update pen scoreboard in the score element
-    function updatePenScore(){
-      scoreEl.textContent=`${curMy}(${penMyScore}) – ${curOpp}(${penOppScore})`;
-    }
+    let penMy=0,penOpp=0,seqIdx=0;
+    function label(r){ return r<=5?`P${r}`:'SD'; }
+    function updatePenScore(){ scoreEl.textContent=`${curMy}(${penMy}) – ${curOpp}(${penOpp})`; }
     updatePenScore();
-
-    // Show if it's round 1–5 (best-of-5) or sudden death
-    function roundLabel(round){ return round<=5 ? `P${round}` : `SD`; }
-
-    function showNextPenalty(){
-      if(seqIdx>=sequence.length){
-        // All done → finish
-        finishPenalties();
-        return;
-      }
-      const item=sequence[seqIdx++];
-      const {team,shot,round}=item;
-      const label=roundLabel(round);
-
-      // Brief suspense pause before revealing result
+    function nextPen(){
+      if(seqIdx>=sequence.length){ finishPenalties(); return; }
+      const {team,shot,round}=sequence[seqIdx++];
       setTimeout(()=>{
         if(team==='me'){
-          if(shot.scored) penMyScore++;
-          const icon=shot.scored?'✅':'❌';
-          addEvent(icon,`<strong>${shot.name}</strong> <span style="color:#aaa;font-size:10px">${myTeamName}</span>`,label);
+          if(shot.scored) penMy++;
+          addEvt(shot.scored?'✅':'❌',`<strong>${shot.name}</strong> <span style="font-size:10px;color:var(--accent)">${myTeamName}</span>`,label(round),'pen');
         } else {
-          if(shot.scored) penOppScore++;
-          const icon=shot.scored?'✅':'❌';
-          addEvent(icon,`<strong>${shot.name}</strong> <span style="color:#f88;font-size:10px">${oppName}</span>`,label);
+          if(shot.scored) penOpp++;
+          addEvt(shot.scored?'✅':'❌',`<strong>${shot.name}</strong> <span style="font-size:10px;color:var(--red)">${oppName}</span>`,label(round),'pen');
         }
         updatePenScore();
         if(shot.scored) playSound('goal');
-
-        // Check if shootout is already decided (can't catch up)
-        const myRemaining=myShots.filter((_,i)=>i>=Math.ceil(seqIdx/2)).length;
-        const oppRemaining=oppShots.filter((_,i)=>i>=Math.floor(seqIdx/2)).length;
-        const diff=penMyScore-penOppScore;
-        if(diff>oppRemaining || -diff>myRemaining){
-          setTimeout(finishPenalties,600);
-          return;
-        }
-
-        setTimeout(showNextPenalty, 700);
-      }, 600);
+        const myRem=myShots.filter((_,i)=>i>=Math.ceil(seqIdx/2)).length;
+        const oppRem=oppShots.filter((_,i)=>i>=Math.floor(seqIdx/2)).length;
+        const diff=penMy-penOpp;
+        if(diff>oppRem||-diff>myRem){ setTimeout(finishPenalties,600); return; }
+        setTimeout(nextPen,700);
+      },600);
     }
-
     function finishPenalties(){
-      const penWon=penMyScore>penOppScore;
-      const finalIcon=penWon?'🏆':'💔';
-      addSeparator(`${finalIcon} ${penWon?myTeamName:oppName} gana la tanda ${penMyScore}–${penOppScore}`);
-      if(penWon) playSound('victory'); else playSound('defeat');
-      setTimeout(()=>showMatchModal(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,penaltyInfo,newCards,predictionResult), 1200);
+      const penWon=penMy>penOpp;
+      addSep(`${penWon?'🏆':'💔'} ${penWon?myTeamName:oppName} gana la tanda ${penMy}–${penOpp}`);
+      playSound(penWon?'victory':'defeat');
+      setTimeout(showPostMatch,1200);
+    }
+    setTimeout(nextPen,500);
+  }
+
+  // ── Post-partido: añadir info al mismo modal ─────────────────────────────
+  function showPostMatch(){
+    const modal=overlay.querySelector('.match-modal');
+    if(!modal) return;
+    modal.style.overflowY='auto';
+
+    // Banner resultado
+    const banner=document.createElement('div');
+    banner.className=`match-result-tag ${resultClass}`;
+    banner.textContent=resultText;
+    banner.style.animation='slideInEvent .4s ease forwards';
+    modal.insertBefore(banner, eventsEl.nextSibling);
+
+    // Info post-partido (lesiones, tarjetas, prensa, estrategia)
+    const infoWrap=document.createElement('div');
+    infoWrap.style.cssText='display:flex;flex-direction:column;gap:6px;margin-top:8px';
+
+    // Resumen de goles (estadísticas del partido)
+    const summaryDiv=document.createElement('div');
+    summaryDiv.className='match-summary';
+    summaryDiv.innerHTML=summary.match(/<div class="match-stats"[^>]*>([\s\S]*?)<\/div>/)?.[0]||'';
+    // Extraer solo las estadísticas (posesión, tiros)
+    const statsMatch=summary.match(/Posesi[oó]n[^<]*/);
+    if(statsMatch){
+      summaryDiv.innerHTML=`<small style="color:var(--text-muted)">${statsMatch[0]}</small>`;
+      infoWrap.appendChild(summaryDiv);
     }
 
-    setTimeout(showNextPenalty, 500);
+    // Recuperados
+    if(recovered.length){
+      const r=document.createElement('div');
+      r.className='match-summary recovered-box';
+      r.innerHTML=`<strong>✅ Recuperados:</strong> ${recovered.join(', ')}`;
+      infoWrap.appendChild(r);
+    }
+
+    // Lesiones
+    if(newInjuries.length){
+      const ILABELS={leve:'leve (1 partido)',básica:'básica (2 partidos)',grave:'grave (3 partidos)'};
+      const inj=document.createElement('div');
+      inj.className='injury-section';
+      inj.innerHTML=`<p>⚠ Lesiones en ${myTeamName}:</p><ul>${newInjuries.map(p=>`<li>✚ ${p.name}: lesión ${ILABELS[p.injury.type]||''}</li>`).join('')}</ul>`;
+      infoWrap.appendChild(inj);
+    }
+
+    // Tarjetas
+    if(newCards&&newCards.length){
+      const CARD_LABELS={yellow:{icon:'🟨',text:'amarilla'},yellow2:{icon:'🟨🟨',text:'2ª amarilla — sancionado'},double_yellow:{icon:'🟨🟥',text:'doble amarilla — sancionado'},red:{icon:'🟥',text:'roja directa — sancionado'}};
+      const cd=document.createElement('div');
+      cd.className='card-section';
+      cd.innerHTML=`<p>📋 Tarjetas:</p><ul>${newCards.map(c=>{const l=CARD_LABELS[c.type];return `<li>${l.icon} ${c.player.name}: ${l.text}</li>`;}).join('')}</ul>`;
+      infoWrap.appendChild(cd);
+    }
+
+    // Entrevista de prensa
+    if(predictionResult){
+      const cls=predictionResult.outcome==='correct'?'press-prediction-good':predictionResult.outcome==='wrong'?'press-prediction-bad':'press-prediction-neutral';
+      const pr=document.createElement('div');
+      pr.className=`press-prediction-section ${cls}`;
+      pr.textContent=predictionResult.text;
+      infoWrap.appendChild(pr);
+    }
+
+    // Estrategia
+    if(selectedMatchStrategy&&nextOpponent){
+      const rivalKey=getRivalStrategyKey(nextOpponent);
+      const myKey=selectedMatchStrategy;
+      const myStrat=STRATEGIES[myKey];
+      const iCounter=myStrat&&myStrat.counters===rivalKey;
+      const iPartial=myStrat&&myStrat.partialCounters&&myStrat.partialCounters.includes(rivalKey);
+      const counteredBy=STRATEGIES[rivalKey]&&STRATEGIES[rivalKey].counters===myKey;
+      let stratMsg,stratClass;
+      if(iCounter){stratMsg=`✓ Tu estrategia (${myStrat.name}) contrarrestó perfectamente a ${oppName}.`;stratClass='strategy-feedback-good';}
+      else if(iPartial){stratMsg=`✓ Tu estrategia (${myStrat.name}) controló bien a ${oppName}.`;stratClass='strategy-feedback-good';}
+      else if(counteredBy){stratMsg=`✗ ${oppName} aprovechó el enfrentamiento táctico.`;stratClass='strategy-feedback-bad';}
+      else if(myKey===rivalKey){stratMsg=`= Ambos jugaron con un enfoque similar (${myStrat.name}).`;stratClass='strategy-feedback-neutral';}
+      else{stratMsg=`Estrategia neutral: ${myStrat.name}, sin ventaja táctica clara.`;stratClass='strategy-feedback-neutral';}
+      const sf=document.createElement('div');
+      sf.className=`strategy-feedback ${stratClass}`;
+      sf.textContent=stratMsg;
+      infoWrap.appendChild(sf);
+    }
+
+    modal.appendChild(infoWrap);
+
+    // Botón continuar
+    let btnLabel,outcome;
+    if(stage==='group'){
+      if(groupMatchIdx>=3){btnLabel='VER RESULTADOS DE GRUPO';outcome='groupDone';}
+      else{btnLabel='SIGUIENTE PARTIDO';outcome='nextGroupMatch';}
+    } else {
+      if(!won){btnLabel='FIN DEL TORNEO';outcome='knockoutLost';}
+      else if(knockoutRound>=ROUND_NAMES.length-1){btnLabel='VER RESUMEN FINAL';outcome='champion';}
+      else{btnLabel='SIGUIENTE RONDA';outcome='nextKnockoutMatch';}
+    }
+    const btn=document.createElement('button');
+    btn.className='modal-btn';
+    btn.textContent=btnLabel;
+    btn.style.marginTop='10px';
+    btn.addEventListener('click',()=>{
+      overlay.innerHTML='';
+      switch(outcome){
+        case 'nextGroupMatch': pickNextOpponent(); break;
+        case 'groupDone': renderMatchHistory(); showGroupResultsPopup(); break;
+        case 'nextKnockoutMatch': if(knockoutRound===1)clearYellowCardsAfterQuarterfinals(); knockoutRound++; pickNextOpponent(); break;
+        case 'champion': showVictory(); break;
+        case 'knockoutLost': showEliminated(); break;
+      }
+    });
+    modal.appendChild(btn);
+
+    // Scroll al final para ver el banner y la info
+    setTimeout(()=>{ overlay.querySelector('.match-modal').scrollTop=9999; },100);
   }
 }
+
 
 function showMatchModal(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,penaltyInfo,newCards,predictionResult){
   const wasShootout=!!penaltyInfo;
@@ -2925,12 +2984,11 @@ function showVictory(){
       <div class="vb-row"><span>Rachas de goleador</span><span class="vb-pts">${sc.breakdown.streaks} pts</span></div>
       ${sc.penWins?`<div class="vb-row"><span>Victorias en penaltis (${sc.penWins})</span><span class="vb-pts">${sc.breakdown.penalties} pts</span></div>`:''}
     </div>
-    <button class="modal-btn" onclick="location.reload()">NUEVA PARTIDA</button>
+    <button class="modal-btn" onclick="window._launchGoldenAndReload()">FINALIZAR CAMPEONATO</button>
   </div>`;
-
-  // Lanzar ticket dorado tras breve pausa para que el jugador vea la pantalla de victoria
-  setTimeout(showGoldenTicket, 1800);
 }
+
+window._launchGoldenAndReload=function(){ showGoldenTicket(); };
 
 /* ── TICKET DORADO: solo cabras y una X roja. Se gasta al instante. ── */
 function showGoldenTicket(){
@@ -2950,10 +3008,11 @@ function showGoldenTicket(){
   const serial=String(Math.floor(1000+Math.random()*8999))+'-'+String(Math.floor(1000+Math.random()*8999));
   wrap.innerHTML=`
   <div style="position:relative;width:340px;background:linear-gradient(180deg,#3a2a00 0%,#1a1200 100%);border-radius:18px;box-shadow:0 0 0 2px #f0c419,0 30px 60px -10px rgba(0,0,0,.9);overflow:hidden;">
+    <button onclick=\"window.gtClose(0)\" style=\"position:absolute;top:10px;left:12px;background:none;border:none;color:rgba(240,196,25,.5);font-size:20px;cursor:pointer;z-index:10;line-height:1;padding:4px\" title=\"Cerrar\">✕</button>
     <div style="padding:26px 22px 22px;">
       <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:2px;">
         <span style="font-size:18px">🏆</span>
-        <span style="font-family:'Bebas Neue',Impact,sans-serif;font-size:22px;letter-spacing:2px;color:#f0c419;text-shadow:0 0 12px rgba(240,196,25,.6)">BOLETO CAMPEÓN</span>
+        <span style="font-family:Bebas Neue,Impact,sans-serif;font-size:22px;letter-spacing:2px;color:#f0c419;text-shadow:0 0 12px rgba(240,196,25,.6)">TICKET GOAT</span>
         <span style="font-size:18px">🏆</span>
       </div>
       <div style="text-align:center;font-size:10px;letter-spacing:3px;color:rgba(240,196,25,.6);text-transform:uppercase;margin-bottom:16px;font-weight:700">Premio por ganar el Mundial</div>
@@ -2969,7 +3028,7 @@ function showGoldenTicket(){
       <div id="gtDots" style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
         <span style="font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:rgba(240,196,25,.5);font-weight:700;margin-right:4px;">Casillas rascadas</span>
       </div>
-      <button id="gtCashBtn" disabled onclick="gtCashOut(false)" style="width:100%;border:none;border-radius:10px;font-family:'Bebas Neue',Impact,sans-serif;font-size:16px;letter-spacing:1.5px;padding:13px;cursor:pointer;background:linear-gradient(180deg,#ffe27a,#f0c419 55%,#c9960c);color:#08160d;box-shadow:0 6px 0 #8a6a08;opacity:.35;pointer-events:none;">💰 COBRAR <span id="gtCashAmt">0</span> PTS</button>
+      <button id="gtCashBtn" disabled onclick="gtCashOut(false)" style="width:100%;border:none;border-radius:10px;font-family:'Bebas Neue',Impact,sans-serif;font-size:16px;letter-spacing:1.5px;padding:13px;cursor:pointer;background:linear-gradient(180deg,#ffe27a,#f0c419 55%,#c9960c);color:#08160d;box-shadow:0 6px 0 #8a6a08;opacity:.35;pointer-events:none;">💰 PLANTARSE</button>
       <div style="text-align:center;font-size:9px;color:rgba(240,196,25,.35);margin-top:14px;letter-spacing:.5px;line-height:1.5">
         Solo cabras 🐐 (+3 pts) y una casilla ❌.<br>Premio especial por ganar el Mundial. ¡No se acumula!
       </div>
@@ -3086,7 +3145,7 @@ function showGoldenTicket(){
     <div style="background:linear-gradient(180deg,#3a2a00,#1a1200);border-radius:18px;padding:30px 26px;text-align:center;max-width:300px;width:90%;box-shadow:0 0 0 2px #f0c419,0 30px 60px -10px rgba(0,0,0,.9);animation:popIn .3s cubic-bezier(.2,1.4,.4,1)">
       <style>@keyframes popIn{0%{transform:scale(.7);opacity:0}100%{transform:scale(1);opacity:1}}</style>
       <span style="font-size:54px;display:block;margin-bottom:10px">${win?(auto?'🏆':'💰'):'❌'}</span>
-      <h2 style="font-family:'Bebas Neue',Impact,sans-serif;font-size:26px;letter-spacing:1px;color:${win?'#f0c419':'#f87171'};margin-bottom:6px">${win?(auto?'¡BOLETO COMPLETO!':'¡PUNTOS A SALVO!'):'¡MALA SUERTE!'}</h2>
+      <h2 style="font-family:'Bebas Neue',Impact,sans-serif;font-size:26px;letter-spacing:1px;color:${win?'#f0c419':'#f87171'};margin-bottom:6px">${win?(auto?'¡TICKET PREMIADO!':'¡TICKET PREMIADO!'):'TICKET ANULADO'}</h2>
       <p style="font-size:12px;color:rgba(240,196,25,.7);line-height:1.5;margin-bottom:12px">${win?'Tus puntos de campeón han sido guardados.':'La casilla mala te ha quitado los puntos. ¡Casi!'}</p>
       <div style="font-family:'Bebas Neue',Impact,sans-serif;font-size:34px;color:${win?'#f0c419':'#f87171'};margin-bottom:18px">${(win && pts>0)?'+'+pts+' PTS':win?'SIN PUNTOS':'TICKET ANULADO'}</div>
       <button onclick="gtClose(${win?pts:0})" style="width:100%;border:none;border-radius:10px;padding:12px;font-family:'Bebas Neue',Impact,sans-serif;font-size:15px;letter-spacing:1.5px;background:linear-gradient(180deg,#ffe27a,#f0c419 55%,#c9960c);color:#08160d;cursor:pointer;">CERRAR</button>
@@ -4626,6 +4685,7 @@ function buildTicketInMount(mount, ticketCount, lastRegen, currentScratchPts){
 
   mount.innerHTML=`
   <div class="ticket" id="ticketCard" style="position:relative;width:340px;background:linear-gradient(180deg,#0f3d24 0%,#0c2e1c 100%);border-radius:18px;box-shadow:0 30px 60px -20px rgba(0,0,0,.7),0 0 0 1px rgba(240,196,25,.15);overflow:hidden;">
+    <button onclick=\"window.closeTicketOverlay()\" style=\"position:absolute;top:10px;left:12px;background:none;border:none;color:rgba(246,241,227,.5);font-size:20px;cursor:pointer;z-index:10;line-height:1;padding:4px\" title=\"Cerrar\">✕</button>
     <div id="ticketStamp" style="position:absolute;top:54px;right:-34px;width:140px;text-align:center;background:#e8a020;color:#fff;font-family:'Bebas Neue',Impact,sans-serif;font-size:11px;letter-spacing:2px;padding:4px 0;transform:rotate(40deg);box-shadow:0 3px 8px rgba(0,0,0,.35);z-index:4;">RASCA Y GANA</div>
     <div style="padding:26px 22px 22px;">
       <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:2px;">
@@ -4850,15 +4910,15 @@ function buildTicketInMount(mount, ticketCount, lastRegen, currentScratchPts){
     <div style="background:linear-gradient(180deg,#0f3d24,#0c2e1c);border-radius:18px;padding:30px 26px;text-align:center;max-width:300px;width:90%;box-shadow:0 30px 60px -10px rgba(0,0,0,.8),0 0 0 1px rgba(240,196,25,.2);animation:popIn .3s cubic-bezier(.2,1.4,.4,1)">
       <style>@keyframes popIn{0%{transform:scale(.7);opacity:0}100%{transform:scale(1);opacity:1}}</style>
       <span style="font-size:54px;display:block;margin-bottom:10px">${win?(auto?'🏆':'💰'):'❌'}</span>
-      <h2 style="font-family:'Bebas Neue',Impact,sans-serif;font-size:26px;letter-spacing:1px;color:${win?'#f0c419':'#d94f3d'};margin-bottom:6px">${win?(auto?'¡BOLETO COMPLETO!':'¡PUNTOS A SALVO!'):'TICKET ANULADO'}</h2>
-      <p style="font-size:12px;color:rgba(246,241,227,.7);line-height:1.5;margin-bottom:12px">${win?(auto?'Rascaste todo el boleto. Premio máximo.':'Has cobrado a tiempo. Decisión inteligente.'):'Has perdido los puntos acumulados en este boleto.'}</p>
+      <h2 style="font-family:'Bebas Neue',Impact,sans-serif;font-size:26px;letter-spacing:1px;color:${win?'#f0c419':'#d94f3d'};margin-bottom:6px">${win?(auto?'¡TICKET PREMIADO!':'¡TICKET PREMIADO!'):'TICKET ANULADO'}</h2>
+      <p style="font-size:12px;color:rgba(246,241,227,.7);line-height:1.5;margin-bottom:12px">${win?(auto?'Rascaste todo el boleto. Premio máximo.':'¡Buena jugada! Te has retirado a tiempo'):'Has perdido los puntos acumulados en este boleto.'}</p>
       <div style="font-family:'Bebas Neue',Impact,sans-serif;font-size:34px;color:${win?'#f0c419':'#d94f3d'};margin-bottom:18px">${(win && pts>0)?'+'+pts+' PTS':win?'SIN PUNTOS':'TICKET ANULADO'}</div>
       <button onclick="closeTicketAndSave(${win?pts:0})" style="width:100%;border:none;border-radius:10px;padding:12px;font-family:'Bebas Neue',Impact,sans-serif;font-size:15px;letter-spacing:1.5px;background:linear-gradient(180deg,#ffe27a,#f0c419 55%,#c9960c);color:#08160d;cursor:pointer;">CERRAR</button>
     </div>`;
   }
 
   window.closeTicketAndSave=async function(ptsEarned){
-    if(window.CHEATS_ACTIVE){ window.closeTicketOverlay(); updateTicketBadge(3); return; }
+    // En cheats aún guardamos los puntos ganados realmente
     if(window._fbAuth&&window._fbAuth.currentUser){
       try{
         const user=window._fbAuth.currentUser;
@@ -4881,7 +4941,8 @@ function buildTicketInMount(mount, ticketCount, lastRegen, currentScratchPts){
           scratchPoints:newPts,
           scratchPointsEarned:newEarned
         },{merge:true});
-        updateTicketBadge(newCount);
+        const displayCount=window.CHEATS_ACTIVE?3:newCount;
+        updateTicketBadge(displayCount);
         const pse=$id('pstat-scratch-pts');
         if(pse) pse.textContent=newPts;
       }catch(e){ console.warn('Error guardando boleto:',e); }
