@@ -4600,7 +4600,7 @@ document.addEventListener('click', e=>{
    ============================================================ */
 
 const TICKET_MAX = 3;
-const TICKET_FIXED_HOURS = [0, 8, 12, 16, 20]; // horas locales de recarga
+const TICKET_FIXED_HOURS = [0, 4, 8, 12, 16, 20]; // horas locales de recarga
 
 /* Devuelve el timestamp local del próximo slot de recarga a partir de 'now' */
 function nextTicketSlot(now){
