@@ -2550,7 +2550,7 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
     item.style.cssText='display:grid;grid-template-columns:1fr 44px 1fr;align-items:center;width:100%;font-size:12px;animation:slideInEvent .3s ease;opacity:0;animation-fill-mode:forwards;padding:3px 0;border-bottom:1px solid rgba(0,0,0,.05)';
     const isMe=type==='mygoal'||type==='card'||type==='injury'||type==='pen_me';
     const isOpp=type==='oppgoal'||type==='pen_opp'||type==='oppcard';
-    const myColor=type==='mygoal'||type==='pen_me'?'var(--accent)':type==='card'?'#a07a00':type==='injury'?'#888':'var(--text)';
+    const myColor=type==='mygoal'||type==='pen_me'?'var(--accent)':type==='card'?'#a07a00':type==='injury'?'#e74c3c':'var(--text)';
     const oppColor=type==='oppgoal'||type==='pen_opp'?'var(--red)':type==='oppcard'?'#a07a00':'var(--text)';
     // Centro: minuto
     const center=`<span style="font-family:'Bebas Neue',Impact,sans-serif;font-size:12px;color:#999;text-align:center;display:block">${minLabel}</span>`;
@@ -2725,7 +2725,7 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
       const ILABELS={leve:'leve (1 partido)',básica:'básica (2 partidos)',grave:'grave (3 partidos)'};
       const inj=document.createElement('div');
       inj.className='injury-section';
-      inj.innerHTML=`<p>⚠ Lesiones en ${myTeamName}:</p><ul>${newInjuries.map(p=>`<li>✚ ${p.name}: lesión ${ILABELS[p.injury.type]||''}</li>`).join('')}</ul>`;
+      inj.innerHTML=`<p>⚠ Lesiones en ${myTeamName}:</p><ul>${newInjuries.map(p=>`<li><span style="color:#e74c3c">✚</span> ${p.name}: lesión ${ILABELS[p.injury.type]||''}</li>`).join('')}</ul>`;
       infoWrap.appendChild(inj);
     }
 
@@ -4424,6 +4424,27 @@ function initFirebaseAuth(){
   window.showRankingModal=function(){
     const o=document.getElementById('rankingOverlay');
     if(o){ o.style.display='flex'; window.loadRanking('rankingTableDesktop'); }
+    // Mostrar botón de limpiar solo en modo debug
+    const dbz=document.getElementById('rankingDebugZone');
+    if(dbz) dbz.style.display=window.CHEATS_ACTIVE?'block':'none';
+  };
+
+  window.clearRanking=async function(){
+    if(!window.CHEATS_ACTIVE) return;
+    if(!confirm('¿Borrar TODAS las entradas del ranking? Esta acción no se puede deshacer.')) return;
+    try{
+      const btn=document.querySelector('#rankingDebugZone button');
+      if(btn) btn.textContent='Borrando...';
+      const snap=await window._fbDb.collection('scores').get();
+      const batch=window._fbDb.batch();
+      snap.docs.forEach(doc=>batch.delete(doc.ref));
+      await batch.commit();
+      if(btn) btn.textContent='⚙️ LIMPIAR RANKING COMPLETO';
+      window.loadRanking('rankingTableDesktop');
+    }catch(e){
+      console.error('Error limpiando ranking:',e);
+      alert('Error: '+e.message);
+    }
   };
 
   /* ─── CLOSE ON BACKDROP ─── */
