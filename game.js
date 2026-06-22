@@ -3097,9 +3097,10 @@ function showGoldenTicket(){
       try{
         const user=window._fbAuth.currentUser;
         const snap=await window._fbDb.collection('users').doc(user.uid).get();
-        const current=snap.exists?(snap.data().scratchPoints||0):0;
-        const newPts=current+ptsEarned;
-        await window._fbDb.collection('users').doc(user.uid).set({scratchPoints:newPts},{merge:true});
+        const d=snap.exists?snap.data():{};
+        const newPts=(d.scratchPoints||0)+ptsEarned;
+        const newEarned=(d.scratchPointsEarned||0)+ptsEarned;
+        await window._fbDb.collection('users').doc(user.uid).set({scratchPoints:newPts,scratchPointsEarned:newEarned},{merge:true});
         const pse=$id('pstat-scratch-pts'); if(pse) pse.textContent=newPts;
       }catch(e){console.warn('Error guardando pts golden ticket:',e);}
     }
@@ -3920,7 +3921,7 @@ function initFirebaseAuth(){
       await db.collection('users').doc(cred.user.uid).set({
         username,username_lower:username.toLowerCase(),email,
         createdAt:new Date().toISOString(),
-        ticketCount:1, ticketLastRegen:Date.now(), scratchPoints:0,
+        ticketCount:1, ticketLastRegen:Date.now(), scratchPoints:0, scratchPointsEarned:0, scratchPointsSpent:0,
         stats:{gamesPlayed:0,wins:0,draws:0,losses:0,goalsFor:0,goalsAgainst:0,bestScore:0,titles:0}
       });
       if(window._initTicketSystem) window._initTicketSystem(cred.user, true);
@@ -4473,6 +4474,8 @@ async function getTicketState(){
     count: d.ticketCount !== undefined ? d.ticketCount : 1,
     lastChecked: d.ticketLastRegen || Date.now(),
     scratchPoints: d.scratchPoints || 0,
+    scratchPointsEarned: d.scratchPointsEarned || 0,
+    scratchPointsSpent: d.scratchPointsSpent || 0,
   };
 }
 
@@ -4843,6 +4846,7 @@ function buildTicketInMount(mount, ticketCount, lastRegen, currentScratchPts){
         const currentData=snap.exists?snap.data():{};
         const currentPts=currentData.scratchPoints||0;
         const newPts=currentPts+ptsEarned;
+        const newEarned=(currentData.scratchPointsEarned||0)+ptsEarned;
         // Calcular nuevo contador de tickets
         const updated=computeCurrentTickets(
           currentData.ticketCount!==undefined?currentData.ticketCount:1,
@@ -4852,7 +4856,8 @@ function buildTicketInMount(mount, ticketCount, lastRegen, currentScratchPts){
         await db.collection('users').doc(user.uid).set({
           ticketCount:newCount,
           ticketLastRegen:updated.lastChecked,
-          scratchPoints:newPts
+          scratchPoints:newPts,
+          scratchPointsEarned:newEarned
         },{merge:true});
         updateTicketBadge(newCount);
         const pse=$id('pstat-scratch-pts');
@@ -4876,6 +4881,8 @@ async function initTicketSystem(user, isNewUser){
       ticketCount:1,
       ticketLastRegen:Date.now(),
       scratchPoints:0,
+      scratchPointsEarned:0,
+      scratchPointsSpent:0,
     },{merge:true});
     updateTicketBadge(1);
   } else {
