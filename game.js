@@ -3854,6 +3854,7 @@ function initFirebaseAuth(){
     return "";
   }
   function $id(id){return document.getElementById(id);}
+  window.$id=$id;
   function setErr(id,msg){
     const el=$id(id); if(!el) return;
     el.textContent=msg||""; el.style.display=msg?"block":"none";
