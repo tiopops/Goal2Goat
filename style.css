@@ -770,30 +770,30 @@ body.dark-theme .settings-item:hover{background:var(--row-hover);color:var(--gol
 /* Base común para todos los botones del header */
 .header-auth-btn,
 .header-ticket-btn,
-.profile-btn{
+.profile-btn,
+.support-btn{
   font-family:'Bebas Neue',Impact,sans-serif;
   font-size:13px;letter-spacing:1px;
-  padding:5px 12px;cursor:pointer;
+  padding:0 14px;cursor:pointer;
   border:none;border-radius:0;
   transition:background .15s, transform .1s, box-shadow .15s;
   white-space:nowrap;flex-shrink:0;
-  height:30px;display:inline-flex;align-items:center;
+  height:32px;display:inline-flex;align-items:center;justify-content:center;
 }
+/* LOGIN/REGISTRO */
 .login-btn{background:transparent;color:var(--gold);border:1px solid var(--gold)}
-.login-btn:hover{background:var(--gold);color:#000;transform:translateY(-1px);box-shadow:0 4px 12px rgba(240,196,25,.3)}
+.login-btn:hover,.login-btn:active{background:var(--gold);color:#000;transform:translateY(-1px);box-shadow:0 4px 12px rgba(240,196,25,.3)}
 .register-btn{background:var(--gold);color:#000}
 .register-btn:hover{background:#e0b82a;transform:translateY(-1px);box-shadow:0 4px 12px rgba(240,196,25,.3)}
-.logout-btn{background:transparent;color:#aaa;border:1px solid #555;font-size:11px;padding:4px 8px}
+.logout-btn{background:transparent;color:#aaa;border:1px solid #555;font-size:11px}
 .logout-btn:hover{border-color:#aaa;color:#fff}
 .header-user-info{display:flex;align-items:center;gap:8px;flex-shrink:0}
 .header-username{font-size:12px;color:var(--gold);font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:.5px}
+/* PERFIL */
 .profile-btn{background:#1a2a1a;color:var(--gold);border:1px solid var(--gold)}
 .profile-btn:hover{background:var(--gold);color:#000;transform:translateY(-1px);box-shadow:0 4px 12px rgba(240,196,25,.3)}
-.header-ticket-btn{
-  position:relative;
-  background:#1a2a1a;color:var(--gold);
-  border:1px solid var(--gold);
-}
+/* TICKETS */
+.header-ticket-btn{position:relative;background:#1a2a1a;color:var(--gold);border:1px solid var(--gold)}
 .header-ticket-btn:hover{background:var(--gold);color:#000;transform:translateY(-1px);box-shadow:0 4px 12px rgba(240,196,25,.3)}
 .header-ticket-alert{
   position:absolute;top:-4px;right:-4px;
@@ -801,6 +801,15 @@ body.dark-theme .settings-item:hover{background:var(--row-hover);color:var(--gol
   background:#f87171;border:2px solid var(--card-bg);
   animation:ticketPulse 1.5s ease-in-out infinite;
 }
+/* APOYA y RANKING — support-btn */
+.support-btn{background:var(--gold);color:#000}
+.support-btn:hover{background:#e0b82a;transform:translateY(-1px);box-shadow:0 4px 12px rgba(240,196,25,.3)}
+.support-btn:active{transform:translateY(0)}
+/* RANKING: fondo oscuro con borde dorado, hover igual que los demás */
+.support-btn[onclick*="Ranking"],
+.support-btn[onclick*="ranking"]{background:#1a1a1a;color:var(--gold);border:1px solid var(--gold)}
+.support-btn[onclick*="Ranking"]:hover,
+.support-btn[onclick*="ranking"]:hover{background:var(--gold);color:#000;transform:translateY(-1px);box-shadow:0 4px 12px rgba(240,196,25,.3)}
 
 /* ===== AUTH MODAL ===== */
 .auth-modal{
@@ -849,15 +858,6 @@ body.dark-theme .settings-item:hover{background:var(--row-hover);color:var(--gol
 .auth-submit-btn:disabled{opacity:.5;cursor:not-allowed}
 .auth-switch{font-size:12px;color:var(--text-muted);text-align:center;margin-top:14px}
 .auth-switch a{color:var(--gold);text-decoration:none}
-.support-btn{
-  background:var(--gold);color:#000;border:none;
-  font-family:'Bebas Neue',Impact,sans-serif;
-  font-size:12px;letter-spacing:1px;
-  padding:5px 10px;cursor:pointer;transition:background .15s, transform .1s, box-shadow .15s;
-  white-space:nowrap;flex-shrink:0;
-}
-.support-btn:hover{background:#e0b82a;transform:translateY(-1px);box-shadow:0 4px 12px rgba(240,196,25,.3)}
-.support-btn:active{transform:translateY(0)}
 .auth-switch a:hover{text-decoration:underline}
 
 @media(max-width:640px){
@@ -894,7 +894,8 @@ body.dark-theme .settings-item:hover{background:var(--row-hover);color:var(--gol
   border:none!important;
 }
 
-/* profile-btn y header-ticket-btn definidos arriba junto a los demás botones del header */
+/* profile-btn, header-ticket-btn y support-btn definidos arriba */
+/* placeholder */
 @keyframes ticketPulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.3);opacity:.7}}
 
 /* PROFILE STATS */

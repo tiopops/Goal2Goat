@@ -2471,9 +2471,21 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
 
   function addEvt(icon,text,minLabel,type){
     const item=document.createElement('div');
-    item.style.cssText='display:flex;align-items:center;gap:8px;font-size:12px;animation:slideInEvent .3s ease;opacity:0;animation-fill-mode:forwards;padding:2px 0';
-    const color=type==='mygoal'?'var(--accent)':type==='oppgoal'?'var(--red)':type==='card'?'#a07a00':'#888';
-    item.innerHTML=`<span style="font-family:'Bebas Neue',Impact,sans-serif;font-size:13px;color:${color};min-width:34px">${minLabel}</span><span style="font-size:15px">${icon}</span><span style="color:var(--text);line-height:1.3">${text}</span>`;
+    item.style.cssText='display:grid;grid-template-columns:1fr 44px 1fr;align-items:center;font-size:12px;animation:slideInEvent .3s ease;opacity:0;animation-fill-mode:forwards;padding:3px 0;border-bottom:1px solid rgba(0,0,0,.05)';
+    const isMe=type==='mygoal'||type==='card'||type==='injury'||type==='pen_me';
+    const isOpp=type==='oppgoal'||type==='pen_opp';
+    const myColor=type==='mygoal'||type==='pen_me'?'var(--accent)':type==='card'?'#a07a00':type==='injury'?'#888':'var(--text)';
+    const oppColor=type==='oppgoal'||type==='pen_opp'?'var(--red)':'var(--text)';
+    // Centro: minuto
+    const center=`<span style="font-family:'Bebas Neue',Impact,sans-serif;font-size:12px;color:#999;text-align:center;display:block">${minLabel}</span>`;
+    if(isMe){
+      item.innerHTML=`<span style="text-align:right;padding-right:6px;color:${myColor};line-height:1.3">${text} <span style="font-size:14px">${icon}</span></span>${center}<span></span>`;
+    } else if(isOpp){
+      item.innerHTML=`<span></span>${center}<span style="text-align:left;padding-left:6px;color:${oppColor};line-height:1.3"><span style="font-size:14px">${icon}</span> ${text}</span>`;
+    } else {
+      // penalti neutro o separador inline
+      item.innerHTML=`<span style="text-align:right;padding-right:6px;color:var(--text);line-height:1.3">${text} ${icon}</span>${center}<span></span>`;
+    }
     eventsEl.appendChild(item);
     eventsEl.scrollTop=eventsEl.scrollHeight;
   }
@@ -2572,7 +2584,7 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
       setTimeout(()=>{
         if(team==='me'){
           if(shot.scored) penMy++;
-          addEvt(shot.scored?'✅':'❌',`<strong>${shot.name}</strong> <span style="font-size:10px;color:var(--accent)">${myTeamName}</span>`,label(round),'pen');
+          addEvt(shot.scored?'✅':'❌',`<strong>${shot.name}</strong>`,label(round),'pen_me');
         } else {
           if(shot.scored) penOpp++;
           addEvt(shot.scored?'✅':'❌',`<strong>${shot.name}</strong> <span style="font-size:10px;color:var(--red)">${oppName}</span>`,label(round),'pen');
