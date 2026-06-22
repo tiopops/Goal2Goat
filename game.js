@@ -311,7 +311,7 @@ let swapsUsedThisMatch = 0;
 /* ========= ROGUELIKE SYSTEMS STATE ========= */
 // Morale: -50 to +50, starts at 0, affects match lambda
 let teamMorale = 0;
-let CHEATS_ACTIVE = false;
+window.CHEATS_ACTIVE = false;
 const CHEAT_USER = 'jesuslor85@gmail.com';
 // Scorer streaks: map playerName -> consecutive matches scored
 let scorerStreaks = {};
@@ -4515,72 +4515,52 @@ function updateTicketBadge(count){
   }
 }
 
-/* ── Abrir overlay del boleto ── */
-window.openTicketOverlay=function(){
-  const overlay=$id('ticketOverlay');
-  if(overlay) overlay.style.display='block';
-  const mount=$id('ticketMountPoint');
-  if(mount) mount.innerHTML='<div style="text-align:center;padding:40px;color:#aaa;font-family:Inter,sans-serif">Cargando...</div>';
-  _openTicketAsync();
+/* ── Abrir / cerrar overlay de tickets ── */
+window.openTicketOverlay = function() {
+  var ov = document.getElementById('ticketOverlay');
+  if (ov) ov.style.display = 'block';
+  var mt = document.getElementById('ticketMountPoint');
+  if (mt) mt.innerHTML = '<div style="text-align:center;padding:40px;color:#aaa">Cargando...</div>';
+  // Firebase puede no estar listo: esperar
+  if (typeof firebase === 'undefined') {
+    if (mt) mt.innerHTML = '<div style="padding:40px;color:#f87171;text-align:center">Firebase no disponible.</div>';
+    return;
+  }
+  firebase.auth().onAuthStateChanged(function(user) {
+    if (!user) {
+      if (mt) mt.innerHTML = "<div style='text-align:center;color:#ccc;padding:40px 20px'><div style='font-size:48px'>🔒</div><div style='font-size:20px;color:var(--gold);margin:10px 0'>INICIA SESIÓN</div><p style='font-size:12px;color:#aaa'>Necesitas cuenta para usar los tickets.</p><button onclick='window.closeTicketOverlay()' style='margin-top:16px;border:1px solid #444;background:none;color:#aaa;padding:8px 20px;cursor:pointer;font-size:13px'>CERRAR</button></div>";
+      return;
+    }
+    getTicketState().then(function(state) {
+      if (!state) {
+        if (mt) mt.innerHTML = '<div style="padding:40px;color:#f87171;text-align:center">Error cargando tickets.</div>';
+        return;
+      }
+      var updated = computeCurrentTickets(state.count, state.lastChecked);
+      if (updated.count !== state.count || updated.lastChecked !== state.lastChecked) {
+        saveTicketState(updated.count, updated.lastChecked, state.scratchPoints);
+      }
+      updateTicketBadge(updated.count);
+      if (updated.count <= 0) {
+        var nextSlot = nextTicketSlot(Date.now());
+        var d = new Date(nextSlot);
+        var hh = String(d.getHours()).padStart(2,'0');
+        var mm = String(d.getMinutes()).padStart(2,'0');
+        var msLeft = nextSlot - Date.now();
+        var minsLeft = Math.ceil(msLeft / 60000);
+        var hLeft = Math.floor(minsLeft / 60);
+        var mLeft = minsLeft % 60;
+        if (mt) mt.innerHTML = "<div style='text-align:center;color:#ccc;padding:40px 20px'><div style='font-size:60px;margin-bottom:16px'>🎟️</div><div style='font-size:24px;color:var(--gold);margin-bottom:8px'>SIN TICKETS</div><div style='font-size:13px;font-family:Inter,sans-serif;color:#aaa;line-height:1.8'>Próximo ticket a las<br><strong style='color:#fff;font-size:22px'>" + hh + ":" + mm + "</strong><br><span style='font-size:11px;color:#666'>(en " + (hLeft>0?hLeft+"h ":"") + mLeft + "min)</span><br><br>Los tickets se generan a las<br><strong style='color:#aaa'>8:00 · 12:00 · 16:00 · 20:00 · 00:00</strong><br><br>Máximo " + TICKET_MAX + " tickets acumulados.</div><button onclick='window.closeTicketOverlay()' style='margin-top:20px;border:1px solid #444;background:none;color:#aaa;padding:10px 24px;cursor:pointer;font-size:14px;letter-spacing:1px'>CERRAR</button></div>";
+        return;
+      }
+      buildTicketInMount(mt, updated.count, updated.lastChecked, state.scratchPoints);
+    }).catch(function(e){ console.error('ticket error', e); });
+  });
 };
 
-async function _openTicketAsync(){
-  const mount=$id('ticketMountPoint');
-  if(!mount) return;
-  // Esperar a que Firebase Auth resuelva el estado del usuario
-  const user = await new Promise(resolve=>{
-    if(typeof firebase==='undefined'){ resolve(null); return; }
-    const unsub=firebase.auth().onAuthStateChanged(u=>{ unsub(); resolve(u); });
-  });
-  if(!user){
-    mount.innerHTML=`<div style="text-align:center;color:#ccc;padding:40px 20px;font-family:'Bebas Neue',Impact,sans-serif;">
-      <div style="font-size:50px;margin-bottom:16px">🔒</div>
-      <div style="font-size:20px;color:var(--gold);margin-bottom:8px">INICIA SESIÓN</div>
-      <div style="font-size:12px;font-family:'Inter',sans-serif;color:#aaa">Necesitas una cuenta para usar los tickets.</div>
-      <button onclick="closeTicketOverlay()" style="margin-top:20px;border:1px solid #444;background:none;color:#aaa;padding:10px 24px;cursor:pointer;font-family:'Bebas Neue',Impact,sans-serif;font-size:14px;letter-spacing:1px;">CERRAR</button>
-    </div>`;
-    return;
-  }
-  const state=await getTicketState();
-  if(!state){
-    mount.innerHTML='<div style="text-align:center;padding:40px;color:#f87171">Error cargando tickets.</div>';
-    return;
-  }
-  const updated=computeCurrentTickets(state.count, state.lastChecked);
-  if(updated.count!==state.count||updated.lastChecked!==state.lastChecked){
-    await saveTicketState(updated.count, updated.lastChecked, state.scratchPoints);
-  }
-  updateTicketBadge(updated.count);
-  if(updated.count<=0){
-    const nextSlot=nextTicketSlot(Date.now());
-    const d=new Date(nextSlot);
-    const hh=String(d.getHours()).padStart(2,'0');
-    const mm=String(d.getMinutes()).padStart(2,'0');
-    const msLeft=nextSlot-Date.now();
-    const minsLeft=Math.ceil(msLeft/60000);
-    const hLeft=Math.floor(minsLeft/60);
-    const mLeft=minsLeft%60;
-    mount.innerHTML=`
-      <div style="text-align:center;color:#ccc;padding:40px 20px;font-family:'Bebas Neue',Impact,sans-serif;">
-        <div style="font-size:60px;margin-bottom:16px">🎟️</div>
-        <div style="font-size:24px;color:var(--gold);margin-bottom:8px">SIN TICKETS</div>
-        <div style="font-size:13px;font-family:'Inter',sans-serif;color:#aaa;line-height:1.8">
-          Próximo ticket a las<br>
-          <strong style="color:#fff;font-size:22px">${hh}:${mm}</strong><br>
-          <span style="font-size:11px;color:#666">(en ${hLeft>0?hLeft+'h ':''}${mLeft}min)</span><br><br>
-          Los tickets se generan a las<br>
-          <strong style="color:#aaa">8:00 · 12:00 · 16:00 · 20:00 · 00:00</strong><br><br>
-          Máximo ${TICKET_MAX} tickets acumulados.
-        </div>
-        <button onclick="closeTicketOverlay()" style="margin-top:20px;border:1px solid #444;background:none;color:#aaa;padding:10px 24px;cursor:pointer;font-family:'Bebas Neue',Impact,sans-serif;font-size:14px;letter-spacing:1px;">CERRAR</button>
-      </div>`;
-    return;
-  }
-  buildTicketInMount(mount, updated.count, updated.lastChecked, state.scratchPoints);
-}
-window.closeTicketOverlay=function(){
-  const overlay=$id('ticketOverlay');
-  if(overlay) overlay.style.display='none';
+window.closeTicketOverlay = function() {
+  var ov = document.getElementById('ticketOverlay');
+  if (ov) ov.style.display = 'none';
 };
 
 /* ── Construir el boleto dentro del mount point ── */
