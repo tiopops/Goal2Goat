@@ -2498,7 +2498,9 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
     } else {
       halfEl.textContent='FIN';
       playSound(won||draw?'victory':'defeat');
-      setTimeout(()=>showPostMatchSummary(), 800);
+      halfEl.textContent='FIN';
+      playSound(won||draw?'victory':'defeat');
+      setTimeout(()=>showMatchModal(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,penaltyInfo,newCards,predictionResult), 800);
     }
   }
   requestAnimationFrame(tickRegulation);
@@ -3001,7 +3003,7 @@ function showGoldenTicket(){
     if(data.type==='bomb'){
       res.innerHTML=`<span style="font-size:26px">❌</span><span style="font-size:13px;color:#f87171;letter-spacing:.5px">PIERDE</span>`;
     } else {
-      res.innerHTML=`<span style="font-size:26px">🐐</span><span style="font-size:13px;color:#f0c419;letter-spacing:.5px">+3 PTS</span>`;
+      res.innerHTML=`<span style="font-size:26px">🐐</span><span style="font-size:13px;color:#f0c419;letter-spacing:.5px">+4 PTS</span>`;
     }
     cell.appendChild(res);
     const canvas=document.createElement('canvas');
@@ -3086,7 +3088,7 @@ function showGoldenTicket(){
       <span style="font-size:54px;display:block;margin-bottom:10px">${win?(auto?'🏆':'💰'):'❌'}</span>
       <h2 style="font-family:'Bebas Neue',Impact,sans-serif;font-size:26px;letter-spacing:1px;color:${win?'#f0c419':'#f87171'};margin-bottom:6px">${win?(auto?'¡BOLETO COMPLETO!':'¡PUNTOS A SALVO!'):'¡MALA SUERTE!'}</h2>
       <p style="font-size:12px;color:rgba(240,196,25,.7);line-height:1.5;margin-bottom:12px">${win?'Tus puntos de campeón han sido guardados.':'La casilla mala te ha quitado los puntos. ¡Casi!'}</p>
-      <div style="font-family:'Bebas Neue',Impact,sans-serif;font-size:34px;color:${win?'#f0c419':'#f87171'};margin-bottom:18px">${win?'+':'−'}${pts} PTS</div>
+      <div style="font-family:'Bebas Neue',Impact,sans-serif;font-size:34px;color:${win?'#f0c419':'#f87171'};margin-bottom:18px">${(win && pts>0)?'+'+pts+' PTS':win?'SIN PUNTOS':'TICKET ANULADO'}</div>
       <button onclick="gtClose(${win?pts:0})" style="width:100%;border:none;border-radius:10px;padding:12px;font-family:'Bebas Neue',Impact,sans-serif;font-size:15px;letter-spacing:1.5px;background:linear-gradient(180deg,#ffe27a,#f0c419 55%,#c9960c);color:#08160d;cursor:pointer;">CERRAR</button>
     </div>`;
   }
@@ -4068,6 +4070,7 @@ function initFirebaseAuth(){
           newCb.addEventListener('change',function(){
             window.CHEATS_ACTIVE=this.checked;
             updateTicketBadge(window.CHEATS_ACTIVE?3:undefined);
+            if(window.CHEATS_ACTIVE){const pse=$id('pstat-scratch-pts');if(pse)pse.textContent=100;}
             showToast(window.CHEATS_ACTIVE?"⚙️ Cheats ON — ganas todos, tickets 3/3, pts 100":"⚙️ Cheats OFF — juego normal","toast-pos");
           });
         }
@@ -4563,7 +4566,27 @@ window.openTicketOverlay = function() {
       var hLeft = Math.floor(msLeft / 3600000);
       var mLeft = Math.floor((msLeft % 3600000) / 60000);
       var sLeft = Math.floor((msLeft % 60000) / 1000);
-      mt.innerHTML = "<div style='text-align:center;color:#ccc;padding:40px 20px'><div style='font-size:60px;margin-bottom:16px'>🎟️</div><div style='font-size:24px;color:#f0c419;margin-bottom:12px;font-family:Bebas Neue,sans-serif'>SIN TICKETS</div><div style='font-size:13px;color:#aaa;line-height:2'>Próximo ticket en<br><strong style='color:#fff;font-size:32px'>" + (hLeft>0?hLeft+"h ":"") + mLeft + "m " + String(sLeft).padStart(2,'0') + "s</strong></div><button onclick='window.closeTicketOverlay()' style='margin-top:24px;border:none;background:#c0392b;color:#fff;padding:10px 28px;cursor:pointer;font-size:14px;font-family:Bebas Neue,sans-serif;letter-spacing:1px'>CERRAR</button></div>";
+      // Diseño de modal de perfil con temporizador en vivo
+      mt.innerHTML = `<div class="auth-modal" style="max-width:340px;text-align:center;padding:28px 24px">
+        <div style="font-size:48px;margin-bottom:8px">🎟️</div>
+        <div style="font-family:'Bebas Neue',Impact,sans-serif;font-size:22px;letter-spacing:2px;color:var(--gold);margin-bottom:20px">SIN TICKETS</div>
+        <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px;letter-spacing:1px;text-transform:uppercase">Próximo ticket en</div>
+        <div id="ticketCountdown" style="font-family:'Bebas Neue',Impact,sans-serif;font-size:48px;color:#fff;letter-spacing:4px;margin-bottom:24px">--:--:--</div>
+        <button onclick="window.closeTicketOverlay()" style="width:100%;border:none;background:#c0392b;color:#fff;padding:12px;cursor:pointer;font-family:'Bebas Neue',Impact,sans-serif;font-size:16px;letter-spacing:1.5px;transition:.15s" onmouseover="this.style.background='#e74c3c'" onmouseout="this.style.background='#c0392b'">CERRAR</button>
+      </div>`;
+      // Arrancar cuenta atrás en vivo
+      function _tickCountdown(){
+        const el = document.getElementById('ticketCountdown');
+        if(!el) return; // overlay cerrado
+        const left = nextTicketSlot(Date.now()) - Date.now();
+        if(left <= 0){ el.textContent = '00:00:00'; return; }
+        const h = Math.floor(left/3600000);
+        const m = Math.floor((left%3600000)/60000);
+        const s = Math.floor((left%60000)/1000);
+        el.textContent = String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
+        setTimeout(_tickCountdown, 1000);
+      }
+      _tickCountdown();
       return;
     }
     buildTicketInMount(mt, updated.count, updated.lastChecked, state.scratchPoints);
@@ -4594,7 +4617,7 @@ function buildTicketInMount(mount, ticketCount, lastRegen, currentScratchPts){
   const cellsData=[];
   for(let i=0;i<GRID_SIZE;i++){
     if(bombSet.has(i))       cellsData.push({type:'bomb', value:0});
-    else if(i===starIdx)     cellsData.push({type:'star', value:3});
+    else if(i===starIdx)     cellsData.push({type:'star', value:4});
     else                     cellsData.push({type:'coin', value:1});
   }
 
@@ -4603,13 +4626,14 @@ function buildTicketInMount(mount, ticketCount, lastRegen, currentScratchPts){
 
   mount.innerHTML=`
   <div class="ticket" id="ticketCard" style="position:relative;width:340px;background:linear-gradient(180deg,#0f3d24 0%,#0c2e1c 100%);border-radius:18px;box-shadow:0 30px 60px -20px rgba(0,0,0,.7),0 0 0 1px rgba(240,196,25,.15);overflow:hidden;">
-    <div id="ticketStamp" style="position:absolute;top:54px;right:-34px;width:140px;text-align:center;background:#e8a020;color:#fff;font-family:'Bebas Neue',Impact,sans-serif;font-size:11px;letter-spacing:2px;padding:4px 0;transform:rotate(40deg);box-shadow:0 3px 8px rgba(0,0,0,.35);z-index:4;">EN JUEGO</div>
+    <div id="ticketStamp" style="position:absolute;top:54px;right:-34px;width:140px;text-align:center;background:#e8a020;color:#fff;font-family:'Bebas Neue',Impact,sans-serif;font-size:11px;letter-spacing:2px;padding:4px 0;transform:rotate(40deg);box-shadow:0 3px 8px rgba(0,0,0,.35);z-index:4;">RASCA Y GANA</div>
     <div style="padding:26px 22px 22px;">
       <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:2px;">
         <span style="font-size:18px">⚽</span>
         <span style="font-family:'Bebas Neue',Impact,sans-serif;font-size:22px;letter-spacing:2px;color:#f0c419;text-shadow:0 2px 0 rgba(0,0,0,.4)">GOAL2GOAT</span>
+        <span style="font-size:18px">🐐</span>
       </div>
-      <div style="text-align:center;font-size:10px;letter-spacing:3px;color:rgba(246,241,227,.55);text-transform:uppercase;margin-bottom:16px;font-weight:700">Boleto de Recompensa</div>
+      <div style="text-align:center;font-size:10px;letter-spacing:3px;color:rgba(246,241,227,.55);text-transform:uppercase;margin-bottom:16px;font-weight:700">Ticket de GoatPoints</div>
       <div style="height:1px;background:repeating-linear-gradient(90deg,rgba(240,196,25,.35) 0 6px,transparent 6px 12px);margin:14px 0"></div>
       <div style="display:flex;justify-content:space-between;font-size:9px;letter-spacing:1px;color:rgba(246,241,227,.4);text-transform:uppercase;margin-bottom:14px;">
         <span>Nº <b style="color:rgba(246,241,227,.65)">${serial}</b></span>
@@ -4633,12 +4657,10 @@ function buildTicketInMount(mount, ticketCount, lastRegen, currentScratchPts){
         </div>
       </div>
       <div style="display:flex;flex-direction:column;gap:8px;">
-        <button id="tCashBtn" disabled onclick="ticketCashOut(false)" style="border:none;border-radius:10px;font-family:'Bebas Neue',Impact,sans-serif;font-size:16px;letter-spacing:1.5px;padding:13px;cursor:pointer;background:linear-gradient(180deg,#ffe27a,#f0c419 55%,#c9960c);color:#08160d;box-shadow:0 6px 0 #8a6a08,0 10px 18px -6px rgba(0,0,0,.5);opacity:.35;pointer-events:none;">💰 COBRAR <span id="tCashAmt">0</span> PTS</button>
+        <button id="tCashBtn" disabled onclick="ticketCashOut(false)" style="border:none;border-radius:10px;font-family:'Bebas Neue',Impact,sans-serif;font-size:16px;letter-spacing:1.5px;padding:13px;cursor:pointer;background:linear-gradient(180deg,#ffe27a,#f0c419 55%,#c9960c);color:#08160d;box-shadow:0 6px 0 #8a6a08,0 10px 18px -6px rgba(0,0,0,.5);opacity:.35;pointer-events:none;">💰 PLANTARSE</button>
         <div id="tRiskBtn" style="border:1.5px solid rgba(246,241,227,.35);border-radius:10px;font-family:'Bebas Neue',Impact,sans-serif;font-size:13px;letter-spacing:1px;padding:13px;text-align:center;color:rgba(246,241,227,.7);">TOCA CUALQUIER CASILLA PARA RASCAR</div>
       </div>
-      <div style="text-align:center;font-size:9px;color:rgba(246,241,227,.35);margin-top:14px;letter-spacing:.5px;line-height:1.5">
-        🪙 = 1 punto · 🐐 = 3 puntos · ❌ = pierdes lo acumulado<br>Dos casillas ❌ ocultas en el boleto.
-      </div>
+      
     </div>
   </div>
   <div id="tResultOverlay" style="display:none;position:fixed;inset:0;z-index:50000;background:rgba(0,0,0,.75);align-items:center;justify-content:center;padding:20px;"></div>`;
@@ -4659,7 +4681,7 @@ function buildTicketInMount(mount, ticketCount, lastRegen, currentScratchPts){
       res.innerHTML=`<span style="font-size:26px">❌</span><span style="font-size:13px;color:#d94f3d;letter-spacing:.5px">PIERDE</span>`;
     } else if(data.type==='star'){
       res.style.background='#fff9e0';
-      res.innerHTML=`<span style="font-size:26px">🐐</span><span style="font-size:13px;color:#0c2e1c;letter-spacing:.5px">+3 PTS</span>`;
+      res.innerHTML=`<span style="font-size:26px">🐐</span><span style="font-size:13px;color:#0c2e1c;letter-spacing:.5px">+4 PTS</span>`;
     } else {
       res.innerHTML=`<span style="font-size:26px">🪙</span><span style="font-size:13px;color:#0c2e1c;letter-spacing:.5px">+1 PT</span>`;
     }
@@ -4709,7 +4731,7 @@ function buildTicketInMount(mount, ticketCount, lastRegen, currentScratchPts){
     if(riskBtn){
       if(gameOver) riskBtn.textContent='BOLETO CERRADO';
       else if(scratchedCount>=GRID_SIZE) riskBtn.textContent='BOLETO COMPLETO';
-      else if(scratchedCount===0) riskBtn.textContent='TOCA CUALQUIER CASILLA PARA RASCAR';
+      else if(scratchedCount===0) riskBtn.textContent='';
       else riskBtn.innerHTML=`SIGUIENTE RASCADO · <b style="color:#d94f3d">${risk}% riesgo</b>`;
     }
   }
@@ -4828,9 +4850,9 @@ function buildTicketInMount(mount, ticketCount, lastRegen, currentScratchPts){
     <div style="background:linear-gradient(180deg,#0f3d24,#0c2e1c);border-radius:18px;padding:30px 26px;text-align:center;max-width:300px;width:90%;box-shadow:0 30px 60px -10px rgba(0,0,0,.8),0 0 0 1px rgba(240,196,25,.2);animation:popIn .3s cubic-bezier(.2,1.4,.4,1)">
       <style>@keyframes popIn{0%{transform:scale(.7);opacity:0}100%{transform:scale(1);opacity:1}}</style>
       <span style="font-size:54px;display:block;margin-bottom:10px">${win?(auto?'🏆':'💰'):'❌'}</span>
-      <h2 style="font-family:'Bebas Neue',Impact,sans-serif;font-size:26px;letter-spacing:1px;color:${win?'#f0c419':'#d94f3d'};margin-bottom:6px">${win?(auto?'¡BOLETO COMPLETO!':'¡PUNTOS A SALVO!'):'¡CASILLA BOMBA!'}</h2>
+      <h2 style="font-family:'Bebas Neue',Impact,sans-serif;font-size:26px;letter-spacing:1px;color:${win?'#f0c419':'#d94f3d'};margin-bottom:6px">${win?(auto?'¡BOLETO COMPLETO!':'¡PUNTOS A SALVO!'):'TICKET ANULADO'}</h2>
       <p style="font-size:12px;color:rgba(246,241,227,.7);line-height:1.5;margin-bottom:12px">${win?(auto?'Rascaste todo el boleto. Premio máximo.':'Has cobrado a tiempo. Decisión inteligente.'):'Has perdido los puntos acumulados en este boleto.'}</p>
-      <div style="font-family:'Bebas Neue',Impact,sans-serif;font-size:34px;color:${win?'#f0c419':'#d94f3d'};margin-bottom:18px">${win?'+':'−'}${pts} PTS</div>
+      <div style="font-family:'Bebas Neue',Impact,sans-serif;font-size:34px;color:${win?'#f0c419':'#d94f3d'};margin-bottom:18px">${(win && pts>0)?'+'+pts+' PTS':win?'SIN PUNTOS':'TICKET ANULADO'}</div>
       <button onclick="closeTicketAndSave(${win?pts:0})" style="width:100%;border:none;border-radius:10px;padding:12px;font-family:'Bebas Neue',Impact,sans-serif;font-size:15px;letter-spacing:1.5px;background:linear-gradient(180deg,#ffe27a,#f0c419 55%,#c9960c);color:#08160d;cursor:pointer;">CERRAR</button>
     </div>`;
   }

@@ -742,14 +742,7 @@ body.dark-theme .vb-row:nth-child(even){background:transparent}
 .quick-build-btn:hover:not(:disabled){background:#1f3a1f}
 
 /* SUPPORT BUTTON & MODAL */
-.support-btn{
-  background:var(--gold);color:#000;border:none;
-  font-family:'Bebas Neue',Impact,sans-serif;
-  font-size:12px;letter-spacing:1px;
-  padding:5px 10px;cursor:pointer;transition:.15s;
-  white-space:nowrap;flex-shrink:0;
-}
-.support-btn:hover{background:#e0b82a}
+.support-btn-old-placeholder{display:none}
 #supportOverlay{display:none}
 .support-modal{
   background:var(--card-bg);border:2px solid var(--gold);
@@ -827,12 +820,22 @@ body.dark-theme .settings-item:hover{background:var(--row-hover);color:var(--gol
   width:100%;background:var(--gold);color:#000;border:none;
   font-family:'Bebas Neue',Impact,sans-serif;
   font-size:18px;letter-spacing:1.5px;
-  padding:12px;cursor:pointer;transition:.15s;margin-top:4px;
+  padding:12px;cursor:pointer;transition:background .15s, transform .1s, box-shadow .15s;margin-top:4px;
 }
-.auth-submit-btn:hover:not(:disabled){background:#e0b82a}
+.auth-submit-btn:hover:not(:disabled){background:#e0b82a;transform:translateY(-1px);box-shadow:0 4px 12px rgba(240,196,25,.3)}
+.auth-submit-btn:active:not(:disabled){transform:translateY(0)}
 .auth-submit-btn:disabled{opacity:.5;cursor:not-allowed}
 .auth-switch{font-size:12px;color:var(--text-muted);text-align:center;margin-top:14px}
 .auth-switch a{color:var(--gold);text-decoration:none}
+.support-btn{
+  background:var(--gold);color:#000;border:none;
+  font-family:'Bebas Neue',Impact,sans-serif;
+  font-size:12px;letter-spacing:1px;
+  padding:5px 10px;cursor:pointer;transition:background .15s, transform .1s, box-shadow .15s;
+  white-space:nowrap;flex-shrink:0;
+}
+.support-btn:hover{background:#e0b82a;transform:translateY(-1px);box-shadow:0 4px 12px rgba(240,196,25,.3)}
+.support-btn:active{transform:translateY(0)}
 .auth-switch a:hover{text-decoration:underline}
 
 @media(max-width:640px){
