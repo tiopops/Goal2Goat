@@ -1272,7 +1272,7 @@ body.dark-theme .press-prediction-neutral{background:#1a1a1a;border-color:#333;c
 
 /* VERSION NOTES TAB */
 .version-notes-scroll{
-  max-height:280px;overflow-y:auto;
+  height:calc(85vh - 180px);max-height:420px;overflow-y:auto;
   padding-right:6px;
   font-size:12px;color:var(--text);line-height:1.5;
 }

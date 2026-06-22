@@ -3093,13 +3093,13 @@ function showGoldenTicket(){
 
   window.gtClose=async function(ptsEarned){
     // Guardar puntos directamente (no consume boleto acumulado)
-    if(ptsEarned>0&&typeof firebase!=='undefined'&&firebase.auth().currentUser){
+    if(ptsEarned>0&&window._fbAuth&&window._fbAuth.currentUser){
       try{
-        const user=firebase.auth().currentUser;
-        const snap=await firebase.firestore().collection('users').doc(user.uid).get();
+        const user=window._fbAuth.currentUser;
+        const snap=await window._fbDb.collection('users').doc(user.uid).get();
         const current=snap.exists?(snap.data().scratchPoints||0):0;
         const newPts=current+ptsEarned;
-        await firebase.firestore().collection('users').doc(user.uid).set({scratchPoints:newPts},{merge:true});
+        await window._fbDb.collection('users').doc(user.uid).set({scratchPoints:newPts},{merge:true});
         const pse=$id('pstat-scratch-pts'); if(pse) pse.textContent=newPts;
       }catch(e){console.warn('Error guardando pts golden ticket:',e);}
     }
@@ -4559,7 +4559,7 @@ window.openTicketOverlay = function() {
       var msLeft = nextSlot - Date.now();
       var hLeft = Math.floor(msLeft / 3600000);
       var mLeft = Math.floor((msLeft % 3600000) / 60000);
-      mt.innerHTML = "<div style='text-align:center;color:#ccc;padding:40px 20px'><div style='font-size:60px;margin-bottom:16px'>🎟️</div><div style='font-size:24px;color:#f0c419;margin-bottom:8px;font-family:Bebas Neue,sans-serif'>SIN TICKETS</div><div style='font-size:13px;color:#aaa;line-height:1.8'>Próximo ticket a las<br><strong style='color:#fff;font-size:22px'>" + hh + ":" + mm + "</strong><br><span style='font-size:11px;color:#666'>(en " + (hLeft>0?hLeft+"h ":"") + mLeft + "min)</span><br><br>Los tickets se generan a las<br><strong style='color:#aaa'>8:00 · 12:00 · 16:00 · 20:00 · 00:00</strong><br><br>Máximo " + TICKET_MAX + " tickets acumulados.</div><button onclick='window.closeTicketOverlay()' style='margin-top:20px;border:1px solid #444;background:none;color:#aaa;padding:10px 24px;cursor:pointer;font-size:14px'>CERRAR</button></div>";
+      mt.innerHTML = "<div style='text-align:center;color:#ccc;padding:40px 20px'><div style='font-size:60px;margin-bottom:16px'>🎟️</div><div style='font-size:24px;color:#f0c419;margin-bottom:12px;font-family:Bebas Neue,sans-serif'>SIN TICKETS</div><div style='font-size:13px;color:#aaa;line-height:2'>Próximo ticket en<br><strong style='color:#fff;font-size:32px'>" + (hLeft>0?hLeft+"h ":"") + mLeft + "min</strong></div><button onclick='window.closeTicketOverlay()' style='margin-top:24px;border:1px solid #444;background:none;color:#aaa;padding:10px 24px;cursor:pointer;font-size:14px'>CERRAR</button></div>";
       return;
     }
     buildTicketInMount(mt, updated.count, updated.lastChecked, state.scratchPoints);
@@ -4832,8 +4832,8 @@ function buildTicketInMount(mount, ticketCount, lastRegen, currentScratchPts){
   }
 
   window.closeTicketAndSave=async function(ptsEarned){
-    if(window.CHEATS_ACTIVE){ closeTicketOverlay(); updateTicketBadge(3); return; }
-    if(typeof firebase!=='undefined'&&firebase.auth().currentUser){
+    if(window.CHEATS_ACTIVE){ window.closeTicketOverlay(); updateTicketBadge(3); return; }
+    if(window._fbAuth&&window._fbAuth.currentUser){
       try{
         const state=await getTicketState();
         const updated=computeCurrentTickets(state.count,state.lastChecked);
@@ -4845,7 +4845,7 @@ function buildTicketInMount(mount, ticketCount, lastRegen, currentScratchPts){
         if(pse) pse.textContent=newPts;
       }catch(e){ console.warn('Error guardando boleto:',e); }
     }
-    closeTicketOverlay();
+    window.closeTicketOverlay();
   };
 }
 
