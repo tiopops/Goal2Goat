@@ -2012,10 +2012,23 @@ function playMatch(){
   // Match narrative
   let summary=generateMatchSummary(myGoals,oppGoals,nextOpponent.name);
   updateScorerStreaks(generateMatchSummary._scorers||[]);
-  // Injuries
+  // Injuries y tarjetas propias
   const newInjuries=rollInjuries(myPower,oppPower);
-  // Cards (yellow/red)
   const newCards=rollCards();
+  // Eventos del rival (lesiones y tarjetas)
+  const oppEvents=rollOppEvents(oppPower,myPower);
+  // Si el rival tiene una expulsión, su lambda se reduce proporcionalmente
+  // desde el minuto de la roja: reducción promedio de ~11% (10/11 jugadores)
+  let adjOppLambda=oppLambda;
+  if(oppEvents.redMinute!==null){
+    // Fracción del partido que juegan con 10: (90-redMinute)/90
+    const fracWith10=Math.max(0,(90-oppEvents.redMinute)/90);
+    adjOppLambda=oppLambda*(1-fracWith10*0.11);
+  }
+  // Recalcular goles del rival con el lambda ajustado
+  if(!window.CHEATS_ACTIVE && oppEvents.redMinute!==null){
+    oppGoals=poissonSample(adjOppLambda);
+  }
   // Fatigue y tabla se actualizan al TERMINAR el partido (en showPostMatch)
   // para que la tabla de convocados no cambie mientras se simula
 
@@ -2083,7 +2096,7 @@ function playMatch(){
 
   renderMatchHistory();
   updateLed();
-  showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,penaltyInfo,newCards,predictionResult);
+  showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,penaltyInfo,newCards,predictionResult,oppEvents);
 }
 document.getElementById("playMatchBtn").addEventListener("click",playMatch);
 
@@ -2312,6 +2325,51 @@ function rollCards(){
   return cardedThisMatch;
 }
 
+/* ========= EVENTOS DEL RIVAL (lesiones y tarjetas) ========= */
+function rollOppEvents(oppPower, myPower){
+  const opp=nextOpponent;
+  if(!opp||!opp.players||!opp.players.length) return {injuries:[], cards:[], redMinute:null};
+
+  const pool=opp.players.filter(p=>p.positions&&!p.positions.includes('POR'));
+  const allPool=opp.players;
+
+  // Lesiones del rival — probabilidad similar a la del jugador
+  const injRisk=0.025;
+  const oppInjuries=[];
+  const injPlayer=allPool[Math.floor(Math.random()*allPool.length)];
+  if(injPlayer && Math.random()<injRisk){
+    oppInjuries.push(injPlayer);
+  }
+
+  // Tarjetas del rival
+  const oppCards=[];
+  let redMinute=null; // minuto de expulsión si hay roja
+  const yellowRisk=0.017;
+  const redRisk=0.010;
+  const yellowed=[];
+
+  pool.forEach(p=>{
+    const r=Math.random();
+    if(r<redRisk){
+      oppCards.push({player:p, type:'red'});
+      // El minuto de expulsión: entre 10' y 80'
+      if(!redMinute) redMinute=Math.floor(10+Math.random()*70);
+    } else if(r<redRisk+yellowRisk){
+      yellowed.push(p);
+      oppCards.push({player:p, type:'yellow'});
+    }
+  });
+  // Doble amarilla rara
+  yellowed.forEach(p=>{
+    if(Math.random()<0.05 && !oppCards.find(c=>c.player===p&&c.type==='red')){
+      oppCards.push({player:p, type:'double_yellow'});
+      if(!redMinute) redMinute=Math.floor(10+Math.random()*70);
+    }
+  });
+
+  return {injuries:oppInjuries, cards:oppCards, redMinute};
+}
+
 function clearYellowCardsAfterQuarterfinals(){
   // FIFA rule: accumulated yellow cards are wiped after the quarterfinals,
   // so nobody misses a final purely from earlier accumulation.
@@ -2371,7 +2429,7 @@ function forceSwapSuspendedStarters(){
 /* ========= LIVE MATCH SIMULATION — diseño match-modal + animación secuencial =========
    Usa el diseño visual de match-modal pero muestra todo de forma secuencial.
    Los eventos ocurren en sus minutos reales, incluyendo tiempo de descuento. */
-function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,penaltyInfo,newCards,predictionResult){
+function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,penaltyInfo,newCards,predictionResult,oppEvents){
   const overlay=document.getElementById("matchOverlay");
   const oppName=nextOpponent?nextOpponent.name:'Rival';
 
@@ -2409,6 +2467,24 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
       type:'injury',icon:'✚',
       text:`<strong>${p.name}</strong>`
     }));
+  }
+  // Eventos del rival (lesiones y tarjetas)
+  if(oppEvents){
+    const CICONS={yellow:'🟨',double_yellow:'🟨🟥',red:'🟥'};
+    if(oppEvents.injuries&&oppEvents.injuries.length){
+      oppEvents.injuries.forEach(p=>allEvents.push({
+        minute:Math.floor(20+Math.random()*65),
+        type:'oppcard',icon:'✚',
+        text:`<strong>${p.name}</strong>`
+      }));
+    }
+    if(oppEvents.cards&&oppEvents.cards.length){
+      oppEvents.cards.forEach(c=>allEvents.push({
+        minute:c.type==='red'||c.type==='double_yellow'?(oppEvents.redMinute||Math.floor(10+Math.random()*70)):Math.floor(5+Math.random()*85),
+        type:'oppcard',icon:CICONS[c.type]||'🟨',
+        text:`<strong>${c.player.name}</strong>`
+      }));
+    }
   }
   allEvents.sort((a,b)=>a.minute-b.minute);
 
@@ -2449,7 +2525,7 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
         <span class="match-team-name">${oppName}</span>
       </div>
     </div>
-    <div id="liveEvents" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:6px;padding:4px 0;min-height:80px;max-height:260px"></div>
+    <div id="liveEvents" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;align-items:stretch;gap:2px;padding:4px 0;min-height:80px;max-height:260px"></div>
   </div>`;
 
   const eventsEl=document.getElementById('liveEvents');
@@ -2471,11 +2547,11 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
 
   function addEvt(icon,text,minLabel,type){
     const item=document.createElement('div');
-    item.style.cssText='display:grid;grid-template-columns:1fr 44px 1fr;align-items:center;font-size:12px;animation:slideInEvent .3s ease;opacity:0;animation-fill-mode:forwards;padding:3px 0;border-bottom:1px solid rgba(0,0,0,.05)';
+    item.style.cssText='display:grid;grid-template-columns:1fr 44px 1fr;align-items:center;width:100%;font-size:12px;animation:slideInEvent .3s ease;opacity:0;animation-fill-mode:forwards;padding:3px 0;border-bottom:1px solid rgba(0,0,0,.05)';
     const isMe=type==='mygoal'||type==='card'||type==='injury'||type==='pen_me';
-    const isOpp=type==='oppgoal'||type==='pen_opp';
+    const isOpp=type==='oppgoal'||type==='pen_opp'||type==='oppcard';
     const myColor=type==='mygoal'||type==='pen_me'?'var(--accent)':type==='card'?'#a07a00':type==='injury'?'#888':'var(--text)';
-    const oppColor=type==='oppgoal'||type==='pen_opp'?'var(--red)':'var(--text)';
+    const oppColor=type==='oppgoal'||type==='pen_opp'?'var(--red)':type==='oppcard'?'#a07a00':'var(--text)';
     // Centro: minuto
     const center=`<span style="font-family:'Bebas Neue',Impact,sans-serif;font-size:12px;color:#999;text-align:center;display:block">${minLabel}</span>`;
     if(isMe){
@@ -3183,13 +3259,15 @@ function showGoldenTicket(){
   function gtShowResult(win,pts,auto){
     const ro=$id('gtResultOverlay'); if(!ro) return;
     ro.style.display='flex';
+    if(win) playSound('victory');
+    else playSound('scratch_bomb');
     ro.innerHTML=`
     <div style="background:linear-gradient(180deg,#3a2a00,#1a1200);border-radius:18px;padding:30px 26px;text-align:center;max-width:300px;width:90%;box-shadow:0 0 0 2px #f0c419,0 30px 60px -10px rgba(0,0,0,.9);animation:popIn .3s cubic-bezier(.2,1.4,.4,1)">
       <style>@keyframes popIn{0%{transform:scale(.7);opacity:0}100%{transform:scale(1);opacity:1}}</style>
       <span style="font-size:54px;display:block;margin-bottom:10px">${win?(auto?'🏆':'💰'):'❌'}</span>
       <h2 style="font-family:'Bebas Neue',Impact,sans-serif;font-size:26px;letter-spacing:1px;color:${win?'#f0c419':'#f87171'};margin-bottom:6px">${win?(auto?'¡TICKET PREMIADO!':'¡TICKET PREMIADO!'):'TICKET ANULADO'}</h2>
       <p style="font-size:12px;color:rgba(240,196,25,.7);line-height:1.5;margin-bottom:12px">${win?'Tus puntos de campeón han sido guardados.':'La casilla mala te ha quitado los puntos. ¡Casi!'}</p>
-      <div style="font-family:'Bebas Neue',Impact,sans-serif;font-size:34px;color:${win?'#f0c419':'#f87171'};margin-bottom:18px">${(win && pts>0)?'+'+pts+' PTS':win?'SIN PUNTOS':'TICKET ANULADO'}</div>
+      <div style="font-family:'Bebas Neue',Impact,sans-serif;font-size:34px;color:${win?'#f0c419':'#f87171'};margin-bottom:18px">${(win && pts>0)?'+'+pts+' PTS':win?'0 PTS':''}</div>
       <button onclick="gtClose(${win?pts:0})" style="width:100%;border:none;border-radius:0;padding:12px;font-family:'Bebas Neue',Impact,sans-serif;font-size:15px;letter-spacing:1.5px;background:linear-gradient(180deg,#ffe27a,#f0c419 55%,#c9960c);color:#08160d;cursor:pointer;">CERRAR</button>
     </div>`;
   }
@@ -4966,13 +5044,16 @@ function buildTicketInMount(mount, ticketCount, lastRegen, currentScratchPts){
     const overlay=$id('tResultOverlay');
     if(!overlay) return;
     overlay.style.display='flex';
+    // Sonido según resultado
+    if(win) playSound('victory');
+    else playSound('scratch_bomb');
     overlay.innerHTML=`
     <div style="background:linear-gradient(180deg,#0f3d24,#0c2e1c);border-radius:18px;padding:30px 26px;text-align:center;max-width:300px;width:90%;box-shadow:0 30px 60px -10px rgba(0,0,0,.8),0 0 0 1px rgba(240,196,25,.2);animation:popIn .3s cubic-bezier(.2,1.4,.4,1)">
       <style>@keyframes popIn{0%{transform:scale(.7);opacity:0}100%{transform:scale(1);opacity:1}}</style>
       <span style="font-size:54px;display:block;margin-bottom:10px">${win?(auto?'🏆':'💰'):'❌'}</span>
       <h2 style="font-family:'Bebas Neue',Impact,sans-serif;font-size:26px;letter-spacing:1px;color:${win?'#f0c419':'#d94f3d'};margin-bottom:6px">${win?(auto?'¡TICKET PREMIADO!':'¡TICKET PREMIADO!'):'TICKET ANULADO'}</h2>
       <p style="font-size:12px;color:rgba(246,241,227,.7);line-height:1.5;margin-bottom:12px">${win?(auto?'Rascaste todo el boleto. Premio máximo.':'¡Buena jugada! Te has retirado a tiempo'):'Has perdido los puntos acumulados en este boleto.'}</p>
-      <div style="font-family:'Bebas Neue',Impact,sans-serif;font-size:34px;color:${win?'#f0c419':'#d94f3d'};margin-bottom:18px">${(win && pts>0)?'+'+pts+' PTS':win?'SIN PUNTOS':'TICKET ANULADO'}</div>
+      <div style="font-family:'Bebas Neue',Impact,sans-serif;font-size:34px;color:${win?'#f0c419':'#d94f3d'};margin-bottom:18px">${(win && pts>0)?'+'+pts+' PTS':win?'0 PTS':''}</div>
       <button onclick="closeTicketAndSave(${win?pts:0})" style="width:100%;border:none;border-radius:0;padding:12px;font-family:'Bebas Neue',Impact,sans-serif;font-size:15px;letter-spacing:1.5px;background:linear-gradient(180deg,#ffe27a,#f0c419 55%,#c9960c);color:#08160d;cursor:pointer;">CERRAR</button>
     </div>`;
   }

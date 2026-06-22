@@ -778,7 +778,8 @@ body.dark-theme .settings-item:hover{background:var(--row-hover);color:var(--gol
   border:none;border-radius:0;
   transition:background .15s, transform .1s, box-shadow .15s;
   white-space:nowrap;flex-shrink:0;
-  height:32px;display:inline-flex;align-items:center;justify-content:center;
+  height:32px;min-width:120px;
+  display:inline-flex;align-items:center;justify-content:center;
 }
 /* LOGIN/REGISTRO */
 .login-btn{background:transparent;color:var(--gold);border:1px solid var(--gold)}
@@ -801,15 +802,13 @@ body.dark-theme .settings-item:hover{background:var(--row-hover);color:var(--gol
   background:#f87171;border:2px solid var(--card-bg);
   animation:ticketPulse 1.5s ease-in-out infinite;
 }
-/* APOYA y RANKING — support-btn */
+/* APOYA — dorado sólido */
 .support-btn{background:var(--gold);color:#000}
 .support-btn:hover{background:#e0b82a;transform:translateY(-1px);box-shadow:0 4px 12px rgba(240,196,25,.3)}
 .support-btn:active{transform:translateY(0)}
-/* RANKING: fondo oscuro con borde dorado, hover igual que los demás */
-.support-btn[onclick*="Ranking"],
-.support-btn[onclick*="ranking"]{background:#1a1a1a;color:var(--gold);border:1px solid var(--gold)}
-.support-btn[onclick*="Ranking"]:hover,
-.support-btn[onclick*="ranking"]:hover{background:var(--gold);color:#000;transform:translateY(-1px);box-shadow:0 4px 12px rgba(240,196,25,.3)}
+/* RANKING — fondo oscuro con borde dorado, hover igual que tickets/perfil */
+.ranking-btn{background:#1a1a1a;color:var(--gold);border:1px solid var(--gold)}
+.ranking-btn:hover{background:var(--gold);color:#000;transform:translateY(-1px);box-shadow:0 4px 12px rgba(240,196,25,.3)}
 
 /* ===== AUTH MODAL ===== */
 .auth-modal{
