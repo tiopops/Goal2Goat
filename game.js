@@ -1996,8 +1996,8 @@ function playMatch(){
   const weatherDelta=weatherLambdaEffect(); // weather was rolled when rival was revealed
   const myLambda=Math.max(0.25, 1.15+diff+tactical.myScoreMod+counter.myScoreMod+earlyBoost+groupNudge+starBonus+moraleBonus+streakBonus+weatherDelta);
   const oppLambda=Math.max(0.25, 1.15-diff+tactical.oppScoreMod+counter.oppScoreMod-earlyBoost*0.6-groupNudge*0.6+weatherDelta);
-  let myGoals=CHEATS_ACTIVE ? (3+Math.floor(Math.random()*3)) : poissonSample(myLambda);
-  let oppGoals=CHEATS_ACTIVE ? 0 : poissonSample(oppLambda);
+  let myGoals=window.CHEATS_ACTIVE ? (3+Math.floor(Math.random()*3)) : poissonSample(myLambda);
+  let oppGoals=window.CHEATS_ACTIVE ? 0 : poissonSample(oppLambda);
   // Match narrative
   let summary=generateMatchSummary(myGoals,oppGoals,nextOpponent.name);
   updateScorerStreaks(generateMatchSummary._scorers||[]);
@@ -4056,13 +4056,15 @@ function initFirebaseAuth(){
       if(cheatsSection&&auth.currentUser&&auth.currentUser.email===CHEAT_USER){
         cheatsSection.style.display="block";
         if(cheatsCheckbox){
-          cheatsCheckbox.checked=!!CHEATS_ACTIVE;
-          cheatsCheckbox.onchange=()=>{
-            CHEATS_ACTIVE=cheatsCheckbox.checked;
-            // Si cheats activos: tickets siempre a 3
-            if(CHEATS_ACTIVE) updateTicketBadge(3);
-            showToast(CHEATS_ACTIVE?"⚙️ Cheats ON — modo debug activo":"⚙️ Cheats OFF — juego normal","toast-pos");
-          };
+          cheatsCheckbox.checked=!!window.CHEATS_ACTIVE;
+          cheatsCheckbox.addEventListener('change', function(){
+            window.CHEATS_ACTIVE=this.checked;
+            if(window.CHEATS_ACTIVE){
+              updateTicketBadge(3);
+              const pse=$id('pstat-scratch-pts'); if(pse) pse.textContent=100;
+            }
+            showToast(window.CHEATS_ACTIVE?"⚙️ Cheats ON":"⚙️ Cheats OFF","toast-pos");
+          });
         }
       } else if(cheatsSection){
         cheatsSection.style.display="none";
@@ -4460,7 +4462,7 @@ async function getTicketState(){
   if(typeof firebase==='undefined') return null;
   const user=firebase.auth().currentUser;
   if(!user) return null;
-  if(CHEATS_ACTIVE) return {count:3, lastChecked:Date.now(), scratchPoints:999999};
+  if(window.CHEATS_ACTIVE) return {count:3, lastChecked:Date.now(), scratchPoints:100};
   const snap=await firebase.firestore().collection('users').doc(user.uid).get();
   if(!snap.exists) return null;
   const d=snap.data();
@@ -4515,27 +4517,31 @@ function updateTicketBadge(count){
 }
 
 /* ── Abrir overlay del boleto ── */
-window.openTicketOverlay=async function(){
+window.openTicketOverlay=function(){
   if(typeof firebase==='undefined'||!firebase.auth().currentUser){
-    alert('Debes iniciar sesión para usar los boletos de rasca y gana.');
+    alert('Debes iniciar sesión para usar los tickets de rasca y gana.');
     return;
   }
   const overlay=$id('ticketOverlay');
   if(overlay) overlay.style.display='block';
+  const mount=$id('ticketMountPoint');
+  if(mount) mount.innerHTML='<div style="text-align:center;padding:40px;color:#aaa;font-family:Inter,sans-serif">Cargando...</div>';
+  _openTicketAsync();
+};
 
+async function _openTicketAsync(){
+  const mount=$id('ticketMountPoint');
+  if(!mount) return;
   const state=await getTicketState();
-  if(!state){ alert('Error cargando boletos.'); return; }
-
+  if(!state){
+    mount.innerHTML='<div style="text-align:center;padding:40px;color:#f87171">Error cargando tickets.</div>';
+    return;
+  }
   const updated=computeCurrentTickets(state.count, state.lastChecked);
   if(updated.count!==state.count||updated.lastChecked!==state.lastChecked){
     await saveTicketState(updated.count, updated.lastChecked, state.scratchPoints);
   }
-
   updateTicketBadge(updated.count);
-
-  const mount=$id('ticketMountPoint');
-  if(!mount) return;
-
   if(updated.count<=0){
     const nextSlot=nextTicketSlot(Date.now());
     const d=new Date(nextSlot);
@@ -4548,26 +4554,21 @@ window.openTicketOverlay=async function(){
     mount.innerHTML=`
       <div style="text-align:center;color:#ccc;padding:40px 20px;font-family:'Bebas Neue',Impact,sans-serif;">
         <div style="font-size:60px;margin-bottom:16px">🎟️</div>
-        <div style="font-size:24px;color:var(--gold);margin-bottom:8px">SIN BOLETOS</div>
+        <div style="font-size:24px;color:var(--gold);margin-bottom:8px">SIN TICKETS</div>
         <div style="font-size:13px;font-family:'Inter',sans-serif;color:#aaa;line-height:1.8">
-          Próximo boleto a las<br>
+          Próximo ticket a las<br>
           <strong style="color:#fff;font-size:22px">${hh}:${mm}</strong><br>
           <span style="font-size:11px;color:#666">(en ${hLeft>0?hLeft+'h ':''}${mLeft}min)</span><br><br>
-          Los boletos se generan a las<br>
+          Los tickets se generan a las<br>
           <strong style="color:#aaa">8:00 · 12:00 · 16:00 · 20:00 · 00:00</strong><br><br>
-          Máximo ${TICKET_MAX} boletos acumulados.
+          Máximo ${TICKET_MAX} tickets acumulados.
         </div>
+        <button onclick="closeTicketOverlay()" style="margin-top:20px;border:1px solid #444;background:none;color:#aaa;padding:10px 24px;cursor:pointer;font-family:'Bebas Neue',Impact,sans-serif;font-size:14px;letter-spacing:1px;">CERRAR</button>
       </div>`;
     return;
   }
-
   buildTicketInMount(mount, updated.count, updated.lastChecked, state.scratchPoints);
-  if(!mount) return;
-
-  // Construir el boleto interactivo (fallback — no debería llegar aquí si updated.count<=0)
-  buildTicketInMount(mount, updated.count, updated.lastChecked, state.scratchPoints);
-};
-
+}
 window.closeTicketOverlay=function(){
   const overlay=$id('ticketOverlay');
   if(overlay) overlay.style.display='none';
@@ -4831,7 +4832,7 @@ function buildTicketInMount(mount, ticketCount, lastRegen, currentScratchPts){
   }
 
   window.closeTicketAndSave=async function(ptsEarned){
-    if(CHEATS_ACTIVE){ closeTicketOverlay(); updateTicketBadge(3); return; }
+    if(window.CHEATS_ACTIVE){ closeTicketOverlay(); updateTicketBadge(3); return; }
     if(typeof firebase!=='undefined'&&firebase.auth().currentUser){
       try{
         const state=await getTicketState();
