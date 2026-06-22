@@ -3991,7 +3991,7 @@ function initFirebaseAuth(){
         wrb.style.display='block';
         wrb.onclick=()=>{
           const wo=$id("welcomeOverlay"); if(wo) wo.style.display="none";
-          window.openAuthModal&&window.openAuthModal('register');
+          window.showAuthModal&&window.showAuthModal('register');
         };
       }
       updateTicketBadge(0);
@@ -4559,7 +4559,8 @@ window.openTicketOverlay = function() {
       var msLeft = nextSlot - Date.now();
       var hLeft = Math.floor(msLeft / 3600000);
       var mLeft = Math.floor((msLeft % 3600000) / 60000);
-      mt.innerHTML = "<div style='text-align:center;color:#ccc;padding:40px 20px'><div style='font-size:60px;margin-bottom:16px'>🎟️</div><div style='font-size:24px;color:#f0c419;margin-bottom:12px;font-family:Bebas Neue,sans-serif'>SIN TICKETS</div><div style='font-size:13px;color:#aaa;line-height:2'>Próximo ticket en<br><strong style='color:#fff;font-size:32px'>" + (hLeft>0?hLeft+"h ":"") + mLeft + "min</strong></div><button onclick='window.closeTicketOverlay()' style='margin-top:24px;border:1px solid #444;background:none;color:#aaa;padding:10px 24px;cursor:pointer;font-size:14px'>CERRAR</button></div>";
+      var sLeft = Math.floor((msLeft % 60000) / 1000);
+      mt.innerHTML = "<div style='text-align:center;color:#ccc;padding:40px 20px'><div style='font-size:60px;margin-bottom:16px'>🎟️</div><div style='font-size:24px;color:#f0c419;margin-bottom:12px;font-family:Bebas Neue,sans-serif'>SIN TICKETS</div><div style='font-size:13px;color:#aaa;line-height:2'>Próximo ticket en<br><strong style='color:#fff;font-size:32px'>" + (hLeft>0?hLeft+"h ":"") + mLeft + "m " + String(sLeft).padStart(2,'0') + "s</strong></div><button onclick='window.closeTicketOverlay()' style='margin-top:24px;border:none;background:#c0392b;color:#fff;padding:10px 28px;cursor:pointer;font-size:14px;font-family:Bebas Neue,sans-serif;letter-spacing:1px'>CERRAR</button></div>";
       return;
     }
     buildTicketInMount(mt, updated.count, updated.lastChecked, state.scratchPoints);
@@ -4835,11 +4836,24 @@ function buildTicketInMount(mount, ticketCount, lastRegen, currentScratchPts){
     if(window.CHEATS_ACTIVE){ window.closeTicketOverlay(); updateTicketBadge(3); return; }
     if(window._fbAuth&&window._fbAuth.currentUser){
       try{
-        const state=await getTicketState();
-        const updated=computeCurrentTickets(state.count,state.lastChecked);
+        const user=window._fbAuth.currentUser;
+        const db=window._fbDb;
+        // Leer estado actual de Firestore para no perder puntos por estado desactualizado
+        const snap=await db.collection('users').doc(user.uid).get();
+        const currentData=snap.exists?snap.data():{};
+        const currentPts=currentData.scratchPoints||0;
+        const newPts=currentPts+ptsEarned;
+        // Calcular nuevo contador de tickets
+        const updated=computeCurrentTickets(
+          currentData.ticketCount!==undefined?currentData.ticketCount:1,
+          currentData.ticketLastRegen||Date.now()
+        );
         const newCount=Math.max(0,updated.count-1);
-        const newPts=(state.scratchPoints||0)+ptsEarned;
-        await saveTicketState(newCount,updated.lastChecked,newPts);
+        await db.collection('users').doc(user.uid).set({
+          ticketCount:newCount,
+          ticketLastRegen:updated.lastChecked,
+          scratchPoints:newPts
+        },{merge:true});
         updateTicketBadge(newCount);
         const pse=$id('pstat-scratch-pts');
         if(pse) pse.textContent=newPts;
