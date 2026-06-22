@@ -2063,7 +2063,7 @@ function playMatch(){
 
   renderMatchHistory();
   updateLed();
-  showMatchModal(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,penaltyInfo,newCards,predictionResult);
+  showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,penaltyInfo,newCards,predictionResult);
 }
 document.getElementById("playMatchBtn").addEventListener("click",playMatch);
 
@@ -2331,6 +2331,288 @@ function forceSwapSuspendedStarters(){
     renderSlotContent(slot, benchPlayer, label, r, star);
   });
   baseTeamOVR=computeTeamOVR();
+}
+
+/* ========= LIVE MATCH SIMULATION =========
+   Animates the match clock from 0' to 90'+X' over ~9 seconds,
+   showing goals and events as they happen. Then calls showMatchModal. */
+function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,penaltyInfo,newCards,predictionResult){
+  const overlay=document.getElementById("matchOverlay");
+  const oppName=nextOpponent?nextOpponent.name:'Rival';
+  const oppFlag=nextOpponent?flagEmoji(nextOpponent.name,36):'🏳️';
+
+  // --- Parse goal events from summary HTML ---
+  const tempDiv=document.createElement('div');
+  tempDiv.innerHTML=summary;
+  const goalCols=tempDiv.querySelectorAll('.goals-col');
+  const allEvents=[];
+  if(goalCols.length>=2){
+    goalCols[0].querySelectorAll('li').forEach(li=>{
+      const txt=li.textContent;
+      const m=txt.match(/\((\d+)'\)/);
+      if(m) allEvents.push({minute:parseInt(m[1]),type:'mygoal',icon:'⚽',text:`<strong>${txt.replace(/⚽/,'').replace(/\(\d+'\)/,'').trim()}</strong>`});
+    });
+    goalCols[1].querySelectorAll('li').forEach(li=>{
+      const txt=li.textContent;
+      const m=txt.match(/\((\d+)'\)/);
+      if(m) allEvents.push({minute:parseInt(m[1]),type:'oppgoal',icon:'⚽',text:`<strong>${txt.replace(/⚽/,'').replace(/\(\d+'\)/,'').trim()}</strong> <span style="color:#f88;font-size:10px">(${oppName})</span>`});
+    });
+  }
+  // Cards and injuries with random minutes
+  if(newCards&&newCards.length){
+    const CICONS={yellow:'🟨',yellow2:'🟨🟨',double_yellow:'🟨🟥',red:'🟥'};
+    newCards.forEach(c=>allEvents.push({minute:Math.floor(5+Math.random()*80),type:'card',icon:CICONS[c.type]||'🟨',text:`<strong>${c.player.name}</strong>`}));
+  }
+  if(newInjuries&&newInjuries.length){
+    newInjuries.forEach(p=>allEvents.push({minute:Math.floor(30+Math.random()*55),type:'injury',icon:'🚑',text:`<strong>${p.name}</strong>`}));
+  }
+  allEvents.sort((a,b)=>a.minute-b.minute);
+
+  // Stoppage times
+  const inj1=Math.floor(1+Math.random()*4);
+  const inj2=Math.floor(2+Math.random()*5);
+
+  // --- Build modal HTML ---
+  overlay.innerHTML=`
+  <div class="live-match-modal">
+    <div class="live-match-header">
+      <div class="live-match-side">
+        <span style="font-size:36px">🐐</span>
+        <span class="live-match-team">${myTeamName}</span>
+      </div>
+      <div style="text-align:center">
+        <div class="live-scoreline" id="liveScore">0 – 0</div>
+      </div>
+      <div class="live-match-side">
+        <span style="font-size:36px">${oppFlag}</span>
+        <span class="live-match-team">${oppName}</span>
+      </div>
+    </div>
+    <div class="live-clock-row">
+      <div class="live-clock" id="liveClock">0'</div>
+      <div class="live-half-badge" id="liveHalf">1ª PARTE</div>
+    </div>
+    <div class="live-pitch-bar"><div class="live-pitch-fill" id="liveFill" style="width:0%"></div></div>
+    <div class="live-events" id="liveEvents"></div>
+  </div>`;
+
+  const eventsEl=document.getElementById('liveEvents');
+  const clockEl=document.getElementById('liveClock');
+  const halfEl=document.getElementById('liveHalf');
+  const fillEl=document.getElementById('liveFill');
+  const scoreEl=document.getElementById('liveScore');
+  let curMy=0, curOpp=0;
+
+  function updateScore(my,opp){
+    scoreEl.textContent=`${my} – ${opp}`;
+    scoreEl.classList.remove('goal-flash');
+    void scoreEl.offsetWidth;
+    scoreEl.classList.add('goal-flash');
+  }
+
+  function addSeparator(text){
+    const sep=document.createElement('div');
+    sep.className='live-ht-separator';
+    sep.textContent=text;
+    eventsEl.appendChild(sep);
+    eventsEl.scrollTop=eventsEl.scrollHeight;
+  }
+
+  function addEvent(icon,text,minLabel){
+    const item=document.createElement('div');
+    item.className='live-event';
+    item.innerHTML=`<span class="live-event-min">${minLabel}</span><span class="live-event-icon">${icon}</span><span class="live-event-text">${text}</span>`;
+    eventsEl.appendChild(item);
+    eventsEl.scrollTop=eventsEl.scrollHeight;
+  }
+
+  // ── PHASE 1 & 2: Reglamento (90') — 9 segundos ──────────────────────────
+  // Fracciones del timeline de 9s: HT pause en 47%-53%
+  const REG_DURATION=9000;
+  const HT_S=0.47, HT_E=0.53;
+  let eventIdx=0, htShown=false;
+  const regStart=performance.now();
+
+  function tickRegulation(now){
+    const frac=Math.min((now-regStart)/REG_DURATION,1);
+
+    // HT pause
+    if(frac>=HT_S && frac<HT_E){
+      if(!htShown){
+        htShown=true;
+        clockEl.textContent=`45+${inj1}'`;
+        halfEl.textContent='DESCANSO';
+        fillEl.style.width='50%';
+        addSeparator(`— DESCANSO (45+${inj1}') —`);
+        playSound('whistle');
+      }
+      requestAnimationFrame(tickRegulation);
+      return;
+    }
+
+    let minute;
+    if(frac<HT_S){
+      minute=Math.min(45,Math.floor(frac/HT_S*(45+inj1)));
+      halfEl.textContent='1ª PARTE';
+      fillEl.style.width=`${(frac/HT_S)*50}%`;
+      clockEl.textContent=`${minute}'`;
+    } else {
+      const f2=(frac-HT_E)/(1-HT_E);
+      minute=46+Math.floor(f2*(90+inj2-46));
+      minute=Math.min(minute,90+inj2);
+      halfEl.textContent='2ª PARTE';
+      fillEl.style.width=`${50+f2*50}%`;
+      clockEl.textContent=minute>90?`90+${minute-90}'`:`${minute}'`;
+    }
+
+    while(eventIdx<allEvents.length && allEvents[eventIdx].minute<=minute){
+      const ev=allEvents[eventIdx++];
+      addEvent(ev.icon,ev.text,`${ev.minute}'`);
+      if(ev.type==='mygoal'){ curMy++; updateScore(curMy,curOpp); playSound('goal'); }
+      else if(ev.type==='oppgoal'){ curOpp++; updateScore(curMy,curOpp); playSound('goal'); }
+    }
+
+    if(frac<1){ requestAnimationFrame(tickRegulation); return; }
+
+    // Regulation finished
+    clockEl.textContent=`90+${inj2}'`;
+    fillEl.style.width='100%';
+    playSound('whistle');
+
+    if(penaltyInfo){
+      // Draw after 90' → show extra time then penalties
+      setTimeout(startExtraTime, 900);
+    } else {
+      halfEl.textContent='FIN';
+      setTimeout(()=>showMatchModal(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,penaltyInfo,newCards,predictionResult), 800);
+    }
+  }
+  requestAnimationFrame(tickRegulation);
+
+  // ── PHASE 3: Prórroga (30') — 4 segundos ────────────────────────────────
+  // Mundial 2026: 2×15', sin gol de oro, ambas partes completas
+  function startExtraTime(){
+    halfEl.textContent='PRÓRROGA';
+    addSeparator('— PRÓRROGA —');
+    const ET_DURATION=4000;
+    const ET_HT_S=0.47, ET_HT_E=0.53;
+    let etHtShown=false;
+    const etStart=performance.now();
+
+    function tickET(now){
+      const frac=Math.min((now-etStart)/ET_DURATION,1);
+
+      if(frac>=ET_HT_S && frac<ET_HT_E){
+        if(!etHtShown){
+          etHtShown=true;
+          clockEl.textContent="105'";
+          halfEl.textContent='DESCANSO P.';
+          addSeparator('— DESCANSO PRÓRROGA (105\') —');
+          playSound('whistle');
+        }
+        requestAnimationFrame(tickET);
+        return;
+      }
+
+      if(frac<ET_HT_S){
+        const m=91+Math.floor((frac/ET_HT_S)*14);
+        halfEl.textContent='PRÓRROGA 1ª';
+        clockEl.textContent=`${Math.min(m,105)}'`;
+      } else {
+        const f2=(frac-ET_HT_E)/(1-ET_HT_E);
+        const m=106+Math.floor(f2*14);
+        halfEl.textContent='PRÓRROGA 2ª';
+        clockEl.textContent=`${Math.min(m,120)}'`;
+      }
+
+      if(frac<1){ requestAnimationFrame(tickET); return; }
+
+      clockEl.textContent="120'";
+      halfEl.textContent='FIN PRÓRROGA';
+      playSound('whistle');
+      setTimeout(startPenalties, 900);
+    }
+    requestAnimationFrame(tickET);
+  }
+
+  // ── PHASE 4: Tanda de penaltis ───────────────────────────────────────────
+  // ABAB alternando, 5 rondas + muerte súbita si empate
+  // (Mundial 2026 usa ABAB estándar — ABBA sólo fue piloto experimental)
+  function startPenalties(){
+    halfEl.textContent='PENALTIS';
+    clockEl.textContent='—';
+    fillEl.style.width='100%';
+    addSeparator('— TANDA DE PENALTIS —');
+
+    const myShots=penaltyInfo.myShots;    // [{name, scored}, ...]
+    const oppShots=penaltyInfo.oppShots;
+    // Interleave ABAB: [my0, opp0, my1, opp1, ...]
+    const maxLen=Math.max(myShots.length, oppShots.length);
+    const sequence=[];
+    for(let i=0;i<maxLen;i++){
+      if(i<myShots.length) sequence.push({team:'me',  shot:myShots[i],  round:i+1});
+      if(i<oppShots.length) sequence.push({team:'opp', shot:oppShots[i], round:i+1});
+    }
+
+    let penMyScore=0, penOppScore=0;
+    let seqIdx=0;
+
+    // Update pen scoreboard in the score element
+    function updatePenScore(){
+      scoreEl.textContent=`${curMy}(${penMyScore}) – ${curOpp}(${penOppScore})`;
+    }
+    updatePenScore();
+
+    // Show if it's round 1–5 (best-of-5) or sudden death
+    function roundLabel(round){ return round<=5 ? `P${round}` : `SD`; }
+
+    function showNextPenalty(){
+      if(seqIdx>=sequence.length){
+        // All done → finish
+        finishPenalties();
+        return;
+      }
+      const item=sequence[seqIdx++];
+      const {team,shot,round}=item;
+      const label=roundLabel(round);
+
+      // Brief suspense pause before revealing result
+      setTimeout(()=>{
+        if(team==='me'){
+          if(shot.scored) penMyScore++;
+          const icon=shot.scored?'✅':'❌';
+          addEvent(icon,`<strong>${shot.name}</strong> <span style="color:#aaa;font-size:10px">${myTeamName}</span>`,label);
+        } else {
+          if(shot.scored) penOppScore++;
+          const icon=shot.scored?'✅':'❌';
+          addEvent(icon,`<strong>${shot.name}</strong> <span style="color:#f88;font-size:10px">${oppName}</span>`,label);
+        }
+        updatePenScore();
+        if(shot.scored) playSound('goal');
+
+        // Check if shootout is already decided (can't catch up)
+        const myRemaining=myShots.filter((_,i)=>i>=Math.ceil(seqIdx/2)).length;
+        const oppRemaining=oppShots.filter((_,i)=>i>=Math.floor(seqIdx/2)).length;
+        const diff=penMyScore-penOppScore;
+        if(diff>oppRemaining || -diff>myRemaining){
+          setTimeout(finishPenalties,600);
+          return;
+        }
+
+        setTimeout(showNextPenalty, 700);
+      }, 600);
+    }
+
+    function finishPenalties(){
+      const penWon=penMyScore>penOppScore;
+      const finalIcon=penWon?'🏆':'💔';
+      addSeparator(`${finalIcon} ${penWon?myTeamName:oppName} gana la tanda ${penMyScore}–${penOppScore}`);
+      if(penWon) playSound('victory'); else playSound('defeat');
+      setTimeout(()=>showMatchModal(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,penaltyInfo,newCards,predictionResult), 1200);
+    }
+
+    setTimeout(showNextPenalty, 500);
+  }
 }
 
 function showMatchModal(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,penaltyInfo,newCards,predictionResult){

@@ -24,6 +24,17 @@
     <button class="support-btn desktop-only" style="background:#1a1a1a;border:1px solid var(--gold);color:var(--gold)" onclick="showRankingModal()">🏆 RANKING</button>
     <button class="header-auth-btn register-btn" id="authBtn">LOGIN / REGISTRO</button>
     <button class="header-auth-btn profile-btn" id="profileBtn" style="display:none">PERFIL</button>
+    <div class="settings-menu" id="settingsMenu">
+      <button class="settings-toggle" id="settingsToggle" onclick="toggleSettingsMenu()" title="Ajustes">⚙</button>
+      <div class="settings-dropdown" id="settingsDropdown">
+        <button id="audioToggleHeader" class="settings-item" title="Activar/desactivar sonido">
+          <span class="topbar-dot on"></span><span class="topbar-label">SONIDO</span>
+        </button>
+        <button id="themeToggleHeader" class="settings-item" title="Cambiar tema claro/oscuro">
+          <span class="topbar-dot on"></span><span class="topbar-label">TEMA OSCURO</span>
+        </button>
+      </div>
+    </div>
   </div>
 </header>
 

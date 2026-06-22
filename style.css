@@ -365,6 +365,30 @@ body.dark-theme .version-tag{color:#555}
 .rival-slot-reel{width:100%}
 @keyframes slotPulse{0%{transform:translateY(-2px)}50%{transform:translateY(2px)}100%{transform:translateY(-2px)}}
 .pen-shots{font-size:11px;color:#666;line-height:1.6}
+
+/* ===== LIVE MATCH SIMULATION ===== */
+.live-match-modal{background:#0a1f12;color:#fff;padding:24px;max-width:460px;width:90vw;max-height:85vh;overflow:hidden;display:flex;flex-direction:column;gap:0;border:2px solid #1a5c30}
+.live-match-header{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:16px}
+.live-match-side{display:flex;flex-direction:column;align-items:center;gap:4px;flex:1;min-width:0}
+.live-match-side .flag-emoji{font-size:36px;line-height:1}
+.live-match-team{font-size:10px;font-weight:700;text-align:center;text-transform:uppercase;letter-spacing:.5px;color:#aaa;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.live-scoreline{font-family:'Bebas Neue',Impact,sans-serif;font-size:52px;text-align:center;letter-spacing:4px;flex:0 0 auto;color:#fff;line-height:1;min-width:80px}
+.live-scoreline.goal-flash{animation:goalFlash .5s ease}
+@keyframes goalFlash{0%{color:#fff}40%{color:#f5c518;transform:scale(1.2)}100%{color:#fff;transform:scale(1)}}
+.live-clock-row{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:14px}
+.live-clock{font-family:'Bebas Neue',Impact,sans-serif;font-size:28px;color:#f5c518;letter-spacing:2px;min-width:60px;text-align:center}
+.live-half-badge{font-size:10px;font-weight:700;background:#1a5c30;color:#7defa0;padding:2px 8px;letter-spacing:1px;text-transform:uppercase}
+.live-pitch-bar{width:100%;height:6px;background:#1a3a20;border-radius:3px;margin-bottom:16px;overflow:hidden}
+.live-pitch-fill{height:100%;background:linear-gradient(90deg,#1a5c30,#7defa0);border-radius:3px;transition:width .15s linear}
+.live-events{flex:1;min-height:120px;max-height:200px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;padding-right:2px}
+.live-event{display:flex;align-items:center;gap:8px;font-size:12px;animation:slideInEvent .3s ease;opacity:0;animation-fill-mode:forwards}
+@keyframes slideInEvent{from{opacity:0;transform:translateX(-12px)}to{opacity:1;transform:translateX(0)}}
+.live-event-min{font-family:'Bebas Neue',Impact,sans-serif;font-size:14px;color:#f5c518;min-width:32px}
+.live-event-icon{font-size:16px;min-width:20px;text-align:center}
+.live-event-text{color:#ddd;line-height:1.3}
+.live-event-text strong{color:#fff}
+.live-ht-separator{text-align:center;font-size:10px;font-weight:700;color:#1a5c30;background:#0a1f12;letter-spacing:2px;padding:4px 0;border-top:1px solid #1a5c30;border-bottom:1px solid #1a5c30;margin:4px 0}
+body.dark-theme .live-match-modal{border-color:#2a7a40}
 .row-selected td{background:#fff3c4 !important}
 .row-selected td:first-child{box-shadow:-2px 0 0 var(--gold), 0 -2px 0 var(--gold), 0 2px 0 var(--gold)}
 .row-selected td:last-child{box-shadow:2px 0 0 var(--gold), 0 -2px 0 var(--gold), 0 2px 0 var(--gold)}
