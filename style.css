@@ -7,7 +7,9 @@
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%}
-body{background:var(--bg);font-family:'Inter',Arial,sans-serif;color:var(--text);font-size:13px;transition:background .2s,color .2s}
+/* Tema oscuro por defecto para evitar el flash claro al cargar */
+body{background:#15181a;font-family:'Inter',Arial,sans-serif;color:#ccc;font-size:13px}
+body.theme-loaded{background:var(--bg);color:var(--text);transition:background .2s,color .2s}
 
 /* ===================== LAYOUT ===================== */
 body{display:flex;flex-direction:column;height:100vh;overflow:hidden}
@@ -881,13 +883,13 @@ body.dark-theme .settings-item:hover{background:var(--row-hover);color:var(--gol
 .header-ticket-btn{
   position:relative;
   background:#1a2a1a;color:var(--gold);
-  border:1px solid rgba(240,196,25,.4);
-  border-radius:6px;padding:5px 10px;
+  border:1px solid var(--gold);
+  border-radius:0;padding:5px 10px;
   font-family:'Bebas Neue',Impact,sans-serif;
   font-size:13px;letter-spacing:.5px;
   cursor:pointer;transition:.15s;
 }
-.header-ticket-btn:hover{background:var(--gold);color:#000;border-color:var(--gold)}
+.header-ticket-btn:hover{background:var(--gold);color:#000}
 .header-ticket-alert{
   position:absolute;top:-4px;right:-4px;
   width:10px;height:10px;border-radius:50%;

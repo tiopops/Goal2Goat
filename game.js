@@ -235,6 +235,17 @@ function playSound(name){
       tone(ctx, 1800, 0, 0.18, 'square', 0.06, 0.0001);
       tone(ctx, 2000, 0.16, 0.16, 'square', 0.06, 0.0001);
       break;
+    case 'scratch_good': // casilla buena al rascar — pitch pasado como data
+      tone(ctx, 520, 0, 0.06, 'sine', 0.10, 0.0001);
+      tone(ctx, 780, 0.04, 0.09, 'sine', 0.08, 0.0001);
+      break;
+    case 'scratch_star': // casilla cabra — más dramático
+      [520,660,880,1100].forEach((f,i)=>tone(ctx, f, i*0.06, 0.10, 'triangle', 0.12, 0.0001));
+      break;
+    case 'scratch_bomb': // casilla bomba — sonido de derrumbe
+      [300,240,180,120].forEach((f,i)=>tone(ctx, f, i*0.07, 0.15, 'sawtooth', 0.12, 0.0001));
+      tone(ctx, 80, 0.28, 0.4, 'sine', 0.18, 0.0001);
+      break;
   }
 }
 
@@ -2005,12 +2016,8 @@ function playMatch(){
   const newInjuries=rollInjuries(myPower,oppPower);
   // Cards (yellow/red)
   const newCards=rollCards();
-  // Fatigue (titulares lose freshness, bench fully recovers)
-  applyMatchFatigue();
-  refreshPitchRatings();
-  baseTeamOVR=computeTeamOVR();
-  updateConvocadosTable();
-  updateBenchTable();
+  // Fatigue y tabla se actualizan al TERMINAR el partido (en showPostMatch)
+  // para que la tabla de convocados no cambie mientras se simula
 
   let won, draw=false, penaltyInfo=null, scoreLabel;
   if(stage==="group"){
@@ -2190,12 +2197,27 @@ function generateMatchSummary(myGoals,oppGoals,rivalName){
   const myGoalLines=myMinutes.map(min=>{
     const scorer=attackers[Math.floor(Math.random()*attackers.length)]||usedPlayers[0];
     if(scorer) lastMatchScorers.push(scorer.name);
-    return `<li>⚽ ${scorer?scorer.name:"Desconocido"} <span class="goal-min">(${min}')</span></li>`;
+    // Buscar el emoji del equipo del goleador usando su id
+    const scorerTeamEmoji=(()=>{
+      if(!scorer||!scorer.id) return '';
+      const parts=scorer.id.split('_');
+      // id format: p_TEAMID_N o p_team_NAME_N
+      let teamId;
+      if(parts[1]==='team') teamId=null; // equipos especiales
+      else teamId='team_'+parts[1];
+      if(teamId){
+        const t=teams.find(x=>x.id===teamId);
+        return t?t.emoji||'':'';
+      }
+      return '';
+    })();
+    return `<li>⚽ ${scorerTeamEmoji} ${scorer?scorer.name:'Desconocido'} <span class="goal-min">(${min}')</span></li>`;
   });
   generateMatchSummary._scorers=lastMatchScorers;
   const oppGoalLines=oppMinutes.map(min=>{
     const scorer=oppPool[Math.floor(Math.random()*oppPool.length)];
-    return `<li>⚽ ${scorer?scorer.name:rivalName} <span class="goal-min">(${min}')</span></li>`;
+    const oppEmoji=nextOpponent?nextOpponent.emoji||'':'';
+    return `<li>⚽ ${oppEmoji} ${scorer?scorer.name:rivalName} <span class="goal-min">(${min}')</span></li>`;
   });
 
   const goalsHTML=`
@@ -2590,15 +2612,21 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
     const infoWrap=document.createElement('div');
     infoWrap.style.cssText='display:flex;flex-direction:column;gap:6px;margin-top:8px';
 
-    // Resumen de goles (estadísticas del partido)
+    // Estadísticas del partido: posesión + tiros (primeras 2 líneas del summary)
     const summaryDiv=document.createElement('div');
     summaryDiv.className='match-summary';
-    summaryDiv.innerHTML=summary.match(/<div class="match-stats"[^>]*>([\s\S]*?)<\/div>/)?.[0]||'';
-    // Extraer solo las estadísticas (posesión, tiros)
-    const statsMatch=summary.match(/Posesi[oó]n[^<]*/);
-    if(statsMatch){
-      summaryDiv.innerHTML=`<small style="color:var(--text-muted)">${statsMatch[0]}</small>`;
-      infoWrap.appendChild(summaryDiv);
+    // Extraer la parte de estadísticas (antes del bloque goals-columns)
+    // El summary tiene el formato: "Posesión:...<br>Tiros:...\n<div class=goals-columns>..."
+    const goalsColIdx=summary.indexOf('<div class="goals-columns">');
+    const statsRaw=goalsColIdx>0 ? summary.substring(0,goalsColIdx) : summary;
+    // Limpiar: el statsRaw ya tiene HTML válido con <strong> y <br>
+    summaryDiv.innerHTML=statsRaw.trim();
+    infoWrap.appendChild(summaryDiv);
+    // Mostrar los goles completos con banderas
+    if(goalsColIdx>0){
+      const goalsDiv=document.createElement('div');
+      goalsDiv.innerHTML=summary.substring(goalsColIdx);
+      infoWrap.appendChild(goalsDiv);
     }
 
     // Recuperados
@@ -2657,6 +2685,13 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
     }
 
     modal.appendChild(infoWrap);
+
+    // Aplicar efectos del partido ahora que ha terminado
+    applyMatchFatigue();
+    refreshPitchRatings();
+    baseTeamOVR=computeTeamOVR();
+    updateConvocadosTable();
+    updateBenchTable();
 
     // Botón continuar
     let btnLabel,outcome;
@@ -3008,7 +3043,7 @@ function showGoldenTicket(){
   const serial=String(Math.floor(1000+Math.random()*8999))+'-'+String(Math.floor(1000+Math.random()*8999));
   wrap.innerHTML=`
   <div style="position:relative;width:340px;background:linear-gradient(180deg,#3a2a00 0%,#1a1200 100%);border-radius:18px;box-shadow:0 0 0 2px #f0c419,0 30px 60px -10px rgba(0,0,0,.9);overflow:hidden;">
-    <button onclick=\"window.gtClose(0)\" style=\"position:absolute;top:10px;left:12px;background:none;border:none;color:rgba(240,196,25,.5);font-size:20px;cursor:pointer;z-index:10;line-height:1;padding:4px\" title=\"Cerrar\">✕</button>
+    <button onclick=\"window.gtClose(0)\" style=\"position:absolute;top:10px;right:12px;background:none;border:none;color:rgba(240,196,25,.5);font-size:20px;cursor:pointer;z-index:10;line-height:1;padding:4px\" title=\"Cerrar\">✕</button>
     <div style="padding:26px 22px 22px;">
       <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:2px;">
         <span style="font-size:18px">🏆</span>
@@ -3028,7 +3063,7 @@ function showGoldenTicket(){
       <div id="gtDots" style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
         <span style="font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:rgba(240,196,25,.5);font-weight:700;margin-right:4px;">Casillas rascadas</span>
       </div>
-      <button id="gtCashBtn" disabled onclick="gtCashOut(false)" style="width:100%;border:none;border-radius:10px;font-family:'Bebas Neue',Impact,sans-serif;font-size:16px;letter-spacing:1.5px;padding:13px;cursor:pointer;background:linear-gradient(180deg,#ffe27a,#f0c419 55%,#c9960c);color:#08160d;box-shadow:0 6px 0 #8a6a08;opacity:.35;pointer-events:none;">💰 PLANTARSE</button>
+      <button id="gtCashBtn" disabled onclick="gtCashOut(false)" style="width:100%;border:none;border-radius:0;font-family:'Bebas Neue',Impact,sans-serif;font-size:22px;letter-spacing:2px;padding:14px;cursor:pointer;background:linear-gradient(180deg,#ffe27a,#f0c419 55%,#c9960c);color:#08160d;box-shadow:0 6px 0 #8a6a08;opacity:.35;pointer-events:none;">PLANTARSE</button>
       <div style="text-align:center;font-size:9px;color:rgba(240,196,25,.35);margin-top:14px;letter-spacing:.5px;line-height:1.5">
         Solo cabras 🐐 (+3 pts) y una casilla ❌.<br>Premio especial por ganar el Mundial. ¡No se acumula!
       </div>
@@ -3166,6 +3201,8 @@ function showGoldenTicket(){
       }catch(e){console.warn('Error guardando pts golden ticket:',e);}
     }
     const w=$id('goldenTicketWrap'); if(w) w.remove();
+    // Recargar para nueva partida
+    setTimeout(()=>location.reload(), 400);
   };
 }
 
@@ -3863,6 +3900,8 @@ function syncThemeToggleUI(isDark){
   }catch(e){}
   if(isDark) document.body.classList.add("dark-theme");
   else document.body.classList.remove("dark-theme");
+  // Activar transiciones solo después de aplicar el tema inicial
+  requestAnimationFrame(()=>document.body.classList.add("theme-loaded"));
   syncThemeToggleUI(isDark);
 })();
 
@@ -4684,8 +4723,9 @@ function buildTicketInMount(mount, ticketCount, lastRegen, currentScratchPts){
   const serial=String(Math.floor(1000+Math.random()*8999))+'-'+String(Math.floor(1000+Math.random()*8999));
 
   mount.innerHTML=`
-  <div class="ticket" id="ticketCard" style="position:relative;width:340px;background:linear-gradient(180deg,#0f3d24 0%,#0c2e1c 100%);border-radius:18px;box-shadow:0 30px 60px -20px rgba(0,0,0,.7),0 0 0 1px rgba(240,196,25,.15);overflow:hidden;">
-    <button onclick=\"window.closeTicketOverlay()\" style=\"position:absolute;top:10px;left:12px;background:none;border:none;color:rgba(246,241,227,.5);font-size:20px;cursor:pointer;z-index:10;line-height:1;padding:4px\" title=\"Cerrar\">✕</button>
+  <div class="ticket" id="ticketCard" style="position:relative;width:340px;background:linear-gradient(180deg,#0f3d24 0%,#0c2e1c 100%);border-radius:0;box-shadow:0 30px 60px -20px rgba(0,0,0,.7),0 0 0 1px rgba(240,196,25,.15);overflow:visible">
+    <div style="display:flex;justify-content:space-around;margin:0 -4px;position:relative;z-index:2">${Array.from({length:12},()=>'<div style="width:16px;height:16px;border-radius:50%;background:#0a1212;border:1px solid rgba(246,241,227,.1);flex-shrink:0"></div>').join('')}</div>
+    <button onclick=\"window.closeTicketOverlay()\" style=\"position:absolute;top:10px;right:12px;background:none;border:none;color:rgba(246,241,227,.5);font-size:20px;cursor:pointer;z-index:10;line-height:1;padding:4px\" title=\"Cerrar\">✕</button>
     <div id="ticketStamp" style="position:absolute;top:54px;right:-34px;width:140px;text-align:center;background:#e8a020;color:#fff;font-family:'Bebas Neue',Impact,sans-serif;font-size:11px;letter-spacing:2px;padding:4px 0;transform:rotate(40deg);box-shadow:0 3px 8px rgba(0,0,0,.35);z-index:4;">RASCA Y GANA</div>
     <div style="padding:26px 22px 22px;">
       <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:2px;">
@@ -4717,7 +4757,7 @@ function buildTicketInMount(mount, ticketCount, lastRegen, currentScratchPts){
         </div>
       </div>
       <div style="display:flex;flex-direction:column;gap:8px;">
-        <button id="tCashBtn" disabled onclick="ticketCashOut(false)" style="border:none;border-radius:10px;font-family:'Bebas Neue',Impact,sans-serif;font-size:16px;letter-spacing:1.5px;padding:13px;cursor:pointer;background:linear-gradient(180deg,#ffe27a,#f0c419 55%,#c9960c);color:#08160d;box-shadow:0 6px 0 #8a6a08,0 10px 18px -6px rgba(0,0,0,.5);opacity:.35;pointer-events:none;">💰 PLANTARSE</button>
+        <button id="tCashBtn" disabled onclick="ticketCashOut(false)" style="border:none;border-radius:0;font-family:'Bebas Neue',Impact,sans-serif;font-size:22px;letter-spacing:2px;padding:14px;cursor:pointer;background:linear-gradient(180deg,#ffe27a,#f0c419 55%,#c9960c);color:#08160d;box-shadow:0 6px 0 #8a6a08,0 10px 18px -6px rgba(0,0,0,.5);opacity:.35;pointer-events:none;">PLANTARSE</button>
         <div id="tRiskBtn" style="border:1.5px solid rgba(246,241,227,.35);border-radius:10px;font-family:'Bebas Neue',Impact,sans-serif;font-size:13px;letter-spacing:1px;padding:13px;text-align:center;color:rgba(246,241,227,.7);">TOCA CUALQUIER CASILLA PARA RASCAR</div>
       </div>
       
@@ -4867,10 +4907,23 @@ function buildTicketInMount(mount, ticketCount, lastRegen, currentScratchPts){
     scratchedCount++;
     if(data.type==='bomb'){
       if(dot){ dot.style.background='#d94f3d'; dot.style.boxShadow='0 0 6px rgba(217,79,61,.7)'; }
+      playSound('scratch_bomb');
       handleTicketBomb();
+    } else if(data.type==='star'){
+      totalPoints+=data.value;
+      if(dot){ dot.style.background='#f0c419'; dot.style.boxShadow='0 0 6px rgba(240,196,25,.6)'; }
+      playSound('scratch_star');
+      updateUI();
+      if(scratchedCount>=GRID_SIZE) setTimeout(()=>ticketCashOut(true),500);
     } else {
       totalPoints+=data.value;
       if(dot){ dot.style.background='#f0c419'; dot.style.boxShadow='0 0 6px rgba(240,196,25,.6)'; }
+      // Pitch progresivo: cada casilla buena sube el tono
+      if(audioEnabled&&getAudioCtx()){
+        const baseFreq=400+(scratchedCount*40);
+        tone(getAudioCtx(), baseFreq, 0, 0.06, 'sine', 0.10, 0.0001);
+        tone(getAudioCtx(), baseFreq*1.5, 0.04, 0.08, 'sine', 0.07, 0.0001);
+      }
       updateUI();
       if(scratchedCount>=GRID_SIZE) setTimeout(()=>ticketCashOut(true),500);
     }
