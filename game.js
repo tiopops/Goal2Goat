@@ -4050,24 +4050,23 @@ function initFirebaseAuth(){
       const checkbox=$id("useFixedTeamNameCheckbox");
       if(nameInp)  nameInp.value=data.preferredTeamName||"";
       if(checkbox) checkbox.checked=!!data.useFixedTeamName;
-      // Cheats: solo para tiopops
+      // Cheats: solo visible y funcional para tiopops (jesuslor85@gmail.com)
       const cheatsSection=$id("cheatsSection");
-      const cheatsCheckbox=$id("cheatsCheckbox");
-      if(cheatsSection&&auth.currentUser&&auth.currentUser.email===CHEAT_USER){
-        cheatsSection.style.display="block";
-        if(cheatsCheckbox){
-          cheatsCheckbox.checked=!!window.CHEATS_ACTIVE;
-          cheatsCheckbox.addEventListener('change', function(){
+      const isCheatUser=(data.email||'').toLowerCase()===CHEAT_USER.toLowerCase();
+      if(cheatsSection) cheatsSection.style.display=isCheatUser?"block":"none";
+      if(isCheatUser){
+        // Clonar para eliminar listeners previos acumulados
+        const oldCb=$id("cheatsCheckbox");
+        if(oldCb){
+          const newCb=oldCb.cloneNode(true);
+          oldCb.parentNode.replaceChild(newCb, oldCb);
+          newCb.checked=!!window.CHEATS_ACTIVE;
+          newCb.addEventListener('change',function(){
             window.CHEATS_ACTIVE=this.checked;
-            if(window.CHEATS_ACTIVE){
-              updateTicketBadge(3);
-              const pse=$id('pstat-scratch-pts'); if(pse) pse.textContent=100;
-            }
-            showToast(window.CHEATS_ACTIVE?"⚙️ Cheats ON":"⚙️ Cheats OFF","toast-pos");
+            updateTicketBadge(window.CHEATS_ACTIVE?3:undefined);
+            showToast(window.CHEATS_ACTIVE?"⚙️ Cheats ON — ganas todos, tickets 3/3, pts 100":"⚙️ Cheats OFF — juego normal","toast-pos");
           });
         }
-      } else if(cheatsSection){
-        cheatsSection.style.display="none";
       }
     }catch(e){
       console.warn("Stats load error:", e);
@@ -4486,6 +4485,9 @@ async function saveTicketState(count, lastChecked, scratchPoints){
 
 /* ── Actualizar badge en la tab de móvil ── */
 function updateTicketBadge(count){
+  // Si cheats activos, siempre mostrar 3
+  if(window.CHEATS_ACTIVE) count=3;
+  if(count===undefined||count===null) return; // sin datos aún
   // Mobile tab badge
   const el=$id('ticketCountBadge');
   if(el){
@@ -4496,32 +4498,25 @@ function updateTicketBadge(count){
   const hBtn=$id('headerTicketBtn');
   const hCount=$id('headerTicketCount');
   const hAlert=$id('headerTicketAlert');
-  if(hBtn) hBtn.style.display=window.currentUsername?'':'none';
   if(hCount) hCount.textContent=`${count}/${TICKET_MAX}`;
   if(hAlert) hAlert.style.display=count>0?'block':'none';
-  // Mobile tab alert dot (reutilizamos el badge de color)
-  const mobAlert=document.querySelector('#ticketTabBtn .mob-tab-badge');
-  if(mobAlert){
-    mobAlert.style.display=count>0?'':'none';
-    mobAlert.textContent='';
-  } else if(count>0){
-    // Crear badge si no existe
-    const btn=$id('ticketTabBtn');
-    if(btn&&!btn.querySelector('.mob-tab-badge')){
-      const dot=document.createElement('span');
-      dot.className='mob-tab-badge mob-tab-badge-pulse';
+  // Punto de alerta en tab móvil
+  const btn=$id('ticketTabBtn');
+  if(btn){
+    let dot=btn.querySelector('.mob-tab-badge');
+    if(count>0&&!dot){
+      dot=document.createElement('span');
+      dot.className='mob-tab-badge';
       dot.style.cssText='background:#f87171;width:8px;height:8px;border-radius:50%;padding:0;min-width:unset;';
       btn.appendChild(dot);
+    } else if(count<=0&&dot){
+      dot.remove();
     }
   }
 }
 
 /* ── Abrir overlay del boleto ── */
 window.openTicketOverlay=function(){
-  if(typeof firebase==='undefined'||!firebase.auth().currentUser){
-    alert('Debes iniciar sesión para usar los tickets de rasca y gana.');
-    return;
-  }
   const overlay=$id('ticketOverlay');
   if(overlay) overlay.style.display='block';
   const mount=$id('ticketMountPoint');
@@ -4532,6 +4527,20 @@ window.openTicketOverlay=function(){
 async function _openTicketAsync(){
   const mount=$id('ticketMountPoint');
   if(!mount) return;
+  // Esperar a que Firebase Auth resuelva el estado del usuario
+  const user = await new Promise(resolve=>{
+    if(typeof firebase==='undefined'){ resolve(null); return; }
+    const unsub=firebase.auth().onAuthStateChanged(u=>{ unsub(); resolve(u); });
+  });
+  if(!user){
+    mount.innerHTML=`<div style="text-align:center;color:#ccc;padding:40px 20px;font-family:'Bebas Neue',Impact,sans-serif;">
+      <div style="font-size:50px;margin-bottom:16px">🔒</div>
+      <div style="font-size:20px;color:var(--gold);margin-bottom:8px">INICIA SESIÓN</div>
+      <div style="font-size:12px;font-family:'Inter',sans-serif;color:#aaa">Necesitas una cuenta para usar los tickets.</div>
+      <button onclick="closeTicketOverlay()" style="margin-top:20px;border:1px solid #444;background:none;color:#aaa;padding:10px 24px;cursor:pointer;font-family:'Bebas Neue',Impact,sans-serif;font-size:14px;letter-spacing:1px;">CERRAR</button>
+    </div>`;
+    return;
+  }
   const state=await getTicketState();
   if(!state){
     mount.innerHTML='<div style="text-align:center;padding:40px;color:#f87171">Error cargando tickets.</div>';
