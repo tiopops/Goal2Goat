@@ -767,20 +767,40 @@ body.dark-theme .settings-dropdown{background:#0a0c0d;border-color:var(--gold)}
 body.dark-theme .settings-item:hover{background:var(--row-hover);color:var(--gold)}
 
 /* ===== AUTH HEADER BUTTONS ===== */
-.header-auth-btn{
+/* Base común para todos los botones del header */
+.header-auth-btn,
+.header-ticket-btn,
+.profile-btn{
   font-family:'Bebas Neue',Impact,sans-serif;
   font-size:13px;letter-spacing:1px;
-  padding:5px 12px;cursor:pointer;border:none;
-  transition:.15s;white-space:nowrap;flex-shrink:0;
+  padding:5px 12px;cursor:pointer;
+  border:none;border-radius:0;
+  transition:background .15s, transform .1s, box-shadow .15s;
+  white-space:nowrap;flex-shrink:0;
+  height:30px;display:inline-flex;align-items:center;
 }
 .login-btn{background:transparent;color:var(--gold);border:1px solid var(--gold)}
-.login-btn:hover{background:var(--gold);color:#000}
+.login-btn:hover{background:var(--gold);color:#000;transform:translateY(-1px);box-shadow:0 4px 12px rgba(240,196,25,.3)}
 .register-btn{background:var(--gold);color:#000}
-.register-btn:hover{background:#e0b82a}
+.register-btn:hover{background:#e0b82a;transform:translateY(-1px);box-shadow:0 4px 12px rgba(240,196,25,.3)}
 .logout-btn{background:transparent;color:#aaa;border:1px solid #555;font-size:11px;padding:4px 8px}
 .logout-btn:hover{border-color:#aaa;color:#fff}
 .header-user-info{display:flex;align-items:center;gap:8px;flex-shrink:0}
 .header-username{font-size:12px;color:var(--gold);font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:.5px}
+.profile-btn{background:#1a2a1a;color:var(--gold);border:1px solid var(--gold)}
+.profile-btn:hover{background:var(--gold);color:#000;transform:translateY(-1px);box-shadow:0 4px 12px rgba(240,196,25,.3)}
+.header-ticket-btn{
+  position:relative;
+  background:#1a2a1a;color:var(--gold);
+  border:1px solid var(--gold);
+}
+.header-ticket-btn:hover{background:var(--gold);color:#000;transform:translateY(-1px);box-shadow:0 4px 12px rgba(240,196,25,.3)}
+.header-ticket-alert{
+  position:absolute;top:-4px;right:-4px;
+  width:10px;height:10px;border-radius:50%;
+  background:#f87171;border:2px solid var(--card-bg);
+  animation:ticketPulse 1.5s ease-in-out infinite;
+}
 
 /* ===== AUTH MODAL ===== */
 .auth-modal{
@@ -874,28 +894,7 @@ body.dark-theme .settings-item:hover{background:var(--row-hover);color:var(--gol
   border:none!important;
 }
 
-.profile-btn{
-  background:#1a2a1a;color:var(--gold);
-  border:1px solid var(--gold);
-  font-size:12px;letter-spacing:.5px;
-}
-.profile-btn:hover{background:var(--gold);color:#000}
-.header-ticket-btn{
-  position:relative;
-  background:#1a2a1a;color:var(--gold);
-  border:1px solid var(--gold);
-  border-radius:0;padding:5px 10px;
-  font-family:'Bebas Neue',Impact,sans-serif;
-  font-size:13px;letter-spacing:.5px;
-  cursor:pointer;transition:.15s;
-}
-.header-ticket-btn:hover{background:var(--gold);color:#000}
-.header-ticket-alert{
-  position:absolute;top:-4px;right:-4px;
-  width:10px;height:10px;border-radius:50%;
-  background:#f87171;border:2px solid var(--card-bg);
-  animation:ticketPulse 1.5s ease-in-out infinite;
-}
+/* profile-btn y header-ticket-btn definidos arriba junto a los demás botones del header */
 @keyframes ticketPulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.3);opacity:.7}}
 
 /* PROFILE STATS */
