@@ -235,6 +235,17 @@ function playSound(name){
       tone(ctx, 1800, 0, 0.18, 'square', 0.06, 0.0001);
       tone(ctx, 2000, 0.16, 0.16, 'square', 0.06, 0.0001);
       break;
+    case 'scratch_good': // casilla buena al rascar — pitch pasado como data
+      tone(ctx, 520, 0, 0.06, 'sine', 0.10, 0.0001);
+      tone(ctx, 780, 0.04, 0.09, 'sine', 0.08, 0.0001);
+      break;
+    case 'scratch_star': // casilla cabra — más dramático
+      [520,660,880,1100].forEach((f,i)=>tone(ctx, f, i*0.06, 0.10, 'triangle', 0.12, 0.0001));
+      break;
+    case 'scratch_bomb': // casilla bomba — sonido de derrumbe
+      [300,240,180,120].forEach((f,i)=>tone(ctx, f, i*0.07, 0.15, 'sawtooth', 0.12, 0.0001));
+      tone(ctx, 80, 0.28, 0.4, 'sine', 0.18, 0.0001);
+      break;
   }
 }
 
@@ -311,6 +322,8 @@ let swapsUsedThisMatch = 0;
 /* ========= ROGUELIKE SYSTEMS STATE ========= */
 // Morale: -50 to +50, starts at 0, affects match lambda
 let teamMorale = 0;
+window.CHEATS_ACTIVE = false;
+const CHEAT_USER = 'jesuslor85@gmail.com';
 // Scorer streaks: map playerName -> consecutive matches scored
 let scorerStreaks = {};
 // Current match weather
@@ -465,7 +478,7 @@ const PRESS_PREDICTIONS = [
     ]
   },
 ];
-const MAX_SWAPS_PER_MATCH = 5;
+// getMaxSubs() reemplazado por getMaxSubs() dinámico
 
 /* ========= COMPETITION STATE (World Cup format) ========= */
 const ROUND_NAMES = ["Octavos de Final","Cuartos de Final","Semifinal","Final"];
@@ -793,9 +806,13 @@ function rollTeams(){
   const pool=teams.slice();
   shuffle(pool);
   const t1=pool[0], t2=pool[1];
-  const p1=randomPick(t1.players,5), p2=randomPick(t2.players,5);
-  window._lastTeamChoice={t1,p1,t2,p2,isBench:false};
-  showTeamChoice(t1,p1,t2,p2);
+  // Asegurar que el cache está cargado antes de usarlo
+  refreshUpgradeCache().then(()=>{
+    const _ppt=getPlayersPerTeam();
+    const p1=randomPick(t1.players,_ppt), p2=randomPick(t2.players,_ppt);
+    window._lastTeamChoice={t1,p1,t2,p2,isBench:false};
+    showTeamChoice(t1,p1,t2,p2);
+  });
 }
 
 function rollBench(){
@@ -804,10 +821,13 @@ function rollBench(){
   shuffle(pool);
   const t1=pool[0], t2=pool[1];
   const already=new Set([...usedPlayers.map(p=>p.name),...bench.map(p=>p.name)]);
-  const p1=randomPick(t1.players.filter(p=>!already.has(p.name)),5);
-  const p2=randomPick(t2.players.filter(p=>!already.has(p.name)),5);
-  window._lastTeamChoice={t1,p1,p2,t2,isBench:true};
-  showTeamChoice(t1,p1,t2,p2,true);
+  refreshUpgradeCache().then(()=>{
+    const _ppt=getPlayersPerTeam();
+    const p1=randomPick(t1.players.filter(p=>!already.has(p.name)),_ppt);
+    const p2=randomPick(t2.players.filter(p=>!already.has(p.name)),_ppt);
+    window._lastTeamChoice={t1,p1,t2,p2,isBench:true};
+    showTeamChoice(t1,p1,t2,p2,true);
+  });
 }
 
 function randomPick(arr,n){
@@ -886,7 +906,7 @@ function renderBonuses(team){
   return h;
 }
 
-/* ========= SELECT TEAM → show 8 players ========= */
+/* ========= SELECT TEAM → show players según mejora CONVOCADOS ========= */
 function selectTeam(teamName){
   const team=teams.find(t=>t.name===teamName);
   if(!team) return;
@@ -894,7 +914,7 @@ function selectTeam(teamName){
   applyBonuses(team);
   const already=new Set([...usedPlayers.map(p=>p.name),...bench.map(p=>p.name)]);
   const available=team.players.filter(p=>!already.has(p.name));
-  const show=randomPick(available,5);
+  const show=randomPick(available, getPlayersPerTeam());
   window._lastRoster={team, players:show}; // store for VOLVER
   showRosterModal(team,show);
 }
@@ -947,7 +967,7 @@ function pickPlayer(player){
     benchCount++;
     if(rosterTarget) rosterTarget.innerHTML="";
     updateBenchTable();
-    if(benchCount>=5){
+    if(benchCount>=getMaxBench()){
       phase="ready";
       rollBtn.style.display="none";
       const tipsBox=document.getElementById("tipsBox");
@@ -965,7 +985,7 @@ function pickPlayer(player){
       startLedLoop();
     } else {
       rollBtn.disabled=false;
-      rollBtn.textContent=`BANQUILLO ${benchCount}/5`;
+      rollBtn.textContent=`BANQUILLO ${benchCount}/${getMaxBench()}`;
       scrollToCenter("rollBtn");
     }
     return;
@@ -1187,7 +1207,7 @@ function onSlotClick(slot){
   if(draftedCount>=11){
     baseTeamOVR=computeTeamOVR();
     phase="bench";
-    rollBtn.textContent="BANQUILLO 0/5";
+    rollBtn.textContent=`BANQUILLO 0/${getMaxBench()}`;
     rollBtn.disabled=false;
     document.getElementById("benchSection").style.display="block";
     playerCardEl.innerHTML="";
@@ -1332,7 +1352,7 @@ function getFatigueBarHTML(p){
 function updateConvocadosTable(){
   const el=document.getElementById("convocadosTable");
   if(!el) return;
-  const swapsLeft=MAX_SWAPS_PER_MATCH-swapsUsedThisMatch;
+  const swapsLeft=getMaxSubs()-swapsUsedThisMatch;
   const canSwap=(phase==='ready')&&swapsLeft>0;
   let rows="",stars=0;
   usedPlayers.forEach((p,i)=>{
@@ -1366,7 +1386,7 @@ function updateConvocadosTable(){
     if(phase==='ready'){
       swapHint.style.display="block";
       swapHint.textContent=swapsLeft>0
-        ? `Cambios disponibles antes del próximo partido: ${swapsLeft}/${MAX_SWAPS_PER_MATCH}`
+        ? `Cambios disponibles antes del próximo partido: ${swapsLeft}/${getMaxSubs()}`
         : `Ya has usado tu cambio para este partido.`;
     } else {
       swapHint.style.display="none";
@@ -1376,9 +1396,9 @@ function updateConvocadosTable(){
 function updateBenchTable(){
   const el=document.getElementById("benchTable");
   const cnt=document.getElementById("benchCounter");
-  if(cnt) cnt.textContent=bench.length+"/5";
+  if(cnt) cnt.textContent=bench.length+`/${getMaxBench()}`;
   if(!el) return;
-  const swapsLeft=MAX_SWAPS_PER_MATCH-swapsUsedThisMatch;
+  const swapsLeft=getMaxSubs()-swapsUsedThisMatch;
   const canSwap=(phase==='ready')&&swapsLeft>0;
   let rows="";
   bench.forEach((p,i)=>{
@@ -1396,7 +1416,7 @@ function updateBenchTable(){
 
 /* ========= PRE-MATCH SWAPS (convocados <-> bench) ========= */
 function onConvocadoClick(i){
-  if(phase!=='ready'||swapsUsedThisMatch>=MAX_SWAPS_PER_MATCH) return;
+  if(phase!=='ready'||swapsUsedThisMatch>=getMaxSubs()) return;
   if(swapSelection&&swapSelection.source==='bench'){
     // bench → conv swap
     const benchIdx=swapSelection.index;
@@ -1422,7 +1442,7 @@ function onConvocadoClick(i){
   updateBenchTable();
 }
 function onBenchClick(i){
-  if(phase!=='ready'||swapsUsedThisMatch>=MAX_SWAPS_PER_MATCH) return;
+  if(phase!=='ready'||swapsUsedThisMatch>=getMaxSubs()) return;
   // A suspended player cannot be brought onto the pitch — they must serve
   // their sanction. Clicking them does nothing until the suspension lifts.
   if(bench[i]&&bench[i].suspended) return;
@@ -1582,7 +1602,7 @@ function renderMobileFormationInfo(){
   if(!el) return;
   if(phase==="draft" && draftedCount===0){
     el.classList.add("empty");
-    el.innerHTML=`Elige tu <strong>formación</strong> justo debajo, antes de empezar a seleccionar jugadores.`;
+    el.innerHTML=``;
   } else {
     el.classList.remove("empty");
     const desc=FORMATION_DESC[currentFormation.code]||"";
@@ -1893,7 +1913,18 @@ function computeOppPower(team){
   const pl=team.players.slice(0,11);
   const avg=pl.length?pl.reduce((s,p)=>s+(p.rating||75),0)/pl.length:75;
   const bonusBoost=Object.values(team.bonuses||{}).reduce((a,b)=>a+(Math.abs(b)||0),0)*0.12;
-  return avg + bonusBoost;
+  // Rival fatigue: mirrors player fatigue accumulation across the tournament.
+  // Group stage: slight fatigue by match 2-3. Knockout: accumulates each round.
+  // This balances the fact that the player manages fatigue but the AI doesn't.
+  let fatiguePenalty=0;
+  if(stage==='group'){
+    // Match 1: fresh (0), Match 2: minor (-0.4), Match 3: noticeable (-0.9)
+    fatiguePenalty=[0,0.4,0.9][groupMatchIdx]||0;
+  } else {
+    // Octavos(0):-1.2, Cuartos(1):-2.0, Semis(2):-2.8, Final(3):-3.5
+    fatiguePenalty=[1.2,2.0,2.8,3.5][knockoutRound]||1.2;
+  }
+  return avg + bonusBoost - fatiguePenalty;
 }
 /* Tactical matchup: returns a small lambda modifier for each side based on
    attack-vs-defense and supporting stats. Capped so it nudges, not dominates. */
@@ -1983,21 +2014,35 @@ function playMatch(){
   const weatherDelta=weatherLambdaEffect(); // weather was rolled when rival was revealed
   const myLambda=Math.max(0.25, 1.15+diff+tactical.myScoreMod+counter.myScoreMod+earlyBoost+groupNudge+starBonus+moraleBonus+streakBonus+weatherDelta);
   const oppLambda=Math.max(0.25, 1.15-diff+tactical.oppScoreMod+counter.oppScoreMod-earlyBoost*0.6-groupNudge*0.6+weatherDelta);
-  const myGoals=poissonSample(myLambda);
-  const oppGoals=poissonSample(oppLambda);
+  let myGoals=window.CHEATS_ACTIVE ? (3+Math.floor(Math.random()*3)) : poissonSample(myLambda);
+  let oppGoals=window.CHEATS_ACTIVE ? 0 : poissonSample(oppLambda);
   // Match narrative
   let summary=generateMatchSummary(myGoals,oppGoals,nextOpponent.name);
   updateScorerStreaks(generateMatchSummary._scorers||[]);
-  // Injuries
+  // Injuries y tarjetas propias
   const newInjuries=rollInjuries(myPower,oppPower);
-  // Cards (yellow/red)
   const newCards=rollCards();
-  // Fatigue (titulares lose freshness, bench fully recovers)
-  applyMatchFatigue();
-  refreshPitchRatings();
-  baseTeamOVR=computeTeamOVR();
-  updateConvocadosTable();
-  updateBenchTable();
+  // Eventos del rival (lesiones y tarjetas)
+  const oppEvents=rollOppEvents(oppPower,myPower);
+  // Si el rival tiene una expulsión, su lambda se reduce proporcionalmente
+  // desde el minuto de la roja: reducción promedio de ~11% (10/11 jugadores)
+  let adjOppLambda=oppLambda;
+  if(oppEvents.redMinute!==null){
+    // Fracción del partido que juegan con 10: (90-redMinute)/90
+    const fracWith10=Math.max(0,(90-oppEvents.redMinute)/90);
+    adjOppLambda=oppLambda*(1-fracWith10*0.11);
+  }
+  // Recalcular goles del rival con el lambda ajustado
+  if(!window.CHEATS_ACTIVE && oppEvents.redMinute!==null){
+    oppGoals=poissonSample(adjOppLambda);
+  }
+  // Procesar expulsiones durante el partido:
+  // Jugadores con roja/doble amarilla se retiran si hay hueco en banquillo.
+  // Si el banquillo está lleno, se quedan en el campo con rating 0.
+  applyInMatchRedCards(newCards);
+
+  // Fatigue y tabla se actualizan al TERMINAR el partido (en showPostMatch)
+  // para que la tabla de convocados no cambie mientras se simula
 
   let won, draw=false, penaltyInfo=null, scoreLabel;
   if(stage==="group"){
@@ -2063,7 +2108,7 @@ function playMatch(){
 
   renderMatchHistory();
   updateLed();
-  showMatchModal(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,penaltyInfo,newCards,predictionResult);
+  showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,penaltyInfo,newCards,predictionResult,oppEvents);
 }
 document.getElementById("playMatchBtn").addEventListener("click",playMatch);
 
@@ -2177,12 +2222,27 @@ function generateMatchSummary(myGoals,oppGoals,rivalName){
   const myGoalLines=myMinutes.map(min=>{
     const scorer=attackers[Math.floor(Math.random()*attackers.length)]||usedPlayers[0];
     if(scorer) lastMatchScorers.push(scorer.name);
-    return `<li>⚽ ${scorer?scorer.name:"Desconocido"} <span class="goal-min">(${min}')</span></li>`;
+    // Buscar el emoji del equipo del goleador usando su id
+    const scorerTeamEmoji=(()=>{
+      if(!scorer||!scorer.id) return '';
+      const parts=scorer.id.split('_');
+      // id format: p_TEAMID_N o p_team_NAME_N
+      let teamId;
+      if(parts[1]==='team') teamId=null; // equipos especiales
+      else teamId='team_'+parts[1];
+      if(teamId){
+        const t=teams.find(x=>x.id===teamId);
+        return t?t.emoji||'':'';
+      }
+      return '';
+    })();
+    return `<li>⚽ ${scorerTeamEmoji} ${scorer?scorer.name:'Desconocido'} <span class="goal-min">(${min}')</span></li>`;
   });
   generateMatchSummary._scorers=lastMatchScorers;
   const oppGoalLines=oppMinutes.map(min=>{
     const scorer=oppPool[Math.floor(Math.random()*oppPool.length)];
-    return `<li>⚽ ${scorer?scorer.name:rivalName} <span class="goal-min">(${min}')</span></li>`;
+    const oppEmoji=nextOpponent?nextOpponent.emoji||'':'';
+    return `<li>⚽ ${oppEmoji} ${scorer?scorer.name:rivalName} <span class="goal-min">(${min}')</span></li>`;
   });
 
   const goalsHTML=`
@@ -2277,6 +2337,83 @@ function rollCards(){
   return cardedThisMatch;
 }
 
+/* ── Expulsiones durante el partido actual ──────────────────────────────
+   Jugadores con roja o doble amarilla se mueven al banquillo si hay hueco.
+   Si el banquillo está lleno, permanecen en el campo con rating=0. ── */
+function applyInMatchRedCards(newCards){
+  if(!newCards||!newCards.length) return;
+  const reds=newCards.filter(c=>c.type==='red'||c.type==='double_yellow');
+  if(!reds.length) return;
+  const slots=getPitchSlots();
+  reds.forEach(({player:p})=>{
+    // Marcar como expulsado en este partido
+    p._redThisMatch=true;
+    // ¿Hay hueco en el banquillo?
+    const benchFull=bench.filter(b=>b).length>=getMaxBench();
+    if(!benchFull){
+      // Mover al banquillo — encontrar su slot
+      const slot=slots.find(s=>s._player===p);
+      if(slot){
+        bench.push({...p, fatigue:p.fatigue||100});
+        // Liberar el slot del campo (quedará vacío hasta que el usuario actúe)
+        slot._player=null;
+        slot.querySelector&&slot.querySelector('.pitch-player-label')&&
+          (slot.querySelector('.pitch-player-label').textContent='');
+      }
+    } else {
+      // Banquillo lleno: se queda en el campo con rating 0
+      p._redThisMatchOnPitch=true;
+      p._originalRating=p.rating;
+      p.rating=0;
+    }
+  });
+}
+
+/* ========= EVENTOS DEL RIVAL (lesiones y tarjetas) ========= */
+function rollOppEvents(oppPower, myPower){
+  const opp=nextOpponent;
+  if(!opp||!opp.players||!opp.players.length) return {injuries:[], cards:[], redMinute:null};
+
+  const pool=opp.players.filter(p=>p.positions&&!p.positions.includes('POR'));
+  const allPool=opp.players;
+
+  // Lesiones del rival — probabilidad similar a la del jugador
+  const injRisk=0.025;
+  const oppInjuries=[];
+  const injPlayer=allPool[Math.floor(Math.random()*allPool.length)];
+  if(injPlayer && Math.random()<injRisk){
+    oppInjuries.push(injPlayer);
+  }
+
+  // Tarjetas del rival
+  const oppCards=[];
+  let redMinute=null; // minuto de expulsión si hay roja
+  const yellowRisk=0.017;
+  const redRisk=0.010;
+  const yellowed=[];
+
+  pool.forEach(p=>{
+    const r=Math.random();
+    if(r<redRisk){
+      oppCards.push({player:p, type:'red'});
+      // El minuto de expulsión: entre 10' y 80'
+      if(!redMinute) redMinute=Math.floor(10+Math.random()*70);
+    } else if(r<redRisk+yellowRisk){
+      yellowed.push(p);
+      oppCards.push({player:p, type:'yellow'});
+    }
+  });
+  // Doble amarilla rara
+  yellowed.forEach(p=>{
+    if(Math.random()<0.05 && !oppCards.find(c=>c.player===p&&c.type==='red')){
+      oppCards.push({player:p, type:'double_yellow'});
+      if(!redMinute) redMinute=Math.floor(10+Math.random()*70);
+    }
+  });
+
+  return {injuries:oppInjuries, cards:oppCards, redMinute};
+}
+
 function clearYellowCardsAfterQuarterfinals(){
   // FIFA rule: accumulated yellow cards are wiped after the quarterfinals,
   // so nobody misses a final purely from earlier accumulation.
@@ -2333,6 +2470,397 @@ function forceSwapSuspendedStarters(){
   baseTeamOVR=computeTeamOVR();
 }
 
+/* ========= LIVE MATCH SIMULATION — diseño match-modal + animación secuencial =========
+   Usa el diseño visual de match-modal pero muestra todo de forma secuencial.
+   Los eventos ocurren en sus minutos reales, incluyendo tiempo de descuento. */
+function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,penaltyInfo,newCards,predictionResult,oppEvents){
+  const overlay=document.getElementById("matchOverlay");
+  const oppName=nextOpponent?nextOpponent.name:'Rival';
+
+  // ── Parsear eventos del resumen HTML ──
+  const tempDiv=document.createElement('div');
+  tempDiv.innerHTML=summary;
+  const goalCols=tempDiv.querySelectorAll('.goals-col');
+  const allEvents=[];
+  if(goalCols.length>=2){
+    goalCols[0].querySelectorAll('li').forEach(li=>{
+      const txt=li.textContent;
+      const m=txt.match(/(\d+)'\)/);
+      if(m) allEvents.push({minute:parseInt(m[1]),type:'mygoal',icon:'⚽',
+        text:`<strong>${txt.replace(/⚽/,'').replace(/\(\d+'\)/,'').trim()}</strong>`});
+    });
+    goalCols[1].querySelectorAll('li').forEach(li=>{
+      const txt=li.textContent;
+      const m=txt.match(/(\d+)'\)/);
+      if(m) allEvents.push({minute:parseInt(m[1]),type:'oppgoal',icon:'⚽',
+        text:`<strong>${txt.replace(/⚽/,'').replace(/\(\d+'\)/,'').trim()}</strong> <span style="color:var(--red);font-size:10px">(${oppName})</span>`});
+    });
+  }
+  // Tarjetas e lesiones con minutos realistas (pueden caer en descuento)
+  const CICONS={yellow:'🟨',yellow2:'🟨🟨',double_yellow:'🟨🟥',red:'🟥'};
+  if(newCards&&newCards.length){
+    newCards.forEach(c=>allEvents.push({
+      minute:Math.floor(5+Math.random()*90), // pueden llegar a 90+
+      type:'card',icon:CICONS[c.type]||'🟨',
+      text:`<strong>${c.player.name}</strong>`
+    }));
+  }
+  if(newInjuries&&newInjuries.length){
+    newInjuries.forEach(p=>allEvents.push({
+      minute:Math.floor(20+Math.random()*75),
+      type:'injury',icon:'✚',
+      text:`<strong>${p.name}</strong>`
+    }));
+  }
+  // Eventos del rival (lesiones y tarjetas)
+  if(oppEvents){
+    const CICONS={yellow:'🟨',double_yellow:'🟨🟥',red:'🟥'};
+    if(oppEvents.injuries&&oppEvents.injuries.length){
+      oppEvents.injuries.forEach(p=>allEvents.push({
+        minute:Math.floor(20+Math.random()*65),
+        type:'oppcard',icon:'✚',
+        text:`<strong>${p.name}</strong>`
+      }));
+    }
+    if(oppEvents.cards&&oppEvents.cards.length){
+      oppEvents.cards.forEach(c=>allEvents.push({
+        minute:c.type==='red'||c.type==='double_yellow'?(oppEvents.redMinute||Math.floor(10+Math.random()*70)):Math.floor(5+Math.random()*85),
+        type:'oppcard',icon:CICONS[c.type]||'🟨',
+        text:`<strong>${c.player.name}</strong>`
+      }));
+    }
+  }
+  allEvents.sort((a,b)=>a.minute-b.minute);
+
+  // Tiempos de descuento
+  const inj1=Math.floor(1+Math.random()*4);
+  const inj2=Math.floor(2+Math.random()*5);
+  const MAX_MIN=90+inj2;
+
+  // Resultado
+  const wasShootout=!!penaltyInfo;
+  let resultText,resultClass;
+  if(draw){ resultText="EMPATE"; resultClass="res-draw-tag"; }
+  else {
+    resultText=won?(wasShootout?"¡VICTORIA EN PENALTIS!":"¡VICTORIA!"):(wasShootout?"DERROTA EN PENALTIS":"DERROTA");
+    resultClass=won?"res-win-tag":"res-lose-tag";
+  }
+
+  // ── HTML inicial — diseño match-modal ──
+  overlay.innerHTML=`
+  <div class="match-modal" style="overflow:hidden;display:flex;flex-direction:column;max-height:85vh">
+    <div class="match-header">
+      <div class="match-side">
+        <span class="match-flag">🐐</span>
+        <span class="match-team-name">${myTeamName}</span>
+      </div>
+      <div style="text-align:center;flex:0 0 auto">
+        <div class="match-scoreline" id="liveScore" style="font-size:42px;letter-spacing:4px">0 – 0</div>
+        <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-top:4px">
+          <div style="font-family:'Bebas Neue',Impact,sans-serif;font-size:20px;color:var(--gold)" id="liveClock">0'</div>
+          <div style="font-size:9px;font-weight:700;background:var(--accent);color:#fff;padding:2px 7px;letter-spacing:1px;text-transform:uppercase" id="liveHalf">1ª PARTE</div>
+        </div>
+        <div style="height:4px;background:#eee;border-radius:2px;margin-top:6px;overflow:hidden">
+          <div id="liveFill" style="height:100%;background:var(--accent);border-radius:2px;width:0%;transition:width .15s linear"></div>
+        </div>
+      </div>
+      <div class="match-side">
+        ${flagEmoji(nextOpponent.name)}
+        <span class="match-team-name">${oppName}</span>
+      </div>
+    </div>
+    <div id="liveEvents" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;align-items:stretch;gap:2px;padding:4px 0;min-height:80px;max-height:260px"></div>
+  </div>`;
+
+  const eventsEl=document.getElementById('liveEvents');
+  const clockEl=document.getElementById('liveClock');
+  const halfEl=document.getElementById('liveHalf');
+  const fillEl=document.getElementById('liveFill');
+  const scoreEl=document.getElementById('liveScore');
+  let curMy=0,curOpp=0;
+
+  function flashScore(){ scoreEl.classList.remove('goal-flash'); void scoreEl.offsetWidth; scoreEl.classList.add('goal-flash'); }
+
+  function addSep(text){
+    const sep=document.createElement('div');
+    sep.style.cssText='text-align:center;font-size:10px;font-weight:700;color:var(--accent);letter-spacing:2px;padding:4px 0;border-top:1px solid #eee;border-bottom:1px solid #eee;margin:2px 0;text-transform:uppercase';
+    sep.textContent=text;
+    eventsEl.appendChild(sep);
+    eventsEl.scrollTop=eventsEl.scrollHeight;
+  }
+
+  function addEvt(icon,text,minLabel,type){
+    const item=document.createElement('div');
+    item.style.cssText='display:grid;grid-template-columns:1fr 44px 1fr;align-items:center;width:100%;font-size:12px;animation:slideInEvent .3s ease;opacity:0;animation-fill-mode:forwards;padding:3px 0;border-bottom:1px solid rgba(0,0,0,.05)';
+    const isMe=type==='mygoal'||type==='card'||type==='injury'||type==='pen_me';
+    const isOpp=type==='oppgoal'||type==='pen_opp'||type==='oppcard';
+    const myColor=type==='mygoal'||type==='pen_me'?'var(--accent)':type==='card'?'#a07a00':type==='injury'?'#e74c3c':'var(--text)';
+    const oppColor=type==='oppgoal'||type==='pen_opp'?'var(--red)':type==='oppcard'?'#a07a00':'var(--text)';
+    // Centro: minuto
+    const center=`<span style="font-family:'Bebas Neue',Impact,sans-serif;font-size:12px;color:#999;text-align:center;display:block">${minLabel}</span>`;
+    if(isMe){
+      item.innerHTML=`<span style="text-align:right;padding-right:6px;color:${myColor};line-height:1.3">${text} <span style="font-size:14px">${icon}</span></span>${center}<span></span>`;
+    } else if(isOpp){
+      item.innerHTML=`<span></span>${center}<span style="text-align:left;padding-left:6px;color:${oppColor};line-height:1.3"><span style="font-size:14px">${icon}</span> ${text}</span>`;
+    } else {
+      // penalti neutro o separador inline
+      item.innerHTML=`<span style="text-align:right;padding-right:6px;color:var(--text);line-height:1.3">${text} ${icon}</span>${center}<span></span>`;
+    }
+    eventsEl.appendChild(item);
+    eventsEl.scrollTop=eventsEl.scrollHeight;
+  }
+
+  // ── Animación — fase 1 reglamento (9s) ──────────────────────────────────
+  const REG_DURATION=9000;
+  const HT_S=0.47,HT_E=0.53;
+  let eventIdx=0,htShown=false;
+  const regStart=performance.now();
+
+  function tickReg(now){
+    const frac=Math.min((now-regStart)/REG_DURATION,1);
+    if(frac>=HT_S&&frac<HT_E){
+      if(!htShown){
+        htShown=true;
+        clockEl.textContent=`45+${inj1}'`;
+        halfEl.textContent='DESCANSO';
+        halfEl.style.background='#a07a00';
+        fillEl.style.width='50%';
+        addSep(`Descanso — 45+${inj1}'`);
+        playSound('whistle');
+      }
+      requestAnimationFrame(tickReg); return;
+    }
+    let minute;
+    if(frac<HT_S){
+      minute=Math.min(45+inj1,Math.floor(frac/HT_S*(45+inj1)));
+      halfEl.textContent='1ª PARTE'; halfEl.style.background='var(--accent)';
+      fillEl.style.width=`${(frac/HT_S)*50}%`;
+      clockEl.textContent=minute>45?`45+${minute-45}'`:`${minute}'`;
+    } else {
+      const f2=(frac-HT_E)/(1-HT_E);
+      minute=46+Math.floor(f2*(MAX_MIN-46));
+      minute=Math.min(minute,MAX_MIN);
+      halfEl.textContent='2ª PARTE'; halfEl.style.background='var(--accent)';
+      fillEl.style.width=`${50+f2*50}%`;
+      clockEl.textContent=minute>90?`90+${minute-90}'`:`${minute}'`;
+    }
+    while(eventIdx<allEvents.length&&allEvents[eventIdx].minute<=minute){
+      const ev=allEvents[eventIdx++];
+      const label=ev.minute>90?`90+${ev.minute-90}'`:ev.minute>45&&ev.minute<=45+inj1?`45+${ev.minute-45}'`:`${ev.minute}'`;
+      addEvt(ev.icon,ev.text,label,ev.type);
+      if(ev.type==='mygoal'){ curMy++; scoreEl.textContent=`${curMy} – ${curOpp}`; flashScore(); playSound('goal'); }
+      else if(ev.type==='oppgoal'){ curOpp++; scoreEl.textContent=`${curMy} – ${curOpp}`; flashScore(); playSound('goal'); }
+    }
+    if(frac<1){ requestAnimationFrame(tickReg); return; }
+    // Fin reglamento
+    clockEl.textContent=`90+${inj2}'`; fillEl.style.width='100%';
+    halfEl.textContent='FIN'; halfEl.style.background='#555';
+    playSound('whistle');
+    if(penaltyInfo) setTimeout(startExtraTime,900);
+    else { playSound(won||draw?'victory':'defeat'); setTimeout(showPostMatch,800); }
+  }
+  requestAnimationFrame(tickReg);
+
+  // ── Fase 3: Prórroga ────────────────────────────────────────────────────
+  function startExtraTime(){
+    halfEl.textContent='PRÓRROGA'; halfEl.style.background='#7a3a0a';
+    addSep('— PRÓRROGA —');
+    const ET=4000,ET_S=0.47,ET_E=0.53;
+    let etHt=false;
+    const etStart=performance.now();
+    function tickET(now){
+      const frac=Math.min((now-etStart)/ET,1);
+      if(frac>=ET_S&&frac<ET_E){
+        if(!etHt){ etHt=true; clockEl.textContent="105'"; halfEl.textContent='DESCANSO P.'; halfEl.style.background='#a07a00'; addSep("Descanso prórroga — 105'"); playSound('whistle'); }
+        requestAnimationFrame(tickET); return;
+      }
+      if(frac<ET_S){ clockEl.textContent=`${91+Math.floor((frac/ET_S)*14)}'`; halfEl.textContent='PRÓRROGA 1ª'; halfEl.style.background='#7a3a0a'; }
+      else { const f2=(frac-ET_E)/(1-ET_E); clockEl.textContent=`${106+Math.floor(f2*14)}'`; halfEl.textContent='PRÓRROGA 2ª'; halfEl.style.background='#7a3a0a'; }
+      if(frac<1){ requestAnimationFrame(tickET); return; }
+      clockEl.textContent="120'"; halfEl.textContent='FIN PRÓRROGA'; halfEl.style.background='#555';
+      playSound('whistle'); setTimeout(startPenalties,900);
+    }
+    requestAnimationFrame(tickET);
+  }
+
+  // ── Fase 4: Penaltis ────────────────────────────────────────────────────
+  function startPenalties(){
+    halfEl.textContent='PENALTIS'; halfEl.style.background='#3a0a5a'; clockEl.textContent='—';
+    addSep('— TANDA DE PENALTIS —');
+    const myShots=penaltyInfo.myShots,oppShots=penaltyInfo.oppShots;
+    const maxLen=Math.max(myShots.length,oppShots.length);
+    const sequence=[];
+    for(let i=0;i<maxLen;i++){
+      if(i<myShots.length) sequence.push({team:'me',shot:myShots[i],round:i+1});
+      if(i<oppShots.length) sequence.push({team:'opp',shot:oppShots[i],round:i+1});
+    }
+    let penMy=0,penOpp=0,seqIdx=0;
+    function label(r){ return r<=5?`P${r}`:'SD'; }
+    function updatePenScore(){ scoreEl.textContent=`${curMy}(${penMy}) – ${curOpp}(${penOpp})`; }
+    updatePenScore();
+    function nextPen(){
+      if(seqIdx>=sequence.length){ finishPenalties(); return; }
+      const {team,shot,round}=sequence[seqIdx++];
+      setTimeout(()=>{
+        if(team==='me'){
+          if(shot.scored) penMy++;
+          addEvt(shot.scored?'✅':'❌',`<strong>${shot.name}</strong>`,label(round),'pen_me');
+        } else {
+          if(shot.scored) penOpp++;
+          addEvt(shot.scored?'✅':'❌',`<strong>${shot.name}</strong> <span style="font-size:10px;color:var(--red)">${oppName}</span>`,label(round),'pen');
+        }
+        updatePenScore();
+        if(shot.scored) playSound('goal');
+        const myRem=myShots.filter((_,i)=>i>=Math.ceil(seqIdx/2)).length;
+        const oppRem=oppShots.filter((_,i)=>i>=Math.floor(seqIdx/2)).length;
+        const diff=penMy-penOpp;
+        if(diff>oppRem||-diff>myRem){ setTimeout(finishPenalties,600); return; }
+        setTimeout(nextPen,700);
+      },600);
+    }
+    function finishPenalties(){
+      const penWon=penMy>penOpp;
+      addSep(`${penWon?'🏆':'💔'} ${penWon?myTeamName:oppName} gana la tanda ${penMy}–${penOpp}`);
+      playSound(penWon?'victory':'defeat');
+      setTimeout(showPostMatch,1200);
+    }
+    setTimeout(nextPen,500);
+  }
+
+  // ── Post-partido: añadir info al mismo modal ─────────────────────────────
+  function showPostMatch(){
+    const modal=overlay.querySelector('.match-modal');
+    if(!modal) return;
+    modal.style.overflowY='auto';
+
+    // Banner resultado
+    const banner=document.createElement('div');
+    banner.className=`match-result-tag ${resultClass}`;
+    banner.textContent=resultText;
+    banner.style.animation='slideInEvent .4s ease forwards';
+    modal.insertBefore(banner, eventsEl.nextSibling);
+
+    // Info post-partido (lesiones, tarjetas, prensa, estrategia)
+    const infoWrap=document.createElement('div');
+    infoWrap.style.cssText='display:flex;flex-direction:column;gap:6px;margin-top:8px';
+
+    // Estadísticas del partido: posesión + tiros (primeras 2 líneas del summary)
+    const summaryDiv=document.createElement('div');
+    summaryDiv.className='match-summary';
+    // Extraer la parte de estadísticas (antes del bloque goals-columns)
+    // El summary tiene el formato: "Posesión:...<br>Tiros:...\n<div class=goals-columns>..."
+    const goalsColIdx=summary.indexOf('<div class="goals-columns">');
+    const statsRaw=goalsColIdx>0 ? summary.substring(0,goalsColIdx) : summary;
+    // Limpiar: el statsRaw ya tiene HTML válido con <strong> y <br>
+    summaryDiv.innerHTML=statsRaw.trim();
+    infoWrap.appendChild(summaryDiv);
+    // Los goles ya aparecen en el feed secuencial arriba, no se duplican aquí
+
+    // Recuperados
+    if(recovered.length){
+      const r=document.createElement('div');
+      r.className='match-summary recovered-box';
+      r.innerHTML=`<strong>✅ Recuperados:</strong> ${recovered.join(', ')}`;
+      infoWrap.appendChild(r);
+    }
+
+    // Lesiones
+    if(newInjuries.length){
+      const ILABELS={leve:'leve (1 partido)',básica:'básica (2 partidos)',grave:'grave (3 partidos)'};
+      const inj=document.createElement('div');
+      inj.className='injury-section';
+      inj.innerHTML=`<p>⚠ Lesiones en ${myTeamName}:</p><ul>${newInjuries.map(p=>`<li><span style="color:#e74c3c">✚</span> ${p.name}: lesión ${ILABELS[p.injury.type]||''}</li>`).join('')}</ul>`;
+      infoWrap.appendChild(inj);
+    }
+
+    // Tarjetas
+    if(newCards&&newCards.length){
+      const CARD_LABELS={yellow:{icon:'🟨',text:'amarilla'},yellow2:{icon:'🟨🟨',text:'2ª amarilla — sancionado'},double_yellow:{icon:'🟨🟥',text:'doble amarilla — sancionado'},red:{icon:'🟥',text:'roja directa — sancionado'}};
+      const cd=document.createElement('div');
+      cd.className='card-section';
+      cd.innerHTML=`<p>📋 Tarjetas:</p><ul>${newCards.map(c=>{const l=CARD_LABELS[c.type];return `<li>${l.icon} ${c.player.name}: ${l.text}</li>`;}).join('')}</ul>`;
+      infoWrap.appendChild(cd);
+    }
+
+    // Entrevista de prensa
+    if(predictionResult){
+      const cls=predictionResult.outcome==='correct'?'press-prediction-good':predictionResult.outcome==='wrong'?'press-prediction-bad':'press-prediction-neutral';
+      const pr=document.createElement('div');
+      pr.className=`press-prediction-section ${cls}`;
+      pr.textContent=predictionResult.text;
+      infoWrap.appendChild(pr);
+    }
+
+    // Estrategia
+    if(selectedMatchStrategy&&nextOpponent){
+      const rivalKey=getRivalStrategyKey(nextOpponent);
+      const myKey=selectedMatchStrategy;
+      const myStrat=STRATEGIES[myKey];
+      const iCounter=myStrat&&myStrat.counters===rivalKey;
+      const iPartial=myStrat&&myStrat.partialCounters&&myStrat.partialCounters.includes(rivalKey);
+      const counteredBy=STRATEGIES[rivalKey]&&STRATEGIES[rivalKey].counters===myKey;
+      let stratMsg,stratClass;
+      if(iCounter){stratMsg=`✓ Tu estrategia (${myStrat.name}) contrarrestó perfectamente a ${oppName}.`;stratClass='strategy-feedback-good';}
+      else if(iPartial){stratMsg=`✓ Tu estrategia (${myStrat.name}) controló bien a ${oppName}.`;stratClass='strategy-feedback-good';}
+      else if(counteredBy){stratMsg=`✗ ${oppName} aprovechó el enfrentamiento táctico.`;stratClass='strategy-feedback-bad';}
+      else if(myKey===rivalKey){stratMsg=`= Ambos jugaron con un enfoque similar (${myStrat.name}).`;stratClass='strategy-feedback-neutral';}
+      else{stratMsg=`Estrategia neutral: ${myStrat.name}, sin ventaja táctica clara.`;stratClass='strategy-feedback-neutral';}
+      const sf=document.createElement('div');
+      sf.className=`strategy-feedback ${stratClass}`;
+      sf.textContent=stratMsg;
+      infoWrap.appendChild(sf);
+    }
+
+    modal.appendChild(infoWrap);
+
+    // Restaurar ratings de expulsados que quedaron en campo con 0
+    [...usedPlayers,...bench].forEach(p=>{
+      if(p._redThisMatchOnPitch && p._originalRating!==undefined){
+        p.rating=p._originalRating;
+        delete p._originalRating;
+        delete p._redThisMatchOnPitch;
+      }
+      delete p._redThisMatch;
+    });
+    // Aplicar efectos del partido ahora que ha terminado
+    applyMatchFatigue();
+    refreshPitchRatings();
+    baseTeamOVR=computeTeamOVR();
+    updateConvocadosTable();
+    updateBenchTable();
+
+    // Botón continuar
+    let btnLabel,outcome;
+    if(stage==='group'){
+      if(groupMatchIdx>=3){btnLabel='VER RESULTADOS DE GRUPO';outcome='groupDone';}
+      else{btnLabel='SIGUIENTE PARTIDO';outcome='nextGroupMatch';}
+    } else {
+      if(!won){btnLabel='FIN DEL TORNEO';outcome='knockoutLost';}
+      else if(knockoutRound>=ROUND_NAMES.length-1){btnLabel='VER RESUMEN FINAL';outcome='champion';}
+      else{btnLabel='SIGUIENTE RONDA';outcome='nextKnockoutMatch';}
+    }
+    const btn=document.createElement('button');
+    btn.className='modal-btn';
+    btn.textContent=btnLabel;
+    btn.style.marginTop='10px';
+    btn.addEventListener('click',()=>{
+      overlay.innerHTML='';
+      switch(outcome){
+        case 'nextGroupMatch': pickNextOpponent(); break;
+        case 'groupDone': renderMatchHistory(); showGroupResultsPopup(); break;
+        case 'nextKnockoutMatch': if(knockoutRound===1)clearYellowCardsAfterQuarterfinals(); knockoutRound++; pickNextOpponent(); break;
+        case 'champion': showVictory(); break;
+        case 'knockoutLost': showEliminated(); break;
+      }
+    });
+    modal.appendChild(btn);
+
+    // Scroll al final para ver el banner y la info
+    setTimeout(()=>{ overlay.querySelector('.match-modal').scrollTop=9999; },100);
+  }
+}
+
+
 function showMatchModal(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,penaltyInfo,newCards,predictionResult){
   const wasShootout=!!penaltyInfo;
   let resultText, resultClass;
@@ -2349,7 +2877,7 @@ function showMatchModal(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,
   }
   if(newInjuries.length){
     const ILABELS={leve:"leve (1 partido)",básica:"básica (2 partidos)",grave:"grave (3 partidos)"};
-    extraHTML+=`<div class="injury-section"><p>⚠ Lesiones en ${myTeamName} tras el partido:</p><ul>${newInjuries.map(p=>`<li>${p.name}: lesión ${ILABELS[p.injury.type]}</li>`).join('')}</ul><p class="injury-note">Recuerda: puedes hacer hasta <strong>5 cambios</strong> entre Convocados y Banquillo antes del próximo partido. Hazlo manualmente desde las tablas de la izquierda.</p></div>`;
+    extraHTML+=`<div class="injury-section"><p>⚠ Lesiones en ${myTeamName} tras el partido:</p><ul>${newInjuries.map(p=>`<li>${p.name}: lesión ${ILABELS[p.injury.type]}</li>`).join('')}</ul><p class="injury-note">Recuerda: puedes hacer hasta <strong>${getMaxSubs()} cambios</strong> entre Convocados y Banquillo antes del próximo partido. Hazlo manualmente desde las tablas de la izquierda.</p></div>`;
   }
   if(newCards&&newCards.length){
     const CARD_LABELS={
@@ -2522,7 +3050,10 @@ function showEliminated(){
   const sc=computeFinalScore(false);
   if(typeof window.saveFinalScore==="function") window.saveFinalScore(sc.total);
   const grade=sc.total>=750?"ÉLITE":sc.total>=550?"MUY BUENO":sc.total>=350?"BUENO":"MEJORABLE";
-  const slots=getChainSlots();
+  // Run encadenada según la ronda alcanzada:
+  // Cuartos (1) → 1 slot, Semis (2) → 2 slots, Final (3) → 3 slots
+  const chainSlotsByRound={1:1, 2:2, 3:3};
+  const slots=chainSlotsByRound[knockoutRound]||0;
   const chainBtn=slots>0
     ?`<button class="modal-btn" onclick="document.getElementById('matchOverlay').innerHTML='';showChainRunModal()">🔗 CONSERVAR ${slots} JUGADOR${slots>1?"ES":""}</button>`
     :"";
@@ -2601,7 +3132,6 @@ function computeFinalScore(champion){
 }
 function showVictory(){
   const sc=computeFinalScore(true);
-  // Save to Firebase — victory saves titles+bestScore, saveFinalScore updates bestScore
   if(typeof window.saveVictoryStat==="function") window.saveVictoryStat(sc.total);
   if(typeof window.saveFinalScore==="function") window.saveFinalScore(sc.total);
   const grade=sc.total>=900?"LEGENDARIO":sc.total>=750?"ÉLITE":sc.total>=600?"EXCELENTE":sc.total>=450?"MUY BUENO":"BUENO";
@@ -2625,8 +3155,193 @@ function showVictory(){
       <div class="vb-row"><span>Rachas de goleador</span><span class="vb-pts">${sc.breakdown.streaks} pts</span></div>
       ${sc.penWins?`<div class="vb-row"><span>Victorias en penaltis (${sc.penWins})</span><span class="vb-pts">${sc.breakdown.penalties} pts</span></div>`:''}
     </div>
-    <button class="modal-btn" onclick="location.reload()">NUEVA PARTIDA</button>
+    <button class="modal-btn" onclick="window._launchGoldenAndReload()">FINALIZAR CAMPEONATO</button>
   </div>`;
+}
+
+window._launchGoldenAndReload=function(){ showGoldenTicket(); };
+
+/* ── TICKET DORADO: solo cabras y una X roja. Se gasta al instante. ── */
+function showGoldenTicket(){
+  const GOLD_GRID=9;
+  // 1 bomba, 8 cabras (3pts cada una → max 24pts)
+  const bombIdx=Math.floor(Math.random()*GOLD_GRID);
+  const cellsData=[];
+  for(let i=0;i<GOLD_GRID;i++){
+    cellsData.push(i===bombIdx ? {type:'bomb',value:0} : {type:'star',value:3});
+  }
+
+  // Crear overlay encima del modal de victoria
+  const wrap=document.createElement('div');
+  wrap.id='goldenTicketWrap';
+  wrap.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:60000;display:flex;align-items:center;justify-content:center;overflow-y:auto;padding:20px 0;';
+
+  const serial=String(Math.floor(1000+Math.random()*8999))+'-'+String(Math.floor(1000+Math.random()*8999));
+  wrap.innerHTML=`
+  <div style="position:relative;width:340px;background:linear-gradient(180deg,#3a2a00 0%,#1a1200 100%);border-radius:18px;box-shadow:0 0 0 2px #f0c419,0 30px 60px -10px rgba(0,0,0,.9);overflow:hidden;">
+    <button onclick=\"window.gtClose(0)\" style=\"position:absolute;top:10px;right:12px;background:none;border:none;color:rgba(240,196,25,.5);font-size:20px;cursor:pointer;z-index:10;line-height:1;padding:4px\" title=\"Cerrar\">✕</button>
+    <div style="padding:26px 22px 22px;">
+      <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:2px;">
+        <span style="font-size:18px">🏆</span>
+        <span style="font-family:Bebas Neue,Impact,sans-serif;font-size:22px;letter-spacing:2px;color:#f0c419;text-shadow:0 0 12px rgba(240,196,25,.6)">TICKET GOAT</span>
+        <span style="font-size:18px">🏆</span>
+      </div>
+      <div style="text-align:center;font-size:10px;letter-spacing:3px;color:rgba(240,196,25,.6);text-transform:uppercase;margin-bottom:16px;font-weight:700">Premio por ganar el Mundial</div>
+      <div style="height:1px;background:repeating-linear-gradient(90deg,rgba(240,196,25,.5) 0 6px,transparent 6px 12px);margin:14px 0"></div>
+      <div style="display:flex;justify-content:space-between;font-size:9px;letter-spacing:1px;color:rgba(240,196,25,.4);text-transform:uppercase;margin-bottom:14px;">
+        <span>Nº <b style="color:rgba(240,196,25,.7)">${serial}</b></span><span>EDICIÓN ORO</span>
+      </div>
+      <div style="text-align:center;margin-bottom:18px;">
+        <div style="font-size:9px;letter-spacing:3px;text-transform:uppercase;color:rgba(240,196,25,.5);margin-bottom:4px;font-weight:700">Puntos acumulados</div>
+        <div id="gtPrize" style="font-family:'Bebas Neue',Impact,sans-serif;font-size:40px;color:#f0c419;text-shadow:0 0 12px rgba(240,196,25,.4);">0 <span style="font-size:20px;opacity:.85">PTS</span></div>
+      </div>
+      <div id="gtGrid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px;"></div>
+      <div id="gtDots" style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
+        <span style="font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:rgba(240,196,25,.5);font-weight:700;margin-right:4px;">Casillas rascadas</span>
+      </div>
+      <button id="gtCashBtn" disabled onclick="gtCashOut(false)" style="width:100%;border:none;border-radius:0;font-family:'Bebas Neue',Impact,sans-serif;font-size:22px;letter-spacing:2px;padding:14px;cursor:pointer;background:linear-gradient(180deg,#ffe27a,#f0c419 55%,#c9960c);color:#08160d;box-shadow:0 6px 0 #8a6a08;opacity:.35;pointer-events:none;">PLANTARSE</button>
+      <div style="text-align:center;font-size:9px;color:rgba(240,196,25,.35);margin-top:14px;letter-spacing:.5px;line-height:1.5">
+        Solo cabras 🐐 (+3 pts) y una casilla ❌.<br>Premio especial por ganar el Mundial. ¡No se acumula!
+      </div>
+    </div>
+  </div>
+  <div id="gtResultOverlay" style="display:none;position:fixed;inset:0;z-index:70000;background:rgba(0,0,0,.8);align-items:center;justify-content:center;padding:20px;"></div>`;
+  document.body.appendChild(wrap);
+
+  let gtPoints=0, gtScratched=0, gtOver=false;
+
+  function gtUpdateUI(){
+    const p=$id('gtPrize'); if(p) p.innerHTML=`${gtPoints} <span style="font-size:20px;opacity:.85">PTS</span>`;
+    const cb=$id('gtCashBtn'); const ca=$id('gtCashAmt');
+    if(ca) ca.textContent=gtPoints;
+    if(cb){
+      const ok=gtPoints>0&&!gtOver;
+      cb.disabled=!ok; cb.style.opacity=ok?'1':'.35'; cb.style.pointerEvents=ok?'auto':'none';
+    }
+  }
+
+  const grid=$id('gtGrid');
+  const dotsRow=$id('gtDots');
+
+  for(let i=0;i<GOLD_GRID;i++){
+    const data=cellsData[i];
+    const cell=document.createElement('div');
+    cell.style.cssText='position:relative;aspect-ratio:1;border-radius:10px;overflow:hidden;background:#2a1f00;box-shadow:inset 0 0 0 2px rgba(240,196,25,.3);';
+    cell.dataset.index=i;
+    const res=document.createElement('div');
+    res.style.cssText='position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:2px;font-family:"Bebas Neue",Impact,sans-serif;background:#1a1200;';
+    if(data.type==='bomb'){
+      res.innerHTML=`<span style="font-size:26px">❌</span><span style="font-size:13px;color:#f87171;letter-spacing:.5px">PIERDE</span>`;
+    } else {
+      res.innerHTML=`<span style="font-size:26px">🐐</span><span style="font-size:13px;color:#f0c419;letter-spacing:.5px">+4 PTS</span>`;
+    }
+    cell.appendChild(res);
+    const canvas=document.createElement('canvas');
+    canvas.style.cssText='position:absolute;inset:0;width:100%;height:100%;cursor:pointer;touch-action:none;';
+    cell.appendChild(canvas);
+    grid.appendChild(cell);
+
+    const dot=document.createElement('span');
+    dot.style.cssText='width:9px;height:9px;border-radius:50%;background:rgba(240,196,25,.18);display:inline-block;transition:all .25s ease;';
+    dot.dataset.di=i;
+    dotsRow.appendChild(dot);
+
+    // Init canvas (misma lógica pero dorada)
+    const dpr=window.devicePixelRatio||1;
+    const rect=cell.getBoundingClientRect()||{width:80,height:80};
+    const w=Math.max(rect.width,80), h=Math.max(rect.height,80);
+    canvas.width=w*dpr; canvas.height=h*dpr;
+    canvas.style.width=w+'px'; canvas.style.height=h+'px';
+    const ctx=canvas.getContext('2d');
+    ctx.scale(dpr,dpr);
+    const grad=ctx.createLinearGradient(0,0,w,h);
+    grad.addColorStop(0,'#c9960c'); grad.addColorStop(.5,'#f0c419'); grad.addColorStop(1,'#c9960c');
+    ctx.fillStyle=grad; ctx.fillRect(0,0,w,h);
+    ctx.strokeStyle='rgba(255,220,50,.4)'; ctx.lineWidth=2;
+    for(let x=-h;x<w;x+=6){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x+h,h);ctx.stroke();}
+    ctx.font='20px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.globalAlpha=.5; ctx.fillStyle='#000'; ctx.fillText('🐐',w/2,h/2); ctx.globalAlpha=1;
+    ctx.globalCompositeOperation='destination-out';
+
+    let scratching=false;
+    function scratchAt(cx,cy){
+      const r=canvas.getBoundingClientRect();
+      ctx.beginPath(); ctx.arc(cx-r.left,cy-r.top,18,0,Math.PI*2); ctx.fill();
+      const d=ctx.getImageData(0,0,canvas.width,canvas.height).data;
+      let cl=0,s=0;
+      for(let p=3;p<d.length;p+=160){s++;if(d[p]<80)cl++;}
+      if(cl/s>0.5&&!cell.dataset.revealed) gtReveal(cell,i,canvas);
+    }
+    canvas.addEventListener('mousedown',e=>{scratching=true;scratchAt(e.clientX,e.clientY);e.preventDefault();});
+    canvas.addEventListener('mousemove',e=>{if(!scratching)return;scratchAt(e.clientX,e.clientY);e.preventDefault();});
+    window.addEventListener('mouseup',()=>{if(scratching&&!cell.dataset.revealed)gtReveal(cell,i,canvas);scratching=false;});
+    canvas.addEventListener('touchstart',e=>{scratching=true;scratchAt(e.touches[0].clientX,e.touches[0].clientY);e.preventDefault();},{passive:false});
+    canvas.addEventListener('touchmove',e=>{if(!scratching)return;scratchAt(e.touches[0].clientX,e.touches[0].clientY);e.preventDefault();},{passive:false});
+    canvas.addEventListener('touchend',()=>{if(scratching&&!cell.dataset.revealed)gtReveal(cell,i,canvas);scratching=false;});
+  }
+
+  function gtReveal(cell,idx,canvas){
+    if(cell.dataset.revealed) return;
+    cell.dataset.revealed='1';
+    canvas.style.opacity='0'; canvas.style.transition='opacity .35s ease'; canvas.style.pointerEvents='none';
+    const data=cellsData[idx];
+    const dot=dotsRow.querySelector(`[data-di="${idx}"]`);
+    gtScratched++;
+    if(data.type==='bomb'){
+      if(dot){dot.style.background='#f87171';dot.style.boxShadow='0 0 6px rgba(248,113,113,.7)';}
+      gtOver=true;
+      Array.from(grid.children).forEach(c=>{
+        if(!c.dataset.revealed){c.dataset.revealed='1';const cv=c.querySelector('canvas');if(cv){cv.style.opacity='0';cv.style.pointerEvents='none';}}
+      });
+      gtUpdateUI();
+      setTimeout(()=>gtShowResult(false,0),600);
+    } else {
+      gtPoints+=data.value;
+      if(dot){dot.style.background='#f0c419';dot.style.boxShadow='0 0 6px rgba(240,196,25,.7)';}
+      gtUpdateUI();
+      if(gtScratched>=GOLD_GRID) setTimeout(()=>gtCashOut(true),500);
+    }
+  }
+
+  window.gtCashOut=function(auto){
+    if(gtOver||gtPoints<=0) return;
+    gtOver=true; gtUpdateUI();
+    gtShowResult(true,gtPoints,auto);
+  };
+
+  function gtShowResult(win,pts,auto){
+    const ro=$id('gtResultOverlay'); if(!ro) return;
+    ro.style.display='flex';
+    if(win) playSound('victory');
+    else playSound('scratch_bomb');
+    ro.innerHTML=`
+    <div style="background:linear-gradient(180deg,#3a2a00,#1a1200);border-radius:18px;padding:30px 26px;text-align:center;max-width:300px;width:90%;box-shadow:0 0 0 2px #f0c419,0 30px 60px -10px rgba(0,0,0,.9);animation:popIn .3s cubic-bezier(.2,1.4,.4,1)">
+      <style>@keyframes popIn{0%{transform:scale(.7);opacity:0}100%{transform:scale(1);opacity:1}}</style>
+      <span style="font-size:54px;display:block;margin-bottom:10px">${win?(auto?'🏆':'💰'):'❌'}</span>
+      <h2 style="font-family:'Bebas Neue',Impact,sans-serif;font-size:26px;letter-spacing:1px;color:${win?'#f0c419':'#f87171'};margin-bottom:6px">${win?(auto?'¡TICKET PREMIADO!':'¡TICKET PREMIADO!'):'TICKET ANULADO'}</h2>
+      <p style="font-size:12px;color:rgba(240,196,25,.7);line-height:1.5;margin-bottom:12px">${win?'Tus puntos de campeón han sido guardados.':'La casilla mala te ha quitado los puntos. ¡Casi!'}</p>
+      <div style="font-family:'Bebas Neue',Impact,sans-serif;font-size:34px;color:${win?'#f0c419':'#f87171'};margin-bottom:18px">${(win && pts>0)?'+'+pts+' PTS':win?'0 PTS':''}</div>
+      <button onclick="gtClose(${win?pts:0})" style="width:100%;border:none;border-radius:0;padding:12px;font-family:'Bebas Neue',Impact,sans-serif;font-size:15px;letter-spacing:1.5px;background:linear-gradient(180deg,#ffe27a,#f0c419 55%,#c9960c);color:#08160d;cursor:pointer;">CERRAR</button>
+    </div>`;
+  }
+
+  window.gtClose=async function(ptsEarned){
+    // Guardar puntos directamente (no consume boleto acumulado)
+    if(ptsEarned>0&&window._fbAuth&&window._fbAuth.currentUser){
+      try{
+        const user=window._fbAuth.currentUser;
+        const snap=await window._fbDb.collection('users').doc(user.uid).get();
+        const d=snap.exists?snap.data():{};
+        const newPts=(d.scratchPoints||0)+ptsEarned;
+        const newEarned=(d.scratchPointsEarned||0)+ptsEarned;
+        await window._fbDb.collection('users').doc(user.uid).set({scratchPoints:newPts,scratchPointsEarned:newEarned},{merge:true});
+        const pse=$id('pstat-scratch-pts'); if(pse) pse.textContent=newPts;
+      }catch(e){console.warn('Error guardando pts golden ticket:',e);}
+    }
+    const w=$id('goldenTicketWrap'); if(w) w.remove();
+    // Recargar para nueva partida
+    setTimeout(()=>location.reload(), 400);
+  };
 }
 
 
@@ -3242,7 +3957,7 @@ function _executeQuickBuild(){
   });
 
   // Fill bench (3 players) — simulate 3 more draws
-  const benchNeeded=5-bench.length;
+  const benchNeeded=getMaxBench()-bench.length;
   for(let i=0;i<benchNeeded;i++){
     const [t1,t2]=drawTeamPair();
     const pool1=t1.players.filter(p=>!usedNames.has(p.name));
@@ -3323,6 +4038,8 @@ function syncThemeToggleUI(isDark){
   }catch(e){}
   if(isDark) document.body.classList.add("dark-theme");
   else document.body.classList.remove("dark-theme");
+  // Activar transiciones solo después de aplicar el tema inicial
+  requestAnimationFrame(()=>document.body.classList.add("theme-loaded"));
   syncThemeToggleUI(isDark);
 })();
 
@@ -3354,6 +4071,8 @@ function initFirebaseAuth(){
   }
   const auth=firebase.auth();
   const db=firebase.firestore();
+  window._fbAuth=auth;
+  window._fbDb=db;
 
   /* ─── VALIDATION ─── */
   function vUsername(v){
@@ -3374,6 +4093,7 @@ function initFirebaseAuth(){
     return "";
   }
   function $id(id){return document.getElementById(id);}
+  window.$id=$id;
   function setErr(id,msg){
     const el=$id(id); if(!el) return;
     el.textContent=msg||""; el.style.display=msg?"block":"none";
@@ -3436,11 +4156,13 @@ function initFirebaseAuth(){
       const snap=await db.collection("users").where("username_lower","==",username.toLowerCase()).get();
       if(!snap.empty){setErr("regUsernameErr","Este nombre de usuario ya está en uso.");setBtnLoading("regSubmitBtn",false);return;}
       const cred=await auth.createUserWithEmailAndPassword(email,pass);
-      await db.collection("users").doc(cred.user.uid).set({
+      await db.collection('users').doc(cred.user.uid).set({
         username,username_lower:username.toLowerCase(),email,
         createdAt:new Date().toISOString(),
+        ticketCount:1, ticketLastRegen:Date.now(), scratchPoints:0, scratchPointsEarned:0, scratchPointsSpent:0,
         stats:{gamesPlayed:0,wins:0,draws:0,losses:0,goalsFor:0,goalsAgainst:0,bestScore:0,titles:0}
       });
+      if(window._initTicketSystem) window._initTicketSystem(cred.user, true);
       window.closeAuthModal();
     }catch(err){
       console.error('Firebase register error:', err.code, err.message);
@@ -3482,25 +4204,40 @@ function initFirebaseAuth(){
       const username=snap.exists?snap.data().username:user.email;
       if(authBtn)    authBtn.style.display="none";
       if(profileBtn){ profileBtn.style.display=""; profileBtn.textContent="👤 "+username; }
-      // Sound/theme settings now live inside the profile's AJUSTES tab —
-      // hide the header dropdown once the user is logged in.
       if(settingsMenu) settingsMenu.style.display="none";
+      // Mostrar botón de tickets en desktop
+      const hBtn=$id("headerTicketBtn"); if(hBtn) hBtn.style.display="";
       const pun=$id("profileUsername"); if(pun) pun.textContent=username;
       window.currentUsername=username;
-      // Load the player's team-name preference, so showTeamNameModal can
-      // skip the popup entirely if they've set it to always use one name.
       const data=snap.exists?snap.data():{};
       window.preferredTeamName=data.preferredTeamName||"";
       window.useFixedTeamName=!!data.useFixedTeamName;
+      // Inicializar sistema de boletos
+      if(window._initTicketSystem) window._initTicketSystem(user, false);
+      // Listener en tiempo real de mejoras
+      startUpgradeListener(user.uid);
     }else{
       if(authBtn)    authBtn.style.display="";
       if(profileBtn) profileBtn.style.display="none";
-      // Logged out: no profile/AJUSTES tab to reach sound/theme from —
-      // show the header settings dropdown so they're still accessible.
       if(settingsMenu) settingsMenu.style.display="";
+      const hBtn=$id("headerTicketBtn"); if(hBtn) hBtn.style.display="none";
+      // Limpiar cache de mejoras al cerrar sesión
+      stopUpgradeListener();
       window.currentUsername=null;
       window.preferredTeamName="";
       window.useFixedTeamName=false;
+      // Sin sesión: mensaje diferenciado en el welcome overlay
+      const wt=$id("welcomeText");
+      const wrb=$id("welcomeRegisterBtn");
+      if(wt) wt.innerHTML='Bienvenido a <strong style="color:var(--gold)">Goal2Goat</strong>, <strong style="color:var(--gold)">REGÍSTRATE</strong> para guardar tu progreso y tener acceso a contenido exclusivo.<br><br>Goal2Goat es un manager de fútbol con alma de roguelike. Tu apoyo nos ayuda a seguir mejorando el juego, añadiendo contenido nuevo y manteniéndolo libre de publicidad invasiva.';
+      if(wrb){
+        wrb.style.display='block';
+        wrb.onclick=()=>{
+          const wo=$id("welcomeOverlay"); if(wo) wo.style.display="none";
+          window.showAuthModal&&window.showAuthModal('register');
+        };
+      }
+      updateTicketBadge(0);
     }
   });
 
@@ -3549,6 +4286,9 @@ function initFirebaseAuth(){
       set("pstat-ga",     s.goalsAgainst);
       set("pstat-best",   displayBest);
       set("pstat-titles", s.titles);
+      // Puntos rasca y gana
+      const spEl=$id("pstat-scratch-pts");
+      if(spEl) spEl.textContent=snap.data().scratchPoints||0;
 
       // Load team-name preference (USUARIO tab)
       const data=snap.data();
@@ -3556,6 +4296,25 @@ function initFirebaseAuth(){
       const checkbox=$id("useFixedTeamNameCheckbox");
       if(nameInp)  nameInp.value=data.preferredTeamName||"";
       if(checkbox) checkbox.checked=!!data.useFixedTeamName;
+      // Cheats: solo visible y funcional para tiopops (jesuslor85@gmail.com)
+      const cheatsSection=$id("cheatsSection");
+      const isCheatUser=(data.email||'').toLowerCase()===CHEAT_USER.toLowerCase();
+      if(cheatsSection) cheatsSection.style.display=isCheatUser?"block":"none";
+      if(isCheatUser){
+        // Clonar para eliminar listeners previos acumulados
+        const oldCb=$id("cheatsCheckbox");
+        if(oldCb){
+          const newCb=oldCb.cloneNode(true);
+          oldCb.parentNode.replaceChild(newCb, oldCb);
+          newCb.checked=!!window.CHEATS_ACTIVE;
+          newCb.addEventListener('change',function(){
+            window.CHEATS_ACTIVE=this.checked;
+            updateTicketBadge(window.CHEATS_ACTIVE?3:undefined);
+            if(window.CHEATS_ACTIVE){const pse=$id('pstat-scratch-pts');if(pse)pse.textContent=100;}
+            showToast(window.CHEATS_ACTIVE?"⚙️ Cheats ON — ganas todos, tickets 3/3, pts 100":"⚙️ Cheats OFF — juego normal","toast-pos");
+          });
+        }
+      }
     }catch(e){
       console.warn("Stats load error:", e);
       ["pstat-games","pstat-wins","pstat-draws","pstat-losses",
@@ -3597,15 +4356,17 @@ function initFirebaseAuth(){
 
   window.switchProfileTab=function(tab){
     const tabs={
-      stats: {btn:$id("profileTabStats"), pane:$id("profileStatsPane")},
-      user:  {btn:$id("profileTabUser"),  pane:$id("profileUserPane")},
-      notes: {btn:$id("profileTabNotes"), pane:$id("profileNotesPane")},
+      stats:    {btn:$id("profileTabStats"),    pane:$id("profileStatsPane")},
+      user:     {btn:$id("profileTabUser"),     pane:$id("profileUserPane")},
+      upgrades: {btn:$id("profileTabUpgrades"), pane:$id("profileUpgradesPane")},
+      notes:    {btn:$id("profileTabNotes"),    pane:$id("profileNotesPane")},
     };
     Object.entries(tabs).forEach(([key,{btn,pane}])=>{
       const active=(key===tab);
       btn?.classList.toggle("auth-tab-active", active);
       pane?.classList.toggle("profile-tab-pane-active", active);
     });
+    if(tab==='upgrades') renderUpgradesTab();
   };
 
   // Save match result to Firestore
@@ -3741,9 +4502,10 @@ function initFirebaseAuth(){
   wire("authCloseBtn",     ()=>window.closeAuthModal());
   wire("profileCloseBtn",  ()=>window.closeProfileModal());
   wire("profileLogoutBtn", ()=>{ window.authLogout(); window.closeProfileModal(); });
-  wire("profileTabStats",  ()=>window.switchProfileTab("stats"));
-  wire("profileTabUser",   ()=>window.switchProfileTab("user"));
-  wire("profileTabNotes",  ()=>window.switchProfileTab("notes"));
+  wire("profileTabStats",    ()=>window.switchProfileTab("stats"));
+  wire("profileTabUser",     ()=>window.switchProfileTab("user"));
+  wire("profileTabUpgrades", ()=>window.switchProfileTab("upgrades"));
+  wire("profileTabNotes",    ()=>window.switchProfileTab("notes"));
   // Auto-save the team-name preference: checkbox toggles save immediately,
   // the text field saves when the user leaves it (blur) or presses Enter.
   (function(){
@@ -3887,3 +4649,767 @@ document.addEventListener('click', e=>{
     rivalTab.appendChild(badge);
   }
 })();
+
+/* ============================================================
+   SISTEMA DE BOLETOS RASCA Y GANA
+   - 1 boleto cada 4h, máximo 3 acumulados
+   - Al crear cuenta: 1 boleto inicial
+   - Premios: 🪙 moneda = 1 pt, 🐐 cabra = 3 pts, ❌ = pierde todo
+   - 2 casillas X roja, 1 cabra, resto monedas (9 casillas total)
+   - Puntos se guardan en Firestore: users/{uid}.scratchPoints
+   ============================================================ */
+
+const TICKET_MAX = 3;
+const TICKET_FIXED_HOURS = [0, 4, 8, 12, 16, 20]; // horas locales de recarga
+
+/* Devuelve el timestamp local del próximo slot de recarga a partir de 'now' */
+function nextTicketSlot(now){
+  const d = new Date(now);
+  const h = d.getHours(), m = d.getMinutes(), s = d.getSeconds(), ms = d.getMilliseconds();
+  const minutesNow = h * 60 + m;
+  // Buscar el próximo slot en el mismo día
+  for(const fh of TICKET_FIXED_HOURS){
+    if(fh * 60 > minutesNow){
+      const next = new Date(d);
+      next.setHours(fh, 0, 0, 0);
+      return next.getTime();
+    }
+  }
+  // Si ya pasaron todos los slots de hoy → primer slot de mañana
+  const next = new Date(d);
+  next.setDate(next.getDate() + 1);
+  next.setHours(TICKET_FIXED_HOURS[0], 0, 0, 0);
+  return next.getTime();
+}
+
+/* Cuántos slots han pasado entre lastChecked y now */
+function slotsBetween(lastChecked, now){
+  let count = 0;
+  let cursor = lastChecked;
+  while(true){
+    const slot = nextTicketSlot(cursor);
+    if(slot > now) break;
+    count++;
+    cursor = slot;
+  }
+  return count;
+}
+
+function computeCurrentTickets(count, lastChecked){
+  const now = Date.now();
+  const gained = slotsBetween(lastChecked, now);
+  if(gained <= 0) return { count, lastChecked };
+  const newCount = Math.min(TICKET_MAX, count + gained);
+  // lastChecked avanza al último slot consumido
+  let cursor = lastChecked;
+  for(let i = 0; i < gained; i++) cursor = nextTicketSlot(cursor);
+  return { count: newCount, lastChecked: cursor };
+}
+
+/* ── Leer/escribir estado de boletos en Firestore ── */
+async function getTicketState(){
+  const auth=window._fbAuth; const db=window._fbDb;
+  if(!auth||!db) return null;
+  const user=auth.currentUser;
+  if(!user) return null;
+  if(window.CHEATS_ACTIVE) return {count:3, lastChecked:Date.now(), scratchPoints:100};
+  const snap=await db.collection('users').doc(user.uid).get();
+  if(!snap.exists) return null;
+  const d=snap.data();
+  return {
+    count: d.ticketCount !== undefined ? d.ticketCount : 1,
+    lastChecked: d.ticketLastRegen || Date.now(),
+    scratchPoints: d.scratchPoints || 0,
+    scratchPointsEarned: d.scratchPointsEarned || 0,
+    scratchPointsSpent: d.scratchPointsSpent || 0,
+  };
+}
+
+async function saveTicketState(count, lastChecked, scratchPoints){
+  const auth=window._fbAuth; const db=window._fbDb;
+  if(!auth||!db) return;
+  const user=auth.currentUser;
+  if(!user) return;
+  await db.collection('users').doc(user.uid).set({
+    ticketCount: count,
+    ticketLastRegen: lastChecked,
+    scratchPoints: scratchPoints,
+  },{merge:true});
+}
+
+/* ── Actualizar badge en la tab de móvil ── */
+function updateTicketBadge(count){
+  // Si cheats activos, siempre mostrar 3
+  if(window.CHEATS_ACTIVE) count=3;
+  if(count===undefined||count===null) return; // sin datos aún
+  // Mobile tab badge
+  const el=$id('ticketCountBadge');
+  if(el){
+    el.textContent=`${count}/${TICKET_MAX}`;
+    el.style.color=count>0?'var(--gold)':'#666';
+  }
+  // Desktop header button
+  const hBtn=$id('headerTicketBtn');
+  const hCount=$id('headerTicketCount');
+  const hAlert=$id('headerTicketAlert');
+  if(hCount) hCount.textContent=`${count}/${TICKET_MAX}`;
+  if(hAlert) hAlert.style.display=count>0?'block':'none';
+  // Punto de alerta en tab móvil
+  const btn=$id('ticketTabBtn');
+  if(btn){
+    let dot=btn.querySelector('.mob-tab-badge');
+    if(count>0&&!dot){
+      dot=document.createElement('span');
+      dot.className='mob-tab-badge';
+      dot.style.cssText='background:#f87171;width:8px;height:8px;border-radius:50%;padding:0;min-width:unset;';
+      btn.appendChild(dot);
+    } else if(count<=0&&dot){
+      dot.remove();
+    }
+  }
+}
+
+/* ── Abrir / cerrar overlay de tickets ── */
+window.openTicketOverlay = function() {
+  var ov = document.getElementById('ticketOverlay');
+  if (ov) ov.style.display = 'block';
+  var mt = document.getElementById('ticketMountPoint');
+  if (!mt) return;
+
+  var auth = window._fbAuth;
+  if (!auth) {
+    mt.innerHTML = '<div style="padding:40px;color:#f87171;text-align:center">Firebase no disponible. Recarga la página.</div>';
+    return;
+  }
+
+  var user = auth.currentUser;
+  if (!user) {
+    mt.innerHTML = "<div style='text-align:center;color:#ccc;padding:40px 20px'><div style='font-size:48px'>🔒</div><div style='font-size:20px;color:#f0c419;margin:10px 0;font-family:Bebas Neue,sans-serif'>INICIA SESIÓN</div><p style='font-size:12px;color:#aaa'>Necesitas cuenta para usar los tickets.</p><button onclick='window.closeTicketOverlay()' style='margin-top:16px;border:1px solid #444;background:none;color:#aaa;padding:8px 20px;cursor:pointer;font-size:13px'>CERRAR</button></div>";
+    return;
+  }
+
+  mt.innerHTML = '<div style="text-align:center;padding:40px;color:#aaa">Cargando...</div>';
+
+  getTicketState().then(function(state) {
+    if (!state) {
+      mt.innerHTML = '<div style="padding:40px;color:#f87171;text-align:center">Error cargando tickets.</div>';
+      return;
+    }
+    var updated = computeCurrentTickets(state.count, state.lastChecked);
+    if (updated.count !== state.count || updated.lastChecked !== state.lastChecked) {
+      saveTicketState(updated.count, updated.lastChecked, state.scratchPoints);
+    }
+    updateTicketBadge(updated.count);
+    if (updated.count <= 0) {
+      var nextSlot = nextTicketSlot(Date.now());
+      var d = new Date(nextSlot);
+      var hh = String(d.getHours()).padStart(2,'0');
+      var mm = String(d.getMinutes()).padStart(2,'0');
+      var msLeft = nextSlot - Date.now();
+      var hLeft = Math.floor(msLeft / 3600000);
+      var mLeft = Math.floor((msLeft % 3600000) / 60000);
+      var sLeft = Math.floor((msLeft % 60000) / 1000);
+      // Diseño de modal de perfil con temporizador en vivo
+      mt.innerHTML = `<div class="auth-modal" style="max-width:340px;text-align:center;padding:28px 24px">
+        <div style="font-size:48px;margin-bottom:8px">🎟️</div>
+        <div style="font-family:'Bebas Neue',Impact,sans-serif;font-size:22px;letter-spacing:2px;color:var(--gold);margin-bottom:20px">SIN TICKETS</div>
+        <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px;letter-spacing:1px;text-transform:uppercase">Próximo ticket en</div>
+        <div id="ticketCountdown" style="font-family:'Bebas Neue',Impact,sans-serif;font-size:48px;color:#fff;letter-spacing:4px;margin-bottom:24px">--:--:--</div>
+        <button onclick="window.closeTicketOverlay()" style="width:100%;border:none;background:#c0392b;color:#fff;padding:12px;cursor:pointer;font-family:'Bebas Neue',Impact,sans-serif;font-size:16px;letter-spacing:1.5px;transition:.15s" onmouseover="this.style.background='#e74c3c'" onmouseout="this.style.background='#c0392b'">CERRAR</button>
+      </div>`;
+      // Arrancar cuenta atrás en vivo
+      function _tickCountdown(){
+        const el = document.getElementById('ticketCountdown');
+        if(!el) return; // overlay cerrado
+        const left = nextTicketSlot(Date.now()) - Date.now();
+        if(left <= 0){ el.textContent = '00:00:00'; return; }
+        const h = Math.floor(left/3600000);
+        const m = Math.floor((left%3600000)/60000);
+        const s = Math.floor((left%60000)/1000);
+        el.textContent = String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
+        setTimeout(_tickCountdown, 1000);
+      }
+      _tickCountdown();
+      return;
+    }
+    buildTicketInMount(mt, updated.count, updated.lastChecked, state.scratchPoints);
+  }).catch(function(e) {
+    console.error('openTicketOverlay error:', e);
+    mt.innerHTML = '<div style="padding:40px;color:#f87171;text-align:center">Error: ' + e.message + '</div>';
+  });
+};
+
+window.closeTicketOverlay = function() {
+  var ov = document.getElementById('ticketOverlay');
+  if (ov) ov.style.display = 'none';
+};
+
+/* ── Construir el boleto dentro del mount point ── */
+function buildTicketInMount(mount, ticketCount, lastRegen, currentScratchPts){
+  const GRID_SIZE=9;
+  // Composición fija: 2 X rojas, 1 cabra (5pts), 6 monedas (1pt cada una)
+  const indices=Array.from({length:GRID_SIZE},(_,i)=>i);
+  // Barajar Fisher-Yates
+  for(let i=indices.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [indices[i],indices[j]]=[indices[j],indices[i]];
+  }
+  const bombSet=new Set([indices[0],indices[1]]);
+  const starIdx=indices[2];
+
+  const cellsData=[];
+  for(let i=0;i<GRID_SIZE;i++){
+    if(bombSet.has(i))       cellsData.push({type:'bomb', value:0});
+    else if(i===starIdx)     cellsData.push({type:'star', value:4});
+    else                     cellsData.push({type:'coin', value:1});
+  }
+
+  let scratchedCount=0, totalPoints=0, gameOver=false;
+  const serial=String(Math.floor(1000+Math.random()*8999))+'-'+String(Math.floor(1000+Math.random()*8999));
+
+  mount.innerHTML=`
+  <div class="ticket" id="ticketCard" style="position:relative;width:340px;background:linear-gradient(180deg,#0f3d24 0%,#0c2e1c 100%);border-radius:0;box-shadow:0 30px 60px -20px rgba(0,0,0,.7),0 0 0 1px rgba(240,196,25,.15);overflow:visible">
+    <div style="display:flex;justify-content:space-around;margin:0 -4px;position:relative;z-index:2">${Array.from({length:12},()=>'<div style="width:16px;height:16px;border-radius:50%;background:#0a1212;border:1px solid rgba(246,241,227,.1);flex-shrink:0"></div>').join('')}</div>
+    <button onclick=\"window.closeTicketOverlay()\" style=\"position:absolute;top:10px;right:12px;background:none;border:none;color:rgba(246,241,227,.5);font-size:20px;cursor:pointer;z-index:10;line-height:1;padding:4px\" title=\"Cerrar\">✕</button>
+
+    <div style="padding:26px 22px 22px;">
+      <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:2px;">
+        <span style="font-size:18px">⚽</span>
+        <span style="font-family:'Bebas Neue',Impact,sans-serif;font-size:22px;letter-spacing:2px;color:#f0c419;text-shadow:0 2px 0 rgba(0,0,0,.4)">GOAL2GOAT</span>
+        <span style="font-size:18px">🐐</span>
+      </div>
+      <div style="text-align:center;font-size:10px;letter-spacing:3px;color:rgba(246,241,227,.55);text-transform:uppercase;margin-bottom:16px;font-weight:700">Ticket de GoatPoints</div>
+      <div style="height:1px;background:repeating-linear-gradient(90deg,rgba(240,196,25,.35) 0 6px,transparent 6px 12px);margin:14px 0"></div>
+      <div style="display:flex;justify-content:space-between;font-size:9px;letter-spacing:1px;color:rgba(246,241,227,.4);text-transform:uppercase;margin-bottom:14px;">
+        <span>Nº <b style="color:rgba(246,241,227,.65)">${serial}</b></span>
+        <span>Boleto ${TICKET_MAX+1-ticketCount}/${TICKET_MAX}</span>
+      </div>
+      <div style="text-align:center;margin-bottom:18px;">
+        <div style="font-size:9px;letter-spacing:3px;text-transform:uppercase;color:rgba(246,241,227,.5);margin-bottom:4px;font-weight:700">Puntos acumulados en el boleto</div>
+        <div id="tPrize" style="font-family:'Bebas Neue',Impact,sans-serif;font-size:40px;color:#f0c419;text-shadow:0 3px 0 rgba(0,0,0,.35);">0 <span style="font-size:20px;opacity:.85">PTS</span></div>
+      </div>
+      <div class="scratch-grid" id="tGrid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px;"></div>
+      <div id="tDots" style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
+        <span style="font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:rgba(246,241,227,.5);font-weight:700;margin-right:4px;">Casillas rascadas</span>
+      </div>
+      <div style="margin-bottom:18px;">
+        <div style="display:flex;justify-content:space-between;font-size:9px;letter-spacing:1px;text-transform:uppercase;color:rgba(246,241,227,.5);font-weight:700;margin-bottom:5px;">
+          <span>Riesgo de la próxima casilla</span>
+          <span style="color:#d94f3d;font-weight:800" id="tRiskVal">8%</span>
+        </div>
+        <div style="height:6px;border-radius:4px;background:rgba(246,241,227,.12);overflow:hidden;">
+          <div id="tRiskFill" style="height:100%;border-radius:4px;background:linear-gradient(90deg,#e8b923,#d94f3d);width:8%;transition:width .4s ease;"></div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <button id="tCashBtn" disabled onclick="ticketCashOut(false)" style="border:none;border-radius:0;font-family:'Bebas Neue',Impact,sans-serif;font-size:22px;letter-spacing:2px;padding:14px;cursor:pointer;background:linear-gradient(180deg,#ffe27a,#f0c419 55%,#c9960c);color:#08160d;box-shadow:0 6px 0 #8a6a08,0 10px 18px -6px rgba(0,0,0,.5);opacity:.35;pointer-events:none;">PLANTARSE</button>
+
+      </div>
+      
+    </div>
+  </div>
+  <div id="tResultOverlay" style="display:none;position:fixed;inset:0;z-index:50000;background:rgba(0,0,0,.75);align-items:center;justify-content:center;padding:20px;"></div>`;
+
+  // Construir grid
+  const grid=$id('tGrid');
+  const dotsRow=$id('tDots');
+  for(let i=0;i<GRID_SIZE;i++){
+    const data=cellsData[i];
+    const cell=document.createElement('div');
+    cell.style.cssText='position:relative;aspect-ratio:1;border-radius:10px;overflow:hidden;background:#f6f1e3;box-shadow:inset 0 0 0 2px rgba(8,22,13,.25);';
+    cell.dataset.index=i;
+
+    const res=document.createElement('div');
+    res.style.cssText='position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:2px;font-family:"Bebas Neue",Impact,sans-serif;background:#fff;';
+    if(data.type==='bomb'){
+      res.style.background='#fff0ee';
+      res.innerHTML=`<span style="font-size:26px">❌</span><span style="font-size:13px;color:#d94f3d;letter-spacing:.5px">PIERDE</span>`;
+    } else if(data.type==='star'){
+      res.style.background='#fff9e0';
+      res.innerHTML=`<span style="font-size:26px">🐐</span><span style="font-size:13px;color:#0c2e1c;letter-spacing:.5px">+4 PTS</span>`;
+    } else {
+      res.innerHTML=`<span style="font-size:26px">🪙</span><span style="font-size:13px;color:#0c2e1c;letter-spacing:.5px">+1 PT</span>`;
+    }
+    cell.appendChild(res);
+
+    const canvas=document.createElement('canvas');
+    canvas.style.cssText='position:absolute;inset:0;width:100%;height:100%;cursor:pointer;touch-action:none;';
+    cell.appendChild(canvas);
+    grid.appendChild(cell);
+
+    // Dot indicador
+    const dot=document.createElement('span');
+    dot.style.cssText='width:9px;height:9px;border-radius:50%;background:rgba(246,241,227,.18);display:inline-block;transition:all .25s ease;';
+    dot.dataset.dotIdx=i;
+    dotsRow.appendChild(dot);
+
+    initTicketCell(cell, canvas, i);
+  }
+
+  function riskForAttempt(n){
+    return [8,16,26,38,52,68,86,99][Math.min(n,7)];
+  }
+
+  function updateUI(){
+    const prizeEl=$id('tPrize');
+    if(prizeEl) prizeEl.innerHTML=`${totalPoints} <span style="font-size:20px;opacity:.85">PTS</span>`;
+    const cashBtn=$id('tCashBtn');
+    const cashAmt=$id('tCashAmt');
+    const riskBtn=null; // eliminado
+    const riskVal=$id('tRiskVal');
+    const riskFill=$id('tRiskFill');
+    if(cashAmt) cashAmt.textContent=totalPoints;
+    if(cashBtn){
+      if(totalPoints>0&&!gameOver){
+        cashBtn.disabled=false;
+        cashBtn.style.opacity='1';
+        cashBtn.style.pointerEvents='auto';
+      } else {
+        cashBtn.disabled=true;
+        cashBtn.style.opacity='.35';
+        cashBtn.style.pointerEvents='none';
+      }
+    }
+    const risk=riskForAttempt(scratchedCount);
+    if(riskVal) riskVal.textContent=risk+'%';
+    if(riskFill) riskFill.style.width=risk+'%';
+    if(riskBtn){
+      if(gameOver) riskBtn.textContent='BOLETO CERRADO';
+      else if(scratchedCount>=GRID_SIZE) riskBtn.textContent='BOLETO COMPLETO';
+      else if(scratchedCount===0) riskBtn.textContent='';
+      else riskBtn.innerHTML=`SIGUIENTE RASCADO · <b style="color:#d94f3d">${risk}% riesgo</b>`;
+    }
+  }
+
+  function initTicketCell(cell, canvas, idx){
+    const dpr=window.devicePixelRatio||1;
+    const rect=cell.getBoundingClientRect();
+    canvas.width=Math.max(rect.width,80)*dpr;
+    canvas.height=Math.max(rect.height,80)*dpr;
+    canvas.style.width=(Math.max(rect.width,80))+'px';
+    canvas.style.height=(Math.max(rect.height,80))+'px';
+    const ctx=canvas.getContext('2d');
+    ctx.scale(dpr,dpr);
+    const w=canvas.width/dpr, h=canvas.height/dpr;
+    // Capa metálica
+    const grad=ctx.createLinearGradient(0,0,w,h);
+    grad.addColorStop(0,'#e3e8ea');
+    grad.addColorStop(.5,'#9aa5ab');
+    grad.addColorStop(1,'#c4cbce');
+    ctx.fillStyle=grad;
+    ctx.fillRect(0,0,w,h);
+    ctx.strokeStyle='rgba(180,190,195,.5)';
+    ctx.lineWidth=2;
+    for(let x=-h;x<w;x+=6){ ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x+h,h);ctx.stroke(); }
+    ctx.font='20px sans-serif';
+    ctx.textAlign='center';
+    ctx.textBaseline='middle';
+    ctx.globalAlpha=.5;
+    ctx.fillStyle='#333';
+    ctx.fillText('⚽',w/2,h/2);
+    ctx.globalAlpha=1;
+    ctx.globalCompositeOperation='destination-out';
+
+    let isScratching=false;
+    let hasMoved=false;
+
+    function scratchAt(cx,cy){
+      const r=canvas.getBoundingClientRect();
+      ctx.beginPath();
+      ctx.arc(cx-r.left,cy-r.top,18,0,Math.PI*2);
+      ctx.fill();
+      // Check reveal %
+      const imgData=ctx.getImageData(0,0,canvas.width,canvas.height).data;
+      let cleared=0,sampled=0;
+      for(let p=3;p<imgData.length;p+=160){sampled++;if(imgData[p]<80)cleared++;}
+      if(cleared/sampled>0.5&&!cell.dataset.revealed) revealTicketCell(cell,idx,canvas);
+    }
+
+    canvas.addEventListener('mousedown',e=>{isScratching=true;hasMoved=false;scratchAt(e.clientX,e.clientY);e.preventDefault();});
+    canvas.addEventListener('mousemove',e=>{if(!isScratching)return;hasMoved=true;scratchAt(e.clientX,e.clientY);e.preventDefault();});
+    window.addEventListener('mouseup',()=>{
+      if(isScratching&&!cell.dataset.revealed) revealTicketCell(cell,idx,canvas);
+      isScratching=false;
+    });
+    canvas.addEventListener('touchstart',e=>{isScratching=true;hasMoved=false;scratchAt(e.touches[0].clientX,e.touches[0].clientY);e.preventDefault();},{passive:false});
+    canvas.addEventListener('touchmove',e=>{if(!isScratching)return;hasMoved=true;scratchAt(e.touches[0].clientX,e.touches[0].clientY);e.preventDefault();},{passive:false});
+    canvas.addEventListener('touchend',()=>{
+      if(isScratching&&!cell.dataset.revealed) revealTicketCell(cell,idx,canvas);
+      isScratching=false;
+    });
+  }
+
+  function revealTicketCell(cell,idx,canvas){
+    if(cell.dataset.revealed) return;
+    cell.dataset.revealed='1';
+    canvas.style.opacity='0';
+    canvas.style.transition='opacity .35s ease';
+    canvas.style.pointerEvents='none';
+
+    const data=cellsData[idx];
+    const dot=dotsRow.querySelector(`[data-dot-idx="${idx}"]`);
+
+    scratchedCount++;
+    if(data.type==='bomb'){
+      if(dot){ dot.style.background='#d94f3d'; dot.style.boxShadow='0 0 6px rgba(217,79,61,.7)'; }
+      playSound('scratch_bomb');
+      handleTicketBomb();
+    } else if(data.type==='star'){
+      totalPoints+=data.value;
+      if(dot){ dot.style.background='#f0c419'; dot.style.boxShadow='0 0 6px rgba(240,196,25,.6)'; }
+      playSound('scratch_star');
+      updateUI();
+      if(scratchedCount>=GRID_SIZE) setTimeout(()=>ticketCashOut(true),500);
+    } else {
+      totalPoints+=data.value;
+      if(dot){ dot.style.background='#f0c419'; dot.style.boxShadow='0 0 6px rgba(240,196,25,.6)'; }
+      // Pitch progresivo: cada casilla buena sube el tono
+      if(audioEnabled&&getAudioCtx()){
+        const baseFreq=400+(scratchedCount*40);
+        tone(getAudioCtx(), baseFreq, 0, 0.06, 'sine', 0.10, 0.0001);
+        tone(getAudioCtx(), baseFreq*1.5, 0.04, 0.08, 'sine', 0.07, 0.0001);
+      }
+      updateUI();
+      if(scratchedCount>=GRID_SIZE) setTimeout(()=>ticketCashOut(true),500);
+    }
+  }
+
+  function handleTicketBomb(){
+    gameOver=true;
+    const stamp=$id('ticketStamp');
+    if(stamp){stamp.textContent='PERDISTE';stamp.style.background='#d94f3d';}
+    // Revelar todas las celdas restantes
+    Array.from(grid.children).forEach(c=>{
+      if(!c.dataset.revealed){
+        c.dataset.revealed='1';
+        const cv=c.querySelector('canvas');
+        if(cv){cv.style.opacity='0';cv.style.pointerEvents='none';}
+      }
+    });
+    updateUI();
+    setTimeout(()=>showTicketResult(false,0),600);
+  }
+
+  window.ticketCashOut=function(auto){
+    if(gameOver||totalPoints<=0) return;
+    gameOver=true;
+    const stamp=$id('ticketStamp');
+    if(stamp){stamp.textContent='COBRADO';stamp.style.background='#3fae5c';}
+    const pts=totalPoints;
+    updateUI();
+    showTicketResult(true,pts,auto);
+  };
+
+  function showTicketResult(win,pts,auto){
+    const overlay=$id('tResultOverlay');
+    if(!overlay) return;
+    overlay.style.display='flex';
+    // Sonido según resultado
+    if(win) playSound('victory');
+    else playSound('scratch_bomb');
+    overlay.innerHTML=`
+    <div style="background:linear-gradient(180deg,#0f3d24,#0c2e1c);border-radius:18px;padding:30px 26px;text-align:center;max-width:300px;width:90%;box-shadow:0 30px 60px -10px rgba(0,0,0,.8),0 0 0 1px rgba(240,196,25,.2);animation:popIn .3s cubic-bezier(.2,1.4,.4,1)">
+      <style>@keyframes popIn{0%{transform:scale(.7);opacity:0}100%{transform:scale(1);opacity:1}}</style>
+      <span style="font-size:54px;display:block;margin-bottom:10px">${win?(auto?'🏆':'💰'):'❌'}</span>
+      <h2 style="font-family:'Bebas Neue',Impact,sans-serif;font-size:26px;letter-spacing:1px;color:${win?'#f0c419':'#d94f3d'};margin-bottom:6px">${win?(auto?'¡TICKET PREMIADO!':'¡TICKET PREMIADO!'):'TICKET ANULADO'}</h2>
+      <p style="font-size:12px;color:rgba(246,241,227,.7);line-height:1.5;margin-bottom:12px">${win?(auto?'Rascaste todo el boleto. Premio máximo.':'¡Buena jugada! Te has retirado a tiempo'):'Has perdido los puntos acumulados en este boleto.'}</p>
+      <div style="font-family:'Bebas Neue',Impact,sans-serif;font-size:34px;color:${win?'#f0c419':'#d94f3d'};margin-bottom:18px">${(win && pts>0)?'+'+pts+' PTS':win?'0 PTS':''}</div>
+      <button onclick="closeTicketAndSave(${win?pts:0})" style="width:100%;border:none;border-radius:0;padding:12px;font-family:'Bebas Neue',Impact,sans-serif;font-size:15px;letter-spacing:1.5px;background:linear-gradient(180deg,#ffe27a,#f0c419 55%,#c9960c);color:#08160d;cursor:pointer;">CERRAR</button>
+    </div>`;
+  }
+
+  window.closeTicketAndSave=async function(ptsEarned){
+    // En cheats aún guardamos los puntos ganados realmente
+    if(window._fbAuth&&window._fbAuth.currentUser){
+      try{
+        const user=window._fbAuth.currentUser;
+        const db=window._fbDb;
+        // Leer estado actual de Firestore para no perder puntos por estado desactualizado
+        const snap=await db.collection('users').doc(user.uid).get();
+        const currentData=snap.exists?snap.data():{};
+        const currentPts=currentData.scratchPoints||0;
+        const newPts=currentPts+ptsEarned;
+        const newEarned=(currentData.scratchPointsEarned||0)+ptsEarned;
+        // Calcular nuevo contador de tickets
+        const updated=computeCurrentTickets(
+          currentData.ticketCount!==undefined?currentData.ticketCount:1,
+          currentData.ticketLastRegen||Date.now()
+        );
+        const newCount=Math.max(0,updated.count-1);
+        await db.collection('users').doc(user.uid).set({
+          ticketCount:newCount,
+          ticketLastRegen:updated.lastChecked,
+          scratchPoints:newPts,
+          scratchPointsEarned:newEarned
+        },{merge:true});
+        const displayCount=window.CHEATS_ACTIVE?3:newCount;
+        updateTicketBadge(displayCount);
+        const pse=$id('pstat-scratch-pts');
+        if(pse) pse.textContent=newPts;
+      }catch(e){ console.warn('Error guardando boleto:',e); }
+    }
+    window.closeTicketOverlay();
+  };
+}
+
+/* ── Inicializar boletos cuando el usuario se loguea ── */
+async function initTicketSystem(user, isNewUser){
+  if(!user) return;
+  const db=window._fbDb;
+  if(!db) return;
+  const snap=await db.collection('users').doc(user.uid).get();
+  const data=snap.exists?snap.data():{};
+
+  if(isNewUser || data.ticketCount===undefined){
+    await db.collection('users').doc(user.uid).set({
+      ticketCount:1,
+      ticketLastRegen:Date.now(),
+      scratchPoints:0,
+      scratchPointsEarned:0,
+      scratchPointsSpent:0,
+    },{merge:true});
+    updateTicketBadge(1);
+  } else {
+    const updated=computeCurrentTickets(data.ticketCount, data.ticketLastRegen||Date.now());
+    if(updated.count!==data.ticketCount||updated.lastChecked!==data.ticketLastRegen){
+      await saveTicketState(updated.count, updated.lastChecked, data.scratchPoints||0);
+    }
+    updateTicketBadge(updated.count);
+  }
+}
+
+/* ── Hook en onAuthStateChanged para inicializar boletos ── */
+// Se llamará desde el listener de auth ya existente
+window._initTicketSystem=initTicketSystem;
+
+/* ============================================================
+   SISTEMA DE MEJORAS (GOAT Points)
+   - 3 características: BANQUILLO, CAMBIOS, CONVOCADOS
+   - 10 niveles por característica
+   - Coste: nivel 1 = 5pts, cada nivel siguiente dobla el anterior
+   - Se puede deshacer (recuperar puntos)
+   - Se guarda en Firestore: users/{uid}.upgrades
+   ============================================================ */
+
+/* ── Helper: leer nivel de mejora activo del usuario (cached en window) ── */
+async function loadUserUpgradeLevel(id){
+  try{
+    if(!window._fbAuth||!window._fbAuth.currentUser) return 0;
+    const snap=await window._fbDb.collection('users').doc(window._fbAuth.currentUser.uid).get();
+    return (snap.exists&&snap.data().upgrades&&snap.data().upgrades[id])||0;
+  }catch(e){ return 0; }
+}
+// Cache sincrónico — se actualiza en tiempo real via onSnapshot
+(function(){
+  try{
+    const saved=localStorage.getItem('_g2g_upgrades');
+    window._upgradeCache=saved?JSON.parse(saved):{bench:0,subs:0,scout:0};
+  }catch(e){ window._upgradeCache={bench:0,subs:0,scout:0}; }
+})();
+
+let _upgradeListener=null; // referencia al listener para poder cancelarlo
+
+function startUpgradeListener(uid){
+  // Cancelar listener anterior si existe
+  if(_upgradeListener){ _upgradeListener(); _upgradeListener=null; }
+  if(!window._fbDb||!uid) return;
+  _upgradeListener=window._fbDb.collection('users').doc(uid)
+    .onSnapshot(snap=>{
+      if(!snap.exists) return;
+      const upgs=snap.data().upgrades||{};
+      window._upgradeCache={
+        bench: upgs.bench||0,
+        subs:  upgs.subs||0,
+        scout: upgs.scout||0,
+      };
+      try{ localStorage.setItem('_g2g_upgrades',JSON.stringify(window._upgradeCache)); }catch(e){}
+    }, e=>{ console.warn('upgrade listener error:',e); });
+}
+
+function stopUpgradeListener(){
+  if(_upgradeListener){ _upgradeListener(); _upgradeListener=null; }
+  window._upgradeCache={bench:0,subs:0,scout:0};
+  try{ localStorage.removeItem('_g2g_upgrades'); }catch(e){}
+}
+
+// refreshUpgradeCache sigue disponible para forzar una lectura puntual
+async function refreshUpgradeCache(){
+  if(!window._fbAuth||!window._fbAuth.currentUser||!window._fbDb) return;
+  try{
+    const snap=await window._fbDb.collection('users').doc(window._fbAuth.currentUser.uid).get();
+    const upgs=(snap.exists&&snap.data().upgrades)||{};
+    window._upgradeCache={bench:upgs.bench||0,subs:upgs.subs||0,scout:upgs.scout||0};
+    try{ localStorage.setItem('_g2g_upgrades',JSON.stringify(window._upgradeCache)); }catch(e){}
+  }catch(e){}
+}
+// Valores efectivos con mejoras aplicadas
+function getMaxBench(){ return 2 + (window._upgradeCache.bench||0); }
+function getMaxSubs(){  return 2 + (window._upgradeCache.subs||0); }
+function getScoutTeams(){ return 2; } // ya no se usa para equipos
+function getPlayersPerTeam(){ return 5 + (window._upgradeCache.scout||0); }
+
+const UPGRADE_DEFS = [
+  {
+    id: 'bench',
+    icon: '🪑',
+    name: 'BANQUILLO',
+    desc: 'PLAZAS EN EL BANQUILLO',
+    baseCost: 5,
+    maxLevel: 10,
+    baseValue: 5,  // valor base actual
+    tooltip: (lvl) => `${2 + lvl} plazas en el banquillo`
+  },
+  {
+    id: 'subs',
+    icon: '🔄',
+    name: 'CAMBIOS',
+    desc: 'SUSTITUCIONES POR PARTIDO',
+    baseCost: 5,
+    maxLevel: 10,
+    baseValue: 5,
+    tooltip: (lvl) => `${2 + lvl} cambios por partido`
+  },
+  {
+    id: 'scout',
+    icon: '🔭',
+    name: 'CONVOCADOS',
+    desc: 'JUGADORES POR EQUIPO AL BARAJAR',
+    baseCost: 5,
+    maxLevel: 10,
+    baseValue: 3,
+    tooltip: (lvl) => `${5 + lvl} jugadores por equipo al barajar`
+  },
+];
+
+// Coste acumulado para subir al nivel N (0-indexed: coste para ir de N-1 a N)
+function upgradeLevelCost(def, toLevel){
+  // nivel 1 = baseCost, nivel 2 = baseCost*2, nivel 3 = baseCost*4...
+  return def.baseCost * Math.pow(2, toLevel - 1);
+}
+
+// Cargar upgrades de Firestore
+async function loadUpgrades(){
+  const user = window._fbAuth && window._fbAuth.currentUser;
+  if(!user) return {};
+  try{
+    const snap = await window._fbDb.collection('users').doc(user.uid).get();
+    return (snap.exists && snap.data().upgrades) || {};
+  }catch(e){ return {}; }
+}
+
+// Guardar upgrades en Firestore
+async function saveUpgrades(upgrades){
+  const user = window._fbAuth && window._fbAuth.currentUser;
+  if(!user) return;
+  await window._fbDb.collection('users').doc(user.uid).set({upgrades}, {merge:true});
+}
+
+// Iconos SVG para mejoras (sin emoji)
+const UPGRADE_ICONS = {
+  bench: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 10v4M20 10v4M2 14h20M6 14v4M18 14v4"/></svg>',
+  subs:  '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M7 16l-4-4 4-4"/><path d="M17 8l4 4-4 4"/><line x1="3" y1="12" x2="21" y2="12"/></svg>',
+  scout: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/><path d="M11 8v6M8 11h6"/></svg>',
+};
+
+// Renderizar la pestaña de mejoras
+async function renderUpgradesTab(){
+  const list = document.getElementById('upgradesList');
+  const pointsEl = document.getElementById('upgradePointsDisplay');
+  if(!list) return;
+
+  list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:12px">Cargando...</div>';
+  await refreshUpgradeCache(); // sincronizar cache antes de renderizar
+
+  const user = window._fbAuth && window._fbAuth.currentUser;
+  if(!user){
+    list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted)">Inicia sesión para ver las mejoras.</div>';
+    return;
+  }
+
+  const snap = await window._fbDb.collection('users').doc(user.uid).get();
+  const data = snap.exists ? snap.data() : {};
+  let currentPts = data.scratchPoints || 0;
+  let upgrades = data.upgrades || {};
+
+  if(pointsEl) pointsEl.textContent = currentPts;
+  list.innerHTML = '';
+
+  UPGRADE_DEFS.forEach(def => {
+    const currentLevel = upgrades[def.id] || 0;
+    const nextCost = currentLevel < def.maxLevel ? upgradeLevelCost(def, currentLevel + 1) : null;
+    const prevRefund = currentLevel > 0 ? upgradeLevelCost(def, currentLevel) : null;
+    const canUpgrade = nextCost !== null && currentPts >= nextCost;
+    const canDowngrade = currentLevel > 0;
+    const currentVal = def.baseValue + currentLevel;
+
+    const bars = Array.from({length: def.maxLevel}, (_, i) =>
+      `<div class="upgrade-bar ${i < currentLevel ? 'filled' : ''}"></div>`
+    ).join('');
+
+    const costHtml = nextCost !== null
+      ? `<span class="cost-star">★</span>${nextCost}`
+      : `<span style="font-size:9px;color:var(--text-muted);letter-spacing:1px">MAX</span>`;
+
+    const row = document.createElement('div');
+    row.className = 'upgrade-row';
+    row.id = `upgrade-row-${def.id}`;
+    row.innerHTML = `
+      <div class="upgrade-row-top">
+        <div class="upgrade-icon" style="color:var(--accent)">${UPGRADE_ICONS[def.id]||''}</div>
+        <div class="upgrade-label-block">
+          <div class="upgrade-name">${def.name}</div>
+          <div class="upgrade-desc">${def.desc}</div>
+        </div>
+        <div class="upgrade-value-pill">${def.tooltip(currentLevel)}</div>
+      </div>
+      <div class="upgrade-row-bottom">
+        <div class="upgrade-bars">${bars}</div>
+        <div class="upgrade-controls">
+          <div class="upgrade-cost-badge">${costHtml}</div>
+          <button class="upgrade-btn minus" data-id="${def.id}" title="Recuperar ${prevRefund||0} pts" ${canDowngrade?'':'disabled'}>−</button>
+          <button class="upgrade-btn plus" data-id="${def.id}" title="Coste: ${nextCost||0} pts" ${canUpgrade?'':'disabled'}>+</button>
+        </div>
+      </div>`;
+
+    list.appendChild(row);
+  });
+
+  // Event listeners
+  list.querySelectorAll('.upgrade-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const id = btn.dataset.id;
+      const def = UPGRADE_DEFS.find(d => d.id === id);
+      if(!def) return;
+      btn.disabled = true;
+
+      const freshSnap = await window._fbDb.collection('users').doc(user.uid).get();
+      const freshData = freshSnap.exists ? freshSnap.data() : {};
+      let pts = freshData.scratchPoints || 0;
+      let upgs = freshData.upgrades || {};
+      let lvl = upgs[id] || 0;
+
+      if(btn.classList.contains('plus')){
+        const cost = upgradeLevelCost(def, lvl + 1);
+        if(lvl >= def.maxLevel || pts < cost) return;
+        lvl++; pts -= cost;
+      } else {
+        if(lvl <= 0) return;
+        pts += upgradeLevelCost(def, lvl); lvl--;
+      }
+
+      upgs[id] = lvl;
+      await window._fbDb.collection('users').doc(user.uid).set({
+        scratchPoints: pts, upgrades: upgs,
+        scratchPointsSpent: freshData.scratchPointsSpent || 0
+      }, {merge: true});
+      await refreshUpgradeCache(); // actualizar valores efectivos en juego
+
+      const pEl = document.getElementById('upgradePointsDisplay');
+      if(pEl) pEl.textContent = pts;
+      const statPts = document.getElementById('pstat-scratch-pts');
+      if(statPts) statPts.textContent = pts;
+
+      renderUpgradesTab();
+    });
+  });
+}

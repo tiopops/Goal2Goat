@@ -24,7 +24,7 @@
     <button class="support-btn desktop-only ranking-btn" onclick="showRankingModal()">🏆 RANKING</button>
     <button class="header-auth-btn register-btn" id="authBtn">LOGIN / REGISTRO</button>
     <button class="header-ticket-btn" id="headerTicketBtn" style="display:none" onclick="openTicketOverlay()">🎟️ TICKETS <span id="headerTicketCount">0/3</span><span class="header-ticket-alert" id="headerTicketAlert" style="display:none"></span></button>
-    <button class="header-auth-btn profile-btn" id="profileBtn" style="display:none">PERFIL</button>
+    <button class="header-auth-btn profile-btn" id="profileBtn" style="display:none;position:relative">PERFIL <span id="profileGoatBadge" style="display:none;position:absolute;top:-4px;right:-4px;width:10px;height:10px;border-radius:50%;background:#2ecc71;border:2px solid var(--card-bg);animation:ticketPulse 1.5s ease-in-out infinite"></span></button>
     <div class="settings-menu" id="settingsMenu">
       <button class="settings-toggle" id="settingsToggle" onclick="toggleSettingsMenu()" title="Ajustes">⚙</button>
       <div class="settings-dropdown" id="settingsDropdown">
@@ -49,7 +49,7 @@
     <div class="auth-tabs">
       <button class="auth-tab auth-tab-active" id="profileTabStats">ESTADÍSTICAS</button>
       <button class="auth-tab" id="profileTabUser">AJUSTES</button>
-      <button class="auth-tab" id="profileTabUpgrades">MEJORAS</button>
+      <button class="auth-tab" id="profileTabUpgrades">MEJORAS <span id="upgradesBadge" style="display:none;width:8px;height:8px;border-radius:50%;background:#2ecc71;margin-left:4px;vertical-align:middle;animation:ticketPulse 1.5s ease-in-out infinite"></span></button>
       <button class="auth-tab" id="profileTabNotes">NOTAS <span id="profileVersionLabel"></span></button>
     </div>
 

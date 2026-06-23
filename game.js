@@ -1284,27 +1284,28 @@ function applyMatchFatigue(){
 
     // Goalkeepers barely tire — minimal running involved in a real match.
     if(p.placedPos==='POR'){
-      p.fatigue=Math.max(0, Math.round((p.fatigue===undefined?100:p.fatigue)-(2+Math.random()*3)));
+      p.fatigue=Math.max(0, Math.round((p.fatigue===undefined?100:p.fatigue)-(4+Math.random()*5)));
       return;
     }
 
-    // Base random fatigue loss per match: gentle, 4-9 points — a player
-    // can comfortably go 6-8 matches before needing real concern.
-    let loss=4+Math.random()*5;
+    // Base fatigue loss: 12-20 points per match — enough to feel it after 2-3 games.
+    // RECUPERACIÓN upgrade reduces this loss.
+    const recoveryBonus = getRecoveryBonus(); // 0-10% reduction per level
+    let loss=(12+Math.random()*8)*(1-recoveryBonus);
 
     // Central defenders cover the least ground — lightest loss.
     if(p.placedPos==='DFC'){
-      loss*=0.6;
+      loss*=0.65;
     }
     // Full-backs/wingers/forwards/midfielders run more, especially when
     // the active strategy demands it.
     const runningPositions=['EI','ED','DC','MC','LI','LD'];
     if(isAttackingStrategy&&runningPositions.includes(p.placedPos)){
-      loss+=Math.random()*4; // small extra, 0-4
+      loss+=Math.random()*6;
     }
     // A player who scored works a bit harder than average that match.
     if(scorers.has(p.name)){
-      loss+=Math.random()*3;
+      loss+=Math.random()*4;
     }
     p.fatigue=Math.max(0, Math.round((p.fatigue===undefined?100:p.fatigue)-loss));
   });
@@ -2036,6 +2037,26 @@ function playMatch(){
   if(!window.CHEATS_ACTIVE && oppEvents.redMinute!==null){
     oppGoals=poissonSample(adjOppLambda);
   }
+  // Procesar tarjetas por faltas que causaron lesiones
+  if(newInjuries&&newInjuries.length){
+    newInjuries.forEach(inj=>{
+      if(!inj.injury||!inj.injury.foulCard) return;
+      const card=inj.injury.foulCard;
+      if(!oppEvents.cards) oppEvents.cards=[];
+      const oppPool=nextOpponent?nextOpponent.players:[];
+      if(oppPool.length){
+        const fouler=oppPool[Math.floor(Math.random()*oppPool.length)];
+        oppEvents.cards.push({player:fouler, type:card, isFoul:true});
+        if(card==='red'&&!oppEvents.redMinute){
+          oppEvents.redMinute=Math.floor(20+Math.random()*60);
+          const fracWith10=Math.max(0,(90-oppEvents.redMinute)/90);
+          adjOppLambda=adjOppLambda*(1-fracWith10*0.11);
+          if(!window.CHEATS_ACTIVE) oppGoals=poissonSample(adjOppLambda);
+        }
+      }
+    });
+  }
+
   // Procesar expulsiones durante el partido:
   // Jugadores con roja/doble amarilla se retiran si hay hueco en banquillo.
   // Si el banquillo está lleno, se quedan en el campo con rating 0.
@@ -2264,9 +2285,6 @@ ${goalsHTML}`;
 
 function rollInjuries(myPower,oppPower){
   const fb=currentFormationBonus||{};
-  // Recalibrated for the 40-point formation system, where almost every
-  // formation has SOME skew — using a higher, fixed threshold so only
-  // truly extreme picks (very lopsided attack/defense split) count as risky.
   const extreme=Math.abs((fb.attack||0)-(fb.defense||0));
   let risk=0.02;
   if(extreme>=16) risk=0.032;
@@ -2281,6 +2299,20 @@ function rollInjuries(myPower,oppPower){
       else if(r<0.85){type="básica";remaining=2;}
       else{type="grave";remaining=3;}
       p.injury={type,remaining};
+      // Tarjeta al rival por la falta que causó la lesión:
+      // lesión leve → amarilla (80%) o nada (20%)
+      // lesión básica → amarilla (60%) o roja (40%)
+      // lesión grave → roja directa siempre
+      const rCard=Math.random();
+      let foulCard=null;
+      if(type==='leve'){
+        if(rCard<0.8) foulCard='yellow';
+      } else if(type==='básica'){
+        foulCard=rCard<0.6?'yellow':'red';
+      } else {
+        foulCard='red';
+      }
+      p.injury.foulCard=foulCard; // guardamos para el feed
       injured.push(p);
     }
   });
@@ -2292,8 +2324,12 @@ function rollInjuries(myPower,oppPower){
 // and ~0.1 red cards per TEAM per match (11 players), based on historical
 // editions (1990: 3.71 yellows/match total both teams; 2006: ~5.4 — we use
 // a middle-ground average, split evenly between both teams).
-const YELLOW_RISK_PER_PLAYER = 0.017;
-const RED_RISK_PER_PLAYER    = 0.010;
+// Calibración basada en estadísticas históricas del Mundial:
+// Media real: ~1.3-1.8 amarillas por equipo por partido (histórico 1990-2022)
+// Con 11 jugadores: 0.12 por jugador → ~1.32 amarillas esperadas por partido
+// Rojas directas reales: ~0.1 por partido → 0.009 por jugador correcto
+const YELLOW_RISK_PER_PLAYER = 0.12;
+const RED_RISK_PER_PLAYER    = 0.009;
 
 function rollCards(){
   const cardedThisMatch=[]; // {player, type: 'yellow'|'second_yellow_match'|'yellow2'|'red'}
@@ -2382,6 +2418,21 @@ function rollOppEvents(oppPower, myPower){
   const oppInjuries=[];
   const injPlayer=allPool[Math.floor(Math.random()*allPool.length)];
   if(injPlayer && Math.random()<injRisk){
+    // Determinar gravedad y tarjeta correspondiente a mi jugador
+    const r=Math.random();
+    let injType;
+    if(r<0.5) injType='leve';
+    else if(r<0.85) injType='básica';
+    else injType='grave';
+
+    const rCard=Math.random();
+    let foulCard=null;
+    if(injType==='leve'){ if(rCard<0.8) foulCard='yellow'; }
+    else if(injType==='básica'){ foulCard=rCard<0.6?'yellow':'red'; }
+    else { foulCard='red'; }
+
+    injPlayer._injType=injType;
+    injPlayer._foulCard=foulCard; // tarjeta que recibirá mi jugador
     oppInjuries.push(injPlayer);
   }
 
@@ -2500,27 +2551,65 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
   const CICONS={yellow:'🟨',yellow2:'🟨🟨',double_yellow:'🟨🟥',red:'🟥'};
   if(newCards&&newCards.length){
     newCards.forEach(c=>allEvents.push({
-      minute:Math.floor(5+Math.random()*90), // pueden llegar a 90+
+      minute:Math.floor(5+Math.random()*90),
       type:'card',icon:CICONS[c.type]||'🟨',
       text:`<strong>${c.player.name}</strong>`
     }));
   }
   if(newInjuries&&newInjuries.length){
-    newInjuries.forEach(p=>allEvents.push({
-      minute:Math.floor(20+Math.random()*75),
-      type:'injury',icon:'✚',
-      text:`<strong>${p.name}</strong>`
-    }));
+    newInjuries.forEach(p=>{
+      const injMin=Math.floor(20+Math.random()*65);
+      // Lesión
+      allEvents.push({
+        minute:injMin,
+        type:'injury',icon:'✚',
+        text:`<strong>${p.name}</strong>`
+      });
+      // Tarjeta al rival en el mismo minuto (falta que causó la lesión)
+      if(p.injury&&p.injury.foulCard){
+        const oppPool=nextOpponent?nextOpponent.players:[];
+        const fouler=oppPool[Math.floor(Math.random()*oppPool.length)];
+        if(fouler){
+          const cardIcon=CICONS[p.injury.foulCard]||'🟨';
+          allEvents.push({
+            minute:injMin, // mismo minuto que la lesión
+            type:'oppcard',
+            icon:cardIcon,
+            text:`<strong>${fouler.name}</strong> <span style="font-size:10px;color:#e74c3c">(falta sobre ${p.name})</span>`
+          });
+        }
+      }
+    });
   }
   // Eventos del rival (lesiones y tarjetas)
   if(oppEvents){
     const CICONS={yellow:'🟨',double_yellow:'🟨🟥',red:'🟥'};
     if(oppEvents.injuries&&oppEvents.injuries.length){
-      oppEvents.injuries.forEach(p=>allEvents.push({
-        minute:Math.floor(20+Math.random()*65),
-        type:'oppcard',icon:'✚',
-        text:`<strong>${p.name}</strong>`
-      }));
+      oppEvents.injuries.forEach(p=>{
+        const injMin=Math.floor(20+Math.random()*65);
+        // Lesión del rival (feed derecha)
+        allEvents.push({
+          minute:injMin,
+          type:'oppcard',icon:'✚',
+          text:`<strong>${p.name}</strong>`
+        });
+        // Tarjeta a mi jugador por la falta (feed izquierda), mismo minuto
+        if(p._foulCard && usedPlayers.length){
+          const fouler=usedPlayers[Math.floor(Math.random()*usedPlayers.length)];
+          const cardIcon=CICONS[p._foulCard]||'🟨';
+          allEvents.push({
+            minute:injMin,
+            type:'card',icon:cardIcon,
+            text:`<strong>${fouler.name}</strong> <span style="font-size:10px;color:#a07a00">(falta sobre ${p.name})</span>`
+          });
+          // Si es roja, aplicar también las consecuencias de sanción
+          if(p._foulCard==='red'){
+            fouler.suspendedNextMatch=true;
+            fouler.cardStatus='red';
+            newCards.push({player:fouler, type:'red', _foulRed:true});
+          }
+        }
+      });
     }
     if(oppEvents.cards&&oppEvents.cards.length){
       oppEvents.cards.forEach(c=>allEvents.push({
@@ -3334,6 +3423,7 @@ function showGoldenTicket(){
         const d=snap.exists?snap.data():{};
         const newPts=(d.scratchPoints||0)+ptsEarned;
         const newEarned=(d.scratchPointsEarned||0)+ptsEarned;
+        if(ptsEarned>0) showGoatPointsBadge();
         await window._fbDb.collection('users').doc(user.uid).set({scratchPoints:newPts,scratchPointsEarned:newEarned},{merge:true});
         const pse=$id('pstat-scratch-pts'); if(pse) pse.textContent=newPts;
       }catch(e){console.warn('Error guardando pts golden ticket:',e);}
@@ -4366,7 +4456,7 @@ function initFirebaseAuth(){
       btn?.classList.toggle("auth-tab-active", active);
       pane?.classList.toggle("profile-tab-pane-active", active);
     });
-    if(tab==='upgrades') renderUpgradesTab();
+    if(tab==='upgrades'){ renderUpgradesTab(); hideGoatPointsBadge(); }
   };
 
   // Save match result to Firestore
@@ -4648,6 +4738,26 @@ document.addEventListener('click', e=>{
     badge.textContent='!';
     rivalTab.appendChild(badge);
   }
+})();
+
+/* ── Notificación de GOAT Points ganados ── */
+function showGoatPointsBadge(){
+  const pb=$id('profileGoatBadge');
+  const ub=$id('upgradesBadge');
+  if(pb) pb.style.display='block';
+  if(ub) ub.style.display='inline-block';
+  try{ localStorage.setItem('_g2g_pts_pending','1'); }catch(e){}
+}
+function hideGoatPointsBadge(){
+  const pb=$id('profileGoatBadge');
+  const ub=$id('upgradesBadge');
+  if(pb) pb.style.display='none';
+  if(ub) ub.style.display='none';
+  try{ localStorage.removeItem('_g2g_pts_pending'); }catch(e){}
+}
+// Restaurar badge si había puntos pendientes de ver al cargar la página
+(function(){
+  try{ if(localStorage.getItem('_g2g_pts_pending')) showGoatPointsBadge(); }catch(e){}
 })();
 
 /* ============================================================
@@ -5130,6 +5240,7 @@ function buildTicketInMount(mount, ticketCount, lastRegen, currentScratchPts){
         const currentPts=currentData.scratchPoints||0;
         const newPts=currentPts+ptsEarned;
         const newEarned=(currentData.scratchPointsEarned||0)+ptsEarned;
+        if(ptsEarned>0) showGoatPointsBadge();
         // Calcular nuevo contador de tickets
         const updated=computeCurrentTickets(
           currentData.ticketCount!==undefined?currentData.ticketCount:1,
@@ -5244,6 +5355,7 @@ async function refreshUpgradeCache(){
 }
 // Valores efectivos con mejoras aplicadas
 function getMaxBench(){ return 2 + (window._upgradeCache.bench||0); }
+function getRecoveryBonus(){ return (window._upgradeCache.recovery||0)*0.10; } // 10% menos fatiga por nivel
 function getMaxSubs(){  return 2 + (window._upgradeCache.subs||0); }
 function getScoutTeams(){ return 2; } // ya no se usa para equipos
 function getPlayersPerTeam(){ return 5 + (window._upgradeCache.scout||0); }
@@ -5255,8 +5367,8 @@ const UPGRADE_DEFS = [
     name: 'BANQUILLO',
     desc: 'PLAZAS EN EL BANQUILLO',
     baseCost: 5,
-    maxLevel: 10,
-    baseValue: 5,  // valor base actual
+    maxLevel: 5,
+    baseValue: 2,
     tooltip: (lvl) => `${2 + lvl} plazas en el banquillo`
   },
   {
@@ -5265,8 +5377,8 @@ const UPGRADE_DEFS = [
     name: 'CAMBIOS',
     desc: 'SUSTITUCIONES POR PARTIDO',
     baseCost: 5,
-    maxLevel: 10,
-    baseValue: 5,
+    maxLevel: 5,
+    baseValue: 2,
     tooltip: (lvl) => `${2 + lvl} cambios por partido`
   },
   {
@@ -5275,9 +5387,19 @@ const UPGRADE_DEFS = [
     name: 'CONVOCADOS',
     desc: 'JUGADORES POR EQUIPO AL BARAJAR',
     baseCost: 5,
-    maxLevel: 10,
-    baseValue: 3,
+    maxLevel: 5,
+    baseValue: 5,
     tooltip: (lvl) => `${5 + lvl} jugadores por equipo al barajar`
+  },
+  {
+    id: 'recovery',
+    icon: '⚡',
+    name: 'RECUPERACIÓN',
+    desc: 'REDUCE LA FATIGA ENTRE PARTIDOS',
+    baseCost: 5,
+    maxLevel: 5,
+    baseValue: 0,
+    tooltip: (lvl) => `${lvl*10}% menos fatiga por partido`
   },
 ];
 
@@ -5306,9 +5428,10 @@ async function saveUpgrades(upgrades){
 
 // Iconos SVG para mejoras (sin emoji)
 const UPGRADE_ICONS = {
-  bench: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 10v4M20 10v4M2 14h20M6 14v4M18 14v4"/></svg>',
-  subs:  '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M7 16l-4-4 4-4"/><path d="M17 8l4 4-4 4"/><line x1="3" y1="12" x2="21" y2="12"/></svg>',
-  scout: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/><path d="M11 8v6M8 11h6"/></svg>',
+  bench:    '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 10v4M20 10v4M2 14h20M6 14v4M18 14v4"/></svg>',
+  subs:     '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M7 16l-4-4 4-4"/><path d="M17 8l4 4-4 4"/><line x1="3" y1="12" x2="21" y2="12"/></svg>',
+  scout:    '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/><path d="M11 8v6M8 11h6"/></svg>',
+  recovery: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>',
 };
 
 // Renderizar la pestaña de mejoras
