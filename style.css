@@ -828,6 +828,16 @@ body.dark-theme .settings-item:hover{background:var(--row-hover);color:var(--gol
   #profileOverlay .profile-stats-grid{
     grid-template-columns:repeat(3,1fr);
   }
+  /* Todas las pestañas igual de anchas */
+  #profileOverlay .auth-tabs{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+  }
+  #profileOverlay .auth-tab{
+    text-align:center;
+    padding:10px 4px;
+    font-size:11px;
+  }
 }
 .auth-close{
   position:absolute;top:12px;right:14px;

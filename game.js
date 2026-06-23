@@ -2328,7 +2328,7 @@ function rollInjuries(myPower,oppPower){
 // Media real: ~1.3-1.8 amarillas por equipo por partido (histórico 1990-2022)
 // Con 11 jugadores: 0.12 por jugador → ~1.32 amarillas esperadas por partido
 // Rojas directas reales: ~0.1 por partido → 0.009 por jugador correcto
-const YELLOW_RISK_PER_PLAYER = 0.12;
+const YELLOW_RISK_PER_PLAYER = 0.055; // ~0.6 amarillas/equipo/partido base
 const RED_RISK_PER_PLAYER    = 0.009;
 
 function rollCards(){
