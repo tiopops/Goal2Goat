@@ -478,7 +478,7 @@ const PRESS_PREDICTIONS = [
     ]
   },
 ];
-const MAX_SWAPS_PER_MATCH = 5;
+// getMaxSubs() reemplazado por getMaxSubs() dinámico
 
 /* ========= COMPETITION STATE (World Cup format) ========= */
 const ROUND_NAMES = ["Octavos de Final","Cuartos de Final","Semifinal","Final"];
@@ -806,8 +806,8 @@ function rollTeams(){
   const pool=teams.slice();
   shuffle(pool);
   const t1=pool[0], t2=pool[1];
-  const _sc=getScoutTeams()<=2?5:5+Math.floor((getScoutTeams()-2)/2);
-  const p1=randomPick(t1.players,_sc), p2=randomPick(t2.players,_sc);
+  const _ppt=getPlayersPerTeam();
+  const p1=randomPick(t1.players,_ppt), p2=randomPick(t2.players,_ppt);
   window._lastTeamChoice={t1,p1,t2,p2,isBench:false};
   showTeamChoice(t1,p1,t2,p2);
 }
@@ -818,8 +818,8 @@ function rollBench(){
   shuffle(pool);
   const t1=pool[0], t2=pool[1];
   const already=new Set([...usedPlayers.map(p=>p.name),...bench.map(p=>p.name)]);
-  const _scb=getScoutTeams()<=2?5:5+Math.floor((getScoutTeams()-2)/2);
-  const p1=randomPick(t1.players.filter(p=>!already.has(p.name)),_scb);
+  const _ppt=getPlayersPerTeam();
+  const p1=randomPick(t1.players.filter(p=>!already.has(p.name)),_ppt);
   const p2=randomPick(t2.players.filter(p=>!already.has(p.name)),5);
   window._lastTeamChoice={t1,p1,p2,t2,isBench:true};
   showTeamChoice(t1,p1,t2,p2,true);
@@ -1347,7 +1347,7 @@ function getFatigueBarHTML(p){
 function updateConvocadosTable(){
   const el=document.getElementById("convocadosTable");
   if(!el) return;
-  const swapsLeft=MAX_SWAPS_PER_MATCH-swapsUsedThisMatch;
+  const swapsLeft=getMaxSubs()-swapsUsedThisMatch;
   const canSwap=(phase==='ready')&&swapsLeft>0;
   let rows="",stars=0;
   usedPlayers.forEach((p,i)=>{
@@ -1381,7 +1381,7 @@ function updateConvocadosTable(){
     if(phase==='ready'){
       swapHint.style.display="block";
       swapHint.textContent=swapsLeft>0
-        ? `Cambios disponibles antes del próximo partido: ${swapsLeft}/${MAX_SWAPS_PER_MATCH}`
+        ? `Cambios disponibles antes del próximo partido: ${swapsLeft}/${getMaxSubs()}`
         : `Ya has usado tu cambio para este partido.`;
     } else {
       swapHint.style.display="none";
@@ -1393,7 +1393,7 @@ function updateBenchTable(){
   const cnt=document.getElementById("benchCounter");
   if(cnt) cnt.textContent=bench.length+`/${getMaxBench()}`;
   if(!el) return;
-  const swapsLeft=MAX_SWAPS_PER_MATCH-swapsUsedThisMatch;
+  const swapsLeft=getMaxSubs()-swapsUsedThisMatch;
   const canSwap=(phase==='ready')&&swapsLeft>0;
   let rows="";
   bench.forEach((p,i)=>{
@@ -1411,7 +1411,7 @@ function updateBenchTable(){
 
 /* ========= PRE-MATCH SWAPS (convocados <-> bench) ========= */
 function onConvocadoClick(i){
-  if(phase!=='ready'||swapsUsedThisMatch>=MAX_SWAPS_PER_MATCH) return;
+  if(phase!=='ready'||swapsUsedThisMatch>=getMaxSubs()) return;
   if(swapSelection&&swapSelection.source==='bench'){
     // bench → conv swap
     const benchIdx=swapSelection.index;
@@ -1437,7 +1437,7 @@ function onConvocadoClick(i){
   updateBenchTable();
 }
 function onBenchClick(i){
-  if(phase!=='ready'||swapsUsedThisMatch>=MAX_SWAPS_PER_MATCH) return;
+  if(phase!=='ready'||swapsUsedThisMatch>=getMaxSubs()) return;
   // A suspended player cannot be brought onto the pitch — they must serve
   // their sanction. Clicking them does nothing until the suspension lifts.
   if(bench[i]&&bench[i].suspended) return;
@@ -5209,7 +5209,8 @@ async function refreshUpgradeCache(){
 // Valores efectivos con mejoras aplicadas
 function getMaxBench(){ return 2 + (window._upgradeCache.bench||0); }
 function getMaxSubs(){  return 2 + (window._upgradeCache.subs||0); }
-function getScoutTeams(){ return 2 + (window._upgradeCache.scout||0); }
+function getScoutTeams(){ return 2; } // ya no se usa para equipos
+function getPlayersPerTeam(){ return 5 + (window._upgradeCache.scout||0); }
 
 const UPGRADE_DEFS = [
   {
@@ -5230,17 +5231,17 @@ const UPGRADE_DEFS = [
     baseCost: 5,
     maxLevel: 10,
     baseValue: 5,
-    tooltip: (lvl) => `${2 + lvl} sustituciones por partido`
+    tooltip: (lvl) => `${2 + lvl} cambios por partido`
   },
   {
     id: 'scout',
     icon: '🔭',
     name: 'CONVOCADOS',
-    desc: 'JUGADORES AL BARAJAR EQUIPOS',
+    desc: 'JUGADORES POR EQUIPO AL BARAJAR',
     baseCost: 5,
     maxLevel: 10,
     baseValue: 3,
-    tooltip: (lvl) => `${3 + lvl} equipos mostrados al seleccionar`
+    tooltip: (lvl) => `${5 + lvl} jugadores por equipo al barajar`
   },
 ];
 
