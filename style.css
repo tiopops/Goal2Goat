@@ -7,9 +7,10 @@
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%}
-/* Tema oscuro por defecto para evitar el flash claro al cargar */
-body{background:#15181a;font-family:'Inter',Arial,sans-serif;color:#ccc;font-size:13px}
-body.theme-loaded{background:var(--bg);color:var(--text);transition:background .2s,color .2s}
+/* El body arranca con clases dark-theme aplicadas desde el <head>
+   para evitar el fogonazo. La transición solo se activa después. */
+body{background:var(--bg);font-family:'Inter',Arial,sans-serif;color:var(--text);font-size:13px}
+body.theme-ready{transition:background .2s,color .2s}
 
 /* ===================== LAYOUT ===================== */
 body{display:flex;flex-direction:column;height:100vh;overflow:hidden}
@@ -818,8 +819,62 @@ body.dark-theme .settings-item:hover{background:var(--row-hover);color:var(--gol
   position:relative;max-height:90vh;overflow-y:auto;
   box-sizing:border-box;
 }
-/* Modal de perfil más ancho en desktop */
-#profileOverlay .auth-modal{max-width:640px;padding:28px 32px}
+/* Modal de perfil en desktop: layout horizontal */
+@media(min-width:641px){
+  #profileOverlay .auth-modal{
+    max-width:740px;
+    width:90vw;
+    padding:0;
+    display:flex;
+    flex-direction:column;
+    max-height:85vh;
+    overflow:hidden;
+  }
+  /* Header con nombre */
+  #profileOverlay .auth-logo{
+    padding:20px 28px 0;
+    margin-bottom:0;
+    text-align:left;
+    border-bottom:1px solid var(--line);
+    padding-bottom:14px;
+  }
+  /* X de cierre */
+  #profileOverlay .auth-close{
+    top:16px;right:16px;
+  }
+  /* Tabs horizontales reales */
+  #profileOverlay .auth-tabs{
+    padding:0 28px;
+    margin-bottom:0;
+    border-bottom:2px solid var(--line);
+    flex-shrink:0;
+  }
+  #profileOverlay .auth-tab{
+    font-size:12px;
+    padding:12px 16px;
+    flex:none;
+  }
+  /* Área de contenido scrolleable */
+  #profileOverlay .profile-tab-stack{
+    flex:1;
+    overflow-y:auto;
+    padding:20px 28px;
+    min-height:0;
+  }
+  /* Stats en 3 columnas */
+  #profileOverlay .profile-stats-grid{
+    grid-template-columns:repeat(3,1fr);
+  }
+  /* Mejoras: dos columnas */
+  #profileOverlay .upgrades-list{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:0 24px;
+  }
+  #profileOverlay .upgrade-row{
+    border-bottom:1px solid var(--line);
+  }
+}
 .auth-close{
   position:absolute;top:12px;right:14px;
   background:none;border:none;color:#888;font-size:18px;
@@ -904,10 +959,6 @@ body.dark-theme .settings-item:hover{background:var(--row-hover);color:var(--gol
 /* PROFILE STATS */
 .profile-stats-grid{
   display:grid;grid-template-columns:1fr 1fr;gap:6px;width:100%;margin:8px 0;
-}
-/* En desktop con modal más ancho, 3 columnas */
-#profileOverlay .profile-stats-grid{
-  grid-template-columns:repeat(3,1fr);
 }
 .profile-stat-card{
   background:var(--dark);border:1px solid var(--line);

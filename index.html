@@ -9,15 +9,15 @@
   (function(){
     var saved=null;
     try{ saved=localStorage.getItem('darkTheme'); }catch(e){}
-    // Por defecto oscuro (null = primera visita)
+    // Por defecto oscuro. Aplicar clase ANTES de que cargue el CSS.
     if(saved===null||saved==='true'){
-      document.documentElement.classList.add('dark-theme-pre');
+      document.documentElement.className='dark-theme';
     }
   })();
 </script>
 <style>
-  /* Evitar fogonazo: fondo oscuro inmediato si el tema es oscuro */
-  .dark-theme-pre{background:#15181a !important}
+  /* Fondo oscuro inmediato mientras el CSS carga */
+  .dark-theme{background:#15181a;color:#ccc}
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;600;700&family=Press+Start+2P&display=swap" rel="stylesheet">
