@@ -818,6 +818,8 @@ body.dark-theme .settings-item:hover{background:var(--row-hover);color:var(--gol
   position:relative;max-height:90vh;overflow-y:auto;
   box-sizing:border-box;
 }
+/* Modal de perfil más ancho en desktop */
+#profileOverlay .auth-modal{max-width:640px;padding:28px 32px}
 .auth-close{
   position:absolute;top:12px;right:14px;
   background:none;border:none;color:#888;font-size:18px;
@@ -878,9 +880,10 @@ body.dark-theme .settings-item:hover{background:var(--row-hover);color:var(--gol
 .auth-tab{
   flex:1;background:none;border:none;color:var(--text-muted);
   font-family:'Bebas Neue',Impact,sans-serif;
-  font-size:14px;letter-spacing:1px;
-  padding:10px 0;cursor:pointer;transition:.15s;
+  font-size:12px;letter-spacing:.8px;
+  padding:10px 6px;cursor:pointer;transition:.15s;
   border-bottom:2px solid transparent;margin-bottom:-2px;
+  white-space:nowrap;text-align:center;
 }
 .auth-tab:hover{color:var(--text)}
 .auth-tab-active{
@@ -901,6 +904,10 @@ body.dark-theme .settings-item:hover{background:var(--row-hover);color:var(--gol
 /* PROFILE STATS */
 .profile-stats-grid{
   display:grid;grid-template-columns:1fr 1fr;gap:6px;width:100%;margin:8px 0;
+}
+/* En desktop con modal más ancho, 3 columnas */
+#profileOverlay .profile-stats-grid{
+  grid-template-columns:repeat(3,1fr);
 }
 .profile-stat-card{
   background:var(--dark);border:1px solid var(--line);

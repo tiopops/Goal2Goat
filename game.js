@@ -4128,7 +4128,8 @@ function syncThemeToggleUI(isDark){
   }catch(e){}
   if(isDark) document.body.classList.add("dark-theme");
   else document.body.classList.remove("dark-theme");
-  // Activar transiciones solo después de aplicar el tema inicial
+  // Eliminar la clase provisional del head y activar transiciones
+  document.documentElement.classList.remove('dark-theme-pre');
   requestAnimationFrame(()=>document.body.classList.add("theme-loaded"));
   syncThemeToggleUI(isDark);
 })();

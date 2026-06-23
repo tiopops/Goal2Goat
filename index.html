@@ -4,6 +4,21 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Goal2Goat</title>
+<!-- Aplicar tema ANTES de pintar para evitar el fogonazo claro -->
+<script>
+  (function(){
+    var saved=null;
+    try{ saved=localStorage.getItem('darkTheme'); }catch(e){}
+    // Por defecto oscuro (null = primera visita)
+    if(saved===null||saved==='true'){
+      document.documentElement.classList.add('dark-theme-pre');
+    }
+  })();
+</script>
+<style>
+  /* Evitar fogonazo: fondo oscuro inmediato si el tema es oscuro */
+  .dark-theme-pre{background:#15181a !important}
+</style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;600;700&family=Press+Start+2P&display=swap" rel="stylesheet">
 <script>
