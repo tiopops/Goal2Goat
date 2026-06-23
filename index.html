@@ -17,7 +17,7 @@
 <header id="appHeader">
   <div class="app-header-logo">
     <div class="logo" onclick="location.reload()" style="cursor:pointer" title="Volver al inicio">GOAL2GOAT</div>
-    <div class="version-tag">v0.35</div>
+    <div class="version-tag">v0.35b</div>
   </div>
   <div class="app-header-actions">
     <a href="https://ko-fi.com/goal2goat" target="_blank" class="support-btn" style="text-decoration:none;display:inline-flex;align-items:center;justify-content:center">APOYA A GOAL2GOAT</a>
@@ -49,7 +49,8 @@
     <div class="auth-tabs">
       <button class="auth-tab auth-tab-active" id="profileTabStats">ESTADÍSTICAS</button>
       <button class="auth-tab" id="profileTabUser">AJUSTES</button>
-      <button class="auth-tab" id="profileTabNotes">NOTAS DE LA VERSIÓN <span id="profileVersionLabel"></span></button>
+      <button class="auth-tab" id="profileTabUpgrades">MEJORAS</button>
+      <button class="auth-tab" id="profileTabNotes">NOTAS <span id="profileVersionLabel"></span></button>
     </div>
 
     <!-- All panes stack in the same grid cell, so the modal always sizes
@@ -174,6 +175,22 @@
         </div>
       </div>
 
+      <!-- MEJORAS TAB -->
+      <div id="profileUpgradesPane" class="profile-tab-pane">
+        <div class="upgrades-header">
+          <div class="upgrades-title-row">
+            <span class="upgrades-title">MEJORAS</span>
+            <span class="upgrades-subtitle">ATRIBUTOS DEL MANAGER</span>
+          </div>
+          <div class="upgrades-points-badge">
+            <span class="upgrades-star">★</span>
+            <span id="upgradePointsDisplay">0</span>
+            <span class="upgrades-pts-label">GOAT POINTS</span>
+          </div>
+        </div>
+        <div class="upgrades-list" id="upgradesList"></div>
+      </div>
+
     </div>
   </div>
 </div>
@@ -282,7 +299,7 @@
         <button class="formation-tab" data-cat="defensiva">Defensiva</button>
       </div>
       <div id="formationList"></div>
-      <p class="hint-line formation-picker-hint">Elige tu formación ahora — una vez completes el equipo, quedará fijada para todo el torneo.</p>
+      <p class="hint-line formation-picker-hint" style="display:none">Elige tu formación ahora — una vez completes el equipo, quedará fijada para todo el torneo.</p>
     </div>
 
     <div class="team-profile box" id="teamProfileBox">
@@ -470,9 +487,6 @@
     <div class="auth-logo">🏆 RANKING GLOBAL</div>
     <p class="ranking-subtitle" style="text-align:center">Top 50 mejores puntuaciones de jugadores registrados</p>
     <div id="rankingTableDesktop"><p class="ranking-loading">Cargando...</p></div>
-    <div id="rankingDebugZone" style="display:none;margin-top:12px;border-top:1px dashed #c0392b;padding-top:10px">
-      <button onclick="window.clearRanking()" style="width:100%;background:#c0392b;color:#fff;border:none;padding:10px;font-family:'Bebas Neue',Impact,sans-serif;font-size:14px;letter-spacing:1px;cursor:pointer">⚙️ LIMPIAR RANKING COMPLETO</button>
-    </div>
   </div>
 </div>
 

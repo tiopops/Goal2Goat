@@ -4299,15 +4299,17 @@ function initFirebaseAuth(){
 
   window.switchProfileTab=function(tab){
     const tabs={
-      stats: {btn:$id("profileTabStats"), pane:$id("profileStatsPane")},
-      user:  {btn:$id("profileTabUser"),  pane:$id("profileUserPane")},
-      notes: {btn:$id("profileTabNotes"), pane:$id("profileNotesPane")},
+      stats:    {btn:$id("profileTabStats"),    pane:$id("profileStatsPane")},
+      user:     {btn:$id("profileTabUser"),     pane:$id("profileUserPane")},
+      upgrades: {btn:$id("profileTabUpgrades"), pane:$id("profileUpgradesPane")},
+      notes:    {btn:$id("profileTabNotes"),    pane:$id("profileNotesPane")},
     };
     Object.entries(tabs).forEach(([key,{btn,pane}])=>{
       const active=(key===tab);
       btn?.classList.toggle("auth-tab-active", active);
       pane?.classList.toggle("profile-tab-pane-active", active);
     });
+    if(tab==='upgrades') renderUpgradesTab();
   };
 
   // Save match result to Firestore
@@ -4424,27 +4426,6 @@ function initFirebaseAuth(){
   window.showRankingModal=function(){
     const o=document.getElementById('rankingOverlay');
     if(o){ o.style.display='flex'; window.loadRanking('rankingTableDesktop'); }
-    // Mostrar botón de limpiar solo en modo debug
-    const dbz=document.getElementById('rankingDebugZone');
-    if(dbz) dbz.style.display=window.CHEATS_ACTIVE?'block':'none';
-  };
-
-  window.clearRanking=async function(){
-    if(!window.CHEATS_ACTIVE) return;
-    if(!confirm('¿Borrar TODAS las entradas del ranking? Esta acción no se puede deshacer.')) return;
-    try{
-      const btn=document.querySelector('#rankingDebugZone button');
-      if(btn) btn.textContent='Borrando...';
-      const snap=await window._fbDb.collection('scores').get();
-      const batch=window._fbDb.batch();
-      snap.docs.forEach(doc=>batch.delete(doc.ref));
-      await batch.commit();
-      if(btn) btn.textContent='⚙️ LIMPIAR RANKING COMPLETO';
-      window.loadRanking('rankingTableDesktop');
-    }catch(e){
-      console.error('Error limpiando ranking:',e);
-      alert('Error: '+e.message);
-    }
   };
 
   /* ─── CLOSE ON BACKDROP ─── */
@@ -4464,9 +4445,10 @@ function initFirebaseAuth(){
   wire("authCloseBtn",     ()=>window.closeAuthModal());
   wire("profileCloseBtn",  ()=>window.closeProfileModal());
   wire("profileLogoutBtn", ()=>{ window.authLogout(); window.closeProfileModal(); });
-  wire("profileTabStats",  ()=>window.switchProfileTab("stats"));
-  wire("profileTabUser",   ()=>window.switchProfileTab("user"));
-  wire("profileTabNotes",  ()=>window.switchProfileTab("notes"));
+  wire("profileTabStats",    ()=>window.switchProfileTab("stats"));
+  wire("profileTabUser",     ()=>window.switchProfileTab("user"));
+  wire("profileTabUpgrades", ()=>window.switchProfileTab("upgrades"));
+  wire("profileTabNotes",    ()=>window.switchProfileTab("notes"));
   // Auto-save the team-name preference: checkbox toggles save immediately,
   // the text field saves when the user leaves it (blur) or presses Enter.
   (function(){
@@ -5142,3 +5124,173 @@ async function initTicketSystem(user, isNewUser){
 /* ── Hook en onAuthStateChanged para inicializar boletos ── */
 // Se llamará desde el listener de auth ya existente
 window._initTicketSystem=initTicketSystem;
+
+/* ============================================================
+   SISTEMA DE MEJORAS (GOAT Points)
+   - 3 características: BANQUILLO, CAMBIOS, CONVOCADOS
+   - 10 niveles por característica
+   - Coste: nivel 1 = 5pts, cada nivel siguiente dobla el anterior
+   - Se puede deshacer (recuperar puntos)
+   - Se guarda en Firestore: users/{uid}.upgrades
+   ============================================================ */
+
+const UPGRADE_DEFS = [
+  {
+    id: 'bench',
+    icon: '🪑',
+    name: 'BANQUILLO',
+    desc: 'PLAZAS EN EL BANQUILLO',
+    baseCost: 5,
+    maxLevel: 10,
+    baseValue: 5,  // valor base actual
+    tooltip: (lvl) => `${5 + lvl} plazas en el banquillo`
+  },
+  {
+    id: 'subs',
+    icon: '🔄',
+    name: 'CAMBIOS',
+    desc: 'SUSTITUCIONES POR PARTIDO',
+    baseCost: 5,
+    maxLevel: 10,
+    baseValue: 5,
+    tooltip: (lvl) => `${5 + lvl} sustituciones por partido`
+  },
+  {
+    id: 'scout',
+    icon: '🔭',
+    name: 'CONVOCADOS',
+    desc: 'JUGADORES AL BARAJAR EQUIPOS',
+    baseCost: 5,
+    maxLevel: 10,
+    baseValue: 3,
+    tooltip: (lvl) => `${3 + lvl} equipos mostrados al seleccionar`
+  },
+];
+
+// Coste acumulado para subir al nivel N (0-indexed: coste para ir de N-1 a N)
+function upgradeLevelCost(def, toLevel){
+  // nivel 1 = baseCost, nivel 2 = baseCost*2, nivel 3 = baseCost*4...
+  return def.baseCost * Math.pow(2, toLevel - 1);
+}
+
+// Cargar upgrades de Firestore
+async function loadUpgrades(){
+  const user = window._fbAuth && window._fbAuth.currentUser;
+  if(!user) return {};
+  try{
+    const snap = await window._fbDb.collection('users').doc(user.uid).get();
+    return (snap.exists && snap.data().upgrades) || {};
+  }catch(e){ return {}; }
+}
+
+// Guardar upgrades en Firestore
+async function saveUpgrades(upgrades){
+  const user = window._fbAuth && window._fbAuth.currentUser;
+  if(!user) return;
+  await window._fbDb.collection('users').doc(user.uid).set({upgrades}, {merge:true});
+}
+
+// Renderizar la pestaña de mejoras
+async function renderUpgradesTab(){
+  const list = document.getElementById('upgradesList');
+  const pointsEl = document.getElementById('upgradePointsDisplay');
+  if(!list) return;
+
+  list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted)">Cargando...</div>';
+
+  const user = window._fbAuth && window._fbAuth.currentUser;
+  if(!user){
+    list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted)">Inicia sesión para ver las mejoras.</div>';
+    return;
+  }
+
+  // Cargar puntos y upgrades actuales
+  const snap = await window._fbDb.collection('users').doc(user.uid).get();
+  const data = snap.exists ? snap.data() : {};
+  let currentPts = data.scratchPoints || 0;
+  let upgrades = data.upgrades || {};
+
+  if(pointsEl) pointsEl.textContent = currentPts;
+
+  list.innerHTML = '';
+
+  UPGRADE_DEFS.forEach(def => {
+    const currentLevel = upgrades[def.id] || 0;
+    const nextCost = currentLevel < def.maxLevel ? upgradeLevelCost(def, currentLevel + 1) : null;
+    const prevRefund = currentLevel > 0 ? upgradeLevelCost(def, currentLevel) : null;
+    const canUpgrade = nextCost !== null && currentPts >= nextCost;
+    const canDowngrade = currentLevel > 0;
+
+    const row = document.createElement('div');
+    row.className = 'upgrade-row';
+    row.id = `upgrade-row-${def.id}`;
+
+    // Barras
+    const bars = Array.from({length: def.maxLevel}, (_, i) =>
+      `<div class="upgrade-bar ${i < currentLevel ? 'filled' : ''}" data-bar="${def.id}-${i}"></div>`
+    ).join('');
+
+    row.innerHTML = `
+      <div class="upgrade-icon">${def.icon}</div>
+      <div class="upgrade-info">
+        <div class="upgrade-name">${def.name}</div>
+        <div class="upgrade-desc">${def.desc}</div>
+        <div class="upgrade-bars">
+          ${bars}
+          <span class="upgrade-level-text">${currentLevel} / ${def.maxLevel}</span>
+        </div>
+      </div>
+      <div class="upgrade-controls">
+        <div class="upgrade-cost">
+          ${nextCost !== null ? `<span style="font-size:9px">★</span>${nextCost}` : '<span style="font-size:9px;color:var(--text-muted)">MAX</span>'}
+        </div>
+        <button class="upgrade-btn minus" data-id="${def.id}" title="Reducir (recuperar ${prevRefund || 0} pts)" ${canDowngrade ? '' : 'disabled'}>−</button>
+        <button class="upgrade-btn plus" data-id="${def.id}" title="Mejorar por ${nextCost || 0} pts" ${canUpgrade ? '' : 'disabled'}>+</button>
+      </div>`;
+
+    list.appendChild(row);
+  });
+
+  // Event listeners para + y -
+  list.querySelectorAll('.upgrade-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const id = btn.dataset.id;
+      const def = UPGRADE_DEFS.find(d => d.id === id);
+      if(!def) return;
+
+      // Leer estado fresco de Firestore
+      const freshSnap = await window._fbDb.collection('users').doc(user.uid).get();
+      const freshData = freshSnap.exists ? freshSnap.data() : {};
+      let pts = freshData.scratchPoints || 0;
+      let upgs = freshData.upgrades || {};
+      let lvl = upgs[id] || 0;
+
+      if(btn.classList.contains('plus')){
+        const cost = upgradeLevelCost(def, lvl + 1);
+        if(lvl >= def.maxLevel || pts < cost) return;
+        lvl++;
+        pts -= cost;
+      } else {
+        if(lvl <= 0) return;
+        const refund = upgradeLevelCost(def, lvl);
+        pts += refund;
+        lvl--;
+      }
+
+      upgs[id] = lvl;
+      await window._fbDb.collection('users').doc(user.uid).set({
+        scratchPoints: pts,
+        upgrades: upgs
+      }, {merge: true});
+
+      // Actualizar display
+      const pEl = document.getElementById('upgradePointsDisplay');
+      if(pEl) pEl.textContent = pts;
+      const statPts = document.getElementById('pstat-scratch-pts');
+      if(statPts) statPts.textContent = pts;
+
+      // Re-render la pestaña
+      renderUpgradesTab();
+    });
+  });
+}
