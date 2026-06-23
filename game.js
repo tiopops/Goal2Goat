@@ -4221,6 +4221,9 @@ function initFirebaseAuth(){
       if(profileBtn) profileBtn.style.display="none";
       if(settingsMenu) settingsMenu.style.display="";
       const hBtn=$id("headerTicketBtn"); if(hBtn) hBtn.style.display="none";
+      // Limpiar cache de mejoras al cerrar sesión
+      window._upgradeCache={bench:0,subs:0,scout:0};
+      try{ localStorage.removeItem('_g2g_upgrades'); }catch(e){}
       window.currentUsername=null;
       window.preferredTeamName="";
       window.useFixedTeamName=false;
@@ -5198,7 +5201,13 @@ async function loadUserUpgradeLevel(id){
   }catch(e){ return 0; }
 }
 // Cache sincrónico — se actualiza al abrir MEJORAS y al comprar/vender
-window._upgradeCache={bench:0,subs:0,scout:0};
+// Se persiste en localStorage para que esté disponible inmediatamente
+(function(){
+  try{
+    const saved=localStorage.getItem('_g2g_upgrades');
+    window._upgradeCache=saved?JSON.parse(saved):{bench:0,subs:0,scout:0};
+  }catch(e){ window._upgradeCache={bench:0,subs:0,scout:0}; }
+})();
 async function refreshUpgradeCache(){
   if(!window._fbAuth||!window._fbAuth.currentUser) return;
   try{
@@ -5209,6 +5218,8 @@ async function refreshUpgradeCache(){
       subs:  upgs.subs||0,
       scout: upgs.scout||0,
     };
+    // Persistir en localStorage para la próxima carga
+    try{ localStorage.setItem('_g2g_upgrades', JSON.stringify(window._upgradeCache)); }catch(e){}
   }catch(e){}
 }
 // Valores efectivos con mejoras aplicadas
