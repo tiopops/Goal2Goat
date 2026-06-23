@@ -4,21 +4,17 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Goal2Goat</title>
-<!-- Aplicar tema ANTES de pintar para evitar el fogonazo claro -->
+<!-- Fix fogonazo: fondo oscuro ANTES de cualquier CSS --><style>html{background:#15181a;color:#ccc}</style>
 <script>
   (function(){
     var saved=null;
-    try{ saved=localStorage.getItem('darkTheme'); }catch(e){}
-    // Por defecto oscuro. Aplicar clase ANTES de que cargue el CSS.
-    if(saved===null||saved==='true'){
-      document.documentElement.className='dark-theme';
+    try{saved=localStorage.getItem('darkTheme');}catch(e){}
+    if(saved==='false'){
+      document.documentElement.style.background='';
+      document.documentElement.style.color='';
     }
   })();
 </script>
-<style>
-  /* Fondo oscuro inmediato mientras el CSS carga */
-  .dark-theme{background:#15181a;color:#ccc}
-</style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;600;700&family=Press+Start+2P&display=swap" rel="stylesheet">
 <script>

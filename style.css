@@ -822,57 +822,55 @@ body.dark-theme .settings-item:hover{background:var(--row-hover);color:var(--gol
 /* Modal de perfil en desktop: layout horizontal */
 @media(min-width:641px){
   #profileOverlay .auth-modal{
-    max-width:740px;
-    width:90vw;
+    max-width:780px;
+    width:min(90vw,780px);
     padding:0;
     display:flex;
     flex-direction:column;
-    max-height:85vh;
+    max-height:88vh;
     overflow:hidden;
   }
-  /* Header con nombre */
   #profileOverlay .auth-logo{
-    padding:20px 28px 0;
+    padding:20px 28px 14px;
     margin-bottom:0;
     text-align:left;
     border-bottom:1px solid var(--line);
-    padding-bottom:14px;
+    flex-shrink:0;
   }
-  /* X de cierre */
-  #profileOverlay .auth-close{
-    top:16px;right:16px;
-  }
-  /* Tabs horizontales reales */
+  #profileOverlay .auth-close{top:16px;right:16px;}
   #profileOverlay .auth-tabs{
     padding:0 28px;
     margin-bottom:0;
     border-bottom:2px solid var(--line);
     flex-shrink:0;
+    overflow-x:auto;
   }
   #profileOverlay .auth-tab{
     font-size:12px;
-    padding:12px 16px;
+    padding:12px 20px;
     flex:none;
   }
-  /* Área de contenido scrolleable */
   #profileOverlay .profile-tab-stack{
     flex:1;
     overflow-y:auto;
+    overflow-x:hidden;
     padding:20px 28px;
     min-height:0;
+    width:100%;
+    box-sizing:border-box;
   }
-  /* Stats en 3 columnas */
   #profileOverlay .profile-stats-grid{
     grid-template-columns:repeat(3,1fr);
   }
-  /* Mejoras: dos columnas */
   #profileOverlay .upgrades-list{
     display:grid;
     grid-template-columns:1fr 1fr;
-    gap:0 24px;
+    gap:0 28px;
   }
-  #profileOverlay .upgrade-row{
-    border-bottom:1px solid var(--line);
+  #profileOverlay .upgrade-row{border-bottom:1px solid var(--line);}
+  #profileOverlay .version-notes-scroll{
+    height:calc(88vh - 160px);
+    max-height:none;
   }
 }
 .auth-close{
