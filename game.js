@@ -2017,23 +2017,17 @@ function playMatch(){
   const oppLambda=Math.max(0.25, 1.15-diff+tactical.oppScoreMod+counter.oppScoreMod-earlyBoost*0.6-groupNudge*0.6+weatherDelta);
   let myGoals=window.CHEATS_ACTIVE ? (3+Math.floor(Math.random()*3)) : poissonSample(myLambda);
   let oppGoals=window.CHEATS_ACTIVE ? 0 : poissonSample(oppLambda);
-  // Match narrative
-  let summary=generateMatchSummary(myGoals,oppGoals,nextOpponent.name);
-  updateScorerStreaks(generateMatchSummary._scorers||[]);
   // Injuries y tarjetas propias
   const newInjuries=rollInjuries(myPower,oppPower);
   const newCards=rollCards();
   // Eventos del rival (lesiones y tarjetas)
   const oppEvents=rollOppEvents(oppPower,myPower);
   // Si el rival tiene una expulsión, su lambda se reduce proporcionalmente
-  // desde el minuto de la roja: reducción promedio de ~11% (10/11 jugadores)
   let adjOppLambda=oppLambda;
   if(oppEvents.redMinute!==null){
-    // Fracción del partido que juegan con 10: (90-redMinute)/90
     const fracWith10=Math.max(0,(90-oppEvents.redMinute)/90);
     adjOppLambda=oppLambda*(1-fracWith10*0.11);
   }
-  // Recalcular goles del rival con el lambda ajustado
   if(!window.CHEATS_ACTIVE && oppEvents.redMinute!==null){
     oppGoals=poissonSample(adjOppLambda);
   }
@@ -2056,6 +2050,10 @@ function playMatch(){
       }
     });
   }
+
+  // Generar summary DESPUÉS de todos los recálculos de goles
+  let summary=generateMatchSummary(myGoals,oppGoals,nextOpponent.name);
+  updateScorerStreaks(generateMatchSummary._scorers||[]);
 
   // Procesar expulsiones durante el partido:
   // Jugadores con roja/doble amarilla se retiran si hay hueco en banquillo.
@@ -5506,6 +5504,7 @@ async function renderUpgradesTab(){
       const def = UPGRADE_DEFS.find(d => d.id === id);
       if(!def) return;
       btn.disabled = true;
+      playSound('select');
 
       const freshSnap = await window._fbDb.collection('users').doc(user.uid).get();
       const freshData = freshSnap.exists ? freshSnap.data() : {};
