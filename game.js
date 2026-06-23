@@ -806,7 +806,8 @@ function rollTeams(){
   const pool=teams.slice();
   shuffle(pool);
   const t1=pool[0], t2=pool[1];
-  const p1=randomPick(t1.players,5), p2=randomPick(t2.players,5);
+  const _sc=getScoutTeams()<=2?5:5+Math.floor((getScoutTeams()-2)/2);
+  const p1=randomPick(t1.players,_sc), p2=randomPick(t2.players,_sc);
   window._lastTeamChoice={t1,p1,t2,p2,isBench:false};
   showTeamChoice(t1,p1,t2,p2);
 }
@@ -817,7 +818,8 @@ function rollBench(){
   shuffle(pool);
   const t1=pool[0], t2=pool[1];
   const already=new Set([...usedPlayers.map(p=>p.name),...bench.map(p=>p.name)]);
-  const p1=randomPick(t1.players.filter(p=>!already.has(p.name)),5);
+  const _scb=getScoutTeams()<=2?5:5+Math.floor((getScoutTeams()-2)/2);
+  const p1=randomPick(t1.players.filter(p=>!already.has(p.name)),_scb);
   const p2=randomPick(t2.players.filter(p=>!already.has(p.name)),5);
   window._lastTeamChoice={t1,p1,p2,t2,isBench:true};
   showTeamChoice(t1,p1,t2,p2,true);
@@ -960,7 +962,7 @@ function pickPlayer(player){
     benchCount++;
     if(rosterTarget) rosterTarget.innerHTML="";
     updateBenchTable();
-    if(benchCount>=5){
+    if(benchCount>=getMaxBench()){
       phase="ready";
       rollBtn.style.display="none";
       const tipsBox=document.getElementById("tipsBox");
@@ -978,7 +980,7 @@ function pickPlayer(player){
       startLedLoop();
     } else {
       rollBtn.disabled=false;
-      rollBtn.textContent=`BANQUILLO ${benchCount}/5`;
+      rollBtn.textContent=`BANQUILLO ${benchCount}/${getMaxBench()}`;
       scrollToCenter("rollBtn");
     }
     return;
@@ -1200,7 +1202,7 @@ function onSlotClick(slot){
   if(draftedCount>=11){
     baseTeamOVR=computeTeamOVR();
     phase="bench";
-    rollBtn.textContent="BANQUILLO 0/5";
+    rollBtn.textContent=`BANQUILLO 0/${getMaxBench()}`;
     rollBtn.disabled=false;
     document.getElementById("benchSection").style.display="block";
     playerCardEl.innerHTML="";
@@ -1389,7 +1391,7 @@ function updateConvocadosTable(){
 function updateBenchTable(){
   const el=document.getElementById("benchTable");
   const cnt=document.getElementById("benchCounter");
-  if(cnt) cnt.textContent=bench.length+"/5";
+  if(cnt) cnt.textContent=bench.length+`/${getMaxBench()}`;
   if(!el) return;
   const swapsLeft=MAX_SWAPS_PER_MATCH-swapsUsedThisMatch;
   const canSwap=(phase==='ready')&&swapsLeft>0;
@@ -2029,6 +2031,11 @@ function playMatch(){
   if(!window.CHEATS_ACTIVE && oppEvents.redMinute!==null){
     oppGoals=poissonSample(adjOppLambda);
   }
+  // Procesar expulsiones durante el partido:
+  // Jugadores con roja/doble amarilla se retiran si hay hueco en banquillo.
+  // Si el banquillo está lleno, se quedan en el campo con rating 0.
+  applyInMatchRedCards(newCards);
+
   // Fatigue y tabla se actualizan al TERMINAR el partido (en showPostMatch)
   // para que la tabla de convocados no cambie mientras se simula
 
@@ -2323,6 +2330,38 @@ function rollCards(){
     }
   });
   return cardedThisMatch;
+}
+
+/* ── Expulsiones durante el partido actual ──────────────────────────────
+   Jugadores con roja o doble amarilla se mueven al banquillo si hay hueco.
+   Si el banquillo está lleno, permanecen en el campo con rating=0. ── */
+function applyInMatchRedCards(newCards){
+  if(!newCards||!newCards.length) return;
+  const reds=newCards.filter(c=>c.type==='red'||c.type==='double_yellow');
+  if(!reds.length) return;
+  const slots=getPitchSlots();
+  reds.forEach(({player:p})=>{
+    // Marcar como expulsado en este partido
+    p._redThisMatch=true;
+    // ¿Hay hueco en el banquillo?
+    const benchFull=bench.filter(b=>b).length>=getMaxBench();
+    if(!benchFull){
+      // Mover al banquillo — encontrar su slot
+      const slot=slots.find(s=>s._player===p);
+      if(slot){
+        bench.push({...p, fatigue:p.fatigue||100});
+        // Liberar el slot del campo (quedará vacío hasta que el usuario actúe)
+        slot._player=null;
+        slot.querySelector&&slot.querySelector('.pitch-player-label')&&
+          (slot.querySelector('.pitch-player-label').textContent='');
+      }
+    } else {
+      // Banquillo lleno: se queda en el campo con rating 0
+      p._redThisMatchOnPitch=true;
+      p._originalRating=p.rating;
+      p.rating=0;
+    }
+  });
 }
 
 /* ========= EVENTOS DEL RIVAL (lesiones y tarjetas) ========= */
@@ -2769,6 +2808,15 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
 
     modal.appendChild(infoWrap);
 
+    // Restaurar ratings de expulsados que quedaron en campo con 0
+    [...usedPlayers,...bench].forEach(p=>{
+      if(p._redThisMatchOnPitch && p._originalRating!==undefined){
+        p.rating=p._originalRating;
+        delete p._originalRating;
+        delete p._redThisMatchOnPitch;
+      }
+      delete p._redThisMatch;
+    });
     // Aplicar efectos del partido ahora que ha terminado
     applyMatchFatigue();
     refreshPitchRatings();
@@ -2824,7 +2872,7 @@ function showMatchModal(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,
   }
   if(newInjuries.length){
     const ILABELS={leve:"leve (1 partido)",básica:"básica (2 partidos)",grave:"grave (3 partidos)"};
-    extraHTML+=`<div class="injury-section"><p>⚠ Lesiones en ${myTeamName} tras el partido:</p><ul>${newInjuries.map(p=>`<li>${p.name}: lesión ${ILABELS[p.injury.type]}</li>`).join('')}</ul><p class="injury-note">Recuerda: puedes hacer hasta <strong>5 cambios</strong> entre Convocados y Banquillo antes del próximo partido. Hazlo manualmente desde las tablas de la izquierda.</p></div>`;
+    extraHTML+=`<div class="injury-section"><p>⚠ Lesiones en ${myTeamName} tras el partido:</p><ul>${newInjuries.map(p=>`<li>${p.name}: lesión ${ILABELS[p.injury.type]}</li>`).join('')}</ul><p class="injury-note">Recuerda: puedes hacer hasta <strong>${getMaxSubs()} cambios</strong> entre Convocados y Banquillo antes del próximo partido. Hazlo manualmente desde las tablas de la izquierda.</p></div>`;
   }
   if(newCards&&newCards.length){
     const CARD_LABELS={
@@ -3904,7 +3952,7 @@ function _executeQuickBuild(){
   });
 
   // Fill bench (3 players) — simulate 3 more draws
-  const benchNeeded=5-bench.length;
+  const benchNeeded=getMaxBench()-bench.length;
   for(let i=0;i<benchNeeded;i++){
     const [t1,t2]=drawTeamPair();
     const pool1=t1.players.filter(p=>!usedNames.has(p.name));
@@ -4161,6 +4209,8 @@ function initFirebaseAuth(){
       window.useFixedTeamName=!!data.useFixedTeamName;
       // Inicializar sistema de boletos
       if(window._initTicketSystem) window._initTicketSystem(user, false);
+      // Cargar mejoras en cache
+      refreshUpgradeCache();
     }else{
       if(authBtn)    authBtn.style.display="";
       if(profileBtn) profileBtn.style.display="none";
@@ -5134,6 +5184,33 @@ window._initTicketSystem=initTicketSystem;
    - Se guarda en Firestore: users/{uid}.upgrades
    ============================================================ */
 
+/* ── Helper: leer nivel de mejora activo del usuario (cached en window) ── */
+async function loadUserUpgradeLevel(id){
+  try{
+    if(!window._fbAuth||!window._fbAuth.currentUser) return 0;
+    const snap=await window._fbDb.collection('users').doc(window._fbAuth.currentUser.uid).get();
+    return (snap.exists&&snap.data().upgrades&&snap.data().upgrades[id])||0;
+  }catch(e){ return 0; }
+}
+// Cache sincrónico — se actualiza al abrir MEJORAS y al comprar/vender
+window._upgradeCache={bench:0,subs:0,scout:0};
+async function refreshUpgradeCache(){
+  if(!window._fbAuth||!window._fbAuth.currentUser) return;
+  try{
+    const snap=await window._fbDb.collection('users').doc(window._fbAuth.currentUser.uid).get();
+    const upgs=(snap.exists&&snap.data().upgrades)||{};
+    window._upgradeCache={
+      bench: upgs.bench||0,
+      subs:  upgs.subs||0,
+      scout: upgs.scout||0,
+    };
+  }catch(e){}
+}
+// Valores efectivos con mejoras aplicadas
+function getMaxBench(){ return 2 + (window._upgradeCache.bench||0); }
+function getMaxSubs(){  return 2 + (window._upgradeCache.subs||0); }
+function getScoutTeams(){ return 2 + (window._upgradeCache.scout||0); }
+
 const UPGRADE_DEFS = [
   {
     id: 'bench',
@@ -5143,7 +5220,7 @@ const UPGRADE_DEFS = [
     baseCost: 5,
     maxLevel: 10,
     baseValue: 5,  // valor base actual
-    tooltip: (lvl) => `${5 + lvl} plazas en el banquillo`
+    tooltip: (lvl) => `${2 + lvl} plazas en el banquillo`
   },
   {
     id: 'subs',
@@ -5153,7 +5230,7 @@ const UPGRADE_DEFS = [
     baseCost: 5,
     maxLevel: 10,
     baseValue: 5,
-    tooltip: (lvl) => `${5 + lvl} sustituciones por partido`
+    tooltip: (lvl) => `${2 + lvl} sustituciones por partido`
   },
   {
     id: 'scout',
@@ -5204,6 +5281,7 @@ async function renderUpgradesTab(){
   if(!list) return;
 
   list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:12px">Cargando...</div>';
+  await refreshUpgradeCache(); // sincronizar cache antes de renderizar
 
   const user = window._fbAuth && window._fbAuth.currentUser;
   if(!user){
@@ -5287,6 +5365,7 @@ async function renderUpgradesTab(){
         scratchPoints: pts, upgrades: upgs,
         scratchPointsSpent: freshData.scratchPointsSpent || 0
       }, {merge: true});
+      await refreshUpgradeCache(); // actualizar valores efectivos en juego
 
       const pEl = document.getElementById('upgradePointsDisplay');
       if(pEl) pEl.textContent = pts;
