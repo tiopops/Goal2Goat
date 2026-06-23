@@ -906,7 +906,7 @@ function renderBonuses(team){
   return h;
 }
 
-/* ========= SELECT TEAM → show 8 players ========= */
+/* ========= SELECT TEAM → show players según mejora CONVOCADOS ========= */
 function selectTeam(teamName){
   const team=teams.find(t=>t.name===teamName);
   if(!team) return;
@@ -914,7 +914,7 @@ function selectTeam(teamName){
   applyBonuses(team);
   const already=new Set([...usedPlayers.map(p=>p.name),...bench.map(p=>p.name)]);
   const available=team.players.filter(p=>!already.has(p.name));
-  const show=randomPick(available,5);
+  const show=randomPick(available, getPlayersPerTeam());
   window._lastRoster={team, players:show}; // store for VOLVER
   showRosterModal(team,show);
 }
@@ -4214,16 +4214,15 @@ function initFirebaseAuth(){
       window.useFixedTeamName=!!data.useFixedTeamName;
       // Inicializar sistema de boletos
       if(window._initTicketSystem) window._initTicketSystem(user, false);
-      // Cargar mejoras en cache
-      refreshUpgradeCache();
+      // Listener en tiempo real de mejoras
+      startUpgradeListener(user.uid);
     }else{
       if(authBtn)    authBtn.style.display="";
       if(profileBtn) profileBtn.style.display="none";
       if(settingsMenu) settingsMenu.style.display="";
       const hBtn=$id("headerTicketBtn"); if(hBtn) hBtn.style.display="none";
       // Limpiar cache de mejoras al cerrar sesión
-      window._upgradeCache={bench:0,subs:0,scout:0};
-      try{ localStorage.removeItem('_g2g_upgrades'); }catch(e){}
+      stopUpgradeListener();
       window.currentUsername=null;
       window.preferredTeamName="";
       window.useFixedTeamName=false;
@@ -5200,26 +5199,47 @@ async function loadUserUpgradeLevel(id){
     return (snap.exists&&snap.data().upgrades&&snap.data().upgrades[id])||0;
   }catch(e){ return 0; }
 }
-// Cache sincrónico — se actualiza al abrir MEJORAS y al comprar/vender
-// Se persiste en localStorage para que esté disponible inmediatamente
+// Cache sincrónico — se actualiza en tiempo real via onSnapshot
 (function(){
   try{
     const saved=localStorage.getItem('_g2g_upgrades');
     window._upgradeCache=saved?JSON.parse(saved):{bench:0,subs:0,scout:0};
   }catch(e){ window._upgradeCache={bench:0,subs:0,scout:0}; }
 })();
+
+let _upgradeListener=null; // referencia al listener para poder cancelarlo
+
+function startUpgradeListener(uid){
+  // Cancelar listener anterior si existe
+  if(_upgradeListener){ _upgradeListener(); _upgradeListener=null; }
+  if(!window._fbDb||!uid) return;
+  _upgradeListener=window._fbDb.collection('users').doc(uid)
+    .onSnapshot(snap=>{
+      if(!snap.exists) return;
+      const upgs=snap.data().upgrades||{};
+      window._upgradeCache={
+        bench: upgs.bench||0,
+        subs:  upgs.subs||0,
+        scout: upgs.scout||0,
+      };
+      try{ localStorage.setItem('_g2g_upgrades',JSON.stringify(window._upgradeCache)); }catch(e){}
+    }, e=>{ console.warn('upgrade listener error:',e); });
+}
+
+function stopUpgradeListener(){
+  if(_upgradeListener){ _upgradeListener(); _upgradeListener=null; }
+  window._upgradeCache={bench:0,subs:0,scout:0};
+  try{ localStorage.removeItem('_g2g_upgrades'); }catch(e){}
+}
+
+// refreshUpgradeCache sigue disponible para forzar una lectura puntual
 async function refreshUpgradeCache(){
-  if(!window._fbAuth||!window._fbAuth.currentUser) return;
+  if(!window._fbAuth||!window._fbAuth.currentUser||!window._fbDb) return;
   try{
     const snap=await window._fbDb.collection('users').doc(window._fbAuth.currentUser.uid).get();
     const upgs=(snap.exists&&snap.data().upgrades)||{};
-    window._upgradeCache={
-      bench: upgs.bench||0,
-      subs:  upgs.subs||0,
-      scout: upgs.scout||0,
-    };
-    // Persistir en localStorage para la próxima carga
-    try{ localStorage.setItem('_g2g_upgrades', JSON.stringify(window._upgradeCache)); }catch(e){}
+    window._upgradeCache={bench:upgs.bench||0,subs:upgs.subs||0,scout:upgs.scout||0};
+    try{ localStorage.setItem('_g2g_upgrades',JSON.stringify(window._upgradeCache)); }catch(e){}
   }catch(e){}
 }
 // Valores efectivos con mejoras aplicadas
