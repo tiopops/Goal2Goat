@@ -806,10 +806,13 @@ function rollTeams(){
   const pool=teams.slice();
   shuffle(pool);
   const t1=pool[0], t2=pool[1];
-  const _ppt=getPlayersPerTeam();
-  const p1=randomPick(t1.players,_ppt), p2=randomPick(t2.players,_ppt);
-  window._lastTeamChoice={t1,p1,t2,p2,isBench:false};
-  showTeamChoice(t1,p1,t2,p2);
+  // Asegurar que el cache está cargado antes de usarlo
+  refreshUpgradeCache().then(()=>{
+    const _ppt=getPlayersPerTeam();
+    const p1=randomPick(t1.players,_ppt), p2=randomPick(t2.players,_ppt);
+    window._lastTeamChoice={t1,p1,t2,p2,isBench:false};
+    showTeamChoice(t1,p1,t2,p2);
+  });
 }
 
 function rollBench(){
@@ -818,11 +821,13 @@ function rollBench(){
   shuffle(pool);
   const t1=pool[0], t2=pool[1];
   const already=new Set([...usedPlayers.map(p=>p.name),...bench.map(p=>p.name)]);
-  const _ppt=getPlayersPerTeam();
-  const p1=randomPick(t1.players.filter(p=>!already.has(p.name)),_ppt);
-  const p2=randomPick(t2.players.filter(p=>!already.has(p.name)),5);
-  window._lastTeamChoice={t1,p1,p2,t2,isBench:true};
-  showTeamChoice(t1,p1,t2,p2,true);
+  refreshUpgradeCache().then(()=>{
+    const _ppt=getPlayersPerTeam();
+    const p1=randomPick(t1.players.filter(p=>!already.has(p.name)),_ppt);
+    const p2=randomPick(t2.players.filter(p=>!already.has(p.name)),_ppt);
+    window._lastTeamChoice={t1,p1,t2,p2,isBench:true};
+    showTeamChoice(t1,p1,t2,p2,true);
+  });
 }
 
 function randomPick(arr,n){
