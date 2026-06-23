@@ -1595,7 +1595,7 @@ function renderMobileFormationInfo(){
   if(!el) return;
   if(phase==="draft" && draftedCount===0){
     el.classList.add("empty");
-    el.innerHTML=`Elige tu <strong>formación</strong> justo debajo, antes de empezar a seleccionar jugadores.`;
+    el.innerHTML=``;
   } else {
     el.classList.remove("empty");
     const desc=FORMATION_DESC[currentFormation.code]||"";
@@ -5190,13 +5190,20 @@ async function saveUpgrades(upgrades){
   await window._fbDb.collection('users').doc(user.uid).set({upgrades}, {merge:true});
 }
 
+// Iconos SVG para mejoras (sin emoji)
+const UPGRADE_ICONS = {
+  bench: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 10v4M20 10v4M2 14h20M6 14v4M18 14v4"/></svg>`,
+  subs:  `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M7 16l-4-4 4-4"/><path d="M17 8l4 4-4 4"/><line x1="3" y1="12" x2="21" y2="12"/></svg>`,
+  scout: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/><path d="M11 8v6M8 11h6"/></svg>`,
+};
+
 // Renderizar la pestaña de mejoras
 async function renderUpgradesTab(){
   const list = document.getElementById('upgradesList');
   const pointsEl = document.getElementById('upgradePointsDisplay');
   if(!list) return;
 
-  list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted)">Cargando...</div>';
+  list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:12px">Cargando...</div>';
 
   const user = window._fbAuth && window._fbAuth.currentUser;
   if(!user){
@@ -5204,14 +5211,12 @@ async function renderUpgradesTab(){
     return;
   }
 
-  // Cargar puntos y upgrades actuales
   const snap = await window._fbDb.collection('users').doc(user.uid).get();
   const data = snap.exists ? snap.data() : {};
   let currentPts = data.scratchPoints || 0;
   let upgrades = data.upgrades || {};
 
   if(pointsEl) pointsEl.textContent = currentPts;
-
   list.innerHTML = '';
 
   UPGRADE_DEFS.forEach(def => {
@@ -5220,45 +5225,48 @@ async function renderUpgradesTab(){
     const prevRefund = currentLevel > 0 ? upgradeLevelCost(def, currentLevel) : null;
     const canUpgrade = nextCost !== null && currentPts >= nextCost;
     const canDowngrade = currentLevel > 0;
+    const currentVal = def.baseValue + currentLevel;
+
+    const bars = Array.from({length: def.maxLevel}, (_, i) =>
+      `<div class="upgrade-bar ${i < currentLevel ? 'filled' : ''}"></div>`
+    ).join('');
+
+    const costHtml = nextCost !== null
+      ? `<span class="cost-star">★</span>${nextCost}`
+      : `<span style="font-size:9px;color:var(--text-muted);letter-spacing:1px">MAX</span>`;
 
     const row = document.createElement('div');
     row.className = 'upgrade-row';
     row.id = `upgrade-row-${def.id}`;
-
-    // Barras
-    const bars = Array.from({length: def.maxLevel}, (_, i) =>
-      `<div class="upgrade-bar ${i < currentLevel ? 'filled' : ''}" data-bar="${def.id}-${i}"></div>`
-    ).join('');
-
     row.innerHTML = `
-      <div class="upgrade-icon">${def.icon}</div>
-      <div class="upgrade-info">
-        <div class="upgrade-name">${def.name}</div>
-        <div class="upgrade-desc">${def.desc}</div>
-        <div class="upgrade-bars">
-          ${bars}
-          <span class="upgrade-level-text">${currentLevel} / ${def.maxLevel}</span>
+      <div class="upgrade-row-top">
+        <div class="upgrade-icon" style="color:var(--accent)">${UPGRADE_ICONS[def.id]||''}</div>
+        <div class="upgrade-label-block">
+          <div class="upgrade-name">${def.name}</div>
+          <div class="upgrade-desc">${def.desc}</div>
         </div>
+        <div class="upgrade-value-pill">${def.tooltip(currentLevel)}</div>
       </div>
-      <div class="upgrade-controls">
-        <div class="upgrade-cost">
-          ${nextCost !== null ? `<span style="font-size:9px">★</span>${nextCost}` : '<span style="font-size:9px;color:var(--text-muted)">MAX</span>'}
+      <div class="upgrade-row-bottom">
+        <div class="upgrade-bars">${bars}</div>
+        <div class="upgrade-controls">
+          <div class="upgrade-cost-badge">${costHtml}</div>
+          <button class="upgrade-btn minus" data-id="${def.id}" title="Recuperar ${prevRefund||0} pts" ${canDowngrade?'':'disabled'}>−</button>
+          <button class="upgrade-btn plus" data-id="${def.id}" title="Coste: ${nextCost||0} pts" ${canUpgrade?'':'disabled'}>+</button>
         </div>
-        <button class="upgrade-btn minus" data-id="${def.id}" title="Reducir (recuperar ${prevRefund || 0} pts)" ${canDowngrade ? '' : 'disabled'}>−</button>
-        <button class="upgrade-btn plus" data-id="${def.id}" title="Mejorar por ${nextCost || 0} pts" ${canUpgrade ? '' : 'disabled'}>+</button>
       </div>`;
 
     list.appendChild(row);
   });
 
-  // Event listeners para + y -
+  // Event listeners
   list.querySelectorAll('.upgrade-btn').forEach(btn => {
     btn.addEventListener('click', async () => {
       const id = btn.dataset.id;
       const def = UPGRADE_DEFS.find(d => d.id === id);
       if(!def) return;
+      btn.disabled = true;
 
-      // Leer estado fresco de Firestore
       const freshSnap = await window._fbDb.collection('users').doc(user.uid).get();
       const freshData = freshSnap.exists ? freshSnap.data() : {};
       let pts = freshData.scratchPoints || 0;
@@ -5268,28 +5276,23 @@ async function renderUpgradesTab(){
       if(btn.classList.contains('plus')){
         const cost = upgradeLevelCost(def, lvl + 1);
         if(lvl >= def.maxLevel || pts < cost) return;
-        lvl++;
-        pts -= cost;
+        lvl++; pts -= cost;
       } else {
         if(lvl <= 0) return;
-        const refund = upgradeLevelCost(def, lvl);
-        pts += refund;
-        lvl--;
+        pts += upgradeLevelCost(def, lvl); lvl--;
       }
 
       upgs[id] = lvl;
       await window._fbDb.collection('users').doc(user.uid).set({
-        scratchPoints: pts,
-        upgrades: upgs
+        scratchPoints: pts, upgrades: upgs,
+        scratchPointsSpent: freshData.scratchPointsSpent || 0
       }, {merge: true});
 
-      // Actualizar display
       const pEl = document.getElementById('upgradePointsDisplay');
       if(pEl) pEl.textContent = pts;
       const statPts = document.getElementById('pstat-scratch-pts');
       if(statPts) statPts.textContent = pts;
 
-      // Re-render la pestaña
       renderUpgradesTab();
     });
   });
