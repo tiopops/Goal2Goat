@@ -899,7 +899,7 @@ body.dark-theme .settings-item:hover{background:var(--row-hover);color:var(--gol
 .auth-tab{
   flex:1;background:none;border:none;color:var(--text-muted);
   font-family:'Bebas Neue',Impact,sans-serif;
-  font-size:12px;letter-spacing:.8px;
+  font-size:14px;letter-spacing:1px;
   padding:10px 6px;cursor:pointer;transition:.15s;
   border-bottom:2px solid transparent;margin-bottom:-2px;
   white-space:nowrap;text-align:center;

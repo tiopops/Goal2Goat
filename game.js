@@ -1350,13 +1350,42 @@ function getFatigueBarHTML(p){
   const color=getFatigueColor(p);
   return `<div class="fatigue-bar-wrap" title="Resistencia: ${f}%"><div class="fatigue-bar fatigue-${color}" style="width:${f}%"></div></div>`;
 }
+// Ordenación de convocados: 'arrival' = orden de llegada, 'position' = por posición ocupada
+let convSortMode = 'arrival';
+window.toggleConvSort = function(){
+  convSortMode = convSortMode === 'arrival' ? 'position' : 'arrival';
+  const btn = document.getElementById('convSortBtn');
+  if(btn){
+    btn.style.color = convSortMode === 'position' ? 'var(--accent)' : 'var(--text-muted)';
+    btn.title = convSortMode === 'position' ? 'Orden por posición (pulsa para orden de llegada)' : 'Orden de llegada (pulsa para ordenar por posición)';
+  }
+  updateConvocadosTable();
+};
+
 function updateConvocadosTable(){
   const el=document.getElementById("convocadosTable");
   if(!el) return;
   const swapsLeft=getMaxSubs()-swapsUsedThisMatch;
   const canSwap=(phase==='ready')&&swapsLeft>0;
+  // Mostrar/ocultar el botón de ordenación
+  const sortBtn = document.getElementById('convSortBtn');
+  if(sortBtn) sortBtn.style.display = usedPlayers.length > 0 ? 'block' : 'none';
+
+  // Ordenar según el modo activo
+  let displayPlayers;
+  if(convSortMode === 'position'){
+    const posOrder = ['POR','DFC','LI','LD','MC','EI','ED','DC'];
+    displayPlayers = [...usedPlayers].sort((a,b)=>{
+      const ai = posOrder.indexOf(a.placedPos||'');
+      const bi = posOrder.indexOf(b.placedPos||'');
+      return (ai===-1?99:ai) - (bi===-1?99:bi);
+    });
+  } else {
+    displayPlayers = usedPlayers; // orden de llegada = orden del array
+  }
+
   let rows="",stars=0;
-  usedPlayers.forEach((p,i)=>{
+  displayPlayers.forEach((p,i)=>{
     const inPrimary=p.positions&&p.placedPos&&p.positions[0]===p.placedPos;
     if(inPrimary) stars++;
     const injuryTag=p.injury?` <span class="cross" title="Lesionado">✚(-${p.injury.remaining})</span> `:'';
@@ -1367,7 +1396,8 @@ function updateConvocadosTable(){
     const streak=getStreakBadge(p.name);
     const fatigueBar=getFatigueBarHTML(p);
     const sel=(swapSelection&&swapSelection.source==='conv'&&swapSelection.index===i)?' class="row-selected"':'';
-    const clickable=canSwap?` onclick="onConvocadoClick(${i})" style="cursor:pointer"`:'';
+    const realIdx=usedPlayers.indexOf(p);
+    const clickable=canSwap?` onclick="onConvocadoClick(${realIdx})" style="cursor:pointer"`:'';
     const realPos=(p.positions||[]).join('/');
     const posLabel=p.placedPos||'?';
     const realLabel=(realPos&&realPos!==posLabel)?`<br><span style="font-size:9px;color:var(--text-muted)">${realPos}</span>`:'';
@@ -1425,6 +1455,7 @@ function onConvocadoClick(i){
     // bench → conv swap
     const benchIdx=swapSelection.index;
     swapSelection=null;
+    highlightPos([]);
     performSwap(benchIdx, i);
     return;
   }
@@ -1432,15 +1463,20 @@ function onConvocadoClick(i){
     if(swapSelection.index===i){
       // Deselect
       swapSelection=null;
+      highlightPos([]); // limpiar highlight
     } else {
       // conv → conv: swap two titulars' pitch positions
       const idxA=swapSelection.index, idxB=i;
       swapSelection=null;
+      highlightPos([]);
       performConvConvSwap(idxA, idxB);
       return;
     }
   } else {
     swapSelection={source:'conv',index:i};
+    // Resaltar la posición del jugador en el campo
+    const p=usedPlayers[i];
+    if(p) highlightPos(p.positions||[]);
   }
   updateConvocadosTable();
   updateBenchTable();
@@ -1809,13 +1845,23 @@ function renderRivalBox(){
 function renderStrategySelector(){
   const el=document.getElementById("strategySelector");
   if(!el) return;
+  // Hint de ESTRATEGA si está activo
+  const estrategaHint = window.getEstrategaHint?window.getEstrategaHint():null;
+  const hintHTML = estrategaHint
+    ? `<div style="background:rgba(201,162,39,.12);border:1px solid var(--gold);padding:8px 12px;margin-bottom:10px;font-size:12px;color:var(--gold);display:flex;align-items:center;gap:8px">
+        <span style="font-size:16px">⚡</span>
+        <span><strong>ESTRATEGA:</strong> La mejor contra-táctica es <strong>${estrategaHint.name}</strong></span>
+       </div>`
+    : '';
   el.innerHTML=`
+    ${hintHTML}
     <div class="style-label" style="margin-top:12px">Elige tu estrategia para este partido</div>
     <div class="strategy-grid">
       ${STRATEGY_ORDER.map(key=>{
         const s=STRATEGIES[key];
         const sel=selectedMatchStrategy===key?' selected':'';
-        return `<button class="strategy-btn${sel}" data-key="${key}" onclick="chooseMatchStrategy('${key}')" title="${esc(s.desc)}">${s.name}</button>`;
+        const isOptimal=estrategaHint&&estrategaHint.key===key?' style="outline:2px solid var(--gold)"':'';
+        return `<button class="strategy-btn${sel}" data-key="${key}" onclick="chooseMatchStrategy('${key}')" title="${esc(s.desc)}"${isOptimal}>${s.name}</button>`;
       }).join('')}
     </div>
     ${selectedMatchStrategy?`<div class="strategy-desc">${STRATEGIES[selectedMatchStrategy].desc}</div>`:'<div class="strategy-desc strategy-desc-empty">Sin estrategia elegida: sin bonus ni penalización.</div>'}
@@ -1983,6 +2029,7 @@ function poissonSample(lambda){
 function playMatch(){
   if(!nextOpponent) return;
   swapsUsedThisMatch=0;
+  convSortMode='arrival'; // reset al empezar partido
   swapSelection=null;
   // Tick injury timers
   const recovered=[];
@@ -4309,6 +4356,8 @@ function initFirebaseAuth(){
       if(window._initTicketSystem) window._initTicketSystem(user, false);
       // Listener en tiempo real de mejoras
       startUpgradeListener(user.uid);
+      // Listener de habilidades
+      startSkillListener(user.uid);
     }else{
       if(authBtn)    authBtn.style.display="";
       if(profileBtn) profileBtn.style.display="none";
@@ -4460,6 +4509,7 @@ function initFirebaseAuth(){
       pane?.classList.toggle("profile-tab-pane-active", active);
     });
     if(tab==='upgrades'){ renderUpgradesTab(); hideGoatPointsBadge(); }
+    if(tab==='notes') renderSkillsTab();
   };
 
   // Save match result to Firestore
@@ -5539,3 +5589,122 @@ async function renderUpgradesTab(){
     });
   });
 }
+
+/* ============================================================
+   SISTEMA DE HABILIDADES (Skills)
+   - Modificadores especiales comprables con GOAT Points
+   - Se pueden activar/desactivar — al desactivar se recuperan los puntos
+   - Se guardan en Firestore: users/{uid}.skills
+   ============================================================ */
+
+const SKILL_DEFS = [
+  {
+    id: 'estratega',
+    name: 'ESTRATEGA',
+    desc: 'ANÁLISIS TÁCTICO AVANZADO',
+    cost: 25,
+    icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 3"/><path d="M9.5 3.5C6 5 3.5 8.2 3.5 12"/></svg>',
+    tooltip: 'Resalta la mejor contra-estrategia para cada rival antes del partido.',
+    effect: 'Se muestra la contra-estrategia óptima en la selección de táctica.'
+  },
+];
+
+// Cache de habilidades activas
+window._skillCache = {};
+
+function startSkillListener(uid){
+  if(!window._fbDb||!uid) return;
+  window._fbDb.collection('users').doc(uid).onSnapshot(snap=>{
+    if(!snap.exists) return;
+    window._skillCache = (snap.data().skills)||{};
+  });
+}
+
+// Efecto real de ESTRATEGA: devuelve la mejor contra-estrategia
+window.getEstrategaHint = function(){
+  if(!window._skillCache.estratega) return null;
+  if(!nextOpponent) return null;
+  const rivalKey = getRivalStrategyKey(nextOpponent);
+  // Buscar qué estrategia mía contrarresta al rival
+  for(const [key, s] of Object.entries(STRATEGIES||{})){
+    if(s.counters === rivalKey) return {key, name:s.name};
+  }
+  return null;
+};
+
+async function renderSkillsTab(){
+  const list = document.getElementById('skillsList');
+  const pointsEl = document.getElementById('skillPointsDisplay');
+  if(!list) return;
+  list.innerHTML='<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:12px">Cargando...</div>';
+  const user = window._fbAuth&&window._fbAuth.currentUser;
+  if(!user){ list.innerHTML='<div style="text-align:center;padding:20px;color:var(--text-muted)">Inicia sesión para ver las habilidades.</div>'; return; }
+  const snap = await window._fbDb.collection('users').doc(user.uid).get();
+  const data = snap.exists?snap.data():{};
+  let pts = data.scratchPoints||0;
+  let skills = data.skills||{};
+  if(pointsEl) pointsEl.textContent=pts;
+  list.innerHTML='';
+
+  SKILL_DEFS.forEach(def=>{
+    const active = !!skills[def.id];
+    const row = document.createElement('div');
+    row.className='upgrade-row';
+    row.style.cssText='padding:14px 0;border-bottom:1px solid var(--line)';
+    row.innerHTML=`
+      <div class="upgrade-row-top" style="margin-bottom:10px">
+        <div class="upgrade-icon" style="color:${active?'var(--gold)':'var(--accent)'};${active?'border-color:var(--gold);background:rgba(201,162,39,.1)':''}">${def.icon}</div>
+        <div class="upgrade-label-block">
+          <div class="upgrade-name" style="${active?'color:var(--gold)':''}"> ${def.name}</div>
+          <div class="upgrade-desc">${def.desc}</div>
+        </div>
+        <div style="flex-shrink:0">
+          <button class="skill-toggle-btn" data-id="${def.id}" data-active="${active}" style="
+            border:1px solid ${active?'var(--gold)':'var(--line)'};
+            background:${active?'var(--gold)':'var(--panel)'};
+            color:${active?'#000':'var(--text-muted)'};
+            font-family:'Bebas Neue',Impact,sans-serif;font-size:12px;letter-spacing:1px;
+            padding:6px 12px;cursor:pointer;white-space:nowrap;transition:.15s
+          ">${active?'ACTIVA ✓':`★ ${def.cost}`}</button>
+        </div>
+      </div>
+      <div style="font-size:11px;color:${active?'var(--accent)':'var(--text-muted)'};line-height:1.4;padding-left:52px">${active?def.effect:def.tooltip}</div>`;
+    list.appendChild(row);
+  });
+
+  list.querySelectorAll('.skill-toggle-btn').forEach(btn=>{
+    btn.addEventListener('click', async()=>{
+      const id=btn.dataset.id;
+      const def=SKILL_DEFS.find(d=>d.id===id);
+      if(!def) return;
+      btn.disabled=true;
+      playSound('select');
+      const freshSnap=await window._fbDb.collection('users').doc(user.uid).get();
+      const fd=freshSnap.exists?freshSnap.data():{};
+      let p=fd.scratchPoints||0;
+      let sk=fd.skills||{};
+      if(sk[id]){
+        // Desactivar — devolver puntos
+        delete sk[id];
+        p+=def.cost;
+      } else {
+        // Activar — gastar puntos
+        if(p<def.cost){ btn.disabled=false; return; }
+        sk[id]=true;
+        p-=def.cost;
+      }
+      await window._fbDb.collection('users').doc(user.uid).set({scratchPoints:p,skills:sk},{merge:true});
+      const pEl=document.getElementById('skillPointsDisplay');
+      if(pEl) pEl.textContent=p;
+      const statPts=document.getElementById('pstat-scratch-pts');
+      if(statPts) statPts.textContent=p;
+      renderSkillsTab();
+    });
+  });
+}
+
+/* showPatchNotes — llamado desde Ajustes */
+window.showPatchNotes=function(){
+  const o=document.getElementById('patchNotesOverlay');
+  if(o) o.style.display='flex';
+};
