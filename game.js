@@ -6018,7 +6018,7 @@ function showAchievementToast(def){
     font-family:'Bebas Neue',Impact,sans-serif;min-width:280px;max-width:90vw;
     animation:slideUpToast .4s ease;box-shadow:0 8px 24px rgba(0,0,0,.6)`;
   toast.innerHTML=`
-    <i class="${def.icon}-bold" style="font-size:28px;color:${TIER_COLOR[def.tier]}"></i>
+    <i class="ph ph-bold ${def.icon}" style="font-size:28px;color:${TIER_COLOR[def.tier]}"></i>
     <div>
       <div style="font-size:10px;letter-spacing:2px;color:${TIER_COLOR[def.tier]};margin-bottom:2px">LOGRO DESBLOQUEADO · ${TIER_LABEL[def.tier]}</div>
       <div style="font-size:16px;color:#fff;letter-spacing:1px">${def.name}</div>
@@ -6043,6 +6043,7 @@ async function renderAchievementsTab(){
   const total=ACHIEVEMENT_DEFS.length;
   const done=[...unlocked].filter(id=>ACHIEVEMENT_DEFS.find(a=>a.id===id)).length;
   list.innerHTML='';
+  list.style.paddingRight='12px';
 
   // Progreso general
   const progress=document.createElement('div');
@@ -6053,7 +6054,7 @@ async function renderAchievementsTab(){
 
   // Grid 2 columnas
   const grid=document.createElement('div');
-  grid.style.cssText='display:grid;grid-template-columns:1fr 1fr;gap:6px';
+  grid.style.cssText='display:grid;grid-template-columns:1fr 1fr;gap:6px;padding-right:4px';
   list.appendChild(grid);
 
   ACHIEVEMENT_DEFS.forEach(def=>{
@@ -6064,13 +6065,13 @@ async function renderAchievementsTab(){
       background:${isUnlocked?'rgba(0,0,0,.3)':'var(--panel)'};
       opacity:${isUnlocked?'1':'.45'};position:relative;overflow:hidden`;
     card.innerHTML=`
-      <i class="${def.icon}-bold" style="font-size:26px;flex-shrink:0;color:${isUnlocked?TIER_COLOR[def.tier]:'var(--text-muted)'};${isUnlocked?'':'opacity:.35'}"></i>
+      <i class="ph ph-bold ${def.icon}" style="font-size:26px;flex-shrink:0;color:${isUnlocked?TIER_COLOR[def.tier]:'var(--text-muted)'};${isUnlocked?'':`opacity:.35`}"></i>
       <div style="min-width:0;flex:1">
         <div style="font-family:'Bebas Neue',Impact,sans-serif;font-size:12px;letter-spacing:.8px;color:${isUnlocked?'#fff':'var(--text-muted)'};line-height:1.2">${def.name}</div>
         <div style="font-size:9px;color:${isUnlocked?'#aaa':'var(--text-muted)'};line-height:1.4;margin-top:2px">${def.desc}</div>
         <div style="font-size:9px;color:${TIER_COLOR[def.tier]};letter-spacing:1px;margin-top:3px;font-family:'Bebas Neue',Impact,sans-serif">${TIER_LABEL[def.tier]}</div>
       </div>
-      ${isUnlocked?`<i class="ph-bold ph-check" style="position:absolute;top:5px;right:6px;font-size:12px;color:${TIER_COLOR[def.tier]}"></i>`:''}`;
+      ${isUnlocked?`<i class="ph ph-bold ph-check" style="position:absolute;top:5px;right:6px;font-size:12px;color:${TIER_COLOR[def.tier]}"></i>`:''}`;
     grid.appendChild(card);
   });
 }
