@@ -1364,6 +1364,16 @@ window.toggleConvSort = function(){
 function updateConvocadosTable(){
   const el=document.getElementById("convocadosTable");
   if(!el) return;
+
+  // Siempre limpiar resaltado amarillo primero
+  getPitchSlots().forEach(s=>s.classList.remove('slot-conv-selected'));
+  // Volver a aplicar solo si hay selección activa
+  if(swapSelection&&swapSelection.source==='conv'){
+    const selPlayer=usedPlayers[swapSelection.index];
+    if(selPlayer) getPitchSlots().forEach(s=>{
+      if(s._player===selPlayer) s.classList.add('slot-conv-selected');
+    });
+  }
   const swapsLeft=getMaxSubs()-swapsUsedThisMatch;
   const canSwap=(phase==='ready')&&swapsLeft>0;
   // Mostrar/ocultar el botón de ordenación
@@ -4576,7 +4586,7 @@ function initFirebaseAuth(){
       pane?.classList.toggle("profile-tab-pane-active", active);
     });
     if(tab==='upgrades'){ renderUpgradesTab(); hideGoatPointsBadge(); }
-    if(tab==='notes') renderSkillsTab();
+    if(tab==='notes'){ renderSkillsTab(); const sb=$id('skillsBadge'); if(sb) sb.style.display='none'; }
   };
 
   // Save match result to Firestore
@@ -4864,15 +4874,19 @@ document.addEventListener('click', e=>{
 function showGoatPointsBadge(){
   const pb=$id('profileGoatBadge');
   const ub=$id('upgradesBadge');
+  const sb=$id('skillsBadge');
   if(pb) pb.style.display='block';
   if(ub) ub.style.display='inline-block';
+  if(sb) sb.style.display='inline-block';
   try{ localStorage.setItem('_g2g_pts_pending','1'); }catch(e){}
 }
 function hideGoatPointsBadge(){
   const pb=$id('profileGoatBadge');
   const ub=$id('upgradesBadge');
+  const sb=$id('skillsBadge');
   if(pb) pb.style.display='none';
   if(ub) ub.style.display='none';
+  if(sb) sb.style.display='none';
   try{ localStorage.removeItem('_g2g_pts_pending'); }catch(e){}
 }
 // Restaurar badge si había puntos pendientes de ver al cargar la página
