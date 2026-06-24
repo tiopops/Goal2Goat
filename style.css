@@ -825,10 +825,10 @@ body.dark-theme .settings-item:hover{background:var(--row-hover);color:var(--gol
   }
   #profileOverlay .auth-tab{
     text-align:center;
-    padding:8px 2px;
-    font-size:11px !important;
+    padding:10px 4px;
+    font-size:13px !important;
     letter-spacing:.8px;
-    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
   }
   #profileOverlay .skill-grid{
     grid-template-columns:repeat(3,1fr) !important;
@@ -895,27 +895,28 @@ body.dark-theme .settings-item:hover{background:var(--row-hover);color:var(--gol
 #profileOverlay .auth-tabs{
   display:grid;
   grid-template-columns:repeat(5,1fr);
-  overflow:hidden;
+  position:relative;
+  overflow:visible;
 }
 .auth-tab{
   flex:1;background:none;border:none;color:var(--text-muted);
   font-family:'Bebas Neue',Impact,sans-serif;
-  font-size:11px;letter-spacing:.8px;
-  padding:8px 2px;cursor:pointer;transition:.15s;
+  font-size:12px;letter-spacing:.5px;
+  padding:10px 2px;cursor:pointer;transition:.15s;
   border-bottom:2px solid transparent;margin-bottom:-2px;
-  white-space:nowrap;text-align:center;overflow:hidden;text-overflow:ellipsis;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+  white-space:nowrap;text-align:center;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
 }
 /* En móvil, pestañas más compactas */
 @media(max-width:640px){
   #profileOverlay .auth-tab{
-    font-size:10px !important;
-    padding:6px 1px !important;
+    font-size:11px !important;
+    padding:8px 1px !important;
     letter-spacing:0 !important;
     display:flex;flex-direction:column;align-items:center;gap:2px;
   }
   #profileOverlay .auth-tab i{
-    font-size:16px !important;
+    font-size:18px !important;
   }
   /* Header botones en móvil: menos padding, icono más visible */
   .header-auth-btn, .header-ticket-btn, .profile-btn, .support-btn{
@@ -935,13 +936,8 @@ body.dark-theme .settings-item:hover{background:var(--row-hover);color:var(--gol
 .auth-tab-active{
   color:var(--gold);
   position:relative;
-}
-/* Línea amarilla debajo de la pestaña activa */
-.auth-tab-active::after{
-  content:'';
-  position:absolute;
-  bottom:-2px;left:0;right:0;
-  height:2px;background:var(--gold);
+  border-bottom:3px solid var(--gold) !important;
+  margin-bottom:-3px;
 }
 .auth-tab-active i{ opacity:1; }
 .auth-tab:not(.auth-tab-active) i{ opacity:.55; }
