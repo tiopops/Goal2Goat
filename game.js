@@ -1686,6 +1686,24 @@ function resetDraft(){
   playerCardEl.innerHTML="";
 }
 function getPitchSlots(){ return Array.from(document.querySelectorAll("#pitch .position")); }
+
+// Forzar redibujado del campo al cambiar tamaño/orientación
+(function(){
+  const pitchEl=document.getElementById('pitch');
+  if(!pitchEl||!window.ResizeObserver) return;
+  let _debounce;
+  new ResizeObserver(()=>{
+    clearTimeout(_debounce);
+    _debounce=setTimeout(()=>{
+      // Forzar reflow de los slots
+      getPitchSlots().forEach(s=>{ s.style.display='none'; void s.offsetHeight; s.style.display=''; });
+    },100);
+  }).observe(pitchEl);
+  // También en cambio de orientación
+  window.addEventListener('orientationchange',()=>{
+    setTimeout(()=>{ getPitchSlots().forEach(s=>{ s.style.display='none'; void s.offsetHeight; s.style.display=''; }); },300);
+  });
+})();
 function reassignSquad(code){
   const pool=[...getPitchSlots().map(s=>s._player).filter(Boolean),...bench];
   renderPitch(code);
@@ -2089,9 +2107,15 @@ function playMatch(){
   const moraleBonus=moraleLambdaBonus();
   const streakBonus=getStreakLambdaBonus();
   const weatherDelta=weatherLambdaEffect(); // weather was rolled when rival was revealed
-  const myLambda=Math.max(0.25, 1.15+diff+tactical.myScoreMod+counter.myScoreMod+earlyBoost+groupNudge+starBonus+moraleBonus+streakBonus+weatherDelta);
+  const captainBonus=(window._skillCache&&window._skillCache.capitan&&teamMorale<0)?0.10:0;
+  const myLambda=Math.max(0.25, 1.15+diff+tactical.myScoreMod+counter.myScoreMod+earlyBoost+groupNudge+starBonus+moraleBonus+streakBonus+weatherDelta+captainBonus);
   const oppLambda=Math.max(0.25, 1.15-diff+tactical.oppScoreMod+counter.oppScoreMod-earlyBoost*0.6-groupNudge*0.6+weatherDelta);
   let myGoals=window.CHEATS_ACTIVE ? (3+Math.floor(Math.random()*3)) : poissonSample(myLambda);
+  // REMONTADA: si el rival marcara 2+ más, relanzar con +35%
+  if(!window.CHEATS_ACTIVE && window._skillCache&&window._skillCache.remontada){
+    const tempOpp=poissonSample(oppLambda);
+    if(tempOpp>=myGoals+2) myGoals=poissonSample(myLambda*1.35);
+  }
   let oppGoals=window.CHEATS_ACTIVE ? 0 : poissonSample(oppLambda);
   // Injuries y tarjetas propias
   const newInjuries=rollInjuries(myPower,oppPower);
@@ -2258,7 +2282,8 @@ function simulateRivalMatches(){
 
 function simulatePenalties(myPower,oppPower){
   // Probability of scoring a penalty, slightly influenced by overall power
-  const myProb=Math.min(0.92,Math.max(0.65,0.78+(myPower-oppPower)*0.01));
+  const _penSkill=(window._skillCache&&window._skillCache.penaltis)?0.15:0;
+  const myProb=Math.min(0.92,Math.max(0.65,0.78+(myPower-oppPower)*0.01+_penSkill));
   const oppProb=Math.min(0.92,Math.max(0.65,0.78+(oppPower-myPower)*0.01));
   let myScore=0,oppScore=0;
   // Pick takers from my squad (prioritize attackers/midfielders)
@@ -3017,7 +3042,17 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
       switch(outcome){
         case 'nextGroupMatch': pickNextOpponent(); break;
         case 'groupDone': renderMatchHistory(); showGroupResultsPopup(); break;
-        case 'nextKnockoutMatch': if(knockoutRound===1)clearYellowCardsAfterQuarterfinals(); knockoutRound++; pickNextOpponent(); break;
+        case 'nextKnockoutMatch':
+          if(knockoutRound===1) clearYellowCardsAfterQuarterfinals();
+          // PATROCINADOR: +1 GOAT Point al clasificar a cuartos (pasar de grupos)
+          if(knockoutRound===0&&window._skillCache&&window._skillCache.patrocinador){
+            const _u=window._fbAuth&&window._fbAuth.currentUser;
+            if(_u&&window._fbDb) window._fbDb.collection('users').doc(_u.uid).get().then(s=>{
+              const d=s.exists?s.data():{};
+              window._fbDb.collection('users').doc(_u.uid).set({scratchPoints:(d.scratchPoints||0)+1},{merge:true});
+            });
+          }
+          knockoutRound++; pickNextOpponent(); break;
         case 'champion': showVictory(); break;
         case 'knockoutLost': showEliminated(); break;
       }
@@ -5634,13 +5669,13 @@ const SKILL_DEFS = [
   // === TÁCTICA ===
   {
     id: 'estratega', category: 'TÁCTICA',
-    name: 'ESTRATEGA', cost: 50,
+    name: 'ESTRATEGA', cost: 40,
     icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 3"/></svg>',
     tooltip: 'Muestra la mejor contra-estrategia antes de cada partido.',
   },
   {
     id: 'capitan', category: 'TÁCTICA',
-    name: 'CAPITÁN', cost: 40,
+    name: 'CAPITÁN', cost: 30,
     icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>',
     tooltip: 'Si vas perdiendo en el descanso, tu ataque sube un 10% en la segunda parte.',
   },
@@ -5652,26 +5687,26 @@ const SKILL_DEFS = [
   },
   {
     id: 'penaltis', category: 'TÁCTICA',
-    name: 'ESPECIALISTA EN PENALTIS', cost: 50,
+    name: 'ESPECIALISTA EN PENALTIS', cost: 35,
     icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><line x1="12" y1="3" x2="12" y2="21"/><line x1="3" y1="12" x2="21" y2="12"/></svg>',
     tooltip: 'Aumenta la probabilidad de anotar en tandas de penaltis en un 15%.',
   },
   // === PLANTILLA ===
   {
     id: 'medico', category: 'PLANTILLA',
-    name: 'MÉDICO DE ÉLITE', cost: 55,
+    name: 'MÉDICO DE ÉLITE', cost: 50,
     icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>',
     tooltip: 'Las lesiones leves se recuperan automáticamente al acabar el partido, no duran al siguiente.',
   },
   {
     id: 'ojeador', category: 'PLANTILLA',
-    name: 'OJEADOR', cost: 45,
+    name: 'OJEADOR', cost: 25,
     icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>',
     tooltip: 'Al barajar equipos siempre aparece al menos un jugador con 85 o más de rating.',
   },
   {
     id: 'cazatalentos', category: 'PLANTILLA',
-    name: 'CAZATALENTOS', cost: 40,
+    name: 'CAZATALENTOS', cost: 30,
     icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
     tooltip: 'Los jugadores fuera de su posición natural solo pierden un 5% de rendimiento en lugar del 15%.',
   },
@@ -5684,13 +5719,13 @@ const SKILL_DEFS = [
   // === ECONOMÍA ===
   {
     id: 'coleccionista', category: 'ECONOMÍA',
-    name: 'COLECCIONISTA', cost: 35,
+    name: 'COLECCIONISTA', cost: 20,
     icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>',
     tooltip: 'Cada casilla buena del ticket (moneda o cabra) da 1 punto extra.',
   },
   {
     id: 'patrocinador', category: 'ECONOMÍA',
-    name: 'PATROCINADOR', cost: 30,
+    name: 'PATROCINADOR', cost: 20,
     icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>',
     tooltip: 'Ganas 1 GOAT Point extra al clasificarte para cuartos de final.',
   },
@@ -5755,7 +5790,7 @@ async function renderSkillsTab(){
       const btn = document.createElement('button');
       btn.className='skill-toggle-btn';
       btn.dataset.id=def.id;
-      btn.style.cssText=`display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:18px 10px;border:2px solid ${active?'var(--gold)':'var(--line)'};background:${active?'rgba(201,162,39,.18)':'var(--panel)'};color:${active?'var(--gold)':'var(--text)'};cursor:pointer;transition:.15s;text-align:center;position:relative;min-height:140px;width:100%;box-sizing:border-box`;
+      btn.style.cssText=`display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:12px 8px;border:2px solid ${active?'var(--gold)':'var(--line)'};background:${active?'rgba(201,162,39,.18)':'var(--panel)'};color:${active?'var(--gold)':'var(--text)'};cursor:pointer;transition:.15s;text-align:center;position:relative;min-height:110px;width:100%;box-sizing:border-box`;
       btn.innerHTML=`
         ${active?'<span style="position:absolute;top:6px;right:8px;font-size:10px;color:var(--gold);font-family:Bebas Neue,Impact,sans-serif;letter-spacing:1px">✓ ACTIVA</span>':''}
         <span style="color:${active?'var(--gold)':'var(--accent)'}">${bigIcon}</span>

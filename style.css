@@ -152,6 +152,13 @@ body.dark-theme .version-tag{color:#555}
   max-height:62vh;
   aspect-ratio:3/4;
   margin:0 auto;
+  contain:layout;
+}
+@media(orientation:landscape) and (max-width:900px){
+  #pitch{
+    max-height:80vh;
+    max-width:min(320px, 45vw);
+  }
 }
 .pitch-svg{
   position:absolute;inset:0;width:100%;height:100%;
