@@ -2687,7 +2687,7 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
     const myColor=type==='mygoal'||type==='pen_me'?'var(--accent)':type==='card'?'#a07a00':type==='injury'?'#e74c3c':'var(--text)';
     const oppColor=type==='oppgoal'||type==='pen_opp'?'var(--red)':type==='oppcard'?'#a07a00':'var(--text)';
     // Centro: minuto
-    const center=`<span style="font-family:'Bebas Neue',Impact,sans-serif;font-size:12px;color:#999;text-align:center;display:block">${minLabel}</span>`;
+    const center=`<span style="font-family:'Bebas Neue',Impact,sans-serif;font-size:15px;color:#aaa;text-align:center;display:block;letter-spacing:.5px">${minLabel}</span>`;
     if(isMe){
       item.innerHTML=`<span style="text-align:right;padding-right:6px;color:${myColor};line-height:1.3">${text} <span style="font-size:14px">${icon}</span></span>${center}<span></span>`;
     } else if(isOpp){
