@@ -1297,6 +1297,26 @@ body.dark-theme .press-prediction-neutral{background:#1a1a1a;border-color:#333;c
   position:relative;max-height:90vh;overflow-y:auto;
   box-sizing:border-box;
 }
+/* Modal de perfil: altura fija igual a la pestaña MEJORAS */
+#profileModal{
+  height:710px;
+  max-height:92vh;
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+}
+#profileModal .auth-logo{ flex-shrink:0; }
+#profileModal .auth-tabs{ flex-shrink:0; }
+#profileModal .profile-tab-stack{
+  flex:1;
+  min-height:0;
+  overflow:hidden;
+}
+#profileModal .profile-tab-pane.profile-tab-pane-active{
+  height:100%;
+  overflow-y:auto;
+  overflow-x:hidden;
+}
 /* El contenido scrolleable va dentro de cada pane que lo necesite */
 .profile-tab-stack{
   display:grid;
