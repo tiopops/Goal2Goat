@@ -1165,7 +1165,7 @@ function addArcedLine(slots,labels,baseTop,isGoalkeeperLine,isAttackLine){
         top=baseTop - distFromPitchCenter*arcDepth;
       }
     }
-    slots.push({label,left,top});
+    slots.push({label,left:Math.max(5,Math.min(95,left)),top});
   });
 }
 function renderPitch(code){
