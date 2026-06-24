@@ -821,9 +821,10 @@ body.dark-theme .settings-item:hover{background:var(--row-hover);color:var(--gol
 }
 /* Modal de perfil en desktop: layout horizontal */
 @media(min-width:641px){
-  #profileOverlay .auth-modal{
-    max-width:860px;
-    width:92vw;
+  #profileModal{
+    max-width:900px !important;
+    width:90vw !important;
+    min-width:600px;
   }
   #profileOverlay .profile-stats-grid{
     grid-template-columns:repeat(3,1fr);
@@ -840,8 +841,7 @@ body.dark-theme .settings-item:hover{background:var(--row-hover);color:var(--gol
     letter-spacing:1.5px;
   }
   /* Habilidades: 4 columnas en desktop */
-  #profileOverlay #skillsList .upgrades-list,
-  #profileOverlay #skillsList > div[style*="grid"]{
+  #profileOverlay .skill-grid{
     grid-template-columns:repeat(4,1fr) !important;
   }
 }

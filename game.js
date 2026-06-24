@@ -5732,6 +5732,8 @@ async function renderSkillsTab(){
   let skills = data.skills||{};
   if(pointsEl) pointsEl.textContent=pts;
   list.innerHTML='';
+  list.style.overflowX='hidden';
+  list.style.width='100%';
 
   // Agrupar por categoría
   const categories = [...new Set(SKILL_DEFS.map(d=>d.category))];
@@ -5744,6 +5746,7 @@ async function renderSkillsTab(){
     list.appendChild(label);
     // Grid de botones
     const grid = document.createElement('div');
+    grid.className='skill-grid';
     grid.style.cssText='display:grid;grid-template-columns:repeat(2,1fr);gap:8px';
     list.appendChild(grid);
     catDefs.forEach(def=>{
