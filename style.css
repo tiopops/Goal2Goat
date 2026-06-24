@@ -836,13 +836,13 @@ body.dark-theme .settings-item:hover{background:var(--row-hover);color:var(--gol
   }
   #profileOverlay .auth-tabs{
     display:grid;
-    grid-template-columns:repeat(4,1fr);
+    grid-template-columns:repeat(5,1fr);
   }
   #profileOverlay .auth-tab{
     text-align:center;
-    padding:14px 8px;
-    font-size:18px !important;
-    letter-spacing:1.5px;
+    padding:12px 4px;
+    font-size:14px !important;
+    letter-spacing:.8px;
   }
   #profileOverlay .skill-grid{
     grid-template-columns:repeat(3,1fr) !important;

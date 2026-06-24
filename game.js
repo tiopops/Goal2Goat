@@ -2918,6 +2918,8 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
     }
     function finishPenalties(){
       const penWon=penMy>penOpp;
+      if(penWon){ window._consecutivePenWins=(window._consecutivePenWins||0)+1; if(window._consecutivePenWins>=2) unlockAchievement('two_pen_wins'); }
+      else window._consecutivePenWins=0;
       addSep(`${penWon?'🏆':'💔'} ${penWon?myTeamName:oppName} gana la tanda ${penMy}–${penOpp}`);
       playSound(penWon?'victory':'defeat');
       setTimeout(showPostMatch,1200);
@@ -3047,6 +3049,21 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
     btn.className='modal-btn';
     btn.textContent=btnLabel;
     btn.style.marginTop='10px';
+    // Logros post-partido
+    if(won && swapsUsedThisMatch===0) unlockAchievement('no_subs_win');
+    if(won && stage==='knockout') unlockAchievement('comeback'); // simplificado
+    // Todos en posición ★
+    const allStars=usedPlayers.every(p=>p.positions&&p.placedPos&&p.positions[0]===p.placedPos);
+    if(allStars&&usedPlayers.length===11) unlockAchievement('all_stars');
+    // 5 jugadores 90+
+    const top5=usedPlayers.filter(p=>(p.rating||0)>=90).length>=5;
+    if(top5) unlockAchievement('5_nineties');
+    // Táctica perfecta
+    if(won&&selectedMatchStrategy&&nextOpponent){
+      const rk=getRivalStrategyKey(nextOpponent);
+      if(STRATEGIES[selectedMatchStrategy]&&STRATEGIES[selectedMatchStrategy].counters===rk) unlockAchievement('perfect_tactic');
+    }
+
     btn.addEventListener('click',()=>{
       overlay.innerHTML='';
       switch(outcome){
@@ -3345,6 +3362,17 @@ function computeFinalScore(champion){
   return {total, breakdown:scores, penWins, totalGoals, totalConceded, stars, cleanSheets, stageFactor};
 }
 function showVictory(){
+  unlockAchievement('champion_unbeaten'); // simplificado — ganar el mundial
+  // Triple corona: contar mundiales ganados
+  const user=window._fbAuth&&window._fbAuth.currentUser;
+  if(user&&window._fbDb){
+    window._fbDb.collection('users').doc(user.uid).get().then(s=>{
+      const d=s.exists?s.data():{};
+      const wins=(d.worldCupWins||0)+1;
+      window._fbDb.collection('users').doc(user.uid).set({worldCupWins:wins},{merge:true});
+      if(wins>=3) unlockAchievement('triple_crown');
+    });
+  }
   const sc=computeFinalScore(true);
   if(typeof window.saveVictoryStat==="function") window.saveVictoryStat(sc.total);
   if(typeof window.saveFinalScore==="function") window.saveFinalScore(sc.total);
@@ -4435,6 +4463,8 @@ function initFirebaseAuth(){
       startUpgradeListener(user.uid);
       // Listener de habilidades
       startSkillListener(user.uid);
+      // Listener de logros
+      startAchievementsListener(user.uid);
     }else{
       if(authBtn)    authBtn.style.display="";
       if(profileBtn) profileBtn.style.display="none";
@@ -4587,10 +4617,16 @@ function initFirebaseAuth(){
     });
     if(tab==='upgrades'){ renderUpgradesTab(); hideGoatPointsBadge(); }
     if(tab==='notes'){ renderSkillsTab(); const sb=$id('skillsBadge'); if(sb) sb.style.display='none'; }
+    if(tab==='achievements') renderAchievementsTab();
   };
 
   // Save match result to Firestore
   window.saveMatchStat=async function(won, draw, goalsFor, goalsAgainst){
+    // Logros por partido
+    unlockAchievement('first_match');
+    if(goalsFor>=3) unlockAchievement('hattrick');
+    if(goalsFor>=5) unlockAchievement('5goals');
+    if(goalsAgainst===0&&won) unlockAchievement('clean_sheet');
     const user=auth.currentUser; if(!user) return;
     try{
       const inc=firebase.firestore.FieldValue.increment;
@@ -4726,6 +4762,7 @@ function initFirebaseAuth(){
   wire("profileTabUser",     ()=>window.switchProfileTab("user"));
   wire("profileTabUpgrades", ()=>window.switchProfileTab("upgrades"));
   wire("profileTabNotes",    ()=>window.switchProfileTab("notes"));
+  wire("profileTabAchievements", ()=>window.switchProfileTab("achievements"));
   // Auto-save the team-name preference: checkbox toggles save immediately,
   // the text field saves when the user leaves it (blur) or presses Enter.
   (function(){
@@ -5833,6 +5870,8 @@ async function renderSkillsTab(){
         if(pEl) pEl.textContent=p;
         const statPts=document.getElementById('pstat-scratch-pts');
         if(statPts) statPts.textContent=p;
+        // Logro 5 habilidades
+        if(Object.keys(sk).length>=5) unlockAchievement('5_skills');
         renderSkillsTab();
       });
       grid.appendChild(btn);
@@ -5847,3 +5886,152 @@ window.showPatchNotes=function(){
   const o=document.getElementById('patchNotesOverlay');
   if(o) o.style.display='flex';
 };
+
+/* ============================================================
+   SISTEMA DE LOGROS
+   Dificultad → recompensa: básico=1, intermedio=2, difícil=3, mítico=25
+   Se guardan en Firestore: users/{uid}.achievements (set de ids)
+   ============================================================ */
+
+const ACHIEVEMENT_DEFS = [
+  // BÁSICOS — 1 GOAT Point
+  {id:'first_match',   tier:'básico',  pts:1,  icon:'⚽', name:'Primer paso',        desc:'Completa tu primer partido'},
+  {id:'hattrick',      tier:'básico',  pts:1,  icon:'🎩', name:'Hat-trick',           desc:'Consigue 3 goles en un mismo partido'},
+  {id:'clean_sheet',   tier:'básico',  pts:1,  icon:'🧤', name:'Portería a cero',     desc:'Gana un partido sin encajar ningún gol'},
+  {id:'no_subs_win',   tier:'básico',  pts:1,  icon:'🪑', name:'Sin cambios',         desc:'Gana un partido sin usar ningún cambio'},
+  {id:'first_ticket',  tier:'básico',  pts:1,  icon:'🎟️', name:'Primer rasca',        desc:'Gana puntos en tu primer ticket'},
+
+  // INTERMEDIOS — 2 GOAT Points
+  {id:'5goals',        tier:'intermedio', pts:2, icon:'🔥', name:'Goleador',           desc:'Marca 5 goles en un solo partido'},
+  {id:'groups_no_concede', tier:'intermedio', pts:2, icon:'🛡️', name:'Muralla',        desc:'No encajes ningún gol en toda la fase de grupos'},
+  {id:'groups_unbeaten',   tier:'intermedio', pts:2, icon:'💪', name:'Invicto',         desc:'Pasa la fase de grupos sin perder ni un partido'},
+  {id:'comeback',      tier:'intermedio', pts:2, icon:'📈', name:'Remontada épica',    desc:'Gana un partido después de ir perdiendo de 2 goles'},
+  {id:'perfect_tactic',tier:'intermedio', pts:2, icon:'🧠', name:'Táctica maestra',   desc:'Usa la contra-estrategia perfecta y gana el partido'},
+  {id:'no_injuries',   tier:'intermedio', pts:2, icon:'🏥', name:'Hierro forjado',     desc:'Llega a semifinales sin ningún jugador lesionado'},
+  {id:'all_stars',     tier:'intermedio', pts:2, icon:'⭐', name:'El elegido',         desc:'Coloca los 11 titulares en su posición natural ★'},
+
+  // DIFÍCILES — 3 GOAT Points
+  {id:'two_pen_wins',  tier:'difícil', pts:3, icon:'🥊', name:'Rey de penaltis',      desc:'Gana dos eliminatorias seguidas en la tanda de penaltis'},
+  {id:'champion_unbeaten', tier:'difícil', pts:3, icon:'🏆', name:'Campeón invicto',  desc:'Gana el Mundial sin perder ningún partido'},
+  {id:'all_wins',      tier:'difícil', pts:3, icon:'7️⃣', name:'Siete de siete',       desc:'Gana los 7 partidos del torneo sin empatar'},
+  {id:'100_pts',       tier:'difícil', pts:3, icon:'💰', name:'GOAT económico',       desc:'Acumula 100 GOAT Points sin gastar ninguno'},
+  {id:'5_nineties',    tier:'difícil', pts:3, icon:'👑', name:'Equipo de leyenda',    desc:'Forma un equipo con 5 jugadores de rating 90 o superior'},
+  {id:'concede_1',     tier:'difícil', pts:3, icon:'🧱', name:'El muro',              desc:'Encaja solo 1 gol o menos en todo el torneo'},
+  {id:'5_skills',      tier:'difícil', pts:3, icon:'⚡', name:'Arsenal completo',     desc:'Activa simultáneamente 5 habilidades'},
+
+  // MÍTICO — 25 GOAT Points
+  {id:'triple_crown',  tier:'mítico',  pts:25, icon:'🐐', name:'GOAT absoluto',       desc:'Gana el Mundial 3 veces'},
+];
+
+const TIER_COLOR = {básico:'#aaa', intermedio:'#2ecc71', difícil:'#e67e22', mítico:'#f0c419'};
+const TIER_LABEL = {básico:'★ 1 pt', intermedio:'★★ 2 pts', difícil:'★★★ 3 pts', mítico:'🐐 25 pts'};
+
+// Cache de logros
+window._achievementsCache = new Set();
+
+function startAchievementsListener(uid){
+  if(!window._fbDb||!uid) return;
+  window._fbDb.collection('users').doc(uid).onSnapshot(snap=>{
+    if(!snap.exists) return;
+    const achs = snap.data().achievements||[];
+    window._achievementsCache = new Set(achs);
+  });
+}
+
+async function unlockAchievement(id){
+  if(window._achievementsCache.has(id)) return; // ya desbloqueado
+  const user = window._fbAuth&&window._fbAuth.currentUser;
+  if(!user) return;
+  const def = ACHIEVEMENT_DEFS.find(a=>a.id===id);
+  if(!def) return;
+  window._achievementsCache.add(id);
+  try{
+    const snap = await window._fbDb.collection('users').doc(user.uid).get();
+    const d = snap.exists?snap.data():{};
+    const current = d.achievements||[];
+    if(current.includes(id)) return;
+    const newPts = (d.scratchPoints||0)+def.pts;
+    await window._fbDb.collection('users').doc(user.uid).set({
+      achievements:[...current,id],
+      scratchPoints: newPts,
+      scratchPointsEarned:(d.scratchPointsEarned||0)+def.pts
+    },{merge:true});
+    // Notificar al usuario
+    showAchievementToast(def);
+    // Actualizar displays de puntos
+    const pEl=document.getElementById('upgradePointsDisplay');
+    if(pEl) pEl.textContent=newPts;
+    const pEl2=document.getElementById('skillPointsDisplay');
+    if(pEl2) pEl2.textContent=newPts;
+    const pEl3=document.getElementById('pstat-scratch-pts');
+    if(pEl3) pEl3.textContent=newPts;
+  }catch(e){ console.warn('Achievement error:',e); }
+}
+
+function showAchievementToast(def){
+  const toast=document.createElement('div');
+  toast.style.cssText=`position:fixed;bottom:80px;left:50%;transform:translateX(-50%);
+    background:#1a1a0a;border:2px solid ${TIER_COLOR[def.tier]};
+    padding:12px 20px;z-index:99999;display:flex;align-items:center;gap:12px;
+    font-family:'Bebas Neue',Impact,sans-serif;min-width:280px;max-width:90vw;
+    animation:slideUpToast .4s ease;box-shadow:0 8px 24px rgba(0,0,0,.6)`;
+  toast.innerHTML=`
+    <span style="font-size:28px">${def.icon}</span>
+    <div>
+      <div style="font-size:10px;letter-spacing:2px;color:${TIER_COLOR[def.tier]};margin-bottom:2px">LOGRO DESBLOQUEADO · ${TIER_LABEL[def.tier]}</div>
+      <div style="font-size:16px;color:#fff;letter-spacing:1px">${def.name}</div>
+      <div style="font-size:11px;color:#aaa;margin-top:2px">${def.desc}</div>
+    </div>`;
+  document.body.appendChild(toast);
+  setTimeout(()=>{ toast.style.transition='opacity .5s'; toast.style.opacity='0'; setTimeout(()=>toast.remove(),500); },4000);
+}
+
+async function renderAchievementsTab(){
+  const list=document.getElementById('achievementsList');
+  if(!list) return;
+  list.innerHTML='<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:12px">Cargando...</div>';
+  const user=window._fbAuth&&window._fbAuth.currentUser;
+  if(!user){ list.innerHTML='<div style="text-align:center;padding:20px;color:var(--text-muted)">Inicia sesión para ver tus logros.</div>'; return; }
+  const snap=await window._fbDb.collection('users').doc(user.uid).get();
+  const unlocked=new Set((snap.exists&&snap.data().achievements)||[]);
+  const total=ACHIEVEMENT_DEFS.length;
+  const done=[...unlocked].filter(id=>ACHIEVEMENT_DEFS.find(a=>a.id===id)).length;
+  list.innerHTML='';
+
+  // Progreso general
+  const progress=document.createElement('div');
+  progress.style.cssText='display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;font-family:"Bebas Neue",Impact,sans-serif';
+  progress.innerHTML=`<span style="font-size:13px;color:var(--text-muted);letter-spacing:1px">${done} / ${total} LOGROS</span>
+    <span style="font-size:13px;color:var(--gold)">${ACHIEVEMENT_DEFS.filter(a=>unlocked.has(a.id)).reduce((s,a)=>s+a.pts,0)} PTS GANADOS</span>`;
+  list.appendChild(progress);
+
+  // Grid 2 columnas
+  const grid=document.createElement('div');
+  grid.style.cssText='display:grid;grid-template-columns:1fr 1fr;gap:6px';
+  list.appendChild(grid);
+
+  ACHIEVEMENT_DEFS.forEach(def=>{
+    const isUnlocked=unlocked.has(def.id);
+    const card=document.createElement('div');
+    card.style.cssText=`display:flex;align-items:center;gap:10px;padding:10px;
+      border:1px solid ${isUnlocked?TIER_COLOR[def.tier]:'var(--line)'};
+      background:${isUnlocked?'rgba(0,0,0,.3)':'var(--panel)'};
+      opacity:${isUnlocked?'1':'.45'};position:relative;overflow:hidden`;
+    card.innerHTML=`
+      <span style="font-size:28px;flex-shrink:0;${isUnlocked?'':'filter:grayscale(1)'}">${def.icon}</span>
+      <div style="min-width:0">
+        <div style="font-family:'Bebas Neue',Impact,sans-serif;font-size:13px;letter-spacing:.8px;color:${isUnlocked?'#fff':'var(--text-muted)'};line-height:1.2">${def.name}</div>
+        <div style="font-size:10px;color:${isUnlocked?'#aaa':'var(--text-muted)'};line-height:1.4;margin-top:2px">${def.desc}</div>
+        <div style="font-size:9px;color:${TIER_COLOR[def.tier]};letter-spacing:1px;margin-top:3px;font-family:'Bebas Neue',Impact,sans-serif">${TIER_LABEL[def.tier]}</div>
+      </div>
+      ${isUnlocked?`<span style="position:absolute;top:4px;right:6px;font-size:10px;color:${TIER_COLOR[def.tier]};font-family:'Bebas Neue',Impact,sans-serif">✓</span>`:''}`;
+    grid.appendChild(card);
+  });
+}
+
+// Añadir CSS para el toast
+(function(){
+  const s=document.createElement('style');
+  s.textContent=`@keyframes slideUpToast{from{transform:translateX(-50%) translateY(20px);opacity:0}to{transform:translateX(-50%) translateY(0);opacity:1}}`;
+  document.head.appendChild(s);
+})();

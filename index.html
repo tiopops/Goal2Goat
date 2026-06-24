@@ -62,6 +62,7 @@
       <button class="auth-tab" id="profileTabUser">AJUSTES</button>
       <button class="auth-tab" id="profileTabUpgrades">MEJORAS <span id="upgradesBadge" style="display:none;width:8px;height:8px;border-radius:50%;background:#f87171;margin-left:4px;vertical-align:middle;animation:ticketPulse 1.5s ease-in-out infinite"></span></button>
       <button class="auth-tab" id="profileTabNotes">HABILIDADES <span id="skillsBadge" style="display:none;width:8px;height:8px;border-radius:50%;background:#f87171;margin-left:4px;vertical-align:middle;animation:ticketPulse 1.5s ease-in-out infinite"></span></button>
+      <button class="auth-tab" id="profileTabAchievements">LOGROS <span id="achievementsBadge" style="display:none;width:8px;height:8px;border-radius:50%;background:#f0c419;margin-left:4px;vertical-align:middle;animation:ticketPulse 1.5s ease-in-out infinite"></span></button>
     </div>
 
     <!-- All panes stack in the same grid cell, so the modal always sizes
@@ -187,6 +188,17 @@
           </div>
         </div>
         <div class="upgrades-list" id="upgradesList"></div>
+      </div>
+
+      <!-- LOGROS TAB -->
+      <div id="profileAchievementsPane" class="profile-tab-pane">
+        <div class="upgrades-header">
+          <div class="upgrades-title-row">
+            <span class="upgrades-title">LOGROS</span>
+            <span class="upgrades-subtitle">Desafíos y recompensas</span>
+          </div>
+        </div>
+        <div id="achievementsList"></div>
       </div>
 
     </div>
