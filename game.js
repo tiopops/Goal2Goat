@@ -4624,7 +4624,12 @@ function initFirebaseAuth(){
     });
     if(tab==='upgrades'){ renderUpgradesTab(); hideGoatPointsBadge(); }
     if(tab==='notes'){ renderSkillsTab(); const sb=$id('skillsBadge'); if(sb) sb.style.display='none'; }
-    if(tab==='achievements') renderAchievementsTab();
+    if(tab==='achievements'){
+      renderAchievementsTab();
+      const ab=$id('achievementsBadge');
+      if(ab) ab.style.display='none';
+      try{localStorage.removeItem('_g2g_ach_pending');}catch(e){}
+    }
   };
 
   // Save match result to Firestore
@@ -4930,16 +4935,23 @@ function showGoatPointsBadge(){
   const pb=$id('profileGoatBadge');
   const ub=$id('upgradesBadge');
   const sb=$id('skillsBadge');
-  if(pb) pb.style.display='block';
+  if(pb) pb.style.display='block'; // siempre mostrar en botón perfil
   if(ub) ub.style.display='inline-block';
   if(sb) sb.style.display='inline-block';
   try{ localStorage.setItem('_g2g_pts_pending','1'); }catch(e){}
 }
+function showProfileBadge(){
+  // Muestra solo el badge del botón perfil (sin indicar pestaña específica)
+  const pb=$id('profileGoatBadge');
+  if(pb) pb.style.display='block';
+}
 function hideGoatPointsBadge(){
+  // Solo ocultar si no hay logros pendientes tampoco
+  const achPending=localStorage.getItem('_g2g_ach_pending');
   const pb=$id('profileGoatBadge');
   const ub=$id('upgradesBadge');
   const sb=$id('skillsBadge');
-  if(pb) pb.style.display='none';
+  if(!achPending&&pb) pb.style.display='none';
   if(ub) ub.style.display='none';
   if(sb) sb.style.display='none';
   try{ localStorage.removeItem('_g2g_pts_pending'); }catch(e){}
@@ -4947,6 +4959,15 @@ function hideGoatPointsBadge(){
 // Restaurar badge si había puntos pendientes de ver al cargar la página
 (function(){
   try{ if(localStorage.getItem('_g2g_pts_pending')) showGoatPointsBadge(); }catch(e){}
+  try{
+    if(localStorage.getItem('_g2g_ach_pending')){
+      const ab=document.getElementById('achievementsBadge');
+      if(ab) ab.style.display='inline-block';
+      // También mostrar badge en perfil
+      const pb=document.getElementById('profileGoatBadge');
+      if(pb) pb.style.display='block';
+    }
+  }catch(e){}
 })();
 
 /* ============================================================
@@ -5916,17 +5937,17 @@ window.showPatchNotes=function(){
 
 const ACHIEVEMENT_DEFS = [
   // BÁSICOS — 1 PT
-  {id:'first_match',      tier:'básico',  pts:1,  icon:'ph-whistle',        name:'PITIDO INICIAL',       desc:'Completa tu primer partido'},
+  {id:'first_match',      tier:'básico',  pts:1,  icon:'ph-megaphone',        name:'PITIDO INICIAL',       desc:'Completa tu primer partido'},
   {id:'first_win',        tier:'básico',  pts:1,  icon:'ph-trophy',         name:'PRIMERA VICTORIA',     desc:'Gana tu primer partido'},
   {id:'first_ticket',     tier:'básico',  pts:1,  icon:'ph-ticket',         name:'PRIMER RASCA',         desc:'Gana puntos en tu primer ticket'},
   {id:'clean_sheet',      tier:'básico',  pts:1,  icon:'ph-shield-check',   name:'PORTERÍA A CERO',      desc:'Gana un partido sin encajar ningún gol'},
-  {id:'no_subs_win',      tier:'básico',  pts:1,  icon:'ph-bench',          name:'SIN ROTACIONES',       desc:'Gana un partido sin usar ningún cambio'},
-  {id:'first_groups',     tier:'básico',  pts:1,  icon:'ph-flag-checkered', name:'FASE SUPERADA',        desc:'Clasifícate para octavos de final'},
+  {id:'no_subs_win',      tier:'básico',  pts:1,  icon:'ph-swap',          name:'SIN ROTACIONES',       desc:'Gana un partido sin usar ningún cambio'},
+  {id:'first_groups',     tier:'básico',  pts:1,  icon:'ph-flag', name:'FASE SUPERADA',        desc:'Clasifícate para octavos de final'},
   {id:'score_5',          tier:'básico',  pts:1,  icon:'ph-soccer-ball',    name:'GOLEADA',              desc:'Marca 5 goles o más en un partido'},
-  {id:'win_comeback',     tier:'básico',  pts:1,  icon:'ph-arrow-u-up-left','name':'VUELTA AL PARTIDO',  desc:'Gana un partido después de ir perdiendo'},
+  {id:'win_comeback',     tier:'básico',  pts:1,  icon:'ph-arrow-bend-up-left','name':'VUELTA AL PARTIDO',  desc:'Gana un partido después de ir perdiendo'},
   {id:'use_skill',        tier:'básico',  pts:1,  icon:'ph-lightning',      name:'PRIMER PODER',         desc:'Activa tu primera habilidad'},
   {id:'full_bench',       tier:'básico',  pts:1,  icon:'ph-users',          name:'PLANTILLA COMPLETA',   desc:'Llega a un partido con el banquillo lleno'},
-  {id:'hattrick_player',  tier:'básico',  pts:1,  icon:'ph-hat',            name:'HAT-TRICK',            desc:'Un mismo jugador marca 3 goles en un partido'},
+  {id:'hattrick_player',  tier:'básico',  pts:1,  icon:'ph-number-three',            name:'HAT-TRICK',            desc:'Un mismo jugador marca 3 goles en un partido'},
   {id:'win_no_concede2',  tier:'básico',  pts:1,  icon:'ph-wall',           name:'DOBLE CERROJO',        desc:'No encajes goles en 2 partidos consecutivos'},
   {id:'all_stars',        tier:'básico',  pts:1,  icon:'ph-star',           name:'ONCE PERFECTO',        desc:'Coloca los 11 titulares en su posición natural ★'},
   {id:'first_pen_win',    tier:'básico',  pts:1,  icon:'ph-crosshair',      name:'NERVIOS DE ACERO',     desc:'Gana una tanda de penaltis'},
@@ -5934,16 +5955,16 @@ const ACHIEVEMENT_DEFS = [
 
   // INTERMEDIOS — 2 PTS
   {id:'groups_unbeaten',  tier:'intermedio', pts:2, icon:'ph-shield',        name:'INVICTO EN GRUPOS',   desc:'Pasa la fase de grupos sin perder ningún partido'},
-  {id:'groups_no_concede',tier:'intermedio', pts:2, icon:'ph-castle-turret', name:'MURALLA EN GRUPOS',   desc:'No encajes ningún gol en toda la fase de grupos'},
+  {id:'groups_no_concede',tier:'intermedio', pts:2, icon:'ph-shield-star', name:'MURALLA EN GRUPOS',   desc:'No encajes ningún gol en toda la fase de grupos'},
   {id:'quarters',         tier:'intermedio', pts:2, icon:'ph-medal',         name:'CUARTOS',              desc:'Clasifícate para cuartos de final'},
-  {id:'semis',            tier:'intermedio', pts:2, icon:'ph-medal-military','name':'SEMIFINAL',          desc:'Llega a semifinales'},
-  {id:'comeback_2',       tier:'intermedio', pts:2, icon:'ph-arrow-fat-up',  name:'REMONTADA ÉPICA',     desc:'Gana un partido después de ir perdiendo de 2 goles'},
-  {id:'perfect_tactic',   tier:'intermedio', pts:2, icon:'ph-strategy',      name:'TÁCTICA MAESTRA',     desc:'Usa la contra-estrategia perfecta y gana el partido'},
-  {id:'no_injuries_semis',tier:'intermedio', pts:2, icon:'ph-first-aid-kit', name:'HIERRO FORJADO',      desc:'Llega a semifinales sin ningún jugador lesionado'},
+  {id:'semis',            tier:'intermedio', pts:2, icon:'ph-medal','name':'SEMIFINAL',          desc:'Llega a semifinales'},
+  {id:'comeback_2',       tier:'intermedio', pts:2, icon:'ph-arrow-fat-lines-up',  name:'REMONTADA ÉPICA',     desc:'Gana un partido después de ir perdiendo de 2 goles'},
+  {id:'perfect_tactic',   tier:'intermedio', pts:2, icon:'ph-graph',      name:'TÁCTICA MAESTRA',     desc:'Usa la contra-estrategia perfecta y gana el partido'},
+  {id:'no_injuries_semis',tier:'intermedio', pts:2, icon:'ph-plus-circle', name:'HIERRO FORJADO',      desc:'Llega a semifinales sin ningún jugador lesionado'},
   {id:'score_7',          tier:'intermedio', pts:2, icon:'ph-fire',          name:'ARROLLADOR',           desc:'Marca 7 goles o más en un partido'},
   {id:'5_nineties',       tier:'intermedio', pts:2, icon:'ph-crown',         name:'EQUIPO DE LEYENDA',   desc:'Forma un equipo con 5 jugadores de rating 90 o superior'},
   {id:'two_pen_wins',     tier:'intermedio', pts:2, icon:'ph-target',        name:'REY DE PENALTIS',     desc:'Gana dos tandas de penaltis en el mismo torneo'},
-  {id:'use_3_skills',     tier:'intermedio', pts:2, icon:'ph-briefcase',     name:'ESPECIALISTA',         desc:'Activa simultáneamente 3 habilidades distintas'},
+  {id:'use_3_skills',     tier:'intermedio', pts:2, icon:'ph-toolbox',     name:'ESPECIALISTA',         desc:'Activa simultáneamente 3 habilidades distintas'},
   {id:'win_5_row',        tier:'intermedio', pts:2, icon:'ph-trend-up',      name:'RACHA GANADORA',      desc:'Gana 5 partidos consecutivos'},
   {id:'50_goat_pts',      tier:'intermedio', pts:2, icon:'ph-coins',         name:'BUEN CONTRATO',       desc:'Acumula 50 GOAT Points sin gastar ninguno'},
   {id:'score_10_group',   tier:'intermedio', pts:2, icon:'ph-chart-bar',     name:'MÁQUINA GOLEADORA',   desc:'Marca 10 goles o más en toda la fase de grupos'},
@@ -5951,18 +5972,18 @@ const ACHIEVEMENT_DEFS = [
 
   // DIFÍCILES — 3 PTS
   {id:'champion',         tier:'difícil', pts:3, icon:'ph-trophy',          name:'CAMPEÓN MUNDIAL',      desc:'Gana el Mundial'},
-  {id:'champion_unbeaten',tier:'difícil', pts:3, icon:'ph-star-four',       name:'CAMPEÓN INVICTO',      desc:'Gana el Mundial sin perder ningún partido'},
-  {id:'all_wins',         tier:'difícil', pts:3, icon:'ph-infinity',        name:'SIETE DE SIETE',       desc:'Gana los 7 partidos del torneo sin empatar'},
-  {id:'100_pts',          tier:'difícil', pts:3, icon:'ph-vault',           name:'CAJA FUERTE',          desc:'Acumula 100 GOAT Points sin gastar ninguno'},
+  {id:'champion_unbeaten',tier:'difícil', pts:3, icon:'ph-star',       name:'CAMPEÓN INVICTO',      desc:'Gana el Mundial sin perder ningún partido'},
+  {id:'all_wins',         tier:'difícil', pts:3, icon:'ph-circles-four',        name:'SIETE DE SIETE',       desc:'Gana los 7 partidos del torneo sin empatar'},
+  {id:'100_pts',          tier:'difícil', pts:3, icon:'ph-bank',           name:'CAJA FUERTE',          desc:'Acumula 100 GOAT Points sin gastar ninguno'},
   {id:'concede_1',        tier:'difícil', pts:3, icon:'ph-lock',            name:'BAJO SIETE LLAVES',    desc:'Encaja solo 1 gol o menos en todo el torneo'},
   {id:'5_skills',         tier:'difícil', pts:3, icon:'ph-lightning',       name:'MANAGER TOTAL',        desc:'Activa simultáneamente 5 habilidades'},
-  {id:'hattrick_final',   tier:'difícil', pts:3, icon:'ph-hat',             name:'HÉROE DE LA FINAL',    desc:'Un jugador marca 3 goles en la final del Mundial'},
+  {id:'hattrick_final',   tier:'difícil', pts:3, icon:'ph-number-three',             name:'HÉROE DE LA FINAL',    desc:'Un jugador marca 3 goles en la final del Mundial'},
   {id:'10_clean_sheets',  tier:'difícil', pts:3, icon:'ph-shield-check',    name:'PORTERO LEGENDARIO',   desc:'Consigue 10 porterías a cero a lo largo de tus partidas'},
-  {id:'pen_win_final',    tier:'difícil', pts:3, icon:'ph-crosshair-simple','name':'FINAL EN PENALTIS',  desc:'Gana la final del Mundial en la tanda de penaltis'},
-  {id:'all_achievements_basic', tier:'difícil', pts:3, icon:'ph-certificate','name':'PROFESIONAL',       desc:'Desbloquea todos los logros básicos'},
+  {id:'pen_win_final',    tier:'difícil', pts:3, icon:'ph-crosshair','name':'FINAL EN PENALTIS',  desc:'Gana la final del Mundial en la tanda de penaltis'},
+  {id:'all_achievements_basic', tier:'difícil', pts:3, icon:'ph-seal-check','name':'PROFESIONAL',       desc:'Desbloquea todos los logros básicos'},
 
   // MÍTICO — 25 PTS
-  {id:'triple_crown',     tier:'mítico',  pts:25, icon:'ph-crown-simple',   name:'GOAT ABSOLUTO',        desc:'Gana el Mundial 3 veces'},
+  {id:'triple_crown',     tier:'mítico',  pts:25, icon:'ph-crown',   name:'GOAT ABSOLUTO',        desc:'Gana el Mundial 3 veces'},
 ];
 
 const TIER_COLOR = {básico:'#aaa', intermedio:'#2ecc71', difícil:'#e67e22', mítico:'#f0c419'};
@@ -6000,6 +6021,10 @@ async function unlockAchievement(id){
     },{merge:true});
     // Notificar al usuario
     showAchievementToast(def);
+    showGoatPointsBadge();
+    // Badge en la pestaña LOGROS
+    const ab=document.getElementById('achievementsBadge');
+    if(ab){ ab.style.display='inline-block'; try{localStorage.setItem('_g2g_ach_pending','1');}catch(e){} }
     // Actualizar displays de puntos
     const pEl=document.getElementById('upgradePointsDisplay');
     if(pEl) pEl.textContent=newPts;
@@ -6065,7 +6090,10 @@ async function renderAchievementsTab(){
       background:${isUnlocked?'rgba(0,0,0,.3)':'var(--panel)'};
       opacity:${isUnlocked?'1':'.45'};position:relative;overflow:hidden`;
     card.innerHTML=`
-      <i class="ph ph-bold ${def.icon}" style="font-size:26px;flex-shrink:0;color:${isUnlocked?TIER_COLOR[def.tier]:'var(--text-muted)'};${isUnlocked?'':`opacity:.35`}"></i>
+      ${def.icon.startsWith('svg:')?
+        `<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="${isUnlocked?'#c9a227':'var(--text-muted)'}" stroke-width="2" stroke-linecap="round" style="${isUnlocked?'':'opacity:.35'}"><path d="${def.icon.slice(4)}"/></svg>`
+        :`<i class="ph ph-bold ${def.icon}" style="font-size:26px;flex-shrink:0;color:${isUnlocked?'#c9a227':'var(--text-muted)'};${isUnlocked?'':'opacity:.35'}"></i>`
+      }
       <div style="min-width:0;flex:1">
         <div style="font-family:'Bebas Neue',Impact,sans-serif;font-size:12px;letter-spacing:.8px;color:${isUnlocked?'#fff':'var(--text-muted)'};line-height:1.2">${def.name}</div>
         <div style="font-size:9px;color:${isUnlocked?'#aaa':'var(--text-muted)'};line-height:1.4;margin-top:2px">${def.desc}</div>
