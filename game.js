@@ -1240,7 +1240,17 @@ function clearHighlights(){
 /* ========= DRAFT COUNTER & TABLES ========= */
 function updateDraftCounter(){
   const el=document.getElementById("draftCounter");
-  if(el) el.textContent=draftedCount+"/11";
+  if(!el) return;
+  if(draftedCount===11){
+    const teamName=window._currentTeamName||'EQUIPO';
+    el.textContent=teamName.toUpperCase();
+    el.style.background='var(--gold)';
+    el.style.color='#000';
+  } else {
+    el.textContent=draftedCount+"/11";
+    el.style.background='';
+    el.style.color='';
+  }
 }
 function effRating(p){
   const r=p.rating||70;
@@ -1766,6 +1776,7 @@ function showTeamNameModal(){
   // skip the popup entirely and use that name directly.
   if(window.useFixedTeamName && window.preferredTeamName){
     myTeamName=window.preferredTeamName;
+    window._currentTeamName=myTeamName;
     if(typeof firebase!=='undefined'){
       try{
         const user=firebase.auth().currentUser;
@@ -1796,6 +1807,7 @@ function showTeamNameModal(){
       return;
     }
     myTeamName=val.toUpperCase();
+    window._currentTeamName=myTeamName;
     document.getElementById("matchOverlay").innerHTML="";
     // Save team name to Firebase profile if logged in
     if(typeof firebase!=='undefined'){
