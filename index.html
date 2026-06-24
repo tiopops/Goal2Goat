@@ -4,14 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Goal2Goat</title>
-<!-- Fix fogonazo: fondo oscuro ANTES de cualquier CSS --><style>html{background:#15181a;color:#ccc}</style>
+<!-- Fix fogonazo: fondo oscuro ANTES de cualquier CSS --><style>html,body{background:#15181a;color:#ccc}</style>
 <script>
   (function(){
+    // Por defecto oscuro. Solo cambiar si el usuario eligió claro explícitamente.
     var saved=null;
     try{saved=localStorage.getItem('darkTheme');}catch(e){}
-    if(saved==='false'){
-      document.documentElement.style.background='';
-      document.documentElement.style.color='';
+    if(saved!=='false'){
+      document.documentElement.classList.add('dark-theme-init');
     }
   })();
 </script>
@@ -22,7 +22,7 @@
   document.write('<link rel="stylesheet" href="style.css?v=' + Date.now() + '">');
 </script>
 </head>
-<body>
+<body class="dark-theme">
 
 <!-- FULL-WIDTH APP HEADER -->
 <header id="appHeader">
@@ -106,8 +106,8 @@
           </div>
         </div>
 
-        <!-- Sección: Logros -->
-        <div class="stats-section-label">LOGROS</div>
+        <!-- Sección: Trofeos -->
+        <div class="stats-section-label">TROFEOS</div>
         <div class="profile-stats-grid" style="grid-template-columns:repeat(3,1fr)">
           <div class="profile-stat-card best">
             <div class="pstat-val" id="pstat-best">—</div>

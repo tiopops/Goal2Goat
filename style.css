@@ -1,7 +1,15 @@
 /* ===================== BASE ===================== */
 :root{
+  /* Variables OSCURAS por defecto — sin flash al cargar */
+  --bg:#15181a;--panel:#1e2326;--dark:#0d1011;--accent:#2ecc71;
+  --gold:#c9a227;--line:#2f3539;--red:#c0392b;
+  --text:#ccc;--text-soft:#aaa;--text-muted:#666;
+  --card-bg:#262b2e;--table-header-bg:#2f3539;--row-hover:#333a3e;
+}
+/* Tema claro — solo si el usuario lo activa explícitamente */
+body.light-theme{
   --bg:#ece8df;--panel:#f7f4ee;--dark:#1d2a2a;--accent:#0f6b3b;
-  --gold:#c9a227;--line:#d8d1c4;--red:#c0392b;
+  --line:#d8d1c4;
   --text:#333;--text-soft:#555;--text-muted:#888;
   --card-bg:#fff;--table-header-bg:#f0ece2;--row-hover:#f8f5ee;
 }
@@ -148,16 +156,12 @@ body.dark-theme .version-tag{color:#555}
   position:relative;
   overflow:hidden;
   width:100%;
-  max-width:420px;
-  max-height:62vh;
+  max-width:min(420px, 65vh);
   aspect-ratio:3/4;
   margin:0 auto;
 }
-@media(orientation:landscape) and (max-height:600px){
-  #pitch{
-    max-height:90vh;
-    max-width:calc(90vh * 3/4);
-  }
+@media(orientation:landscape) and (max-height:500px){
+  #pitch{ max-width:min(300px, 55vh); }
 }
 .pitch-svg{
   position:absolute;inset:0;width:100%;height:100%;
@@ -904,6 +908,28 @@ body.dark-theme .settings-item:hover{background:var(--row-hover);color:var(--gol
 }
 .auth-tabs{
   display:flex;border-bottom:2px solid var(--line);margin-bottom:20px;
+}
+/* Con 5 pestañas: grid en lugar de flex para igualar anchos */
+#profileOverlay .auth-tabs{
+  display:grid;
+  grid-template-columns:repeat(5,1fr);
+  overflow:hidden;
+}
+.auth-tab{
+  flex:1;background:none;border:none;color:var(--text-muted);
+  font-family:'Bebas Neue',Impact,sans-serif;
+  font-size:16px;letter-spacing:1px;
+  padding:12px 4px;cursor:pointer;transition:.15s;
+  border-bottom:2px solid transparent;margin-bottom:-2px;
+  white-space:nowrap;text-align:center;overflow:hidden;text-overflow:ellipsis;
+}
+/* En móvil, pestañas más compactas */
+@media(max-width:640px){
+  #profileOverlay .auth-tab{
+    font-size:10px !important;
+    padding:10px 2px !important;
+    letter-spacing:0 !important;
+  }
 }
 .auth-tab{
   flex:1;background:none;border:none;color:var(--text-muted);

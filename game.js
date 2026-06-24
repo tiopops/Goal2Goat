@@ -4276,14 +4276,12 @@ function syncThemeToggleUI(isDark){
   // Theme: dark is the default; only go light if explicitly saved as light
   let isDark=true;
   try{
-    const saved=localStorage.getItem('g2g_darkTheme');
-    if(saved!==null) isDark=(saved==='true');
+    const saved=localStorage.getItem('darkTheme');
+    if(saved==='false') isDark=false;
   }catch(e){}
   if(isDark) document.body.classList.add("dark-theme");
   else document.body.classList.remove("dark-theme");
-  // Quitar la clase provisional del <html> (la puso el script inline del head)
-  document.documentElement.classList.remove('dark-theme');
-  // Activar transiciones solo DESPUÉS de aplicar el tema — sin fogonazo
+  document.documentElement.classList.remove('dark-theme-init');
   requestAnimationFrame(()=>requestAnimationFrame(()=>document.body.classList.add("theme-ready")));
   syncThemeToggleUI(isDark);
 })();
@@ -4300,7 +4298,7 @@ themeToggleBtns.forEach(btn=>{
   btn.addEventListener("click",()=>{
     const isDark=document.body.classList.toggle("dark-theme");
     syncThemeToggleUI(isDark);
-    try{ localStorage.setItem('g2g_darkTheme', isDark); }catch(e){}
+    try{ localStorage.setItem('darkTheme', isDark); }catch(e){}
     playSound('select');
   });
 });
@@ -4605,10 +4603,11 @@ function initFirebaseAuth(){
 
   window.switchProfileTab=function(tab){
     const tabs={
-      stats:    {btn:$id("profileTabStats"),    pane:$id("profileStatsPane")},
-      user:     {btn:$id("profileTabUser"),     pane:$id("profileUserPane")},
-      upgrades: {btn:$id("profileTabUpgrades"), pane:$id("profileUpgradesPane")},
-      notes:    {btn:$id("profileTabNotes"),    pane:$id("profileNotesPane")},
+      stats:        {btn:$id("profileTabStats"),        pane:$id("profileStatsPane")},
+      user:         {btn:$id("profileTabUser"),         pane:$id("profileUserPane")},
+      upgrades:     {btn:$id("profileTabUpgrades"),     pane:$id("profileUpgradesPane")},
+      notes:        {btn:$id("profileTabNotes"),        pane:$id("profileNotesPane")},
+      achievements: {btn:$id("profileTabAchievements"), pane:$id("profileAchievementsPane")},
     };
     Object.entries(tabs).forEach(([key,{btn,pane}])=>{
       const active=(key===tab);
