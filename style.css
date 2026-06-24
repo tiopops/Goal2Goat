@@ -822,21 +822,27 @@ body.dark-theme .settings-item:hover{background:var(--row-hover);color:var(--gol
 /* Modal de perfil en desktop: layout horizontal */
 @media(min-width:641px){
   #profileOverlay .auth-modal{
-    max-width:700px;
-    width:88vw;
+    max-width:860px;
+    width:92vw;
   }
   #profileOverlay .profile-stats-grid{
     grid-template-columns:repeat(3,1fr);
   }
-  /* Todas las pestañas igual de anchas */
+  /* Pestañas iguales en ancho, texto grande */
   #profileOverlay .auth-tabs{
     display:grid;
     grid-template-columns:repeat(4,1fr);
   }
   #profileOverlay .auth-tab{
     text-align:center;
-    padding:10px 4px;
-    font-size:11px;
+    padding:14px 8px;
+    font-size:18px !important;
+    letter-spacing:1.5px;
+  }
+  /* Habilidades: 4 columnas en desktop */
+  #profileOverlay #skillsList .upgrades-list,
+  #profileOverlay #skillsList > div[style*="grid"]{
+    grid-template-columns:repeat(4,1fr) !important;
   }
 }
 .auth-close{

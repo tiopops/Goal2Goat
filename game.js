@@ -5752,13 +5752,13 @@ async function renderSkillsTab(){
       const btn = document.createElement('button');
       btn.className='skill-toggle-btn';
       btn.dataset.id=def.id;
-      btn.style.cssText=`display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:14px 8px;border:2px solid ${active?'var(--gold)':'var(--line)'};background:${active?'rgba(201,162,39,.15)':'var(--panel)'};color:${active?'var(--gold)':'var(--text)'};cursor:pointer;transition:.15s;text-align:center;position:relative;min-height:120px;width:100%`;
+      btn.style.cssText=`display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:18px 10px;border:2px solid ${active?'var(--gold)':'var(--line)'};background:${active?'rgba(201,162,39,.18)':'var(--panel)'};color:${active?'var(--gold)':'var(--text)'};cursor:pointer;transition:.15s;text-align:center;position:relative;min-height:140px;width:100%;box-sizing:border-box`;
       btn.innerHTML=`
-        ${active?'<span style="position:absolute;top:5px;right:7px;font-size:9px;color:var(--gold);font-family:Bebas Neue,Impact,sans-serif;letter-spacing:1px">✓</span>':''}
+        ${active?'<span style="position:absolute;top:6px;right:8px;font-size:10px;color:var(--gold);font-family:Bebas Neue,Impact,sans-serif;letter-spacing:1px">✓ ACTIVA</span>':''}
         <span style="color:${active?'var(--gold)':'var(--accent)'}">${bigIcon}</span>
-        <span style="font-family:'Bebas Neue',Impact,sans-serif;font-size:13px;letter-spacing:1px;line-height:1.2">${def.name}</span>
-        <span style="font-size:10px;color:${active?'var(--accent)':'var(--text-muted)'};line-height:1.4;padding:0 2px">${def.tooltip}</span>
-        <span style="font-size:11px;font-family:'Bebas Neue',Impact,sans-serif;color:${active?'var(--gold)':'var(--text-muted)'};letter-spacing:1px">${active?'DESACTIVAR':'★ '+def.cost}</span>
+        <span style="font-family:'Bebas Neue',Impact,sans-serif;font-size:15px;letter-spacing:1px;line-height:1.1">${def.name}</span>
+        <span style="font-size:12px;color:${active?'var(--accent)':'var(--text-muted)'};line-height:1.5;padding:0 4px">${def.tooltip}</span>
+        <span style="font-size:13px;font-family:'Bebas Neue',Impact,sans-serif;color:${active?'var(--gold)':'var(--text-muted)'};letter-spacing:1px;margin-top:2px">${active?'DESACTIVAR':'★ '+def.cost+' PTS'}</span>
       `;
       btn.addEventListener('click', async()=>{
         btn.disabled=true;
