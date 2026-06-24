@@ -1294,12 +1294,12 @@ body.dark-theme .press-prediction-neutral{background:#1a1a1a;border-color:#333;c
 .auth-modal{
   background:var(--card-bg);border:2px solid var(--gold);
   padding:28px;max-width:400px;width:92vw;
-  position:relative;max-height:90vh;overflow:hidden;
-  box-sizing:border-box;display:flex;flex-direction:column;
+  position:relative;max-height:90vh;overflow-y:auto;
+  box-sizing:border-box;
 }
 /* El contenido scrolleable va dentro de cada pane que lo necesite */
 .profile-tab-stack{
-  flex:1;min-height:0;
+  display:grid;
 }
 .profile-tab-pane{
   grid-area:1/1;
@@ -1313,15 +1313,15 @@ body.dark-theme .press-prediction-neutral{background:#1a1a1a;border-color:#333;c
   pointer-events:auto;
   opacity:1;
 }
-/* Solo las pestañas con mucho contenido tienen scroll */
+/* Pestañas con mucho contenido tienen scroll interno */
 #profileUpgradesPane.profile-tab-pane-active,
-#profileNotesPane.profile-tab-pane-active,
-#profileUserPane.profile-tab-pane-active{
+#profileNotesPane.profile-tab-pane-active{
   overflow-y:auto;
-  max-height:calc(90vh - 140px);
+  max-height:calc(85vh - 160px);
 }
-#profileStatsPane.profile-tab-pane-active{
-  overflow:hidden;
+#profileStatsPane.profile-tab-pane-active,
+#profileUserPane.profile-tab-pane-active{
+  overflow:visible;
 }
 
 /* VERSION NOTES TAB */
