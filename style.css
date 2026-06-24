@@ -822,7 +822,7 @@ body.dark-theme .settings-item:hover{background:var(--row-hover);color:var(--gol
 .auth-modal{
   background:var(--card-bg);border:2px solid var(--gold);
   padding:28px;max-width:400px;width:92vw;
-  position:relative;max-height:90vh;overflow-y:auto;
+  position:relative;max-height:90vh;overflow:hidden;
   box-sizing:border-box;
 }
 /* Modal de perfil en desktop: layout horizontal */
@@ -1291,19 +1291,37 @@ body.dark-theme .press-prediction-neutral{background:#1a1a1a;border-color:#333;c
 /* PROFILE TAB STACK — all panes occupy the same grid cell, so the modal
    always sizes itself to the TALLEST pane, regardless of which tab is
    active. Switching tabs never resizes the modal. */
+.auth-modal{
+  background:var(--card-bg);border:2px solid var(--gold);
+  padding:28px;max-width:400px;width:92vw;
+  position:relative;max-height:90vh;overflow:hidden;
+  box-sizing:border-box;display:flex;flex-direction:column;
+}
+/* El contenido scrolleable va dentro de cada pane que lo necesite */
 .profile-tab-stack{
-  display:grid;
+  flex:1;min-height:0;
 }
 .profile-tab-pane{
   grid-area:1/1;
   visibility:hidden;
   pointer-events:none;
   opacity:0;
+  overflow:hidden;
 }
 .profile-tab-pane.profile-tab-pane-active{
   visibility:visible;
   pointer-events:auto;
   opacity:1;
+}
+/* Solo las pestañas con mucho contenido tienen scroll */
+#profileUpgradesPane.profile-tab-pane-active,
+#profileNotesPane.profile-tab-pane-active,
+#profileUserPane.profile-tab-pane-active{
+  overflow-y:auto;
+  max-height:calc(90vh - 140px);
+}
+#profileStatsPane.profile-tab-pane-active{
+  overflow:hidden;
 }
 
 /* VERSION NOTES TAB */

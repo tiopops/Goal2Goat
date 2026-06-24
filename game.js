@@ -5796,22 +5796,23 @@ async function renderSkillsTab(){
     // Grid de botones
     const grid = document.createElement('div');
     grid.className='skill-grid';
-    grid.style.cssText='display:grid;grid-template-columns:repeat(2,1fr);gap:8px';
+    grid.style.cssText='display:flex;flex-direction:column;gap:6px';
     list.appendChild(grid);
     catDefs.forEach(def=>{
       const active = !!skills[def.id];
-      const bigIcon = def.icon.replace(/width="22"/g,'width="30"').replace(/height="22"/g,'height="30"');
       const btn = document.createElement('button');
       btn.className='skill-toggle-btn';
       btn.dataset.id=def.id;
-      btn.style.cssText=`display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:12px 8px;border:2px solid ${active?'var(--gold)':'var(--line)'};background:${active?'rgba(201,162,39,.18)':'var(--panel)'};color:${active?'var(--gold)':'var(--text)'};cursor:pointer;transition:.15s;text-align:center;position:relative;min-height:110px;width:100%;box-sizing:border-box`;
-      btn.innerHTML=`
-        ${active?'<span style="position:absolute;top:6px;right:8px;font-size:10px;color:var(--gold);font-family:Bebas Neue,Impact,sans-serif;letter-spacing:1px">✓ ACTIVA</span>':''}
-        <span style="color:${active?'var(--gold)':'var(--accent)'}">${bigIcon}</span>
-        <span style="font-family:'Bebas Neue',Impact,sans-serif;font-size:15px;letter-spacing:1px;line-height:1.1">${def.name}</span>
-        <span style="font-size:12px;color:${active?'var(--accent)':'var(--text-muted)'};line-height:1.5;padding:0 4px">${def.tooltip}</span>
-        <span style="font-size:13px;font-family:'Bebas Neue',Impact,sans-serif;color:${active?'var(--gold)':'var(--text-muted)'};letter-spacing:1px;margin-top:2px">${active?'DESACTIVAR':'★ '+def.cost+' PTS'}</span>
-      `;
+      btn.style.cssText=`display:flex;flex-direction:row;align-items:stretch;gap:0;border:2px solid ${active?'var(--gold)':'var(--line)'};background:${active?'rgba(201,162,39,.12)':'var(--panel)'};color:${active?'var(--gold)':'var(--text)'};cursor:pointer;transition:.15s;text-align:left;position:relative;width:100%;box-sizing:border-box;overflow:hidden`;
+      const iconCol=`<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:12px 10px;min-width:72px;border-right:1px solid ${active?'rgba(201,162,39,.3)':'var(--line)'};background:${active?'rgba(201,162,39,.08)':'rgba(0,0,0,.1)'}">
+        <span style="color:${active?'var(--gold)':'var(--accent)'}">${def.icon.replace(/width="22"/g,'width="28"').replace(/height="22"/g,'height="28"')}</span>
+        <span style="font-family:'Bebas Neue',Impact,sans-serif;font-size:11px;letter-spacing:.8px;color:${active?'var(--gold)':'var(--text)'};line-height:1;text-align:center">${def.name}</span>
+        <span style="font-family:'Bebas Neue',Impact,sans-serif;font-size:11px;color:${active?'var(--gold)':'var(--text-muted)'};letter-spacing:.5px">${active?'✓ ACTIVA':'★ '+def.cost}</span>
+      </div>`;
+      const descCol=`<div style="flex:1;padding:10px 12px;display:flex;align-items:center;">
+        <span style="font-size:12px;color:${active?'var(--accent)':'var(--text-muted)'};line-height:1.5">${def.tooltip}</span>
+      </div>`;
+      btn.innerHTML=iconCol+descCol;
       btn.addEventListener('click', async()=>{
         btn.disabled=true;
         playSound('select');
