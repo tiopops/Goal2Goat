@@ -1378,7 +1378,7 @@ function updateConvocadosTable(){
   const canSwap=(phase==='ready')&&swapsLeft>0;
   // Mostrar/ocultar el botón de ordenación
   const sortBtn = document.getElementById('convSortBtn');
-  if(sortBtn) sortBtn.style.display = usedPlayers.length > 0 ? 'block' : 'none';
+  if(sortBtn) sortBtn.style.display = usedPlayers.length >= 2 ? 'flex' : 'none';
 
   // Ordenar según el modo activo
   let displayPlayers;
@@ -5784,35 +5784,34 @@ async function renderSkillsTab(){
   list.style.overflowX='hidden';
   list.style.width='100%';
 
-  // Agrupar por categoría
+  // Agrupar por categoría, 2 columnas por tipo
   const categories = [...new Set(SKILL_DEFS.map(d=>d.category))];
   categories.forEach(cat=>{
     const catDefs = SKILL_DEFS.filter(d=>d.category===cat);
-    // Etiqueta de categoría
     const label = document.createElement('div');
     label.style.cssText='font-family:"Bebas Neue",Impact,sans-serif;font-size:11px;letter-spacing:2px;color:var(--text-muted);border-bottom:1px solid var(--line);padding-bottom:4px;margin:12px 0 8px';
     label.textContent=cat;
     list.appendChild(label);
-    // Grid de botones
     const grid = document.createElement('div');
     grid.className='skill-grid';
-    grid.style.cssText='display:flex;flex-direction:column;gap:6px';
+    grid.style.cssText='display:grid;grid-template-columns:1fr 1fr;gap:6px';
     list.appendChild(grid);
     catDefs.forEach(def=>{
       const active = !!skills[def.id];
       const btn = document.createElement('button');
       btn.className='skill-toggle-btn';
       btn.dataset.id=def.id;
-      btn.style.cssText=`display:flex;flex-direction:row;align-items:stretch;gap:0;border:2px solid ${active?'var(--gold)':'var(--line)'};background:${active?'rgba(201,162,39,.12)':'var(--panel)'};color:${active?'var(--gold)':'var(--text)'};cursor:pointer;transition:.15s;text-align:left;position:relative;width:100%;box-sizing:border-box;overflow:hidden`;
-      const iconCol=`<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:12px 10px;min-width:72px;border-right:1px solid ${active?'rgba(201,162,39,.3)':'var(--line)'};background:${active?'rgba(201,162,39,.08)':'rgba(0,0,0,.1)'}">
-        <span style="color:${active?'var(--gold)':'var(--accent)'}">${def.icon.replace(/width="22"/g,'width="28"').replace(/height="22"/g,'height="28"')}</span>
-        <span style="font-family:'Bebas Neue',Impact,sans-serif;font-size:11px;letter-spacing:.8px;color:${active?'var(--gold)':'var(--text)'};line-height:1;text-align:center">${def.name}</span>
-        <span style="font-family:'Bebas Neue',Impact,sans-serif;font-size:11px;color:${active?'var(--gold)':'var(--text-muted)'};letter-spacing:.5px">${active?'✓ ACTIVA':'★ '+def.cost}</span>
+      // Mismo tamaño para todos: height fijo con flex column centrado
+      btn.style.cssText=`display:flex;flex-direction:column;align-items:center;justify-content:space-between;gap:0;border:2px solid ${active?'var(--gold)':'var(--line)'};background:${active?'rgba(201,162,39,.12)':'var(--panel)'};color:${active?'var(--gold)':'var(--text)'};cursor:pointer;transition:.15s;text-align:center;width:100%;box-sizing:border-box;overflow:hidden;height:160px`;
+      const iconPart=`<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;padding:12px 8px 8px;flex:1">
+        <span style="color:${active?'var(--gold)':'var(--accent)'}">${def.icon.replace(/width="22"/g,'width="26"').replace(/height="22"/g,'height="26"')}</span>
+        <span style="font-family:'Bebas Neue',Impact,sans-serif;font-size:13px;letter-spacing:.8px;color:${active?'var(--gold)':'var(--text)'};line-height:1.1">${def.name}</span>
+        <span style="font-size:10px;color:${active?'var(--accent)':'var(--text-muted)'};line-height:1.4;padding:0 4px">${def.tooltip}</span>
       </div>`;
-      const descCol=`<div style="flex:1;padding:10px 12px;display:flex;align-items:center;">
-        <span style="font-size:12px;color:${active?'var(--accent)':'var(--text-muted)'};line-height:1.5">${def.tooltip}</span>
+      const footerPart=`<div style="width:100%;padding:6px;background:${active?'rgba(201,162,39,.15)':'rgba(0,0,0,.15)'};border-top:1px solid ${active?'rgba(201,162,39,.3)':'var(--line)'}">
+        <span style="font-family:'Bebas Neue',Impact,sans-serif;font-size:12px;color:${active?'var(--gold)':'var(--text-muted)'};letter-spacing:1px">${active?'✓ ACTIVA · PULSA PARA DESACTIVAR':'★ '+def.cost+' PTS'}</span>
       </div>`;
-      btn.innerHTML=iconCol+descCol;
+      btn.innerHTML=iconPart+footerPart;
       btn.addEventListener('click', async()=>{
         btn.disabled=true;
         playSound('select');
@@ -5826,7 +5825,10 @@ async function renderSkillsTab(){
           if(p<def.cost){ btn.disabled=false; return; }
           sk[def.id]=true; p-=def.cost;
         }
-        await window._fbDb.collection('users').doc(user.uid).set({scratchPoints:p,skills:sk},{merge:true});
+        await window._fbDb.collection('users').doc(user.uid).update({
+          scratchPoints: p,
+          skills: sk
+        });
         const pEl=document.getElementById('skillPointsDisplay');
         if(pEl) pEl.textContent=p;
         const statPts=document.getElementById('pstat-scratch-pts');
