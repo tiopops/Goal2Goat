@@ -1,15 +1,24 @@
 /* ===================== BASE ===================== */
 :root{
+  /* Variables OSCURAS por defecto — sin flash al cargar */
+  --bg:#15181a;--panel:#1e2326;--dark:#0d1011;--accent:#2ecc71;
+  --gold:#c9a227;--line:#2f3539;--red:#c0392b;
+  --text:#ccc;--text-soft:#aaa;--text-muted:#666;
+  --card-bg:#262b2e;--table-header-bg:#2f3539;--row-hover:#333a3e;
+}
+/* Tema claro — solo si el usuario lo activa explícitamente */
+body.light-theme{
   --bg:#ece8df;--panel:#f7f4ee;--dark:#1d2a2a;--accent:#0f6b3b;
-  --gold:#c9a227;--line:#d8d1c4;--red:#c0392b;
+  --line:#d8d1c4;
   --text:#333;--text-soft:#555;--text-muted:#888;
   --card-bg:#fff;--table-header-bg:#f0ece2;--row-hover:#f8f5ee;
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%}
-/* Tema oscuro por defecto para evitar el flash claro al cargar */
-body{background:#15181a;font-family:'Inter',Arial,sans-serif;color:#ccc;font-size:13px}
-body.theme-loaded{background:var(--bg);color:var(--text);transition:background .2s,color .2s}
+/* El body arranca con clases dark-theme aplicadas desde el <head>
+   para evitar el fogonazo. La transición solo se activa después. */
+body{background:var(--bg);font-family:'Inter',Arial,sans-serif;color:var(--text);font-size:13px}
+body.theme-ready{transition:background .2s,color .2s}
 
 /* ===================== LAYOUT ===================== */
 body{display:flex;flex-direction:column;height:100vh;overflow:hidden}
@@ -147,10 +156,12 @@ body.dark-theme .version-tag{color:#555}
   position:relative;
   overflow:hidden;
   width:100%;
-  max-width:420px;
-  max-height:62vh;
+  max-width:min(420px, 65vh);
   aspect-ratio:3/4;
   margin:0 auto;
+}
+@media(orientation:landscape) and (max-height:500px){
+  #pitch{ max-width:min(300px, 55vh); }
 }
 .pitch-svg{
   position:absolute;inset:0;width:100%;height:100%;
@@ -815,8 +826,31 @@ body.dark-theme .settings-item:hover{background:var(--row-hover);color:var(--gol
 .auth-modal{
   background:var(--card-bg);border:2px solid var(--gold);
   padding:28px;max-width:400px;width:92vw;
-  position:relative;max-height:90vh;overflow-y:auto;
+  position:relative;max-height:90vh;overflow:hidden;
   box-sizing:border-box;
+}
+/* Modal de perfil en desktop: layout horizontal */
+@media(min-width:641px){
+  #profileModal{
+    max-width:680px !important;
+    width:88vw !important;
+  }
+  #profileOverlay .profile-stats-grid{
+    grid-template-columns:repeat(3,1fr);
+  }
+  #profileOverlay .auth-tabs{
+    display:grid;
+    grid-template-columns:repeat(5,1fr);
+  }
+  #profileOverlay .auth-tab{
+    text-align:center;
+    padding:12px 4px;
+    font-size:14px !important;
+    letter-spacing:.8px;
+  }
+  #profileOverlay .skill-grid{
+    grid-template-columns:repeat(3,1fr) !important;
+  }
 }
 .auth-close{
   position:absolute;top:12px;right:14px;
@@ -875,12 +909,35 @@ body.dark-theme .settings-item:hover{background:var(--row-hover);color:var(--gol
 .auth-tabs{
   display:flex;border-bottom:2px solid var(--line);margin-bottom:20px;
 }
+/* Con 5 pestañas: grid en lugar de flex para igualar anchos */
+#profileOverlay .auth-tabs{
+  display:grid;
+  grid-template-columns:repeat(5,1fr);
+  overflow:hidden;
+}
 .auth-tab{
   flex:1;background:none;border:none;color:var(--text-muted);
   font-family:'Bebas Neue',Impact,sans-serif;
-  font-size:14px;letter-spacing:1px;
-  padding:10px 0;cursor:pointer;transition:.15s;
+  font-size:16px;letter-spacing:1px;
+  padding:12px 4px;cursor:pointer;transition:.15s;
   border-bottom:2px solid transparent;margin-bottom:-2px;
+  white-space:nowrap;text-align:center;overflow:hidden;text-overflow:ellipsis;
+}
+/* En móvil, pestañas más compactas */
+@media(max-width:640px){
+  #profileOverlay .auth-tab{
+    font-size:10px !important;
+    padding:10px 2px !important;
+    letter-spacing:0 !important;
+  }
+}
+.auth-tab{
+  flex:1;background:none;border:none;color:var(--text-muted);
+  font-family:'Bebas Neue',Impact,sans-serif;
+  font-size:16px;letter-spacing:1px;
+  padding:12px 6px;cursor:pointer;transition:.15s;
+  border-bottom:2px solid transparent;margin-bottom:-2px;
+  white-space:nowrap;text-align:center;
 }
 .auth-tab:hover{color:var(--text)}
 .auth-tab-active{
@@ -1260,6 +1317,33 @@ body.dark-theme .press-prediction-neutral{background:#1a1a1a;border-color:#333;c
 /* PROFILE TAB STACK — all panes occupy the same grid cell, so the modal
    always sizes itself to the TALLEST pane, regardless of which tab is
    active. Switching tabs never resizes the modal. */
+.auth-modal{
+  background:var(--card-bg);border:2px solid var(--gold);
+  padding:28px;max-width:400px;width:92vw;
+  position:relative;max-height:90vh;overflow-y:auto;
+  box-sizing:border-box;
+}
+/* Modal de perfil: altura fija igual a la pestaña MEJORAS */
+#profileModal{
+  height:710px;
+  max-height:92vh;
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+}
+#profileModal .auth-logo{ flex-shrink:0; }
+#profileModal .auth-tabs{ flex-shrink:0; }
+#profileModal .profile-tab-stack{
+  flex:1;
+  min-height:0;
+  overflow:hidden;
+}
+#profileModal .profile-tab-pane.profile-tab-pane-active{
+  height:100%;
+  overflow-y:auto;
+  overflow-x:hidden;
+}
+/* El contenido scrolleable va dentro de cada pane que lo necesite */
 .profile-tab-stack{
   display:grid;
 }
@@ -1268,11 +1352,22 @@ body.dark-theme .press-prediction-neutral{background:#1a1a1a;border-color:#333;c
   visibility:hidden;
   pointer-events:none;
   opacity:0;
+  overflow:hidden;
 }
 .profile-tab-pane.profile-tab-pane-active{
   visibility:visible;
   pointer-events:auto;
   opacity:1;
+}
+/* Pestañas con mucho contenido tienen scroll interno */
+#profileUpgradesPane.profile-tab-pane-active,
+#profileNotesPane.profile-tab-pane-active{
+  overflow-y:auto;
+  max-height:calc(85vh - 160px);
+}
+#profileStatsPane.profile-tab-pane-active,
+#profileUserPane.profile-tab-pane-active{
+  overflow:visible;
 }
 
 /* VERSION NOTES TAB */
@@ -1346,3 +1441,21 @@ body.dark-theme .profile-settings-row .settings-item{border-bottom-color:#333}
 body.dark-theme .upgrade-bar{background:#333}
 body.dark-theme .upgrade-bar.filled{background:var(--accent)}
 body.dark-theme .upgrades-points-badge{background:rgba(201,162,39,.1)}
+
+/* ===== STATS SECTIONS ===== */
+.stats-section-label{
+  font-family:'Bebas Neue',Impact,sans-serif;
+  font-size:11px;letter-spacing:2px;
+  color:var(--text-muted);
+  border-bottom:1px solid var(--line);
+  padding-bottom:4px;
+  margin:14px 0 6px;
+}
+.stats-section-label:first-child{margin-top:4px}
+
+/* Círculo del jugador seleccionado en convocados */
+.slot-conv-selected{
+  border-color:var(--gold) !important;
+  box-shadow:0 0 0 3px rgba(201,162,39,.5), 0 0 12px rgba(201,162,39,.4) !important;
+  background:rgba(201,162,39,.12) !important;
+}

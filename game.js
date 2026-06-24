@@ -1196,6 +1196,7 @@ function onSlotClick(slot){
   renderSlotContent(slot, p, label, r, starHTML);
   hideSelectedPlayerBanner();
   slot.classList.add("locked");
+  slot.classList.remove("highlight-pos");
   slot._player=p;
   usedPlayers.push(p);
   draftedCount++;
@@ -1228,9 +1229,11 @@ function highlightPos(positions){
   });
 }
 function clearHighlights(){
-  document.querySelectorAll("#pitch .position:not(.locked)").forEach(s=>{
+  document.querySelectorAll("#pitch .position").forEach(s=>{
     s.classList.remove("highlight-pos");
-    s.style.borderColor="";s.style.boxShadow="";
+    if(!s.classList.contains("locked")){
+      s.style.borderColor="";s.style.boxShadow="";
+    }
   });
 }
 
@@ -3086,6 +3089,20 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
     });
     modal.appendChild(btn);
 
+    // Mostrar logros desbloqueados durante el partido
+    if(window._pendingAchievements&&window._pendingAchievements.length){
+      const achWrap=document.createElement('div');
+      achWrap.style.cssText='margin-top:10px;display:flex;flex-direction:column;gap:6px';
+      window._pendingAchievements.forEach(def=>{
+        const row=document.createElement('div');
+        row.style.cssText=`display:flex;align-items:center;gap:10px;padding:8px 10px;background:rgba(201,162,39,.1);border:1px solid var(--gold);animation:slideInEvent .4s ease forwards`;
+        row.innerHTML=`<i class="ph ph-bold ${def.icon}" style="font-size:20px;color:#c9a227;flex-shrink:0"></i><div><div style="font-family:'Bebas Neue',Impact,sans-serif;font-size:12px;letter-spacing:1px;color:var(--gold)">LOGRO: ${def.name}</div><div style="font-size:10px;color:var(--text-muted)">${def.desc} · <span style="color:var(--gold)">+${def.pts} pts</span></div></div>`;
+        achWrap.appendChild(row);
+      });
+      modal.appendChild(achWrap);
+      window._pendingAchievements=[];
+    }
+
     // Scroll al final para ver el banner y la info
     setTimeout(()=>{ overlay.querySelector('.match-modal').scrollTop=9999; },100);
   }
@@ -4454,7 +4471,14 @@ function initFirebaseAuth(){
       const snap=await db.collection("users").doc(user.uid).get();
       const username=snap.exists?snap.data().username:user.email;
       if(authBtn)    authBtn.style.display="none";
-      if(profileBtn){ profileBtn.style.display=""; profileBtn.textContent="👤 "+username; }
+      if(profileBtn){
+        profileBtn.style.display="";
+        const lbl=profileBtn.querySelector('#profileUsernameLabel');
+        if(lbl) lbl.textContent=username;
+        // Restaurar badge si existe
+        const badge=profileBtn.querySelector('#profileGoatBadge');
+        if(badge) profileBtn.appendChild(badge);
+      }
       if(settingsMenu) settingsMenu.style.display="none";
       // Mostrar botón de tickets en desktop
       const hBtn=$id("headerTicketBtn"); if(hBtn) hBtn.style.display="";
@@ -5860,6 +5884,7 @@ async function renderSkillsTab(){
   list.innerHTML='';
   list.style.overflowX='hidden';
   list.style.width='100%';
+  list.style.paddingRight='12px';
 
   // Agrupar por categoría, 2 columnas por tipo
   const categories = [...new Set(SKILL_DEFS.map(d=>d.category))];
@@ -6001,6 +6026,8 @@ function startAchievementsListener(uid){
   });
 }
 
+window._pendingAchievements = []; // logros ganados durante partido, se muestran al final
+
 async function unlockAchievement(id){
   if(window._achievementsCache.has(id)) return; // ya desbloqueado
   const user = window._fbAuth&&window._fbAuth.currentUser;
@@ -6019,8 +6046,12 @@ async function unlockAchievement(id){
       scratchPoints: newPts,
       scratchPointsEarned:(d.scratchPointsEarned||0)+def.pts
     },{merge:true});
-    // Notificar al usuario
-    showAchievementToast(def);
+    // Si hay partido activo, encolar para mostrar al final
+    if(document.getElementById('matchOverlay')&&document.getElementById('matchOverlay').innerHTML!=''){
+      window._pendingAchievements.push(def);
+    } else {
+      showAchievementToast(def);
+    }
     showGoatPointsBadge();
     // Badge en la pestaña LOGROS
     const ab=document.getElementById('achievementsBadge');

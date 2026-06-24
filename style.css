@@ -926,9 +926,14 @@ body.dark-theme .settings-item:hover{background:var(--row-hover);color:var(--gol
 /* En móvil, pestañas más compactas */
 @media(max-width:640px){
   #profileOverlay .auth-tab{
-    font-size:10px !important;
+    font-size:12px !important;
     padding:10px 2px !important;
     letter-spacing:0 !important;
+  }
+  /* Header botones en móvil: menos padding, icono más visible */
+  .header-auth-btn, .header-ticket-btn, .profile-btn, .support-btn{
+    padding:0 8px !important;
+    font-size:12px !important;
   }
 }
 .auth-tab{

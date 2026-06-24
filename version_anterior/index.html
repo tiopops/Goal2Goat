@@ -4,27 +4,39 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Goal2Goat</title>
+<!-- Fix fogonazo: fondo oscuro ANTES de cualquier CSS --><style>html,body{background:#15181a;color:#ccc}</style>
+<script>
+  (function(){
+    // Por defecto oscuro. Solo cambiar si el usuario eligió claro explícitamente.
+    var saved=null;
+    try{saved=localStorage.getItem('darkTheme');}catch(e){}
+    if(saved!=='false'){
+      document.documentElement.classList.add('dark-theme-init');
+    }
+  })();
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;600;700&family=Press+Start+2P&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/@phosphor-icons/web@2.1.1/src/index.js"></script>
 <script>
   // Cache-busting: force fresh CSS on every page load/refresh
   document.write('<link rel="stylesheet" href="style.css?v=' + Date.now() + '">');
 </script>
 </head>
-<body>
+<body class="dark-theme">
 
 <!-- FULL-WIDTH APP HEADER -->
 <header id="appHeader">
   <div class="app-header-logo">
     <div class="logo" onclick="location.reload()" style="cursor:pointer" title="Volver al inicio">GOAL2GOAT</div>
-    <div class="version-tag">v0.35b</div>
+    <div class="version-tag">v0.352</div>
   </div>
   <div class="app-header-actions">
     <a href="https://ko-fi.com/goal2goat" target="_blank" class="support-btn" style="text-decoration:none;display:inline-flex;align-items:center;justify-content:center">APOYA A GOAL2GOAT</a>
     <button class="support-btn desktop-only ranking-btn" onclick="showRankingModal()">🏆 RANKING</button>
     <button class="header-auth-btn register-btn" id="authBtn">LOGIN / REGISTRO</button>
     <button class="header-ticket-btn" id="headerTicketBtn" style="display:none" onclick="openTicketOverlay()">🎟️ TICKETS <span id="headerTicketCount">0/3</span><span class="header-ticket-alert" id="headerTicketAlert" style="display:none"></span></button>
-    <button class="header-auth-btn profile-btn" id="profileBtn" style="display:none">PERFIL</button>
+    <button class="header-auth-btn profile-btn" id="profileBtn" style="display:none;position:relative">PERFIL <span id="profileGoatBadge" style="display:none;position:absolute;top:-4px;right:-4px;width:10px;height:10px;border-radius:50%;background:#2ecc71;border:2px solid var(--card-bg);animation:ticketPulse 1.5s ease-in-out infinite"></span></button>
     <div class="settings-menu" id="settingsMenu">
       <button class="settings-toggle" id="settingsToggle" onclick="toggleSettingsMenu()" title="Ajustes">⚙</button>
       <div class="settings-dropdown" id="settingsDropdown">
@@ -40,8 +52,8 @@
 </header>
 
 <!-- PROFILE MODAL -->
-<div id="profileOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:40000;align-items:center;justify-content:center;">
-  <div class="auth-modal" style="max-width:380px">
+<div id="profileOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:40000;align-items:center;justify-content:center;overflow-y:auto;padding:20px 0">
+  <div class="auth-modal" id="profileModal">
     <button class="auth-close" id="profileCloseBtn">✕</button>
     <div class="auth-logo">👤 <span id="profileUsername"></span></div>
 
@@ -49,8 +61,9 @@
     <div class="auth-tabs">
       <button class="auth-tab auth-tab-active" id="profileTabStats">ESTADÍSTICAS</button>
       <button class="auth-tab" id="profileTabUser">AJUSTES</button>
-      <button class="auth-tab" id="profileTabUpgrades">MEJORAS</button>
-      <button class="auth-tab" id="profileTabNotes">NOTAS <span id="profileVersionLabel"></span></button>
+      <button class="auth-tab" id="profileTabUpgrades">MEJORAS <span id="upgradesBadge" style="display:none;width:8px;height:8px;border-radius:50%;background:#f87171;margin-left:4px;vertical-align:middle;animation:ticketPulse 1.5s ease-in-out infinite"></span></button>
+      <button class="auth-tab" id="profileTabNotes">HABILIDADES <span id="skillsBadge" style="display:none;width:8px;height:8px;border-radius:50%;background:#f87171;margin-left:4px;vertical-align:middle;animation:ticketPulse 1.5s ease-in-out infinite"></span></button>
+      <button class="auth-tab" id="profileTabAchievements">LOGROS <span id="achievementsBadge" style="display:none;width:8px;height:8px;border-radius:50%;background:#f0c419;margin-left:4px;vertical-align:middle;animation:ticketPulse 1.5s ease-in-out infinite"></span></button>
     </div>
 
     <!-- All panes stack in the same grid cell, so the modal always sizes
@@ -59,7 +72,10 @@
 
       <!-- ESTADÍSTICAS TAB -->
       <div id="profileStatsPane" class="profile-tab-pane profile-tab-pane-active">
-        <div class="profile-stats-grid">
+
+        <!-- Sección: Resultados -->
+        <div class="stats-section-label">RESULTADOS</div>
+        <div class="profile-stats-grid" style="grid-template-columns:repeat(2,1fr)">
           <div class="profile-stat-card">
             <div class="pstat-val" id="pstat-games">—</div>
             <div class="pstat-label">PARTIDAS</div>
@@ -76,27 +92,38 @@
             <div class="pstat-val" id="pstat-losses">—</div>
             <div class="pstat-label">DERROTAS</div>
           </div>
+        </div>
+
+        <!-- Sección: Goles -->
+        <div class="stats-section-label">GOLES</div>
+        <div class="profile-stats-grid" style="grid-template-columns:repeat(2,1fr)">
           <div class="profile-stat-card">
             <div class="pstat-val" id="pstat-gf">—</div>
-            <div class="pstat-label">GOLES A FAVOR</div>
+            <div class="pstat-label">A FAVOR</div>
           </div>
           <div class="profile-stat-card">
             <div class="pstat-val" id="pstat-ga">—</div>
-            <div class="pstat-label">GOLES EN CONTRA</div>
+            <div class="pstat-label">EN CONTRA</div>
           </div>
+        </div>
+
+        <!-- Sección: Trofeos -->
+        <div class="stats-section-label">TROFEOS</div>
+        <div class="profile-stats-grid" style="grid-template-columns:repeat(3,1fr)">
           <div class="profile-stat-card best">
             <div class="pstat-val" id="pstat-best">—</div>
-            <div class="pstat-label">MEJOR PUNTUACIÓN</div>
+            <div class="pstat-label">MEJOR PUNT.</div>
           </div>
           <div class="profile-stat-card titles">
             <div class="pstat-val">🏆 <span id="pstat-titles">—</span></div>
             <div class="pstat-label">TÍTULOS</div>
           </div>
           <div class="profile-stat-card" style="border-color:var(--gold)">
-            <div class="pstat-val" style="color:var(--gold)">🎟️ <span id="pstat-scratch-pts">—</span></div>
-            <div class="pstat-label">GOAT POINTS</div>
+            <div class="pstat-val" style="color:var(--gold)">🐐 <span id="pstat-scratch-pts">—</span></div>
+            <div class="pstat-label">GOAT PTS</div>
           </div>
         </div>
+
       </div>
 
       <!-- USUARIO TAB -->
@@ -117,6 +144,9 @@
           <span>Usar siempre como nombre de equipo</span>
         </label>
         <p class="profile-field-hint">Si lo activas, no se te preguntará el nombre del equipo al formarlo — se usará este automáticamente.</p>
+        <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;align-items:center">
+          <button onclick="window.showPatchNotes()" style="background:none;border:none;cursor:pointer;font-family:'Bebas Neue',Impact,sans-serif;font-size:13px;letter-spacing:1px;color:var(--gold);padding:0;text-decoration:underline">NOTAS v0.351</button>
+        </div>
         <button class="auth-submit-btn" style="background:#c0392b;margin-top:14px" id="profileLogoutBtn">CERRAR SESIÓN</button>
         <!-- CHEATS: solo visible para tiopops -->
         <div id="cheatsSection" style="display:none;margin-top:18px;border-top:1px dashed #c0392b;padding-top:14px;">
@@ -129,50 +159,20 @@
         </div>
       </div>
 
-      <!-- NOTAS DE LA VERSIÓN TAB -->
+      <!-- HABILIDADES TAB -->
       <div id="profileNotesPane" class="profile-tab-pane">
-        <div class="version-notes-scroll">
-          <h4>v0.35 — Sistema de partido</h4>
-          <ul>
-            <li>Simulacion en vivo con cronometro animado 0 a 90+X minutos, descanso, prorroga 2x15 y penaltis secuenciales.</li>
-            <li>Feed de eventos en 3 columnas: tu equipo a la izquierda, minuto al centro, rival a la derecha.</li>
-            <li>Penaltis ABAB lanzados uno a uno con tension y muerte subita. Corte automatico si el resultado es matematicamente imposible de remontar.</li>
-            <li>Post-partido integrado: posesion, tiros, goles con bandera del jugador, lesiones, tarjetas, feedback de estrategia y entrevista de prensa en el mismo modal.</li>
-            <li>La tabla de convocados y el cansancio no se actualizan hasta que el partido termina.</li>
-          </ul>
-          <h4>v0.35 — Sistema de Tickets</h4>
-          <ul>
-            <li>1 ticket disponible en horas fijas: 8:00, 12:00, 16:00, 20:00 y 0:00 hora local.</li>
-            <li>Maximo 3 tickets acumulados. Al registrarse se otorga 1 ticket inicial.</li>
-            <li>Riesgo progresivo: cada casilla buena aumenta el tono del sonido.</li>
-            <li>Composicion fija por boleto: 2 casillas nulas, 1 cabra (+4 pts) y 6 monedas (+1 pt).</li>
-            <li>Ticket GOAT dorado al ganar el Mundial: solo cabras y una casilla nula. Se gasta al instante y reinicia la partida.</li>
-          </ul>
-          <h4>v0.35 — GOAT Points</h4>
-          <ul>
-            <li>Los puntos obtenidos en tickets se almacenan en tu perfil como GOAT Points.</li>
-            <li>Tres campos en base de datos: disponibles, ganados historicamente y gastados. Preparado para tienda futura.</li>
-          </ul>
-          <h4>v0.35 — Progresion y recompensas</h4>
-          <ul>
-            <li>Ganar el Mundial: Ticket GOAT dorado.</li>
-            <li>Perder la Final: Run encadenada con 3 jugadores.</li>
-            <li>Perder Semifinal: Run encadenada con 2 jugadores.</li>
-            <li>Perder Cuartos: Run encadenada con 1 jugador.</li>
-          </ul>
-          <h4>v0.35 — Modo debug</h4>
-          <ul>
-            <li>Checkbox oculto en Ajustes para el administrador: gana todos los partidos y tickets siempre al maximo.</li>
-          </ul>
-          <h4>v0.341 — Sistema de resistencia</h4>
-          <ul>
-            <li>Los jugadores sufren desgaste segun la estrategia y posicion. Un partido en el banquillo recupera la energia.</li>
-          </ul>
-          <h4>v0.341 — Tarjetas</h4>
-          <ul>
-            <li>Amarillas, doble amarilla, roja directa y sanciones automaticas. Limpieza de acumuladas al pasar cuartos.</li>
-          </ul>
+        <div class="upgrades-header">
+          <div class="upgrades-title-row">
+            <span class="upgrades-title">HABILIDADES</span>
+            <span class="upgrades-subtitle">Modificadores especiales</span>
+          </div>
+          <div class="upgrades-points-badge">
+            <span class="badge-goat">🐐</span>
+            <span id="skillPointsDisplay">0</span>
+            <span class="upgrades-pts-label">GOAT POINTS</span>
+          </div>
         </div>
+        <div class="upgrades-list" id="skillsList"></div>
       </div>
 
       <!-- MEJORAS TAB -->
@@ -191,6 +191,53 @@
         <div class="upgrades-list" id="upgradesList"></div>
       </div>
 
+      <!-- LOGROS TAB -->
+      <div id="profileAchievementsPane" class="profile-tab-pane">
+        <div class="upgrades-header">
+          <div class="upgrades-title-row">
+            <span class="upgrades-title">LOGROS</span>
+            <span class="upgrades-subtitle">Desafíos y recompensas</span>
+          </div>
+        </div>
+        <div id="achievementsList"></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- PATCH NOTES MODAL -->
+<div id="patchNotesOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:60000;align-items:center;justify-content:center">
+  <div class="auth-modal" style="max-width:500px;position:relative">
+    <button onclick="document.getElementById('patchNotesOverlay').style.display='none'" class="auth-close" style="position:absolute;top:12px;right:14px">✕</button>
+    <div class="auth-logo" style="font-size:16px">📋 NOTAS DE LA VERSIÓN</div>
+    <div class="version-notes-scroll">
+      <h4>v0.351 — Partido</h4>
+      <ul>
+        <li>Feed de partido en 3 columnas: mi equipo izquierda, minuto centro, rival derecha.</li>
+        <li>Lesiones y tarjetas bidireccionales: la falta que causa una lesión genera tarjeta al jugador que la comete.</li>
+        <li>El rival también puede sufrir lesiones y tarjetas durante el partido.</li>
+        <li>Expulsión con banquillo lleno: el jugador permanece en campo con rating 0.</li>
+        <li>Los estados de convocados se actualizan solo al finalizar el partido.</li>
+      </ul>
+      <h4>v0.351 — Tickets</h4>
+      <ul>
+        <li>Composicion: 1 X roja, 1 cabra (+4pts), 7 monedas (+1pt). Máximo 11pts por boleto.</li>
+        <li>Tickets disponibles a las 0:00, 4:00, 8:00, 12:00, 16:00 y 20:00 hora local.</li>
+        <li>Sonido al ganar y al perder el boleto.</li>
+      </ul>
+      <h4>v0.351 — Mejoras y Habilidades</h4>
+      <ul>
+        <li>Nueva pestaña MEJORAS: banquillo, cambios y convocados mejorables con GOAT Points.</li>
+        <li>Nueva pestaña HABILIDADES: modificadores especiales comprables con GOAT Points.</li>
+        <li>Mejora RECUPERACIÓN: reduce la fatiga acumulada por partido.</li>
+        <li>Las mejoras tienen efecto real en el juego en tiempo real.</li>
+      </ul>
+      <h4>v0.35 — Sistema base</h4>
+      <ul>
+        <li>Simulación en vivo 0-90+X minutos con descanso, prórroga y penaltis ABAB.</li>
+        <li>Tickets GOAT Points con rasca y gana y ticket dorado al ganar el Mundial.</li>
+      </ul>
     </div>
   </div>
 </div>
@@ -267,7 +314,15 @@
   <!-- LEFT PANEL -->
   <div class="panel left-panel">
     <div class="box" id="convocadosBox">
-      <h3>CONVOCADOS <span id="draftCounter" class="counter-badge">0/11</span></h3>
+      <h3 style="display:flex;align-items:center;justify-content:space-between">
+        <span>CONVOCADOS <span id="draftCounter" class="counter-badge">0/11</span></span>
+        <button id="convSortBtn" onclick="window.toggleConvSort()" title="Cambiar orden" style="background:none;border:none;cursor:pointer;padding:4px;color:var(--text-muted);display:none;flex-shrink:0;display:flex;align-items:center;gap:4px" aria-label="Cambiar orden">
+          <span id="convSortLabel" style="font-family:'Bebas Neue',Impact,sans-serif;font-size:11px;letter-spacing:1px;color:var(--text-muted)">LLEGADA</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--text-muted);flex-shrink:0">
+            <path d="M3 6h18M7 12h10M11 18h2"/>
+          </svg>
+        </button>
+      </h3>
       <div id="convocadosTable"></div>
       <div id="swapHint" class="swap-hint" style="display:none"></div>
       <div id="moraleSection" style="display:none">

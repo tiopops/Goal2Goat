@@ -1165,7 +1165,7 @@ function addArcedLine(slots,labels,baseTop,isGoalkeeperLine,isAttackLine){
         top=baseTop - distFromPitchCenter*arcDepth;
       }
     }
-    slots.push({label,left,top});
+    slots.push({label,left:Math.max(5,Math.min(95,left)),top});
   });
 }
 function renderPitch(code){
@@ -1284,27 +1284,28 @@ function applyMatchFatigue(){
 
     // Goalkeepers barely tire — minimal running involved in a real match.
     if(p.placedPos==='POR'){
-      p.fatigue=Math.max(0, Math.round((p.fatigue===undefined?100:p.fatigue)-(2+Math.random()*3)));
+      p.fatigue=Math.max(0, Math.round((p.fatigue===undefined?100:p.fatigue)-(2+Math.random()*4)));
       return;
     }
 
-    // Base random fatigue loss per match: gentle, 4-9 points — a player
-    // can comfortably go 6-8 matches before needing real concern.
-    let loss=4+Math.random()*5;
+    // Base fatigue loss: 12-20 points per match — enough to feel it after 2-3 games.
+    // RECUPERACIÓN upgrade reduces this loss.
+    const recoveryBonus = getRecoveryBonus(); // 0-10% reduction per level
+    let loss=(8+Math.random()*6)*(1-recoveryBonus);
 
     // Central defenders cover the least ground — lightest loss.
     if(p.placedPos==='DFC'){
-      loss*=0.6;
+      loss*=0.65;
     }
     // Full-backs/wingers/forwards/midfielders run more, especially when
     // the active strategy demands it.
     const runningPositions=['EI','ED','DC','MC','LI','LD'];
     if(isAttackingStrategy&&runningPositions.includes(p.placedPos)){
-      loss+=Math.random()*4; // small extra, 0-4
+      loss+=Math.random()*6;
     }
     // A player who scored works a bit harder than average that match.
     if(scorers.has(p.name)){
-      loss+=Math.random()*3;
+      loss+=Math.random()*4;
     }
     p.fatigue=Math.max(0, Math.round((p.fatigue===undefined?100:p.fatigue)-loss));
   });
@@ -1349,13 +1350,53 @@ function getFatigueBarHTML(p){
   const color=getFatigueColor(p);
   return `<div class="fatigue-bar-wrap" title="Resistencia: ${f}%"><div class="fatigue-bar fatigue-${color}" style="width:${f}%"></div></div>`;
 }
+// Ordenación de convocados: 'arrival' | 'position' | 'rating'
+let convSortMode = 'position';
+const CONV_SORT_LABELS = {arrival:'LLEGADA', position:'POSICIÓN', rating:'PUNTOS'};
+const CONV_SORT_NEXT = {arrival:'position', position:'rating', rating:'arrival'};
+window.toggleConvSort = function(){
+  convSortMode = CONV_SORT_NEXT[convSortMode];
+  const lbl = document.getElementById('convSortLabel');
+  if(lbl) lbl.textContent = CONV_SORT_LABELS[convSortMode];
+  updateConvocadosTable();
+};
+
 function updateConvocadosTable(){
   const el=document.getElementById("convocadosTable");
   if(!el) return;
+
+  // Siempre limpiar resaltado amarillo primero
+  getPitchSlots().forEach(s=>s.classList.remove('slot-conv-selected'));
+  // Volver a aplicar solo si hay selección activa
+  if(swapSelection&&swapSelection.source==='conv'){
+    const selPlayer=usedPlayers[swapSelection.index];
+    if(selPlayer) getPitchSlots().forEach(s=>{
+      if(s._player===selPlayer) s.classList.add('slot-conv-selected');
+    });
+  }
   const swapsLeft=getMaxSubs()-swapsUsedThisMatch;
   const canSwap=(phase==='ready')&&swapsLeft>0;
+  // Mostrar/ocultar el botón de ordenación
+  const sortBtn = document.getElementById('convSortBtn');
+  if(sortBtn) sortBtn.style.display = usedPlayers.length >= 2 ? 'flex' : 'none';
+
+  // Ordenar según el modo activo
+  let displayPlayers;
+  if(convSortMode === 'position'){
+    const posOrder = ['POR','DFC','LI','LD','MC','EI','ED','DC'];
+    displayPlayers = [...usedPlayers].sort((a,b)=>{
+      const ai = posOrder.indexOf(a.placedPos||'');
+      const bi = posOrder.indexOf(b.placedPos||'');
+      return (ai===-1?99:ai) - (bi===-1?99:bi);
+    });
+  } else if(convSortMode === 'rating'){
+    displayPlayers = [...usedPlayers].sort((a,b)=> effRating(b) - effRating(a));
+  } else {
+    displayPlayers = usedPlayers; // orden de llegada = orden del array
+  }
+
   let rows="",stars=0;
-  usedPlayers.forEach((p,i)=>{
+  displayPlayers.forEach((p,i)=>{
     const inPrimary=p.positions&&p.placedPos&&p.positions[0]===p.placedPos;
     if(inPrimary) stars++;
     const injuryTag=p.injury?` <span class="cross" title="Lesionado">✚(-${p.injury.remaining})</span> `:'';
@@ -1365,9 +1406,14 @@ function updateConvocadosTable(){
     const r=effRating(p);
     const streak=getStreakBadge(p.name);
     const fatigueBar=getFatigueBarHTML(p);
-    const sel=(swapSelection&&swapSelection.source==='conv'&&swapSelection.index===i)?' class="row-selected"':'';
-    const clickable=canSwap?` onclick="onConvocadoClick(${i})" style="cursor:pointer"`:'';
-    rows+=`<tr${sel}${clickable}><td>${i+1}</td><td>${p.name}${cross}${cardBadge}${streak}</td><td>${fatigueBar}</td><td>${p.placedPos||'?'} ${star}</td><td>${r}</td></tr>`;
+    const realIdx=usedPlayers.indexOf(p);
+    const sel=(swapSelection&&swapSelection.source==='conv'&&swapSelection.index===realIdx)?' class="row-selected"':'';
+    // Siempre clicable para seleccionar y ver posición en campo
+    const clickable=` onclick="onConvocadoClick(${realIdx})" style="cursor:pointer"`;
+    const realPos=(p.positions||[]).join('/');
+    const posLabel=p.placedPos||'?';
+    const realLabel=(realPos&&realPos!==posLabel)?`<br><span style="font-size:9px;color:var(--text-muted)">${realPos}</span>`:'';
+    rows+=`<tr${sel}${clickable}><td>${i+1}</td><td>${p.name}${cross}${cardBadge}${streak}</td><td>${fatigueBar}</td><td><span style="font-weight:700">${posLabel}</span>${star}${realLabel}</td><td>${r}</td></tr>`;
   });
   el.innerHTML=rows?`<table><thead><tr><th>#</th><th>Jugador</th><th title="Resistencia">Resistencia</th><th>Pos</th><th>★</th></tr></thead><tbody>${rows}</tbody></table>`:"";
   // Update star bonus display
@@ -1416,28 +1462,57 @@ function updateBenchTable(){
 
 /* ========= PRE-MATCH SWAPS (convocados <-> bench) ========= */
 function onConvocadoClick(i){
-  if(phase!=='ready'||swapsUsedThisMatch>=getMaxSubs()) return;
+  if(phase!=='ready') return;
+
+  // Si hay un jugador del banquillo seleccionado y quedan cambios, hacer swap
   if(swapSelection&&swapSelection.source==='bench'){
-    // bench → conv swap
+    if(swapsUsedThisMatch>=getMaxSubs()) return;
     const benchIdx=swapSelection.index;
     swapSelection=null;
+    highlightPos([]);
+  getPitchSlots().forEach(s=>s.classList.remove('slot-conv-selected'));
     performSwap(benchIdx, i);
     return;
   }
+
+  // Si hay un convocado ya seleccionado
   if(swapSelection&&swapSelection.source==='conv'){
     if(swapSelection.index===i){
-      // Deselect
+      // Deseleccionar
       swapSelection=null;
-    } else {
-      // conv → conv: swap two titulars' pitch positions
-      const idxA=swapSelection.index, idxB=i;
-      swapSelection=null;
-      performConvConvSwap(idxA, idxB);
+      highlightPos([]);
+      updateConvocadosTable();
+      updateBenchTable();
       return;
     }
-  } else {
-    swapSelection={source:'conv',index:i};
+    // Intercambiar posición EN LA LISTA (no solo en el campo)
+    if(swapsUsedThisMatch<getMaxSubs()){
+      const idxA=swapSelection.index, idxB=i;
+      swapSelection=null;
+      highlightPos([]);
+      // Intercambiar en el array usedPlayers (posición en la lista)
+      [usedPlayers[idxA], usedPlayers[idxB]] = [usedPlayers[idxB], usedPlayers[idxA]];
+      // Y también intercambiar sus posiciones en el campo
+      performConvConvSwap(idxA, idxB);
+      return;
+    } else {
+      // Sin cambios disponibles — cambiar selección al nuevo jugador
+      swapSelection={source:'conv',index:i};
+      highlightPos((usedPlayers[i]||{}).positions||[]);
+      updateConvocadosTable();
+      updateBenchTable();
+      return;
+    }
   }
+
+  // Seleccionar el jugador (siempre permitido para ver su posición)
+  swapSelection={source:'conv',index:i};
+  highlightPos((usedPlayers[i]||{}).positions||[]);
+  // Resaltar el círculo del jugador en el campo en amarillo
+  getPitchSlots().forEach(s=>{
+    if(s._player===usedPlayers[i]) s.classList.add('slot-conv-selected');
+    else s.classList.remove('slot-conv-selected');
+  });
   updateConvocadosTable();
   updateBenchTable();
 }
@@ -1474,7 +1549,8 @@ function performSwap(benchIdx, convIdx){
   usedPlayers[convIdx]=benchPlayer;
   slot._player=benchPlayer;
   const inPos=benchPlayer.positions&&benchPlayer.positions.includes(label);
-  const r=inPos?(benchPlayer.rating||70):Math.round((benchPlayer.rating||70)*0.85);
+  const _penPct=window._skillCache&&window._skillCache.cazatalentos?0.95:0.85;
+  const r=inPos?(benchPlayer.rating||70):Math.round((benchPlayer.rating||70)*_penPct);
   const star=inPos&&benchPlayer.positions[0]===label?' <span class="star">★</span>':'';
   renderSlotContent(slot, benchPlayer, label, r, star);
   baseTeamOVR=computeTeamOVR();
@@ -1620,6 +1696,24 @@ function resetDraft(){
   playerCardEl.innerHTML="";
 }
 function getPitchSlots(){ return Array.from(document.querySelectorAll("#pitch .position")); }
+
+// Forzar redibujado del campo al cambiar tamaño/orientación
+(function(){
+  const pitchEl=document.getElementById('pitch');
+  if(!pitchEl||!window.ResizeObserver) return;
+  let _debounce;
+  new ResizeObserver(()=>{
+    clearTimeout(_debounce);
+    _debounce=setTimeout(()=>{
+      // Forzar reflow de los slots
+      getPitchSlots().forEach(s=>{ s.style.display='none'; void s.offsetHeight; s.style.display=''; });
+    },100);
+  }).observe(pitchEl);
+  // También en cambio de orientación
+  window.addEventListener('orientationchange',()=>{
+    setTimeout(()=>{ getPitchSlots().forEach(s=>{ s.style.display='none'; void s.offsetHeight; s.style.display=''; }); },300);
+  });
+})();
 function reassignSquad(code){
   const pool=[...getPitchSlots().map(s=>s._player).filter(Boolean),...bench];
   renderPitch(code);
@@ -1805,13 +1899,23 @@ function renderRivalBox(){
 function renderStrategySelector(){
   const el=document.getElementById("strategySelector");
   if(!el) return;
+  // Hint de ESTRATEGA si está activo
+  const estrategaHint = window.getEstrategaHint?window.getEstrategaHint():null;
+  const hintHTML = estrategaHint
+    ? `<div style="background:rgba(201,162,39,.12);border:1px solid var(--gold);padding:8px 12px;margin-bottom:10px;font-size:12px;color:var(--gold);display:flex;align-items:center;gap:8px">
+        <span style="font-size:16px">⚡</span>
+        <span><strong>ESTRATEGA:</strong> La mejor contra-táctica es <strong>${estrategaHint.name}</strong></span>
+       </div>`
+    : '';
   el.innerHTML=`
+    ${hintHTML}
     <div class="style-label" style="margin-top:12px">Elige tu estrategia para este partido</div>
     <div class="strategy-grid">
       ${STRATEGY_ORDER.map(key=>{
         const s=STRATEGIES[key];
         const sel=selectedMatchStrategy===key?' selected':'';
-        return `<button class="strategy-btn${sel}" data-key="${key}" onclick="chooseMatchStrategy('${key}')" title="${esc(s.desc)}">${s.name}</button>`;
+        const isOptimal=estrategaHint&&estrategaHint.key===key?' style="outline:2px solid var(--gold)"':'';
+        return `<button class="strategy-btn${sel}" data-key="${key}" onclick="chooseMatchStrategy('${key}')" title="${esc(s.desc)}"${isOptimal}>${s.name}</button>`;
       }).join('')}
     </div>
     ${selectedMatchStrategy?`<div class="strategy-desc">${STRATEGIES[selectedMatchStrategy].desc}</div>`:'<div class="strategy-desc strategy-desc-empty">Sin estrategia elegida: sin bonus ni penalización.</div>'}
@@ -1979,6 +2083,7 @@ function poissonSample(lambda){
 function playMatch(){
   if(!nextOpponent) return;
   swapsUsedThisMatch=0;
+  convSortMode='arrival'; // reset al empezar partido
   swapSelection=null;
   // Tick injury timers
   const recovered=[];
@@ -2012,30 +2117,54 @@ function playMatch(){
   const moraleBonus=moraleLambdaBonus();
   const streakBonus=getStreakLambdaBonus();
   const weatherDelta=weatherLambdaEffect(); // weather was rolled when rival was revealed
-  const myLambda=Math.max(0.25, 1.15+diff+tactical.myScoreMod+counter.myScoreMod+earlyBoost+groupNudge+starBonus+moraleBonus+streakBonus+weatherDelta);
+  const captainBonus=(window._skillCache&&window._skillCache.capitan&&teamMorale<0)?0.10:0;
+  const myLambda=Math.max(0.25, 1.15+diff+tactical.myScoreMod+counter.myScoreMod+earlyBoost+groupNudge+starBonus+moraleBonus+streakBonus+weatherDelta+captainBonus);
   const oppLambda=Math.max(0.25, 1.15-diff+tactical.oppScoreMod+counter.oppScoreMod-earlyBoost*0.6-groupNudge*0.6+weatherDelta);
   let myGoals=window.CHEATS_ACTIVE ? (3+Math.floor(Math.random()*3)) : poissonSample(myLambda);
+  // REMONTADA: si el rival marcara 2+ más, relanzar con +35%
+  if(!window.CHEATS_ACTIVE && window._skillCache&&window._skillCache.remontada){
+    const tempOpp=poissonSample(oppLambda);
+    if(tempOpp>=myGoals+2) myGoals=poissonSample(myLambda*1.35);
+  }
   let oppGoals=window.CHEATS_ACTIVE ? 0 : poissonSample(oppLambda);
-  // Match narrative
-  let summary=generateMatchSummary(myGoals,oppGoals,nextOpponent.name);
-  updateScorerStreaks(generateMatchSummary._scorers||[]);
   // Injuries y tarjetas propias
   const newInjuries=rollInjuries(myPower,oppPower);
   const newCards=rollCards();
   // Eventos del rival (lesiones y tarjetas)
   const oppEvents=rollOppEvents(oppPower,myPower);
   // Si el rival tiene una expulsión, su lambda se reduce proporcionalmente
-  // desde el minuto de la roja: reducción promedio de ~11% (10/11 jugadores)
   let adjOppLambda=oppLambda;
   if(oppEvents.redMinute!==null){
-    // Fracción del partido que juegan con 10: (90-redMinute)/90
     const fracWith10=Math.max(0,(90-oppEvents.redMinute)/90);
     adjOppLambda=oppLambda*(1-fracWith10*0.11);
   }
-  // Recalcular goles del rival con el lambda ajustado
   if(!window.CHEATS_ACTIVE && oppEvents.redMinute!==null){
     oppGoals=poissonSample(adjOppLambda);
   }
+  // Procesar tarjetas por faltas que causaron lesiones
+  if(newInjuries&&newInjuries.length){
+    newInjuries.forEach(inj=>{
+      if(!inj.injury||!inj.injury.foulCard) return;
+      const card=inj.injury.foulCard;
+      if(!oppEvents.cards) oppEvents.cards=[];
+      const oppPool=nextOpponent?nextOpponent.players:[];
+      if(oppPool.length){
+        const fouler=oppPool[Math.floor(Math.random()*oppPool.length)];
+        oppEvents.cards.push({player:fouler, type:card, isFoul:true});
+        if(card==='red'&&!oppEvents.redMinute){
+          oppEvents.redMinute=Math.floor(20+Math.random()*60);
+          const fracWith10=Math.max(0,(90-oppEvents.redMinute)/90);
+          adjOppLambda=adjOppLambda*(1-fracWith10*0.11);
+          if(!window.CHEATS_ACTIVE) oppGoals=poissonSample(adjOppLambda);
+        }
+      }
+    });
+  }
+
+  // Generar summary DESPUÉS de todos los recálculos de goles
+  let summary=generateMatchSummary(myGoals,oppGoals,nextOpponent.name);
+  updateScorerStreaks(generateMatchSummary._scorers||[]);
+
   // Procesar expulsiones durante el partido:
   // Jugadores con roja/doble amarilla se retiran si hay hueco en banquillo.
   // Si el banquillo está lleno, se quedan en el campo con rating 0.
@@ -2163,7 +2292,8 @@ function simulateRivalMatches(){
 
 function simulatePenalties(myPower,oppPower){
   // Probability of scoring a penalty, slightly influenced by overall power
-  const myProb=Math.min(0.92,Math.max(0.65,0.78+(myPower-oppPower)*0.01));
+  const _penSkill=(window._skillCache&&window._skillCache.penaltis)?0.15:0;
+  const myProb=Math.min(0.92,Math.max(0.65,0.78+(myPower-oppPower)*0.01+_penSkill));
   const oppProb=Math.min(0.92,Math.max(0.65,0.78+(oppPower-myPower)*0.01));
   let myScore=0,oppScore=0;
   // Pick takers from my squad (prioritize attackers/midfielders)
@@ -2264,13 +2394,10 @@ ${goalsHTML}`;
 
 function rollInjuries(myPower,oppPower){
   const fb=currentFormationBonus||{};
-  // Recalibrated for the 40-point formation system, where almost every
-  // formation has SOME skew — using a higher, fixed threshold so only
-  // truly extreme picks (very lopsided attack/defense split) count as risky.
   const extreme=Math.abs((fb.attack||0)-(fb.defense||0));
-  let risk=0.02;
-  if(extreme>=16) risk=0.032;
-  if((fb.defense||0)<(fb.attack||0)&&oppPower>myPower) risk+=0.008;
+  let risk=0.06;
+  if(extreme>=16) risk=0.08;
+  if((fb.defense||0)<(fb.attack||0)&&oppPower>myPower) risk+=0.015;
   const injured=[];
   usedPlayers.forEach(p=>{
     if(injured.length>=1||p.injury) return;
@@ -2281,6 +2408,20 @@ function rollInjuries(myPower,oppPower){
       else if(r<0.85){type="básica";remaining=2;}
       else{type="grave";remaining=3;}
       p.injury={type,remaining};
+      // Tarjeta al rival por la falta que causó la lesión:
+      // lesión leve → amarilla (80%) o nada (20%)
+      // lesión básica → amarilla (60%) o roja (40%)
+      // lesión grave → roja directa siempre
+      const rCard=Math.random();
+      let foulCard=null;
+      if(type==='leve'){
+        if(rCard<0.8) foulCard='yellow';
+      } else if(type==='básica'){
+        foulCard=rCard<0.6?'yellow':'red';
+      } else {
+        foulCard='red';
+      }
+      p.injury.foulCard=foulCard; // guardamos para el feed
       injured.push(p);
     }
   });
@@ -2292,8 +2433,12 @@ function rollInjuries(myPower,oppPower){
 // and ~0.1 red cards per TEAM per match (11 players), based on historical
 // editions (1990: 3.71 yellows/match total both teams; 2006: ~5.4 — we use
 // a middle-ground average, split evenly between both teams).
-const YELLOW_RISK_PER_PLAYER = 0.017;
-const RED_RISK_PER_PLAYER    = 0.010;
+// Calibración basada en estadísticas históricas del Mundial:
+// Media real: ~1.3-1.8 amarillas por equipo por partido (histórico 1990-2022)
+// Con 11 jugadores: 0.12 por jugador → ~1.32 amarillas esperadas por partido
+// Rojas directas reales: ~0.1 por partido → 0.009 por jugador correcto
+const YELLOW_RISK_PER_PLAYER = 0.055; // ~0.6 amarillas/equipo/partido base
+const RED_RISK_PER_PLAYER    = 0.009;
 
 function rollCards(){
   const cardedThisMatch=[]; // {player, type: 'yellow'|'second_yellow_match'|'yellow2'|'red'}
@@ -2378,10 +2523,25 @@ function rollOppEvents(oppPower, myPower){
   const allPool=opp.players;
 
   // Lesiones del rival — probabilidad similar a la del jugador
-  const injRisk=0.025;
+  const injRisk=0.06;
   const oppInjuries=[];
   const injPlayer=allPool[Math.floor(Math.random()*allPool.length)];
   if(injPlayer && Math.random()<injRisk){
+    // Determinar gravedad y tarjeta correspondiente a mi jugador
+    const r=Math.random();
+    let injType;
+    if(r<0.5) injType='leve';
+    else if(r<0.85) injType='básica';
+    else injType='grave';
+
+    const rCard=Math.random();
+    let foulCard=null;
+    if(injType==='leve'){ if(rCard<0.8) foulCard='yellow'; }
+    else if(injType==='básica'){ foulCard=rCard<0.6?'yellow':'red'; }
+    else { foulCard='red'; }
+
+    injPlayer._injType=injType;
+    injPlayer._foulCard=foulCard; // tarjeta que recibirá mi jugador
     oppInjuries.push(injPlayer);
   }
 
@@ -2500,27 +2660,65 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
   const CICONS={yellow:'🟨',yellow2:'🟨🟨',double_yellow:'🟨🟥',red:'🟥'};
   if(newCards&&newCards.length){
     newCards.forEach(c=>allEvents.push({
-      minute:Math.floor(5+Math.random()*90), // pueden llegar a 90+
+      minute:Math.floor(5+Math.random()*90),
       type:'card',icon:CICONS[c.type]||'🟨',
       text:`<strong>${c.player.name}</strong>`
     }));
   }
   if(newInjuries&&newInjuries.length){
-    newInjuries.forEach(p=>allEvents.push({
-      minute:Math.floor(20+Math.random()*75),
-      type:'injury',icon:'✚',
-      text:`<strong>${p.name}</strong>`
-    }));
+    newInjuries.forEach(p=>{
+      const injMin=Math.floor(20+Math.random()*65);
+      // Lesión
+      allEvents.push({
+        minute:injMin,
+        type:'injury',icon:'✚',
+        text:`<strong>${p.name}</strong>`
+      });
+      // Tarjeta al rival en el mismo minuto (falta que causó la lesión)
+      if(p.injury&&p.injury.foulCard){
+        const oppPool=nextOpponent?nextOpponent.players:[];
+        const fouler=oppPool[Math.floor(Math.random()*oppPool.length)];
+        if(fouler){
+          const cardIcon=CICONS[p.injury.foulCard]||'🟨';
+          allEvents.push({
+            minute:injMin, // mismo minuto que la lesión
+            type:'oppcard',
+            icon:cardIcon,
+            text:`<strong>${fouler.name}</strong> <span style="font-size:10px;color:#e74c3c">(falta sobre ${p.name})</span>`
+          });
+        }
+      }
+    });
   }
   // Eventos del rival (lesiones y tarjetas)
   if(oppEvents){
     const CICONS={yellow:'🟨',double_yellow:'🟨🟥',red:'🟥'};
     if(oppEvents.injuries&&oppEvents.injuries.length){
-      oppEvents.injuries.forEach(p=>allEvents.push({
-        minute:Math.floor(20+Math.random()*65),
-        type:'oppcard',icon:'✚',
-        text:`<strong>${p.name}</strong>`
-      }));
+      oppEvents.injuries.forEach(p=>{
+        const injMin=Math.floor(20+Math.random()*65);
+        // Lesión del rival (feed derecha)
+        allEvents.push({
+          minute:injMin,
+          type:'oppcard',icon:'✚',
+          text:`<strong>${p.name}</strong>`
+        });
+        // Tarjeta a mi jugador por la falta (feed izquierda), mismo minuto
+        if(p._foulCard && usedPlayers.length){
+          const fouler=usedPlayers[Math.floor(Math.random()*usedPlayers.length)];
+          const cardIcon=CICONS[p._foulCard]||'🟨';
+          allEvents.push({
+            minute:injMin,
+            type:'card',icon:cardIcon,
+            text:`<strong>${fouler.name}</strong> <span style="font-size:10px;color:#a07a00">(falta sobre ${p.name})</span>`
+          });
+          // Si es roja, aplicar también las consecuencias de sanción
+          if(p._foulCard==='red'){
+            fouler.suspendedNextMatch=true;
+            fouler.cardStatus='red';
+            newCards.push({player:fouler, type:'red', _foulRed:true});
+          }
+        }
+      });
     }
     if(oppEvents.cards&&oppEvents.cards.length){
       oppEvents.cards.forEach(c=>allEvents.push({
@@ -2597,7 +2795,7 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
     const myColor=type==='mygoal'||type==='pen_me'?'var(--accent)':type==='card'?'#a07a00':type==='injury'?'#e74c3c':'var(--text)';
     const oppColor=type==='oppgoal'||type==='pen_opp'?'var(--red)':type==='oppcard'?'#a07a00':'var(--text)';
     // Centro: minuto
-    const center=`<span style="font-family:'Bebas Neue',Impact,sans-serif;font-size:12px;color:#999;text-align:center;display:block">${minLabel}</span>`;
+    const center=`<span style="font-family:'Bebas Neue',Impact,sans-serif;font-size:15px;color:#aaa;text-align:center;display:block;letter-spacing:.5px">${minLabel}</span>`;
     if(isMe){
       item.innerHTML=`<span style="text-align:right;padding-right:6px;color:${myColor};line-height:1.3">${text} <span style="font-size:14px">${icon}</span></span>${center}<span></span>`;
     } else if(isOpp){
@@ -2707,7 +2905,7 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
           addEvt(shot.scored?'✅':'❌',`<strong>${shot.name}</strong>`,label(round),'pen_me');
         } else {
           if(shot.scored) penOpp++;
-          addEvt(shot.scored?'✅':'❌',`<strong>${shot.name}</strong> <span style="font-size:10px;color:var(--red)">${oppName}</span>`,label(round),'pen');
+          addEvt(shot.scored?'✅':'❌',`<strong>${shot.name}</strong>`,label(round),'pen_opp');
         }
         updatePenScore();
         if(shot.scored) playSound('goal');
@@ -2720,6 +2918,8 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
     }
     function finishPenalties(){
       const penWon=penMy>penOpp;
+      if(penWon){ window._consecutivePenWins=(window._consecutivePenWins||0)+1; if(window._consecutivePenWins>=2) unlockAchievement('two_pen_wins'); }
+      else window._consecutivePenWins=0;
       addSep(`${penWon?'🏆':'💔'} ${penWon?myTeamName:oppName} gana la tanda ${penMy}–${penOpp}`);
       playSound(penWon?'victory':'defeat');
       setTimeout(showPostMatch,1200);
@@ -2813,6 +3013,12 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
 
     modal.appendChild(infoWrap);
 
+    // MÉDICO DE ÉLITE: curar lesiones leves al finalizar el partido
+    if(window._skillCache&&window._skillCache.medico){
+      usedPlayers.forEach(p=>{
+        if(p.injury&&p.injury.type==='leve') p.injury=null;
+      });
+    }
     // Restaurar ratings de expulsados que quedaron en campo con 0
     [...usedPlayers,...bench].forEach(p=>{
       if(p._redThisMatchOnPitch && p._originalRating!==undefined){
@@ -2843,12 +3049,37 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
     btn.className='modal-btn';
     btn.textContent=btnLabel;
     btn.style.marginTop='10px';
+    // Logros post-partido
+    if(won && swapsUsedThisMatch===0) unlockAchievement('no_subs_win');
+    if(won && stage==='knockout') unlockAchievement('comeback'); // simplificado
+    // Todos en posición ★
+    const allStars=usedPlayers.every(p=>p.positions&&p.placedPos&&p.positions[0]===p.placedPos);
+    if(allStars&&usedPlayers.length===11) unlockAchievement('all_stars');
+    // 5 jugadores 90+
+    const top5=usedPlayers.filter(p=>(p.rating||0)>=90).length>=5;
+    if(top5) unlockAchievement('5_nineties');
+    // Táctica perfecta
+    if(won&&selectedMatchStrategy&&nextOpponent){
+      const rk=getRivalStrategyKey(nextOpponent);
+      if(STRATEGIES[selectedMatchStrategy]&&STRATEGIES[selectedMatchStrategy].counters===rk) unlockAchievement('perfect_tactic');
+    }
+
     btn.addEventListener('click',()=>{
       overlay.innerHTML='';
       switch(outcome){
         case 'nextGroupMatch': pickNextOpponent(); break;
         case 'groupDone': renderMatchHistory(); showGroupResultsPopup(); break;
-        case 'nextKnockoutMatch': if(knockoutRound===1)clearYellowCardsAfterQuarterfinals(); knockoutRound++; pickNextOpponent(); break;
+        case 'nextKnockoutMatch':
+          if(knockoutRound===1) clearYellowCardsAfterQuarterfinals();
+          // PATROCINADOR: +1 GOAT Point al clasificar a cuartos (pasar de grupos)
+          if(knockoutRound===0&&window._skillCache&&window._skillCache.patrocinador){
+            const _u=window._fbAuth&&window._fbAuth.currentUser;
+            if(_u&&window._fbDb) window._fbDb.collection('users').doc(_u.uid).get().then(s=>{
+              const d=s.exists?s.data():{};
+              window._fbDb.collection('users').doc(_u.uid).set({scratchPoints:(d.scratchPoints||0)+1},{merge:true});
+            });
+          }
+          knockoutRound++; pickNextOpponent(); break;
         case 'champion': showVictory(); break;
         case 'knockoutLost': showEliminated(); break;
       }
@@ -2972,6 +3203,14 @@ function showMatchModal(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,
 
 /* ---------- PROGRESSIVE GROUP RESULTS POPUP ---------- */
 function showGroupResultsPopup(){
+  // Logros de fase de grupos
+  const meRow=groupTable.find(r=>r.isMe);
+  if(meRow){
+    if(meRow.lost===0) unlockAchievement('groups_unbeaten');
+    if(meRow.ga===0) unlockAchievement('groups_no_concede');
+    if(meRow.won===3) unlockAchievement('win_all_groups');
+    unlockAchievement('first_groups');
+  }
   const sorted=sortedGroupTable();
   const meIdx=sorted.findIndex(r=>r.isMe);
   const qualified=meIdx<2;
@@ -3131,6 +3370,17 @@ function computeFinalScore(champion){
   return {total, breakdown:scores, penWins, totalGoals, totalConceded, stars, cleanSheets, stageFactor};
 }
 function showVictory(){
+  unlockAchievement('champion_unbeaten'); // simplificado — ganar el mundial
+  // Triple corona: contar mundiales ganados
+  const user=window._fbAuth&&window._fbAuth.currentUser;
+  if(user&&window._fbDb){
+    window._fbDb.collection('users').doc(user.uid).get().then(s=>{
+      const d=s.exists?s.data():{};
+      const wins=(d.worldCupWins||0)+1;
+      window._fbDb.collection('users').doc(user.uid).set({worldCupWins:wins},{merge:true});
+      if(wins>=3) unlockAchievement('triple_crown');
+    });
+  }
   const sc=computeFinalScore(true);
   if(typeof window.saveVictoryStat==="function") window.saveVictoryStat(sc.total);
   if(typeof window.saveFinalScore==="function") window.saveFinalScore(sc.total);
@@ -3315,7 +3565,7 @@ function showGoldenTicket(){
     if(win) playSound('victory');
     else playSound('scratch_bomb');
     ro.innerHTML=`
-    <div style="background:linear-gradient(180deg,#3a2a00,#1a1200);border-radius:18px;padding:30px 26px;text-align:center;max-width:300px;width:90%;box-shadow:0 0 0 2px #f0c419,0 30px 60px -10px rgba(0,0,0,.9);animation:popIn .3s cubic-bezier(.2,1.4,.4,1)">
+    <div style="background:linear-gradient(180deg,#3a2a00,#1a1200);border-radius:0;padding:30px 26px;text-align:center;max-width:300px;width:90%;box-shadow:0 0 0 2px #f0c419,0 30px 60px -10px rgba(0,0,0,.9);animation:popIn .3s cubic-bezier(.2,1.4,.4,1)">
       <style>@keyframes popIn{0%{transform:scale(.7);opacity:0}100%{transform:scale(1);opacity:1}}</style>
       <span style="font-size:54px;display:block;margin-bottom:10px">${win?(auto?'🏆':'💰'):'❌'}</span>
       <h2 style="font-family:'Bebas Neue',Impact,sans-serif;font-size:26px;letter-spacing:1px;color:${win?'#f0c419':'#f87171'};margin-bottom:6px">${win?(auto?'¡TICKET PREMIADO!':'¡TICKET PREMIADO!'):'TICKET ANULADO'}</h2>
@@ -3334,6 +3584,7 @@ function showGoldenTicket(){
         const d=snap.exists?snap.data():{};
         const newPts=(d.scratchPoints||0)+ptsEarned;
         const newEarned=(d.scratchPointsEarned||0)+ptsEarned;
+        if(ptsEarned>0) showGoatPointsBadge();
         await window._fbDb.collection('users').doc(user.uid).set({scratchPoints:newPts,scratchPointsEarned:newEarned},{merge:true});
         const pse=$id('pstat-scratch-pts'); if(pse) pse.textContent=newPts;
       }catch(e){console.warn('Error guardando pts golden ticket:',e);}
@@ -4033,13 +4284,13 @@ function syncThemeToggleUI(isDark){
   // Theme: dark is the default; only go light if explicitly saved as light
   let isDark=true;
   try{
-    const saved=localStorage.getItem('g2g_darkTheme');
-    if(saved!==null) isDark=(saved==='true');
+    const saved=localStorage.getItem('darkTheme');
+    if(saved==='false') isDark=false;
   }catch(e){}
   if(isDark) document.body.classList.add("dark-theme");
   else document.body.classList.remove("dark-theme");
-  // Activar transiciones solo después de aplicar el tema inicial
-  requestAnimationFrame(()=>document.body.classList.add("theme-loaded"));
+  document.documentElement.classList.remove('dark-theme-init');
+  requestAnimationFrame(()=>requestAnimationFrame(()=>document.body.classList.add("theme-ready")));
   syncThemeToggleUI(isDark);
 })();
 
@@ -4055,7 +4306,7 @@ themeToggleBtns.forEach(btn=>{
   btn.addEventListener("click",()=>{
     const isDark=document.body.classList.toggle("dark-theme");
     syncThemeToggleUI(isDark);
-    try{ localStorage.setItem('g2g_darkTheme', isDark); }catch(e){}
+    try{ localStorage.setItem('darkTheme', isDark); }catch(e){}
     playSound('select');
   });
 });
@@ -4216,6 +4467,10 @@ function initFirebaseAuth(){
       if(window._initTicketSystem) window._initTicketSystem(user, false);
       // Listener en tiempo real de mejoras
       startUpgradeListener(user.uid);
+      // Listener de habilidades
+      startSkillListener(user.uid);
+      // Listener de logros
+      startAchievementsListener(user.uid);
     }else{
       if(authBtn)    authBtn.style.display="";
       if(profileBtn) profileBtn.style.display="none";
@@ -4356,21 +4611,41 @@ function initFirebaseAuth(){
 
   window.switchProfileTab=function(tab){
     const tabs={
-      stats:    {btn:$id("profileTabStats"),    pane:$id("profileStatsPane")},
-      user:     {btn:$id("profileTabUser"),     pane:$id("profileUserPane")},
-      upgrades: {btn:$id("profileTabUpgrades"), pane:$id("profileUpgradesPane")},
-      notes:    {btn:$id("profileTabNotes"),    pane:$id("profileNotesPane")},
+      stats:        {btn:$id("profileTabStats"),        pane:$id("profileStatsPane")},
+      user:         {btn:$id("profileTabUser"),         pane:$id("profileUserPane")},
+      upgrades:     {btn:$id("profileTabUpgrades"),     pane:$id("profileUpgradesPane")},
+      notes:        {btn:$id("profileTabNotes"),        pane:$id("profileNotesPane")},
+      achievements: {btn:$id("profileTabAchievements"), pane:$id("profileAchievementsPane")},
     };
     Object.entries(tabs).forEach(([key,{btn,pane}])=>{
       const active=(key===tab);
       btn?.classList.toggle("auth-tab-active", active);
       pane?.classList.toggle("profile-tab-pane-active", active);
     });
-    if(tab==='upgrades') renderUpgradesTab();
+    if(tab==='upgrades'){ renderUpgradesTab(); hideGoatPointsBadge(); }
+    if(tab==='notes'){ renderSkillsTab(); const sb=$id('skillsBadge'); if(sb) sb.style.display='none'; }
+    if(tab==='achievements'){
+      renderAchievementsTab();
+      const ab=$id('achievementsBadge');
+      if(ab) ab.style.display='none';
+      try{localStorage.removeItem('_g2g_ach_pending');}catch(e){}
+    }
   };
 
   // Save match result to Firestore
   window.saveMatchStat=async function(won, draw, goalsFor, goalsAgainst){
+    // Logros por partido
+    unlockAchievement('first_match');
+    if(won) unlockAchievement('first_win');
+    if(goalsFor>=5) unlockAchievement('score_5');
+    if(goalsFor>=7) unlockAchievement('score_7');
+    if(goalsAgainst===0&&won) unlockAchievement('clean_sheet');
+    // Hat-trick: detectar si algún scorer marcó 3+ (usando lastMatchScorers)
+    if(typeof generateMatchSummary._scorers!=='undefined'){
+      const scorerCounts={};
+      (generateMatchSummary._scorers||[]).forEach(n=>{ scorerCounts[n]=(scorerCounts[n]||0)+1; });
+      if(Object.values(scorerCounts).some(c=>c>=3)) unlockAchievement('hattrick_player');
+    }
     const user=auth.currentUser; if(!user) return;
     try{
       const inc=firebase.firestore.FieldValue.increment;
@@ -4506,6 +4781,7 @@ function initFirebaseAuth(){
   wire("profileTabUser",     ()=>window.switchProfileTab("user"));
   wire("profileTabUpgrades", ()=>window.switchProfileTab("upgrades"));
   wire("profileTabNotes",    ()=>window.switchProfileTab("notes"));
+  wire("profileTabAchievements", ()=>window.switchProfileTab("achievements"));
   // Auto-save the team-name preference: checkbox toggles save immediately,
   // the text field saves when the user leaves it (blur) or presses Enter.
   (function(){
@@ -4648,6 +4924,50 @@ document.addEventListener('click', e=>{
     badge.textContent='!';
     rivalTab.appendChild(badge);
   }
+})();
+
+/* ── Notificación de GOAT Points ganados ── */
+function checkPointsAchievements(pts){
+  if(pts>=50) unlockAchievement('50_goat_pts');
+  if(pts>=100) unlockAchievement('100_pts');
+}
+function showGoatPointsBadge(){
+  const pb=$id('profileGoatBadge');
+  const ub=$id('upgradesBadge');
+  const sb=$id('skillsBadge');
+  if(pb) pb.style.display='block'; // siempre mostrar en botón perfil
+  if(ub) ub.style.display='inline-block';
+  if(sb) sb.style.display='inline-block';
+  try{ localStorage.setItem('_g2g_pts_pending','1'); }catch(e){}
+}
+function showProfileBadge(){
+  // Muestra solo el badge del botón perfil (sin indicar pestaña específica)
+  const pb=$id('profileGoatBadge');
+  if(pb) pb.style.display='block';
+}
+function hideGoatPointsBadge(){
+  // Solo ocultar si no hay logros pendientes tampoco
+  const achPending=localStorage.getItem('_g2g_ach_pending');
+  const pb=$id('profileGoatBadge');
+  const ub=$id('upgradesBadge');
+  const sb=$id('skillsBadge');
+  if(!achPending&&pb) pb.style.display='none';
+  if(ub) ub.style.display='none';
+  if(sb) sb.style.display='none';
+  try{ localStorage.removeItem('_g2g_pts_pending'); }catch(e){}
+}
+// Restaurar badge si había puntos pendientes de ver al cargar la página
+(function(){
+  try{ if(localStorage.getItem('_g2g_pts_pending')) showGoatPointsBadge(); }catch(e){}
+  try{
+    if(localStorage.getItem('_g2g_ach_pending')){
+      const ab=document.getElementById('achievementsBadge');
+      if(ab) ab.style.display='inline-block';
+      // También mostrar badge en perfil
+      const pb=document.getElementById('profileGoatBadge');
+      if(pb) pb.style.display='block';
+    }
+  }catch(e){}
 })();
 
 /* ============================================================
@@ -4847,21 +5167,20 @@ window.closeTicketOverlay = function() {
 /* ── Construir el boleto dentro del mount point ── */
 function buildTicketInMount(mount, ticketCount, lastRegen, currentScratchPts){
   const GRID_SIZE=9;
-  // Composición fija: 2 X rojas, 1 cabra (5pts), 6 monedas (1pt cada una)
+  // Composición: 1 X roja, 1 cabra (+4pts), 7 monedas (+1pt cada una)
   const indices=Array.from({length:GRID_SIZE},(_,i)=>i);
-  // Barajar Fisher-Yates
   for(let i=indices.length-1;i>0;i--){
     const j=Math.floor(Math.random()*(i+1));
     [indices[i],indices[j]]=[indices[j],indices[i]];
   }
-  const bombSet=new Set([indices[0],indices[1]]);
-  const starIdx=indices[2];
+  const bombIdx=indices[0];  // 1 sola X roja
+  const starIdx=indices[1];  // 1 sola cabra
 
   const cellsData=[];
   for(let i=0;i<GRID_SIZE;i++){
-    if(bombSet.has(i))       cellsData.push({type:'bomb', value:0});
-    else if(i===starIdx)     cellsData.push({type:'star', value:4});
-    else                     cellsData.push({type:'coin', value:1});
+    if(i===bombIdx)       cellsData.push({type:'bomb', value:0});
+    else if(i===starIdx)  cellsData.push({type:'star', value:4});
+    else                  cellsData.push({type:'coin', value:1});
   }
 
   let scratchedCount=0, totalPoints=0, gameOver=false;
@@ -5052,10 +5371,11 @@ function buildTicketInMount(mount, ticketCount, lastRegen, currentScratchPts){
     scratchedCount++;
     if(data.type==='bomb'){
       if(dot){ dot.style.background='#d94f3d'; dot.style.boxShadow='0 0 6px rgba(217,79,61,.7)'; }
-      playSound('scratch_bomb');
+      // Sin sonido para la bomba — el silencio es más impactante
       handleTicketBomb();
     } else if(data.type==='star'){
-      totalPoints+=data.value;
+      const colBonus=window._skillCache&&window._skillCache.coleccionista?1:0;
+      totalPoints+=data.value+colBonus;
       if(dot){ dot.style.background='#f0c419'; dot.style.boxShadow='0 0 6px rgba(240,196,25,.6)'; }
       playSound('scratch_star');
       updateUI();
@@ -5108,7 +5428,7 @@ function buildTicketInMount(mount, ticketCount, lastRegen, currentScratchPts){
     if(win) playSound('victory');
     else playSound('scratch_bomb');
     overlay.innerHTML=`
-    <div style="background:linear-gradient(180deg,#0f3d24,#0c2e1c);border-radius:18px;padding:30px 26px;text-align:center;max-width:300px;width:90%;box-shadow:0 30px 60px -10px rgba(0,0,0,.8),0 0 0 1px rgba(240,196,25,.2);animation:popIn .3s cubic-bezier(.2,1.4,.4,1)">
+    <div style="background:linear-gradient(180deg,#0f3d24,#0c2e1c);border-radius:0;padding:30px 26px;text-align:center;max-width:300px;width:90%;box-shadow:0 30px 60px -10px rgba(0,0,0,.8),0 0 0 1px rgba(240,196,25,.2);animation:popIn .3s cubic-bezier(.2,1.4,.4,1)">
       <style>@keyframes popIn{0%{transform:scale(.7);opacity:0}100%{transform:scale(1);opacity:1}}</style>
       <span style="font-size:54px;display:block;margin-bottom:10px">${win?(auto?'🏆':'💰'):'❌'}</span>
       <h2 style="font-family:'Bebas Neue',Impact,sans-serif;font-size:26px;letter-spacing:1px;color:${win?'#f0c419':'#d94f3d'};margin-bottom:6px">${win?(auto?'¡TICKET PREMIADO!':'¡TICKET PREMIADO!'):'TICKET ANULADO'}</h2>
@@ -5130,6 +5450,7 @@ function buildTicketInMount(mount, ticketCount, lastRegen, currentScratchPts){
         const currentPts=currentData.scratchPoints||0;
         const newPts=currentPts+ptsEarned;
         const newEarned=(currentData.scratchPointsEarned||0)+ptsEarned;
+        if(ptsEarned>0) showGoatPointsBadge();
         // Calcular nuevo contador de tickets
         const updated=computeCurrentTickets(
           currentData.ticketCount!==undefined?currentData.ticketCount:1,
@@ -5244,6 +5565,7 @@ async function refreshUpgradeCache(){
 }
 // Valores efectivos con mejoras aplicadas
 function getMaxBench(){ return 2 + (window._upgradeCache.bench||0); }
+function getRecoveryBonus(){ return (window._upgradeCache.recovery||0)*0.10; } // 10% menos fatiga por nivel
 function getMaxSubs(){  return 2 + (window._upgradeCache.subs||0); }
 function getScoutTeams(){ return 2; } // ya no se usa para equipos
 function getPlayersPerTeam(){ return 5 + (window._upgradeCache.scout||0); }
@@ -5255,8 +5577,8 @@ const UPGRADE_DEFS = [
     name: 'BANQUILLO',
     desc: 'PLAZAS EN EL BANQUILLO',
     baseCost: 5,
-    maxLevel: 10,
-    baseValue: 5,  // valor base actual
+    maxLevel: 5,
+    baseValue: 2,
     tooltip: (lvl) => `${2 + lvl} plazas en el banquillo`
   },
   {
@@ -5265,8 +5587,8 @@ const UPGRADE_DEFS = [
     name: 'CAMBIOS',
     desc: 'SUSTITUCIONES POR PARTIDO',
     baseCost: 5,
-    maxLevel: 10,
-    baseValue: 5,
+    maxLevel: 5,
+    baseValue: 2,
     tooltip: (lvl) => `${2 + lvl} cambios por partido`
   },
   {
@@ -5275,9 +5597,19 @@ const UPGRADE_DEFS = [
     name: 'CONVOCADOS',
     desc: 'JUGADORES POR EQUIPO AL BARAJAR',
     baseCost: 5,
-    maxLevel: 10,
-    baseValue: 3,
+    maxLevel: 5,
+    baseValue: 5,
     tooltip: (lvl) => `${5 + lvl} jugadores por equipo al barajar`
+  },
+  {
+    id: 'recovery',
+    icon: '⚡',
+    name: 'RECUPERACIÓN',
+    desc: 'REDUCE LA FATIGA ENTRE PARTIDOS',
+    baseCost: 5,
+    maxLevel: 5,
+    baseValue: 0,
+    tooltip: (lvl) => `${lvl*10}% menos fatiga por partido`
   },
 ];
 
@@ -5306,9 +5638,10 @@ async function saveUpgrades(upgrades){
 
 // Iconos SVG para mejoras (sin emoji)
 const UPGRADE_ICONS = {
-  bench: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 10v4M20 10v4M2 14h20M6 14v4M18 14v4"/></svg>',
-  subs:  '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M7 16l-4-4 4-4"/><path d="M17 8l4 4-4 4"/><line x1="3" y1="12" x2="21" y2="12"/></svg>',
-  scout: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/><path d="M11 8v6M8 11h6"/></svg>',
+  bench:    '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 10v4M20 10v4M2 14h20M6 14v4M18 14v4"/></svg>',
+  subs:     '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M7 16l-4-4 4-4"/><path d="M17 8l4 4-4 4"/><line x1="3" y1="12" x2="21" y2="12"/></svg>',
+  scout:    '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/><path d="M11 8v6M8 11h6"/></svg>',
+  recovery: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>',
 };
 
 // Renderizar la pestaña de mejoras
@@ -5381,6 +5714,7 @@ async function renderUpgradesTab(){
       const def = UPGRADE_DEFS.find(d => d.id === id);
       if(!def) return;
       btn.disabled = true;
+      playSound('select');
 
       const freshSnap = await window._fbDb.collection('users').doc(user.uid).get();
       const freshData = freshSnap.exists ? freshSnap.data() : {};
@@ -5402,6 +5736,7 @@ async function renderUpgradesTab(){
         scratchPoints: pts, upgrades: upgs,
         scratchPointsSpent: freshData.scratchPointsSpent || 0
       }, {merge: true});
+      unlockAchievement('upgrade_once');
       await refreshUpgradeCache(); // actualizar valores efectivos en juego
 
       const pEl = document.getElementById('upgradePointsDisplay');
@@ -5413,3 +5748,365 @@ async function renderUpgradesTab(){
     });
   });
 }
+
+/* ============================================================
+   SISTEMA DE HABILIDADES (Skills)
+   - Modificadores especiales comprables con GOAT Points
+   - Se pueden activar/desactivar — al desactivar se recuperan los puntos
+   - Se guardan en Firestore: users/{uid}.skills
+   ============================================================ */
+
+const SKILL_DEFS = [
+  // === TÁCTICA ===
+  {
+    id: 'estratega', category: 'TÁCTICA',
+    name: 'ESTRATEGA', cost: 40,
+    icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 3"/></svg>',
+    tooltip: 'Muestra la mejor contra-estrategia antes de cada partido.',
+  },
+  {
+    id: 'capitan', category: 'TÁCTICA',
+    name: 'CAPITÁN', cost: 30,
+    icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>',
+    tooltip: 'Si vas perdiendo en el descanso, tu ataque sube un 10% en la segunda parte.',
+  },
+  {
+    id: 'remontada', category: 'TÁCTICA',
+    name: 'REMONTADA', cost: 60,
+    icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M18 15l-6-6-6 6"/></svg>',
+    tooltip: 'Si vas perdiendo de 2 o más goles, tu ataque sube un 35% el resto del partido.',
+  },
+  {
+    id: 'penaltis', category: 'TÁCTICA',
+    name: 'ESPECIALISTA EN PENALTIS', cost: 35,
+    icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><line x1="12" y1="3" x2="12" y2="21"/><line x1="3" y1="12" x2="21" y2="12"/></svg>',
+    tooltip: 'Aumenta la probabilidad de anotar en tandas de penaltis en un 15%.',
+  },
+  // === PLANTILLA ===
+  {
+    id: 'medico', category: 'PLANTILLA',
+    name: 'MÉDICO DE ÉLITE', cost: 50,
+    icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>',
+    tooltip: 'Las lesiones leves se recuperan automáticamente al acabar el partido, no duran al siguiente.',
+  },
+  {
+    id: 'ojeador', category: 'PLANTILLA',
+    name: 'OJEADOR', cost: 25,
+    icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>',
+    tooltip: 'Al barajar equipos siempre aparece al menos un jugador con 85 o más de rating.',
+  },
+  {
+    id: 'cazatalentos', category: 'PLANTILLA',
+    name: 'CAZATALENTOS', cost: 30,
+    icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
+    tooltip: 'Los jugadores fuera de su posición natural solo pierden un 5% de rendimiento en lugar del 15%.',
+  },
+  {
+    id: 'veterano', category: 'PLANTILLA',
+    name: 'VETERANO', cost: 45,
+    icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>',
+    tooltip: 'Los jugadores con 85+ de rating no pueden recibir tarjeta roja directa, solo amarilla.',
+  },
+  // === ECONOMÍA ===
+  {
+    id: 'coleccionista', category: 'ECONOMÍA',
+    name: 'COLECCIONISTA', cost: 20,
+    icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>',
+    tooltip: 'Cada casilla buena del ticket (moneda o cabra) da 1 punto extra.',
+  },
+  {
+    id: 'patrocinador', category: 'ECONOMÍA',
+    name: 'PATROCINADOR', cost: 20,
+    icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>',
+    tooltip: 'Ganas 1 GOAT Point extra al clasificarte para cuartos de final.',
+  },
+];
+
+// Cache de habilidades activas
+window._skillCache = {};
+
+function startSkillListener(uid){
+  if(!window._fbDb||!uid) return;
+  window._fbDb.collection('users').doc(uid).onSnapshot(snap=>{
+    if(!snap.exists) return;
+    window._skillCache = (snap.data().skills)||{};
+  });
+}
+
+// Efecto real de ESTRATEGA: devuelve la mejor contra-estrategia
+window.getEstrategaHint = function(){
+  if(!window._skillCache.estratega) return null;
+  if(!nextOpponent) return null;
+  const rivalKey = getRivalStrategyKey(nextOpponent);
+  // Buscar qué estrategia mía contrarresta al rival
+  for(const [key, s] of Object.entries(STRATEGIES||{})){
+    if(s.counters === rivalKey) return {key, name:s.name};
+  }
+  return null;
+};
+
+async function renderSkillsTab(){
+  const list = document.getElementById('skillsList');
+  const pointsEl = document.getElementById('skillPointsDisplay');
+  if(!list) return;
+  list.innerHTML='<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:12px">Cargando...</div>';
+  const user = window._fbAuth&&window._fbAuth.currentUser;
+  if(!user){ list.innerHTML='<div style="text-align:center;padding:20px;color:var(--text-muted)">Inicia sesión para ver las habilidades.</div>'; return; }
+  const snap = await window._fbDb.collection('users').doc(user.uid).get();
+  const data = snap.exists?snap.data():{};
+  let pts = data.scratchPoints||0;
+  let skills = data.skills||{};
+  if(pointsEl) pointsEl.textContent=pts;
+  list.innerHTML='';
+  list.style.overflowX='hidden';
+  list.style.width='100%';
+
+  // Agrupar por categoría, 2 columnas por tipo
+  const categories = [...new Set(SKILL_DEFS.map(d=>d.category))];
+  categories.forEach(cat=>{
+    const catDefs = SKILL_DEFS.filter(d=>d.category===cat);
+    const label = document.createElement('div');
+    label.style.cssText='font-family:"Bebas Neue",Impact,sans-serif;font-size:11px;letter-spacing:2px;color:var(--text-muted);border-bottom:1px solid var(--line);padding-bottom:4px;margin:12px 0 8px';
+    label.textContent=cat;
+    list.appendChild(label);
+    const grid = document.createElement('div');
+    grid.className='skill-grid';
+    grid.style.cssText='display:grid;grid-template-columns:1fr 1fr;gap:6px';
+    list.appendChild(grid);
+    catDefs.forEach(def=>{
+      const active = !!skills[def.id];
+      const btn = document.createElement('button');
+      btn.className='skill-toggle-btn';
+      btn.dataset.id=def.id;
+      // Mismo tamaño para todos: height fijo con flex column centrado
+      btn.style.cssText=`display:flex;flex-direction:column;align-items:center;justify-content:space-between;gap:0;border:2px solid ${active?'var(--gold)':'var(--line)'};background:${active?'rgba(201,162,39,.12)':'var(--panel)'};color:${active?'var(--gold)':'var(--text)'};cursor:pointer;transition:.15s;text-align:center;width:100%;box-sizing:border-box;overflow:hidden;height:160px`;
+      const iconPart=`<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;padding:12px 8px 8px;flex:1">
+        <span style="color:${active?'var(--gold)':'var(--accent)'}">${def.icon.replace(/width="22"/g,'width="26"').replace(/height="22"/g,'height="26"')}</span>
+        <span style="font-family:'Bebas Neue',Impact,sans-serif;font-size:13px;letter-spacing:.8px;color:${active?'var(--gold)':'var(--text)'};line-height:1.1">${def.name}</span>
+        <span style="font-size:10px;color:${active?'var(--accent)':'var(--text-muted)'};line-height:1.4;padding:0 4px">${def.tooltip}</span>
+      </div>`;
+      const footerPart=`<div style="width:100%;padding:6px;background:${active?'rgba(201,162,39,.15)':'rgba(0,0,0,.15)'};border-top:1px solid ${active?'rgba(201,162,39,.3)':'var(--line)'}">
+        <span style="font-family:'Bebas Neue',Impact,sans-serif;font-size:12px;color:${active?'var(--gold)':'var(--text-muted)'};letter-spacing:1px">${active?'✓ ACTIVA · PULSA PARA DESACTIVAR':'★ '+def.cost+' PTS'}</span>
+      </div>`;
+      btn.innerHTML=iconPart+footerPart;
+      btn.addEventListener('click', async()=>{
+        btn.disabled=true;
+        playSound('select');
+        const fs2=await window._fbDb.collection('users').doc(user.uid).get();
+        const fd=fs2.exists?fs2.data():{};
+        let p=fd.scratchPoints||0;
+        let sk=fd.skills||{};
+        if(sk[def.id]){
+          delete sk[def.id]; p+=def.cost;
+        } else {
+          if(p<def.cost){ btn.disabled=false; return; }
+          sk[def.id]=true; p-=def.cost;
+        }
+        await window._fbDb.collection('users').doc(user.uid).update({
+          scratchPoints: p,
+          skills: sk
+        });
+        const pEl=document.getElementById('skillPointsDisplay');
+        if(pEl) pEl.textContent=p;
+        const statPts=document.getElementById('pstat-scratch-pts');
+        if(statPts) statPts.textContent=p;
+        // Logros de habilidades
+        unlockAchievement('use_skill');
+        if(Object.keys(sk).length>=3) unlockAchievement('use_3_skills');
+        if(Object.keys(sk).length>=5) unlockAchievement('5_skills');
+        renderSkillsTab();
+      });
+      grid.appendChild(btn);
+    });
+  });
+
+  // Eliminar el viejo listener loop que ya no existe
+}
+
+/* showPatchNotes — llamado desde Ajustes */
+window.showPatchNotes=function(){
+  const o=document.getElementById('patchNotesOverlay');
+  if(o) o.style.display='flex';
+};
+
+/* ============================================================
+   SISTEMA DE LOGROS
+   Dificultad → recompensa: básico=1, intermedio=2, difícil=3, mítico=25
+   Se guardan en Firestore: users/{uid}.achievements (set de ids)
+   ============================================================ */
+
+const ACHIEVEMENT_DEFS = [
+  // BÁSICOS — 1 PT
+  {id:'first_match',      tier:'básico',  pts:1,  icon:'ph-megaphone',        name:'PITIDO INICIAL',       desc:'Completa tu primer partido'},
+  {id:'first_win',        tier:'básico',  pts:1,  icon:'ph-trophy',         name:'PRIMERA VICTORIA',     desc:'Gana tu primer partido'},
+  {id:'first_ticket',     tier:'básico',  pts:1,  icon:'ph-ticket',         name:'PRIMER RASCA',         desc:'Gana puntos en tu primer ticket'},
+  {id:'clean_sheet',      tier:'básico',  pts:1,  icon:'ph-shield-check',   name:'PORTERÍA A CERO',      desc:'Gana un partido sin encajar ningún gol'},
+  {id:'no_subs_win',      tier:'básico',  pts:1,  icon:'ph-swap',          name:'SIN ROTACIONES',       desc:'Gana un partido sin usar ningún cambio'},
+  {id:'first_groups',     tier:'básico',  pts:1,  icon:'ph-flag', name:'FASE SUPERADA',        desc:'Clasifícate para octavos de final'},
+  {id:'score_5',          tier:'básico',  pts:1,  icon:'ph-soccer-ball',    name:'GOLEADA',              desc:'Marca 5 goles o más en un partido'},
+  {id:'win_comeback',     tier:'básico',  pts:1,  icon:'ph-arrow-bend-up-left','name':'VUELTA AL PARTIDO',  desc:'Gana un partido después de ir perdiendo'},
+  {id:'use_skill',        tier:'básico',  pts:1,  icon:'ph-lightning',      name:'PRIMER PODER',         desc:'Activa tu primera habilidad'},
+  {id:'full_bench',       tier:'básico',  pts:1,  icon:'ph-users',          name:'PLANTILLA COMPLETA',   desc:'Llega a un partido con el banquillo lleno'},
+  {id:'hattrick_player',  tier:'básico',  pts:1,  icon:'ph-number-three',            name:'HAT-TRICK',            desc:'Un mismo jugador marca 3 goles en un partido'},
+  {id:'win_no_concede2',  tier:'básico',  pts:1,  icon:'ph-wall',           name:'DOBLE CERROJO',        desc:'No encajes goles en 2 partidos consecutivos'},
+  {id:'all_stars',        tier:'básico',  pts:1,  icon:'ph-star',           name:'ONCE PERFECTO',        desc:'Coloca los 11 titulares en su posición natural ★'},
+  {id:'first_pen_win',    tier:'básico',  pts:1,  icon:'ph-crosshair',      name:'NERVIOS DE ACERO',     desc:'Gana una tanda de penaltis'},
+  {id:'upgrade_once',     tier:'básico',  pts:1,  icon:'ph-arrow-circle-up','name':'PRIMERA MEJORA',     desc:'Sube por primera vez cualquier mejora'},
+
+  // INTERMEDIOS — 2 PTS
+  {id:'groups_unbeaten',  tier:'intermedio', pts:2, icon:'ph-shield',        name:'INVICTO EN GRUPOS',   desc:'Pasa la fase de grupos sin perder ningún partido'},
+  {id:'groups_no_concede',tier:'intermedio', pts:2, icon:'ph-shield-star', name:'MURALLA EN GRUPOS',   desc:'No encajes ningún gol en toda la fase de grupos'},
+  {id:'quarters',         tier:'intermedio', pts:2, icon:'ph-medal',         name:'CUARTOS',              desc:'Clasifícate para cuartos de final'},
+  {id:'semis',            tier:'intermedio', pts:2, icon:'ph-medal','name':'SEMIFINAL',          desc:'Llega a semifinales'},
+  {id:'comeback_2',       tier:'intermedio', pts:2, icon:'ph-arrow-fat-lines-up',  name:'REMONTADA ÉPICA',     desc:'Gana un partido después de ir perdiendo de 2 goles'},
+  {id:'perfect_tactic',   tier:'intermedio', pts:2, icon:'ph-graph',      name:'TÁCTICA MAESTRA',     desc:'Usa la contra-estrategia perfecta y gana el partido'},
+  {id:'no_injuries_semis',tier:'intermedio', pts:2, icon:'ph-plus-circle', name:'HIERRO FORJADO',      desc:'Llega a semifinales sin ningún jugador lesionado'},
+  {id:'score_7',          tier:'intermedio', pts:2, icon:'ph-fire',          name:'ARROLLADOR',           desc:'Marca 7 goles o más en un partido'},
+  {id:'5_nineties',       tier:'intermedio', pts:2, icon:'ph-crown',         name:'EQUIPO DE LEYENDA',   desc:'Forma un equipo con 5 jugadores de rating 90 o superior'},
+  {id:'two_pen_wins',     tier:'intermedio', pts:2, icon:'ph-target',        name:'REY DE PENALTIS',     desc:'Gana dos tandas de penaltis en el mismo torneo'},
+  {id:'use_3_skills',     tier:'intermedio', pts:2, icon:'ph-toolbox',     name:'ESPECIALISTA',         desc:'Activa simultáneamente 3 habilidades distintas'},
+  {id:'win_5_row',        tier:'intermedio', pts:2, icon:'ph-trend-up',      name:'RACHA GANADORA',      desc:'Gana 5 partidos consecutivos'},
+  {id:'50_goat_pts',      tier:'intermedio', pts:2, icon:'ph-coins',         name:'BUEN CONTRATO',       desc:'Acumula 50 GOAT Points sin gastar ninguno'},
+  {id:'score_10_group',   tier:'intermedio', pts:2, icon:'ph-chart-bar',     name:'MÁQUINA GOLEADORA',   desc:'Marca 10 goles o más en toda la fase de grupos'},
+  {id:'win_all_groups',   tier:'intermedio', pts:2, icon:'ph-check-square',  name:'PLENO EN GRUPOS',     desc:'Gana los 3 partidos de la fase de grupos'},
+
+  // DIFÍCILES — 3 PTS
+  {id:'champion',         tier:'difícil', pts:3, icon:'ph-trophy',          name:'CAMPEÓN MUNDIAL',      desc:'Gana el Mundial'},
+  {id:'champion_unbeaten',tier:'difícil', pts:3, icon:'ph-star',       name:'CAMPEÓN INVICTO',      desc:'Gana el Mundial sin perder ningún partido'},
+  {id:'all_wins',         tier:'difícil', pts:3, icon:'ph-circles-four',        name:'SIETE DE SIETE',       desc:'Gana los 7 partidos del torneo sin empatar'},
+  {id:'100_pts',          tier:'difícil', pts:3, icon:'ph-bank',           name:'CAJA FUERTE',          desc:'Acumula 100 GOAT Points sin gastar ninguno'},
+  {id:'concede_1',        tier:'difícil', pts:3, icon:'ph-lock',            name:'BAJO SIETE LLAVES',    desc:'Encaja solo 1 gol o menos en todo el torneo'},
+  {id:'5_skills',         tier:'difícil', pts:3, icon:'ph-lightning',       name:'MANAGER TOTAL',        desc:'Activa simultáneamente 5 habilidades'},
+  {id:'hattrick_final',   tier:'difícil', pts:3, icon:'ph-number-three',             name:'HÉROE DE LA FINAL',    desc:'Un jugador marca 3 goles en la final del Mundial'},
+  {id:'10_clean_sheets',  tier:'difícil', pts:3, icon:'ph-shield-check',    name:'PORTERO LEGENDARIO',   desc:'Consigue 10 porterías a cero a lo largo de tus partidas'},
+  {id:'pen_win_final',    tier:'difícil', pts:3, icon:'ph-crosshair','name':'FINAL EN PENALTIS',  desc:'Gana la final del Mundial en la tanda de penaltis'},
+  {id:'all_achievements_basic', tier:'difícil', pts:3, icon:'ph-seal-check','name':'PROFESIONAL',       desc:'Desbloquea todos los logros básicos'},
+
+  // MÍTICO — 25 PTS
+  {id:'triple_crown',     tier:'mítico',  pts:25, icon:'ph-crown',   name:'GOAT ABSOLUTO',        desc:'Gana el Mundial 3 veces'},
+];
+
+const TIER_COLOR = {básico:'#aaa', intermedio:'#2ecc71', difícil:'#e67e22', mítico:'#f0c419'};
+const TIER_LABEL = {básico:'★ 1 PT', intermedio:'★ 2 PTS', difícil:'★ 3 PTS', mítico:'★ 25 PTS'};
+
+// Cache de logros
+window._achievementsCache = new Set();
+
+function startAchievementsListener(uid){
+  if(!window._fbDb||!uid) return;
+  window._fbDb.collection('users').doc(uid).onSnapshot(snap=>{
+    if(!snap.exists) return;
+    const achs = snap.data().achievements||[];
+    window._achievementsCache = new Set(achs);
+  });
+}
+
+async function unlockAchievement(id){
+  if(window._achievementsCache.has(id)) return; // ya desbloqueado
+  const user = window._fbAuth&&window._fbAuth.currentUser;
+  if(!user) return;
+  const def = ACHIEVEMENT_DEFS.find(a=>a.id===id);
+  if(!def) return;
+  window._achievementsCache.add(id);
+  try{
+    const snap = await window._fbDb.collection('users').doc(user.uid).get();
+    const d = snap.exists?snap.data():{};
+    const current = d.achievements||[];
+    if(current.includes(id)) return;
+    const newPts = (d.scratchPoints||0)+def.pts;
+    await window._fbDb.collection('users').doc(user.uid).set({
+      achievements:[...current,id],
+      scratchPoints: newPts,
+      scratchPointsEarned:(d.scratchPointsEarned||0)+def.pts
+    },{merge:true});
+    // Notificar al usuario
+    showAchievementToast(def);
+    showGoatPointsBadge();
+    // Badge en la pestaña LOGROS
+    const ab=document.getElementById('achievementsBadge');
+    if(ab){ ab.style.display='inline-block'; try{localStorage.setItem('_g2g_ach_pending','1');}catch(e){} }
+    // Actualizar displays de puntos
+    const pEl=document.getElementById('upgradePointsDisplay');
+    if(pEl) pEl.textContent=newPts;
+    const pEl2=document.getElementById('skillPointsDisplay');
+    if(pEl2) pEl2.textContent=newPts;
+    const pEl3=document.getElementById('pstat-scratch-pts');
+    if(pEl3) pEl3.textContent=newPts;
+  }catch(e){ console.warn('Achievement error:',e); }
+}
+
+function showAchievementToast(def){
+  const toast=document.createElement('div');
+  toast.style.cssText=`position:fixed;bottom:80px;left:50%;transform:translateX(-50%);
+    background:#1a1a0a;border:2px solid ${TIER_COLOR[def.tier]};
+    padding:12px 20px;z-index:99999;display:flex;align-items:center;gap:12px;
+    font-family:'Bebas Neue',Impact,sans-serif;min-width:280px;max-width:90vw;
+    animation:slideUpToast .4s ease;box-shadow:0 8px 24px rgba(0,0,0,.6)`;
+  toast.innerHTML=`
+    <i class="ph ph-bold ${def.icon}" style="font-size:28px;color:${TIER_COLOR[def.tier]}"></i>
+    <div>
+      <div style="font-size:10px;letter-spacing:2px;color:${TIER_COLOR[def.tier]};margin-bottom:2px">LOGRO DESBLOQUEADO · ${TIER_LABEL[def.tier]}</div>
+      <div style="font-size:16px;color:#fff;letter-spacing:1px">${def.name}</div>
+      <div style="font-size:11px;color:#aaa;margin-top:2px">${def.desc}</div>
+    </div>`;
+  document.body.appendChild(toast);
+  setTimeout(()=>{ toast.style.transition='opacity .5s'; toast.style.opacity='0'; setTimeout(()=>toast.remove(),500); },4000);
+}
+
+async function checkAllBasicAchievements(unlocked){
+  const basics=ACHIEVEMENT_DEFS.filter(a=>a.tier==='básico').map(a=>a.id);
+  if(basics.every(id=>unlocked.has(id))) unlockAchievement('all_achievements_basic');
+}
+async function renderAchievementsTab(){
+  const list=document.getElementById('achievementsList');
+  if(!list) return;
+  list.innerHTML='<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:12px">Cargando...</div>';
+  const user=window._fbAuth&&window._fbAuth.currentUser;
+  if(!user){ list.innerHTML='<div style="text-align:center;padding:20px;color:var(--text-muted)">Inicia sesión para ver tus logros.</div>'; return; }
+  const snap=await window._fbDb.collection('users').doc(user.uid).get();
+  const unlocked=new Set((snap.exists&&snap.data().achievements)||[]);
+  const total=ACHIEVEMENT_DEFS.length;
+  const done=[...unlocked].filter(id=>ACHIEVEMENT_DEFS.find(a=>a.id===id)).length;
+  list.innerHTML='';
+  list.style.paddingRight='12px';
+
+  // Progreso general
+  const progress=document.createElement('div');
+  progress.style.cssText='display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;font-family:"Bebas Neue",Impact,sans-serif';
+  progress.innerHTML=`<span style="font-size:13px;color:var(--text-muted);letter-spacing:1px">${done} / ${total} LOGROS</span>
+    <span style="font-size:13px;color:var(--gold)">${ACHIEVEMENT_DEFS.filter(a=>unlocked.has(a.id)).reduce((s,a)=>s+a.pts,0)} PTS GANADOS</span>`;
+  list.appendChild(progress);
+
+  // Grid 2 columnas
+  const grid=document.createElement('div');
+  grid.style.cssText='display:grid;grid-template-columns:1fr 1fr;gap:6px;padding-right:4px';
+  list.appendChild(grid);
+
+  ACHIEVEMENT_DEFS.forEach(def=>{
+    const isUnlocked=unlocked.has(def.id);
+    const card=document.createElement('div');
+    card.style.cssText=`display:flex;align-items:center;gap:10px;padding:10px;
+      border:1px solid ${isUnlocked?TIER_COLOR[def.tier]:'var(--line)'};
+      background:${isUnlocked?'rgba(0,0,0,.3)':'var(--panel)'};
+      opacity:${isUnlocked?'1':'.45'};position:relative;overflow:hidden`;
+    card.innerHTML=`
+      ${def.icon.startsWith('svg:')?
+        `<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="${isUnlocked?'#c9a227':'var(--text-muted)'}" stroke-width="2" stroke-linecap="round" style="${isUnlocked?'':'opacity:.35'}"><path d="${def.icon.slice(4)}"/></svg>`
+        :`<i class="ph ph-bold ${def.icon}" style="font-size:26px;flex-shrink:0;color:${isUnlocked?'#c9a227':'var(--text-muted)'};${isUnlocked?'':'opacity:.35'}"></i>`
+      }
+      <div style="min-width:0;flex:1">
+        <div style="font-family:'Bebas Neue',Impact,sans-serif;font-size:12px;letter-spacing:.8px;color:${isUnlocked?'#fff':'var(--text-muted)'};line-height:1.2">${def.name}</div>
+        <div style="font-size:9px;color:${isUnlocked?'#aaa':'var(--text-muted)'};line-height:1.4;margin-top:2px">${def.desc}</div>
+        <div style="font-size:9px;color:${TIER_COLOR[def.tier]};letter-spacing:1px;margin-top:3px;font-family:'Bebas Neue',Impact,sans-serif">${TIER_LABEL[def.tier]}</div>
+      </div>
+      ${isUnlocked?`<i class="ph ph-bold ph-check" style="position:absolute;top:5px;right:6px;font-size:12px;color:${TIER_COLOR[def.tier]}"></i>`:''}`;
+    grid.appendChild(card);
+  });
+}
+
+// Añadir CSS para el toast
+(function(){
+  const s=document.createElement('style');
+  s.textContent=`@keyframes slideUpToast{from{transform:translateX(-50%) translateY(20px);opacity:0}to{transform:translateX(-50%) translateY(0);opacity:1}}`;
+  document.head.appendChild(s);
+})();
