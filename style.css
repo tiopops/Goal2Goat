@@ -785,13 +785,13 @@ body.dark-theme .settings-item:hover{background:var(--row-hover);color:var(--gol
 .profile-btn,
 .support-btn{
   font-family:'Bebas Neue',Impact,sans-serif;
-  font-size:13px;letter-spacing:1px;
-  padding:0 14px;cursor:pointer;
+  font-size:14px;letter-spacing:1px;
+  padding:0 10px;cursor:pointer;
   border:none;border-radius:0;
   transition:background .15s, transform .1s, box-shadow .15s;
   white-space:nowrap;flex-shrink:0;
-  height:32px;min-width:120px;
-  display:inline-flex;align-items:center;justify-content:center;
+  height:32px;
+  display:inline-flex;align-items:center;justify-content:center;gap:7px;
 }
 /* LOGIN/REGISTRO */
 .login-btn{background:transparent;color:var(--gold);border:1px solid var(--gold)}
@@ -844,8 +844,8 @@ body.dark-theme .settings-item:hover{background:var(--row-hover);color:var(--gol
   }
   #profileOverlay .auth-tab{
     text-align:center;
-    padding:12px 4px;
-    font-size:14px !important;
+    padding:8px 2px;
+    font-size:17px !important;
     letter-spacing:.8px;
   }
   #profileOverlay .skill-grid{
@@ -918,16 +918,16 @@ body.dark-theme .settings-item:hover{background:var(--row-hover);color:var(--gol
 .auth-tab{
   flex:1;background:none;border:none;color:var(--text-muted);
   font-family:'Bebas Neue',Impact,sans-serif;
-  font-size:16px;letter-spacing:1px;
-  padding:12px 4px;cursor:pointer;transition:.15s;
+  font-size:18px;letter-spacing:1px;
+  padding:8px 2px;cursor:pointer;transition:.15s;
   border-bottom:2px solid transparent;margin-bottom:-2px;
   white-space:nowrap;text-align:center;overflow:hidden;text-overflow:ellipsis;
 }
 /* En móvil, pestañas más compactas */
 @media(max-width:640px){
   #profileOverlay .auth-tab{
-    font-size:12px !important;
-    padding:10px 2px !important;
+    font-size:13px !important;
+    padding:8px 1px !important;
     letter-spacing:0 !important;
   }
   /* Header botones en móvil: menos padding, icono más visible */
