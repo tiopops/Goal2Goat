@@ -845,8 +845,9 @@ body.dark-theme .settings-item:hover{background:var(--row-hover);color:var(--gol
   #profileOverlay .auth-tab{
     text-align:center;
     padding:8px 2px;
-    font-size:17px !important;
+    font-size:11px !important;
     letter-spacing:.8px;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
   }
   #profileOverlay .skill-grid{
     grid-template-columns:repeat(3,1fr) !important;
@@ -918,17 +919,22 @@ body.dark-theme .settings-item:hover{background:var(--row-hover);color:var(--gol
 .auth-tab{
   flex:1;background:none;border:none;color:var(--text-muted);
   font-family:'Bebas Neue',Impact,sans-serif;
-  font-size:18px;letter-spacing:1px;
+  font-size:11px;letter-spacing:.8px;
   padding:8px 2px;cursor:pointer;transition:.15s;
   border-bottom:2px solid transparent;margin-bottom:-2px;
   white-space:nowrap;text-align:center;overflow:hidden;text-overflow:ellipsis;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
 }
 /* En móvil, pestañas más compactas */
 @media(max-width:640px){
   #profileOverlay .auth-tab{
-    font-size:13px !important;
-    padding:8px 1px !important;
+    font-size:10px !important;
+    padding:6px 1px !important;
     letter-spacing:0 !important;
+    display:flex;flex-direction:column;align-items:center;gap:2px;
+  }
+  #profileOverlay .auth-tab i{
+    font-size:16px !important;
   }
   /* Header botones en móvil: menos padding, icono más visible */
   .header-auth-btn, .header-ticket-btn, .profile-btn, .support-btn{
@@ -948,6 +954,9 @@ body.dark-theme .settings-item:hover{background:var(--row-hover);color:var(--gol
 .auth-tab-active{
   color:var(--gold);border-bottom-color:var(--gold);
 }
+/* El icono de la pestaña activa conserva su color propio */
+.auth-tab-active i{ opacity:1; }
+.auth-tab:not(.auth-tab-active) i{ opacity:.55; }
 
 /* Ensure auth button always shows gold regardless of load order */
 #authBtn{
