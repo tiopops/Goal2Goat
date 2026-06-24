@@ -1539,7 +1539,8 @@ function performSwap(benchIdx, convIdx){
   usedPlayers[convIdx]=benchPlayer;
   slot._player=benchPlayer;
   const inPos=benchPlayer.positions&&benchPlayer.positions.includes(label);
-  const r=inPos?(benchPlayer.rating||70):Math.round((benchPlayer.rating||70)*0.85);
+  const _penPct=window._skillCache&&window._skillCache.cazatalentos?0.95:0.85;
+  const r=inPos?(benchPlayer.rating||70):Math.round((benchPlayer.rating||70)*_penPct);
   const star=inPos&&benchPlayer.positions[0]===label?' <span class="star">★</span>':'';
   renderSlotContent(slot, benchPlayer, label, r, star);
   baseTeamOVR=computeTeamOVR();
@@ -2975,6 +2976,12 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
 
     modal.appendChild(infoWrap);
 
+    // MÉDICO DE ÉLITE: curar lesiones leves al finalizar el partido
+    if(window._skillCache&&window._skillCache.medico){
+      usedPlayers.forEach(p=>{
+        if(p.injury&&p.injury.type==='leve') p.injury=null;
+      });
+    }
     // Restaurar ratings de expulsados que quedaron en campo con 0
     [...usedPlayers,...bench].forEach(p=>{
       if(p._redThisMatchOnPitch && p._originalRating!==undefined){
@@ -5242,7 +5249,8 @@ function buildTicketInMount(mount, ticketCount, lastRegen, currentScratchPts){
       // Sin sonido para la bomba — el silencio es más impactante
       handleTicketBomb();
     } else if(data.type==='star'){
-      totalPoints+=data.value;
+      const colBonus=window._skillCache&&window._skillCache.coleccionista?1:0;
+      totalPoints+=data.value+colBonus;
       if(dot){ dot.style.background='#f0c419'; dot.style.boxShadow='0 0 6px rgba(240,196,25,.6)'; }
       playSound('scratch_star');
       updateUI();
@@ -5623,14 +5631,68 @@ async function renderUpgradesTab(){
    ============================================================ */
 
 const SKILL_DEFS = [
+  // === TÁCTICA ===
   {
-    id: 'estratega',
-    name: 'ESTRATEGA',
-    desc: 'ANÁLISIS TÁCTICO AVANZADO',
-    cost: 50,
-    icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 3"/><path d="M9.5 3.5C6 5 3.5 8.2 3.5 12"/></svg>',
-    tooltip: 'Resalta la mejor contra-estrategia para cada rival antes del partido.',
-    effect: 'Se muestra la contra-estrategia óptima en la selección de táctica.'
+    id: 'estratega', category: 'TÁCTICA',
+    name: 'ESTRATEGA', cost: 50,
+    icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 3"/></svg>',
+    tooltip: 'Muestra la mejor contra-estrategia antes de cada partido.',
+  },
+  {
+    id: 'capitan', category: 'TÁCTICA',
+    name: 'CAPITÁN', cost: 40,
+    icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>',
+    tooltip: 'Si vas perdiendo en el descanso, tu ataque sube un 10% en la segunda parte.',
+  },
+  {
+    id: 'remontada', category: 'TÁCTICA',
+    name: 'REMONTADA', cost: 60,
+    icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M18 15l-6-6-6 6"/></svg>',
+    tooltip: 'Si vas perdiendo de 2 o más goles, tu ataque sube un 35% el resto del partido.',
+  },
+  {
+    id: 'penaltis', category: 'TÁCTICA',
+    name: 'ESPECIALISTA EN PENALTIS', cost: 50,
+    icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><line x1="12" y1="3" x2="12" y2="21"/><line x1="3" y1="12" x2="21" y2="12"/></svg>',
+    tooltip: 'Aumenta la probabilidad de anotar en tandas de penaltis en un 15%.',
+  },
+  // === PLANTILLA ===
+  {
+    id: 'medico', category: 'PLANTILLA',
+    name: 'MÉDICO DE ÉLITE', cost: 55,
+    icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>',
+    tooltip: 'Las lesiones leves se recuperan automáticamente al acabar el partido, no duran al siguiente.',
+  },
+  {
+    id: 'ojeador', category: 'PLANTILLA',
+    name: 'OJEADOR', cost: 45,
+    icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>',
+    tooltip: 'Al barajar equipos siempre aparece al menos un jugador con 85 o más de rating.',
+  },
+  {
+    id: 'cazatalentos', category: 'PLANTILLA',
+    name: 'CAZATALENTOS', cost: 40,
+    icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
+    tooltip: 'Los jugadores fuera de su posición natural solo pierden un 5% de rendimiento en lugar del 15%.',
+  },
+  {
+    id: 'veterano', category: 'PLANTILLA',
+    name: 'VETERANO', cost: 45,
+    icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>',
+    tooltip: 'Los jugadores con 85+ de rating no pueden recibir tarjeta roja directa, solo amarilla.',
+  },
+  // === ECONOMÍA ===
+  {
+    id: 'coleccionista', category: 'ECONOMÍA',
+    name: 'COLECCIONISTA', cost: 35,
+    icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>',
+    tooltip: 'Cada casilla buena del ticket (moneda o cabra) da 1 punto extra.',
+  },
+  {
+    id: 'patrocinador', category: 'ECONOMÍA',
+    name: 'PATROCINADOR', cost: 30,
+    icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>',
+    tooltip: 'Ganas 1 GOAT Point extra al clasificarte para cuartos de final.',
   },
 ];
 
@@ -5671,63 +5733,58 @@ async function renderSkillsTab(){
   if(pointsEl) pointsEl.textContent=pts;
   list.innerHTML='';
 
-  // Layout: grid de botones cuadrados
-  const grid = document.createElement('div');
-  grid.style.cssText='display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:8px';
-  list.appendChild(grid);
-
-  SKILL_DEFS.forEach(def=>{
-    const active = !!skills[def.id];
-    const canAfford = pts >= def.cost;
-    const btn = document.createElement('button');
-    btn.className='skill-toggle-btn';
-    btn.dataset.id=def.id;
-    btn.style.cssText=`
-      display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;
-      padding:16px 10px;border:2px solid ${active?'var(--gold)':'var(--line)'};
-      background:${active?'rgba(201,162,39,.15)':'var(--panel)'};
-      color:${active?'var(--gold)':'var(--text)'};
-      cursor:pointer;transition:.15s;text-align:center;
-      position:relative;min-height:110px;
-    `;
-    btn.innerHTML=`
-      ${active?'<span style="position:absolute;top:6px;right:8px;font-size:10px;color:var(--gold);font-family:Bebas Neue,Impact,sans-serif;letter-spacing:1px">✓ ACTIVA</span>':''}
-      <span style="color:${active?'var(--gold)':'var(--accent)'}">${def.icon.replace(/width="22"/g,'width="30"').replace(/height="22"/g,'height="30"')}</span>
-      <span style="font-family:'Bebas Neue',Impact,sans-serif;font-size:15px;letter-spacing:1px;line-height:1.1">${def.name}</span>
-      <span style="font-size:11px;color:${active?'var(--accent)':'var(--text-muted)'};line-height:1.4;padding:0 4px;text-transform:none;letter-spacing:0">${def.tooltip}</span>
-      <span style="font-size:12px;font-family:'Bebas Neue',Impact,sans-serif;color:${active?'var(--gold)':'var(--text-muted)'};margin-top:4px;letter-spacing:1px">${active?'DESACTIVAR':'★ '+def.cost+' PTS'}</span>
-    `;
-  });
-
-  list.querySelectorAll('.skill-toggle-btn').forEach(btn=>{
-    btn.addEventListener('click', async()=>{
-      const id=btn.dataset.id;
-      const def=SKILL_DEFS.find(d=>d.id===id);
-      if(!def) return;
-      btn.disabled=true;
-      playSound('select');
-      const freshSnap=await window._fbDb.collection('users').doc(user.uid).get();
-      const fd=freshSnap.exists?freshSnap.data():{};
-      let p=fd.scratchPoints||0;
-      let sk=fd.skills||{};
-      if(sk[id]){
-        // Desactivar — devolver puntos
-        delete sk[id];
-        p+=def.cost;
-      } else {
-        // Activar — gastar puntos
-        if(p<def.cost){ btn.disabled=false; return; }
-        sk[id]=true;
-        p-=def.cost;
-      }
-      await window._fbDb.collection('users').doc(user.uid).set({scratchPoints:p,skills:sk},{merge:true});
-      const pEl=document.getElementById('skillPointsDisplay');
-      if(pEl) pEl.textContent=p;
-      const statPts=document.getElementById('pstat-scratch-pts');
-      if(statPts) statPts.textContent=p;
-      renderSkillsTab();
+  // Agrupar por categoría
+  const categories = [...new Set(SKILL_DEFS.map(d=>d.category))];
+  categories.forEach(cat=>{
+    const catDefs = SKILL_DEFS.filter(d=>d.category===cat);
+    // Etiqueta de categoría
+    const label = document.createElement('div');
+    label.style.cssText='font-family:"Bebas Neue",Impact,sans-serif;font-size:11px;letter-spacing:2px;color:var(--text-muted);border-bottom:1px solid var(--line);padding-bottom:4px;margin:12px 0 8px';
+    label.textContent=cat;
+    list.appendChild(label);
+    // Grid de botones
+    const grid = document.createElement('div');
+    grid.style.cssText='display:grid;grid-template-columns:repeat(2,1fr);gap:8px';
+    list.appendChild(grid);
+    catDefs.forEach(def=>{
+      const active = !!skills[def.id];
+      const bigIcon = def.icon.replace(/width="22"/g,'width="30"').replace(/height="22"/g,'height="30"');
+      const btn = document.createElement('button');
+      btn.className='skill-toggle-btn';
+      btn.dataset.id=def.id;
+      btn.style.cssText=`display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:14px 8px;border:2px solid ${active?'var(--gold)':'var(--line)'};background:${active?'rgba(201,162,39,.15)':'var(--panel)'};color:${active?'var(--gold)':'var(--text)'};cursor:pointer;transition:.15s;text-align:center;position:relative;min-height:120px;width:100%`;
+      btn.innerHTML=`
+        ${active?'<span style="position:absolute;top:5px;right:7px;font-size:9px;color:var(--gold);font-family:Bebas Neue,Impact,sans-serif;letter-spacing:1px">✓</span>':''}
+        <span style="color:${active?'var(--gold)':'var(--accent)'}">${bigIcon}</span>
+        <span style="font-family:'Bebas Neue',Impact,sans-serif;font-size:13px;letter-spacing:1px;line-height:1.2">${def.name}</span>
+        <span style="font-size:10px;color:${active?'var(--accent)':'var(--text-muted)'};line-height:1.4;padding:0 2px">${def.tooltip}</span>
+        <span style="font-size:11px;font-family:'Bebas Neue',Impact,sans-serif;color:${active?'var(--gold)':'var(--text-muted)'};letter-spacing:1px">${active?'DESACTIVAR':'★ '+def.cost}</span>
+      `;
+      btn.addEventListener('click', async()=>{
+        btn.disabled=true;
+        playSound('select');
+        const fs2=await window._fbDb.collection('users').doc(user.uid).get();
+        const fd=fs2.exists?fs2.data():{};
+        let p=fd.scratchPoints||0;
+        let sk=fd.skills||{};
+        if(sk[def.id]){
+          delete sk[def.id]; p+=def.cost;
+        } else {
+          if(p<def.cost){ btn.disabled=false; return; }
+          sk[def.id]=true; p-=def.cost;
+        }
+        await window._fbDb.collection('users').doc(user.uid).set({scratchPoints:p,skills:sk},{merge:true});
+        const pEl=document.getElementById('skillPointsDisplay');
+        if(pEl) pEl.textContent=p;
+        const statPts=document.getElementById('pstat-scratch-pts');
+        if(statPts) statPts.textContent=p;
+        renderSkillsTab();
+      });
+      grid.appendChild(btn);
     });
   });
+
+  // Eliminar el viejo listener loop que ya no existe
 }
 
 /* showPatchNotes — llamado desde Ajustes */
