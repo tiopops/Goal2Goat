@@ -899,8 +899,8 @@ body.dark-theme .settings-item:hover{background:var(--row-hover);color:var(--gol
 .auth-tab{
   flex:1;background:none;border:none;color:var(--text-muted);
   font-family:'Bebas Neue',Impact,sans-serif;
-  font-size:14px;letter-spacing:1px;
-  padding:10px 6px;cursor:pointer;transition:.15s;
+  font-size:16px;letter-spacing:1px;
+  padding:12px 6px;cursor:pointer;transition:.15s;
   border-bottom:2px solid transparent;margin-bottom:-2px;
   white-space:nowrap;text-align:center;
 }
@@ -1368,3 +1368,21 @@ body.dark-theme .profile-settings-row .settings-item{border-bottom-color:#333}
 body.dark-theme .upgrade-bar{background:#333}
 body.dark-theme .upgrade-bar.filled{background:var(--accent)}
 body.dark-theme .upgrades-points-badge{background:rgba(201,162,39,.1)}
+
+/* ===== STATS SECTIONS ===== */
+.stats-section-label{
+  font-family:'Bebas Neue',Impact,sans-serif;
+  font-size:11px;letter-spacing:2px;
+  color:var(--text-muted);
+  border-bottom:1px solid var(--line);
+  padding-bottom:4px;
+  margin:14px 0 6px;
+}
+.stats-section-label:first-child{margin-top:4px}
+
+/* Círculo del jugador seleccionado en convocados */
+.slot-conv-selected{
+  border-color:var(--gold) !important;
+  box-shadow:0 0 0 3px rgba(201,162,39,.5), 0 0 12px rgba(201,162,39,.4) !important;
+  background:rgba(201,162,39,.12) !important;
+}

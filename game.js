@@ -1351,7 +1351,7 @@ function getFatigueBarHTML(p){
   return `<div class="fatigue-bar-wrap" title="Resistencia: ${f}%"><div class="fatigue-bar fatigue-${color}" style="width:${f}%"></div></div>`;
 }
 // Ordenación de convocados: 'arrival' | 'position' | 'rating'
-let convSortMode = 'arrival';
+let convSortMode = 'position';
 const CONV_SORT_LABELS = {arrival:'LLEGADA', position:'POSICIÓN', rating:'PUNTOS'};
 const CONV_SORT_NEXT = {arrival:'position', position:'rating', rating:'arrival'};
 window.toggleConvSort = function(){
@@ -1396,8 +1396,8 @@ function updateConvocadosTable(){
     const r=effRating(p);
     const streak=getStreakBadge(p.name);
     const fatigueBar=getFatigueBarHTML(p);
-    const sel=(swapSelection&&swapSelection.source==='conv'&&swapSelection.index===i)?' class="row-selected"':'';
     const realIdx=usedPlayers.indexOf(p);
+    const sel=(swapSelection&&swapSelection.source==='conv'&&swapSelection.index===realIdx)?' class="row-selected"':'';
     // Siempre clicable para seleccionar y ver posición en campo
     const clickable=` onclick="onConvocadoClick(${realIdx})" style="cursor:pointer"`;
     const realPos=(p.positions||[]).join('/');
@@ -1460,6 +1460,7 @@ function onConvocadoClick(i){
     const benchIdx=swapSelection.index;
     swapSelection=null;
     highlightPos([]);
+  getPitchSlots().forEach(s=>s.classList.remove('slot-conv-selected'));
     performSwap(benchIdx, i);
     return;
   }
@@ -1497,6 +1498,11 @@ function onConvocadoClick(i){
   // Seleccionar el jugador (siempre permitido para ver su posición)
   swapSelection={source:'conv',index:i};
   highlightPos((usedPlayers[i]||{}).positions||[]);
+  // Resaltar el círculo del jugador en el campo en amarillo
+  getPitchSlots().forEach(s=>{
+    if(s._player===usedPlayers[i]) s.classList.add('slot-conv-selected');
+    else s.classList.remove('slot-conv-selected');
+  });
   updateConvocadosTable();
   updateBenchTable();
 }
@@ -5685,13 +5691,12 @@ async function renderSkillsTab(){
       position:relative;min-height:110px;
     `;
     btn.innerHTML=`
-      ${active?'<span style="position:absolute;top:6px;right:8px;font-size:10px;color:var(--gold);font-family:Bebas Neue,Impact,sans-serif;letter-spacing:1px">ACTIVA</span>':''}
-      <span style="color:${active?'var(--gold)':'var(--accent)'}">${def.icon}</span>
-      <span style="font-family:'Bebas Neue',Impact,sans-serif;font-size:14px;letter-spacing:1px;line-height:1.1">${def.name}</span>
-      <span style="font-size:9px;color:var(--text-muted);letter-spacing:.5px;text-transform:uppercase;line-height:1.3">${def.desc}</span>
-      <span style="font-size:11px;color:${active?'var(--gold)':'var(--text-muted)'};margin-top:2px">${active?'Pulsa para desactivar':`★ ${def.cost} pts`}</span>
+      ${active?'<span style="position:absolute;top:6px;right:8px;font-size:10px;color:var(--gold);font-family:Bebas Neue,Impact,sans-serif;letter-spacing:1px">✓ ACTIVA</span>':''}
+      <span style="color:${active?'var(--gold)':'var(--accent)'}">${def.icon.replace(/width="22"/g,'width="30"').replace(/height="22"/g,'height="30"')}</span>
+      <span style="font-family:'Bebas Neue',Impact,sans-serif;font-size:15px;letter-spacing:1px;line-height:1.1">${def.name}</span>
+      <span style="font-size:11px;color:${active?'var(--accent)':'var(--text-muted)'};line-height:1.4;padding:0 4px;text-transform:none;letter-spacing:0">${def.tooltip}</span>
+      <span style="font-size:12px;font-family:'Bebas Neue',Impact,sans-serif;color:${active?'var(--gold)':'var(--text-muted)'};margin-top:4px;letter-spacing:1px">${active?'DESACTIVAR':'★ '+def.cost+' PTS'}</span>
     `;
-    grid.appendChild(btn);
   });
 
   list.querySelectorAll('.skill-toggle-btn').forEach(btn=>{

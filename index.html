@@ -70,7 +70,10 @@
 
       <!-- ESTADÍSTICAS TAB -->
       <div id="profileStatsPane" class="profile-tab-pane profile-tab-pane-active">
-        <div class="profile-stats-grid">
+
+        <!-- Sección: Resultados -->
+        <div class="stats-section-label">RESULTADOS</div>
+        <div class="profile-stats-grid" style="grid-template-columns:repeat(3,1fr)">
           <div class="profile-stat-card">
             <div class="pstat-val" id="pstat-games">—</div>
             <div class="pstat-label">PARTIDAS</div>
@@ -79,35 +82,46 @@
             <div class="pstat-val" id="pstat-wins">—</div>
             <div class="pstat-label">VICTORIAS</div>
           </div>
-          <div class="profile-stat-card">
-            <div class="pstat-val" id="pstat-draws">—</div>
-            <div class="pstat-label">EMPATES</div>
-          </div>
           <div class="profile-stat-card losses">
             <div class="pstat-val" id="pstat-losses">—</div>
             <div class="pstat-label">DERROTAS</div>
           </div>
+        </div>
+
+        <!-- Sección: Goles -->
+        <div class="stats-section-label">GOLES</div>
+        <div class="profile-stats-grid" style="grid-template-columns:repeat(3,1fr)">
+          <div class="profile-stat-card">
+            <div class="pstat-val" id="pstat-draws">—</div>
+            <div class="pstat-label">EMPATES</div>
+          </div>
           <div class="profile-stat-card">
             <div class="pstat-val" id="pstat-gf">—</div>
-            <div class="pstat-label">GOLES A FAVOR</div>
+            <div class="pstat-label">A FAVOR</div>
           </div>
           <div class="profile-stat-card">
             <div class="pstat-val" id="pstat-ga">—</div>
-            <div class="pstat-label">GOLES EN CONTRA</div>
+            <div class="pstat-label">EN CONTRA</div>
           </div>
+        </div>
+
+        <!-- Sección: Logros -->
+        <div class="stats-section-label">LOGROS</div>
+        <div class="profile-stats-grid" style="grid-template-columns:repeat(3,1fr)">
           <div class="profile-stat-card best">
             <div class="pstat-val" id="pstat-best">—</div>
-            <div class="pstat-label">MEJOR PUNTUACIÓN</div>
+            <div class="pstat-label">MEJOR PUNT.</div>
           </div>
           <div class="profile-stat-card titles">
             <div class="pstat-val">🏆 <span id="pstat-titles">—</span></div>
             <div class="pstat-label">TÍTULOS</div>
           </div>
           <div class="profile-stat-card" style="border-color:var(--gold)">
-            <div class="pstat-val" style="color:var(--gold)">🎟️ <span id="pstat-scratch-pts">—</span></div>
-            <div class="pstat-label">GOAT POINTS</div>
+            <div class="pstat-val" style="color:var(--gold)">🐐 <span id="pstat-scratch-pts">—</span></div>
+            <div class="pstat-label">GOAT PTS</div>
           </div>
         </div>
+
       </div>
 
       <!-- USUARIO TAB -->
