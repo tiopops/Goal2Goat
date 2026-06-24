@@ -3203,6 +3203,14 @@ function showMatchModal(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,
 
 /* ---------- PROGRESSIVE GROUP RESULTS POPUP ---------- */
 function showGroupResultsPopup(){
+  // Logros de fase de grupos
+  const meRow=groupTable.find(r=>r.isMe);
+  if(meRow){
+    if(meRow.lost===0) unlockAchievement('groups_unbeaten');
+    if(meRow.ga===0) unlockAchievement('groups_no_concede');
+    if(meRow.won===3) unlockAchievement('win_all_groups');
+    unlockAchievement('first_groups');
+  }
   const sorted=sortedGroupTable();
   const meIdx=sorted.findIndex(r=>r.isMe);
   const qualified=meIdx<2;
@@ -4623,9 +4631,16 @@ function initFirebaseAuth(){
   window.saveMatchStat=async function(won, draw, goalsFor, goalsAgainst){
     // Logros por partido
     unlockAchievement('first_match');
-    if(goalsFor>=3) unlockAchievement('hattrick');
-    if(goalsFor>=5) unlockAchievement('5goals');
+    if(won) unlockAchievement('first_win');
+    if(goalsFor>=5) unlockAchievement('score_5');
+    if(goalsFor>=7) unlockAchievement('score_7');
     if(goalsAgainst===0&&won) unlockAchievement('clean_sheet');
+    // Hat-trick: detectar si algún scorer marcó 3+ (usando lastMatchScorers)
+    if(typeof generateMatchSummary._scorers!=='undefined'){
+      const scorerCounts={};
+      (generateMatchSummary._scorers||[]).forEach(n=>{ scorerCounts[n]=(scorerCounts[n]||0)+1; });
+      if(Object.values(scorerCounts).some(c=>c>=3)) unlockAchievement('hattrick_player');
+    }
     const user=auth.currentUser; if(!user) return;
     try{
       const inc=firebase.firestore.FieldValue.increment;
@@ -4907,6 +4922,10 @@ document.addEventListener('click', e=>{
 })();
 
 /* ── Notificación de GOAT Points ganados ── */
+function checkPointsAchievements(pts){
+  if(pts>=50) unlockAchievement('50_goat_pts');
+  if(pts>=100) unlockAchievement('100_pts');
+}
 function showGoatPointsBadge(){
   const pb=$id('profileGoatBadge');
   const ub=$id('upgradesBadge');
@@ -5696,6 +5715,7 @@ async function renderUpgradesTab(){
         scratchPoints: pts, upgrades: upgs,
         scratchPointsSpent: freshData.scratchPointsSpent || 0
       }, {merge: true});
+      unlockAchievement('upgrade_once');
       await refreshUpgradeCache(); // actualizar valores efectivos en juego
 
       const pEl = document.getElementById('upgradePointsDisplay');
@@ -5869,7 +5889,9 @@ async function renderSkillsTab(){
         if(pEl) pEl.textContent=p;
         const statPts=document.getElementById('pstat-scratch-pts');
         if(statPts) statPts.textContent=p;
-        // Logro 5 habilidades
+        // Logros de habilidades
+        unlockAchievement('use_skill');
+        if(Object.keys(sk).length>=3) unlockAchievement('use_3_skills');
         if(Object.keys(sk).length>=5) unlockAchievement('5_skills');
         renderSkillsTab();
       });
@@ -5893,37 +5915,58 @@ window.showPatchNotes=function(){
    ============================================================ */
 
 const ACHIEVEMENT_DEFS = [
-  // BÁSICOS — 1 GOAT Point
-  {id:'first_match',   tier:'básico',  pts:1,  icon:'⚽', name:'Primer paso',        desc:'Completa tu primer partido'},
-  {id:'hattrick',      tier:'básico',  pts:1,  icon:'🎩', name:'Hat-trick',           desc:'Consigue 3 goles en un mismo partido'},
-  {id:'clean_sheet',   tier:'básico',  pts:1,  icon:'🧤', name:'Portería a cero',     desc:'Gana un partido sin encajar ningún gol'},
-  {id:'no_subs_win',   tier:'básico',  pts:1,  icon:'🪑', name:'Sin cambios',         desc:'Gana un partido sin usar ningún cambio'},
-  {id:'first_ticket',  tier:'básico',  pts:1,  icon:'🎟️', name:'Primer rasca',        desc:'Gana puntos en tu primer ticket'},
+  // BÁSICOS — 1 PT
+  {id:'first_match',      tier:'básico',  pts:1,  icon:'⚽', name:'PRIMER PASO',         desc:'Completa tu primer partido'},
+  {id:'first_win',        tier:'básico',  pts:1,  icon:'🏅', name:'PRIMERA VICTORIA',     desc:'Gana tu primer partido'},
+  {id:'first_ticket',     tier:'básico',  pts:1,  icon:'🎟️', name:'PRIMER RASCA',         desc:'Gana puntos en tu primer ticket'},
+  {id:'clean_sheet',      tier:'básico',  pts:1,  icon:'🧤', name:'PORTERÍA A CERO',      desc:'Gana un partido sin encajar ningún gol'},
+  {id:'no_subs_win',      tier:'básico',  pts:1,  icon:'🪑', name:'SIN CAMBIOS',          desc:'Gana un partido sin usar ningún cambio'},
+  {id:'first_groups',     tier:'básico',  pts:1,  icon:'📋', name:'FASE SUPERADA',        desc:'Clasifícate para octavos de final'},
+  {id:'score_5',          tier:'básico',  pts:1,  icon:'🔥', name:'GOLEADA',              desc:'Marca 5 goles o más en un partido'},
+  {id:'win_comeback',     tier:'básico',  pts:1,  icon:'📈', name:'LA VUELTA',            desc:'Gana un partido después de ir perdiendo'},
+  {id:'use_skill',        tier:'básico',  pts:1,  icon:'⚡', name:'PRIMER PODER',         desc:'Activa tu primera habilidad'},
+  {id:'full_bench',       tier:'básico',  pts:1,  icon:'👥', name:'BANQUILLO COMPLETO',   desc:'Llega a un partido con el banquillo lleno'},
+  {id:'hattrick_player',  tier:'básico',  pts:1,  icon:'🎩', name:'HAT-TRICK',            desc:'Un mismo jugador marca 3 goles en un partido'},
+  {id:'win_no_concede2',  tier:'básico',  pts:1,  icon:'🧱', name:'MURO',                 desc:'Encaja 0 goles en 2 partidos consecutivos'},
+  {id:'all_stars',        tier:'básico',  pts:1,  icon:'⭐', name:'EL ELEGIDO',           desc:'Coloca los 11 titulares en su posición natural ★'},
+  {id:'first_pen_win',    tier:'básico',  pts:1,  icon:'🥊', name:'NERVIOS DE ACERO',     desc:'Gana una tanda de penaltis'},
+  {id:'upgrade_once',     tier:'básico',  pts:1,  icon:'🔧', name:'PRIMERA MEJORA',       desc:'Sube por primera vez cualquier mejora'},
 
-  // INTERMEDIOS — 2 GOAT Points
-  {id:'5goals',        tier:'intermedio', pts:2, icon:'🔥', name:'Goleador',           desc:'Marca 5 goles en un solo partido'},
-  {id:'groups_no_concede', tier:'intermedio', pts:2, icon:'🛡️', name:'Muralla',        desc:'No encajes ningún gol en toda la fase de grupos'},
-  {id:'groups_unbeaten',   tier:'intermedio', pts:2, icon:'💪', name:'Invicto',         desc:'Pasa la fase de grupos sin perder ni un partido'},
-  {id:'comeback',      tier:'intermedio', pts:2, icon:'📈', name:'Remontada épica',    desc:'Gana un partido después de ir perdiendo de 2 goles'},
-  {id:'perfect_tactic',tier:'intermedio', pts:2, icon:'🧠', name:'Táctica maestra',   desc:'Usa la contra-estrategia perfecta y gana el partido'},
-  {id:'no_injuries',   tier:'intermedio', pts:2, icon:'🏥', name:'Hierro forjado',     desc:'Llega a semifinales sin ningún jugador lesionado'},
-  {id:'all_stars',     tier:'intermedio', pts:2, icon:'⭐', name:'El elegido',         desc:'Coloca los 11 titulares en su posición natural ★'},
+  // INTERMEDIOS — 2 PTS
+  {id:'groups_unbeaten',  tier:'intermedio', pts:2, icon:'💪', name:'INVICTO EN GRUPOS',  desc:'Pasa la fase de grupos sin perder ningún partido'},
+  {id:'groups_no_concede',tier:'intermedio', pts:2, icon:'🛡️', name:'MURALLA EN GRUPOS',  desc:'No encajes ningún gol en toda la fase de grupos'},
+  {id:'quarters',         tier:'intermedio', pts:2, icon:'🏆', name:'CUARTOS',             desc:'Clasifícate para cuartos de final'},
+  {id:'semis',            tier:'intermedio', pts:2, icon:'🥈', name:'SEMIFINAL',           desc:'Llega a semifinales'},
+  {id:'comeback_2',       tier:'intermedio', pts:2, icon:'🚀', name:'REMONTADA ÉPICA',    desc:'Gana un partido después de ir perdiendo de 2 goles'},
+  {id:'perfect_tactic',   tier:'intermedio', pts:2, icon:'🧠', name:'TÁCTICA MAESTRA',    desc:'Usa la contra-estrategia perfecta y gana el partido'},
+  {id:'no_injuries_semis',tier:'intermedio', pts:2, icon:'🏥', name:'HIERRO FORJADO',     desc:'Llega a semifinales sin ningún jugador lesionado'},
+  {id:'score_7',          tier:'intermedio', pts:2, icon:'💥', name:'DEMOLEDOR',           desc:'Marca 7 goles o más en un partido'},
+  {id:'5_nineties',       tier:'intermedio', pts:2, icon:'👑', name:'EQUIPO DE LEYENDA',  desc:'Forma un equipo con 5 jugadores de rating 90 o superior'},
+  {id:'two_pen_wins',     tier:'intermedio', pts:2, icon:'🎯', name:'REY DE PENALTIS',    desc:'Gana dos tandas de penaltis en el mismo torneo'},
+  {id:'use_3_skills',     tier:'intermedio', pts:2, icon:'⚗️', name:'ALQUIMISTA',          desc:'Activa simultáneamente 3 habilidades distintas'},
+  {id:'win_5_row',        tier:'intermedio', pts:2, icon:'🔥', name:'RACHA GANADORA',     desc:'Gana 5 partidos consecutivos'},
+  {id:'50_goat_pts',      tier:'intermedio', pts:2, icon:'💰', name:'AHORRADOR',           desc:'Acumula 50 GOAT Points sin gastar ninguno'},
+  {id:'score_10_group',   tier:'intermedio', pts:2, icon:'⚽', name:'MÁQUINA GOLEADORA',  desc:'Marca 10 goles o más en toda la fase de grupos'},
+  {id:'win_all_groups',   tier:'intermedio', pts:2, icon:'✅', name:'PLENO EN GRUPOS',    desc:'Gana los 3 partidos de la fase de grupos'},
 
-  // DIFÍCILES — 3 GOAT Points
-  {id:'two_pen_wins',  tier:'difícil', pts:3, icon:'🥊', name:'Rey de penaltis',      desc:'Gana dos eliminatorias seguidas en la tanda de penaltis'},
-  {id:'champion_unbeaten', tier:'difícil', pts:3, icon:'🏆', name:'Campeón invicto',  desc:'Gana el Mundial sin perder ningún partido'},
-  {id:'all_wins',      tier:'difícil', pts:3, icon:'7️⃣', name:'Siete de siete',       desc:'Gana los 7 partidos del torneo sin empatar'},
-  {id:'100_pts',       tier:'difícil', pts:3, icon:'💰', name:'GOAT económico',       desc:'Acumula 100 GOAT Points sin gastar ninguno'},
-  {id:'5_nineties',    tier:'difícil', pts:3, icon:'👑', name:'Equipo de leyenda',    desc:'Forma un equipo con 5 jugadores de rating 90 o superior'},
-  {id:'concede_1',     tier:'difícil', pts:3, icon:'🧱', name:'El muro',              desc:'Encaja solo 1 gol o menos en todo el torneo'},
-  {id:'5_skills',      tier:'difícil', pts:3, icon:'⚡', name:'Arsenal completo',     desc:'Activa simultáneamente 5 habilidades'},
+  // DIFÍCILES — 3 PTS
+  {id:'champion',         tier:'difícil', pts:3, icon:'🏆', name:'CAMPEÓN',              desc:'Gana el Mundial'},
+  {id:'champion_unbeaten',tier:'difícil', pts:3, icon:'🌟', name:'CAMPEÓN INVICTO',      desc:'Gana el Mundial sin perder ningún partido'},
+  {id:'all_wins',         tier:'difícil', pts:3, icon:'7️⃣', name:'SIETE DE SIETE',       desc:'Gana los 7 partidos del torneo sin empatar'},
+  {id:'100_pts',          tier:'difícil', pts:3, icon:'💎', name:'GOAT ECONÓMICO',       desc:'Acumula 100 GOAT Points sin gastar ninguno'},
+  {id:'concede_1',        tier:'difícil', pts:3, icon:'🧱', name:'EL MURO',              desc:'Encaja solo 1 gol o menos en todo el torneo'},
+  {id:'5_skills',         tier:'difícil', pts:3, icon:'⚡', name:'ARSENAL COMPLETO',     desc:'Activa simultáneamente 5 habilidades'},
+  {id:'hattrick_final',   tier:'difícil', pts:3, icon:'🎩', name:'HAT-TRICK EN FINAL',   desc:'Un jugador marca 3 goles en la final del Mundial'},
+  {id:'10_clean_sheets',  tier:'difícil', pts:3, icon:'🧤', name:'MURALLA ABSOLUTA',     desc:'Consigue 10 porterías a cero a lo largo de tus partidas'},
+  {id:'pen_win_final',    tier:'difícil', pts:3, icon:'🥊', name:'FINAL EN PENALTIS',    desc:'Gana la final del Mundial en la tanda de penaltis'},
+  {id:'all_achievements_basic', tier:'difícil', pts:3, icon:'📜', name:'COLECCIONISTA', desc:'Desbloquea todos los logros básicos'},
 
-  // MÍTICO — 25 GOAT Points
-  {id:'triple_crown',  tier:'mítico',  pts:25, icon:'🐐', name:'GOAT absoluto',       desc:'Gana el Mundial 3 veces'},
+  // MÍTICO — 25 PTS
+  {id:'triple_crown',     tier:'mítico',  pts:25, icon:'🐐', name:'GOAT ABSOLUTO',      desc:'Gana el Mundial 3 veces'},
 ];
 
 const TIER_COLOR = {básico:'#aaa', intermedio:'#2ecc71', difícil:'#e67e22', mítico:'#f0c419'};
-const TIER_LABEL = {básico:'★ 1 pt', intermedio:'★★ 2 pts', difícil:'★★★ 3 pts', mítico:'🐐 25 pts'};
+const TIER_LABEL = {básico:'★ 1 PT', intermedio:'★ 2 PTS', difícil:'★ 3 PTS', mítico:'★ 25 PTS'};
 
 // Cache de logros
 window._achievementsCache = new Set();
@@ -5985,6 +6028,10 @@ function showAchievementToast(def){
   setTimeout(()=>{ toast.style.transition='opacity .5s'; toast.style.opacity='0'; setTimeout(()=>toast.remove(),500); },4000);
 }
 
+async function checkAllBasicAchievements(unlocked){
+  const basics=ACHIEVEMENT_DEFS.filter(a=>a.tier==='básico').map(a=>a.id);
+  if(basics.every(id=>unlocked.has(id))) unlockAchievement('all_achievements_basic');
+}
 async function renderAchievementsTab(){
   const list=document.getElementById('achievementsList');
   if(!list) return;
