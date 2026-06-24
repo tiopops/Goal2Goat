@@ -1284,14 +1284,14 @@ function applyMatchFatigue(){
 
     // Goalkeepers barely tire — minimal running involved in a real match.
     if(p.placedPos==='POR'){
-      p.fatigue=Math.max(0, Math.round((p.fatigue===undefined?100:p.fatigue)-(4+Math.random()*5)));
+      p.fatigue=Math.max(0, Math.round((p.fatigue===undefined?100:p.fatigue)-(2+Math.random()*4)));
       return;
     }
 
     // Base fatigue loss: 12-20 points per match — enough to feel it after 2-3 games.
     // RECUPERACIÓN upgrade reduces this loss.
     const recoveryBonus = getRecoveryBonus(); // 0-10% reduction per level
-    let loss=(12+Math.random()*8)*(1-recoveryBonus);
+    let loss=(8+Math.random()*6)*(1-recoveryBonus);
 
     // Central defenders cover the least ground — lightest loss.
     if(p.placedPos==='DFC'){
@@ -1368,7 +1368,10 @@ function updateConvocadosTable(){
     const fatigueBar=getFatigueBarHTML(p);
     const sel=(swapSelection&&swapSelection.source==='conv'&&swapSelection.index===i)?' class="row-selected"':'';
     const clickable=canSwap?` onclick="onConvocadoClick(${i})" style="cursor:pointer"`:'';
-    rows+=`<tr${sel}${clickable}><td>${i+1}</td><td>${p.name}${cross}${cardBadge}${streak}</td><td>${fatigueBar}</td><td>${p.placedPos||'?'} ${star}</td><td>${r}</td></tr>`;
+    const realPos=(p.positions||[]).join('/');
+    const posLabel=p.placedPos||'?';
+    const realLabel=(realPos&&realPos!==posLabel)?`<br><span style="font-size:9px;color:var(--text-muted)">${realPos}</span>`:'';
+    rows+=`<tr${sel}${clickable}><td>${i+1}</td><td>${p.name}${cross}${cardBadge}${streak}</td><td>${fatigueBar}</td><td><span style="font-weight:700">${posLabel}</span>${star}${realLabel}</td><td>${r}</td></tr>`;
   });
   el.innerHTML=rows?`<table><thead><tr><th>#</th><th>Jugador</th><th title="Resistencia">Resistencia</th><th>Pos</th><th>★</th></tr></thead><tbody>${rows}</tbody></table>`:"";
   // Update star bonus display
@@ -2284,9 +2287,9 @@ ${goalsHTML}`;
 function rollInjuries(myPower,oppPower){
   const fb=currentFormationBonus||{};
   const extreme=Math.abs((fb.attack||0)-(fb.defense||0));
-  let risk=0.02;
-  if(extreme>=16) risk=0.032;
-  if((fb.defense||0)<(fb.attack||0)&&oppPower>myPower) risk+=0.008;
+  let risk=0.06;
+  if(extreme>=16) risk=0.08;
+  if((fb.defense||0)<(fb.attack||0)&&oppPower>myPower) risk+=0.015;
   const injured=[];
   usedPlayers.forEach(p=>{
     if(injured.length>=1||p.injury) return;
@@ -2412,7 +2415,7 @@ function rollOppEvents(oppPower, myPower){
   const allPool=opp.players;
 
   // Lesiones del rival — probabilidad similar a la del jugador
-  const injRisk=0.025;
+  const injRisk=0.06;
   const oppInjuries=[];
   const injPlayer=allPool[Math.floor(Math.random()*allPool.length)];
   if(injPlayer && Math.random()<injRisk){
@@ -2794,7 +2797,7 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
           addEvt(shot.scored?'✅':'❌',`<strong>${shot.name}</strong>`,label(round),'pen_me');
         } else {
           if(shot.scored) penOpp++;
-          addEvt(shot.scored?'✅':'❌',`<strong>${shot.name}</strong> <span style="font-size:10px;color:var(--red)">${oppName}</span>`,label(round),'pen');
+          addEvt(shot.scored?'✅':'❌',`<strong>${shot.name}</strong>`,label(round),'pen_opp');
         }
         updatePenScore();
         if(shot.scored) playSound('goal');
@@ -4957,21 +4960,20 @@ window.closeTicketOverlay = function() {
 /* ── Construir el boleto dentro del mount point ── */
 function buildTicketInMount(mount, ticketCount, lastRegen, currentScratchPts){
   const GRID_SIZE=9;
-  // Composición fija: 2 X rojas, 1 cabra (5pts), 6 monedas (1pt cada una)
+  // Composición: 1 X roja, 1 cabra (+4pts), 7 monedas (+1pt cada una)
   const indices=Array.from({length:GRID_SIZE},(_,i)=>i);
-  // Barajar Fisher-Yates
   for(let i=indices.length-1;i>0;i--){
     const j=Math.floor(Math.random()*(i+1));
     [indices[i],indices[j]]=[indices[j],indices[i]];
   }
-  const bombSet=new Set([indices[0],indices[1]]);
-  const starIdx=indices[2];
+  const bombIdx=indices[0];  // 1 sola X roja
+  const starIdx=indices[1];  // 1 sola cabra
 
   const cellsData=[];
   for(let i=0;i<GRID_SIZE;i++){
-    if(bombSet.has(i))       cellsData.push({type:'bomb', value:0});
-    else if(i===starIdx)     cellsData.push({type:'star', value:4});
-    else                     cellsData.push({type:'coin', value:1});
+    if(i===bombIdx)       cellsData.push({type:'bomb', value:0});
+    else if(i===starIdx)  cellsData.push({type:'star', value:4});
+    else                  cellsData.push({type:'coin', value:1});
   }
 
   let scratchedCount=0, totalPoints=0, gameOver=false;
@@ -5162,7 +5164,7 @@ function buildTicketInMount(mount, ticketCount, lastRegen, currentScratchPts){
     scratchedCount++;
     if(data.type==='bomb'){
       if(dot){ dot.style.background='#d94f3d'; dot.style.boxShadow='0 0 6px rgba(217,79,61,.7)'; }
-      playSound('scratch_bomb');
+      // Sin sonido para la bomba — el silencio es más impactante
       handleTicketBomb();
     } else if(data.type==='star'){
       totalPoints+=data.value;
