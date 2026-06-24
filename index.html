@@ -128,7 +128,7 @@
           <span>Usar siempre como nombre de equipo</span>
         </label>
         <p class="profile-field-hint">Si lo activas, no se te preguntará el nombre del equipo al formarlo — se usará este automáticamente.</p>
-        <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center">
+        <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;align-items:center">
           <button onclick="window.showPatchNotes()" style="background:none;border:none;cursor:pointer;font-family:'Bebas Neue',Impact,sans-serif;font-size:13px;letter-spacing:1px;color:var(--gold);padding:0;text-decoration:underline">NOTAS v0.351</button>
         </div>
         <button class="auth-submit-btn" style="background:#c0392b;margin-top:14px" id="profileLogoutBtn">CERRAR SESIÓN</button>
@@ -289,8 +289,9 @@
     <div class="box" id="convocadosBox">
       <h3 style="display:flex;align-items:center;justify-content:space-between">
         <span>CONVOCADOS <span id="draftCounter" class="counter-badge">0/11</span></span>
-        <button id="convSortBtn" onclick="window.toggleConvSort()" title="Ordenar jugadores" style="background:none;border:none;cursor:pointer;padding:4px;color:var(--text-muted);display:none;flex-shrink:0" aria-label="Cambiar orden">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <button id="convSortBtn" onclick="window.toggleConvSort()" title="Cambiar orden" style="background:none;border:none;cursor:pointer;padding:4px;color:var(--text-muted);display:none;flex-shrink:0;display:flex;align-items:center;gap:4px" aria-label="Cambiar orden">
+          <span id="convSortLabel" style="font-family:'Bebas Neue',Impact,sans-serif;font-size:11px;letter-spacing:1px;color:var(--text-muted)">LLEGADA</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--text-muted);flex-shrink:0">
             <path d="M3 6h18M7 12h10M11 18h2"/>
           </svg>
         </button>

@@ -1350,15 +1350,14 @@ function getFatigueBarHTML(p){
   const color=getFatigueColor(p);
   return `<div class="fatigue-bar-wrap" title="Resistencia: ${f}%"><div class="fatigue-bar fatigue-${color}" style="width:${f}%"></div></div>`;
 }
-// Ordenación de convocados: 'arrival' = orden de llegada, 'position' = por posición ocupada
+// Ordenación de convocados: 'arrival' | 'position' | 'rating'
 let convSortMode = 'arrival';
+const CONV_SORT_LABELS = {arrival:'LLEGADA', position:'POSICIÓN', rating:'PUNTOS'};
+const CONV_SORT_NEXT = {arrival:'position', position:'rating', rating:'arrival'};
 window.toggleConvSort = function(){
-  convSortMode = convSortMode === 'arrival' ? 'position' : 'arrival';
-  const btn = document.getElementById('convSortBtn');
-  if(btn){
-    btn.style.color = convSortMode === 'position' ? 'var(--accent)' : 'var(--text-muted)';
-    btn.title = convSortMode === 'position' ? 'Orden por posición (pulsa para orden de llegada)' : 'Orden de llegada (pulsa para ordenar por posición)';
-  }
+  convSortMode = CONV_SORT_NEXT[convSortMode];
+  const lbl = document.getElementById('convSortLabel');
+  if(lbl) lbl.textContent = CONV_SORT_LABELS[convSortMode];
   updateConvocadosTable();
 };
 
@@ -1380,6 +1379,8 @@ function updateConvocadosTable(){
       const bi = posOrder.indexOf(b.placedPos||'');
       return (ai===-1?99:ai) - (bi===-1?99:bi);
     });
+  } else if(convSortMode === 'rating'){
+    displayPlayers = [...usedPlayers].sort((a,b)=> effRating(b) - effRating(a));
   } else {
     displayPlayers = usedPlayers; // orden de llegada = orden del array
   }
@@ -1397,7 +1398,8 @@ function updateConvocadosTable(){
     const fatigueBar=getFatigueBarHTML(p);
     const sel=(swapSelection&&swapSelection.source==='conv'&&swapSelection.index===i)?' class="row-selected"':'';
     const realIdx=usedPlayers.indexOf(p);
-    const clickable=canSwap?` onclick="onConvocadoClick(${realIdx})" style="cursor:pointer"`:'';
+    // Siempre clicable para seleccionar y ver posición en campo
+    const clickable=` onclick="onConvocadoClick(${realIdx})" style="cursor:pointer"`;
     const realPos=(p.positions||[]).join('/');
     const posLabel=p.placedPos||'?';
     const realLabel=(realPos&&realPos!==posLabel)?`<br><span style="font-size:9px;color:var(--text-muted)">${realPos}</span>`:'';
@@ -1450,34 +1452,51 @@ function updateBenchTable(){
 
 /* ========= PRE-MATCH SWAPS (convocados <-> bench) ========= */
 function onConvocadoClick(i){
-  if(phase!=='ready'||swapsUsedThisMatch>=getMaxSubs()) return;
+  if(phase!=='ready') return;
+
+  // Si hay un jugador del banquillo seleccionado y quedan cambios, hacer swap
   if(swapSelection&&swapSelection.source==='bench'){
-    // bench → conv swap
+    if(swapsUsedThisMatch>=getMaxSubs()) return;
     const benchIdx=swapSelection.index;
     swapSelection=null;
     highlightPos([]);
     performSwap(benchIdx, i);
     return;
   }
+
+  // Si hay un convocado ya seleccionado
   if(swapSelection&&swapSelection.source==='conv'){
     if(swapSelection.index===i){
-      // Deselect
+      // Deseleccionar
       swapSelection=null;
-      highlightPos([]); // limpiar highlight
-    } else {
-      // conv → conv: swap two titulars' pitch positions
+      highlightPos([]);
+      updateConvocadosTable();
+      updateBenchTable();
+      return;
+    }
+    // Intercambiar posición EN LA LISTA (no solo en el campo)
+    if(swapsUsedThisMatch<getMaxSubs()){
       const idxA=swapSelection.index, idxB=i;
       swapSelection=null;
       highlightPos([]);
+      // Intercambiar en el array usedPlayers (posición en la lista)
+      [usedPlayers[idxA], usedPlayers[idxB]] = [usedPlayers[idxB], usedPlayers[idxA]];
+      // Y también intercambiar sus posiciones en el campo
       performConvConvSwap(idxA, idxB);
       return;
+    } else {
+      // Sin cambios disponibles — cambiar selección al nuevo jugador
+      swapSelection={source:'conv',index:i};
+      highlightPos((usedPlayers[i]||{}).positions||[]);
+      updateConvocadosTable();
+      updateBenchTable();
+      return;
     }
-  } else {
-    swapSelection={source:'conv',index:i};
-    // Resaltar la posición del jugador en el campo
-    const p=usedPlayers[i];
-    if(p) highlightPos(p.positions||[]);
   }
+
+  // Seleccionar el jugador (siempre permitido para ver su posición)
+  swapSelection={source:'conv',index:i};
+  highlightPos((usedPlayers[i]||{}).positions||[]);
   updateConvocadosTable();
   updateBenchTable();
 }
@@ -5602,7 +5621,7 @@ const SKILL_DEFS = [
     id: 'estratega',
     name: 'ESTRATEGA',
     desc: 'ANÁLISIS TÁCTICO AVANZADO',
-    cost: 25,
+    cost: 50,
     icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 3"/><path d="M9.5 3.5C6 5 3.5 8.2 3.5 12"/></svg>',
     tooltip: 'Resalta la mejor contra-estrategia para cada rival antes del partido.',
     effect: 'Se muestra la contra-estrategia óptima en la selección de táctica.'
@@ -5646,30 +5665,33 @@ async function renderSkillsTab(){
   if(pointsEl) pointsEl.textContent=pts;
   list.innerHTML='';
 
+  // Layout: grid de botones cuadrados
+  const grid = document.createElement('div');
+  grid.style.cssText='display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:8px';
+  list.appendChild(grid);
+
   SKILL_DEFS.forEach(def=>{
     const active = !!skills[def.id];
-    const row = document.createElement('div');
-    row.className='upgrade-row';
-    row.style.cssText='padding:14px 0;border-bottom:1px solid var(--line)';
-    row.innerHTML=`
-      <div class="upgrade-row-top" style="margin-bottom:10px">
-        <div class="upgrade-icon" style="color:${active?'var(--gold)':'var(--accent)'};${active?'border-color:var(--gold);background:rgba(201,162,39,.1)':''}">${def.icon}</div>
-        <div class="upgrade-label-block">
-          <div class="upgrade-name" style="${active?'color:var(--gold)':''}"> ${def.name}</div>
-          <div class="upgrade-desc">${def.desc}</div>
-        </div>
-        <div style="flex-shrink:0">
-          <button class="skill-toggle-btn" data-id="${def.id}" data-active="${active}" style="
-            border:1px solid ${active?'var(--gold)':'var(--line)'};
-            background:${active?'var(--gold)':'var(--panel)'};
-            color:${active?'#000':'var(--text-muted)'};
-            font-family:'Bebas Neue',Impact,sans-serif;font-size:12px;letter-spacing:1px;
-            padding:6px 12px;cursor:pointer;white-space:nowrap;transition:.15s
-          ">${active?'ACTIVA ✓':`★ ${def.cost}`}</button>
-        </div>
-      </div>
-      <div style="font-size:11px;color:${active?'var(--accent)':'var(--text-muted)'};line-height:1.4;padding-left:52px">${active?def.effect:def.tooltip}</div>`;
-    list.appendChild(row);
+    const canAfford = pts >= def.cost;
+    const btn = document.createElement('button');
+    btn.className='skill-toggle-btn';
+    btn.dataset.id=def.id;
+    btn.style.cssText=`
+      display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;
+      padding:16px 10px;border:2px solid ${active?'var(--gold)':'var(--line)'};
+      background:${active?'rgba(201,162,39,.15)':'var(--panel)'};
+      color:${active?'var(--gold)':'var(--text)'};
+      cursor:pointer;transition:.15s;text-align:center;
+      position:relative;min-height:110px;
+    `;
+    btn.innerHTML=`
+      ${active?'<span style="position:absolute;top:6px;right:8px;font-size:10px;color:var(--gold);font-family:Bebas Neue,Impact,sans-serif;letter-spacing:1px">ACTIVA</span>':''}
+      <span style="color:${active?'var(--gold)':'var(--accent)'}">${def.icon}</span>
+      <span style="font-family:'Bebas Neue',Impact,sans-serif;font-size:14px;letter-spacing:1px;line-height:1.1">${def.name}</span>
+      <span style="font-size:9px;color:var(--text-muted);letter-spacing:.5px;text-transform:uppercase;line-height:1.3">${def.desc}</span>
+      <span style="font-size:11px;color:${active?'var(--gold)':'var(--text-muted)'};margin-top:2px">${active?'Pulsa para desactivar':`★ ${def.cost} pts`}</span>
+    `;
+    grid.appendChild(btn);
   });
 
   list.querySelectorAll('.skill-toggle-btn').forEach(btn=>{
