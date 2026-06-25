@@ -1774,3 +1774,232 @@ body.light-theme .slot-reel{background:#fff;border-color:#b8860b}
 body.light-theme #langEsBtn,body.light-theme #langEnBtn{
   background:#fff;border-color:#d4cec4;color:#333;
 }
+
+/* =============================================
+   TEMA CLARO — fixes adicionales completos
+   ============================================= */
+
+/* Fondo entre paneles */
+body.light-theme{background:#f2ede4 !important}
+
+/* NOTA MEDIA bar */
+body.light-theme .ovr-team{
+  background:#1a7a3c !important;
+  color:#fff !important;
+}
+body.light-theme .team-stat-title{color:#fff}
+body.light-theme #teamOVR{color:#fff}
+
+/* Stats del equipo */
+body.light-theme .stat-row{color:#1a1a1a;border-color:#e8e2d8}
+body.light-theme .stat-row .stat-label{color:#555}
+body.light-theme .stat-bar-bg,
+body.light-theme .profile-bar-bg{background:#d4cec4}
+
+/* Estrategia — botones */
+body.light-theme .strategy-btn{
+  background:#ffffff !important;
+  color:#1a1a1a !important;
+  border:1px solid #d4cec4 !important;
+}
+body.light-theme .strategy-btn:hover{
+  border-color:#1a7a3c !important;
+  color:#1a7a3c !important;
+  background:#e8f4ec !important;
+}
+body.light-theme .strategy-btn.selected{
+  background:#1a7a3c !important;
+  color:#fff !important;
+  border-color:#1a7a3c !important;
+}
+body.light-theme .strategy-desc{
+  background:#f5f1e8 !important;
+  color:#333 !important;
+  border-left-color:#1a7a3c !important;
+}
+body.light-theme .strategy-desc-empty{color:#999 !important}
+
+/* Rival stage tag */
+body.light-theme .rival-stage-tag{
+  background:#1a7a3c !important;
+  color:#fff !important;
+}
+
+/* Weather display */
+body.light-theme .weather-display{
+  background:#f5f1e8 !important;
+  border-color:#d4cec4 !important;
+  color:#1a1a1a !important;
+}
+body.light-theme .weather-desc{color:#555 !important}
+
+/* Cabeceras de tablas con fondo oscuro hardcodeado */
+body.light-theme #convocadosTable th,
+body.light-theme #benchTable th,
+body.light-theme .roster-table th,
+body.light-theme #matchHistoryTable th,
+body.light-theme .group-table th{
+  background:#ede8df !important;
+  color:#555 !important;
+  border-color:#d4cec4 !important;
+}
+body.light-theme #convocadosTable td,
+body.light-theme #benchTable td,
+body.light-theme .roster-table td,
+body.light-theme #matchHistoryTable td,
+body.light-theme .group-table td{
+  color:#1a1a1a !important;
+  border-color:#e8e2d8 !important;
+}
+body.light-theme .group-table tr{background:#fff}
+body.light-theme .group-row-me{background:#e8f4ec !important}
+body.light-theme .group-row-qualified{background:#f0f8f0 !important}
+
+/* Rival power track */
+body.light-theme .rival-power-track{background:#d4cec4}
+
+/* Textos en el panel izquierdo */
+body.light-theme .box *:not(button):not(.counter-badge):not(.star):not(.cross):not(.card-badge):not([class*="accent"]):not([class*="gold"]){
+  color:inherit;
+}
+
+/* Hint line del panel rival */
+body.light-theme .hint-line{
+  background:#f5f1e8 !important;
+  color:#555 !important;
+  border-color:#d4cec4 !important;
+}
+
+/* Rival style tag */
+body.light-theme .rival-style-tag{color:#666 !important;font-style:italic}
+
+/* Estilos de sidebar / cómo jugar */
+body.light-theme .howto-box,
+body.light-theme .sabias-box,
+body.light-theme .statsguide-box{
+  background:#ffffff !important;
+  color:#1a1a1a !important;
+  border-color:#d4cec4 !important;
+}
+body.light-theme .howto-box *,
+body.light-theme .sabias-box *,
+body.light-theme .statsguide-box *{color:#333}
+body.light-theme .sabias-box summary span,
+body.light-theme details summary span{color:#b8860b}
+body.light-theme details{background:#ffffff;border-color:#d4cec4}
+body.light-theme details summary{color:#b8860b;background:#fff8e8}
+body.light-theme details[open] summary{background:#fff8e8}
+
+/* Fondo general de elementos dentro de paneles */
+body.light-theme .left-panel > *,
+body.light-theme .right-panel > *{color:#1a1a1a}
+
+/* Team name input */
+body.light-theme .team-name-input,
+body.light-theme input[type="text"]{
+  background:#ffffff !important;
+  color:#1a1a1a !important;
+  border-color:#d4cec4 !important;
+}
+
+/* Checkbox label */
+body.light-theme label{color:#333}
+body.light-theme input[type="checkbox"]+label{color:#333}
+
+/* Banquillo header */
+body.light-theme .bench-title{color:#666 !important}
+
+/* Moral bar */
+body.light-theme .morale-bar-wrap{background:#d4cec4}
+body.light-theme .morale-label{color:#555}
+
+/* Cambios disponibles hint */
+body.light-theme .changes-hint,
+body.light-theme .swap-hint{
+  background:#e8f4ec !important;
+  color:#1a7a3c !important;
+  border-color:#1a7a3c !important;
+}
+
+/* Formation category tabs */
+body.light-theme .formation-tabs button{
+  background:#ffffff;
+  color:#555;
+  border-color:#d4cec4;
+}
+body.light-theme .formation-tabs button.active,
+body.light-theme .formation-tabs button:hover{
+  background:#1a7a3c;
+  color:#fff;
+}
+
+/* Quick build buttons */
+body.light-theme .quick-build-option{
+  background:#ffffff !important;
+  border-color:#d4cec4 !important;
+  color:#1a1a1a !important;
+}
+body.light-theme .quick-build-option:hover{
+  border-color:#1a7a3c !important;
+  background:#e8f4ec !important;
+}
+
+/* Modal buttons */
+body.light-theme .modal-btn{
+  background:#1a7a3c;
+  color:#fff;
+  border-color:#1a7a3c;
+}
+body.light-theme .modal-btn:hover{background:#145f30}
+body.light-theme .modal-btn.danger{background:#c0392b;border-color:#c0392b}
+
+/* Presión alta / rueda de prensa opciones */
+body.light-theme .press-option{
+  background:#ffffff !important;
+  border:1px solid #d4cec4 !important;
+  color:#1a1a1a !important;
+}
+body.light-theme .press-option:hover{
+  border-color:#1a7a3c !important;
+  background:#e8f4ec !important;
+}
+
+/* Selección de equipo modal */
+body.light-theme .team-option{
+  background:#ffffff !important;
+  border-color:#d4cec4 !important;
+  color:#1a1a1a !important;
+}
+body.light-theme .team-option p{color:#555 !important}
+body.light-theme .team-option:hover{
+  border-color:#1a7a3c !important;
+  box-shadow:0 2px 8px rgba(0,0,0,.1) !important;
+}
+
+/* Roster players */
+body.light-theme .roster-player-name{color:#1a1a1a}
+body.light-theme .roster-player-pos{color:#666}
+
+/* Injury section */
+body.light-theme .injury-section{
+  background:#fdecea !important;
+  border-color:#f0b0a8 !important;
+  color:#7a2020 !important;
+}
+
+/* Página de victoria/derrota */
+body.light-theme .victory-modal,
+body.light-theme .match-modal{
+  background:#ffffff !important;
+  color:#1a1a1a !important;
+  border-color:#d4cec4 !important;
+}
+
+/* Live match modal feed */
+body.light-theme .live-match-modal{
+  background:#ffffff !important;
+  color:#1a1a1a !important;
+}
+body.light-theme .live-match-modal .match-feed-row{
+  border-color:#e8e2d8 !important;
+}
