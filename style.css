@@ -106,6 +106,7 @@ body.dark-theme .version-tag{color:#555}
 #pitchBox{
   width:100%;display:flex;flex-direction:column;align-items:center;
   flex-shrink:0;
+  background:transparent;
 }
 #appHeader{
   width:100%;display:flex;align-items:center;justify-content:space-between;
@@ -456,7 +457,7 @@ body.dark-theme{
 body.dark-theme .panel{background:var(--panel);border-color:var(--line)}
 body.dark-theme .box{background:var(--card-bg);border-color:var(--line);color:var(--text)}
 body.dark-theme .box h3{color:var(--text-soft)}
-body.dark-theme .center-panel{background:#0a0c0d}
+body.dark-theme .center-panel{background:var(--bg)}
 body.dark-theme #convocadosTable th,
 body.dark-theme #benchTable th,
 body.dark-theme .roster-table th,
@@ -1177,7 +1178,7 @@ body.dark-theme .strategy-desc{background:#0a0c0d}
   }
   .mobile-formation-info strong{color:var(--gold);font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:.5px;font-size:13px}
   .mobile-formation-info.empty{
-    color:var(--text-muted);font-style:italic;border-left-color:#555;
+    display:none;
   }
 }
 
