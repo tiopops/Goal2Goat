@@ -527,6 +527,127 @@ body.dark-theme .pen-shots,
 body.dark-theme .goal-min,
 body.dark-theme .no-goal{color:var(--text-muted)}
 
+
+/* =============================================
+   TEMA CLARO — sobreescribe todos los dark-theme
+   ============================================= */
+body.light-theme{
+  --bg:#f0ece3;--panel:#fff;--dark:#e0dbd0;--accent:#0a7c3e;
+  --gold:#b8860b;--line:#d0c9bc;--red:#c0392b;
+  --text:#1a1a1a;--text-soft:#2c2c2c;--text-muted:#666;
+  --card-bg:#fff;--table-header-bg:#ede8df;--row-hover:#f5f1e8;
+  color:var(--text);
+  background:var(--bg);
+}
+body.light-theme .panel{background:var(--panel);border-color:var(--line)}
+body.light-theme .box{background:var(--card-bg);border-color:var(--line);color:var(--text)}
+body.light-theme .box h3{color:var(--text-soft)}
+body.light-theme .center-panel{background:#e8e3da}
+body.light-theme #convocadosTable th,
+body.light-theme #benchTable th,
+body.light-theme .roster-table th,
+body.light-theme #matchHistoryTable th{background:var(--table-header-bg);color:var(--text-muted)}
+body.light-theme #convocadosTable td,
+body.light-theme #benchTable td,
+body.light-theme .roster-table td,
+body.light-theme #matchHistoryTable td{border-color:var(--line);color:var(--text)}
+body.light-theme #convocadosTable tr:hover td,
+body.light-theme #benchTable tr:hover td,
+body.light-theme .roster-table tr:hover td{background:var(--row-hover)}
+body.light-theme .bench-title,
+body.light-theme .hint-line,
+body.light-theme .rival-style-tag,
+body.light-theme .rival-power-label,
+body.light-theme .dorsal-cell{color:var(--text-muted)}
+body.light-theme .formation-tab{background:var(--card-bg);border-color:var(--line);color:var(--text)}
+body.light-theme .formation-tab.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+body.light-theme .formation-tab:hover:not(.active){border-color:var(--accent);color:var(--accent)}
+body.light-theme .formation-option{background:var(--card-bg);border-color:var(--line);color:var(--text)}
+body.light-theme .formation-option:hover{border-color:var(--accent);background:var(--row-hover)}
+body.light-theme .formation-option.selected{background:var(--accent);border-color:var(--accent)}
+body.light-theme .formation-option.selected .f-code,
+body.light-theme .formation-option.selected .f-badge{color:#fff}
+body.light-theme .f-code{color:var(--text)}
+body.light-theme .f-badge{color:var(--text-muted)}
+body.light-theme .roster-modal,
+body.light-theme .team-option,
+body.light-theme .goals-col,
+body.light-theme .match-modal{background:var(--card-bg);border-color:var(--line);color:var(--text)}
+body.light-theme .team-option:hover{box-shadow:0 3px 10px rgba(0,0,0,.15)}
+body.light-theme .team-option p,
+body.light-theme .selection-title,
+body.light-theme .roster-header .selection-title,
+body.light-theme .team-profile h3,
+body.light-theme .match-team-name,
+body.light-theme .match-modal h3{color:var(--text-soft)}
+body.light-theme .ovr-team{background:#e8e3da}
+body.light-theme .stat-bar{background:#d0c9bc}
+body.light-theme .rival-hint,
+body.light-theme .match-summary,
+body.light-theme .howto-tip,
+body.light-theme .sub-hint{background:#e8f4ec;color:#1a3a22;border-left-color:var(--accent)}
+body.light-theme .match-summary strong{color:var(--text)}
+body.light-theme .injury-section{background:#fdecea;border-color:#e8b4b0}
+body.light-theme .injury-section p{color:#7a2020}
+body.light-theme .row-selected td{background:#fef3cc !important}
+body.light-theme .row-selected td:first-child{box-shadow:-2px 0 0 var(--gold),0 -2px 0 var(--gold),0 2px 0 var(--gold)}
+body.light-theme .row-selected td:last-child{box-shadow:2px 0 0 var(--gold),0 -2px 0 var(--gold),0 2px 0 var(--gold)}
+body.light-theme .row-selected td:not(:first-child):not(:last-child){box-shadow:0 -2px 0 var(--gold),0 2px 0 var(--gold)}
+body.light-theme .swap-hint{background:#e8f4ec;color:var(--accent);border-left-color:var(--accent)}
+body.light-theme .injury-note{color:var(--text-muted)}
+body.light-theme .slot-reel{background:#fff;border-color:var(--gold)}
+body.light-theme #howToPlayBox,
+body.light-theme #statsGuideBox{background:linear-gradient(135deg,#fff,var(--panel))}
+body.light-theme .howto-step{color:var(--text)}
+body.light-theme .howto-num{color:#fff}
+body.light-theme .stat-attack,
+body.light-theme .stat-defense,
+body.light-theme .stat-pace,
+body.light-theme .stat-passing,
+body.light-theme .stat-technique{background:#fff;color:var(--accent);border-color:var(--accent)}
+body.light-theme #centerBottom{background:#e0dbd0;border-color:var(--line)}
+body.light-theme #appHeader{background:#1a1a1a;border-color:#333}
+body.light-theme .team-name-input{background:#fff;color:var(--text);border-color:var(--line)}
+body.light-theme .pen-shots,
+body.light-theme .goal-min,
+body.light-theme .no-goal{color:var(--text-muted)}
+/* Modal y auth en tema claro */
+body.light-theme .auth-modal{background:#fff;color:var(--text)}
+body.light-theme .auth-tabs{border-bottom-color:var(--line)}
+body.light-theme .auth-tab{color:#888}
+body.light-theme .auth-tab:hover{color:var(--text)}
+body.light-theme .profile-stat-card{background:#f7f3ec;border-color:var(--line)}
+body.light-theme .pstat-val{color:var(--text)}
+body.light-theme .pstat-label{color:var(--text-muted)}
+body.light-theme .upgrade-row{border-color:var(--line)}
+body.light-theme .upgrade-name{color:var(--text)}
+body.light-theme .upgrade-desc{color:var(--text-muted)}
+body.light-theme .upgrade-bar{background:#d0c9bc}
+body.light-theme .upgrade-bar.filled{background:var(--accent)}
+/* Historial y rival */
+body.light-theme .live-match-modal{background:#f0f8f2;border-color:var(--accent);color:var(--text)}
+body.light-theme .match-feed-cell{color:var(--text)}
+/* Textos generales */
+body.light-theme h1,body.light-theme h2,body.light-theme h3,
+body.light-theme h4,body.light-theme h5{color:var(--text)}
+body.light-theme p,body.light-theme span,body.light-theme label{color:var(--text)}
+body.light-theme .version-tag{color:#aaa}
+body.light-theme .counter-badge{background:var(--accent);color:#fff}
+/* Botones de acción */
+body.light-theme .main-action-btn{background:var(--gold);color:#fff}
+body.light-theme .secondary-action-btn{border-color:var(--gold);color:var(--gold)}
+/* Tabs del menú móvil */
+body.light-theme .mob-tab-btn{background:#f0ece3;color:#888;border-top-color:var(--line)}
+body.light-theme .mob-tab-btn.active{color:var(--accent)}
+/* Estrategias */
+body.light-theme .strategy-btn{background:#fff;border-color:var(--line);color:var(--text)}
+body.light-theme .strategy-btn.selected{background:var(--accent);color:#fff;border-color:var(--accent)}
+body.light-theme .strategy-desc{color:var(--text-muted)}
+/* Press conference */
+body.light-theme .press-question{background:#f7f3ec;color:var(--text);border-color:var(--line)}
+body.light-theme .press-option{background:#fff;border-color:var(--line);color:var(--text)}
+body.light-theme .press-option:hover{border-color:var(--accent)}
+
 /* CENTER SUMMARY (quick-glance, below pitch) */
 #centerSummary{width:100%;padding:0 12px;flex-shrink:0}
 #centerSummary:empty{display:none}
