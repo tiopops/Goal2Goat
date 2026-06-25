@@ -6154,22 +6154,24 @@ async function renderAchievementsTab(){
 
   ACHIEVEMENT_DEFS.forEach(def=>{
     const isUnlocked=unlocked.has(def.id);
+    const isLight=document.body.classList.contains('light-theme');
     const card=document.createElement('div');
-    card.style.cssText=`display:flex;align-items:center;gap:10px;padding:10px;
-      border:1px solid ${isUnlocked?TIER_COLOR[def.tier]:'var(--line)'};
-      background:${isUnlocked?'rgba(0,0,0,.3)':'var(--panel)'};
-      opacity:${isUnlocked?'1':'.45'};position:relative;overflow:hidden`;
+    const lockedBg=isLight?'#ede8df':'#1a1e20';
+    const unlockedBg=isLight?'#e8f4ec':'rgba(0,0,0,.3)';
+    const borderColor=isUnlocked?TIER_COLOR[def.tier]:(isLight?'#d4cec4':'var(--line)');
+    card.style.cssText='display:flex;align-items:center;gap:10px;padding:10px;border:1px solid '+borderColor+';background:'+(isUnlocked?unlockedBg:lockedBg)+';position:relative;overflow:hidden';
     const achName=window.t?window.t('ach.'+def.id)||def.name:def.name;
     const achDesc=window.t?window.t('ach.'+def.id+'.d')||def.desc:def.desc;
-    const iconHtml='<i class="ph ph-bold '+def.icon+'" style="font-size:26px;flex-shrink:0;color:'+(isUnlocked?'#c9a227':'var(--text-muted)')+';'+(isUnlocked?'':' opacity:.35')+'"></i>';
-    const checkHtml=isUnlocked?'<i class="ph ph-bold ph-check" style="position:absolute;top:5px;right:6px;font-size:12px;color:'+(TIER_COLOR[def.tier]||'#c9a227')+'"></i>':'';
+    const iconColor=isUnlocked?'#c9a227':(isLight?'#bbb':'var(--text-muted)');
+    const iconHtml='<i class="ph ph-bold '+def.icon+'" style="font-size:26px;flex-shrink:0;color:'+iconColor+';'+(isUnlocked?'':' opacity:.5')+'"></i>';
+    const checkHtml=isUnlocked?'<i class="ph ph-bold ph-check" style="position:absolute;top:5px;right:6px;font-size:12px;color:'+(TIER_COLOR[def.tier]||'#c9a227')+'" ></i>':'';
     const tierColor=TIER_COLOR[def.tier]||'#aaa';
     const tierLabel=TIER_LABEL[def.tier]||'';
-    const nameColor=isUnlocked?'#fff':'var(--text-muted)';
-    const descColor=isUnlocked?'#aaa':'var(--text-muted)';
+    const nameColor=isUnlocked?(isLight?'#1a1a1a':'#fff'):(isLight?'#333':'var(--text-muted)');
+    const descColor=isUnlocked?(isLight?'#444':'#aaa'):(isLight?'#666':'var(--text-muted)');
     card.innerHTML=iconHtml+checkHtml+
-      '<div style="min-width:0;flex:1">'+
-      '<div style="font-size:12px;letter-spacing:.8px;color:'+nameColor+';line-height:1.2">'+achName+'</div>'+
+      '<div style="min-width:0;flex:1">'+ 
+      '<div style="font-size:12px;letter-spacing:.8px;color:'+nameColor+';line-height:1.2;font-weight:700">'+achName+'</div>'+
       '<div style="font-size:9px;color:'+descColor+';line-height:1.4;margin-top:2px">'+achDesc+'</div>'+
       '<div style="font-size:9px;color:'+tierColor+';letter-spacing:1px;margin-top:3px">'+tierLabel+'</div>'+
       '</div>';
