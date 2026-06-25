@@ -4617,6 +4617,9 @@ function initFirebaseAuth(){
           newCb.addEventListener('change',function(){
             window.CHEATS_ACTIVE=this.checked;
             updateTicketBadge(window.CHEATS_ACTIVE?3:undefined);
+            // Mostrar selector de idioma solo con cheats activos
+            const langWrap=$id('langSelectorWrap');
+            if(langWrap) langWrap.style.display=window.CHEATS_ACTIVE?'block':'none';
             if(window.CHEATS_ACTIVE){const pse=$id('pstat-scratch-pts');if(pse)pse.textContent=100;}
             showToast(window.CHEATS_ACTIVE?"⚙️ Cheats ON — ganas todos, tickets 3/3, pts 100":"⚙️ Cheats OFF — juego normal","toast-pos");
           });
