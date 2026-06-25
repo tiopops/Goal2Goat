@@ -482,6 +482,7 @@ const PRESS_PREDICTIONS = [
 
 /* ========= COMPETITION STATE (World Cup format) ========= */
 const ROUND_NAMES = ["Octavos de Final","Cuartos de Final","Semifinal","Final"];
+function getRoundName(idx){ try{ return [t("comp.r16"),t("comp.qf"),t("comp.sf"),t("comp.final")][idx]||ROUND_NAMES[idx]||""; }catch(e){ return ROUND_NAMES[idx]||""; } }
 let stage = "group";        // "group" | "knockout" | "done"
 let groupOpponents = [];    // 3 team objects for this group
 let groupMatchIdx = 0;       // 0,1,2 — which group match is next
@@ -1357,9 +1358,9 @@ function renderCenterSummary(){
   </div>`;
 }
 function stageLabel(){
-  if(stage==="group") return `Fase de grupos · partido ${groupMatchIdx+1}/3`;
-  if(stage==="knockout") return ROUND_NAMES[knockoutRound]||"Eliminatorias";
-  return "Torneo completado";
+  if(stage==="group") return `${t("comp.groups")} · ${t("match.match")||"partido"} ${groupMatchIdx+1}/3`;
+  if(stage==="knockout") return getRoundName(knockoutRound);
+  return t("comp.champion")||"Torneo completado";
 }
 
 function getFatigueBarHTML(p){
@@ -1374,7 +1375,8 @@ const CONV_SORT_NEXT = {arrival:'position', position:'rating', rating:'arrival'}
 window.toggleConvSort = function(){
   convSortMode = CONV_SORT_NEXT[convSortMode];
   const lbl = document.getElementById('convSortLabel');
-  if(lbl) lbl.textContent = CONV_SORT_LABELS[convSortMode];
+  const CONV_SORT_KEYS={arrival:'draft.sort_arrival',position:'draft.sort_position',rating:'draft.sort_rating'};
+  if(lbl) lbl.textContent = window.t?window.t(CONV_SORT_KEYS[convSortMode]):CONV_SORT_LABELS[convSortMode];
   updateConvocadosTable();
 };
 
@@ -1708,7 +1710,7 @@ function resetDraft(){
   updateDraftCounter();
   updateConvocadosTable();
   rollBtn.disabled=false;
-  rollBtn.textContent="SELECCIONAR JUGADOR";
+  rollBtn.textContent=t("draft.select_player");
   selectedPlayer=null;
   playerCardEl.innerHTML="";
 }
@@ -1928,7 +1930,7 @@ function renderStrategySelector(){
     : '';
   el.innerHTML=`
     ${hintHTML}
-    <div class="style-label" style="margin-top:12px">Elige tu estrategia para este partido</div>
+    <div class="style-label" style="margin-top:12px">${t("strategy.choose")}</div>
     <div class="strategy-grid">
       ${STRATEGY_ORDER.map(key=>{
         const s=STRATEGIES[key];
@@ -1994,7 +1996,7 @@ function renderGroupTableHTML(){
     </tr>`;
   });
   return `<table class="group-table"><thead><tr><th>#</th><th>Equipo</th><th>PJ</th><th>G</th><th>E</th><th>P</th><th>GF-GC</th><th>Pts</th></tr></thead><tbody>${rows}</tbody></table>
-  <div class="hint-line">Los 2 primeros avanzan a Octavos de Final.</div>`;
+  <div class="hint-line">${t("comp.r16_advance")}</div>`;
 }
 function renderBracketHTML(knockoutMatches){
   let rows="";
@@ -2006,7 +2008,7 @@ function renderBracketHTML(knockoutMatches){
   const nextRound=ROUND_NAMES[knockoutRound];
   return `<div class="hint-line" style="margin-top:10px;font-weight:700">ELIMINATORIAS</div>
   <table><thead><tr><th>Ronda</th><th>Rival</th><th>Resultado</th><th>Res</th></tr></thead><tbody>${rows}</tbody></table>
-  <div class="hint-line">${nextRound&&stage==="knockout"?('Próxima ronda: '+nextRound):'¡Final completada!'}</div>`;
+  <div class="hint-line">${nextRound&&stage==="knockout"?(t('comp.next_round')+nextRound):'¡Final completada!'}</div>`;
 }
 
 /* ========= MATCH SIMULATION ========= */
@@ -2406,8 +2408,8 @@ function generateMatchSummary(myGoals,oppGoals,rivalName){
     </div>
   </div>`;
 
-  return `<strong>Posesión:</strong> ${myTeamName} ${possession}% · ${rivalName} ${oppPoss}%<br>
-<strong>Tiros a puerta:</strong> ${shots} – ${oppShots}
+  return `<strong>${t("match.possession")}:</strong> ${myTeamName} ${possession}% · ${rivalName} ${oppPoss}%<br>
+<strong>${t("match.shots")}:</strong> ${shots} – ${oppShots}
 ${goalsHTML}`;
 }
 
@@ -2757,9 +2759,9 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
   // Resultado
   const wasShootout=!!penaltyInfo;
   let resultText,resultClass;
-  if(draw){ resultText="EMPATE"; resultClass="res-draw-tag"; }
+  if(draw){ resultText=t("match.draw"); resultClass="res-draw-tag"; }
   else {
-    resultText=won?(wasShootout?"¡VICTORIA EN PENALTIS!":"¡VICTORIA!"):(wasShootout?"DERROTA EN PENALTIS":"DERROTA");
+    resultText=won?(wasShootout?t("match.victory"):t("match.victory")):(wasShootout?t("match.defeat"):t("match.defeat"));
     resultClass=won?"res-win-tag":"res-lose-tag";
   }
 
@@ -2839,7 +2841,7 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
       if(!htShown){
         htShown=true;
         clockEl.textContent=`45+${inj1}'`;
-        halfEl.textContent='DESCANSO';
+        halfEl.textContent=t('match.halftime');
         halfEl.style.background='#a07a00';
         fillEl.style.width='50%';
         addSep(`Descanso — 45+${inj1}'`);
@@ -2880,21 +2882,21 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
 
   // ── Fase 3: Prórroga ────────────────────────────────────────────────────
   function startExtraTime(){
-    halfEl.textContent='PRÓRROGA'; halfEl.style.background='#7a3a0a';
-    addSep('— PRÓRROGA —');
+    halfEl.textContent=t('match.extratime'); halfEl.style.background='#7a3a0a';
+    addSep('— '+t('match.extratime')+' —');
     const ET=4000,ET_S=0.47,ET_E=0.53;
     let etHt=false;
     const etStart=performance.now();
     function tickET(now){
       const frac=Math.min((now-etStart)/ET,1);
       if(frac>=ET_S&&frac<ET_E){
-        if(!etHt){ etHt=true; clockEl.textContent="105'"; halfEl.textContent='DESCANSO P.'; halfEl.style.background='#a07a00'; addSep("Descanso prórroga — 105'"); playSound('whistle'); }
+        if(!etHt){ etHt=true; clockEl.textContent="105'"; halfEl.textContent=t("match.halftime"); halfEl.style.background='#a07a00'; addSep("Descanso prórroga — 105'"); playSound('whistle'); }
         requestAnimationFrame(tickET); return;
       }
       if(frac<ET_S){ clockEl.textContent=`${91+Math.floor((frac/ET_S)*14)}'`; halfEl.textContent='PRÓRROGA 1ª'; halfEl.style.background='#7a3a0a'; }
       else { const f2=(frac-ET_E)/(1-ET_E); clockEl.textContent=`${106+Math.floor(f2*14)}'`; halfEl.textContent='PRÓRROGA 2ª'; halfEl.style.background='#7a3a0a'; }
       if(frac<1){ requestAnimationFrame(tickET); return; }
-      clockEl.textContent="120'"; halfEl.textContent='FIN PRÓRROGA'; halfEl.style.background='#555';
+      clockEl.textContent="120'"; halfEl.textContent=t("match.extratime")+" FIN"; halfEl.style.background='#555';
       playSound('whistle'); setTimeout(startPenalties,900);
     }
     requestAnimationFrame(tickET);
@@ -2902,8 +2904,8 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
 
   // ── Fase 4: Penaltis ────────────────────────────────────────────────────
   function startPenalties(){
-    halfEl.textContent='PENALTIS'; halfEl.style.background='#3a0a5a'; clockEl.textContent='—';
-    addSep('— TANDA DE PENALTIS —');
+    halfEl.textContent=t('match.penalties'); halfEl.style.background='#3a0a5a'; clockEl.textContent='—';
+    addSep('— '+t('match.penalties')+' —');
     const myShots=penaltyInfo.myShots,oppShots=penaltyInfo.oppShots;
     const maxLen=Math.max(myShots.length,oppShots.length);
     const sequence=[];
@@ -2979,7 +2981,7 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
     if(recovered.length){
       const r=document.createElement('div');
       r.className='match-summary recovered-box';
-      r.innerHTML=`<strong>✅ Recuperados:</strong> ${recovered.join(', ')}`;
+      r.innerHTML=`<strong>✅ ${t("match.recovered")||"Recuperados"}:</strong> ${recovered.join(", ")}`;
       infoWrap.appendChild(r);
     }
 
@@ -3057,8 +3059,8 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
     // Botón continuar
     let btnLabel,outcome;
     if(stage==='group'){
-      if(groupMatchIdx>=3){btnLabel='VER RESULTADOS DE GRUPO';outcome='groupDone';}
-      else{btnLabel='SIGUIENTE PARTIDO';outcome='nextGroupMatch';}
+      if(groupMatchIdx>=3){btnLabel=t("match.group_results");outcome='groupDone';}
+      else{btnLabel=t('match.next_match');outcome='nextGroupMatch';}
     } else {
       if(!won){btnLabel='FIN DEL TORNEO';outcome='knockoutLost';}
       else if(knockoutRound>=ROUND_NAMES.length-1){btnLabel='VER RESUMEN FINAL';outcome='champion';}
@@ -3112,7 +3114,9 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
       window._pendingAchievements.forEach(def=>{
         const row=document.createElement('div');
         row.style.cssText=`display:flex;align-items:center;gap:10px;padding:8px 10px;background:rgba(201,162,39,.1);border:1px solid var(--gold);animation:slideInEvent .4s ease forwards`;
-        row.innerHTML=`<i class="ph ph-bold ${def.icon}" style="font-size:20px;color:#c9a227;flex-shrink:0"></i><div><div style="font-family:'Bebas Neue',Impact,sans-serif;font-size:12px;letter-spacing:1px;color:var(--gold)">LOGRO: ${def.name}</div><div style="font-size:10px;color:var(--text-muted)">${def.desc} · <span style="color:var(--gold)">+${def.pts} pts</span></div></div>`;
+        const _n=window.t?window.t('ach.'+def.id)||def.name:def.name;
+        const _d=window.t?window.t('ach.'+def.id+'.d')||def.desc:def.desc;
+        row.innerHTML=`<i class="ph ph-bold ${def.icon}" style="font-size:20px;color:#c9a227;flex-shrink:0"></i><div><div style="font-family:'Bebas Neue',Impact,sans-serif;font-size:12px;letter-spacing:1px;color:var(--gold)">${t("match.achievement_unlocked")||"LOGRO"}: ${_n}</div><div style="font-size:10px;color:var(--text-muted)">${_d} · <span style="color:var(--gold)">+${def.pts} pts</span></div></div>`;
         achWrap.appendChild(row);
       });
       modal.appendChild(achWrap);
@@ -3129,7 +3133,7 @@ function showMatchModal(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,
   const wasShootout=!!penaltyInfo;
   let resultText, resultClass;
   if(draw){
-    resultText="EMPATE"; resultClass="res-draw-tag";
+    resultText=t("match.draw"); resultClass="res-draw-tag";
   } else {
     resultText=won?(wasShootout?"¡VICTORIA EN PENALTIS!":"¡VICTORIA!"):(wasShootout?"DERROTA EN PENALTIS":"DERROTA");
     resultClass=won?"res-win-tag":"res-lose-tag";
@@ -3180,8 +3184,8 @@ function showMatchModal(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,
   // Determine continue-button label and the outcome it leads to
   let btnLabel, outcome;
   if(stage==="group"){
-    if(groupMatchIdx>=3) btnLabel="VER RESULTADOS DE GRUPO", outcome="groupDone";
-    else btnLabel="SIGUIENTE PARTIDO", outcome="nextGroupMatch";
+    if(groupMatchIdx>=3) btnLabel=t("match.group_results"), outcome="groupDone";
+    else btnLabel=t("match.next_match"), outcome="nextGroupMatch";
   } else { // knockout
     if(!won){ btnLabel="FIN DEL TORNEO"; outcome="knockoutLost"; }
     else if(knockoutRound>=ROUND_NAMES.length-1){ btnLabel="VER RESUMEN FINAL"; outcome="champion"; }
@@ -3279,7 +3283,7 @@ function showGroupResultsPopup(){
       const summary=document.createElement("div");
       summary.className="match-result-tag "+(qualified?"res-win-tag":"res-lose-tag");
       summary.textContent=qualified
-        ? `¡${myTeamName} clasificado para Octavos de Final! (${meIdx+1}º del grupo)`
+        ? `¡${myTeamName} clasificado para ${t("comp.r16")}! (${meIdx+1}º del grupo)`
         : `${myTeamName} eliminado en la fase de grupos (${meIdx+1}º del grupo)`;
       wrap.parentNode.insertBefore(summary, btn);
       btn.style.display="block";
@@ -3422,7 +3426,7 @@ function showVictory(){
 
   document.getElementById("matchOverlay").innerHTML=`
   <div class="match-modal victory-modal">
-    <div class="match-result-tag res-win-tag">¡¡CAMPEÓN DEL MUNDO!!</div>
+    <div class="match-result-tag res-win-tag">${t("comp.champion")}</div>
     <div class="victory-score-wrap">
       <div class="victory-score-label">PUNTUACIÓN FINAL</div>
       <div class="victory-score-num">${sc.total}</div>
@@ -3438,7 +3442,7 @@ function showVictory(){
       <div class="vb-row"><span>Rachas de goleador</span><span class="vb-pts">${sc.breakdown.streaks} pts</span></div>
       ${sc.penWins?`<div class="vb-row"><span>Victorias en penaltis (${sc.penWins})</span><span class="vb-pts">${sc.breakdown.penalties} pts</span></div>`:''}
     </div>
-    <button class="modal-btn" onclick="window._launchGoldenAndReload()">FINALIZAR CAMPEONATO</button>
+    <button class="modal-btn" onclick="window._launchGoldenAndReload()">${t("comp.end_tournament")}</button>
   </div>`;
 }
 
@@ -4051,7 +4055,7 @@ function buildLedMessages(){
 
   // Stage info
   if(stage==="group" && groupOpponents.length){
-    msgs.push(`FASE DE GRUPOS  ·  PARTIDO ${groupMatchIdx+1}/3`);
+    msgs.push(`${t("comp.groups")}  ·  ${t("comp.play_match")} ${groupMatchIdx+1}/3`);
   } else if(stage==="knockout"){
     msgs.push(`ELIMINATORIAS  ·  ${(ROUND_NAMES[knockoutRound]||"").toUpperCase()}`);
   }
@@ -4505,6 +4509,12 @@ function initFirebaseAuth(){
       window.useFixedTeamName=!!data.useFixedTeamName;
       // Sincronizar nombre del equipo para el contador de convocados
       if(window.preferredTeamName) window._currentTeamName=window.preferredTeamName.toUpperCase();
+      // Cargar idioma guardado
+      if(data.lang && (data.lang==='es'||data.lang==='en')){
+        window.LANG=data.lang;
+        try{localStorage.setItem('g2g_lang',data.lang);}catch(e){}
+      }
+      if(window.applyTranslations) window.applyTranslations();
       // Inicializar sistema de boletos
       if(window._initTicketSystem) window._initTicketSystem(user, false);
       // Listener en tiempo real de mejoras
@@ -5622,7 +5632,7 @@ const UPGRADE_DEFS = [
     baseCost: 5,
     maxLevel: 5,
     baseValue: 2,
-    tooltip: (lvl) => `${2 + lvl} plazas en el banquillo`
+    tooltip: (lvl) => `${2+lvl} ${t("upgrade.bench_desc")}`
   },
   {
     id: 'subs',
@@ -5632,7 +5642,7 @@ const UPGRADE_DEFS = [
     baseCost: 5,
     maxLevel: 5,
     baseValue: 2,
-    tooltip: (lvl) => `${2 + lvl} cambios por partido`
+    tooltip: (lvl) => `${2+lvl} ${t("upgrade.subs_desc")}`
   },
   {
     id: 'scout',
@@ -5642,7 +5652,7 @@ const UPGRADE_DEFS = [
     baseCost: 5,
     maxLevel: 5,
     baseValue: 5,
-    tooltip: (lvl) => `${5 + lvl} jugadores por equipo al barajar`
+    tooltip: (lvl) => `${5+lvl} ${t("upgrade.scout_desc")}`
   },
   {
     id: 'recovery',
@@ -5652,7 +5662,7 @@ const UPGRADE_DEFS = [
     baseCost: 5,
     maxLevel: 5,
     baseValue: 0,
-    tooltip: (lvl) => `${lvl*10}% menos fatiga por partido`
+    tooltip: (lvl) => `${lvl*10}% ${t("upgrade.recovery_desc")}`
   },
 ];
 
@@ -5830,7 +5840,7 @@ const SKILL_DEFS = [
     id: 'medico', category: 'PLANTILLA',
     name: 'MÉDICO DE ÉLITE', cost: 50,
     icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>',
-    tooltip: 'Las lesiones leves se recuperan automáticamente al acabar el partido, no duran al siguiente.',
+    tooltip: 'Las lesiones leves se recuperan automáticamente al acabar el partido.',
   },
   {
     id: 'ojeador', category: 'PLANTILLA',
@@ -5842,13 +5852,13 @@ const SKILL_DEFS = [
     id: 'cazatalentos', category: 'PLANTILLA',
     name: 'CAZATALENTOS', cost: 30,
     icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
-    tooltip: 'Los jugadores fuera de su posición natural solo pierden un 5% de rendimiento en lugar del 15%.',
+    tooltip: 'Los jugadores fuera de su posición natural solo pierden un 5% de rendimiento.',
   },
   {
     id: 'veterano', category: 'PLANTILLA',
     name: 'VETERANO', cost: 45,
     icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>',
-    tooltip: 'Los jugadores con 85+ de rating no pueden recibir tarjeta roja directa, solo amarilla.',
+    tooltip: 'Los jugadores con 85+ de rating no pueden recibir tarjeta roja directa.',
   },
   // === ECONOMÍA ===
   {
@@ -6001,7 +6011,7 @@ const ACHIEVEMENT_DEFS = [
   {id:'groups_unbeaten',  tier:'intermedio', pts:2, icon:'ph-shield',        name:'INVICTO EN GRUPOS',   desc:'Pasa la fase de grupos sin perder ningún partido'},
   {id:'groups_no_concede',tier:'intermedio', pts:2, icon:'ph-shield-star', name:'MURALLA EN GRUPOS',   desc:'No encajes ningún gol en toda la fase de grupos'},
   {id:'quarters',         tier:'intermedio', pts:2, icon:'ph-medal',         name:'CUARTOS',              desc:'Clasifícate para cuartos de final'},
-  {id:'semis',            tier:'intermedio', pts:2, icon:'ph-medal','name':'SEMIFINAL',          desc:'Llega a semifinales'},
+  {id:'semis',            tier:'intermedio', pts:2, icon:'ph-medal', name:'SEMIFINAL',              desc:'Llega a semifinales'},
   {id:'comeback_2',       tier:'intermedio', pts:2, icon:'ph-arrow-fat-lines-up',  name:'REMONTADA ÉPICA',     desc:'Gana un partido después de ir perdiendo de 2 goles'},
   {id:'perfect_tactic',   tier:'intermedio', pts:2, icon:'ph-graph',      name:'TÁCTICA MAESTRA',     desc:'Usa la contra-estrategia perfecta y gana el partido'},
   {id:'no_injuries_semis',tier:'intermedio', pts:2, icon:'ph-plus-circle', name:'HIERRO FORJADO',      desc:'Llega a semifinales sin ningún jugador lesionado'},
@@ -6095,9 +6105,9 @@ function showAchievementToast(def){
   toast.innerHTML=`
     <i class="ph ph-bold ${def.icon}" style="font-size:28px;color:${TIER_COLOR[def.tier]}"></i>
     <div>
-      <div style="font-size:10px;letter-spacing:2px;color:${TIER_COLOR[def.tier]};margin-bottom:2px">LOGRO DESBLOQUEADO · ${TIER_LABEL[def.tier]}</div>
-      <div style="font-size:16px;color:#fff;letter-spacing:1px">${def.name}</div>
-      <div style="font-size:11px;color:#aaa;margin-top:2px">${def.desc}</div>
+      <div style="font-size:10px;letter-spacing:2px;color:${TIER_COLOR[def.tier]};margin-bottom:2px">${t("match.achievement_unlocked")} · ${TIER_LABEL[def.tier]}</div>
+      <div style="font-size:16px;color:#fff;letter-spacing:1px">${window.t?window.t('ach.'+def.id)||def.name:def.name}</div>
+      <div style="font-size:11px;color:#aaa;margin-top:2px">${window.t?window.t('ach.'+def.id+'.d')||def.desc:def.desc}</div>
     </div>`;
   document.body.appendChild(toast);
   setTimeout(()=>{ toast.style.transition='opacity .5s'; toast.style.opacity='0'; setTimeout(()=>toast.remove(),500); },4000);
@@ -6139,20 +6149,24 @@ async function renderAchievementsTab(){
       border:1px solid ${isUnlocked?TIER_COLOR[def.tier]:'var(--line)'};
       background:${isUnlocked?'rgba(0,0,0,.3)':'var(--panel)'};
       opacity:${isUnlocked?'1':'.45'};position:relative;overflow:hidden`;
-    card.innerHTML=`
-      ${def.icon.startsWith('svg:')?
-        `<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="${isUnlocked?'#c9a227':'var(--text-muted)'}" stroke-width="2" stroke-linecap="round" style="${isUnlocked?'':'opacity:.35'}"><path d="${def.icon.slice(4)}"/></svg>`
-        :`<i class="ph ph-bold ${def.icon}" style="font-size:26px;flex-shrink:0;color:${isUnlocked?'#c9a227':'var(--text-muted)'};${isUnlocked?'':'opacity:.35'}"></i>`
-      }
-      <div style="min-width:0;flex:1">
-        <div style="font-family:'Bebas Neue',Impact,sans-serif;font-size:12px;letter-spacing:.8px;color:${isUnlocked?'#fff':'var(--text-muted)'};line-height:1.2">${def.name}</div>
-        <div style="font-size:9px;color:${isUnlocked?'#aaa':'var(--text-muted)'};line-height:1.4;margin-top:2px">${def.desc}</div>
-        <div style="font-size:9px;color:${TIER_COLOR[def.tier]};letter-spacing:1px;margin-top:3px;font-family:'Bebas Neue',Impact,sans-serif">${TIER_LABEL[def.tier]}</div>
-      </div>
-      ${isUnlocked?`<i class="ph ph-bold ph-check" style="position:absolute;top:5px;right:6px;font-size:12px;color:${TIER_COLOR[def.tier]}"></i>`:''}`;
+    const achName=window.t?window.t('ach.'+def.id)||def.name:def.name;
+    const achDesc=window.t?window.t('ach.'+def.id+'.d')||def.desc:def.desc;
+    const iconHtml='<i class="ph ph-bold '+def.icon+'" style="font-size:26px;flex-shrink:0;color:'+(isUnlocked?'#c9a227':'var(--text-muted)')+';'+(isUnlocked?'':' opacity:.35')+'"></i>';
+    const checkHtml=isUnlocked?'<i class="ph ph-bold ph-check" style="position:absolute;top:5px;right:6px;font-size:12px;color:'+(TIER_COLOR[def.tier]||'#c9a227')+'"></i>':'';
+    const tierColor=TIER_COLOR[def.tier]||'#aaa';
+    const tierLabel=TIER_LABEL[def.tier]||'';
+    const nameColor=isUnlocked?'#fff':'var(--text-muted)';
+    const descColor=isUnlocked?'#aaa':'var(--text-muted)';
+    card.innerHTML=iconHtml+checkHtml+
+      '<div style="min-width:0;flex:1">'+
+      '<div style="font-size:12px;letter-spacing:.8px;color:'+nameColor+';line-height:1.2">'+achName+'</div>'+
+      '<div style="font-size:9px;color:'+descColor+';line-height:1.4;margin-top:2px">'+achDesc+'</div>'+
+      '<div style="font-size:9px;color:'+tierColor+';letter-spacing:1px;margin-top:3px">'+tierLabel+'</div>'+
+      '</div>';
     grid.appendChild(card);
   });
 }
+
 
 // Añadir CSS para el toast
 (function(){
@@ -6160,3 +6174,69 @@ async function renderAchievementsTab(){
   s.textContent=`@keyframes slideUpToast{from{transform:translateX(-50%) translateY(20px);opacity:0}to{transform:translateX(-50%) translateY(0);opacity:1}}`;
   document.head.appendChild(s);
 })();
+
+
+/* ============================================================
+   APLICAR TRADUCCIONES — recorre data-i18n y actualiza textos
+   ============================================================ */
+window.applyTranslations = function(){
+  // Actualizar todos los elementos con data-i18n
+  document.querySelectorAll('[data-i18n]').forEach(el=>{
+    const key=el.dataset.i18n;
+    const text=window.t(key);
+    if(text!==key) el.textContent=text;
+  });
+  // Actualizar botones de idioma activo
+  const esBtn=document.getElementById('langEsBtn');
+  const enBtn=document.getElementById('langEnBtn');
+  if(esBtn) esBtn.style.cssText+=(window.LANG==='es')?';border-color:var(--gold);color:var(--gold)':';border-color:var(--line);color:var(--text)';
+  if(enBtn) enBtn.style.cssText+=(window.LANG==='en')?';border-color:var(--gold);color:var(--gold)':';border-color:var(--line);color:var(--text)';
+  // Botones del header
+  const rankBtn=document.querySelector('.ranking-btn');
+  if(rankBtn){ const i=rankBtn.querySelector('i'); rankBtn.textContent=''; if(i)rankBtn.appendChild(i); rankBtn.append(' '+window.t('app.ranking')); }
+  // Tabs del menú perfil
+  const tabLabels={
+    profileTabStats:'profile.stats',
+    profileTabUser:'profile.settings',
+    profileTabUpgrades:'profile.upgrades',
+    profileTabNotes:'profile.skills',
+    profileTabAchievements:'profile.achievements',
+  };
+  Object.entries(tabLabels).forEach(([id,key])=>{
+    const btn=document.getElementById(id);
+    if(!btn) return;
+    const icon=btn.querySelector('i');
+    const badge=btn.querySelector('span');
+    btn.textContent='';
+    if(icon) btn.appendChild(icon);
+    btn.append(' '+window.t(key));
+    if(badge) btn.appendChild(badge);
+  });
+  // Tabs móvil
+  const mobLabels=[
+    ['mob-tab-campo','mob.campo'],['mob-tab-equipo','mob.equipo'],
+    ['mob-tab-rival','mob.rival'],['mob-tab-historial','mob.historial'],
+    ['mob-tab-info','mob.info'],['mob-tab-ranking','mob.ranking'],
+  ];
+  mobLabels.forEach(([id,key])=>{
+    const btn=document.getElementById(id);
+    if(!btn) return;
+    const icon=btn.querySelector('i,.mob-tab-icon');
+    const badge=btn.querySelector('.mob-tab-badge');
+    const label=btn.querySelector('.mob-tab-label');
+    if(label) label.textContent=window.t(key);
+  });
+  // Botones de acción principales
+  const selectBtn=document.querySelector('[onclick*="showTeamSelectModal"],.main-action-btn');
+  // Actualizar el sort label de convocados
+  const sortLabel=document.getElementById('convSortLabel');
+  if(sortLabel){
+    const CONV_SORT_LABELS_I18N={arrival:'draft.sort_arrival',position:'draft.sort_position',rating:'draft.sort_rating'};
+    sortLabel.textContent=window.t(CONV_SORT_LABELS_I18N[window.convSortMode]||'draft.sort_position');
+  }
+};
+
+// Aplicar traducciones al cargar
+document.addEventListener('DOMContentLoaded',()=>{
+  if(window.applyTranslations) window.applyTranslations();
+});

@@ -18,6 +18,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;600;700&family=Press+Start+2P&display=swap" rel="stylesheet">
 <script src="https://unpkg.com/@phosphor-icons/web@2.1.1/src/index.js"></script>
+<script src="i18n.js"></script>
 <script>
   // Cache-busting: force fresh CSS on every page load/refresh
   document.write('<link rel="stylesheet" href="style.css?v=' + Date.now() + '">');
@@ -33,7 +34,7 @@
   </div>
   <div class="app-header-actions">
     <a href="https://ko-fi.com/goal2goat" target="_blank" class="support-btn" style="text-decoration:none;display:inline-flex;align-items:center;justify-content:center">APOYA A GOAL2GOAT</a>
-    <button class="support-btn desktop-only ranking-btn" onclick="showRankingModal()"><i class="ph ph-bold ph-trophy" style="color:#c9a227;font-size:18px;vertical-align:middle"></i> RANKING</button>
+    <button class="support-btn desktop-only ranking-btn" onclick="showRankingModal()"><i class="ph ph-bold ph-trophy" style="color:#c9a227;font-size:18px;vertical-align:middle"></i data-i18n="app.ranking"> RANKING</button>
     <button class="header-auth-btn register-btn" id="authBtn">LOGIN / REGISTRO</button>
     <button class="header-ticket-btn" id="headerTicketBtn" style="display:none" onclick="openTicketOverlay()"><i class="ph ph-bold ph-ticket" style="color:#f87171;font-size:18px;vertical-align:middle"></i> TICKETS <span id="headerTicketCount">0/3</span><span class="header-ticket-alert" id="headerTicketAlert" style="display:none"></span></button>
     <button class="header-auth-btn profile-btn" id="profileBtn" style="display:none;position:relative"><i class="ph ph-bold ph-user" style="color:#7b9cff;font-size:18px;vertical-align:middle"></i> <span id="profileUsernameLabel"></span><span id="profileGoatBadge" style="display:none;position:absolute;top:-4px;right:-4px;width:10px;height:10px;border-radius:50%;background:#f87171;border:2px solid var(--card-bg);animation:ticketPulse 1.5s ease-in-out infinite"></span></button>
@@ -159,10 +160,16 @@
           <span>Usar siempre como nombre de equipo</span>
         </label>
         <p class="profile-field-hint">Si lo activas, no se te preguntará el nombre del equipo al formarlo — se usará este automáticamente.</p>
-        <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;align-items:center">
-          <button onclick="window.showPatchNotes()" style="background:none;border:none;cursor:pointer;font-family:'Bebas Neue',Impact,sans-serif;font-size:13px;letter-spacing:1px;color:var(--gold);padding:0;text-decoration:underline">NOTAS v0.351</button>
+        <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--line)">
+          <div class="settings-label" data-i18n="settings.language">IDIOMA</div>
+          <div style="display:flex;gap:8px;margin-top:8px">
+            <button id="langEsBtn" onclick="window.setLang('es')" style="flex:1;padding:8px;font-family:'Bebas Neue',Impact,sans-serif;font-size:14px;letter-spacing:1px;border:2px solid var(--line);background:var(--panel);color:var(--text);cursor:pointer">🇪🇸 ESPAÑOL</button>
+            <button id="langEnBtn" onclick="window.setLang('en')" style="flex:1;padding:8px;font-family:'Bebas Neue',Impact,sans-serif;font-size:14px;letter-spacing:1px;border:2px solid var(--line);background:var(--panel);color:var(--text);cursor:pointer">🇬🇧 ENGLISH</button>
+          </div>
         </div>
-        <button class="auth-submit-btn" style="background:#c0392b;margin-top:14px" id="profileLogoutBtn">CERRAR SESIÓN</button>
+        <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;align-items:center">
+          <button onclick="window.showPatchNotes()" style="background:none;border:none;cursor:pointer;font-family:'Bebas Neue',Impact,sans-serif;font-size:13px;letter-spacing:1px;color:var(--gold);padding:0;text-decoration:underline" data-i18n="settings.patch_notes">NOTAS v0.353</button>
+        </div>
         <!-- CHEATS: solo visible para tiopops -->
         <div id="cheatsSection" style="display:none;margin-top:18px;border-top:1px dashed #c0392b;padding-top:14px;">
           <label class="profile-field-label" style="color:#c0392b">⚙️ MODO DEBUG</label>
@@ -210,8 +217,8 @@
       <div id="profileAchievementsPane" class="profile-tab-pane">
         <div class="upgrades-header">
           <div class="upgrades-title-row">
-            <span class="upgrades-title">LOGROS</span>
-            <span class="upgrades-subtitle">Desafíos y recompensas</span>
+            <span class="upgrades-title" data-i18n="achievements.title">LOGROS</span>
+            <span class="upgrades-subtitle" data-i18n="achievements.subtitle">Desafíos y recompensas</span>
           </div>
         </div>
         <div id="achievementsList"></div>
@@ -330,7 +337,7 @@
   <div class="panel left-panel">
     <div class="box" id="convocadosBox">
       <h3 style="display:flex;align-items:center;justify-content:space-between">
-        <span id="convocadosTitle">CONVOCADOS <span id="draftCounter" class="counter-badge">0/11</span></span>
+        <span id="convocadosTitle" data-i18n-prefix="draft.convocados">CONVOCADOS <span id="draftCounter" class="counter-badge">0/11</span></span>
         <button id="convSortBtn" onclick="window.toggleConvSort()" title="Cambiar orden" style="background:none;border:none;cursor:pointer;padding:4px;color:var(--text-muted);display:none;flex-shrink:0;display:flex;align-items:center;gap:4px" aria-label="Cambiar orden">
           <span id="convSortLabel" style="font-family:'Bebas Neue',Impact,sans-serif;font-size:11px;letter-spacing:1px;color:var(--text-muted)">POSICIÓN</span>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--text-muted);flex-shrink:0">
@@ -446,11 +453,11 @@
 
     <!-- GO button + next rival compact strip under pitch -->
     <div id="centerBottom">
-      <button id="rollBtn" class="main-action-btn">SELECCIONAR JUGADOR</button>
+      <button id="rollBtn" class="main-action-btn" data-i18n="draft.select_player">SELECCIONAR JUGADOR</button>
       <button id="playMatchBtn" class="main-action-btn" style="display:none">JUGAR</button>
     </div>
     <div id="quickBuildWrap">
-      <button id="quickBuildBtn" class="main-action-btn quick-build-btn">EQUIPO RÁPIDO</button>
+      <button id="quickBuildBtn" class="main-action-btn quick-build-btn" data-i18n="draft.quick_team">EQUIPO RÁPIDO</button>
     </div>
     </div>
     <!-- Selection / roster modal goes here on mobile -->
