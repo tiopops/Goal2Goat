@@ -2102,7 +2102,7 @@ function poissonSample(lambda){
 function playMatch(){
   if(!nextOpponent) return;
   swapsUsedThisMatch=0;
-  convSortMode='arrival'; // reset al empezar partido
+  convSortMode='position'; // siempre ordenar por posición al empezar partido
   swapSelection=null;
   // Tick injury timers
   const recovered=[];
@@ -4503,6 +4503,8 @@ function initFirebaseAuth(){
       const data=snap.exists?snap.data():{};
       window.preferredTeamName=data.preferredTeamName||"";
       window.useFixedTeamName=!!data.useFixedTeamName;
+      // Sincronizar nombre del equipo para el contador de convocados
+      if(window.preferredTeamName) window._currentTeamName=window.preferredTeamName.toUpperCase();
       // Inicializar sistema de boletos
       if(window._initTicketSystem) window._initTicketSystem(user, false);
       // Listener en tiempo real de mejoras
@@ -4628,6 +4630,7 @@ function initFirebaseAuth(){
     const nameInp=$id("preferredTeamNameInput");
     const checkbox=$id("useFixedTeamNameCheckbox");
     const preferredTeamName=(nameInp?nameInp.value.trim():"").toUpperCase();
+    window._currentTeamName=preferredTeamName||myTeamName||'MI EQUIPO';
     const useFixedTeamName=!!(checkbox&&checkbox.checked);
     if(useFixedTeamName&&!preferredTeamName){
       if(checkbox) checkbox.checked=false; // can't activate without a name

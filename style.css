@@ -826,10 +826,11 @@ body.dark-theme .settings-item:hover{background:var(--row-hover);color:var(--gol
   #profileOverlay .auth-tab{
     text-align:center;
     padding:10px 4px;
-    font-size:13px !important;
+    font-size:14px !important;
     letter-spacing:.8px;
-    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
   }
+  #profileOverlay .auth-tab i{ font-size:22px !important; }
   #profileOverlay .skill-grid{
     grid-template-columns:repeat(3,1fr) !important;
   }
@@ -901,11 +902,11 @@ body.dark-theme .settings-item:hover{background:var(--row-hover);color:var(--gol
 .auth-tab{
   flex:1;background:none;border:none;color:var(--text-muted);
   font-family:'Bebas Neue',Impact,sans-serif;
-  font-size:12px;letter-spacing:.5px;
+  font-size:13px;letter-spacing:.5px;
   padding:10px 2px;cursor:pointer;transition:.15s;
   border-bottom:2px solid transparent;margin-bottom:-2px;
   white-space:nowrap;text-align:center;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
 }
 /* En móvil, pestañas más compactas */
 @media(max-width:640px){
@@ -913,10 +914,10 @@ body.dark-theme .settings-item:hover{background:var(--row-hover);color:var(--gol
     font-size:11px !important;
     padding:8px 1px !important;
     letter-spacing:0 !important;
-    display:flex;flex-direction:column;align-items:center;gap:2px;
+    display:flex;flex-direction:column;align-items:center;gap:3px;
   }
   #profileOverlay .auth-tab i{
-    font-size:18px !important;
+    font-size:20px !important;
   }
   /* Header botones en móvil: menos padding, icono más visible */
   .header-auth-btn, .header-ticket-btn, .profile-btn, .support-btn{
