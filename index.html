@@ -81,7 +81,11 @@
 <!-- FULL-WIDTH APP HEADER -->
 <header id="appHeader">
   <div class="app-header-logo">
-    <img src="assets/logo/header_logo.png" alt="Goal2Goat" onclick="location.reload()" style="cursor:pointer;height:28px;width:auto;display:block" title="Volver al inicio">
+    <img src="assets/logo/header_logo.png" alt="Goal2Goat" onclick="location.reload()" 
+      style="cursor:pointer;height:32px;width:auto;display:block" 
+      title="Volver al inicio"
+      onerror="this.style.display='none';document.getElementById('logoFallback').style.display='block'">
+    <span id="logoFallback" style="display:none;font-family:'Bebas Neue',Impact,sans-serif;font-size:26px;letter-spacing:3px;color:#c9a227;cursor:pointer;line-height:1" onclick="location.reload()">GOAL2GOAT</span>
     <div class="version-tag">v0.353</div>
   </div>
   <div class="app-header-actions">
