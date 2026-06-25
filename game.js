@@ -4324,8 +4324,13 @@ function syncThemeToggleUI(isDark){
     const saved=localStorage.getItem('darkTheme');
     if(saved==='false') isDark=false;
   }catch(e){}
-  if(isDark) document.body.classList.add("dark-theme");
-  else document.body.classList.remove("dark-theme");
+  if(isDark) {
+    document.body.classList.add("dark-theme");
+    document.body.classList.remove("light-theme");
+  } else {
+    document.body.classList.remove("dark-theme");
+    document.body.classList.add("light-theme");
+  }
   document.documentElement.classList.remove('dark-theme-init');
   requestAnimationFrame(()=>requestAnimationFrame(()=>document.body.classList.add("theme-ready")));
   syncThemeToggleUI(isDark);
@@ -4342,6 +4347,8 @@ audioToggleBtns.forEach(btn=>{
 themeToggleBtns.forEach(btn=>{
   btn.addEventListener("click",()=>{
     const isDark=document.body.classList.toggle("dark-theme");
+    if(isDark) document.body.classList.remove("light-theme");
+    else document.body.classList.add("light-theme");
     syncThemeToggleUI(isDark);
     try{ localStorage.setItem('darkTheme', isDark); }catch(e){}
     playSound('select');
