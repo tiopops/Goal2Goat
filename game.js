@@ -482,7 +482,7 @@ const PRESS_PREDICTIONS = [
 
 /* ========= COMPETITION STATE (World Cup format) ========= */
 const ROUND_NAMES = ["Octavos de Final","Cuartos de Final","Semifinal","Final"];
-function getRoundName(idx){ try{ return [t("comp.r16"),t("comp.qf"),t("comp.sf"),t("comp.final")][idx]||ROUND_NAMES[idx]||""; }catch(e){ return ROUND_NAMES[idx]||""; } }
+function getRoundName(idx){ try{ const W=window.t||(k=>k); return [W("comp.r16")||ROUND_NAMES[0],W("comp.qf")||ROUND_NAMES[1],W("comp.sf")||ROUND_NAMES[2],W("comp.final")||ROUND_NAMES[3]][idx]||ROUND_NAMES[idx]||""; }catch(e){ return ROUND_NAMES[idx]||""; } }
 let stage = "group";        // "group" | "knockout" | "done"
 let groupOpponents = [];    // 3 team objects for this group
 let groupMatchIdx = 0;       // 0,1,2 — which group match is next
@@ -1364,9 +1364,9 @@ function renderCenterSummary(){
   </div>`;
 }
 function stageLabel(){
-  if(stage==="group") return `${t("comp.groups")} · ${t("match.match")||"partido"} ${groupMatchIdx+1}/3`;
+  if(stage==="group") return `${(window.t?t("comp.groups"):"FASE DE GRUPOS")} · ${(window.t?t("match.match"):"partido")} ${groupMatchIdx+1}/3`;
   if(stage==="knockout") return getRoundName(knockoutRound);
-  return t("comp.champion")||"Torneo completado";
+  return (window.t?t("comp.champion"):"¡CAMPEÓN!")||"¡CAMPEÓN!";
 }
 
 function getFatigueBarHTML(p){
@@ -1716,7 +1716,7 @@ function resetDraft(){
   updateDraftCounter();
   updateConvocadosTable();
   rollBtn.disabled=false;
-  rollBtn.textContent=t("draft.select_player")||"SELECCIONAR JUGADOR";
+  rollBtn.textContent=(window.t?t("draft.select_player"):null)||"SELECCIONAR JUGADOR";
   selectedPlayer=null;
   playerCardEl.innerHTML="";
 }
@@ -2002,7 +2002,7 @@ function renderGroupTableHTML(){
     </tr>`;
   });
   return `<table class="group-table"><thead><tr><th>#</th><th>Equipo</th><th>PJ</th><th>G</th><th>E</th><th>P</th><th>GF-GC</th><th>Pts</th></tr></thead><tbody>${rows}</tbody></table>
-  <div class="hint-line">${t("comp.r16_advance")}</div>`;
+  <div class="hint-line">${window.t?t("comp.r16_advance"):"clasificado para octavos"}</div>`;
 }
 function renderBracketHTML(knockoutMatches){
   let rows="";
@@ -2014,7 +2014,7 @@ function renderBracketHTML(knockoutMatches){
   const nextRound=ROUND_NAMES[knockoutRound];
   return `<div class="hint-line" style="margin-top:10px;font-weight:700">ELIMINATORIAS</div>
   <table><thead><tr><th>Ronda</th><th>Rival</th><th>Resultado</th><th>Res</th></tr></thead><tbody>${rows}</tbody></table>
-  <div class="hint-line">${nextRound&&stage==="knockout"?(t('comp.next_round')+nextRound):'¡Final completada!'}</div>`;
+  <div class="hint-line">${nextRound&&stage==="knockout"?((window.t?t("comp.next_round"):"Siguiente ronda: ")+nextRound):"¡Final completada!"}</div>`;
 }
 
 /* ========= MATCH SIMULATION ========= */
@@ -2414,8 +2414,8 @@ function generateMatchSummary(myGoals,oppGoals,rivalName){
     </div>
   </div>`;
 
-  return `<strong>${t("match.possession")}:</strong> ${myTeamName} ${possession}% · ${rivalName} ${oppPoss}%<br>
-<strong>${t("match.shots")}:</strong> ${shots} – ${oppShots}
+  return `<strong>${window.t?t("match.possession"):"Posesión"}:</strong> ${myTeamName} ${possession}% · ${rivalName} ${oppPoss}%<br>
+<strong>${window.t?t("match.shots"):"Tiros a puerta"}:</strong> ${shots} – ${oppShots}
 ${goalsHTML}`;
 }
 
@@ -2765,9 +2765,9 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
   // Resultado
   const wasShootout=!!penaltyInfo;
   let resultText,resultClass;
-  if(draw){ resultText=t("match.draw"); resultClass="res-draw-tag"; }
+  if(draw){ resultText=window.t?t("match.draw"):"EMPATE"; resultClass="res-draw-tag"; }
   else {
-    resultText=won?(wasShootout?t("match.victory"):t("match.victory")):(wasShootout?t("match.defeat"):t("match.defeat"));
+    resultText=won?(window.t?t("match.victory"):"¡VICTORIA!"):(window.t?t("match.defeat"):"DERROTA");
     resultClass=won?"res-win-tag":"res-lose-tag";
   }
 
@@ -2847,7 +2847,7 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
       if(!htShown){
         htShown=true;
         clockEl.textContent=`45+${inj1}'`;
-        halfEl.textContent=t('match.halftime');
+        halfEl.textContent=window.t?t('match.halftime'):'DESCANSO';
         halfEl.style.background='#a07a00';
         fillEl.style.width='50%';
         addSep(`Descanso — 45+${inj1}'`);
@@ -2888,8 +2888,8 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
 
   // ── Fase 3: Prórroga ────────────────────────────────────────────────────
   function startExtraTime(){
-    halfEl.textContent=t('match.extratime'); halfEl.style.background='#7a3a0a';
-    addSep('— '+t('match.extratime')+' —');
+    halfEl.textContent=window.t?t('match.extratime'):'PRÓRROGA'; halfEl.style.background='#7a3a0a';
+    addSep('— '+(window.t?t('match.extratime'):'PRÓRROGA')+' —');
     const ET=4000,ET_S=0.47,ET_E=0.53;
     let etHt=false;
     const etStart=performance.now();
@@ -6199,71 +6199,6 @@ async function renderAchievementsTab(){
   document.head.appendChild(s);
 })();
 
-
-/* ============================================================
-   APLICAR TRADUCCIONES — recorre data-i18n y actualiza textos
-   ============================================================ */
-window.applyTranslations = function(){
-  // Actualizar todos los elementos con data-i18n
-  document.querySelectorAll('[data-i18n]').forEach(el=>{
-    const key=el.dataset.i18n;
-    const text=window.t(key);
-    if(text!==key) el.textContent=text;
-  });
-  // Actualizar botones de idioma activo
-  const esBtn=document.getElementById('langEsBtn');
-  const enBtn=document.getElementById('langEnBtn');
-  if(esBtn) esBtn.style.cssText+=(window.LANG==='es')?';border-color:var(--gold);color:var(--gold)':';border-color:var(--line);color:var(--text)';
-  if(enBtn) enBtn.style.cssText+=(window.LANG==='en')?';border-color:var(--gold);color:var(--gold)':';border-color:var(--line);color:var(--text)';
-  // Botones del header
-  const rankBtn=document.querySelector('.ranking-btn');
-  if(rankBtn){ const i=rankBtn.querySelector('i'); rankBtn.textContent=''; if(i)rankBtn.appendChild(i); rankBtn.append(' '+window.t('app.ranking')); }
-  // Tabs del menú perfil
-  const tabLabels={
-    profileTabStats:'profile.stats',
-    profileTabUser:'profile.settings',
-    profileTabUpgrades:'profile.upgrades',
-    profileTabNotes:'profile.skills',
-    profileTabAchievements:'profile.achievements',
-  };
-  Object.entries(tabLabels).forEach(([id,key])=>{
-    const btn=document.getElementById(id);
-    if(!btn) return;
-    const icon=btn.querySelector('i');
-    const badge=btn.querySelector('span');
-    btn.textContent='';
-    if(icon) btn.appendChild(icon);
-    btn.append(' '+window.t(key));
-    if(badge) btn.appendChild(badge);
-  });
-  // Tabs móvil
-  const mobLabels=[
-    ['mob-tab-campo','mob.campo'],['mob-tab-equipo','mob.equipo'],
-    ['mob-tab-rival','mob.rival'],['mob-tab-historial','mob.historial'],
-    ['mob-tab-info','mob.info'],['mob-tab-ranking','mob.ranking'],
-  ];
-  mobLabels.forEach(([id,key])=>{
-    const btn=document.getElementById(id);
-    if(!btn) return;
-    const icon=btn.querySelector('i,.mob-tab-icon');
-    const badge=btn.querySelector('.mob-tab-badge');
-    const label=btn.querySelector('.mob-tab-label');
-    if(label) label.textContent=window.t(key);
-  });
-  // Botones de acción principales
-  const selectBtn=document.querySelector('[onclick*="showTeamSelectModal"],.main-action-btn');
-  // Actualizar el sort label de convocados
-  const sortLabel=document.getElementById('convSortLabel');
-  if(sortLabel){
-    const CONV_SORT_LABELS_I18N={arrival:'draft.sort_arrival',position:'draft.sort_position',rating:'draft.sort_rating'};
-    sortLabel.textContent=window.t(CONV_SORT_LABELS_I18N[window.convSortMode]||'draft.sort_position');
-  }
-};
-
-// Aplicar traducciones al cargar
-document.addEventListener('DOMContentLoaded',()=>{
-  if(window.applyTranslations) window.applyTranslations();
-});
 
 
 /* ═══ TRADUCCIONES ═══ */
