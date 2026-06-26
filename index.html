@@ -80,13 +80,13 @@
 
 <!-- FULL-WIDTH APP HEADER -->
 <header id="appHeader">
-  <div class="app-header-logo" style="flex-direction:row;align-items:flex-end;gap:5px">
+  <div class="app-header-logo" style="flex-direction:row;align-items:flex-end;gap:5px;line-height:1">
     <img src="header_logo.png" alt="Goal2Goat" onclick="location.reload()"
-      style="cursor:pointer;height:36px;width:auto;display:block"
+      style="cursor:pointer;height:36px;width:auto;display:block;vertical-align:bottom"
       title="Volver al inicio"
       onerror="this.style.display='none';document.getElementById('logoFallback').style.display='block'">
     <span id="logoFallback" style="display:none;font-family:'Bebas Neue',Impact,sans-serif;font-size:26px;letter-spacing:3px;color:#c9a227;cursor:pointer;line-height:1" onclick="location.reload()">GOAL2GOAT</span>
-    <div class="version-tag" style="align-self:flex-end;line-height:1;margin-bottom:1px">v0.355</div>
+    <div class="version-tag" style="line-height:1;padding-bottom:1px">v0.353</div>
   </div>
   <div class="app-header-actions">
     <a href="https://ko-fi.com/goal2goat" target="_blank" class="support-btn" style="text-decoration:none;display:inline-flex;align-items:center;justify-content:center" data-i18n="app.support">APOYA A GOAL2GOAT</a>
@@ -215,7 +215,7 @@
           <input type="checkbox" id="useFixedTeamNameCheckbox">
           <span data-i18n="settings.always_use">Usar siempre como nombre de equipo</span>
         </label>
-        <p class="profile-field-hint" data-i18n="settings.always_hint">Si lo activas, no se te preguntará el nombre del equipo al formarlo — se usará este automáticamente.</p>
+        <p class="profile-field-hint" data-i18n="settings.always_hint" data-i18n="settings.always_hint">Si lo activas, no se te preguntará el nombre del equipo al formarlo — se usará este automáticamente.</p>
         <div id="langSelectorWrap" style="display:none;margin-top:14px;padding-top:14px;border-top:1px solid var(--line)">
           <div style="font-size:10px;letter-spacing:1.5px;color:var(--text-muted);font-family:'Bebas Neue',Impact,sans-serif;margin-bottom:8px">IDIOMA</div>
           <div style="display:flex;gap:8px">
@@ -224,7 +224,7 @@
           </div>
         </div>
         <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;align-items:center">
-          <button onclick="window.showPatchNotes()" style="background:none;border:none;cursor:pointer;font-family:'Bebas Neue',Impact,sans-serif;font-size:13px;letter-spacing:1px;color:var(--gold);padding:0;text-decoration:underline" data-i18n="settings.patch_notes">NOTAS v0.355</button>
+          <button onclick="window.showPatchNotes()" style="background:none;border:none;cursor:pointer;font-family:'Bebas Neue',Impact,sans-serif;font-size:13px;letter-spacing:1px;color:var(--gold);padding:0;text-decoration:underline" data-i18n="settings.patch_notes">NOTAS v0.353</button>
         </div>
         <!-- CHEATS: solo visible para tiopops -->
         <div id="cheatsSection" style="display:none;margin-top:18px;border-top:1px dashed #c0392b;padding-top:14px;">
