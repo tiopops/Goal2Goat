@@ -89,16 +89,16 @@
     <div class="version-tag" style="margin-bottom:2px">v0.353</div>
   </div>
   <div class="app-header-actions">
-    <a href="https://ko-fi.com/goal2goat" target="_blank" class="support-btn" style="text-decoration:none;display:inline-flex;align-items:center;justify-content:center" data-i18n="app.support">APOYA A GOAL2GOAT</a>
-    <button class="support-btn desktop-only ranking-btn" onclick="showRankingModal()"><i class="ph ph-bold ph-trophy" style="color:#c9a227;font-size:18px;vertical-align:middle"></i> <span data-i18n="app.ranking">RANKING</span></button>
-    <button class="header-auth-btn register-btn" id="authBtn" data-i18n="app.login">LOGIN / REGISTRO</button>
-    <button class="header-ticket-btn" id="headerTicketBtn" style="display:none" onclick="openTicketOverlay()"><i class="ph ph-bold ph-ticket" style="color:#f87171;font-size:18px;vertical-align:middle"></i> <span data-i18n="app.tickets">TICKETS</span> <span id="headerTicketCount">0/3</span><span class="header-ticket-alert" id="headerTicketAlert" style="display:none"></span></button>
+    <a href="https://ko-fi.com/goal2goat" target="_blank" class="support-btn" style="text-decoration:none;display:inline-flex;align-items:center;justify-content:center">APOYA A GOAL2GOAT</a>
+    <button class="support-btn desktop-only ranking-btn" onclick="showRankingModal()"><i class="ph ph-bold ph-trophy" style="color:#c9a227;font-size:18px;vertical-align:middle"></i data-i18n="app.ranking"> RANKING</button>
+    <button class="header-auth-btn register-btn" id="authBtn">LOGIN / REGISTRO</button>
+    <button class="header-ticket-btn" id="headerTicketBtn" style="display:none" onclick="openTicketOverlay()"><i class="ph ph-bold ph-ticket" style="color:#f87171;font-size:18px;vertical-align:middle"></i> TICKETS <span id="headerTicketCount">0/3</span><span class="header-ticket-alert" id="headerTicketAlert" style="display:none"></span></button>
     <button class="header-auth-btn profile-btn" id="profileBtn" style="display:none;position:relative"><i class="ph ph-bold ph-user" style="color:#7b9cff;font-size:18px;vertical-align:middle"></i> <span id="profileUsernameLabel"></span><span id="profileGoatBadge" style="display:none;position:absolute;top:-4px;right:-4px;width:10px;height:10px;border-radius:50%;background:#f87171;border:2px solid var(--card-bg);animation:ticketPulse 1.5s ease-in-out infinite"></span></button>
     <div class="settings-menu" id="settingsMenu">
       <button class="settings-toggle" id="settingsToggle" onclick="toggleSettingsMenu()" title="Ajustes">⚙</button>
       <div class="settings-dropdown" id="settingsDropdown">
         <button id="audioToggleHeader" class="settings-item" title="Activar/desactivar sonido">
-          <span class="topbar-dot on"></span><span class="topbar-label" data-i18n="settings.sound">SONIDO</span>
+          <span class="topbar-dot on"></span><span class="topbar-label">SONIDO</span>
         </button>
         <button id="themeToggleHeader" class="settings-item" title="Cambiar tema claro/oscuro">
           <span class="topbar-dot on"></span><span class="topbar-label">TEMA OSCURO</span>
@@ -146,23 +146,23 @@
       <div id="profileStatsPane" class="profile-tab-pane profile-tab-pane-active">
 
         <!-- Sección: Resultados -->
-        <div class="stats-section-label" data-i18n="stats.results">RESULTADOS</div>
+        <div class="stats-section-label">RESULTADOS</div>
         <div class="profile-stats-grid" style="grid-template-columns:repeat(2,1fr)">
           <div class="profile-stat-card">
             <div class="pstat-val" id="pstat-games">—</div>
-            <div class="pstat-label" data-i18n="stats.played">PARTIDAS</div>
+            <div class="pstat-label">PARTIDAS</div>
           </div>
           <div class="profile-stat-card wins">
             <div class="pstat-val" id="pstat-wins">—</div>
-            <div class="pstat-label" data-i18n="stats.wins">VICTORIAS</div>
+            <div class="pstat-label">VICTORIAS</div>
           </div>
           <div class="profile-stat-card">
             <div class="pstat-val" id="pstat-draws">—</div>
-            <div class="pstat-label" data-i18n="stats.draws">EMPATES</div>
+            <div class="pstat-label">EMPATES</div>
           </div>
           <div class="profile-stat-card losses">
             <div class="pstat-val" id="pstat-losses">—</div>
-            <div class="pstat-label" data-i18n="stats.losses">DERROTAS</div>
+            <div class="pstat-label">DERROTAS</div>
           </div>
         </div>
 
@@ -171,28 +171,28 @@
         <div class="profile-stats-grid" style="grid-template-columns:repeat(2,1fr)">
           <div class="profile-stat-card">
             <div class="pstat-val" id="pstat-gf">—</div>
-            <div class="pstat-label" data-i18n="stats.gf">A FAVOR</div>
+            <div class="pstat-label">A FAVOR</div>
           </div>
           <div class="profile-stat-card">
             <div class="pstat-val" id="pstat-ga">—</div>
-            <div class="pstat-label" data-i18n="stats.ga">EN CONTRA</div>
+            <div class="pstat-label">EN CONTRA</div>
           </div>
         </div>
 
         <!-- Sección: Trofeos -->
-        <div class="stats-section-label" data-i18n="stats.trophies">TROFEOS</div>
+        <div class="stats-section-label">TROFEOS</div>
         <div class="profile-stats-grid" style="grid-template-columns:repeat(3,1fr)">
           <div class="profile-stat-card best">
             <div class="pstat-val" id="pstat-best">—</div>
-            <div class="pstat-label" data-i18n="stats.best">MEJOR PUNT.</div>
+            <div class="pstat-label">MEJOR PUNT.</div>
           </div>
           <div class="profile-stat-card titles">
             <div class="pstat-val"><i class="ph ph-bold ph-trophy" style="color:#c9a227;font-size:28px;vertical-align:middle"></i> <span id="pstat-titles">—</span></div>
-            <div class="pstat-label" data-i18n="stats.titles">TÍTULOS</div>
+            <div class="pstat-label">TÍTULOS</div>
           </div>
           <div class="profile-stat-card" style="border-color:var(--gold)">
             <div class="pstat-val" style="color:var(--gold)">🐐 <span id="pstat-scratch-pts">—</span></div>
-            <div class="pstat-label" data-i18n="stats.goat_pts">GOAT PTS</div>
+            <div class="pstat-label">GOAT PTS</div>
           </div>
         </div>
 
@@ -200,7 +200,7 @@
 
       <!-- USUARIO TAB -->
       <div id="profileUserPane" class="profile-tab-pane">
-        <label class="profile-field-label" data-i18n="settings.preferences">PREFERENCIAS</label>
+        <label class="profile-field-label">PREFERENCIAS</label>
         <div class="profile-settings-row">
           <button id="audioToggle" class="settings-item" title="Activar/desactivar sonido">
             <span class="topbar-dot on"></span><span class="topbar-label">SONIDO</span>
@@ -209,18 +209,18 @@
             <span class="topbar-dot on"></span><span class="topbar-label">TEMA OSCURO</span>
           </button>
         </div>
-        <label class="profile-field-label" for="preferredTeamNameInput" data-i18n="settings.team_name">NOMBRE DEL EQUIPO</label>
+        <label class="profile-field-label" for="preferredTeamNameInput">NOMBRE DEL EQUIPO</label>
         <input type="text" id="preferredTeamNameInput" maxlength="24" placeholder="Ej: Dream Team FC" class="team-name-input">
         <label class="profile-checkbox-row">
           <input type="checkbox" id="useFixedTeamNameCheckbox">
-          <span data-i18n="settings.always_use">Usar siempre como nombre de equipo</span>
+          <span>Usar siempre como nombre de equipo</span>
         </label>
         <p class="profile-field-hint">Si lo activas, no se te preguntará el nombre del equipo al formarlo — se usará este automáticamente.</p>
         <div id="langSelectorWrap" style="margin-top:14px;padding-top:14px;border-top:1px solid var(--line);display:none">
           <div class="settings-label" data-i18n="settings.language">IDIOMA</div>
           <div style="display:flex;gap:8px;margin-top:8px">
-            <button id="langEsBtn" onclick="window.setLang('es')" style="flex:1;padding:8px;font-family:'Bebas Neue',Impact,sans-serif;font-size:14px;letter-spacing:1px;border:2px solid var(--line);background:var(--panel);color:var(--text);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:6px"><span style="font-size:11px;font-weight:700;background:#c60b1e;color:#fff;padding:1px 4px;border-radius:2px;font-family:'Inter',sans-serif;letter-spacing:.5px">ES</span> ESPAÑOL</button>
-            <button id="langEnBtn" onclick="window.setLang('en')" style="flex:1;padding:8px;font-family:'Bebas Neue',Impact,sans-serif;font-size:14px;letter-spacing:1px;border:2px solid var(--line);background:var(--panel);color:var(--text);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:6px"><span style="font-size:11px;font-weight:700;background:#012169;color:#fff;padding:1px 4px;border-radius:2px;font-family:'Inter',sans-serif;letter-spacing:.5px">GB</span> ENGLISH</button>
+            <button id="langEsBtn" onclick="window.setLang('es')" style="flex:1;padding:8px;font-family:'Bebas Neue',Impact,sans-serif;font-size:14px;letter-spacing:1px;border:2px solid var(--line);background:var(--panel);color:var(--text);cursor:pointer">🇪🇸 ESPAÑOL</button>
+            <button id="langEnBtn" onclick="window.setLang('en')" style="flex:1;padding:8px;font-family:'Bebas Neue',Impact,sans-serif;font-size:14px;letter-spacing:1px;border:2px solid var(--line);background:var(--panel);color:var(--text);cursor:pointer">🇬🇧 ENGLISH</button>
           </div>
         </div>
         <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;align-items:center">
@@ -288,33 +288,33 @@
 <div id="patchNotesOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:60000;align-items:center;justify-content:center">
   <div class="auth-modal" style="max-width:500px;position:relative">
     <button onclick="document.getElementById('patchNotesOverlay').style.display='none'" class="auth-close" style="position:absolute;top:12px;right:14px">✕</button>
-    <div class="auth-logo" style="font-size:16px" data-i18n="patch.title">📋 NOTAS DE LA VERSIÓN</div>
+    <div class="auth-logo" style="font-size:16px">📋 NOTAS DE LA VERSIÓN</div>
     <div class="version-notes-scroll">
-      <h4 data-i18n="patch.v351_match">v0.351 — Partido</h4>
+      <h4>v0.351 — Partido</h4>
       <ul>
-        <li data-i18n="patch.v351_match_1">Feed de partido en 3 columnas: mi equipo izquierda, minuto centro, rival derecha.</li>
-        <li data-i18n="patch.v351_match_2">Lesiones y tarjetas bidireccionales: la falta que causa una lesión genera tarjeta al jugador que la comete.</li>
-        <li data-i18n="patch.v351_match_3">El rival también puede sufrir lesiones y tarjetas durante el partido.</li>
-        <li data-i18n="patch.v351_match_4">Expulsión con banquillo lleno: el jugador permanece en campo con rating 0.</li>
-        <li data-i18n="patch.v351_match_5">Los estados de convocados se actualizan solo al finalizar el partido.</li>
+        <li>Feed de partido en 3 columnas: mi equipo izquierda, minuto centro, rival derecha.</li>
+        <li>Lesiones y tarjetas bidireccionales: la falta que causa una lesión genera tarjeta al jugador que la comete.</li>
+        <li>El rival también puede sufrir lesiones y tarjetas durante el partido.</li>
+        <li>Expulsión con banquillo lleno: el jugador permanece en campo con rating 0.</li>
+        <li>Los estados de convocados se actualizan solo al finalizar el partido.</li>
       </ul>
-      <h4 data-i18n="patch.v351_tickets">v0.351 — Tickets</h4>
+      <h4>v0.351 — Tickets</h4>
       <ul>
-        <li data-i18n="patch.v351_t1">Composicion: 1 X roja, 1 cabra (+4pts), 7 monedas (+1pt). Máximo 11pts por boleto.</li>
-        <li data-i18n="patch.v351_t2">Tickets disponibles a las 0:00, 4:00, 8:00, 12:00, 16:00 y 20:00 hora local.</li>
-        <li data-i18n="patch.v351_t3">Sonido al ganar y al perder el boleto.</li>
+        <li>Composicion: 1 X roja, 1 cabra (+4pts), 7 monedas (+1pt). Máximo 11pts por boleto.</li>
+        <li>Tickets disponibles a las 0:00, 4:00, 8:00, 12:00, 16:00 y 20:00 hora local.</li>
+        <li>Sonido al ganar y al perder el boleto.</li>
       </ul>
-      <h4 data-i18n="patch.v351_skills">v0.351 — Mejoras y Habilidades</h4>
+      <h4>v0.351 — Mejoras y Habilidades</h4>
       <ul>
-        <li data-i18n="patch.v351_s1">Nueva pestaña MEJORAS: banquillo, cambios y convocados mejorables con GOAT Points.</li>
-        <li data-i18n="patch.v351_s2">Nueva pestaña HABILIDADES: modificadores especiales comprables con GOAT Points.</li>
-        <li data-i18n="patch.v351_s3">Mejora RECUPERACIÓN: reduce la fatiga acumulada por partido.</li>
-        <li data-i18n="patch.v351_s4">Las mejoras tienen efecto real en el juego en tiempo real.</li>
+        <li>Nueva pestaña MEJORAS: banquillo, cambios y convocados mejorables con GOAT Points.</li>
+        <li>Nueva pestaña HABILIDADES: modificadores especiales comprables con GOAT Points.</li>
+        <li>Mejora RECUPERACIÓN: reduce la fatiga acumulada por partido.</li>
+        <li>Las mejoras tienen efecto real en el juego en tiempo real.</li>
       </ul>
-      <h4 data-i18n="patch.v35_base">v0.35 — Sistema base</h4>
+      <h4>v0.35 — Sistema base</h4>
       <ul>
-        <li data-i18n="patch.v35_1">Simulación en vivo 0-90+X minutos con descanso, prórroga y penaltis ABAB.</li>
-        <li data-i18n="patch.v35_2">Tickets GOAT Points con rasca y gana y ticket dorado al ganar el Mundial.</li>
+        <li>Simulación en vivo 0-90+X minutos con descanso, prórroga y penaltis ABAB.</li>
+        <li>Tickets GOAT Points con rasca y gana y ticket dorado al ganar el Mundial.</li>
       </ul>
     </div>
   </div>
@@ -329,7 +329,7 @@
     </p>
     <button id="welcomeRegisterBtn" class="auth-submit-btn" style="display:none;margin-bottom:10px">REGÍSTRATE</button>
     <a href="https://ko-fi.com/goal2goat" target="_blank" class="support-pay-btn" style="display:block;margin-bottom:10px">APOYA A GOAL2GOAT</a>
-    <button class="auth-submit-btn" id="welcomeStartBtn" style="background:#1a2a1a;border:1px solid var(--gold);color:var(--gold)" onclick="document.getElementById('welcomeOverlay').style.display='none'">EMPEZAR A JUGAR</button>
+    <button class="auth-submit-btn" id="welcomeStartBtn" style="background:#1a2a1a;border:1px solid var(--gold);color:var(--gold)">EMPEZAR A JUGAR</button>
   </div>
 </div>
 
@@ -436,8 +436,8 @@
     </div>
 
     <div class="team-profile box" id="teamProfileBox">
-      <h3 data-i18n="team.profile">PERFIL DEL EQUIPO</h3>
-      <div class="ovr-team"><span class="team-stat-title" data-i18n="team.avg_rating">NOTA MEDIA</span><span id="teamOVR">—</span></div>
+      <h3>PERFIL DEL EQUIPO</h3>
+      <div class="ovr-team"><span class="team-stat-title">NOTA MEDIA</span><span id="teamOVR">—</span></div>
       <div class="stat-row"><span>ATAQUE</span><span id="attackValue">0</span></div>
       <div class="stat-bar"><div id="attackBar"></div></div>
       <div class="stat-row"><span>DEFENSA</span><span id="defenseValue">0</span></div>
@@ -502,7 +502,7 @@
     <!-- Formation info: read-only card shown once the squad is locked in.
          The interactive picker lives in the LEFT panel (only during draft). -->
     <div class="box formation-box-desktop" id="formationInfoCard" style="display:none">
-      <h3 data-i18n="formation.chosen_title">FORMACIÓN ELEGIDA</h3>
+      <h3>FORMACIÓN ELEGIDA</h3>
       <p id="currentFormation" class="hint-line">4-4-2 · Equilibrada</p>
       <p id="formationDesc" class="hint-line" style="margin-top:4px;color:var(--text-muted)"></p>
     </div>
@@ -635,20 +635,20 @@
 <nav id="mobileTabBar">
   <button class="mob-tab active" data-tab="campo" onclick="switchMobileTab('campo')">
     <svg class="mob-tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="12" y1="4" x2="12" y2="20"/><circle cx="12" cy="12" r="2.5"/></svg>
-    <span class="mob-tab-label" data-i18n="mob.campo">CAMPO</span>
+    <span class="mob-tab-label">CAMPO</span>
   </button>
   <button class="mob-tab" data-tab="equipo" onclick="switchMobileTab('equipo')">
     <svg class="mob-tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="7" r="3"/><path d="M2 21v-1.5C2 16 5 14 9 14s7 2 7 5.5V21z"/><circle cx="17" cy="8" r="2.3" opacity=".8"/><path d="M22 21v-1.2c0-2.5-2-4.2-4.5-4.5"/></svg>
-    <span class="mob-tab-label" data-i18n="mob.equipo">EQUIPO</span>
+    <span class="mob-tab-label">EQUIPO</span>
     <span class="mob-tab-badge mob-tab-badge-pulse" id="formationBadge">!</span>
   </button>
   <button class="mob-tab" data-tab="rival" onclick="switchMobileTab('rival')">
     <svg class="mob-tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L3 6v6c0 5 4 8.5 9 10 5-1.5 9-5 9-10V6z"/></svg>
-    <span class="mob-tab-label" data-i18n="mob.rival">RIVAL</span>
+    <span class="mob-tab-label">RIVAL</span>
   </button>
   <button class="mob-tab" data-tab="historial" onclick="switchMobileTab('historial')">
     <svg class="mob-tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3h14a1 1 0 0 1 1 1v17l-8-4-8 4V4a1 1 0 0 1 1-1z"/></svg>
-    <span class="mob-tab-label" data-i18n="mob.historial">HISTORIAL</span>
+    <span class="mob-tab-label">HISTORIAL</span>
   </button>
   <button class="mob-tab" id="ticketTabBtn" onclick="openTicketOverlay()">
     <svg class="mob-tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 9a1 1 0 0 1 0-2V5a1 1 0 0 1 1-1h18a1 1 0 0 1 1 1v2a1 1 0 0 1 0 2v2a1 1 0 0 1 0 2v2a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1v-2a1 1 0 0 1 0-2V9z"/><line x1="9" y1="4" x2="9" y2="20" stroke-dasharray="2 3"/></svg>
@@ -656,11 +656,11 @@
   </button>
   <button class="mob-tab" data-tab="info" onclick="switchMobileTab('info')">
     <svg class="mob-tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="12" y1="11" x2="12" y2="16"/><circle cx="12" cy="7.5" r="0.9" fill="currentColor" stroke="none"/></svg>
-    <span class="mob-tab-label" data-i18n="mob.info">INFORMACIÓN</span>
+    <span class="mob-tab-label">INFORMACIÓN</span>
   </button>
   <button class="mob-tab" data-tab="ranking" onclick="switchMobileTab('ranking')">
     <svg class="mob-tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4h10v6a5 5 0 0 1-10 0z"/><path d="M7 5H4.5A2.5 2.5 0 0 0 4 9.9C4.6 11 5.7 11.6 7 11.5"/><path d="M17 5h2.5A2.5 2.5 0 0 1 20 9.9c-.6 1.1-1.7 1.7-3 1.6"/><line x1="12" y1="14" x2="12" y2="18"/><path d="M8 21h8v-1.3c0-.9-.7-1.7-1.6-1.7H9.6c-.9 0-1.6.8-1.6 1.7z"/></svg>
-    <span class="mob-tab-label" data-i18n="mob.ranking">RANKING</span>
+    <span class="mob-tab-label">RANKING</span>
   </button>
 </nav>
 

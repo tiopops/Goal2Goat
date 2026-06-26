@@ -75,50 +75,49 @@ let rawTeams = [
   {"id":"team_suecia_1994","name":"Suecia 1994","style":"vikingo_directo","players":["p_team_suecia_1994_0","p_team_suecia_1994_1","p_team_suecia_1994_2","p_team_suecia_1994_3","p_team_suecia_1994_4","p_team_suecia_1994_5","p_team_suecia_1994_6","p_team_suecia_1994_7","p_team_suecia_1994_8","p_team_suecia_1994_9","p_team_suecia_1994_10","p_team_suecia_1994_11","p_team_suecia_1994_12","p_team_suecia_1994_13","p_team_suecia_1994_14","p_team_suecia_1994_15"]},
   {"id":"team_holanda_1988","name":"Holanda 1988","style":"total_football","players":["p_team_holanda_1988_0","p_team_holanda_1988_1","p_team_holanda_1988_2","p_team_holanda_1988_3","p_team_holanda_1988_4","p_team_holanda_1988_5","p_team_holanda_1988_6","p_team_holanda_1988_7","p_team_holanda_1988_8","p_team_holanda_1988_9","p_team_holanda_1988_10","p_team_holanda_1988_11","p_team_holanda_1988_12","p_team_holanda_1988_13","p_team_holanda_1988_14","p_team_holanda_1988_15"]}
 ];
-function getStyles(){const W=window.t||(k=>k); return {
- tiki_taka:{name:W("style.tiki_taka"),bonuses:{passing:10,pace:5}},
- samba_total:{name:W("style.samba_total"),bonuses:{attack:8,technique:7}},
- ataque_letal:{name:W("style.ataque_letal"),bonuses:{attack:10,pace:5}},
- maquinaria_alemana:{name:W("style.maquinaria_alemana"),bonuses:{defense:8,technique:4,passing:3}},
- gegenpressing:{name:W("strat.gegenpressing"),bonuses:{pace:9,defense:6}},
- magia_individual:{name:W("style.magia_individual"),bonuses:{attack:10,technique:5}},
- la_scaloneta:{name:W("style.la_scaloneta"),bonuses:{defense:9,passing:6}},
- solidez_francesa:{name:W("style.solidez_francesa"),bonuses:{defense:8,passing:4,pace:3}},
- velocidad_punzante:{name:W("style.velocidad_punzante"),bonuses:{pace:10,attack:5}},
- catenaccio:{name:W("strat.catenaccio"),bonuses:{defense:12,passing:3}},
- total_football:{name:W("strat.futbol_total"),bonuses:{passing:6,technique:6,pace:3}},
- naranja_mecanica:{name:W("style.naranja_mecanica"),bonuses:{technique:8,passing:5,pace:2}},
- futbol_directo:{name:W("style.futbol_directo"),bonuses:{pace:8,attack:4,defense:3}},
- garra_lusa:{name:W("style.garra_lusa"),bonuses:{defense:7,technique:4,pace:4}},
- muralla_balcanica:{name:W("style.muralla_balcanica"),bonuses:{defense:12,technique:3}},
- garra_charrua:{name:W("style.garra_charrua"),bonuses:{defense:8,attack:5,pace:2}},
- once_oro_magiar:{name:W("style.once_oro_magiar"),bonuses:{technique:10,passing:5}},
- dinamita_danesa:{name:W("style.dinamita_danesa"),bonuses:{pace:8,attack:6}},
- tricolor_tecnico:{name:W("style.tricolor_tecnico"),bonuses:{technique:8,passing:5}},
- garra_yanqui:{name:W("style.garra_yanqui"),bonuses:{defense:8,pace:5}},
- disciplina_nipona:{name:W("style.disciplina_nipona"),bonuses:{passing:8,technique:5}},
- muralla_atlas:{name:W("style.muralla_atlas"),bonuses:{defense:10,pace:4}},
- superaguilas:{name:W("style.superaguilas"),bonuses:{pace:8,attack:6}},
- leones_indomables:{name:W("style.leones_indomables"),bonuses:{attack:8,defense:5}},
- garra_chilena:{name:W("style.garra_chilena"),bonuses:{attack:7,technique:5}},
- muralla_guarani:{name:W("style.muralla_guarani"),bonuses:{defense:11,passing:3}},
- fiesta_cafetera:{name:W("style.fiesta_cafetera"),bonuses:{attack:8,technique:5}},
- vendaval_incaico:{name:W("style.vendaval_incaico"),bonuses:{attack:8,pace:5}},
- disciplina_vikinga:{name:W("style.disciplina_vikinga"),bonuses:{defense:7,pace:5}},
- tecnica_centroeuropea:{name:W("style.tecnica_centroeuropea"),bonuses:{technique:8,passing:5}},
- tecnica_balcanica:{name:W("style.tecnica_balcanica"),bonuses:{technique:9,passing:4}},
- wunderteam:{name:W("style.wunderteam"),bonuses:{attack:9,technique:4}},
- sistema_cerrojo:{name:W("style.sistema_cerrojo"),bonuses:{defense:10,passing:4}},
- furia_otomana:{name:W("style.furia_otomana"),bonuses:{pace:8,defense:5}},
- milagro_defensivo:{name:W("style.milagro_defensivo"),bonuses:{defense:12,passing:2}},
- magia_carpatica:{name:W("style.magia_carpatica"),bonuses:{technique:9,attack:4}},
- furia_tartan:{name:W("style.furia_tartan"),bonuses:{attack:7,pace:5}},
- muralla_celta:{name:W("style.muralla_celta"),bonuses:{defense:8,technique:4}},
- punta_lanza:{name:W("style.punta_lanza"),bonuses:{attack:9,pace:4}},
- vikingo_directo:{name:W("style.vikingo_directo"),bonuses:{defense:8,pace:5}}
-}; }
-function getStatLabels(){const W=window.t||(k=>k); return {attack:W("team.attack"),defense:W("team.defense"),pace:W("team.pace"),passing:W("team.passing"),technique:W("team.technique")}; }
-const STAT_LABELS=null;
+const STYLES = {
+ tiki_taka:{name:"Tiki-Taka",bonuses:{passing:10,pace:5}},
+ samba_total:{name:"Samba Total",bonuses:{attack:8,technique:7}},
+ ataque_letal:{name:"Ataque Letal",bonuses:{attack:10,pace:5}},
+ maquinaria_alemana:{name:"Maquinaria Alemana",bonuses:{defense:8,technique:4,passing:3}},
+ gegenpressing:{name:"Gegenpressing",bonuses:{pace:9,defense:6}},
+ magia_individual:{name:"Magia Albiceleste",bonuses:{attack:10,technique:5}},
+ la_scaloneta:{name:"La Scaloneta",bonuses:{defense:9,passing:6}},
+ solidez_francesa:{name:"Solidez Francesa",bonuses:{defense:8,passing:4,pace:3}},
+ velocidad_punzante:{name:"Velocidad Punzante",bonuses:{pace:10,attack:5}},
+ catenaccio:{name:"Catenaccio",bonuses:{defense:12,passing:3}},
+ total_football:{name:"Fútbol Total",bonuses:{passing:6,technique:6,pace:3}},
+ naranja_mecanica:{name:"Naranja Mecánica",bonuses:{technique:8,passing:5,pace:2}},
+ futbol_directo:{name:"Fútbol Directo",bonuses:{pace:8,attack:4,defense:3}},
+ garra_lusa:{name:"Garra Lusa",bonuses:{defense:7,technique:4,pace:4}},
+ muralla_balcanica:{name:"Muralla Balcánica",bonuses:{defense:12,technique:3}},
+ garra_charrua:{name:"Garra Charrúa",bonuses:{defense:8,attack:5,pace:2}},
+ once_oro_magiar:{name:"Once de Oro Magiar",bonuses:{technique:10,passing:5}},
+ dinamita_danesa:{name:"Dinamita Danesa",bonuses:{pace:8,attack:6}},
+ tricolor_tecnico:{name:"Tricolor Técnico",bonuses:{technique:8,passing:5}},
+ garra_yanqui:{name:"Garra Yanqui",bonuses:{defense:8,pace:5}},
+ disciplina_nipona:{name:"Disciplina Nipona",bonuses:{passing:8,technique:5}},
+ muralla_atlas:{name:"Muralla del Atlas",bonuses:{defense:10,pace:4}},
+ superaguilas:{name:"Superáguilas",bonuses:{pace:8,attack:6}},
+ leones_indomables:{name:"Leones Indomables",bonuses:{attack:8,defense:5}},
+ garra_chilena:{name:"Garra Chilena",bonuses:{attack:7,technique:5}},
+ muralla_guarani:{name:"Muralla Guaraní",bonuses:{defense:11,passing:3}},
+ fiesta_cafetera:{name:"Fiesta Cafetera",bonuses:{attack:8,technique:5}},
+ vendaval_incaico:{name:"Vendaval Incaico",bonuses:{attack:8,pace:5}},
+ disciplina_vikinga:{name:"Disciplina Vikinga",bonuses:{defense:7,pace:5}},
+ tecnica_centroeuropea:{name:"Técnica Centroeuropea",bonuses:{technique:8,passing:5}},
+ tecnica_balcanica:{name:"Técnica Balcánica",bonuses:{technique:9,passing:4}},
+ wunderteam:{name:"Wunderteam",bonuses:{attack:9,technique:4}},
+ sistema_cerrojo:{name:"Sistema del Cerrojo",bonuses:{defense:10,passing:4}},
+ furia_otomana:{name:"Furia Otomana",bonuses:{pace:8,defense:5}},
+ milagro_defensivo:{name:"Milagro Defensivo",bonuses:{defense:12,passing:2}},
+ magia_carpatica:{name:"Magia Cárpata",bonuses:{technique:9,attack:4}},
+ furia_tartan:{name:"Furia Tartán",bonuses:{attack:7,pace:5}},
+ muralla_celta:{name:"Muralla Celta",bonuses:{defense:8,technique:4}},
+ punta_lanza:{name:"Punta de Lanza",bonuses:{attack:9,pace:4}},
+ vikingo_directo:{name:"Vikingo Directo",bonuses:{defense:8,pace:5}}
+};
+const STAT_LABELS={attack:"ATAQUE",defense:"DEFENSA",pace:"RITMO",passing:"PASE",technique:"TÉCNICA"};
 
 /* ========= MATCH STRATEGIES (chosen before each match) ========= */
 // Each strategy can be played, and "counters" points to the strategy key it beats.
@@ -127,20 +126,18 @@ const STAT_LABELS=null;
 //  - Catenaccio is broken by Ataque por Bandas (wide play opens compact centers)
 //  - Gegenpressing is broken by Juego Directo (skip the press with long balls)
 //  - etc.
-function getStrategies(){const W=window.t||(k=>k); return {
-  tiki_taka:      { name:W("strat.tiki_taka"),          desc:W("strat.tiki_taka.d"), counters:"bloque_bajo", partialCounters:["gegenpressing","presion_alta"] },
-  contraataque:   { name:W("strat.contraataque"),        desc:W("strat.contraataque.d"), counters:"ataque_bandas", partialCounters:["posesion","presion_alta"] },
-  catenaccio:     { name:W("strat.catenaccio"),          desc:W("strat.catenaccio.d"), counters:"juego_directo", partialCounters:["ataque_bandas","presion_alta"] },
-  presion_alta:   { name:W("strat.presion_alta"),        desc:W("strat.presion_alta.d"), counters:"tiki_taka", partialCounters:["juego_directo","catenaccio"] },
-  gegenpressing:  { name:W("strat.gegenpressing"),       desc:W("strat.gegenpressing.d"), counters:"posesion", partialCounters:["catenaccio","juego_directo"] },
-  posesion:       { name:W("strat.posesion"),   desc:W("strat.posesion.d"), counters:"contraataque", partialCounters:["presion_alta","gegenpressing"] },
-  juego_directo:  { name:W("strat.juego_directo"),       desc:W("strat.juego_directo.d"), counters:"gegenpressing", partialCounters:["catenaccio","bloque_bajo"] },
-  futbol_total:   { name:W("strat.futbol_total"),        desc:W("strat.futbol_total.d"), counters:"catenaccio", partialCounters:["bloque_bajo","contraataque"] },
-  bloque_bajo:    { name:W("strat.bloque_bajo"),         desc:W("strat.bloque_bajo.d"), counters:"futbol_total", partialCounters:["posesion","catenaccio"] },
-  ataque_bandas:  { name:W("strat.ataque_bandas"),   desc:W("strat.ataque_bandas.d"), counters:"presion_alta", partialCounters:["contraataque","gegenpressing"] },
-}; }
-function getStrategiesOnce(){return getStrategies();}
-const STRATEGIES=null;
+const STRATEGIES = {
+  tiki_taka:      { name:"Tiki-Taka",          desc:"Prioriza los pases cortos y la posesión para desgastar al rival y crear espacios.", counters:"bloque_bajo", partialCounters:["gegenpressing","presion_alta"] },
+  contraataque:   { name:"Contraataque",        desc:"Defiende con orden y busca atacar rápidamente tras recuperar el balón.", counters:"ataque_bandas", partialCounters:["posesion","presion_alta"] },
+  catenaccio:     { name:"Catenaccio",          desc:"Centra sus esfuerzos en la defensa y aprovecha las pocas oportunidades de ataque.", counters:"juego_directo", partialCounters:["ataque_bandas","presion_alta"] },
+  presion_alta:   { name:"Presión Alta",        desc:"Presiona al rival en su campo para recuperar el balón cuanto antes.", counters:"tiki_taka", partialCounters:["juego_directo","catenaccio"] },
+  gegenpressing:  { name:"Gegenpressing",       desc:"Tras perder la posesión, todo el equipo intenta recuperarla inmediatamente.", counters:"posesion", partialCounters:["catenaccio","juego_directo"] },
+  posesion:       { name:"Juego de Posesión",   desc:"Mantiene el control del balón para dominar el ritmo del partido.", counters:"contraataque", partialCounters:["presion_alta","gegenpressing"] },
+  juego_directo:  { name:"Juego Directo",       desc:"Busca llegar al área rival con rapidez y el menor número de pases posible.", counters:"gegenpressing", partialCounters:["catenaccio","bloque_bajo"] },
+  futbol_total:   { name:"Fútbol Total",        desc:"Los jugadores intercambian posiciones constantemente para generar superioridades.", counters:"catenaccio", partialCounters:["bloque_bajo","contraataque"] },
+  bloque_bajo:    { name:"Bloque Bajo",         desc:"Repliega al equipo cerca de su área para cerrar espacios y dificultar los ataques rivales.", counters:"futbol_total", partialCounters:["posesion","catenaccio"] },
+  ataque_bandas:  { name:"Ataque por Bandas",   desc:"Utiliza las bandas para crear peligro mediante desbordes y centros al área.", counters:"presion_alta", partialCounters:["contraataque","gegenpressing"] },
+};
 const STRATEGY_ORDER=["tiki_taka","contraataque","catenaccio","presion_alta","gegenpressing","posesion","juego_directo","futbol_total","bloque_bajo","ataque_bandas"];
 
 // Map each of the 38 narrative team styles to one of the 10 match strategies,
@@ -164,7 +161,7 @@ const TEAM_STYLE_TO_STRATEGY={
 let selectedMatchStrategy=null; // strategy key chosen by the player for the upcoming match
 
 let teams = rawTeams.map(function(t){
- const styleInfo = getStyles()[t.style];
+ const styleInfo = STYLES[t.style];
  return {
   name:t.name,
   flag:"es",
@@ -335,80 +332,152 @@ let currentWeather = null;
 let inheritedPlayers = [];
 // Best knockout round reached in current run (for chain run reward)
 let bestRoundReached = -1; // -1=none, 0=groups, 1=octavos, 2=cuartos, 3=semis, 4=final
-function getWeatherTypes(){const W=window.t||(k=>k); return [
-  { id:'sunny',    label:W('weather.sunny'),  desc:W('weather.sunny.d'),  effect:{pace:-0.10} },
-  { id:'cloudy',   label:W('weather.cloudy'), desc:W('weather.cloudy.d'), effect:{} },
-  { id:'rain',     label:W('weather.rain'),   desc:W('weather.rain.d'),   effect:{pace:-0.15, technique:-0.08} },
-  { id:'wind',     label:W('weather.wind'),   desc:W('weather.wind.d'),   effect:{passing:-0.12} },
+const WEATHER_TYPES = [
+  { id:'sunny',    label:'☀ Soleado',         desc:'Calor intenso · RITMO -15% ambos equipos',    effect:{pace:-0.10} },
+  { id:'cloudy',   label:'⛅ Nublado',          desc:'Condiciones neutras',                          effect:{} },
+  { id:'rain',     label:'🌧 Lluvia',           desc:'Campo pesado · RITMO -20%, TÉCNICA -10%',     effect:{pace:-0.15, technique:-0.08} },
+  { id:'wind',     label:'💨 Viento fuerte',    desc:'Juego directo · PASE -15%',                   effect:{passing:-0.12} },
   { id:'hot',      label:'🌡 Calor extremo',    desc:'Fatiga máxima · RITMO -25%, DEFENSA -10%',    effect:{pace:-0.20, defense:-0.08} },
 ];
-/* Predictive pre-match press questions — translated via i18n */
-function getPressQuestions(){
-  const W=window.t||(k=>k);
-  return [
-    {q:W('press.q1'), answers:[
-      {text:W('press.q1a1'),stance:'positive',label:W('press.l1a1'),check:(r)=>r.oppGoals===0},
-      {text:W('press.q1a2'),stance:'neutral', label:W('press.l1a2'),check:()=>null},
-      {text:W('press.q1a3'),stance:'negative',label:W('press.l1a3'),check:(r)=>r.oppGoals>0},
-    ]},
-    {q:W('press.q2'), answers:[
-      {text:W('press.q2a1'),stance:'positive',label:W('press.l2a1'),check:(r)=>(r.myGoals-r.oppGoals)>=3},
-      {text:W('press.q2a2'),stance:'neutral', label:W('press.l2a2'),check:()=>null},
-      {text:W('press.q2a3'),stance:'negative',label:W('press.l2a3'),check:(r)=>(r.myGoals-r.oppGoals)<3},
-    ]},
-    {q:W('press.q3'), answers:[
-      {text:W('press.q3a1'),stance:'positive',label:W('press.l3a1'),check:(r)=>r.cardsCount===0},
-      {text:W('press.q3a2'),stance:'neutral', label:W('press.l3a2'),check:()=>null},
-      {text:W('press.q3a3'),stance:'negative',label:W('press.l3a3'),check:(r)=>r.cardsCount>0},
-    ]},
-    {q:W('press.q4'), answers:[
-      {text:W('press.q4a1'),stance:'positive',label:W('press.l4a1'),check:(r)=>r.myGoals>0},
-      {text:W('press.q4a2'),stance:'neutral', label:W('press.l4a2'),check:()=>null},
-      {text:W('press.q4a3'),stance:'negative',label:W('press.l4a3'),check:(r)=>r.myGoals===0},
-    ]},
-    {q:W('press.q5'), answers:[
-      {text:W('press.q5a1'),stance:'positive',label:W('press.l5a1'),check:(r)=>r.myGoals>=r.oppGoals},
-      {text:W('press.q5a2'),stance:'neutral', label:W('press.l5a2'),check:()=>null},
-      {text:W('press.q5a3'),stance:'negative',label:W('press.l5a3'),check:(r)=>r.oppGoals>r.myGoals},
-    ]},
-    {q:W('press.q6'), answers:[
-      {text:W('press.q6a1'),stance:'positive',label:W('press.l6a1'),check:(r)=>!r.penalties},
-      {text:W('press.q6a2'),stance:'neutral', label:W('press.l6a2'),check:()=>null},
-      {text:W('press.q6a3'),stance:'negative',label:W('press.l6a3'),check:(r)=>r.penalties},
-    ]},
-    {q:W('press.q7'), answers:[
-      {text:W('press.q7a1'),stance:'positive',label:W('press.l7a1'),check:(r)=>r.myGoals>1},
-      {text:W('press.q7a2'),stance:'neutral', label:W('press.l7a2'),check:()=>null},
-      {text:W('press.q7a3'),stance:'negative',label:W('press.l7a3'),check:(r)=>r.myGoals<=1},
-    ]},
-    {q:W('press.q8'), answers:[
-      {text:W('press.q8a1'),stance:'positive',label:W('press.l8a1'),check:(r)=>r.oppGoals<2},
-      {text:W('press.q8a2'),stance:'neutral', label:W('press.l8a2'),check:()=>null},
-      {text:W('press.q8a3'),stance:'negative',label:W('press.l8a3'),check:(r)=>r.oppGoals>=2},
-    ]},
-    {q:W('press.q9'), answers:[
-      {text:W('press.q9a1'),stance:'positive',label:W('press.l9a1'),check:(r)=>!r.draw},
-      {text:W('press.q9a2'),stance:'neutral', label:W('press.l9a2'),check:()=>null},
-      {text:W('press.q9a3'),stance:'negative',label:W('press.l9a3'),check:(r)=>r.draw},
-    ]},
-    {q:W('press.q10'),answers:[
-      {text:W('press.q10a1'),stance:'positive',label:W('press.l10a1'),check:(r)=>r.myGoals>0},
-      {text:W('press.q10a2'),stance:'neutral', label:W('press.l10a2'),check:()=>null},
-      {text:W('press.q10a3'),stance:'negative',label:W('press.l10a3'),check:(r)=>r.myGoals===0},
-    ]},
-    {q:W('press.q11'),answers:[
-      {text:W('press.q11a1'),stance:'positive',label:W('press.l11a1'),check:(r)=>r.cardsCount===0},
-      {text:W('press.q11a2'),stance:'neutral', label:W('press.l11a2'),check:()=>null},
-      {text:W('press.q11a3'),stance:'negative',label:W('press.l11a3'),check:(r)=>r.cardsCount>0},
-    ]},
-    {q:W('press.q12'),answers:[
-      {text:W('press.q12a1'),stance:'positive',label:W('press.l12a1'),check:(r)=>(r.myGoals+r.oppGoals)>=3},
-      {text:W('press.q12a2'),stance:'neutral', label:W('press.l12a2'),check:()=>null},
-      {text:W('press.q12a3'),stance:'negative',label:W('press.l12a3'),check:(r)=>(r.myGoals+r.oppGoals)<3},
-    ]},
-  ];
-}
-
+/* Predictive pre-match press questions: shown when the rival is revealed,
+   BEFORE the match is played. Each answer is a prediction (positive/neutral/
+   negative). After the match, the prediction is checked against the real
+   result: correct guess -> moral up, wrong guess -> moral down, neutral
+   answer -> moral stays the same regardless of outcome. */
+const PRESS_PREDICTIONS = [
+  {
+    q: "«¿Dejaréis la portería a cero en este encuentro?»",
+    answers: [
+      { text: "«Sí, vamos a por la portería a cero.»", stance: "positive", label: "Confiado",
+        check: (r) => r.oppGoals === 0 },
+      { text: "«Es difícil de prometer, ya veremos.»", stance: "neutral", label: "Prudente",
+        check: () => null },
+      { text: "«Lo veo complicado, encajaremos.»", stance: "negative", label: "Pesimista",
+        check: (r) => r.oppGoals > 0 },
+    ]
+  },
+  {
+    q: "«¿Vais a ganar por tres goles o más?»",
+    answers: [
+      { text: "«Sí, vamos a golear.»", stance: "positive", label: "Ambicioso",
+        check: (r) => (r.myGoals - r.oppGoals) >= 3 },
+      { text: "«No me atrevo a predecir el marcador.»", stance: "neutral", label: "Cauto",
+        check: () => null },
+      { text: "«No, será un partido ajustado.»", stance: "negative", label: "Realista",
+        check: (r) => (r.myGoals - r.oppGoals) < 3 },
+    ]
+  },
+  {
+    q: "«Lleváis varios partidos viendo tarjetas. ¿Seguiréis acumulando en este encuentro?»",
+    answers: [
+      { text: "«No, vamos a jugar limpio esta vez.»", stance: "positive", label: "Comprometido",
+        check: (r) => r.cardsCount === 0 },
+      { text: "«No puedo controlar lo que pite el árbitro.»", stance: "neutral", label: "Evasivo",
+        check: () => null },
+      { text: "«Es probable, el rival nos hará cometer faltas.»", stance: "negative", label: "Sincero",
+        check: (r) => r.cardsCount > 0 },
+    ]
+  },
+  {
+    q: "«¿Marcaréis en la primera mitad?»",
+    answers: [
+      { text: "«Sí, saldremos a por todas desde el inicio.»", stance: "positive", label: "Decidido",
+        check: (r) => r.myGoals > 0 },
+      { text: "«El plan de partido lo decide el míster.»", stance: "neutral", label: "Diplomático",
+        check: () => null },
+      { text: "«Seremos pacientes, no hay prisa por marcar.»", stance: "negative", label: "Paciente",
+        check: (r) => r.myGoals === 0 },
+    ]
+  },
+  {
+    q: "«¿Va a generar más ocasiones el rival que vosotros?»",
+    answers: [
+      { text: "«No, vamos a dominar nosotros el partido.»", stance: "positive", label: "Dominante",
+        check: (r) => r.myGoals >= r.oppGoals },
+      { text: "«Cada partido es distinto, lo veremos en el campo.»", stance: "neutral", label: "Flexible",
+        check: () => null },
+      { text: "«Es un rival fuerte, nos costará contenerlo.»", stance: "negative", label: "Respetuoso",
+        check: (r) => r.oppGoals > r.myGoals },
+    ]
+  },
+  {
+    q: "«¿Se va a decidir esto en los 90 minutos, sin penaltis?»",
+    answers: [
+      { text: "«Sí, lo resolveremos en el tiempo reglamentario.»", stance: "positive", label: "Seguro",
+        check: (r) => !r.penalties },
+      { text: "«Lo importante es resolverlo, como sea.»", stance: "neutral", label: "Pragmático",
+        check: () => null },
+      { text: "«Puede decidirse en los detalles, incluso en penaltis.»", stance: "negative", label: "Cauteloso",
+        check: (r) => r.penalties },
+    ]
+  },
+  {
+    q: "«¿Vais a marcar más de un gol en este partido?»",
+    answers: [
+      { text: "«Sí, tenemos gol en las botas.»", stance: "positive", label: "Ofensivo",
+        check: (r) => r.myGoals > 1 },
+      { text: "«Con uno nos conformamos si hace falta.»", stance: "neutral", label: "Pragmático",
+        check: () => null },
+      { text: "«Va a costarnos encontrar el gol hoy.»", stance: "negative", label: "Cauteloso",
+        check: (r) => r.myGoals <= 1 },
+    ]
+  },
+  {
+    q: "«¿Encajaréis dos goles o más en este partido?»",
+    answers: [
+      { text: "«No, vamos a estar sólidos atrás.»", stance: "positive", label: "Defensivo",
+        check: (r) => r.oppGoals < 2 },
+      { text: "«El fútbol siempre da sorpresas.»", stance: "neutral", label: "Filosófico",
+        check: () => null },
+      { text: "«El rival tiene mucho gol, puede pasar.»", stance: "negative", label: "Realista",
+        check: (r) => r.oppGoals >= 2 },
+    ]
+  },
+  {
+    q: "«¿Terminará el partido en empate?»",
+    answers: [
+      { text: "«No, vamos a buscar la victoria hasta el final.»", stance: "positive", label: "Ambicioso",
+        check: (r) => !r.draw },
+      { text: "«Cualquier resultado es posible en este torneo.»", stance: "neutral", label: "Realista",
+        check: () => null },
+      { text: "«Puede que ninguno consiga abrir la lata.»", stance: "negative", label: "Cauteloso",
+        check: (r) => r.draw },
+    ]
+  },
+  {
+    q: "«¿Marcará alguno de vuestros delanteros estrella?»",
+    answers: [
+      { text: "«Sí, va a estar fino delante de la portería.»", stance: "positive", label: "Confiado",
+        check: (r) => r.myGoals > 0 },
+      { text: "«El gol es cosa de todo el equipo.»", stance: "neutral", label: "Colectivo",
+        check: () => null },
+      { text: "«El rival lo va a tener vigilado de cerca.»", stance: "negative", label: "Precavido",
+        check: (r) => r.myGoals === 0 },
+    ]
+  },
+  {
+    q: "«¿Va a ser un partido con mucho juego físico?»",
+    answers: [
+      { text: "«No, queremos jugar al fútbol, no a la guerra.»", stance: "positive", label: "Conciliador",
+        check: (r) => r.cardsCount === 0 },
+      { text: "«Eso lo decide el árbitro, no nosotros.»", stance: "neutral", label: "Evasivo",
+        check: () => null },
+      { text: "«Va a ser un partido muy disputado, sin duda.»", stance: "negative", label: "Realista",
+        check: (r) => r.cardsCount > 0 },
+    ]
+  },
+  {
+    q: "«¿Va a ser un partido de muchas ocasiones para ambos equipos?»",
+    answers: [
+      { text: "«Sí, esto va a ser ida y vuelta.»", stance: "positive", label: "Espectáculo",
+        check: (r) => (r.myGoals + r.oppGoals) >= 3 },
+      { text: "«Depende de cómo se plantee el partido.»", stance: "neutral", label: "Flexible",
+        check: () => null },
+      { text: "«Va a ser un partido cerrado y táctico.»", stance: "negative", label: "Realista",
+        check: (r) => (r.myGoals + r.oppGoals) < 3 },
+    ]
+  },
+];
 // getMaxSubs() reemplazado por getMaxSubs() dinámico
 
 /* ========= COMPETITION STATE (World Cup format) ========= */
@@ -437,13 +506,13 @@ const FORMATIONS = {
     {code:"2-3-5",label:"Vintage ofensivo",bonus:{attack:15,defense:2,passing:6,pace:13,technique:4}},
   ],
   equilibrada:[
-    {code:"4-4-2",label:window.t?t("formation.f442"):"El clásico",bonus:{attack:8,defense:8,passing:8,pace:8,technique:8}},
-    {code:"4-3-3",label:window.t?t("formation.f433"):"Posesión y ataque",bonus:{attack:12,defense:5,passing:9,pace:8,technique:6}},
-    {code:"4-1-4-1",label:window.t?t("formation.f4141"):"Sólido en todo",bonus:{attack:6,defense:10,passing:12,pace:5,technique:7}},
-    {code:"4-2-3-1",label:window.t?t("formation.f4231"):"Fútbol moderno",bonus:{attack:7,defense:7,passing:13,pace:6,technique:7}},
-    {code:"4-3-1-2",label:window.t?t("formation.f4312"):"Control + 2 puntas",bonus:{attack:10,defense:6,passing:10,pace:7,technique:7}},
-    {code:"3-5-2",label:window.t?t("formation.f352"):"Carrileros activos",bonus:{attack:8,defense:5,passing:11,pace:9,technique:7}},
-    {code:"4-5-1",label:window.t?t("formation.f451"):"Defensivo+contragol",bonus:{attack:5,defense:11,passing:10,pace:6,technique:8}},
+    {code:"4-4-2",label:"El clásico",bonus:{attack:8,defense:8,passing:8,pace:8,technique:8}},
+    {code:"4-3-3",label:"Posesión y ataque",bonus:{attack:12,defense:5,passing:9,pace:8,technique:6}},
+    {code:"4-1-4-1",label:"Sólido en todo",bonus:{attack:6,defense:10,passing:12,pace:5,technique:7}},
+    {code:"4-2-3-1",label:"Fútbol moderno",bonus:{attack:7,defense:7,passing:13,pace:6,technique:7}},
+    {code:"4-3-1-2",label:"Control + 2 puntas",bonus:{attack:10,defense:6,passing:10,pace:7,technique:7}},
+    {code:"3-5-2",label:"Carrileros activos",bonus:{attack:8,defense:5,passing:11,pace:9,technique:7}},
+    {code:"4-5-1",label:"Defensivo+contragol",bonus:{attack:5,defense:11,passing:10,pace:6,technique:8}},
   ],
   defensiva:[
     {code:"5-4-1",label:"Fortaleza",bonus:{attack:4,defense:16,passing:8,pace:5,technique:7}},
@@ -457,24 +526,24 @@ const FORMATIONS = {
 };
 const CAT_NAMES={ofensiva:"Ofensiva",equilibrada:"Equilibrada",defensiva:"Defensiva"};
 // Short, neutral one-line description per formation code (shown after the squad is locked)
-function getFormationDesc(){const W=window.t||(k=>k); return {
-  "3-4-3":W("fdesc.343"),
-  "3-4-1-2":W("fdesc.3412"),
-  "4-2-4":W("fdesc.424"),
-  "4-3-3":W("fdesc.433"),
-  "4-2-3-1":W("fdesc.4231"),
-  "3-5-2":W("fdesc.352"),
-  "2-3-5":W("fdesc.245"),
-  "4-4-2":W("fdesc.442"),
-  "4-1-4-1":W("fdesc.4141"),
-  "4-3-1-2":W("fdesc.4312"),
-  "4-5-1":W("fdesc.451"),
-  "5-4-1":W("fdesc.541"),
-  "5-3-2":W("fdesc.532"),
-  "3-6-1":W("fdesc.361"),
-  "5-2-2-1":W("fdesc.5221"),
-  "6-3-1":W("fdesc.631"),
-}; }
+const FORMATION_DESC={
+  "3-4-3":"Tres centrales y tres delanteros: máxima presencia ofensiva.",
+  "3-4-1-2":"Línea de 3 con un mediapunta libre entre líneas.",
+  "4-2-4":"Cuatro atacantes apoyados por solo dos centrocampistas.",
+  "4-3-3":"Equilibrio clásico entre posesión y ancho ofensivo.",
+  "4-2-3-1":"Doble pivote y un enganche que conecta con la punta.",
+  "3-5-2":"Carrileros que suben por banda y dos puntas arriba.",
+  "2-3-5":"Formación vintage con cinco hombres en ataque.",
+  "4-4-2":"El dibujo más clásico: simetría y bloques compactos.",
+  "4-1-4-1":"Pivote defensivo que protege la línea de cuatro.",
+  "4-3-1-2":"Mediocentro creativo entre la medular y la delantera.",
+  "4-5-1":"Línea de cinco en el centro, un único punta de referencia.",
+  "5-4-1":"Cinco defensas para cerrar todos los espacios.",
+  "5-3-2":"Bloque de cinco atrás con doble delantero al contragolpe.",
+  "3-6-1":"Seis hombres en el medio, máxima cautela ofensiva.",
+  "5-2-2-1":"Defensa numerosa pensada para salir rápido a la contra.",
+  "6-3-1":"El mayor número de defensas posible en el campo.",
+};
 let currentFormation={category:"equilibrada",code:"4-4-2"};
 let currentFormationBonus={};
 let formationIsLocked=false; // set true the moment SELECCIONAR JUGADOR/EQUIPO RÁPIDO is pressed
@@ -691,7 +760,7 @@ function maybeShowMobileFormationGate(retryFn){
     <h3>Confirma tu formación</h3>
     <div class="match-summary">
       Vas a jugar con <strong>${currentFormation.code} · ${CAT_NAMES[currentFormation.category]}</strong>.
-      ${getFormationDesc()[currentFormation.code]?`<br>${getFormationDesc()[currentFormation.code]}`:''}
+      ${FORMATION_DESC[currentFormation.code]?`<br>${FORMATION_DESC[currentFormation.code]}`:''}
       <br><br>Recuerda: la formación <strong>solo puede elegirse ahora</strong>, antes de empezar a fichar jugadores. Después quedará fija para todo el torneo.
     </div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
@@ -833,7 +902,7 @@ function renderBonuses(team){
   for(let k in team.bonuses){
     const v=team.bonuses[k];
     if(!v) continue;
-    h+=`<div class="bonus-line">${getStatLabels()[k]||k.toUpperCase()} ${v>0?'+':''}${v}</div>`;
+    h+=`<div class="bonus-line">${STAT_LABELS[k]||k.toUpperCase()} ${v>0?'+':''}${v}</div>`;
   }
   return h;
 }
@@ -1613,7 +1682,7 @@ function lockFormationDisplay(){
   const el=document.getElementById("currentFormation");
   if(el) el.textContent=`${currentFormation.code} · ${CAT_NAMES[currentFormation.category]}`;
   const descEl=document.getElementById("formationDesc");
-  if(descEl) descEl.textContent=getFormationDesc()[currentFormation.code]||"";
+  if(descEl) descEl.textContent=FORMATION_DESC[currentFormation.code]||"";
   const badge=document.getElementById("formationBadge");
   if(badge) badge.style.display="none";
   renderMobileFormationInfo();
@@ -1631,7 +1700,7 @@ function renderMobileFormationInfo(){
     el.innerHTML=``;
   } else {
     el.classList.remove("empty");
-    const desc=getFormationDesc()[currentFormation.code]||"";
+    const desc=FORMATION_DESC[currentFormation.code]||"";
     el.innerHTML=`<strong>${currentFormation.code} · ${CAT_NAMES[currentFormation.category]}</strong><br>${desc}`;
   }
 }
@@ -1864,17 +1933,17 @@ function renderStrategySelector(){
     <div class="style-label" style="margin-top:12px">${t("strategy.choose")}</div>
     <div class="strategy-grid">
       ${STRATEGY_ORDER.map(key=>{
-        const s=getStrategies()[key];
+        const s=STRATEGIES[key];
         const sel=selectedMatchStrategy===key?' selected':'';
         const isOptimal=estrategaHint&&estrategaHint.key===key?' style="outline:2px solid var(--gold)"':'';
         return `<button class="strategy-btn${sel}" data-key="${key}" onclick="chooseMatchStrategy('${key}')" title="${esc(s.desc)}"${isOptimal}>${s.name}</button>`;
       }).join('')}
     </div>
-    ${selectedMatchStrategy?`<div class="strategy-desc">${getStrategies()[selectedMatchStrategy].desc}</div>`:`<div class="strategy-desc strategy-desc-empty">${t('strategy.none')||'Sin estrategia elegida: sin bonus ni penalización.'}</div>`}
+    ${selectedMatchStrategy?`<div class="strategy-desc">${STRATEGIES[selectedMatchStrategy].desc}</div>`:'<div class="strategy-desc strategy-desc-empty">Sin estrategia elegida: sin bonus ni penalización.</div>'}
   `;
 }
 function chooseMatchStrategy(key){
-  if(!getStrategies()[key]) return;
+  if(!STRATEGIES[key]) return;
   playSound('select');
   selectedMatchStrategy = (selectedMatchStrategy===key) ? null : key; // click again to deselect
   renderStrategySelector();
@@ -3013,7 +3082,7 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
     // Táctica perfecta
     if(won&&selectedMatchStrategy&&nextOpponent){
       const rk=getRivalStrategyKey(nextOpponent);
-      if(getStrategies()[selectedMatchStrategy]&&getStrategies()[selectedMatchStrategy].counters===rk) unlockAchievement('perfect_tactic');
+      if(STRATEGIES[selectedMatchStrategy]&&STRATEGIES[selectedMatchStrategy].counters===rk) unlockAchievement('perfect_tactic');
     }
 
     btn.addEventListener('click',()=>{
@@ -3410,14 +3479,14 @@ function showGoldenTicket(){
         <span>Nº <b style="color:rgba(240,196,25,.7)">${serial}</b></span><span>EDICIÓN ORO</span>
       </div>
       <div style="text-align:center;margin-bottom:18px;">
-        <div style="font-size:9px;letter-spacing:3px;text-transform:uppercase;color:rgba(240,196,25,.5);margin-bottom:4px;font-weight:700">${t("ticket.acc_pts_gold")||"Puntos acumulados"}</div>
+        <div style="font-size:9px;letter-spacing:3px;text-transform:uppercase;color:rgba(240,196,25,.5);margin-bottom:4px;font-weight:700">Puntos acumulados</div>
         <div id="gtPrize" style="font-family:'Bebas Neue',Impact,sans-serif;font-size:40px;color:#f0c419;text-shadow:0 0 12px rgba(240,196,25,.4);">0 <span style="font-size:20px;opacity:.85">PTS</span></div>
       </div>
       <div id="gtGrid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px;"></div>
       <div id="gtDots" style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
-        <span style="font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:rgba(240,196,25,.5);font-weight:700;margin-right:4px;">${t("ticket.scratched")||"Casillas rascadas"}</span>
+        <span style="font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:rgba(240,196,25,.5);font-weight:700;margin-right:4px;">Casillas rascadas</span>
       </div>
-      <button id="gtCashBtn" disabled onclick="gtCashOut(false)" style="width:100%;border:none;border-radius:0;font-family:'Bebas Neue',Impact,sans-serif;font-size:22px;letter-spacing:2px;padding:14px;cursor:pointer;background:linear-gradient(180deg,#ffe27a,#f0c419 55%,#c9960c);color:#08160d;box-shadow:0 6px 0 #8a6a08;opacity:.35;pointer-events:none;">${t("ticket.cashout_btn")||"PLANTARSE"}</button>
+      <button id="gtCashBtn" disabled onclick="gtCashOut(false)" style="width:100%;border:none;border-radius:0;font-family:'Bebas Neue',Impact,sans-serif;font-size:22px;letter-spacing:2px;padding:14px;cursor:pointer;background:linear-gradient(180deg,#ffe27a,#f0c419 55%,#c9960c);color:#08160d;box-shadow:0 6px 0 #8a6a08;opacity:.35;pointer-events:none;">PLANTARSE</button>
       <div style="text-align:center;font-size:9px;color:rgba(240,196,25,.35);margin-top:14px;letter-spacing:.5px;line-height:1.5">
         Solo cabras 🐐 (+3 pts) y una casilla ❌.<br>Premio especial por ganar el Mundial. ¡No se acumula!
       </div>
@@ -3602,8 +3671,8 @@ function rollWeather(){
   const w=[2,2,1,1.5,1]; // probabilities matching WEATHER_TYPES order
   const total=w.reduce((a,b)=>a+b,0);
   let r=Math.random()*total;
-  for(let i=0;i<getWeatherTypes().length;i++){
-    r-=w[i]; if(r<=0){ currentWeather=getWeatherTypes()[i]; return; }
+  for(let i=0;i<WEATHER_TYPES.length;i++){
+    r-=w[i]; if(r<=0){ currentWeather=WEATHER_TYPES[i]; return; }
   }
   currentWeather=WEATHER_TYPES[1]; // fallback cloudy
 }
@@ -3683,8 +3752,7 @@ let pendingPrediction=null; // {event, answerIdx} set when player answers, resol
 function maybeShowPressConference(callback){
   const chance=stage==="knockout"?0.40:0.25;
   if(Math.random()>chance){ callback(); return; }
-  const _pq=getPressQuestions();
-  const event=_pq[Math.floor(Math.random()*_pq.length)];
+  const event=PRESS_PREDICTIONS[Math.floor(Math.random()*PRESS_PREDICTIONS.length)];
   showPressEventModal(event, callback);
 }
 function showPressEventModal(event, callback){
@@ -4713,7 +4781,7 @@ function initFirebaseAuth(){
   window.loadRanking=async function(targetId){
     const el=document.getElementById(targetId||'rankingTable');
     if(!el) return;
-    el.innerHTML='<p class="ranking-loading">'+( window.t?window.t('ranking.loading'):'Cargando ranking...')+'</p>';
+    el.innerHTML='<p class="ranking-loading">Cargando ranking...</p>';
     try{
       const snap=await db.collection("scores")
         .orderBy("score","desc")
@@ -5103,7 +5171,7 @@ window.openTicketOverlay = function() {
     return;
   }
 
-  mt.innerHTML = '<div style="text-align:center;padding:40px;color:#aaa">${t("ui.loading")||"Cargando..."}</div>';
+  mt.innerHTML = '<div style="text-align:center;padding:40px;color:#aaa">Cargando...</div>';
 
   getTicketState().then(function(state) {
     if (!state) {
@@ -5128,7 +5196,7 @@ window.openTicketOverlay = function() {
       mt.innerHTML = `<div class="auth-modal" style="max-width:340px;text-align:center;padding:28px 24px">
         <div style="font-size:48px;margin-bottom:8px">🎟️</div>
         <div style="font-family:'Bebas Neue',Impact,sans-serif;font-size:22px;letter-spacing:2px;color:var(--gold);margin-bottom:20px">SIN TICKETS</div>
-        <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px;letter-spacing:1px;text-transform:uppercase">${t("ticket.next_in")||"Próximo ticket en"}</div>
+        <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px;letter-spacing:1px;text-transform:uppercase">Próximo ticket en</div>
         <div id="ticketCountdown" style="font-family:'Bebas Neue',Impact,sans-serif;font-size:48px;color:#fff;letter-spacing:4px;margin-bottom:24px">--:--:--</div>
         <button onclick="window.closeTicketOverlay()" style="width:100%;border:none;background:#c0392b;color:#fff;padding:12px;cursor:pointer;font-family:'Bebas Neue',Impact,sans-serif;font-size:16px;letter-spacing:1.5px;transition:.15s" onmouseover="this.style.background='#e74c3c'" onmouseout="this.style.background='#c0392b'">CERRAR</button>
       </div>`;
@@ -5192,23 +5260,23 @@ function buildTicketInMount(mount, ticketCount, lastRegen, currentScratchPts){
         <span style="font-family:'Bebas Neue',Impact,sans-serif;font-size:22px;letter-spacing:2px;color:#f0c419;text-shadow:0 2px 0 rgba(0,0,0,.4)">GOAL2GOAT</span>
         <span style="font-size:18px">🐐</span>
       </div>
-      <div style="text-align:center;font-size:10px;letter-spacing:3px;color:rgba(246,241,227,.55);text-transform:uppercase;margin-bottom:16px;font-weight:700">${t("ticket.subtitle")||"Ticket de GoatPoints"}</div>
+      <div style="text-align:center;font-size:10px;letter-spacing:3px;color:rgba(246,241,227,.55);text-transform:uppercase;margin-bottom:16px;font-weight:700">Ticket de GoatPoints</div>
       <div style="height:1px;background:repeating-linear-gradient(90deg,rgba(240,196,25,.35) 0 6px,transparent 6px 12px);margin:14px 0"></div>
       <div style="display:flex;justify-content:space-between;font-size:9px;letter-spacing:1px;color:rgba(246,241,227,.4);text-transform:uppercase;margin-bottom:14px;">
         <span>Nº <b style="color:rgba(246,241,227,.65)">${serial}</b></span>
-        <span>${t("ticket.number")||"Boleto"} ${TICKET_MAX+1-ticketCount}/${TICKET_MAX}</span>
+        <span>Boleto ${TICKET_MAX+1-ticketCount}/${TICKET_MAX}</span>
       </div>
       <div style="text-align:center;margin-bottom:18px;">
-        <div style="font-size:9px;letter-spacing:3px;text-transform:uppercase;color:rgba(246,241,227,.5);margin-bottom:4px;font-weight:700">${t("ticket.acc_pts")||"Puntos acumulados en el boleto"}</div>
+        <div style="font-size:9px;letter-spacing:3px;text-transform:uppercase;color:rgba(246,241,227,.5);margin-bottom:4px;font-weight:700">Puntos acumulados en el boleto</div>
         <div id="tPrize" style="font-family:'Bebas Neue',Impact,sans-serif;font-size:40px;color:#f0c419;text-shadow:0 3px 0 rgba(0,0,0,.35);">0 <span style="font-size:20px;opacity:.85">PTS</span></div>
       </div>
       <div class="scratch-grid" id="tGrid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px;"></div>
       <div id="tDots" style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
-        <span style="font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:rgba(246,241,227,.5);font-weight:700;margin-right:4px;">${t("ticket.scratched")||"Casillas rascadas"}</span>
+        <span style="font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:rgba(246,241,227,.5);font-weight:700;margin-right:4px;">Casillas rascadas</span>
       </div>
       <div style="margin-bottom:18px;">
         <div style="display:flex;justify-content:space-between;font-size:9px;letter-spacing:1px;text-transform:uppercase;color:rgba(246,241,227,.5);font-weight:700;margin-bottom:5px;">
-          <span>${t("ticket.risk")||"Riesgo de la próxima casilla"}</span>
+          <span>Riesgo de la próxima casilla</span>
           <span style="color:#d94f3d;font-weight:800" id="tRiskVal">8%</span>
         </div>
         <div style="height:6px;border-radius:4px;background:rgba(246,241,227,.12);overflow:hidden;">
@@ -5216,7 +5284,7 @@ function buildTicketInMount(mount, ticketCount, lastRegen, currentScratchPts){
         </div>
       </div>
       <div style="display:flex;flex-direction:column;gap:8px;">
-        <button id="tCashBtn" disabled onclick="ticketCashOut(false)" style="border:none;border-radius:0;font-family:'Bebas Neue',Impact,sans-serif;font-size:22px;letter-spacing:2px;padding:14px;cursor:pointer;background:linear-gradient(180deg,#ffe27a,#f0c419 55%,#c9960c);color:#08160d;box-shadow:0 6px 0 #8a6a08,0 10px 18px -6px rgba(0,0,0,.5);opacity:.35;pointer-events:none;">${t("ticket.cashout_btn")||"PLANTARSE"}</button>
+        <button id="tCashBtn" disabled onclick="ticketCashOut(false)" style="border:none;border-radius:0;font-family:'Bebas Neue',Impact,sans-serif;font-size:22px;letter-spacing:2px;padding:14px;cursor:pointer;background:linear-gradient(180deg,#ffe27a,#f0c419 55%,#c9960c);color:#08160d;box-shadow:0 6px 0 #8a6a08,0 10px 18px -6px rgba(0,0,0,.5);opacity:.35;pointer-events:none;">PLANTARSE</button>
 
       </div>
       
@@ -5645,12 +5713,12 @@ async function renderUpgradesTab(){
   const pointsEl = document.getElementById('upgradePointsDisplay');
   if(!list) return;
 
-  list.innerHTML = `<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:12px">${t("ui.loading")||"Cargando..."}</div>`;
+  list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:12px">Cargando...</div>';
   await refreshUpgradeCache(); // sincronizar cache antes de renderizar
 
   const user = window._fbAuth && window._fbAuth.currentUser;
   if(!user){
-    list.innerHTML = `<div style="text-align:center;padding:20px;color:var(--text-muted)">${t("upgrades.login")||"Inicia sesión para ver las mejoras."}</div>`;
+    list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted)">Inicia sesión para ver las mejoras.</div>';
     return;
   }
 
@@ -5676,7 +5744,7 @@ async function renderUpgradesTab(){
 
     const costHtml = nextCost !== null
       ? `<span class="cost-star">★</span>${nextCost}`
-      : `<span style="font-size:9px;color:var(--text-muted);letter-spacing:1px">${t('upgrades.max')||'MAX'}</span>`;
+      : `<span style="font-size:9px;color:var(--text-muted);letter-spacing:1px">MAX</span>`;
 
     const row = document.createElement('div');
     row.className = 'upgrade-row';
@@ -5685,8 +5753,8 @@ async function renderUpgradesTab(){
       <div class="upgrade-row-top">
         <div class="upgrade-icon" style="color:var(--accent)">${UPGRADE_ICONS[def.id]||''}</div>
         <div class="upgrade-label-block">
-          <div class="upgrade-name">${window.t?window.t("upgrade."+def.id)||def.name:def.name}</div>
-          <div class="upgrade-desc">${window.t?window.t("upgrade."+def.id+"_desc")||def.desc:def.desc}</div>
+          <div class="upgrade-name">${def.name}</div>
+          <div class="upgrade-desc">${def.desc}</div>
         </div>
         <div class="upgrade-value-pill">${def.tooltip(currentLevel)}</div>
       </div>
@@ -5694,8 +5762,8 @@ async function renderUpgradesTab(){
         <div class="upgrade-bars">${bars}</div>
         <div class="upgrade-controls">
           <div class="upgrade-cost-badge">${costHtml}</div>
-          <button class="upgrade-btn minus" data-id="${def.id}" title="${t('upgrades.sell')||'Recuperar'} ${prevRefund||0} pts" ${canDowngrade?'':'disabled'}>−</button>
-          <button class="upgrade-btn plus" data-id="${def.id}" title="${t('upgrades.buy')||'Coste'}: ${nextCost||0} pts" ${canUpgrade?'':'disabled'}>+</button>
+          <button class="upgrade-btn minus" data-id="${def.id}" title="Recuperar ${prevRefund||0} pts" ${canDowngrade?'':'disabled'}>−</button>
+          <button class="upgrade-btn plus" data-id="${def.id}" title="Coste: ${nextCost||0} pts" ${canUpgrade?'':'disabled'}>+</button>
         </div>
       </div>`;
 
@@ -5844,9 +5912,9 @@ async function renderSkillsTab(){
   const list = document.getElementById('skillsList');
   const pointsEl = document.getElementById('skillPointsDisplay');
   if(!list) return;
-  list.innerHTML=`<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:12px">${t("ui.loading")||"Cargando..."}</div>`;
+  list.innerHTML='<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:12px">Cargando...</div>';
   const user = window._fbAuth&&window._fbAuth.currentUser;
-  if(!user){ list.innerHTML=`<div style="text-align:center;padding:20px;color:var(--text-muted)">${t("skills.login")||"Inicia sesión para ver las habilidades."}</div>`; return; }
+  if(!user){ list.innerHTML='<div style="text-align:center;padding:20px;color:var(--text-muted)">Inicia sesión para ver las habilidades.</div>'; return; }
   const snap = await window._fbDb.collection('users').doc(user.uid).get();
   const data = snap.exists?snap.data():{};
   let pts = data.scratchPoints||0;
@@ -5863,7 +5931,7 @@ async function renderSkillsTab(){
     const catDefs = SKILL_DEFS.filter(d=>d.category===cat);
     const label = document.createElement('div');
     label.style.cssText='font-family:"Bebas Neue",Impact,sans-serif;font-size:11px;letter-spacing:2px;color:var(--text-muted);border-bottom:1px solid var(--line);padding-bottom:4px;margin:12px 0 8px';
-    label.textContent=t('cat.'+cat.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,''))||cat;
+    label.textContent=cat;
     list.appendChild(label);
     const grid = document.createElement('div');
     grid.className='skill-grid';
@@ -5878,11 +5946,11 @@ async function renderSkillsTab(){
       btn.style.cssText=`display:flex;flex-direction:column;align-items:center;justify-content:space-between;gap:0;border:2px solid ${active?'var(--gold)':'var(--line)'};background:${active?'rgba(201,162,39,.12)':'var(--panel)'};color:${active?'var(--gold)':'var(--text)'};cursor:pointer;transition:.15s;text-align:center;width:100%;box-sizing:border-box;overflow:hidden;height:160px`;
       const iconPart=`<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;padding:12px 8px 8px;flex:1">
         <span style="color:${active?'var(--gold)':'var(--accent)'}">${def.icon.replace(/width="22"/g,'width="26"').replace(/height="22"/g,'height="26"')}</span>
-        <span style="font-family:'Bebas Neue',Impact,sans-serif;font-size:13px;letter-spacing:.8px;color:${active?'var(--gold)':'var(--text)'};line-height:1.1">${window.t?window.t("skill."+def.id)||def.name:def.name}</span>
-        <span style="font-size:10px;color:${active?'var(--accent)':'var(--text-muted)'};line-height:1.4;padding:0 4px">${window.t?window.t("skill."+def.id+"_desc")||def.tooltip:def.tooltip}</span>
+        <span style="font-family:'Bebas Neue',Impact,sans-serif;font-size:13px;letter-spacing:.8px;color:${active?'var(--gold)':'var(--text)'};line-height:1.1">${def.name}</span>
+        <span style="font-size:10px;color:${active?'var(--accent)':'var(--text-muted)'};line-height:1.4;padding:0 4px">${def.tooltip}</span>
       </div>`;
       const footerPart=`<div style="width:100%;padding:6px;background:${active?'rgba(201,162,39,.15)':'rgba(0,0,0,.15)'};border-top:1px solid ${active?'rgba(201,162,39,.3)':'var(--line)'}">
-        <span style="font-family:'Bebas Neue',Impact,sans-serif;font-size:12px;color:${active?'var(--gold)':'var(--text-muted)'};letter-spacing:1px">${active?t('skills.active')||'✓ ACTIVA':(t('skills.pts')||'PTS')+' · ★ '+def.cost}</span>
+        <span style="font-family:'Bebas Neue',Impact,sans-serif;font-size:12px;color:${active?'var(--gold)':'var(--text-muted)'};letter-spacing:1px">${active?'✓ ACTIVA · PULSA PARA DESACTIVAR':'★ '+def.cost+' PTS'}</span>
       </div>`;
       btn.innerHTML=iconPart+footerPart;
       btn.addEventListener('click', async()=>{
@@ -5983,7 +6051,7 @@ const ACHIEVEMENT_DEFS = [
 ];
 
 const TIER_COLOR = {básico:'#aaa', intermedio:'#2ecc71', difícil:'#e67e22', mítico:'#f0c419'};
-const TIER_LABEL = {básico:t('tier.basic_pts')||'★ 1 PT', intermedio:t('tier.intermediate_pts')||'★ 2 PTS', difícil:t('tier.hard_pts')||'★ 3 PTS', mítico:t('tier.mythic_pts')||'★ 25 PTS'};
+const TIER_LABEL = {básico:'★ 1 PT', intermedio:'★ 2 PTS', difícil:'★ 3 PTS', mítico:'★ 25 PTS'};
 
 // Cache de logros
 window._achievementsCache = new Set();
@@ -6062,9 +6130,10 @@ async function checkAllBasicAchievements(unlocked){
 async function renderAchievementsTab(){
   const list=document.getElementById('achievementsList');
   if(!list) return;
-  list.innerHTML=`<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:12px">${t("ui.loading")||"Cargando..."}</div>`;
+  list.innerHTML='<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:12px">Cargando...</div>';
   const user=window._fbAuth&&window._fbAuth.currentUser;
-  if(!user){ list.innerHTML=`<div style="text-align:center;padding:20px;color:var(--text-muted)">${t("achievements.login")||"Inicia sesión para ver tus logros."}</div>`; return; }
+  if(!user){ list.innerHTML='<div style="text-align:center;padding:20px;color:var(--text-muted)">Inicia sesión para ver tus logros.</div>'; return; }
+  const snap=await window._fbDb.collection('users').doc(user.uid).get();
   const unlocked=new Set((snap.exists&&snap.data().achievements)||[]);
   const total=ACHIEVEMENT_DEFS.length;
   const done=[...unlocked].filter(id=>ACHIEVEMENT_DEFS.find(a=>a.id===id)).length;
@@ -6171,21 +6240,6 @@ window.applyTranslations = function(){
   });
   // Botones de acción principales
   const selectBtn=document.querySelector('[onclick*="showTeamSelectModal"],.main-action-btn');
-  // Actualizar stat labels del equipo
-  const statMap={'attackValue':'team.attack','defenseValue':'team.defense','paceValue':'team.pace','passingValue':'team.passing','techniqueValue':'team.technique'};
-  document.querySelectorAll('[data-i18n]').forEach(el=>{
-    const key=el.getAttribute('data-i18n');
-    const txt=window.t?window.t(key):null;
-    if(!txt||txt===key) return;
-    // Solo actualizar si el elemento no tiene hijos elementos (solo texto)
-    if(el.children.length===0) el.textContent=txt;
-  });
-  // Actualizar welcome text (solo si no tiene hijos que puedan romperse)
-  const wt=document.getElementById('welcomeText');
-  if(wt && wt.children.length===0){
-    const wtxt=window.t?window.t('welcome.text'):null;
-    if(wtxt&&wtxt!=='welcome.text') wt.innerHTML=wtxt;
-  }
   // Actualizar el sort label de convocados
   const sortLabel=document.getElementById('convSortLabel');
   if(sortLabel){
@@ -6197,11 +6251,4 @@ window.applyTranslations = function(){
 // Aplicar traducciones al cargar
 document.addEventListener('DOMContentLoaded',()=>{
   if(window.applyTranslations) window.applyTranslations();
-  // Wire welcome button siempre, independiente de Firebase
-  const wsb=document.getElementById('welcomeStartBtn');
-  if(wsb) wsb.addEventListener('click',()=>{
-    const o=document.getElementById('welcomeOverlay');
-    if(o) o.style.display='none';
-  });
 });
-}
