@@ -71,6 +71,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;600;700&family=Press+Start+2P&display=swap" rel="stylesheet">
 <script src="https://unpkg.com/@phosphor-icons/web@2.1.1/src/index.js"></script>
 <script src="i18n.js"></script>
+<script src="i18n.js"></script>
 <script>
   // Cache-busting: force fresh CSS on every page load/refresh
   document.write('<link rel="stylesheet" href="style.css?v=' + Date.now() + '">');
@@ -80,9 +81,13 @@
 
 <!-- FULL-WIDTH APP HEADER -->
 <header id="appHeader">
-  <div class="app-header-logo">
-    <img src="assets/logo/header_logo.png" alt="Goal2Goat" onclick="location.reload()" style="cursor:pointer;height:28px;width:auto;display:block" title="Volver al inicio">
-    <div class="version-tag">v0.353</div>
+  <div class="app-header-logo" style="flex-direction:row;align-items:flex-end;gap:6px">
+    <img src="header_logo.png" alt="Goal2Goat" onclick="location.reload()"
+      style="cursor:pointer;height:36px;width:auto;display:block"
+      title="Volver al inicio"
+      onerror="this.style.display='none';document.getElementById('logoFallback').style.display='block'">
+    <span id="logoFallback" style="display:none;font-family:'Bebas Neue',Impact,sans-serif;font-size:26px;letter-spacing:3px;color:#c9a227;cursor:pointer;line-height:1" onclick="location.reload()">GOAL2GOAT</span>
+    <div class="version-tag" style="margin-bottom:3px">v0.353</div>
   </div>
   <div class="app-header-actions">
     <a href="https://ko-fi.com/goal2goat" target="_blank" class="support-btn" style="text-decoration:none;display:inline-flex;align-items:center;justify-content:center">APOYA A GOAL2GOAT</a>
@@ -142,23 +147,23 @@
       <div id="profileStatsPane" class="profile-tab-pane profile-tab-pane-active">
 
         <!-- Sección: Resultados -->
-        <div class="stats-section-label">RESULTADOS</div>
+        <div class="stats-section-label" data-i18n="stats.results">RESULTADOS</div>
         <div class="profile-stats-grid" style="grid-template-columns:repeat(2,1fr)">
           <div class="profile-stat-card">
             <div class="pstat-val" id="pstat-games">—</div>
-            <div class="pstat-label">PARTIDAS</div>
+            <div class="pstat-label" data-i18n="stats.played">PARTIDAS</div>
           </div>
           <div class="profile-stat-card wins">
             <div class="pstat-val" id="pstat-wins">—</div>
-            <div class="pstat-label">VICTORIAS</div>
+            <div class="pstat-label" data-i18n="stats.wins">VICTORIAS</div>
           </div>
           <div class="profile-stat-card">
             <div class="pstat-val" id="pstat-draws">—</div>
-            <div class="pstat-label">EMPATES</div>
+            <div class="pstat-label" data-i18n="stats.draws">EMPATES</div>
           </div>
           <div class="profile-stat-card losses">
             <div class="pstat-val" id="pstat-losses">—</div>
-            <div class="pstat-label">DERROTAS</div>
+            <div class="pstat-label" data-i18n="stats.losses">DERROTAS</div>
           </div>
         </div>
 
@@ -167,28 +172,28 @@
         <div class="profile-stats-grid" style="grid-template-columns:repeat(2,1fr)">
           <div class="profile-stat-card">
             <div class="pstat-val" id="pstat-gf">—</div>
-            <div class="pstat-label">A FAVOR</div>
+            <div class="pstat-label" data-i18n="stats.gf">A FAVOR</div>
           </div>
           <div class="profile-stat-card">
             <div class="pstat-val" id="pstat-ga">—</div>
-            <div class="pstat-label">EN CONTRA</div>
+            <div class="pstat-label" data-i18n="stats.ga">EN CONTRA</div>
           </div>
         </div>
 
         <!-- Sección: Trofeos -->
-        <div class="stats-section-label">TROFEOS</div>
+        <div class="stats-section-label" data-i18n="stats.trophies">TROFEOS</div>
         <div class="profile-stats-grid" style="grid-template-columns:repeat(3,1fr)">
           <div class="profile-stat-card best">
             <div class="pstat-val" id="pstat-best">—</div>
-            <div class="pstat-label">MEJOR PUNT.</div>
+            <div class="pstat-label" data-i18n="stats.best">MEJOR PUNT.</div>
           </div>
           <div class="profile-stat-card titles">
             <div class="pstat-val"><i class="ph ph-bold ph-trophy" style="color:#c9a227;font-size:28px;vertical-align:middle"></i> <span id="pstat-titles">—</span></div>
-            <div class="pstat-label">TÍTULOS</div>
+            <div class="pstat-label" data-i18n="stats.titles">TÍTULOS</div>
           </div>
           <div class="profile-stat-card" style="border-color:var(--gold)">
             <div class="pstat-val" style="color:var(--gold)">🐐 <span id="pstat-scratch-pts">—</span></div>
-            <div class="pstat-label">GOAT PTS</div>
+            <div class="pstat-label" data-i18n="stats.goat_pts">GOAT PTS</div>
           </div>
         </div>
 
@@ -217,6 +222,13 @@
           <div style="display:flex;gap:8px;margin-top:8px">
             <button id="langEsBtn" onclick="window.setLang('es')" style="flex:1;padding:8px;font-family:'Bebas Neue',Impact,sans-serif;font-size:14px;letter-spacing:1px;border:2px solid var(--line);background:var(--panel);color:var(--text);cursor:pointer">🇪🇸 ESPAÑOL</button>
             <button id="langEnBtn" onclick="window.setLang('en')" style="flex:1;padding:8px;font-family:'Bebas Neue',Impact,sans-serif;font-size:14px;letter-spacing:1px;border:2px solid var(--line);background:var(--panel);color:var(--text);cursor:pointer">🇬🇧 ENGLISH</button>
+          </div>
+        </div>
+        <div id="langSelectorWrap" style="display:none;margin-top:14px;padding-top:14px;border-top:1px solid var(--line)">
+          <div style="font-size:10px;letter-spacing:1.5px;color:var(--text-muted);font-family:'Bebas Neue',Impact,sans-serif;margin-bottom:8px">IDIOMA</div>
+          <div style="display:flex;gap:8px">
+            <button id="langEsBtn" onclick="window.setLang('es')" style="flex:1;padding:8px;font-family:'Bebas Neue',Impact,sans-serif;font-size:14px;letter-spacing:1px;border:2px solid var(--gold);color:var(--gold);background:var(--panel);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px"><span style="font-size:11px;font-weight:700;background:#c60b1e;color:#fff;padding:1px 5px;border-radius:2px">ES</span> ESPAÑOL</button>
+            <button id="langEnBtn" onclick="window.setLang('en')" style="flex:1;padding:8px;font-family:'Bebas Neue',Impact,sans-serif;font-size:14px;letter-spacing:1px;border:2px solid var(--line);color:var(--text);background:var(--panel);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px"><span style="font-size:11px;font-weight:700;background:#012169;color:#fff;padding:1px 5px;border-radius:2px">GB</span> ENGLISH</button>
           </div>
         </div>
         <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;align-items:center">
@@ -433,7 +445,7 @@
 
     <div class="team-profile box" id="teamProfileBox">
       <h3>PERFIL DEL EQUIPO</h3>
-      <div class="ovr-team"><span class="team-stat-title">NOTA MEDIA</span><span id="teamOVR">—</span></div>
+      <div class="ovr-team"><span class="team-stat-title" data-i18n="team.avg">NOTA MEDIA</span><span id="teamOVR">—</span></div>
       <div class="stat-row"><span>ATAQUE</span><span id="attackValue">0</span></div>
       <div class="stat-bar"><div id="attackBar"></div></div>
       <div class="stat-row"><span>DEFENSA</span><span id="defenseValue">0</span></div>
@@ -631,20 +643,20 @@
 <nav id="mobileTabBar">
   <button class="mob-tab active" data-tab="campo" onclick="switchMobileTab('campo')">
     <svg class="mob-tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="12" y1="4" x2="12" y2="20"/><circle cx="12" cy="12" r="2.5"/></svg>
-    <span class="mob-tab-label">CAMPO</span>
+    <span class="mob-tab-label" data-i18n="mob.campo">CAMPO</span>
   </button>
   <button class="mob-tab" data-tab="equipo" onclick="switchMobileTab('equipo')">
     <svg class="mob-tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="7" r="3"/><path d="M2 21v-1.5C2 16 5 14 9 14s7 2 7 5.5V21z"/><circle cx="17" cy="8" r="2.3" opacity=".8"/><path d="M22 21v-1.2c0-2.5-2-4.2-4.5-4.5"/></svg>
-    <span class="mob-tab-label">EQUIPO</span>
+    <span class="mob-tab-label" data-i18n="mob.equipo">EQUIPO</span>
     <span class="mob-tab-badge mob-tab-badge-pulse" id="formationBadge">!</span>
   </button>
   <button class="mob-tab" data-tab="rival" onclick="switchMobileTab('rival')">
     <svg class="mob-tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L3 6v6c0 5 4 8.5 9 10 5-1.5 9-5 9-10V6z"/></svg>
-    <span class="mob-tab-label">RIVAL</span>
+    <span class="mob-tab-label" data-i18n="mob.rival">RIVAL</span>
   </button>
   <button class="mob-tab" data-tab="historial" onclick="switchMobileTab('historial')">
     <svg class="mob-tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3h14a1 1 0 0 1 1 1v17l-8-4-8 4V4a1 1 0 0 1 1-1z"/></svg>
-    <span class="mob-tab-label">HISTORIAL</span>
+    <span class="mob-tab-label" data-i18n="mob.historial">HISTORIAL</span>
   </button>
   <button class="mob-tab" id="ticketTabBtn" onclick="openTicketOverlay()">
     <svg class="mob-tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 9a1 1 0 0 1 0-2V5a1 1 0 0 1 1-1h18a1 1 0 0 1 1 1v2a1 1 0 0 1 0 2v2a1 1 0 0 1 0 2v2a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1v-2a1 1 0 0 1 0-2V9z"/><line x1="9" y1="4" x2="9" y2="20" stroke-dasharray="2 3"/></svg>
@@ -652,11 +664,11 @@
   </button>
   <button class="mob-tab" data-tab="info" onclick="switchMobileTab('info')">
     <svg class="mob-tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="12" y1="11" x2="12" y2="16"/><circle cx="12" cy="7.5" r="0.9" fill="currentColor" stroke="none"/></svg>
-    <span class="mob-tab-label">INFORMACIÓN</span>
+    <span class="mob-tab-label" data-i18n="mob.info">INFORMACIÓN</span>
   </button>
   <button class="mob-tab" data-tab="ranking" onclick="switchMobileTab('ranking')">
     <svg class="mob-tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4h10v6a5 5 0 0 1-10 0z"/><path d="M7 5H4.5A2.5 2.5 0 0 0 4 9.9C4.6 11 5.7 11.6 7 11.5"/><path d="M17 5h2.5A2.5 2.5 0 0 1 20 9.9c-.6 1.1-1.7 1.7-3 1.6"/><line x1="12" y1="14" x2="12" y2="18"/><path d="M8 21h8v-1.3c0-.9-.7-1.7-1.6-1.7H9.6c-.9 0-1.6.8-1.6 1.7z"/></svg>
-    <span class="mob-tab-label">RANKING</span>
+    <span class="mob-tab-label" data-i18n="mob.ranking">RANKING</span>
   </button>
 </nav>
 

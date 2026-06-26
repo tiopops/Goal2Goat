@@ -4514,6 +4514,10 @@ function initFirebaseAuth(){
       const data=snap.exists?snap.data():{};
       window.preferredTeamName=data.preferredTeamName||"";
       window.useFixedTeamName=!!data.useFixedTeamName;
+      if(data.lang&&(data.lang==='es'||data.lang==='en')){
+        window.LANG=data.lang;
+        try{localStorage.setItem('g2g_lang',data.lang);}catch(e){}
+      }
       // Sincronizar nombre del equipo para el contador de convocados
       if(window.preferredTeamName) window._currentTeamName=window.preferredTeamName.toUpperCase();
       // Cargar idioma guardado
@@ -4624,6 +4628,8 @@ function initFirebaseAuth(){
           newCb.addEventListener('change',function(){
             window.CHEATS_ACTIVE=this.checked;
             updateTicketBadge(window.CHEATS_ACTIVE?3:undefined);
+            const lw=document.getElementById('langSelectorWrap');
+            if(lw) lw.style.display=window.CHEATS_ACTIVE?'block':'none';
             // Mostrar selector de idioma solo con cheats activos
             const langWrap=$id('langSelectorWrap');
             if(langWrap) langWrap.style.display=window.CHEATS_ACTIVE?'block':'none';
@@ -6250,5 +6256,69 @@ window.applyTranslations = function(){
 
 // Aplicar traducciones al cargar
 document.addEventListener('DOMContentLoaded',()=>{
+  if(window.applyTranslations) window.applyTranslations();
+});
+
+
+/* ═══ TRADUCCIONES ═══ */
+window.applyTranslations = function(){
+  if(!window.t) return;
+  // Solo actualizar elementos de texto puro (sin hijos elementos)
+  document.querySelectorAll('[data-i18n]').forEach(function(el){
+    if(el.children.length > 0) return; // NUNCA tocar elementos con hijos
+    var key = el.getAttribute('data-i18n');
+    var txt = window.t(key);
+    if(txt && txt !== key) el.textContent = txt;
+  });
+  // Actualizar tabs del perfil (tienen icono como hijo - tratar separado)
+  var tabMap = {
+    'profileTabStats':        'tab.stats',
+    'profileTabUser':         'tab.settings',
+    'profileTabUpgrades':     'tab.upgrades',
+    'profileTabNotes':        'tab.skills',
+    'profileTabAchievements': 'tab.achievements'
+  };
+  Object.keys(tabMap).forEach(function(id){
+    var btn = document.getElementById(id);
+    if(!btn) return;
+    var icon = btn.querySelector('i');
+    var badge = btn.querySelector('span');
+    var txt = window.t(tabMap[id]);
+    btn.textContent = txt;
+    if(icon) btn.insertBefore(icon, btn.firstChild);
+    if(badge) btn.appendChild(badge);
+  });
+  // Tabs móvil
+  var mobMap = {
+    'mob-tab-campo':    'mob.campo',
+    'mob-tab-equipo':   'mob.equipo',
+    'mob-tab-rival':    'mob.rival',
+    'mob-tab-historial':'mob.historial',
+    'mob-tab-info':     'mob.info',
+    'mob-tab-ranking':  'mob.ranking'
+  };
+  Object.keys(mobMap).forEach(function(id){
+    var btn = document.getElementById(id);
+    if(!btn) return;
+    var label = btn.querySelector('.mob-tab-label');
+    if(label) label.textContent = window.t(mobMap[id]);
+  });
+  // Botones de idioma activo
+  var esBtn = document.getElementById('langEsBtn');
+  var enBtn = document.getElementById('langEnBtn');
+  if(esBtn) esBtn.style.borderColor = window.LANG==='es' ? 'var(--gold)' : 'var(--line)';
+  if(enBtn) enBtn.style.borderColor = window.LANG==='en' ? 'var(--gold)' : 'var(--line)';
+  if(esBtn) esBtn.style.color = window.LANG==='es' ? 'var(--gold)' : 'var(--text)';
+  if(enBtn) enBtn.style.color = window.LANG==='en' ? 'var(--gold)' : 'var(--text)';
+  // Convocados sort label
+  var sl = document.getElementById('convSortLabel');
+  if(sl){
+    var sortKeys = {position:window.t('draft.position'),arrival:window.t('draft.arrival'),rating:window.t('draft.rating')};
+    sl.textContent = sortKeys[window.convSortMode] || sl.textContent;
+  }
+};
+
+// Aplicar al cargar
+document.addEventListener('DOMContentLoaded', function(){
   if(window.applyTranslations) window.applyTranslations();
 });
