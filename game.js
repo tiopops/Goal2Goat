@@ -1936,7 +1936,7 @@ function renderStrategySelector(){
     : '';
   el.innerHTML=`
     ${hintHTML}
-    <div class="style-label" style="margin-top:12px">${t("strategy.choose")}</div>
+    <div class="style-label" style="margin-top:12px">${window.t?t("strategy.choose"):"ELIGE TU ESTRATEGIA"}</div>
     <div class="strategy-grid">
       ${STRATEGY_ORDER.map(key=>{
         const s=STRATEGIES[key];
@@ -1945,7 +1945,7 @@ function renderStrategySelector(){
         return `<button class="strategy-btn${sel}" data-key="${key}" onclick="chooseMatchStrategy('${key}')" title="${esc(s.desc)}"${isOptimal}>${s.name}</button>`;
       }).join('')}
     </div>
-    ${selectedMatchStrategy?`<div class="strategy-desc">${STRATEGIES[selectedMatchStrategy].desc}</div>`:'<div class="strategy-desc strategy-desc-empty">Sin estrategia elegida: sin bonus ni penalización.</div>'}
+    ${selectedMatchStrategy?`<div class="strategy-desc">${(STRATEGIES[selectedMatchStrategy]||{}).desc||""}</div>`:`<div class="strategy-desc strategy-desc-empty">${window.t?t('rival.no_strat'):'Sin estrategia elegida: sin bonus ni penalización.'}</div>`}
   `;
 }
 function chooseMatchStrategy(key){
