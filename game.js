@@ -346,134 +346,134 @@ const WEATHER_TYPES = [
    answer -> moral stays the same regardless of outcome. */
 const PRESS_PREDICTIONS = [
   {
-    q: "«¿Dejaréis la portería a cero en este encuentro?»",
+    q: window.t?t("press.q1"):"«¿Dejaréis la portería a cero en este encuentro?»",
     answers: [
-      { text: "«Sí, vamos a por la portería a cero.»", stance: "positive", label: "Confiado",
+      { text: window.t?t("press.q1a1"):"«Sí, vamos a por la portería a cero.»", stance: "positive", label: "Confiado",
         check: (r) => r.oppGoals === 0 },
-      { text: "«Es difícil de prometer, ya veremos.»", stance: "neutral", label: "Prudente",
+      { text: window.t?t("press.q1a2"):"«Es difícil de prometer, ya veremos.»", stance: "neutral", label: "Prudente",
         check: () => null },
-      { text: "«Lo veo complicado, encajaremos.»", stance: "negative", label: "Pesimista",
+      { text: window.t?t("press.q1a3"):"«Lo veo complicado, encajaremos.»", stance: "negative", label: "Pesimista",
         check: (r) => r.oppGoals > 0 },
     ]
   },
   {
-    q: "«¿Vais a ganar por tres goles o más?»",
+    q: window.t?t("press.q2"):"«¿Vais a ganar por tres goles o más?»",
     answers: [
-      { text: "«Sí, vamos a golear.»", stance: "positive", label: "Ambicioso",
+      { text: window.t?t("press.q2a1"):"«Sí, vamos a golear.»", stance: "positive", label: "Ambicioso",
         check: (r) => (r.myGoals - r.oppGoals) >= 3 },
-      { text: "«No me atrevo a predecir el marcador.»", stance: "neutral", label: "Cauto",
+      { text: window.t?t("press.q2a2"):"«No me atrevo a predecir el marcador.»", stance: "neutral", label: "Cauto",
         check: () => null },
-      { text: "«No, será un partido ajustado.»", stance: "negative", label: "Realista",
+      { text: window.t?t("press.q2a3"):"«No, será un partido ajustado.»", stance: "negative", label: "Realista",
         check: (r) => (r.myGoals - r.oppGoals) < 3 },
     ]
   },
   {
-    q: "«Lleváis varios partidos viendo tarjetas. ¿Seguiréis acumulando en este encuentro?»",
+    q: window.t?t("press.q3"):"«Lleváis varios partidos viendo tarjetas.»",
     answers: [
-      { text: "«No, vamos a jugar limpio esta vez.»", stance: "positive", label: "Comprometido",
+      { text: window.t?t("press.q3a1"):"«No, vamos a jugar limpio esta vez.»", stance: "positive", label: "Comprometido",
         check: (r) => r.cardsCount === 0 },
-      { text: "«No puedo controlar lo que pite el árbitro.»", stance: "neutral", label: "Evasivo",
+      { text: window.t?t("press.q3a2"):"«No puedo controlar lo que pite el árbitro.»", stance: "neutral", label: "Evasivo",
         check: () => null },
-      { text: "«Es probable, el rival nos hará cometer faltas.»", stance: "negative", label: "Sincero",
+      { text: window.t?t("press.q3a3"):"«Es probable, el rival nos hará cometer faltas.»", stance: "negative", label: "Sincero",
         check: (r) => r.cardsCount > 0 },
     ]
   },
   {
-    q: "«¿Marcaréis en la primera mitad?»",
+    q: window.t?t("press.q4"):"«¿Marcaréis en la primera mitad?»",
     answers: [
-      { text: "«Sí, saldremos a por todas desde el inicio.»", stance: "positive", label: "Decidido",
+      { text: window.t?t("press.q4a1"):"«Sí, saldremos a por todas desde el inicio.»", stance: "positive", label: "Decidido",
         check: (r) => r.myGoals > 0 },
-      { text: "«El plan de partido lo decide el míster.»", stance: "neutral", label: "Diplomático",
+      { text: window.t?t("press.q4a2"):"«El plan de partido lo decide el míster.»", stance: "neutral", label: "Diplomático",
         check: () => null },
-      { text: "«Seremos pacientes, no hay prisa por marcar.»", stance: "negative", label: "Paciente",
+      { text: window.t?t("press.q4a3"):"«Seremos pacientes, no hay prisa por marcar.»", stance: "negative", label: "Paciente",
         check: (r) => r.myGoals === 0 },
     ]
   },
   {
-    q: "«¿Va a generar más ocasiones el rival que vosotros?»",
+    q: window.t?t("press.q5"):"«¿Va a generar más ocasiones el rival?»",
     answers: [
-      { text: "«No, vamos a dominar nosotros el partido.»", stance: "positive", label: "Dominante",
+      { text: window.t?t("press.q5a1"):"«No, vamos a dominar nosotros el partido.»", stance: "positive", label: "Dominante",
         check: (r) => r.myGoals >= r.oppGoals },
-      { text: "«Cada partido es distinto, lo veremos en el campo.»", stance: "neutral", label: "Flexible",
+      { text: window.t?t("press.q5a2"):"«Cada partido es distinto, lo veremos en el campo.»", stance: "neutral", label: "Flexible",
         check: () => null },
-      { text: "«Es un rival fuerte, nos costará contenerlo.»", stance: "negative", label: "Respetuoso",
+      { text: window.t?t("press.q5a3"):"«Es un rival fuerte, nos costará contenerlo.»", stance: "negative", label: "Respetuoso",
         check: (r) => r.oppGoals > r.myGoals },
     ]
   },
   {
-    q: "«¿Se va a decidir esto en los 90 minutos, sin penaltis?»",
+    q: window.t?t("press.q6"):"«¿Se va a decidir en los 90 minutos?»",
     answers: [
-      { text: "«Sí, lo resolveremos en el tiempo reglamentario.»", stance: "positive", label: "Seguro",
+      { text: window.t?t("press.q6a1"):"«Sí, lo resolveremos en el tiempo reglamentario.»", stance: "positive", label: "Seguro",
         check: (r) => !r.penalties },
-      { text: "«Lo importante es resolverlo, como sea.»", stance: "neutral", label: "Pragmático",
+      { text: window.t?t("press.q6a2"):"«Lo importante es resolverlo, como sea.»", stance: "neutral", label: "Pragmático",
         check: () => null },
-      { text: "«Puede decidirse en los detalles, incluso en penaltis.»", stance: "negative", label: "Cauteloso",
+      { text: window.t?t("press.q6a3"):"«Puede decidirse en los detalles, incluso en penaltis.»", stance: "negative", label: "Cauteloso",
         check: (r) => r.penalties },
     ]
   },
   {
-    q: "«¿Vais a marcar más de un gol en este partido?»",
+    q: window.t?t("press.q7"):"«¿Vais a marcar más de un gol?»",
     answers: [
-      { text: "«Sí, tenemos gol en las botas.»", stance: "positive", label: "Ofensivo",
+      { text: window.t?t("press.q7a1"):"«Sí, tenemos gol en las botas.»", stance: "positive", label: "Ofensivo",
         check: (r) => r.myGoals > 1 },
-      { text: "«Con uno nos conformamos si hace falta.»", stance: "neutral", label: "Pragmático",
+      { text: window.t?t("press.q7a2"):"«Con uno nos conformamos si hace falta.»", stance: "neutral", label: "Pragmático",
         check: () => null },
-      { text: "«Va a costarnos encontrar el gol hoy.»", stance: "negative", label: "Cauteloso",
+      { text: window.t?t("press.q7a3"):"«Va a costarnos encontrar el gol hoy.»", stance: "negative", label: "Cauteloso",
         check: (r) => r.myGoals <= 1 },
     ]
   },
   {
-    q: "«¿Encajaréis dos goles o más en este partido?»",
+    q: window.t?t("press.q8"):"«¿Encajaréis dos goles o más?»",
     answers: [
-      { text: "«No, vamos a estar sólidos atrás.»", stance: "positive", label: "Defensivo",
+      { text: window.t?t("press.q8a1"):"«No, vamos a estar sólidos atrás.»", stance: "positive", label: "Defensivo",
         check: (r) => r.oppGoals < 2 },
-      { text: "«El fútbol siempre da sorpresas.»", stance: "neutral", label: "Filosófico",
+      { text: window.t?t("press.q8a2"):"«El fútbol siempre da sorpresas.»", stance: "neutral", label: "Filosófico",
         check: () => null },
-      { text: "«El rival tiene mucho gol, puede pasar.»", stance: "negative", label: "Realista",
+      { text: window.t?t("press.q8a3"):"«El rival tiene mucho gol, puede pasar.»", stance: "negative", label: "Realista",
         check: (r) => r.oppGoals >= 2 },
     ]
   },
   {
-    q: "«¿Terminará el partido en empate?»",
+    q: window.t?t("press.q9"):"«¿Terminará el partido en empate?»",
     answers: [
-      { text: "«No, vamos a buscar la victoria hasta el final.»", stance: "positive", label: "Ambicioso",
+      { text: window.t?t("press.q9a1"):"«No, vamos a buscar la victoria hasta el final.»", stance: "positive", label: "Ambicioso",
         check: (r) => !r.draw },
-      { text: "«Cualquier resultado es posible en este torneo.»", stance: "neutral", label: "Realista",
+      { text: window.t?t("press.q9a2"):"«Cualquier resultado es posible en este torneo.»", stance: "neutral", label: "Realista",
         check: () => null },
-      { text: "«Puede que ninguno consiga abrir la lata.»", stance: "negative", label: "Cauteloso",
+      { text: window.t?t("press.q9a3"):"«Puede que ninguno consiga abrir la lata.»", stance: "negative", label: "Cauteloso",
         check: (r) => r.draw },
     ]
   },
   {
-    q: "«¿Marcará alguno de vuestros delanteros estrella?»",
+    q: window.t?t("press.q10"):"«¿Marcará alguno de vuestros delanteros?»",
     answers: [
-      { text: "«Sí, va a estar fino delante de la portería.»", stance: "positive", label: "Confiado",
+      { text: window.t?t("press.q10a1"):"«Sí, va a estar fino delante de la portería.»", stance: "positive", label: "Confiado",
         check: (r) => r.myGoals > 0 },
-      { text: "«El gol es cosa de todo el equipo.»", stance: "neutral", label: "Colectivo",
+      { text: window.t?t("press.q10a2"):"«El gol es cosa de todo el equipo.»", stance: "neutral", label: "Colectivo",
         check: () => null },
-      { text: "«El rival lo va a tener vigilado de cerca.»", stance: "negative", label: "Precavido",
+      { text: window.t?t("press.q10a3"):"«El rival lo va a tener vigilado de cerca.»", stance: "negative", label: "Precavido",
         check: (r) => r.myGoals === 0 },
     ]
   },
   {
-    q: "«¿Va a ser un partido con mucho juego físico?»",
+    q: window.t?t("press.q11"):"«¿Va a ser un partido con mucho juego físico?»",
     answers: [
-      { text: "«No, queremos jugar al fútbol, no a la guerra.»", stance: "positive", label: "Conciliador",
+      { text: window.t?t("press.q11a1"):"«No, queremos jugar al fútbol, no a la guerra.»", stance: "positive", label: "Conciliador",
         check: (r) => r.cardsCount === 0 },
-      { text: "«Eso lo decide el árbitro, no nosotros.»", stance: "neutral", label: "Evasivo",
+      { text: window.t?t("press.q11a2"):"«Eso lo decide el árbitro, no nosotros.»", stance: "neutral", label: "Evasivo",
         check: () => null },
-      { text: "«Va a ser un partido muy disputado, sin duda.»", stance: "negative", label: "Realista",
+      { text: window.t?t("press.q11a3"):"«Va a ser un partido muy disputado, sin duda.»", stance: "negative", label: "Realista",
         check: (r) => r.cardsCount > 0 },
     ]
   },
   {
-    q: "«¿Va a ser un partido de muchas ocasiones para ambos equipos?»",
+    q: window.t?t("press.q12"):"«¿Va a ser un partido de muchas ocasiones?»",
     answers: [
-      { text: "«Sí, esto va a ser ida y vuelta.»", stance: "positive", label: "Espectáculo",
+      { text: window.t?t("press.q12a1"):"«Sí, esto va a ser ida y vuelta.»", stance: "positive", label: "Espectáculo",
         check: (r) => (r.myGoals + r.oppGoals) >= 3 },
-      { text: "«Depende de cómo se plantee el partido.»", stance: "neutral", label: "Flexible",
+      { text: window.t?t("press.q12a2"):"«Depende de cómo se plantee el partido.»", stance: "neutral", label: "Flexible",
         check: () => null },
-      { text: "«Va a ser un partido cerrado y táctico.»", stance: "negative", label: "Realista",
+      { text: window.t?t("press.q12a3"):"«Va a ser un partido cerrado y táctico.»", stance: "negative", label: "Realista",
         check: (r) => (r.myGoals + r.oppGoals) < 3 },
     ]
   },
@@ -1955,7 +1955,7 @@ function renderMatchHistory(){
   const el=document.getElementById("matchHistoryTable");
   const prog=document.getElementById("matchProgress");
   if(!el) return;
-  if(prog) prog.textContent=stage==="group"?"FASE DE GRUPOS":(ROUND_NAMES[knockoutRound]||"ELIMINATORIAS");
+  if(prog) prog.textContent=stage==="group"?(window.t?t("comp.groups"):"FASE DE GRUPOS"):(ROUND_NAMES[knockoutRound]||"ELIMINATORIAS");
   let html="";
   // Always show group table once there are group matches
   if(groupTable.length && matchResults.some(r=>r.stage==="group")){
@@ -2893,8 +2893,8 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
         if(!etHt){ etHt=true; clockEl.textContent="105'"; halfEl.textContent=t("match.halftime"); halfEl.style.background='#a07a00'; addSep("Descanso prórroga — 105'"); playSound('whistle'); }
         requestAnimationFrame(tickET); return;
       }
-      if(frac<ET_S){ clockEl.textContent=`${91+Math.floor((frac/ET_S)*14)}'`; halfEl.textContent='PRÓRROGA 1ª'; halfEl.style.background='#7a3a0a'; }
-      else { const f2=(frac-ET_E)/(1-ET_E); clockEl.textContent=`${106+Math.floor(f2*14)}'`; halfEl.textContent='PRÓRROGA 2ª'; halfEl.style.background='#7a3a0a'; }
+      if(frac<ET_S){ clockEl.textContent=`${91+Math.floor((frac/ET_S)*14)}'`; halfEl.textContent=(window.t?t('match.extratime'):'PRÓRROGA')+' 1ª'; halfEl.style.background='#7a3a0a'; }
+      else { const f2=(frac-ET_E)/(1-ET_E); clockEl.textContent=`${106+Math.floor(f2*14)}'`; halfEl.textContent=(window.t?t('match.extratime'):'PRÓRROGA')+' 2ª'; halfEl.style.background='#7a3a0a'; }
       if(frac<1){ requestAnimationFrame(tickET); return; }
       clockEl.textContent="120'"; halfEl.textContent=t("match.extratime")+" FIN"; halfEl.style.background='#555';
       playSound('whistle'); setTimeout(startPenalties,900);
@@ -3062,9 +3062,9 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
       if(groupMatchIdx>=3){btnLabel=t("match.group_results");outcome='groupDone';}
       else{btnLabel=t('match.next_match');outcome='nextGroupMatch';}
     } else {
-      if(!won){btnLabel='FIN DEL TORNEO';outcome='knockoutLost';}
-      else if(knockoutRound>=ROUND_NAMES.length-1){btnLabel='VER RESUMEN FINAL';outcome='champion';}
-      else{btnLabel='SIGUIENTE RONDA';outcome='nextKnockoutMatch';}
+      if(!won){btnLabel=window.t?t('comp.end'):'FIN DEL TORNEO';outcome='knockoutLost';}
+      else if(knockoutRound>=ROUND_NAMES.length-1){btnLabel=window.t?t('comp.end'):'VER RESUMEN FINAL';outcome='champion';}
+      else{btnLabel=window.t?t('comp.next_match'):'SIGUIENTE RONDA';outcome='nextKnockoutMatch';}
     }
     const btn=document.createElement('button');
     btn.className='modal-btn';
@@ -3135,7 +3135,7 @@ function showMatchModal(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,
   if(draw){
     resultText=t("match.draw"); resultClass="res-draw-tag";
   } else {
-    resultText=won?(wasShootout?"¡VICTORIA EN PENALTIS!":"¡VICTORIA!"):(wasShootout?"DERROTA EN PENALTIS":"DERROTA");
+    resultText=won?(window.t?t("match.victory"):"¡VICTORIA!"):(window.t?t("match.defeat"):"DERROTA");
     resultClass=won?"res-win-tag":"res-lose-tag";
   }
   playSound(won||draw?'victory':'defeat');
@@ -3484,7 +3484,7 @@ function showGoldenTicket(){
       </div>
       <div id="gtGrid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px;"></div>
       <div id="gtDots" style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
-        <span style="font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:rgba(240,196,25,.5);font-weight:700;margin-right:4px;">Casillas rascadas</span>
+        <span style="font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:rgba(240,196,25,.5);font-weight:700;margin-right:4px;">${window.t?t('ticket.scratched'):'Casillas rascadas'}</span>
       </div>
       <button id="gtCashBtn" disabled onclick="gtCashOut(false)" style="width:100%;border:none;border-radius:0;font-family:'Bebas Neue',Impact,sans-serif;font-size:22px;letter-spacing:2px;padding:14px;cursor:pointer;background:linear-gradient(180deg,#ffe27a,#f0c419 55%,#c9960c);color:#08160d;box-shadow:0 6px 0 #8a6a08;opacity:.35;pointer-events:none;">PLANTARSE</button>
       <div style="text-align:center;font-size:9px;color:rgba(240,196,25,.35);margin-top:14px;letter-spacing:.5px;line-height:1.5">
@@ -3605,7 +3605,7 @@ function showGoldenTicket(){
     <div style="background:linear-gradient(180deg,#3a2a00,#1a1200);border-radius:0;padding:30px 26px;text-align:center;max-width:300px;width:90%;box-shadow:0 0 0 2px #f0c419,0 30px 60px -10px rgba(0,0,0,.9);animation:popIn .3s cubic-bezier(.2,1.4,.4,1)">
       <style>@keyframes popIn{0%{transform:scale(.7);opacity:0}100%{transform:scale(1);opacity:1}}</style>
       <span style="font-size:54px;display:block;margin-bottom:10px">${win?(auto?'🏆':'💰'):'❌'}</span>
-      <h2 style="font-family:'Bebas Neue',Impact,sans-serif;font-size:26px;letter-spacing:1px;color:${win?'#f0c419':'#f87171'};margin-bottom:6px">${win?(auto?'¡TICKET PREMIADO!':'¡TICKET PREMIADO!'):'TICKET ANULADO'}</h2>
+      <h2 style="font-family:'Bebas Neue',Impact,sans-serif;font-size:26px;letter-spacing:1px;color:${win?'#f0c419':'#f87171'};margin-bottom:6px">${win?(window.t?t('ticket.win'):'¡TICKET PREMIADO!'):(window.t?t('ticket.lose'):'TICKET ANULADO')}</h2>
       <p style="font-size:12px;color:rgba(240,196,25,.7);line-height:1.5;margin-bottom:12px">${win?'Tus puntos de campeón han sido guardados.':'La casilla mala te ha quitado los puntos. ¡Casi!'}</p>
       <div style="font-family:'Bebas Neue',Impact,sans-serif;font-size:34px;color:${win?'#f0c419':'#f87171'};margin-bottom:18px">${(win && pts>0)?'+'+pts+' PTS':win?'0 PTS':''}</div>
       <button onclick="gtClose(${win?pts:0})" style="width:100%;border:none;border-radius:0;padding:12px;font-family:'Bebas Neue',Impact,sans-serif;font-size:15px;letter-spacing:1.5px;background:linear-gradient(180deg,#ffe27a,#f0c419 55%,#c9960c);color:#08160d;cursor:pointer;">CERRAR</button>
@@ -5202,7 +5202,7 @@ window.openTicketOverlay = function() {
       mt.innerHTML = `<div class="auth-modal" style="max-width:340px;text-align:center;padding:28px 24px">
         <div style="font-size:48px;margin-bottom:8px">🎟️</div>
         <div style="font-family:'Bebas Neue',Impact,sans-serif;font-size:22px;letter-spacing:2px;color:var(--gold);margin-bottom:20px">SIN TICKETS</div>
-        <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px;letter-spacing:1px;text-transform:uppercase">Próximo ticket en</div>
+        <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px;letter-spacing:1px;text-transform:uppercase">${window.t?t('ticket.next_in'):'Próximo ticket en'}</div>
         <div id="ticketCountdown" style="font-family:'Bebas Neue',Impact,sans-serif;font-size:48px;color:#fff;letter-spacing:4px;margin-bottom:24px">--:--:--</div>
         <button onclick="window.closeTicketOverlay()" style="width:100%;border:none;background:#c0392b;color:#fff;padding:12px;cursor:pointer;font-family:'Bebas Neue',Impact,sans-serif;font-size:16px;letter-spacing:1.5px;transition:.15s" onmouseover="this.style.background='#e74c3c'" onmouseout="this.style.background='#c0392b'">CERRAR</button>
       </div>`;
@@ -5266,7 +5266,7 @@ function buildTicketInMount(mount, ticketCount, lastRegen, currentScratchPts){
         <span style="font-family:'Bebas Neue',Impact,sans-serif;font-size:22px;letter-spacing:2px;color:#f0c419;text-shadow:0 2px 0 rgba(0,0,0,.4)">GOAL2GOAT</span>
         <span style="font-size:18px">🐐</span>
       </div>
-      <div style="text-align:center;font-size:10px;letter-spacing:3px;color:rgba(246,241,227,.55);text-transform:uppercase;margin-bottom:16px;font-weight:700">Ticket de GoatPoints</div>
+      <div style="text-align:center;font-size:10px;letter-spacing:3px;color:rgba(246,241,227,.55);text-transform:uppercase;margin-bottom:16px;font-weight:700">${window.t?t('ticket.subtitle'):'Ticket de GoatPoints'}</div>
       <div style="height:1px;background:repeating-linear-gradient(90deg,rgba(240,196,25,.35) 0 6px,transparent 6px 12px);margin:14px 0"></div>
       <div style="display:flex;justify-content:space-between;font-size:9px;letter-spacing:1px;color:rgba(246,241,227,.4);text-transform:uppercase;margin-bottom:14px;">
         <span>Nº <b style="color:rgba(246,241,227,.65)">${serial}</b></span>
@@ -5278,7 +5278,7 @@ function buildTicketInMount(mount, ticketCount, lastRegen, currentScratchPts){
       </div>
       <div class="scratch-grid" id="tGrid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px;"></div>
       <div id="tDots" style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
-        <span style="font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:rgba(246,241,227,.5);font-weight:700;margin-right:4px;">Casillas rascadas</span>
+        <span style="font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:rgba(246,241,227,.5);font-weight:700;margin-right:4px;">${window.t?t('ticket.scratched'):'Casillas rascadas'}</span>
       </div>
       <div style="margin-bottom:18px;">
         <div style="display:flex;justify-content:space-between;font-size:9px;letter-spacing:1px;text-transform:uppercase;color:rgba(246,241,227,.5);font-weight:700;margin-bottom:5px;">
@@ -5500,7 +5500,7 @@ function buildTicketInMount(mount, ticketCount, lastRegen, currentScratchPts){
     <div style="background:linear-gradient(180deg,#0f3d24,#0c2e1c);border-radius:0;padding:30px 26px;text-align:center;max-width:300px;width:90%;box-shadow:0 30px 60px -10px rgba(0,0,0,.8),0 0 0 1px rgba(240,196,25,.2);animation:popIn .3s cubic-bezier(.2,1.4,.4,1)">
       <style>@keyframes popIn{0%{transform:scale(.7);opacity:0}100%{transform:scale(1);opacity:1}}</style>
       <span style="font-size:54px;display:block;margin-bottom:10px">${win?(auto?'🏆':'💰'):'❌'}</span>
-      <h2 style="font-family:'Bebas Neue',Impact,sans-serif;font-size:26px;letter-spacing:1px;color:${win?'#f0c419':'#d94f3d'};margin-bottom:6px">${win?(auto?'¡TICKET PREMIADO!':'¡TICKET PREMIADO!'):'TICKET ANULADO'}</h2>
+      <h2 style="font-family:'Bebas Neue',Impact,sans-serif;font-size:26px;letter-spacing:1px;color:${win?'#f0c419':'#d94f3d'};margin-bottom:6px">${win?(window.t?t('ticket.win'):'¡TICKET PREMIADO!'):(window.t?t('ticket.lose'):'TICKET ANULADO')}</h2>
       <p style="font-size:12px;color:rgba(246,241,227,.7);line-height:1.5;margin-bottom:12px">${win?(auto?'Rascaste todo el boleto. Premio máximo.':'¡Buena jugada! Te has retirado a tiempo'):'Has perdido los puntos acumulados en este boleto.'}</p>
       <div style="font-family:'Bebas Neue',Impact,sans-serif;font-size:34px;color:${win?'#f0c419':'#d94f3d'};margin-bottom:18px">${(win && pts>0)?'+'+pts+' PTS':win?'0 PTS':''}</div>
       <button onclick="closeTicketAndSave(${win?pts:0})" style="width:100%;border:none;border-radius:0;padding:12px;font-family:'Bebas Neue',Impact,sans-serif;font-size:15px;letter-spacing:1.5px;background:linear-gradient(180deg,#ffe27a,#f0c419 55%,#c9960c);color:#08160d;cursor:pointer;">CERRAR</button>
@@ -5643,8 +5643,8 @@ const UPGRADE_DEFS = [
   {
     id: 'bench',
     icon: '🪑',
-    name: 'BANQUILLO',
-    desc: 'PLAZAS EN EL BANQUILLO',
+    name: window.t?t('upgrade.bench'):'BANQUILLO',
+    desc: window.t?t('upgrade.bench_d'):'PLAZAS EN EL BANQUILLO',
     baseCost: 5,
     maxLevel: 5,
     baseValue: 2,
@@ -5653,8 +5653,8 @@ const UPGRADE_DEFS = [
   {
     id: 'subs',
     icon: '🔄',
-    name: 'CAMBIOS',
-    desc: 'SUSTITUCIONES POR PARTIDO',
+    name: window.t?t('upgrade.subs'):'CAMBIOS',
+    desc: window.t?t('upgrade.subs_d'):'SUSTITUCIONES POR PARTIDO',
     baseCost: 5,
     maxLevel: 5,
     baseValue: 2,
@@ -5663,8 +5663,8 @@ const UPGRADE_DEFS = [
   {
     id: 'scout',
     icon: '🔭',
-    name: 'CONVOCADOS',
-    desc: 'JUGADORES POR EQUIPO AL BARAJAR',
+    name: window.t?t('upgrade.scout'):'CONVOCADOS',
+    desc: window.t?t('upgrade.scout_d'):'JUGADORES POR EQUIPO AL BARAJAR',
     baseCost: 5,
     maxLevel: 5,
     baseValue: 5,
@@ -5673,8 +5673,8 @@ const UPGRADE_DEFS = [
   {
     id: 'recovery',
     icon: '⚡',
-    name: 'RECUPERACIÓN',
-    desc: 'REDUCE LA FATIGA ENTRE PARTIDOS',
+    name: window.t?t('upgrade.recovery'):'RECUPERACIÓN',
+    desc: window.t?t('upgrade.recovery_d'):'REDUCE LA FATIGA ENTRE PARTIDOS',
     baseCost: 5,
     maxLevel: 5,
     baseValue: 0,
@@ -5719,12 +5719,12 @@ async function renderUpgradesTab(){
   const pointsEl = document.getElementById('upgradePointsDisplay');
   if(!list) return;
 
-  list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:12px">Cargando...</div>';
+  list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:12px">'+(window.t?t('ui.loading'):'Cargando...')+'</div>';
   await refreshUpgradeCache(); // sincronizar cache antes de renderizar
 
   const user = window._fbAuth && window._fbAuth.currentUser;
   if(!user){
-    list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted)">Inicia sesión para ver las mejoras.</div>';
+    list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted)">'+(window.t?t('ui.login_req'):'Inicia sesión para ver esto.')+'</div>';
     return;
   }
 
@@ -5750,7 +5750,7 @@ async function renderUpgradesTab(){
 
     const costHtml = nextCost !== null
       ? `<span class="cost-star">★</span>${nextCost}`
-      : `<span style="font-size:9px;color:var(--text-muted);letter-spacing:1px">MAX</span>`;
+      : `<span style="font-size:9px;color:var(--text-muted);letter-spacing:1px">${window.t?t('upgrades.max'):'MAX'}</span>`;
 
     const row = document.createElement('div');
     row.className = 'upgrade-row';
@@ -5828,66 +5828,66 @@ async function renderUpgradesTab(){
 const SKILL_DEFS = [
   // === TÁCTICA ===
   {
-    id: 'estratega', category: 'TÁCTICA',
-    name: 'ESTRATEGA', cost: 40,
+    id: 'estratega', category: window.t?t('skills.cat.tactica'):'TÁCTICA',
+    name: window.t?t('skill.estratega'):'ESTRATEGA', cost: 40,
     icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 3"/></svg>',
-    tooltip: 'Muestra la mejor contra-estrategia antes de cada partido.',
+    tooltip: window.t?t('skill.estratega_d'):'Muestra la mejor contra-estrategia antes de cada partido.',
   },
   {
     id: 'capitan', category: 'TÁCTICA',
-    name: 'CAPITÁN', cost: 30,
+    name: window.t?t('skill.capitan'):'CAPITÁN', cost: 30,
     icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>',
-    tooltip: 'Si vas perdiendo en el descanso, tu ataque sube un 10% en la segunda parte.',
+    tooltip: window.t?t('skill.capitan_d'):'Si vas perdiendo en el descanso, tu ataque sube un 10% en la segunda parte.',
   },
   {
     id: 'remontada', category: 'TÁCTICA',
-    name: 'REMONTADA', cost: 60,
+    name: window.t?t('skill.remontada'):'REMONTADA', cost: 60,
     icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M18 15l-6-6-6 6"/></svg>',
-    tooltip: 'Si vas perdiendo de 2 o más goles, tu ataque sube un 35% el resto del partido.',
+    tooltip: window.t?t('skill.remontada_d'):'Si vas perdiendo de 2 o más goles, tu ataque sube un 35% el resto del partido.',
   },
   {
     id: 'penaltis', category: 'TÁCTICA',
-    name: 'ESPECIALISTA EN PENALTIS', cost: 35,
+    name: window.t?t('skill.penaltis'):'ESPECIALISTA EN PENALTIS', cost: 35,
     icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><line x1="12" y1="3" x2="12" y2="21"/><line x1="3" y1="12" x2="21" y2="12"/></svg>',
-    tooltip: 'Aumenta la probabilidad de anotar en tandas de penaltis en un 15%.',
+    tooltip: window.t?t('skill.penaltis_d'):'Aumenta la probabilidad de anotar en tandas de penaltis en un 15%.',
   },
   // === PLANTILLA ===
   {
-    id: 'medico', category: 'PLANTILLA',
-    name: 'MÉDICO DE ÉLITE', cost: 50,
+    id: 'medico', category: window.t?t('skills.cat.plantilla'):'PLANTILLA',
+    name: window.t?t('skill.medico'):'MÉDICO DE ÉLITE', cost: 50,
     icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>',
-    tooltip: 'Las lesiones leves se recuperan automáticamente al acabar el partido.',
+    tooltip: window.t?t('skill.medico_d'):'Las lesiones leves se recuperan automáticamente al acabar el partido.',
   },
   {
     id: 'ojeador', category: 'PLANTILLA',
-    name: 'OJEADOR', cost: 25,
+    name: window.t?t('skill.ojeador'):'OJEADOR', cost: 25,
     icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>',
-    tooltip: 'Al barajar equipos siempre aparece al menos un jugador con 85 o más de rating.',
+    tooltip: window.t?t('skill.ojeador_d'):'Al barajar equipos siempre aparece al menos un jugador con 85 o más de rating.',
   },
   {
     id: 'cazatalentos', category: 'PLANTILLA',
-    name: 'CAZATALENTOS', cost: 30,
+    name: window.t?t('skill.cazatalentos'):'CAZATALENTOS', cost: 30,
     icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
-    tooltip: 'Los jugadores fuera de su posición natural solo pierden un 5% de rendimiento.',
+    tooltip: window.t?t('skill.cazatalentos_d'):'Los jugadores fuera de su posición natural solo pierden un 5% de rendimiento.',
   },
   {
     id: 'veterano', category: 'PLANTILLA',
-    name: 'VETERANO', cost: 45,
+    name: window.t?t('skill.veterano'):'VETERANO', cost: 45,
     icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>',
-    tooltip: 'Los jugadores con 85+ de rating no pueden recibir tarjeta roja directa.',
+    tooltip: window.t?t('skill.veterano_d'):'Los jugadores con 85+ de rating no pueden recibir tarjeta roja directa.',
   },
   // === ECONOMÍA ===
   {
-    id: 'coleccionista', category: 'ECONOMÍA',
-    name: 'COLECCIONISTA', cost: 20,
+    id: 'coleccionista', category: window.t?t('skills.cat.economia'):'ECONOMÍA',
+    name: window.t?t('skill.coleccionista'):'COLECCIONISTA', cost: 20,
     icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>',
-    tooltip: 'Cada casilla buena del ticket (moneda o cabra) da 1 punto extra.',
+    tooltip: window.t?t('skill.coleccionista_d'):'Cada casilla buena del ticket da 1 punto extra.',
   },
   {
     id: 'patrocinador', category: 'ECONOMÍA',
-    name: 'PATROCINADOR', cost: 20,
+    name: window.t?t('skill.patrocinador'):'PATROCINADOR', cost: 20,
     icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>',
-    tooltip: 'Ganas 1 GOAT Point extra al clasificarte para cuartos de final.',
+    tooltip: window.t?t('skill.patrocinador_d'):'Ganas 1 GOAT Point extra al clasificarte para cuartos de final.',
   },
 ];
 
@@ -5956,7 +5956,7 @@ async function renderSkillsTab(){
         <span style="font-size:10px;color:${active?'var(--accent)':'var(--text-muted)'};line-height:1.4;padding:0 4px">${def.tooltip}</span>
       </div>`;
       const footerPart=`<div style="width:100%;padding:6px;background:${active?'rgba(201,162,39,.15)':'rgba(0,0,0,.15)'};border-top:1px solid ${active?'rgba(201,162,39,.3)':'var(--line)'}">
-        <span style="font-family:'Bebas Neue',Impact,sans-serif;font-size:12px;color:${active?'var(--gold)':'var(--text-muted)'};letter-spacing:1px">${active?'✓ ACTIVA · PULSA PARA DESACTIVAR':'★ '+def.cost+' PTS'}</span>
+        <span style="font-family:'Bebas Neue',Impact,sans-serif;font-size:12px;color:${active?'var(--gold)':'var(--text-muted)'};letter-spacing:1px">${active?(window.t?t('skills.active'):'✓ ACTIVA · PULSA PARA DESACTIVAR'):'★ '+def.cost+' PTS'}</span>
       </div>`;
       btn.innerHTML=iconPart+footerPart;
       btn.addEventListener('click', async()=>{
@@ -6057,7 +6057,7 @@ const ACHIEVEMENT_DEFS = [
 ];
 
 const TIER_COLOR = {básico:'#aaa', intermedio:'#2ecc71', difícil:'#e67e22', mítico:'#f0c419'};
-const TIER_LABEL = {básico:'★ 1 PT', intermedio:'★ 2 PTS', difícil:'★ 3 PTS', mítico:'★ 25 PTS'};
+const TIER_LABEL = {básico:window.t?t('tier.basic'):'★ 1 PT', intermedio:window.t?t('tier.inter'):'★ 2 PTS', difícil:window.t?t('tier.hard'):'★ 3 PTS', mítico:window.t?t('tier.mythic'):'★ 25 PTS'};
 
 // Cache de logros
 window._achievementsCache = new Set();
@@ -6138,7 +6138,7 @@ async function renderAchievementsTab(){
   if(!list) return;
   list.innerHTML='<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:12px">Cargando...</div>';
   const user=window._fbAuth&&window._fbAuth.currentUser;
-  if(!user){ list.innerHTML='<div style="text-align:center;padding:20px;color:var(--text-muted)">Inicia sesión para ver tus logros.</div>'; return; }
+  if(!user){ list.innerHTML='<div style="text-align:center;padding:20px;color:var(--text-muted)">'+(window.t?t('ui.login_req'):'Inicia sesión.')+'</div>'; return; }
   const snap=await window._fbDb.collection('users').doc(user.uid).get();
   const unlocked=new Set((snap.exists&&snap.data().achievements)||[]);
   const total=ACHIEVEMENT_DEFS.length;
@@ -6166,8 +6166,8 @@ async function renderAchievementsTab(){
     const unlockedBg=isLight?'#e8f4ec':'rgba(0,0,0,.3)';
     const borderColor=isUnlocked?TIER_COLOR[def.tier]:(isLight?'#d4cec4':'var(--line)');
     card.style.cssText='display:flex;align-items:center;gap:10px;padding:10px;border:1px solid '+borderColor+';background:'+(isUnlocked?unlockedBg:lockedBg)+';position:relative;overflow:hidden';
-    const achName=window.t?window.t('ach.'+def.id)||def.name:def.name;
-    const achDesc=window.t?window.t('ach.'+def.id+'.d')||def.desc:def.desc;
+    const achName=window.t?(t('ach.'+def.id)||def.name):def.name;
+    const achDesc=window.t?(t('ach.'+def.id+'.d')||def.desc):def.desc;
     const iconColor=isUnlocked?'#c9a227':(isLight?'#bbb':'var(--text-muted)');
     const iconHtml='<i class="ph ph-bold '+def.icon+'" style="font-size:26px;flex-shrink:0;color:'+iconColor+';'+(isUnlocked?'':' opacity:.5')+'"></i>';
     const checkHtml=isUnlocked?'<i class="ph ph-bold ph-check" style="position:absolute;top:5px;right:6px;font-size:12px;color:'+(TIER_COLOR[def.tier]||'#c9a227')+'" ></i>':'';

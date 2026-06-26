@@ -90,10 +90,10 @@
     <div class="version-tag" style="margin-bottom:3px">v0.353</div>
   </div>
   <div class="app-header-actions">
-    <a href="https://ko-fi.com/goal2goat" target="_blank" class="support-btn" style="text-decoration:none;display:inline-flex;align-items:center;justify-content:center">APOYA A GOAL2GOAT</a>
+    <a href="https://ko-fi.com/goal2goat" target="_blank" class="support-btn" style="text-decoration:none;display:inline-flex;align-items:center;justify-content:center" data-i18n="app.support">APOYA A GOAL2GOAT</a>
     <button class="support-btn desktop-only ranking-btn" onclick="showRankingModal()"><i class="ph ph-bold ph-trophy" style="color:#c9a227;font-size:18px;vertical-align:middle"></i data-i18n="app.ranking"> RANKING</button>
     <button class="header-auth-btn register-btn" id="authBtn">LOGIN / REGISTRO</button>
-    <button class="header-ticket-btn" id="headerTicketBtn" style="display:none" onclick="openTicketOverlay()"><i class="ph ph-bold ph-ticket" style="color:#f87171;font-size:18px;vertical-align:middle"></i> TICKETS <span id="headerTicketCount">0/3</span><span class="header-ticket-alert" id="headerTicketAlert" style="display:none"></span></button>
+    <button class="header-ticket-btn" id="headerTicketBtn" style="display:none" onclick="openTicketOverlay()"><i class="ph ph-bold ph-ticket" style="color:#f87171;font-size:18px;vertical-align:middle"></i> <span data-i18n="app.tickets">TICKETS</span> <span id="headerTicketCount">0/3</span><span class="header-ticket-alert" id="headerTicketAlert" style="display:none"></span></button>
     <button class="header-auth-btn profile-btn" id="profileBtn" style="display:none;position:relative"><i class="ph ph-bold ph-user" style="color:#7b9cff;font-size:18px;vertical-align:middle"></i> <span id="profileUsernameLabel"></span><span id="profileGoatBadge" style="display:none;position:absolute;top:-4px;right:-4px;width:10px;height:10px;border-radius:50%;background:#f87171;border:2px solid var(--card-bg);animation:ticketPulse 1.5s ease-in-out infinite"></span></button>
     <div class="settings-menu" id="settingsMenu">
       <button class="settings-toggle" id="settingsToggle" onclick="toggleSettingsMenu()" title="Ajustes">⚙</button>
@@ -201,7 +201,7 @@
 
       <!-- USUARIO TAB -->
       <div id="profileUserPane" class="profile-tab-pane">
-        <label class="profile-field-label">PREFERENCIAS</label>
+        <label class="profile-field-label" data-i18n="settings.prefs">PREFERENCIAS</label>
         <div class="profile-settings-row">
           <button id="audioToggle" class="settings-item" title="Activar/desactivar sonido">
             <span class="topbar-dot on"></span><span class="topbar-label">SONIDO</span>
@@ -210,7 +210,7 @@
             <span class="topbar-dot on"></span><span class="topbar-label">TEMA OSCURO</span>
           </button>
         </div>
-        <label class="profile-field-label" for="preferredTeamNameInput">NOMBRE DEL EQUIPO</label>
+        <label class="profile-field-label" for="preferredTeamNameInput" data-i18n="settings.team_name">NOMBRE DEL EQUIPO</label>
         <input type="text" id="preferredTeamNameInput" maxlength="24" placeholder="Ej: Dream Team FC" class="team-name-input">
         <label class="profile-checkbox-row">
           <input type="checkbox" id="useFixedTeamNameCheckbox">
@@ -336,7 +336,7 @@
       Bienvenido a <strong style="color:var(--gold)">Goal2Goat</strong>, un manager de fútbol con alma de roguelike. Tu apoyo nos ayuda a seguir mejorando el juego, añadiendo contenido nuevo y manteniéndolo libre de publicidad invasiva.
     </p>
     <button id="welcomeRegisterBtn" class="auth-submit-btn" style="display:none;margin-bottom:10px">REGÍSTRATE</button>
-    <a href="https://ko-fi.com/goal2goat" target="_blank" class="support-pay-btn" style="display:block;margin-bottom:10px">APOYA A GOAL2GOAT</a>
+    <a href="https://ko-fi.com/goal2goat" target="_blank" class="support-pay-btn" style="display:block;margin-bottom:10px" data-i18n="app.support">APOYA A GOAL2GOAT</a>
     <button class="auth-submit-btn" id="welcomeStartBtn" style="background:#1a2a1a;border:1px solid var(--gold);color:var(--gold)">EMPEZAR A JUGAR</button>
   </div>
 </div>
@@ -435,16 +435,16 @@
     <div class="box" id="formationPickerBox">
       <h3>FORMACIÓN</h3>
       <div class="formation-tabs">
-        <button class="formation-tab" data-cat="ofensiva">Ofensiva</button>
-        <button class="formation-tab active" data-cat="equilibrada">Equilibrada</button>
-        <button class="formation-tab" data-cat="defensiva">Defensiva</button>
+        <button class="formation-tab" data-cat="ofensiva" data-i18n="formation.offensive">Ofensiva</button>
+        <button class="formation-tab active" data-cat="equilibrada" data-i18n="formation.balanced">Equilibrada</button>
+        <button class="formation-tab" data-cat="defensiva" data-i18n="formation.defensive">Defensiva</button>
       </div>
       <div id="formationList"></div>
       <p class="hint-line formation-picker-hint" style="display:none">Elige tu formación ahora — una vez completes el equipo, quedará fijada para todo el torneo.</p>
     </div>
 
     <div class="team-profile box" id="teamProfileBox">
-      <h3>PERFIL DEL EQUIPO</h3>
+      <h3 data-i18n="team.profile">PERFIL DEL EQUIPO</h3>
       <div class="ovr-team"><span class="team-stat-title" data-i18n="team.avg">NOTA MEDIA</span><span id="teamOVR">—</span></div>
       <div class="stat-row"><span>ATAQUE</span><span id="attackValue">0</span></div>
       <div class="stat-bar"><div id="attackBar"></div></div>
