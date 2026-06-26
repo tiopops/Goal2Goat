@@ -81,13 +81,13 @@
 
 <!-- FULL-WIDTH APP HEADER -->
 <header id="appHeader">
-  <div class="app-header-logo" style="flex-direction:row;align-items:flex-end;gap:5px;line-height:1">
+  <div class="app-header-logo" style="flex-direction:row;align-items:flex-end;gap:5px">
     <img src="header_logo.png" alt="Goal2Goat" onclick="location.reload()"
-      style="cursor:pointer;height:36px;width:auto;display:block;vertical-align:bottom"
+      style="cursor:pointer;height:36px;width:auto;display:block"
       title="Volver al inicio"
       onerror="this.style.display='none';document.getElementById('logoFallback').style.display='block'">
     <span id="logoFallback" style="display:none;font-family:'Bebas Neue',Impact,sans-serif;font-size:26px;letter-spacing:3px;color:#c9a227;cursor:pointer;line-height:1" onclick="location.reload()">GOAL2GOAT</span>
-    <div class="version-tag" style="line-height:1;padding-bottom:1px">v0.353</div>
+    <div class="version-tag" style="align-self:flex-end;line-height:1;margin-bottom:1px">v0.355</div>
   </div>
   <div class="app-header-actions">
     <a href="https://ko-fi.com/goal2goat" target="_blank" class="support-btn" style="text-decoration:none;display:inline-flex;align-items:center;justify-content:center" data-i18n="app.support">APOYA A GOAL2GOAT</a>
@@ -204,19 +204,19 @@
         <label class="profile-field-label" data-i18n="settings.prefs">PREFERENCIAS</label>
         <div class="profile-settings-row">
           <button id="audioToggle" class="settings-item" title="Activar/desactivar sonido">
-            <span class="topbar-dot on"></span><span class="topbar-label">SONIDO</span>
+            <span class="topbar-dot on"></span><span class="topbar-label" data-i18n="settings.sound">SONIDO</span>
           </button>
           <button id="themeToggle" class="settings-item" title="Cambiar tema claro/oscuro">
-            <span class="topbar-dot on"></span><span class="topbar-label">TEMA OSCURO</span>
+            <span class="topbar-dot on"></span><span class="topbar-label" data-i18n="settings.theme">TEMA OSCURO</span>
           </button>
         </div>
         <label class="profile-field-label" for="preferredTeamNameInput" data-i18n="settings.team_name">NOMBRE DEL EQUIPO</label>
         <input type="text" id="preferredTeamNameInput" maxlength="24" placeholder="Ej: Dream Team FC" class="team-name-input">
         <label class="profile-checkbox-row">
           <input type="checkbox" id="useFixedTeamNameCheckbox">
-          <span>Usar siempre como nombre de equipo</span>
+          <span data-i18n="settings.always_use">Usar siempre como nombre de equipo</span>
         </label>
-        <p class="profile-field-hint" data-i18n="settings.always_hint">Si lo activas, no se te preguntará el nombre del equipo al formarlo — se usará este automáticamente.</p>
+        <p class="profile-field-hint" data-i18n="settings.always_hint" data-i18n="settings.always_hint">Si lo activas, no se te preguntará el nombre del equipo al formarlo — se usará este automáticamente.</p>
         <div id="langSelectorWrap" style="margin-top:14px;padding-top:14px;border-top:1px solid var(--line);display:none">
           <div class="settings-label" data-i18n="settings.language">IDIOMA</div>
           <div style="display:flex;gap:8px;margin-top:8px">
@@ -227,12 +227,12 @@
         <div id="langSelectorWrap" style="display:none;margin-top:14px;padding-top:14px;border-top:1px solid var(--line)">
           <div style="font-size:10px;letter-spacing:1.5px;color:var(--text-muted);font-family:'Bebas Neue',Impact,sans-serif;margin-bottom:8px">IDIOMA</div>
           <div style="display:flex;gap:8px">
-            <button id="langEsBtn" onclick="window.setLang('es')" style="flex:1;padding:8px;font-family:'Bebas Neue',Impact,sans-serif;font-size:14px;letter-spacing:1px;border:2px solid var(--gold);color:var(--gold);background:var(--panel);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px"><span style="font-size:11px;font-weight:700;background:#c60b1e;color:#fff;padding:1px 5px;border-radius:2px">ES</span> ESPAÑOL</button>
-            <button id="langEnBtn" onclick="window.setLang('en')" style="flex:1;padding:8px;font-family:'Bebas Neue',Impact,sans-serif;font-size:14px;letter-spacing:1px;border:2px solid var(--line);color:var(--text);background:var(--panel);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px"><span style="font-size:11px;font-weight:700;background:#012169;color:#fff;padding:1px 5px;border-radius:2px">GB</span> ENGLISH</button>
+            <button id="langEsBtn" onclick="window.setLang('es')" style="flex:1;padding:8px;font-family:'Bebas Neue',Impact,sans-serif;font-size:14px;letter-spacing:1px;border:2px solid var(--gold);color:var(--gold);background:var(--panel);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px"><img src="https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/svg/1f1ea-1f1f8.svg" width="20" height="20" alt="ES" style="display:inline-block;vertical-align:middle"> ESPAÑOL</button>
+            <button id="langEnBtn" onclick="window.setLang('en')" style="flex:1;padding:8px;font-family:'Bebas Neue',Impact,sans-serif;font-size:14px;letter-spacing:1px;border:2px solid var(--line);color:var(--text);background:var(--panel);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px"><img src="https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/svg/1f1ec-1f1e7.svg" width="20" height="20" alt="GB" style="display:inline-block;vertical-align:middle"> ENGLISH</button>
           </div>
         </div>
         <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;align-items:center">
-          <button onclick="window.showPatchNotes()" style="background:none;border:none;cursor:pointer;font-family:'Bebas Neue',Impact,sans-serif;font-size:13px;letter-spacing:1px;color:var(--gold);padding:0;text-decoration:underline" data-i18n="settings.patch_notes">NOTAS v0.353</button>
+          <button onclick="window.showPatchNotes()" style="background:none;border:none;cursor:pointer;font-family:'Bebas Neue',Impact,sans-serif;font-size:13px;letter-spacing:1px;color:var(--gold);padding:0;text-decoration:underline" data-i18n="settings.patch_notes">NOTAS v0.355</button>
         </div>
         <!-- CHEATS: solo visible para tiopops -->
         <div id="cheatsSection" style="display:none;margin-top:18px;border-top:1px dashed #c0392b;padding-top:14px;">
@@ -446,15 +446,15 @@
     <div class="team-profile box" id="teamProfileBox">
       <h3 data-i18n="team.profile">PERFIL DEL EQUIPO</h3>
       <div class="ovr-team"><span class="team-stat-title" data-i18n="team.avg">NOTA MEDIA</span><span id="teamOVR">—</span></div>
-      <div class="stat-row"><span>ATAQUE</span><span id="attackValue">0</span></div>
+      <div class="stat-row"><span data-i18n="team.attack">ATAQUE</span><span id="attackValue">0</span></div>
       <div class="stat-bar"><div id="attackBar"></div></div>
-      <div class="stat-row"><span>DEFENSA</span><span id="defenseValue">0</span></div>
+      <div class="stat-row"><span data-i18n="team.defense">DEFENSA</span><span id="defenseValue">0</span></div>
       <div class="stat-bar"><div id="defenseBar"></div></div>
-      <div class="stat-row"><span>RITMO</span><span id="paceValue">0</span></div>
+      <div class="stat-row"><span data-i18n="team.pace">RITMO</span><span id="paceValue">0</span></div>
       <div class="stat-bar"><div id="paceBar"></div></div>
-      <div class="stat-row"><span>PASE</span><span id="passingValue">0</span></div>
+      <div class="stat-row"><span data-i18n="team.passing">PASE</span><span id="passingValue">0</span></div>
       <div class="stat-bar"><div id="passingBar"></div></div>
-      <div class="stat-row"><span>TÉCNICA</span><span id="techniqueValue">0</span></div>
+      <div class="stat-row"><span data-i18n="team.technique">TÉCNICA</span><span id="techniqueValue">0</span></div>
       <div class="stat-bar"><div id="techniqueBar"></div></div>
       <div id="starBonus" class="star-bonus-row" style="display:none">
         <span class="star">★</span> Bonus posición +<span id="starBonusVal">0</span>

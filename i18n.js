@@ -477,6 +477,51 @@ window.TRANSLATIONS = {
   'ticket.boleto_n':      {es:'Boleto',                   en:'Ticket'},
   'ticket.risk_label':    {es:'Riesgo de la próxima casilla', en:'Risk of next cell'},
 
+
+  /* ── CONVOCADOS interfaz ── */
+  'draft.convocados':   {es:'CONVOCADOS',          en:'SQUAD'},
+  'draft.bench_title':  {es:'BANQUILLO',           en:'BENCH'},
+  'draft.quick_team':   {es:'EQUIPO RÁPIDO',       en:'QUICK TEAM'},
+  'draft.select_player':{es:'SELECCIONAR JUGADOR', en:'SELECT PLAYER'},
+  'draft.position':     {es:'POSICIÓN',            en:'POSITION'},
+  'draft.arrival':      {es:'LLEGADA',             en:'ARRIVAL'},
+  'draft.rating':       {es:'PUNTOS',              en:'RATING'},
+  'draft.morale':       {es:'MORAL',               en:'MORALE'},
+  'draft.stamina':      {es:'Resistencia',         en:'Stamina'},
+  'draft.changes':      {es:'Cambios disponibles antes del próximo partido', en:'Available subs before next match'},
+  'draft.squad_of':     {es:'del',                 en:'of'},
+  'draft.full':         {es:'11/11 — ¡Equipo completo!', en:'11/11 — Full squad!'},
+
+  /* ── RIVAL interfaz ── */
+  'rival.next':         {es:'PRÓXIMO RIVAL',       en:'NEXT OPPONENT'},
+  'rival.power':        {es:'PODER RIVAL',         en:'RIVAL POWER'},
+  'rival.style':        {es:'Estilo de juego',     en:'Playing style'},
+  'rival.no_strat':     {es:'Sin estrategia elegida: sin bonus ni penalización.', en:'No strategy chosen: no bonus or penalty.'},
+  'rival.strategist':   {es:'ESTRATEGA: La mejor contra-táctica es', en:'STRATEGIST: Best counter-tactic is'},
+  'rival.phase_group':  {es:'FASE DE GRUPOS',      en:'GROUP STAGE'},
+  'rival.match_of':     {es:'PARTIDO',             en:'MATCH'},
+
+  /* ── AJUSTES (pendientes) ── */
+  'settings.sound':     {es:'SONIDO',              en:'SOUND'},
+  'settings.theme':     {es:'TEMA OSCURO',         en:'DARK THEME'},
+  'settings.team_name': {es:'NOMBRE DEL EQUIPO',   en:'TEAM NAME'},
+  'settings.always_use':{es:'Usar siempre como nombre de equipo', en:'Always use as team name'},
+  'settings.always_hint':{es:'Si lo activas, no se te preguntará el nombre del equipo al formarlo — se usará este automáticamente.', en:'If enabled, you won\'t be asked for a team name — it will be used automatically.'},
+  'settings.save':      {es:'GUARDAR',             en:'SAVE'},
+
+  /* ── TEAM PROFILE stats ── */
+  'team.attack':        {es:'ATAQUE',              en:'ATTACK'},
+  'team.defense':       {es:'DEFENSA',             en:'DEFENCE'},
+  'team.pace':          {es:'RITMO',               en:'PACE'},
+  'team.passing':       {es:'PASE',                en:'PASSING'},
+  'team.technique':     {es:'TÉCNICA',             en:'TECHNIQUE'},
+
+
+  'draft.selected_player': {es:'JUGADOR SELECCIONADO', en:'SELECTED PLAYER'},
+  'draft.positions':        {es:'Posiciones',           en:'Positions'},
+  'draft.place_hint':       {es:'Colócalo en una posición resaltada del campo.', en:'Place him in a highlighted position on the pitch.'},
+  'draft.back':             {es:'VOLVER',               en:'BACK'},
+
 window.t = function(key) {
   const entry = window.TRANSLATIONS[key];
   if (!entry) return key;

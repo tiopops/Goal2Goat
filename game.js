@@ -117,7 +117,7 @@ const STYLES = {
  punta_lanza:{name:"Punta de Lanza",bonuses:{attack:9,pace:4}},
  vikingo_directo:{name:"Vikingo Directo",bonuses:{defense:8,pace:5}}
 };
-const STAT_LABELS={attack:window.t?t("team.attack"):"ATAQUE",defense:window.t?t("team.defense"):"DEFENSA",pace:window.t?t("team.pace"):"RITMO",passing:window.t?t("team.passing"):"PASE",technique:window.t?t("team.technique"):"TÉCNICA"};
+const STAT_LABELS={attack:window.t?t("team.attack"):(window.t?t("team.attack"):"ATAQUE"),defense:window.t?t("team.defense"):(window.t?t("team.defense"):"DEFENSA"),pace:window.t?t("team.pace"):(window.t?t("team.pace"):"RITMO"),passing:window.t?t("team.passing"):(window.t?t("team.passing"):"PASE"),technique:window.t?t("team.technique"):(window.t?t("team.technique"):"TÉCNICA")};
 
 /* ========= MATCH STRATEGIES (chosen before each match) ========= */
 // Each strategy can be played, and "counters" points to the strategy key it beats.
@@ -1004,26 +1004,32 @@ function pickPlayer(player){
 }
 
 function showSelectedPlayerBanner(p){
-  const el=document.getElementById("selectedPlayerBanner");
+  const isDesktop=window.innerWidth>1050;
+  const targetId=isDesktop?"playerCardDesktop":"selectedPlayerBanner";
+  const el=document.getElementById(targetId);
   if(!el) return;
+  // Ocultar el otro contenedor
+  const other=document.getElementById(isDesktop?"selectedPlayerBanner":"playerCardDesktop");
+  if(other){other.style.display="none";other.innerHTML="";}
   el.style.display="block";
-  el.innerHTML=`
+  const html=`
   <div class="box selected-player-banner">
-    <div class="selection-title">JUGADOR SELECCIONADO</div>
+    <div class="selection-title">${window.t?t('draft.selected_player'):'JUGADOR SELECCIONADO'}</div>
     <div class="spb-row">
       <span class="spb-name">${p.name}</span>
       <span class="spb-rating">★${p.rating||0}</span>
     </div>
-    <div class="spb-positions">Posiciones: ${(p.positions||[]).join(' / ')}</div>
-    <div class="hint-line">Colócalo en una posición resaltada del campo.</div>
-    <button class="spb-back-btn" onclick="volverASeleccion()">↩ VOLVER</button>
+    <div class="spb-positions">${window.t?t('draft.positions'):'Posiciones'}: ${(p.positions||[]).join(' / ')}</div>
+    <div class="hint-line">${window.t?t('draft.place_hint'):'Colócalo en una posición resaltada del campo.'}</div>
+    <button class="spb-back-btn" onclick="volverASeleccion()">↩ ${window.t?t('draft.back'):'VOLVER'}</button>
   </div>`;
+  el.innerHTML=html;
 }
 function hideSelectedPlayerBanner(){
-  const el=document.getElementById("selectedPlayerBanner");
-  if(!el) return;
-  el.style.display="none";
-  el.innerHTML="";
+  ["selectedPlayerBanner","playerCardDesktop"].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el){el.style.display="none";el.innerHTML="";}
+  });
 }
 
 function volverASeleccion(){
@@ -1371,11 +1377,12 @@ function getFatigueBarHTML(p){
 // Ordenación de convocados: 'arrival' | 'position' | 'rating'
 let convSortMode = 'position';
 const CONV_SORT_LABELS = {arrival:'LLEGADA', position:'POSICIÓN', rating:'PUNTOS'};
+function getConvSortLabels(){return {arrival:window.t?t('draft.arrival'):'LLEGADA',position:window.t?t('draft.position'):'POSICIÓN',rating:window.t?t('draft.rating'):'PUNTOS'};}
 const CONV_SORT_NEXT = {arrival:'position', position:'rating', rating:'arrival'};
 window.toggleConvSort = function(){
   convSortMode = CONV_SORT_NEXT[convSortMode];
   const lbl = document.getElementById('convSortLabel');
-  if(lbl) lbl.textContent = getConvSortLabels()[convSortMode] || CONV_SORT_LABELS[convSortMode];
+  if(lbl) lbl.textContent = getConvSortLabels()[window.convSortMode||convSortMode] || CONV_SORT_LABELS[convSortMode];
   updateConvocadosTable();
 };
 
@@ -1709,7 +1716,7 @@ function resetDraft(){
   updateDraftCounter();
   updateConvocadosTable();
   rollBtn.disabled=false;
-  rollBtn.textContent=t("draft.select_player");
+  rollBtn.textContent=t("draft.select_player")||"SELECCIONAR JUGADOR";
   selectedPlayer=null;
   playerCardEl.innerHTML="";
 }
@@ -5641,7 +5648,7 @@ function getPlayersPerTeam(){ return 5 + (window._upgradeCache.scout||0); }
 const UPGRADE_DEFS = [
   {
     id: 'bench',
-    icon: '🪑',
+    icon: '<i class="ph ph-bold ph-park" style="color:#c9a227;font-size:14px;vertical-align:middle"></i>',
     name: window.t?t('upgrade.bench'):'BANQUILLO',
     desc: window.t?t('upgrade.bench_d'):'PLAZAS EN EL BANQUILLO',
     baseCost: 5,
