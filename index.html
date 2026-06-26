@@ -323,13 +323,13 @@
 <!-- WELCOME POPUP -->
 <div id="welcomeOverlay" style="position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:50000;display:flex;align-items:center;justify-content:center;">
   <div class="auth-modal" style="max-width:420px;text-align:center">
-    <div class="auth-logo" data-i18n="welcome.title">🐐 GOAL2GOAT</div>
+    <div class="auth-logo">🐐 GOAL2GOAT</div>
     <p id="welcomeText" style="font-size:13px;color:var(--text);line-height:1.6;margin-bottom:20px">
       Bienvenido a <strong style="color:var(--gold)">Goal2Goat</strong>, un manager de fútbol con alma de roguelike. Tu apoyo nos ayuda a seguir mejorando el juego, añadiendo contenido nuevo y manteniéndolo libre de publicidad invasiva.
     </p>
-    <button id="welcomeRegisterBtn" class="auth-submit-btn" style="display:none;margin-bottom:10px" data-i18n="welcome.register">REGÍSTRATE</button>
-    <a href="https://ko-fi.com/goal2goat" target="_blank" class="support-pay-btn" style="display:block;margin-bottom:10px" data-i18n="welcome.support">APOYA A GOAL2GOAT</a>
-    <button class="auth-submit-btn" id="welcomeStartBtn" style="background:#1a2a1a;border:1px solid var(--gold);color:var(--gold)" data-i18n="welcome.start">EMPEZAR A JUGAR</button>
+    <button id="welcomeRegisterBtn" class="auth-submit-btn" style="display:none;margin-bottom:10px">REGÍSTRATE</button>
+    <a href="https://ko-fi.com/goal2goat" target="_blank" class="support-pay-btn" style="display:block;margin-bottom:10px">APOYA A GOAL2GOAT</a>
+    <button class="auth-submit-btn" id="welcomeStartBtn" style="background:#1a2a1a;border:1px solid var(--gold);color:var(--gold)" onclick="document.getElementById('welcomeOverlay').style.display='none'">EMPEZAR A JUGAR</button>
   </div>
 </div>
 
