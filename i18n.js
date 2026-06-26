@@ -1,3 +1,7 @@
+/* Fallback inmediato — se sobreescribe cuando el objeto completo cargue */
+window.t = window.t || function(k){ return k; };
+window.LANG = window.LANG || 'es';
+
 /* ============================================================
    GOAL2GOAT i18n — Sistema de traducciones
    Uso: window.t('clave') → texto en idioma activo

@@ -482,48 +482,7 @@ const PRESS_PREDICTIONS = [
 
 /* ========= COMPETITION STATE (World Cup format) ========= */
 const ROUND_NAMES = ["Octavos de Final","Cuartos de Final","Semifinal","Final"];
-function getRoundName(idx){ try{ return [t("comp.r16"),t("comp.qf"),t("comp.sf"),t("comp.final")][idx]||ROUND_NAMES[idx]||""; }catch(e){ return ROUND_NAMES[idx]||""; } }
-let stage = "group";        // "group" | "knockout" | "done"
-let groupOpponents = [];    // 3 team objects for this group
-let groupMatchIdx = 0;       // 0,1,2 — which group match is next
-let groupTable = [];         // standings rows: {name, team|null, played, won, drawn, lost, gf, ga, pts}
-let knockoutRound = 0;       // 0=Octavos,1=Cuartos,2=Semis,3=Final
-let knockoutPool = [];       // remaining pool of teams for future knockout rounds
-let matchResults = [];       // flat history of all matches played, for display
-
-/* ---------- FORMATIONS ---------- */
-// Formations are now PURELY visual/layout — they define where the 11 pitch
-// slots are placed, but give NO stat bonus. The stat bonus now comes from
-// the per-match STRATEGY chosen against each rival (see STRATEGIES above).
-const FORMATIONS = {
-  ofensiva:[
-    {code:"3-4-3",label:"Ataque total",bonus:{attack:13,defense:3,passing:7,pace:11,technique:6}},
-    {code:"3-4-1-2",label:"Mediapunta creativo",bonus:{attack:9,defense:4,passing:12,pace:7,technique:8}},
-    {code:"4-2-4",label:"Brasil clásico",bonus:{attack:16,defense:6,passing:4,pace:10,technique:4}},
-    {code:"4-3-3",label:"Tridente Ofensivo",bonus:{attack:11,defense:5,passing:8,pace:7,technique:9}},
-    {code:"4-2-3-1",label:"Extremos al ataque",bonus:{attack:8,defense:6,passing:11,pace:9,technique:6}},
-    {code:"3-5-2",label:"Superioridad central",bonus:{attack:7,defense:4,passing:13,pace:8,technique:8}},
-    {code:"2-3-5",label:"Vintage ofensivo",bonus:{attack:15,defense:2,passing:6,pace:13,technique:4}},
-  ],
-  equilibrada:[
-    {code:"4-4-2",label:"El clásico",bonus:{attack:8,defense:8,passing:8,pace:8,technique:8}},
-    {code:"4-3-3",label:"Posesión y ataque",bonus:{attack:12,defense:5,passing:9,pace:8,technique:6}},
-    {code:"4-1-4-1",label:"Sólido en todo",bonus:{attack:6,defense:10,passing:12,pace:5,technique:7}},
-    {code:"4-2-3-1",label:"Fútbol moderno",bonus:{attack:7,defense:7,passing:13,pace:6,technique:7}},
-    {code:"4-3-1-2",label:"Control + 2 puntas",bonus:{attack:10,defense:6,passing:10,pace:7,technique:7}},
-    {code:"3-5-2",label:"Carrileros activos",bonus:{attack:8,defense:5,passing:11,pace:9,technique:7}},
-    {code:"4-5-1",label:"Defensivo+contragol",bonus:{attack:5,defense:11,passing:10,pace:6,technique:8}},
-  ],
-  defensiva:[
-    {code:"5-4-1",label:"Fortaleza",bonus:{attack:4,defense:16,passing:8,pace:5,technique:7}},
-    {code:"5-3-2",label:"5 atrás + 2 arriba",bonus:{attack:7,defense:18,passing:6,pace:5,technique:4}},
-    {code:"4-5-1",label:"Bloque compacto",bonus:{attack:4,defense:12,passing:11,pace:4,technique:9}},
-    {code:"4-1-4-1",label:"Pivote protector",bonus:{attack:5,defense:14,passing:9,pace:4,technique:8}},
-    {code:"3-6-1",label:"Muro defensivo",bonus:{attack:3,defense:9,passing:15,pace:3,technique:10}},
-    {code:"5-2-2-1",label:"Contragolpe",bonus:{attack:6,defense:17,passing:5,pace:8,technique:4}},
-    {code:"6-3-1",label:"Ultra defensivo",bonus:{attack:3,defense:22,passing:6,pace:4,technique:5}},
-  ]
-};
+function getRoundName(idx){ try{ const W=window.t||(k=>k); return [W("comp.r16")||"Octavos",W("comp.qf")||"Cuartos",W("comp.sf")||"Semis",W("comp.final")||"Final"][idx]||ROUND_NAMES[idx]||""; }catch(e){ return ROUND_NAMES[idx]||""; } };
 const CAT_NAMES={ofensiva:"Ofensiva",equilibrada:"Equilibrada",defensiva:"Defensiva"};
 // Short, neutral one-line description per formation code (shown after the squad is locked)
 const FORMATION_DESC={
@@ -1364,9 +1323,10 @@ function renderCenterSummary(){
   </div>`;
 }
 function stageLabel(){
-  if(stage==="group") return `${t("comp.groups")} · ${t("match.match")||"partido"} ${groupMatchIdx+1}/3`;
+  const W=window.t||(k=>k);
+  if(stage==="group") return `${W("comp.groups")||"FASE DE GRUPOS"} · ${W("match.match")||"partido"} ${groupMatchIdx+1}/3`;
   if(stage==="knockout") return getRoundName(knockoutRound);
-  return t("comp.champion")||"Torneo completado";
+  return W("comp.champion")||"Torneo completado";
 }
 
 function getFatigueBarHTML(p){
@@ -2414,8 +2374,8 @@ function generateMatchSummary(myGoals,oppGoals,rivalName){
     </div>
   </div>`;
 
-  return `<strong>${t("match.possession")}:</strong> ${myTeamName} ${possession}% · ${rivalName} ${oppPoss}%<br>
-<strong>${t("match.shots")}:</strong> ${shots} – ${oppShots}
+  return `<strong>${(window.t?t("match.possession"):"Posesión")}:</strong> ${myTeamName} ${possession}% · ${rivalName} ${oppPoss}%<br>
+<strong>${(window.t?t("match.shots"):"Tiros a puerta")}:</strong> ${shots} – ${oppShots}
 ${goalsHTML}`;
 }
 
@@ -2765,9 +2725,9 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
   // Resultado
   const wasShootout=!!penaltyInfo;
   let resultText,resultClass;
-  if(draw){ resultText=t("match.draw"); resultClass="res-draw-tag"; }
+  if(draw){ resultText=window.t?t("match.draw"):"EMPATE"; resultClass="res-draw-tag"; }
   else {
-    resultText=won?(wasShootout?t("match.victory"):t("match.victory")):(wasShootout?t("match.defeat"):t("match.defeat"));
+    resultText=won?(window.t?t("match.victory"):"¡VICTORIA!"):(window.t?t("match.defeat"):"DERROTA");
     resultClass=won?"res-win-tag":"res-lose-tag";
   }
 
@@ -2847,7 +2807,7 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
       if(!htShown){
         htShown=true;
         clockEl.textContent=`45+${inj1}'`;
-        halfEl.textContent=t('match.halftime');
+        halfEl.textContent=window.t?t('match.halftime'):'DESCANSO';
         halfEl.style.background='#a07a00';
         fillEl.style.width='50%';
         addSep(`Descanso — 45+${inj1}'`);
@@ -2888,8 +2848,8 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
 
   // ── Fase 3: Prórroga ────────────────────────────────────────────────────
   function startExtraTime(){
-    halfEl.textContent=t('match.extratime'); halfEl.style.background='#7a3a0a';
-    addSep('— '+t('match.extratime')+' —');
+    halfEl.textContent=window.t?t('match.extratime'):'PRÓRROGA'; halfEl.style.background='#7a3a0a';
+    addSep('— '+(window.t?t('match.extratime'):'PRÓRROGA')+' —');
     const ET=4000,ET_S=0.47,ET_E=0.53;
     let etHt=false;
     const etStart=performance.now();
