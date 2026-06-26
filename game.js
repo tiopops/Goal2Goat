@@ -6176,11 +6176,16 @@ window.applyTranslations = function(){
   document.querySelectorAll('[data-i18n]').forEach(el=>{
     const key=el.getAttribute('data-i18n');
     const txt=window.t?window.t(key):null;
-    if(txt&&txt!==key) el.textContent=txt;
+    if(!txt||txt===key) return;
+    // Solo actualizar si el elemento no tiene hijos elementos (solo texto)
+    if(el.children.length===0) el.textContent=txt;
   });
-  // Actualizar welcome text
+  // Actualizar welcome text (solo si no tiene hijos que puedan romperse)
   const wt=document.getElementById('welcomeText');
-  if(wt) wt.innerHTML=t('welcome.text')||wt.innerHTML;
+  if(wt && wt.children.length===0){
+    const wtxt=window.t?window.t('welcome.text'):null;
+    if(wtxt&&wtxt!=='welcome.text') wt.innerHTML=wtxt;
+  }
   // Actualizar el sort label de convocados
   const sortLabel=document.getElementById('convSortLabel');
   if(sortLabel){
