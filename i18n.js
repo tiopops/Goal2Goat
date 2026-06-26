@@ -360,6 +360,123 @@ window.TRANSLATIONS = {
 };
 
 /* ── Función principal ── */
+
+  /* ── RIVAL BOX ── */
+  'rival.next':      {es:'PRÓXIMO RIVAL',          en:'NEXT OPPONENT'},
+  'rival.power':     {es:'PODER RIVAL',            en:'RIVAL POWER'},
+  'rival.style':     {es:'Estilo de juego',        en:'Playing style'},
+  'rival.strategy':  {es:'Elige tu estrategia para este partido', en:'Choose your strategy for this match'},
+  'rival.no_strat':  {es:'Sin estrategia elegida: sin bonus ni penalización.', en:'No strategy chosen: no bonus or penalty.'},
+  'rival.strategist':{es:'ESTRATEGA: La mejor contra-táctica es', en:'STRATEGIST: Best counter-tactic is'},
+
+  /* ── TEAM PROFILE ── */
+  'team.profile':    {es:'PERFIL DEL EQUIPO',      en:'TEAM PROFILE'},
+  'team.avg':        {es:'NOTA MEDIA',             en:'AVG RATING'},
+
+  /* ── INFO PANEL ── */
+  'info.did_you_know':{es:'¿SABÍAS QUÉ...?',       en:'DID YOU KNOW...?'},
+  'info.how_to_play': {es:'CÓMO JUGAR',            en:'HOW TO PLAY'},
+  'info.stats_guide': {es:'PARA QUÉ SIRVE CADA ESTADÍSTICA', en:'WHAT EACH STAT DOES'},
+
+  /* ── AJUSTES ── */
+  'settings.sound':   {es:'SONIDO',               en:'SOUND'},
+  'settings.theme':   {es:'TEMA OSCURO',           en:'DARK THEME'},
+  'settings.team_name':{es:'NOMBRE DEL EQUIPO',   en:'TEAM NAME'},
+  'settings.always_use':{es:'Usar siempre como nombre de equipo', en:'Always use as team name'},
+  'settings.always_hint':{es:'Si lo activas, no se te preguntará el nombre del equipo al formarlo — se usará este automáticamente.', en:'If enabled, you won't be asked for a team name — it will be used automatically.'},
+
+
+  /* ══ TUTORIALES — CÓMO JUGAR ══ */
+  'howto.1': {
+    es: 'Elige tu <strong>formación</strong> (queda fija todo el torneo) y arma tu once: <strong>SELECCIONAR JUGADOR</strong> o <strong>EQUIPO RÁPIDO</strong>. Coloca cada jugador en su <strong>posición ★</strong> para el 100% de rendimiento.',
+    en: 'Choose your <strong>formation</strong> (fixed for the whole tournament) and build your eleven: <strong>SELECT PLAYER</strong> or <strong>QUICK TEAM</strong>. Place each player in their <strong>★ position</strong> for 100% performance.'
+  },
+  'howto.2': {
+    es: '<strong>Grupos → Octavos → Cuartos → Semis → Final.</strong> Antes de cada partido: rueda de prensa (predicción → moral) y elige una <strong>estrategia</strong> que contrarreste al rival.',
+    en: '<strong>Groups → R16 → QF → SF → Final.</strong> Before each match: press conference (prediction → morale) and choose a <strong>strategy</strong> to counter your opponent.'
+  },
+  'howto.3': {
+    es: 'Hasta <strong>5 cambios 🪑</strong> por partido. Vigila lesiones ✚, sanciones 🚫 y la barra de <strong>Resistencia</strong> — descansa en el banquillo para recuperarla.',
+    en: 'Up to <strong>5 substitutions 🪑</strong> per match. Watch for injuries ✚, suspensions 🚫 and the <strong>Stamina</strong> bar — rest players on the bench to recover it.'
+  },
+  'howto.4': {
+    es: 'La <strong>moral</strong> sube con goles/aciertos y baja con derrotas/fallos. El <strong>clima</strong> y las <strong>rachas 🔥</strong> también influyen en cada partido.',
+    en: 'Your <strong>morale</strong> rises with goals/correct calls and drops with defeats/errors. The <strong>weather</strong> and <strong>streaks 🔥</strong> also influence each match.'
+  },
+  'howto.5': {
+    es: 'Cada run puntúa de <strong>0 a 1000</strong>. Gana el Mundial para acercarte al máximo — tu mejor puntuación se guarda si estás registrado.',
+    en: 'Each run scores from <strong>0 to 1000</strong>. Win the World Cup to get close to the maximum — your best score is saved if you are registered.'
+  },
+
+  /* ══ TUTORIALES — ESTADÍSTICAS ══ */
+  'stats.attack_desc': {
+    es: '<strong>ATAQUE</strong> — cuanto más alto frente a la defensa rival, más posibilidades de marcar goles.',
+    en: '<strong>ATTACK</strong> — the higher it is against the opponent's defence, the more chances of scoring.'
+  },
+  'stats.defense_desc': {
+    es: '<strong>DEFENSA</strong> — frena el ataque rival: cuanto más alta, menos goles encajas.',
+    en: '<strong>DEFENCE</strong> — stops the opponent's attack: the higher it is, the fewer goals you concede.'
+  },
+  'stats.pace_desc': {
+    es: '<strong>RITMO</strong> — aporta un extra de peligro ofensivo cuando supera al rival en velocidad.',
+    en: '<strong>PACE</strong> — provides extra attacking threat when it exceeds the opponent's speed.'
+  },
+  'stats.passing_desc': {
+    es: '<strong>PASE</strong> — mejora tu juego colectivo y ayuda a crear más ocasiones de gol.',
+    en: '<strong>PASSING</strong> — improves your team play and helps create more goal-scoring chances.'
+  },
+  'stats.technique_desc': {
+    es: '<strong>TÉCNICA</strong> — calidad individual: suma un plus de peligro tanto en ataque como en el control del partido.',
+    en: '<strong>TECHNIQUE</strong> — individual quality: adds extra threat both in attack and in controlling the match.'
+  },
+  'stats.tip': {
+    es: 'Los <strong>jugadores ★ en su posición</strong> y la <strong>estrategia</strong> elegida frente a cada rival son lo que más mueve estas estadísticas. ¡Elige bien para inclinar la balanza a tu favor!',
+    en: '<strong>★ players in position</strong> and the chosen <strong>strategy</strong> against each opponent are what move these stats the most. Choose wisely to tip the balance in your favour!'
+  },
+
+  /* ══ RANKING ══ */
+  'ranking.title':    {es:'🏆 RANKING GLOBAL',   en:'🏆 GLOBAL RANKING'},
+  'ranking.subtitle': {es:'Top 50 mejores puntuaciones de jugadores registrados', en:'Top 50 best scores from registered players'},
+
+
+  /* ── PARTIDO — claves faltantes ── */
+  'match.recovered':      {es:'se recupera',              en:'has recovered'},
+  'match.group_results':  {es:'VER RESULTADOS DE GRUPO',  en:'SEE GROUP RESULTS'},
+  'match.next_match':     {es:'SIGUIENTE PARTIDO',        en:'NEXT MATCH'},
+  'match.next_round':     {es:'SIGUIENTE RONDA',          en:'NEXT ROUND'},
+  'match.achievement_unlocked':{es:'LOGRO DESBLOQUEADO',  en:'ACHIEVEMENT UNLOCKED'},
+
+  /* ── COMPETICIÓN — claves faltantes ── */
+  'comp.play_match':      {es:'JUGAR PARTIDO',            en:'PLAY MATCH'},
+  'comp.next_round':      {es:'SIGUIENTE RONDA',          en:'NEXT ROUND'},
+  'comp.end_tournament':  {es:'FINALIZAR CAMPEONATO',     en:'END TOURNAMENT'},
+  'comp.r16_advance':     {es:'clasificado para octavos', en:'qualified for the round of 16'},
+
+  /* ── ESTRATEGIA ── */
+  'strategy.choose':      {es:'ELIGE TU ESTRATEGIA PARA ESTE PARTIDO', en:'CHOOSE YOUR STRATEGY FOR THIS MATCH'},
+
+  /* ── DRAFT ── */
+  'draft.select_player':  {es:'SELECCIONAR JUGADOR',      en:'SELECT PLAYER'},
+
+  /* ── MEJORAS — descs faltantes ── */
+  'upgrade.bench_desc':   {es:'PLAZAS EN EL BANQUILLO',        en:'BENCH SPOTS'},
+  'upgrade.subs_desc':    {es:'SUSTITUCIONES POR PARTIDO',     en:'SUBS PER MATCH'},
+  'upgrade.scout_desc':   {es:'JUGADORES POR EQUIPO AL BARAJAR', en:'PLAYERS PER TEAM WHEN ROLLING'},
+  'upgrade.recovery_desc':{es:'REDUCE LA FATIGA ENTRE PARTIDOS', en:'REDUCES MATCH FATIGUE'},
+
+  /* ── TICKETS — textos pendientes ── */
+  'ticket.serial':        {es:'Nº',                       en:'No.'},
+  'ticket.edition_gold':  {es:'EDICIÓN ORO',              en:'GOLD EDITION'},
+  'ticket.acc_pts_gold':  {es:'Puntos acumulados',        en:'Accumulated points'},
+  'ticket.cashout':       {es:'PLANTARSE',                en:'CASH OUT'},
+  'ticket.risk_it':       {es:'ARRIESGAR',                en:'RISK IT'},
+  'ticket.pts_won':       {es:'puntos ganados',           en:'points earned'},
+  'ticket.max_prize':     {es:'Rascaste todo el boleto. Premio máximo.', en:'You scratched the whole ticket. Maximum prize.'},
+  'ticket.good_call':     {es:'¡Buena jugada! Te has retirado a tiempo.', en:'Good call! You cashed out at the right time.'},
+  'ticket.lost_pts':      {es:'Has perdido los puntos acumulados en este boleto.', en:'You lost the points accumulated on this ticket.'},
+  'ticket.boleto_n':      {es:'Boleto',                   en:'Ticket'},
+  'ticket.risk_label':    {es:'Riesgo de la próxima casilla', en:'Risk of next cell'},
+
 window.t = function(key) {
   const entry = window.TRANSLATIONS[key];
   if (!entry) return key;
