@@ -6197,5 +6197,11 @@ window.applyTranslations = function(){
 // Aplicar traducciones al cargar
 document.addEventListener('DOMContentLoaded',()=>{
   if(window.applyTranslations) window.applyTranslations();
+  // Wire welcome button siempre, independiente de Firebase
+  const wsb=document.getElementById('welcomeStartBtn');
+  if(wsb) wsb.addEventListener('click',()=>{
+    const o=document.getElementById('welcomeOverlay');
+    if(o) o.style.display='none';
+  });
 });
 }
