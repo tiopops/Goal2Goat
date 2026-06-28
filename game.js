@@ -497,52 +497,57 @@ let matchResults = [];       // flat history of all matches played, for display
 // the per-match STRATEGY chosen against each rival (see STRATEGIES above).
 const FORMATIONS = {
   ofensiva:[
-    {code:"3-4-3",label:"Ataque total",bonus:{attack:13,defense:3,passing:7,pace:11,technique:6}},
-    {code:"3-4-1-2",label:"Mediapunta creativo",bonus:{attack:9,defense:4,passing:12,pace:7,technique:8}},
-    {code:"4-2-4",label:"Brasil clásico",bonus:{attack:16,defense:6,passing:4,pace:10,technique:4}},
-    {code:"4-3-3",label:"Tridente Ofensivo",bonus:{attack:11,defense:5,passing:8,pace:7,technique:9}},
-    {code:"4-2-3-1",label:"Extremos al ataque",bonus:{attack:8,defense:6,passing:11,pace:9,technique:6}},
-    {code:"3-5-2",label:"Superioridad central",bonus:{attack:7,defense:4,passing:13,pace:8,technique:8}},
-    {code:"2-3-5",label:"Vintage ofensivo",bonus:{attack:15,defense:2,passing:6,pace:13,technique:4}},
+    {code:"3-4-3",   get label(){ return window.t?window.t('formation.label.3-4-3.ofensiva')  :'Ataque total'; },        bonus:{attack:13,defense:3,passing:7,pace:11,technique:6}},
+    {code:"3-4-1-2", get label(){ return window.t?window.t('formation.label.3-4-1-2.ofensiva'):'Mediapunta creativo'; },  bonus:{attack:9,defense:4,passing:12,pace:7,technique:8}},
+    {code:"4-2-4",   get label(){ return window.t?window.t('formation.label.4-2-4.ofensiva')  :'Brasil clásico'; },       bonus:{attack:16,defense:6,passing:4,pace:10,technique:4}},
+    {code:"4-3-3",   get label(){ return window.t?window.t('formation.label.4-3-3.ofensiva')  :'Tridente Ofensivo'; },    bonus:{attack:11,defense:5,passing:8,pace:7,technique:9}},
+    {code:"4-2-3-1", get label(){ return window.t?window.t('formation.label.4-2-3-1.ofensiva'):'Extremos al ataque'; },   bonus:{attack:8,defense:6,passing:11,pace:9,technique:6}},
+    {code:"3-5-2",   get label(){ return window.t?window.t('formation.label.3-5-2.ofensiva')  :'Superioridad central'; }, bonus:{attack:7,defense:4,passing:13,pace:8,technique:8}},
+    {code:"2-3-5",   get label(){ return window.t?window.t('formation.label.2-3-5.ofensiva')  :'Vintage ofensivo'; },     bonus:{attack:15,defense:2,passing:6,pace:13,technique:4}},
   ],
   equilibrada:[
-    {code:"4-4-2",label:"El clásico",bonus:{attack:8,defense:8,passing:8,pace:8,technique:8}},
-    {code:"4-3-3",label:"Posesión y ataque",bonus:{attack:12,defense:5,passing:9,pace:8,technique:6}},
-    {code:"4-1-4-1",label:"Sólido en todo",bonus:{attack:6,defense:10,passing:12,pace:5,technique:7}},
-    {code:"4-2-3-1",label:"Fútbol moderno",bonus:{attack:7,defense:7,passing:13,pace:6,technique:7}},
-    {code:"4-3-1-2",label:"Control + 2 puntas",bonus:{attack:10,defense:6,passing:10,pace:7,technique:7}},
-    {code:"3-5-2",label:"Carrileros activos",bonus:{attack:8,defense:5,passing:11,pace:9,technique:7}},
-    {code:"4-5-1",label:"Defensivo+contragol",bonus:{attack:5,defense:11,passing:10,pace:6,technique:8}},
+    {code:"4-4-2",   get label(){ return window.t?window.t('formation.label.4-4-2.equilibrada')  :'El clásico'; },          bonus:{attack:8,defense:8,passing:8,pace:8,technique:8}},
+    {code:"4-3-3",   get label(){ return window.t?window.t('formation.label.4-3-3.equilibrada')  :'Posesión y ataque'; },    bonus:{attack:12,defense:5,passing:9,pace:8,technique:6}},
+    {code:"4-1-4-1", get label(){ return window.t?window.t('formation.label.4-1-4-1.equilibrada'):'Sólido en todo'; },       bonus:{attack:6,defense:10,passing:12,pace:5,technique:7}},
+    {code:"4-2-3-1", get label(){ return window.t?window.t('formation.label.4-2-3-1.equilibrada'):'Fútbol moderno'; },       bonus:{attack:7,defense:7,passing:13,pace:6,technique:7}},
+    {code:"4-3-1-2", get label(){ return window.t?window.t('formation.label.4-3-1-2.equilibrada'):'Control + 2 puntas'; },   bonus:{attack:10,defense:6,passing:10,pace:7,technique:7}},
+    {code:"3-5-2",   get label(){ return window.t?window.t('formation.label.3-5-2.equilibrada')  :'Carrileros activos'; },   bonus:{attack:8,defense:5,passing:11,pace:9,technique:7}},
+    {code:"4-5-1",   get label(){ return window.t?window.t('formation.label.4-5-1.equilibrada')  :'Defensivo+contragol'; },  bonus:{attack:5,defense:11,passing:10,pace:6,technique:8}},
   ],
   defensiva:[
-    {code:"5-4-1",label:"Fortaleza",bonus:{attack:4,defense:16,passing:8,pace:5,technique:7}},
-    {code:"5-3-2",label:"5 atrás + 2 arriba",bonus:{attack:7,defense:18,passing:6,pace:5,technique:4}},
-    {code:"4-5-1",label:"Bloque compacto",bonus:{attack:4,defense:12,passing:11,pace:4,technique:9}},
-    {code:"4-1-4-1",label:"Pivote protector",bonus:{attack:5,defense:14,passing:9,pace:4,technique:8}},
-    {code:"3-6-1",label:"Muro defensivo",bonus:{attack:3,defense:9,passing:15,pace:3,technique:10}},
-    {code:"5-2-2-1",label:"Contragolpe",bonus:{attack:6,defense:17,passing:5,pace:8,technique:4}},
-    {code:"6-3-1",label:"Ultra defensivo",bonus:{attack:3,defense:22,passing:6,pace:4,technique:5}},
+    {code:"5-4-1",   get label(){ return window.t?window.t('formation.label.5-4-1.defensiva')  :'Fortaleza'; },           bonus:{attack:4,defense:16,passing:8,pace:5,technique:7}},
+    {code:"5-3-2",   get label(){ return window.t?window.t('formation.label.5-3-2.defensiva')  :'5 atrás + 2 arriba'; }, bonus:{attack:7,defense:18,passing:6,pace:5,technique:4}},
+    {code:"4-5-1",   get label(){ return window.t?window.t('formation.label.4-5-1.defensiva')  :'Bloque compacto'; },     bonus:{attack:4,defense:12,passing:11,pace:4,technique:9}},
+    {code:"4-1-4-1", get label(){ return window.t?window.t('formation.label.4-1-4-1.defensiva'):'Pivote protector'; },    bonus:{attack:5,defense:14,passing:9,pace:4,technique:8}},
+    {code:"3-6-1",   get label(){ return window.t?window.t('formation.label.3-6-1.defensiva')  :'Muro defensivo'; },      bonus:{attack:3,defense:9,passing:15,pace:3,technique:10}},
+    {code:"5-2-2-1", get label(){ return window.t?window.t('formation.label.5-2-2-1.defensiva'):'Contragolpe'; },         bonus:{attack:6,defense:17,passing:5,pace:8,technique:4}},
+    {code:"6-3-1",   get label(){ return window.t?window.t('formation.label.6-3-1.defensiva')  :'Ultra defensivo'; },     bonus:{attack:3,defense:22,passing:6,pace:4,technique:5}},
   ]
 };
-const CAT_NAMES={ofensiva:"Ofensiva",equilibrada:"Equilibrada",defensiva:"Defensiva"};
+const CAT_NAMES={
+  get ofensiva(){ return window.t?window.t('formation.offensive'):'Ofensiva'; },
+  get equilibrada(){ return window.t?window.t('formation.balanced'):'Equilibrada'; },
+  get defensiva(){ return window.t?window.t('formation.defensive'):'Defensiva'; },
+};
 // Short, neutral one-line description per formation code (shown after the squad is locked)
 const FORMATION_DESC={
-  "3-4-3":"Tres centrales y tres delanteros: máxima presencia ofensiva.",
-  "3-4-1-2":"Línea de 3 con un mediapunta libre entre líneas.",
-  "4-2-4":"Cuatro atacantes apoyados por solo dos centrocampistas.",
-  "4-3-3":"Equilibrio clásico entre posesión y ancho ofensivo.",
-  "4-2-3-1":"Doble pivote y un enganche que conecta con la punta.",
-  "3-5-2":"Carrileros que suben por banda y dos puntas arriba.",
-  "2-3-5":"Formación vintage con cinco hombres en ataque.",
-  "4-4-2":"El dibujo más clásico: simetría y bloques compactos.",
-  "4-1-4-1":"Pivote defensivo que protege la línea de cuatro.",
-  "4-3-1-2":"Mediocentro creativo entre la medular y la delantera.",
-  "4-5-1":"Línea de cinco en el centro, un único punta de referencia.",
-  "5-4-1":"Cinco defensas para cerrar todos los espacios.",
-  "5-3-2":"Bloque de cinco atrás con doble delantero al contragolpe.",
-  "3-6-1":"Seis hombres en el medio, máxima cautela ofensiva.",
-  "5-2-2-1":"Defensa numerosa pensada para salir rápido a la contra.",
-  "6-3-1":"El mayor número de defensas posible en el campo.",
+  get "3-4-3"()   { return window.t?window.t('formation.desc.3-4-3')  :'Tres centrales y tres delanteros: máxima presencia ofensiva.'; },
+  get "3-4-1-2"() { return window.t?window.t('formation.desc.3-4-1-2'):'Línea de 3 con un mediapunta libre entre líneas.'; },
+  get "4-2-4"()   { return window.t?window.t('formation.desc.4-2-4')  :'Cuatro atacantes apoyados por solo dos centrocampistas.'; },
+  get "4-3-3"()   { return window.t?window.t('formation.desc.4-3-3')  :'Equilibrio clásico entre posesión y ancho ofensivo.'; },
+  get "4-2-3-1"() { return window.t?window.t('formation.desc.4-2-3-1'):'Doble pivote y un enganche que conecta con la punta.'; },
+  get "3-5-2"()   { return window.t?window.t('formation.desc.3-5-2')  :'Carrileros que suben por banda y dos puntas arriba.'; },
+  get "2-3-5"()   { return window.t?window.t('formation.desc.2-3-5')  :'Formación vintage con cinco hombres en ataque.'; },
+  get "4-4-2"()   { return window.t?window.t('formation.desc.4-4-2')  :'El dibujo más clásico: simetría y bloques compactos.'; },
+  get "4-1-4-1"() { return window.t?window.t('formation.desc.4-1-4-1'):'Pivote defensivo que protege la línea de cuatro.'; },
+  get "4-3-1-2"() { return window.t?window.t('formation.desc.4-3-1-2'):'Mediocentro creativo entre la medular y la delantera.'; },
+  get "4-5-1"()   { return window.t?window.t('formation.desc.4-5-1')  :'Línea de cinco en el centro, un único punta de referencia.'; },
+  get "5-4-1"()   { return window.t?window.t('formation.desc.5-4-1')  :'Cinco defensas para cerrar todos los espacios.'; },
+  get "5-3-2"()   { return window.t?window.t('formation.desc.5-3-2')  :'Bloque de cinco atrás con doble delantero al contragolpe.'; },
+  get "3-6-1"()   { return window.t?window.t('formation.desc.3-6-1')  :'Seis hombres en el medio, máxima cautela ofensiva.'; },
+  get "5-2-2-1"() { return window.t?window.t('formation.desc.5-2-2-1'):'Defensa numerosa pensada para salir rápido a la contra.'; },
+  get "6-3-1"()   { return window.t?window.t('formation.desc.6-3-1')  :'El mayor número de defensas posible en el campo.'; },
+};
 };
 let currentFormation={category:"equilibrada",code:"4-4-2"};
 let currentFormationBonus={};
@@ -6214,6 +6219,15 @@ window.applyTranslations = function(){
   });
   // Re-renderizar el tip actual en el idioma nuevo
   renderCurrentTip();
+  // Re-renderizar lista de formaciones (labels traducibles)
+  if(typeof renderFormationList==='function') renderFormationList(currentFormation.category);
+  // Re-renderizar info card de formación si está visible
+  if(typeof lockFormationDisplay==='function'){
+    const infoCard=document.getElementById('formationInfoCard');
+    if(infoCard&&infoCard.style.display!=='none') lockFormationDisplay();
+  }
+  // Re-renderizar formación en resumen móvil
+  if(typeof renderMobileFormationInfo==='function') renderMobileFormationInfo();
   // Actualizar botones de idioma activo
   const esBtn=document.getElementById('langEsBtn');
   const enBtn=document.getElementById('langEnBtn');
