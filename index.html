@@ -436,20 +436,20 @@
     </div>
 
     <div class="team-profile box" id="teamProfileBox">
-      <h3>PERFIL DEL EQUIPO</h3>
-      <div class="ovr-team"><span class="team-stat-title">NOTA MEDIA</span><span id="teamOVR">—</span></div>
-      <div class="stat-row"><span>ATAQUE</span><span id="attackValue">0</span></div>
+      <h3 data-i18n="draft.team_profile">PERFIL DEL EQUIPO</h3>
+      <div class="ovr-team"><span class="team-stat-title" data-i18n="draft.avg_rating">NOTA MEDIA</span><span id="teamOVR">—</span></div>
+      <div class="stat-row"><span data-i18n="info.attack">ATAQUE</span><span id="attackValue">0</span></div>
       <div class="stat-bar"><div id="attackBar"></div></div>
-      <div class="stat-row"><span>DEFENSA</span><span id="defenseValue">0</span></div>
+      <div class="stat-row"><span data-i18n="info.defense">DEFENSA</span><span id="defenseValue">0</span></div>
       <div class="stat-bar"><div id="defenseBar"></div></div>
-      <div class="stat-row"><span>RITMO</span><span id="paceValue">0</span></div>
+      <div class="stat-row"><span data-i18n="info.pace">RITMO</span><span id="paceValue">0</span></div>
       <div class="stat-bar"><div id="paceBar"></div></div>
-      <div class="stat-row"><span>PASE</span><span id="passingValue">0</span></div>
+      <div class="stat-row"><span data-i18n="info.passing">PASE</span><span id="passingValue">0</span></div>
       <div class="stat-bar"><div id="passingBar"></div></div>
-      <div class="stat-row"><span>TÉCNICA</span><span id="techniqueValue">0</span></div>
+      <div class="stat-row"><span data-i18n="info.technique">TÉCNICA</span><span id="techniqueValue">0</span></div>
       <div class="stat-bar"><div id="techniqueBar"></div></div>
       <div id="starBonus" class="star-bonus-row" style="display:none">
-        <span class="star">★</span> Bonus posición +<span id="starBonusVal">0</span>
+        <span data-i18n="draft.star_bonus">★ Bonus posición +</span><span id="starBonusVal">0</span>
       </div>
     </div>
 
@@ -502,7 +502,7 @@
     <!-- Formation info: read-only card shown once the squad is locked in.
          The interactive picker lives in the LEFT panel (only during draft). -->
     <div class="box formation-box-desktop" id="formationInfoCard" style="display:none">
-      <h3>FORMACIÓN ELEGIDA</h3>
+      <h3 data-i18n="formation.chosen">FORMACIÓN ELEGIDA</h3>
       <p id="currentFormation" class="hint-line">4-4-2 · Equilibrada</p>
       <p id="formationDesc" class="hint-line" style="margin-top:4px;color:var(--text-muted)"></p>
     </div>

@@ -407,6 +407,7 @@ window.TRANSLATIONS = {
   'draft.in_position':    {es:'en su posición',          en:'in position'},
   'draft.team_profile':   {es:'PERFIL DEL EQUIPO',       en:'TEAM PROFILE'},
   'draft.avg_rating':     {es:'NOTA MEDIA',              en:'AVERAGE RATING'},
+  'draft.star_bonus':     {es:'★ Bonus posición +',      en:'★ Position bonus +'},
 
   /* ── TABS MÓVIL ── */
   'mob.campo':            {es:'CAMPO',                en:'PITCH'},
