@@ -848,7 +848,7 @@ function randomPick(arr,n){
 function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]; } }
 
 function showTeamChoice(t1,p1,t2,p2,isBench=false){
-  const title=isBench?"ELIGE JUGADOR DE BANQUILLO":"ELIGE UNA SELECCIÓN";
+  const title=isBench?(window.t?window.t('draft.choose_bench'):'ELIGE JUGADOR DE BANQUILLO'):(window.t?window.t('draft.choose_team'):'ELIGE UNA SELECCIÓN');
   const isMobile=window.innerWidth<=1050;
   const targetEl=isMobile?document.getElementById("playerCard"):playerCardEl;
 
@@ -961,7 +961,7 @@ function showRosterModal(team,players){
       <div class="selection-title" style="margin:0">${team.name}</div>
     </div>
     <table class="roster-table">
-      <thead><tr><th>#</th><th>Jugador</th><th>Pos.</th><th>★</th><th></th></tr></thead>
+      <thead><tr><th>#</th><th>${window.t?window.t('draft.th_player'):'Jugador'}</th><th>${window.t?window.t('draft.th_pos'):'Pos'}.</th><th>★</th><th></th></tr></thead>
       <tbody>${rows}</tbody>
     </table>
   </div>`;
@@ -997,7 +997,7 @@ function pickPlayer(player){
       startLedLoop();
     } else {
       rollBtn.disabled=false;
-      rollBtn.textContent=`BANQUILLO ${benchCount}/${getMaxBench()}`;
+      rollBtn.textContent=`${window.t?window.t('draft.bench'):'BANQUILLO'} ${benchCount}/${getMaxBench()}`;
       scrollToCenter("rollBtn");
     }
     return;
@@ -1022,7 +1022,7 @@ function showSelectedPlayerBanner(p){
       <span class="spb-name">${p.name}</span>
       <span class="spb-rating">★${p.rating||0}</span>
     </div>
-    <div class="spb-positions">Posiciones: ${(p.positions||[]).join(' / ')}</div>
+    <div class="spb-positions">${window.t?window.t('draft.positions'):'Posiciones'}: ${(p.positions||[]).join(' / ')}</div>
     <div class="hint-line">Colócalo en una posición resaltada del campo.</div>
     <button class="spb-back-btn" onclick="volverASeleccion()">↩ VOLVER</button>
   </div>`;
@@ -1221,7 +1221,7 @@ function onSlotClick(slot){
   if(draftedCount>=11){
     baseTeamOVR=computeTeamOVR();
     phase="bench";
-    rollBtn.textContent=`BANQUILLO 0/${getMaxBench()}`;
+    rollBtn.textContent=`${window.t?window.t('draft.bench'):'BANQUILLO'} 0/${getMaxBench()}`;
     rollBtn.disabled=false;
     document.getElementById("benchSection").style.display="block";
     playerCardEl.innerHTML="";
@@ -1263,7 +1263,7 @@ function updateDraftCounter(){
     }
   } else {
     if(title){
-      title.innerHTML=`CONVOCADOS <span id="draftCounter" class="counter-badge">${draftedCount}/11</span>`;
+      title.innerHTML=`${window.t?window.t('draft.convocados'):'CONVOCADOS'} <span id="draftCounter" class="counter-badge">${draftedCount}/11</span>`;
     } else {
       el.textContent=draftedCount+"/11";
     }
@@ -1378,7 +1378,7 @@ function stageLabel(){
 function getFatigueBarHTML(p){
   const f=(p.fatigue===undefined)?100:p.fatigue;
   const color=getFatigueColor(p);
-  return `<div class="fatigue-bar-wrap" title="Resistencia: ${f}%"><div class="fatigue-bar fatigue-${color}" style="width:${f}%"></div></div>`;
+  return `<div class="fatigue-bar-wrap" title="${window.t?window.t('draft.th_stamina'):'Resistencia'}: ${f}%"><div class="fatigue-bar fatigue-${color}" style="width:${f}%"></div></div>`;
 }
 // Ordenación de convocados: 'arrival' | 'position' | 'rating'
 let convSortMode = 'position';
@@ -1446,7 +1446,7 @@ function updateConvocadosTable(){
     const realLabel=(realPos&&realPos!==posLabel)?`<br><span style="font-size:9px;color:var(--text-muted)">${realPos}</span>`:'';
     rows+=`<tr${sel}${clickable}><td>${i+1}</td><td>${p.name}${cross}${cardBadge}${streak}</td><td>${fatigueBar}</td><td><span style="font-weight:700">${posLabel}</span>${star}${realLabel}</td><td>${r}</td></tr>`;
   });
-  el.innerHTML=rows?`<table><thead><tr><th>#</th><th>Jugador</th><th title="Resistencia">Resistencia</th><th>Pos</th><th>★</th></tr></thead><tbody>${rows}</tbody></table>`:"";
+  el.innerHTML=rows?`<table><thead><tr><th>#</th><th>${window.t?window.t('draft.th_player'):'Jugador'}</th><th title="${window.t?window.t('draft.th_stamina'):'Resistencia'}">${window.t?window.t('draft.th_stamina'):'Resistencia'}</th><th>${window.t?window.t('draft.th_pos'):'Pos'}</th><th>★</th></tr></thead><tbody>${rows}</tbody></table>`:"";
   // Update star bonus display
   const sbEl=document.getElementById("starBonus");
   const sbVal=document.getElementById("starBonusVal");
@@ -1463,8 +1463,8 @@ function updateConvocadosTable(){
     if(phase==='ready'){
       swapHint.style.display="block";
       swapHint.textContent=swapsLeft>0
-        ? `Cambios disponibles antes del próximo partido: ${swapsLeft}/${getMaxSubs()}`
-        : `Ya has usado tu cambio para este partido.`;
+        ? `${window.t?window.t('draft.swap_available'):'Cambios disponibles antes del próximo partido'}: ${swapsLeft}/${getMaxSubs()}`
+        : (window.t?window.t('draft.swap_used'):'Ya has usado tu cambio para este partido.');
     } else {
       swapHint.style.display="none";
     }
@@ -1488,7 +1488,7 @@ function updateBenchTable(){
     const clickable=(canSwap&&!isBlocked)?` onclick="onBenchClick(${i})" style="cursor:pointer"`:(isBlocked?` style="opacity:.55;cursor:not-allowed"`:'');
     rows+=`<tr${sel}${clickable}><td>${p.name}${cross}${cardBadge}</td><td>${fatigueBar}</td><td>${(p.positions||[]).join('/')}</td><td>${p.rating||0}</td></tr>`;
   });
-  el.innerHTML=rows?`<table><thead><tr><th>Jugador</th><th title="Resistencia">Resistencia</th><th>Pos</th><th>★</th></tr></thead><tbody>${rows}</tbody></table>`:"";
+  el.innerHTML=rows?`<table><thead><tr><th>${window.t?window.t('draft.th_player'):'Jugador'}</th><th title="${window.t?window.t('draft.th_stamina'):'Resistencia'}">${window.t?window.t('draft.th_stamina'):'Resistencia'}</th><th>${window.t?window.t('draft.th_pos'):'Pos'}</th><th>★</th></tr></thead><tbody>${rows}</tbody></table>`:"";
 }
 
 /* ========= PRE-MATCH SWAPS (convocados <-> bench) ========= */
@@ -6227,6 +6227,10 @@ window.applyTranslations = function(){
   }
   // Re-renderizar formación en resumen móvil
   if(typeof renderMobileFormationInfo==='function') renderMobileFormationInfo();
+  // Re-renderizar convocados y banquillo (cabeceras de tabla y textos dinámicos)
+  if(typeof updateConvocadosTable==='function') updateConvocadosTable();
+  if(typeof updateBenchTable==='function') updateBenchTable();
+  if(typeof updateDraftCounter==='function') updateDraftCounter();
   // Actualizar botones de idioma activo
   const esBtn=document.getElementById('langEsBtn');
   const enBtn=document.getElementById('langEnBtn');

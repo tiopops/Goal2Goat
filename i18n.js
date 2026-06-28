@@ -210,6 +210,17 @@ window.TRANSLATIONS = {
   'draft.changes':        {es:'CAMBIOS DISPONIBLES',  en:'AVAILABLE SUBS'},
   'draft.morale':         {es:'MORAL',                en:'MORALE'},
 
+  /* ── CONVOCADOS — tabla y textos dinámicos ── */
+  'draft.th_player':      {es:'Jugador',              en:'Player'},
+  'draft.th_stamina':     {es:'Resistencia',          en:'Stamina'},
+  'draft.th_pos':         {es:'Pos',                  en:'Pos'},
+  'draft.positions':      {es:'Posiciones',           en:'Positions'},
+  'draft.swap_available': {es:'Cambios disponibles antes del próximo partido', en:'Subs available before next match'},
+  'draft.swap_used':      {es:'Ya has usado tu cambio para este partido.',     en:'You have already used your sub for this match.'},
+  'draft.choose_team':    {es:'ELIGE UNA SELECCIÓN',          en:'CHOOSE A SQUAD'},
+  'draft.choose_bench':   {es:'ELIGE JUGADOR DE BANQUILLO',   en:'CHOOSE A BENCH PLAYER'},
+  'draft.stamina_pct':    {es:'Resistencia',                  en:'Stamina'},
+
   /* ── FORMACIÓN ── */
   'formation.title':      {es:'FORMACIÓN',            en:'FORMATION'},
   'formation.offensive':  {es:'Ofensiva',             en:'Offensive'},

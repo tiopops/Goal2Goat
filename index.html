@@ -395,7 +395,7 @@
       <h3 style="display:flex;align-items:center;justify-content:space-between">
         <span id="convocadosTitle" data-i18n-prefix="draft.convocados">CONVOCADOS <span id="draftCounter" class="counter-badge">0/11</span></span>
         <button id="convSortBtn" onclick="window.toggleConvSort()" title="Cambiar orden" style="background:none;border:none;cursor:pointer;padding:4px;color:var(--text-muted);display:none;flex-shrink:0;display:flex;align-items:center;gap:4px" aria-label="Cambiar orden">
-          <span id="convSortLabel" style="font-family:'Bebas Neue',Impact,sans-serif;font-size:11px;letter-spacing:1px;color:var(--text-muted)">POSICIÓN</span>
+          <span id="convSortLabel" style="font-family:'Bebas Neue',Impact,sans-serif;font-size:11px;letter-spacing:1px;color:var(--text-muted)" data-i18n="draft.sort_position">POSICIÓN</span>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--text-muted);flex-shrink:0">
             <path d="M3 6h18M7 12h10M11 18h2"/>
           </svg>
@@ -405,7 +405,7 @@
       <div id="swapHint" class="swap-hint" style="display:none"></div>
       <div id="moraleSection" style="display:none">
         <div class="morale-bar-wrap">
-          <div class="morale-label">MORAL <span id="moraleValue">0</span></div>
+          <div class="morale-label"><span data-i18n="draft.morale">MORAL</span> <span id="moraleValue">0</span></div>
           <div class="morale-track">
             <div class="morale-neg-zone"></div>
             <div class="morale-center"></div>
@@ -416,7 +416,7 @@
         </div>
       </div>
       <div id="benchSection" style="display:none">
-        <div class="bench-title">BANQUILLO 🪑 <span id="benchCounter">0/5</span></div>
+        <div class="bench-title"><span data-i18n="draft.bench">BANQUILLO</span> 🪑 <span id="benchCounter">0/5</span></div>
         <div id="benchTable"></div>
       </div>
     </div>
