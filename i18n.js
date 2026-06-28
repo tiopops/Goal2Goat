@@ -304,7 +304,7 @@ window.TRANSLATIONS = {
   'ranking.loading':      {es:'Cargando ranking...',  en:'Loading ranking...'},
 
   /* ── INFORMACIÓN ── */
-  'info.did_you_know':    {es:'¿SABÍAS QUE...?',      en:'DID YOU KNOW...?'},
+  'info.did_you_know':    {es:'¿SABÍAS QUÉ...?',      en:'DID YOU KNOW...?'},
   'info.how_to_play':     {es:'CÓMO JUGAR',           en:'HOW TO PLAY'},
   'info.stats_guide':     {es:'PARA QUÉ SIRVE CADA ESTADÍSTICA', en:'WHAT EACH STAT DOES'},
   'info.attack':          {es:'ATAQUE',               en:'ATTACK'},
@@ -312,6 +312,59 @@ window.TRANSLATIONS = {
   'info.pace':            {es:'RITMO',                en:'PACE'},
   'info.passing':         {es:'PASE',                 en:'PASSING'},
   'info.technique':       {es:'TÉCNICA',              en:'TECHNIQUE'},
+
+  /* ── TIPS (¿Sabías qué...?) ── */
+  'tips.0': {es:'💡 Regístrate para guardar tu progreso y acceder a contenido exclusivo.', en:'💡 Register to save your progress and access exclusive content.'},
+  'tips.1': {es:'💡 Un jugador cansado rendirá peor en el campo, controla su resistencia.', en:'💡 A tired player will perform worse on the pitch — keep an eye on their stamina.'},
+  'tips.2': {es:'💡 Conoce a tu rival. Elegir una buena estrategia puede marcar la diferencia.', en:'💡 Know your opponent. Picking the right strategy can make all the difference.'},
+
+  /* ── CÓMO JUGAR — pasos ── */
+  'howto.step1': {
+    es:'Elige tu <strong>formación</strong> (queda fija todo el torneo) y arma tu once: <strong>SELECCIONAR JUGADOR</strong> o <strong>EQUIPO RÁPIDO</strong>. Coloca cada jugador en su <strong>posición ★</strong> para el 100% de rendimiento.',
+    en:'Choose your <strong>formation</strong> (locked for the whole tournament) and build your eleven: <strong>SELECT PLAYER</strong> or <strong>QUICK TEAM</strong>. Place each player in their <strong>★ position</strong> for 100% performance.'
+  },
+  'howto.step2': {
+    es:'<strong>Grupos → Octavos → Cuartos → Semis → Final.</strong> Antes de cada partido: rueda de prensa (predicción → moral) y elige una <strong>estrategia</strong> que contrarreste al rival.',
+    en:'<strong>Groups → Round of 16 → Quarter-finals → Semis → Final.</strong> Before each match: press conference (prediction → morale) and pick a <strong>strategy</strong> to counter your opponent.'
+  },
+  'howto.step3': {
+    es:'Hasta <strong>5 cambios 🪑</strong> por partido. Vigila lesiones ✚, sanciones 🚫 y la barra de <strong>Resistencia</strong> — descansa en el banquillo para recuperarla.',
+    en:'Up to <strong>5 substitutions 🪑</strong> per match. Watch for injuries ✚, suspensions 🚫 and the <strong>Stamina</strong> bar — rest players on the bench to recover it.'
+  },
+  'howto.step4': {
+    es:'La <strong>moral</strong> sube con goles/aciertos y baja con derrotas/fallos. El <strong>clima</strong> y las <strong>rachas 🔥</strong> también influyen en cada partido.',
+    en:'<strong>Morale</strong> rises with goals/correct predictions and drops with defeats/misses. <strong>Weather</strong> and <strong>streaks 🔥</strong> also affect each match.'
+  },
+  'howto.step5': {
+    es:'Cada run puntúa de <strong>0 a 1000</strong>. Gana el Mundial para acercarte al máximo — tu mejor puntuación se guarda si estás registrado.',
+    en:'Each run scores from <strong>0 to 1000</strong>. Win the World Cup to reach the maximum — your best score is saved if you are registered.'
+  },
+
+  /* ── STATS GUIDE — descripciones ── */
+  'info.attack.desc': {
+    es:'<strong>ATAQUE</strong> — cuanto más alto frente a la defensa rival, más posibilidades de marcar goles.',
+    en:'<strong>ATTACK</strong> — the higher it is against the opponent\'s defence, the more chances you have to score.'
+  },
+  'info.defense.desc': {
+    es:'<strong>DEFENSA</strong> — frena el ataque rival: cuanto más alta, menos goles encajas.',
+    en:'<strong>DEFENCE</strong> — limits the opponent\'s attack: the higher it is, the fewer goals you concede.'
+  },
+  'info.pace.desc': {
+    es:'<strong>RITMO</strong> — aporta un extra de peligro ofensivo cuando supera al rival en velocidad.',
+    en:'<strong>PACE</strong> — adds extra offensive threat when it exceeds the opponent\'s speed.'
+  },
+  'info.passing.desc': {
+    es:'<strong>PASE</strong> — mejora tu juego colectivo y ayuda a crear más ocasiones de gol.',
+    en:'<strong>PASSING</strong> — improves your collective play and helps create more goalscoring chances.'
+  },
+  'info.technique.desc': {
+    es:'<strong>TÉCNICA</strong> — calidad individual: suma un plus de peligro tanto en ataque como en el control del partido.',
+    en:'<strong>TECHNIQUE</strong> — individual quality: adds a danger bonus both in attack and in overall match control.'
+  },
+  'info.stats_tip': {
+    es:'Los <strong>jugadores ★ en su posición</strong> y la <strong>estrategia</strong> elegida frente a cada rival son lo que más mueve estas estadísticas. ¡Elige bien para inclinar la balanza a tu favor!',
+    en:'<strong>★ players in their position</strong> and the <strong>strategy</strong> chosen against each opponent are what move these stats the most. Choose wisely to tip the balance in your favour!'
+  },
 
   /* ── LESIONES / TARJETAS ── */
   'injury.leve':          {es:'Lesión leve',          en:'Minor injury'},

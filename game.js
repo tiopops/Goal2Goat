@@ -639,11 +639,13 @@ function toggleCollapsible(boxId){
 }
 
 /* ========= ¿SABÍAS QUÉ...? TIPS ========= */
-const GAME_TIPS=[
-  "💡 Regístrate para guardar tu progreso y acceder a contenido exclusivo.",
-  "💡 Un jugador cansado rendirá peor en el campo, controla su resistencia.",
-  "💡 Conoce a tu rival. Elegir una buena estrategia puede marcar la diferencia.",
-];
+function getGameTips(){
+  return [
+    window.t ? window.t('tips.0') : '💡 Regístrate para guardar tu progreso y acceder a contenido exclusivo.',
+    window.t ? window.t('tips.1') : '💡 Un jugador cansado rendirá peor en el campo, controla su resistencia.',
+    window.t ? window.t('tips.2') : '💡 Conoce a tu rival. Elegir una buena estrategia puede marcar la diferencia.',
+  ];
+}
 let currentTipIndex=0;
 let tipRotationTimer=null;
 function renderCurrentTip(){
@@ -651,12 +653,12 @@ function renderCurrentTip(){
   if(!el) return;
   el.classList.add("tip-fading");
   setTimeout(()=>{
-    el.textContent=GAME_TIPS[currentTipIndex];
+    el.textContent=getGameTips()[currentTipIndex];
     el.classList.remove("tip-fading");
   },200);
 }
 function showNextTip(){
-  currentTipIndex=(currentTipIndex+1)%GAME_TIPS.length;
+  currentTipIndex=(currentTipIndex+1)%getGameTips().length;
   renderCurrentTip();
   // Clicking manually resets the 15s auto-rotation timer, so it doesn't
   // immediately jump again right after a manual click.
@@ -665,7 +667,7 @@ function showNextTip(){
 function restartTipRotation(){
   if(tipRotationTimer) clearInterval(tipRotationTimer);
   tipRotationTimer=setInterval(()=>{
-    currentTipIndex=(currentTipIndex+1)%GAME_TIPS.length;
+    currentTipIndex=(currentTipIndex+1)%getGameTips().length;
     renderCurrentTip();
   },15000);
 }
@@ -6193,12 +6195,20 @@ async function renderAchievementsTab(){
    APLICAR TRADUCCIONES — recorre data-i18n y actualiza textos
    ============================================================ */
 window.applyTranslations = function(){
-  // Actualizar todos los elementos con data-i18n
+  // Actualizar todos los elementos con data-i18n (texto plano, solo leaf nodes)
   document.querySelectorAll('[data-i18n]').forEach(el=>{
     const key=el.dataset.i18n;
     const text=window.t(key);
     if(text!==key) el.textContent=text;
   });
+  // Actualizar elementos con data-i18n-html (contenido HTML con etiquetas)
+  document.querySelectorAll('[data-i18n-html]').forEach(el=>{
+    const key=el.dataset.i18nHtml;
+    const text=window.t(key);
+    if(text!==key) el.innerHTML=text;
+  });
+  // Re-renderizar el tip actual en el idioma nuevo
+  renderCurrentTip();
   // Actualizar botones de idioma activo
   const esBtn=document.getElementById('langEsBtn');
   const enBtn=document.getElementById('langEnBtn');
