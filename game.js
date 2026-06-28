@@ -548,7 +548,6 @@ const FORMATION_DESC={
   get "5-2-2-1"() { return window.t?window.t('formation.desc.5-2-2-1'):'Defensa numerosa pensada para salir rápido a la contra.'; },
   get "6-3-1"()   { return window.t?window.t('formation.desc.6-3-1')  :'El mayor número de defensas posible en el campo.'; },
 };
-};
 let currentFormation={category:"equilibrada",code:"4-4-2"};
 let currentFormationBonus={};
 let formationIsLocked=false; // set true the moment SELECCIONAR JUGADOR/EQUIPO RÁPIDO is pressed
