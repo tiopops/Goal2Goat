@@ -624,6 +624,8 @@ updateDraftCounter();
 renderMobileFormationInfo();
 relocateFormationPickerForViewport();
 window.addEventListener("resize", relocateFormationPickerForViewport);
+// Apply translations after DOM relocation so data-i18n-html elements are in final position
+if(window.applyTranslations) window.applyTranslations();
 
 /* On mobile, the formation picker must be reachable from the FORMACIÓN tab
    (center-panel, which is always visible) — not buried inside the EQUIPO
@@ -651,6 +653,9 @@ let tipRotationTimer=null;
 function renderCurrentTip(){
   const el=document.getElementById("tipText");
   if(!el) return;
+  // Update immediately so the correct text shows at once
+  el.textContent=getGameTips()[currentTipIndex];
+  // Then do the fade animation
   el.classList.add("tip-fading");
   setTimeout(()=>{
     el.textContent=getGameTips()[currentTipIndex];

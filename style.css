@@ -52,7 +52,7 @@ body{display:flex;flex-direction:column;height:100vh;overflow:hidden}
 .version-tag{
   font-size:8px;color:#666;letter-spacing:.5px;
   font-family:'Inter',sans-serif;
-  display:block;margin-top:1px;
+  display:block;line-height:1;align-self:flex-end;margin-bottom:3px;
 }
 body.dark-theme .version-tag{color:#555}
 
