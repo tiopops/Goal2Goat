@@ -1004,10 +1004,7 @@ function pickPlayer(player){
 }
 
 function showSelectedPlayerBanner(p){
-  const el=document.getElementById("selectedPlayerBanner");
-  if(!el) return;
-  el.style.display="block";
-  el.innerHTML=`
+  const html=`
   <div class="box selected-player-banner">
     <div class="selection-title">JUGADOR SELECCIONADO</div>
     <div class="spb-row">
@@ -1018,12 +1015,16 @@ function showSelectedPlayerBanner(p){
     <div class="hint-line">Colócalo en una posición resaltada del campo.</div>
     <button class="spb-back-btn" onclick="volverASeleccion()">↩ VOLVER</button>
   </div>`;
+  const el=document.getElementById("selectedPlayerBanner");
+  if(el){ el.style.display="block"; el.innerHTML=html; }
+  const eld=document.getElementById("selectedPlayerBannerDesktop");
+  if(eld){ eld.style.display="block"; eld.innerHTML=html; }
 }
 function hideSelectedPlayerBanner(){
   const el=document.getElementById("selectedPlayerBanner");
-  if(!el) return;
-  el.style.display="none";
-  el.innerHTML="";
+  if(el){ el.style.display="none"; el.innerHTML=""; }
+  const eld=document.getElementById("selectedPlayerBannerDesktop");
+  if(eld){ eld.style.display="none"; eld.innerHTML=""; }
 }
 
 function volverASeleccion(){

@@ -543,6 +543,13 @@ body.dark-theme .no-goal{color:var(--text-muted)}
 /* SELECTED PLAYER BANNER */
 .selected-player-banner{border-color:var(--gold)}
 #selectedPlayerBanner{width:100%;max-width:420px;margin:8px auto 0;box-sizing:border-box}
+#selectedPlayerBannerDesktop{margin-bottom:8px}
+@media(min-width:1051px){
+  #selectedPlayerBanner{display:none!important}
+}
+@media(max-width:1050px){
+  #selectedPlayerBannerDesktop{display:none!important}
+}
 .spb-row{display:flex;justify-content:space-between;align-items:center;margin:4px 0}
 .spb-name{font-family:'Bebas Neue',Impact,sans-serif;font-size:18px;letter-spacing:.5px;color:var(--text)}
 .spb-rating{font-family:'Bebas Neue',Impact,sans-serif;font-size:20px;color:var(--gold)}
@@ -1420,7 +1427,7 @@ body.dark-theme .profile-settings-row .settings-item{border-bottom-color:#333}
 .upgrades-subtitle{font-size:8px;letter-spacing:2px;color:var(--text-muted);text-transform:uppercase}
 .upgrades-points-badge{display:flex;flex-direction:column;align-items:center;gap:1px;background:rgba(201,162,39,.08);border:1px solid var(--gold);padding:8px 14px}
 .upgrades-points-badge .badge-goat{font-size:22px;line-height:1}
-.upgrades-points-badge #upgradePointsDisplay{font-family:'Bebas Neue',Impact,sans-serif;font-size:26px;color:var(--gold);line-height:1}
+.upgrades-points-badge #upgradePointsDisplay,.upgrades-points-badge #skillPointsDisplay{font-family:'Bebas Neue',Impact,sans-serif;font-size:26px;color:var(--gold);line-height:1}
 .upgrades-pts-label{font-size:7px;letter-spacing:1.5px;color:var(--text-muted);text-transform:uppercase}
 .upgrades-list{display:flex;flex-direction:column;gap:0}
 .upgrade-row{padding:12px 0;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:8px}

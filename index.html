@@ -86,7 +86,7 @@
       title="Volver al inicio"
       onerror="this.style.display='none';document.getElementById('logoFallback').style.display='block'">
     <span id="logoFallback" style="display:none;font-family:'Bebas Neue',Impact,sans-serif;font-size:26px;letter-spacing:3px;color:#c9a227;cursor:pointer;line-height:1" onclick="location.reload()">GOAL2GOAT</span>
-    <div class="version-tag" style="margin-bottom:2px">v0.353</div>
+    <div class="version-tag" style="margin-bottom:2px">v0.354</div>
   </div>
   <div class="app-header-actions">
     <a href="https://ko-fi.com/goal2goat" target="_blank" class="support-btn" style="text-decoration:none;display:inline-flex;align-items:center;justify-content:center">APOYA A GOAL2GOAT</a>
@@ -224,7 +224,7 @@
           </div>
         </div>
         <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;align-items:center">
-          <button onclick="window.showPatchNotes()" style="background:none;border:none;cursor:pointer;font-family:'Bebas Neue',Impact,sans-serif;font-size:13px;letter-spacing:1px;color:var(--gold);padding:0;text-decoration:underline" data-i18n="settings.patch_notes">NOTAS v0.353</button>
+          <button onclick="window.showPatchNotes()" style="background:none;border:none;cursor:pointer;font-family:'Bebas Neue',Impact,sans-serif;font-size:13px;letter-spacing:1px;color:var(--gold);padding:0;text-decoration:underline" data-i18n="settings.patch_notes">NOTAS v0.354</button>
         </div>
         <!-- CHEATS: solo visible para tiopops -->
         <div id="cheatsSection" style="display:none;margin-top:18px;border-top:1px dashed #c0392b;padding-top:14px;">
@@ -542,6 +542,9 @@
       <h3>RESULTADOS <span id="matchProgress">FASE DE GRUPOS</span></h3>
       <div id="matchHistoryTable"></div>
     </div>
+
+    <!-- Desktop-only: selected player panel shown here above tutorials -->
+    <div id="selectedPlayerBannerDesktop" style="display:none"></div>
 
     <div class="box collapsible-box" id="tipsBox">
       <h3 class="collapsible-header" onclick="toggleCollapsible('tipsBox')">¿SABÍAS QUÉ...? <span class="collapse-arrow">▾</span></h3>
