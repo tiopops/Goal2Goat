@@ -328,8 +328,8 @@ window.TRANSLATIONS = {
     en:'<strong>Groups → Round of 16 → Quarter-finals → Semis → Final.</strong> Before each match: press conference (prediction → morale) and pick a <strong>strategy</strong> to counter your opponent.'
   },
   'howto.step3': {
-    es:'Hasta <strong>5 cambios 🪑</strong> por partido. Vigila lesiones ✚, sanciones 🚫 y la barra de <strong>Resistencia</strong> — descansa en el banquillo para recuperarla.',
-    en:'Up to <strong>5 substitutions 🪑</strong> per match. Watch for injuries ✚, suspensions 🚫 and the <strong>Stamina</strong> bar — rest players on the bench to recover it.'
+    es:'Hasta <strong>2 cambios 🪑</strong> por partido (ampliables con mejoras). Vigila lesiones ✚, sanciones 🚫 y la barra de <strong>Resistencia</strong> — descansa en el banquillo para recuperarla.',
+    en:'Up to <strong>2 substitutions 🪑</strong> per match (upgradeable). Watch for injuries ✚, suspensions 🚫 and the <strong>Stamina</strong> bar — rest players on the bench to recover it.'
   },
   'howto.step4': {
     es:'La <strong>moral</strong> sube con goles/aciertos y baja con derrotas/fallos. El <strong>clima</strong> y las <strong>rachas 🔥</strong> también influyen en cada partido.',
