@@ -35,37 +35,37 @@ function flagEmoji(name, size){
 
 let playersDB = [{"id": "p_1_0", "name": "Iker Casillas", "positions": ["POR"], "overall": 91}, {"id": "p_1_1", "name": "Sergio Ramos", "positions": ["DFC"], "overall": 86}, {"id": "p_1_2", "name": "Gerard Piqué", "positions": ["DFC"], "overall": 86}, {"id": "p_1_3", "name": "Carles Puyol", "positions": ["DFC"], "overall": 85}, {"id": "p_1_4", "name": "Joan Capdevila", "positions": ["LI", "DFC"], "overall": 80}, {"id": "p_1_5", "name": "Álvaro Arbeloa", "positions": ["LD", "DFC"], "overall": 78}, {"id": "p_1_6", "name": "Xavi Hernández", "positions": ["MC"], "overall": 92}, {"id": "p_1_7", "name": "Andrés Iniesta", "positions": ["MC"], "overall": 93}, {"id": "p_1_8", "name": "Sergio Busquets", "positions": ["MC"], "overall": 83}, {"id": "p_1_9", "name": "Xabi Alonso", "positions": ["MC"], "overall": 87}, {"id": "p_1_10", "name": "Pedro Rodríguez", "positions": ["EI", "ED"], "overall": 84}, {"id": "p_1_11", "name": "David Silva", "positions": ["ED", "EI"], "overall": 87}, {"id": "p_1_12", "name": "David Villa", "positions": ["DC"], "overall": 91}, {"id": "p_1_13", "name": "Fernando Torres", "positions": ["DC"], "overall": 85}, {"id": "p_1_14", "name": "Cesc Fàbregas", "positions": ["DC", "EI"], "overall": 86}, {"id": "p_1_15", "name": "Jesús Navas", "positions": ["ED", "EI"], "overall": 78}, {"id": "p_2_0", "name": "Iker Casillas", "positions": ["POR"], "overall": 90}, {"id": "p_2_1", "name": "Gerard Piqué", "positions": ["DFC"], "overall": 87}, {"id": "p_2_2", "name": "Sergio Ramos", "positions": ["DFC"], "overall": 87}, {"id": "p_2_3", "name": "Carles Puyol", "positions": ["DFC"], "overall": 85}, {"id": "p_2_4", "name": "Jordi Alba", "positions": ["LI", "DFC"], "overall": 84}, {"id": "p_2_5", "name": "Álvaro Arbeloa", "positions": ["LD", "DFC"], "overall": 79}, {"id": "p_2_6", "name": "Xavi Hernández", "positions": ["MC"], "overall": 91}, {"id": "p_2_7", "name": "Andrés Iniesta", "positions": ["MC"], "overall": 93}, {"id": "p_2_8", "name": "Sergio Busquets", "positions": ["MC"], "overall": 85}, {"id": "p_2_9", "name": "Xabi Alonso", "positions": ["MC"], "overall": 88}, {"id": "p_2_10", "name": "David Silva", "positions": ["EI", "ED"], "overall": 88}, {"id": "p_2_11", "name": "Jesús Navas", "positions": ["ED", "EI"], "overall": 79}, {"id": "p_2_12", "name": "Fernando Torres", "positions": ["DC"], "overall": 84}, {"id": "p_2_13", "name": "Cesc Fàbregas", "positions": ["DC"], "overall": 87}, {"id": "p_2_14", "name": "Pedro Rodríguez", "positions": ["DC", "EI"], "overall": 83}, {"id": "p_2_15", "name": "David Villa", "positions": ["DC", "ED"], "overall": 88}, {"id": "p_4_0", "name": "Marcos", "positions": ["POR"], "overall": 85}, {"id": "p_4_1", "name": "Lúcio", "positions": ["DFC"], "overall": 86}, {"id": "p_4_2", "name": "Roque Júnior", "positions": ["DFC"], "overall": 78}, {"id": "p_4_3", "name": "Edmílson", "positions": ["DFC"], "overall": 82}, {"id": "p_4_4", "name": "Roberto Carlos", "positions": ["LI", "DFC"], "overall": 90}, {"id": "p_4_5", "name": "Cafu", "positions": ["LD", "DFC"], "overall": 89}, {"id": "p_4_6", "name": "Gilberto Silva", "positions": ["MC"], "overall": 85}, {"id": "p_4_7", "name": "Kléberson", "positions": ["MC"], "overall": 80}, {"id": "p_4_8", "name": "Ronaldinho", "positions": ["EI", "ED"], "overall": 92}, {"id": "p_4_9", "name": "Rivaldo", "positions": ["ED", "EI"], "overall": 91}, {"id": "p_4_10", "name": "Ronaldo Nazário", "positions": ["DC"], "overall": 97}, {"id": "p_4_11", "name": "Edmundo", "positions": ["DC"], "overall": 78}, {"id": "p_4_12", "name": "Luizão", "positions": ["DC", "EI"], "overall": 76}, {"id": "p_4_13", "name": "Denílson", "positions": ["DC", "ED"], "overall": 79}, {"id": "p_4_14", "name": "Juninho Paulista", "positions": ["MC"], "overall": 79}, {"id": "p_4_15", "name": "Edílson", "positions": ["MC"], "overall": 76}, {"id": "p_6_0", "name": "Bodo Illgner", "positions": ["POR"], "overall": 84}, {"id": "p_6_1", "name": "Jürgen Kohler", "positions": ["DFC"], "overall": 86}, {"id": "p_6_2", "name": "Guido Buchwald", "positions": ["DFC"], "overall": 84}, {"id": "p_6_3", "name": "Klaus Augenthaler", "positions": ["DFC"], "overall": 82}, {"id": "p_6_4", "name": "Andreas Brehme", "positions": ["LI", "DFC"], "overall": 87}, {"id": "p_6_5", "name": "Stefan Reuter", "positions": ["LD", "DFC"], "overall": 80}, {"id": "p_6_6", "name": "Lothar Matthäus", "positions": ["MC"], "overall": 93}, {"id": "p_6_7", "name": "Thomas Häßler", "positions": ["MC"], "overall": 85}, {"id": "p_6_8", "name": "Olaf Thon", "positions": ["MC"], "overall": 80}, {"id": "p_6_9", "name": "Pierre Littbarski", "positions": ["MC"], "overall": 81}, {"id": "p_6_10", "name": "Jürgen Klinsmann", "positions": ["EI", "ED"], "overall": 92}, {"id": "p_6_11", "name": "Rudi Völler", "positions": ["ED", "EI"], "overall": 88}, {"id": "p_6_12", "name": "Karl-Heinz Riedle", "positions": ["DC"], "overall": 78}, {"id": "p_6_13", "name": "Uwe Bein", "positions": ["DC"], "overall": 76}, {"id": "p_6_14", "name": "Frank Mill", "positions": ["DC", "EI"], "overall": 74}, {"id": "p_6_15", "name": "Thomas Berthold", "positions": ["DFC", "MC"], "overall": 80}, {"id": "p_7_0", "name": "Manuel Neuer", "positions": ["POR"], "overall": 93}, {"id": "p_7_1", "name": "Mats Hummels", "positions": ["DFC"], "overall": 87}, {"id": "p_7_2", "name": "Jérôme Boateng", "positions": ["DFC"], "overall": 86}, {"id": "p_7_3", "name": "Per Mertesacker", "positions": ["DFC"], "overall": 83}, {"id": "p_7_4", "name": "Benedikt Höwedes", "positions": ["LI", "DFC"], "overall": 81}, {"id": "p_7_5", "name": "Philipp Lahm", "positions": ["LD", "DFC"], "overall": 89}, {"id": "p_7_6", "name": "Bastian Schweinsteiger", "positions": ["MC"], "overall": 88}, {"id": "p_7_7", "name": "Toni Kroos", "positions": ["MC"], "overall": 89}, {"id": "p_7_8", "name": "Sami Khedira", "positions": ["MC"], "overall": 84}, {"id": "p_7_9", "name": "Mesut Özil", "positions": ["EI", "ED"], "overall": 88}, {"id": "p_7_10", "name": "Thomas Müller", "positions": ["ED", "EI"], "overall": 89}, {"id": "p_7_11", "name": "Miroslav Klose", "positions": ["DC"], "overall": 87}, {"id": "p_7_12", "name": "André Schürrle", "positions": ["DC"], "overall": 82}, {"id": "p_7_13", "name": "Mario Götze", "positions": ["DC", "EI"], "overall": 85}, {"id": "p_7_14", "name": "Lukas Podolski", "positions": ["DC", "ED"], "overall": 81}, {"id": "p_7_15", "name": "Christoph Kramer", "positions": ["MC"], "overall": 76}, {"id": "p_8_0", "name": "Nery Pumpido", "positions": ["POR"], "overall": 80}, {"id": "p_8_1", "name": "Oscar Ruggeri", "positions": ["DFC"], "overall": 84}, {"id": "p_8_2", "name": "José Luis Brown", "positions": ["DFC"], "overall": 81}, {"id": "p_8_3", "name": "Néstor Clausen", "positions": ["DFC"], "overall": 76}, {"id": "p_8_4", "name": "Julio Olarticoechea", "positions": ["LI", "DFC"], "overall": 79}, {"id": "p_8_5", "name": "José Luis Cuciuffo", "positions": ["LD", "DFC"], "overall": 78}, {"id": "p_8_6", "name": "Diego Armando Maradona", "positions": ["EI", "MC"], "overall": 98}, {"id": "p_8_7", "name": "Jorge Burruchaga", "positions": ["MC"], "overall": 84}, {"id": "p_8_8", "name": "Sergio Batista", "positions": ["MC"], "overall": 80}, {"id": "p_8_9", "name": "Ricardo Giusti", "positions": ["MC"], "overall": 78}, {"id": "p_8_10", "name": "Jorge Valdano", "positions": ["EI", "ED"], "overall": 86}, {"id": "p_8_11", "name": "Héctor Enrique", "positions": ["MC"], "overall": 76}, {"id": "p_8_12", "name": "Claudio Borghi", "positions": ["MC"], "overall": 76}, {"id": "p_8_13", "name": "Ramón Díaz", "positions": ["DC"], "overall": 78}, {"id": "p_8_14", "name": "Pedro Pasculli", "positions": ["DC"], "overall": 75}, {"id": "p_8_15", "name": "Marcelo Trobbiani", "positions": ["ED", "EI"], "overall": 73}, {"id": "p_9_0", "name": "Emiliano Martínez", "positions": ["POR"], "overall": 88}, {"id": "p_9_1", "name": "Cristian Romero", "positions": ["DFC"], "overall": 85}, {"id": "p_9_2", "name": "Nicolás Otamendi", "positions": ["DFC"], "overall": 82}, {"id": "p_9_3", "name": "Lisandro Martínez", "positions": ["DFC"], "overall": 84}, {"id": "p_9_4", "name": "Nicolás Tagliafico", "positions": ["LI", "DFC"], "overall": 81}, {"id": "p_9_5", "name": "Nahuel Molina", "positions": ["LD", "DFC"], "overall": 80}, {"id": "p_9_6", "name": "Rodrigo De Paul", "positions": ["MC"], "overall": 84}, {"id": "p_9_7", "name": "Enzo Fernández", "positions": ["MC"], "overall": 85}, {"id": "p_9_8", "name": "Alexis Mac Allister", "positions": ["MC"], "overall": 83}, {"id": "p_9_9", "name": "Ángel Di María", "positions": ["EI", "ED"], "overall": 86}, {"id": "p_9_10", "name": "Julián Álvarez", "positions": ["DC", "EI"], "overall": 86}, {"id": "p_9_11", "name": "Lionel Messi", "positions": ["EI", "DC"], "overall": 97}, {"id": "p_9_12", "name": "Lautaro Martínez", "positions": ["DC"], "overall": 86}, {"id": "p_9_13", "name": "Paulo Dybala", "positions": ["DC", "EI"], "overall": 82}, {"id": "p_9_14", "name": "Leandro Paredes", "positions": ["MC"], "overall": 78}, {"id": "p_9_15", "name": "Alejandro Gómez", "positions": ["DC", "ED"], "overall": 77}, {"id": "p_10_0", "name": "Fabien Barthez", "positions": ["POR"], "overall": 87}, {"id": "p_10_1", "name": "Laurent Blanc", "positions": ["DFC"], "overall": 86}, {"id": "p_10_2", "name": "Marcel Desailly", "positions": ["DFC"], "overall": 88}, {"id": "p_10_3", "name": "Lilian Thuram", "positions": ["DFC"], "overall": 87}, {"id": "p_10_4", "name": "Bixente Lizarazu", "positions": ["LI", "DFC"], "overall": 85}, {"id": "p_10_5", "name": "Christian Karembeu", "positions": ["LD", "DFC"], "overall": 79}, {"id": "p_10_6", "name": "Didier Deschamps", "positions": ["MC"], "overall": 84}, {"id": "p_10_7", "name": "Emmanuel Petit", "positions": ["MC"], "overall": 85}, {"id": "p_10_8", "name": "Youri Djorkaeff", "positions": ["MC"], "overall": 86}, {"id": "p_10_9", "name": "Zinedine Zidane", "positions": ["MC", "EI"], "overall": 94}, {"id": "p_10_10", "name": "Thierry Henry", "positions": ["EI", "ED"], "overall": 88}, {"id": "p_10_11", "name": "Robert Pirès", "positions": ["ED", "EI"], "overall": 84}, {"id": "p_10_12", "name": "David Trezeguet", "positions": ["DC"], "overall": 84}, {"id": "p_10_13", "name": "Christophe Dugarry", "positions": ["DC"], "overall": 79}, {"id": "p_10_14", "name": "Patrick Vieira", "positions": ["MC"], "overall": 86}, {"id": "p_10_15", "name": "Stéphane Guivarc'h", "positions": ["DC"], "overall": 76}, {"id": "p_11_0", "name": "Hugo Lloris", "positions": ["POR"], "overall": 87}, {"id": "p_11_1", "name": "Raphaël Varane", "positions": ["DFC"], "overall": 88}, {"id": "p_11_2", "name": "Samuel Umtiti", "positions": ["DFC"], "overall": 82}, {"id": "p_11_3", "name": "Lucas Hernández", "positions": ["LI", "DFC"], "overall": 83}, {"id": "p_11_4", "name": "Benjamin Pavard", "positions": ["LD", "DFC"], "overall": 81}, {"id": "p_11_5", "name": "Presnel Kimpembe", "positions": ["DFC"], "overall": 79}, {"id": "p_11_6", "name": "N'Golo Kanté", "positions": ["MC"], "overall": 89}, {"id": "p_11_7", "name": "Paul Pogba", "positions": ["MC"], "overall": 87}, {"id": "p_11_8", "name": "Blaise Matuidi", "positions": ["MC"], "overall": 82}, {"id": "p_11_9", "name": "Kylian Mbappé", "positions": ["EI", "ED"], "overall": 91}, {"id": "p_11_10", "name": "Antoine Griezmann", "positions": ["DC", "EI"], "overall": 90}, {"id": "p_11_11", "name": "Olivier Giroud", "positions": ["DC"], "overall": 84}, {"id": "p_11_12", "name": "Ousmane Dembélé", "positions": ["ED", "EI"], "overall": 81}, {"id": "p_11_13", "name": "Florian Thauvin", "positions": ["ED", "EI"], "overall": 79}, {"id": "p_11_14", "name": "Steven Nzonzi", "positions": ["MC"], "overall": 80}, {"id": "p_11_15", "name": "Corentin Tolisso", "positions": ["MC"], "overall": 78}, {"id": "p_13_0", "name": "Gianluigi Buffon", "positions": ["POR"], "overall": 91}, {"id": "p_13_1", "name": "Fabio Cannavaro", "positions": ["DFC"], "overall": 90}, {"id": "p_13_2", "name": "Alessandro Nesta", "positions": ["DFC"], "overall": 87}, {"id": "p_13_3", "name": "Marco Materazzi", "positions": ["DFC"], "overall": 83}, {"id": "p_13_4", "name": "Fabio Grosso", "positions": ["LI", "DFC"], "overall": 81}, {"id": "p_13_5", "name": "Gianluca Zambrotta", "positions": ["LD", "DFC"], "overall": 84}, {"id": "p_13_6", "name": "Andrea Pirlo", "positions": ["MC"], "overall": 90}, {"id": "p_13_7", "name": "Gennaro Gattuso", "positions": ["MC"], "overall": 84}, {"id": "p_13_8", "name": "Mauro Camoranesi", "positions": ["MC"], "overall": 80}, {"id": "p_13_9", "name": "Francesco Totti", "positions": ["EI", "ED"], "overall": 89}, {"id": "p_13_10", "name": "Luca Toni", "positions": ["ED", "EI"], "overall": 85}, {"id": "p_13_11", "name": "Alessandro Del Piero", "positions": ["DC"], "overall": 88}, {"id": "p_13_12", "name": "Alberto Gilardino", "positions": ["DC"], "overall": 81}, {"id": "p_13_13", "name": "Vincenzo Iaquinta", "positions": ["DC", "EI"], "overall": 77}, {"id": "p_13_14", "name": "Daniele De Rossi", "positions": ["MC"], "overall": 84}, {"id": "p_13_15", "name": "Simone Perrotta", "positions": ["MC"], "overall": 78}, {"id": "p_17_0", "name": "Rui Patrício", "positions": ["POR"], "overall": 84}, {"id": "p_17_1", "name": "Pepe", "positions": ["DFC"], "overall": 84}, {"id": "p_17_2", "name": "José Fonte", "positions": ["DFC"], "overall": 81}, {"id": "p_17_3", "name": "Bruno Alves", "positions": ["DFC"], "overall": 80}, {"id": "p_17_4", "name": "Raphaël Guerreiro", "positions": ["LI", "DFC"], "overall": 81}, {"id": "p_17_5", "name": "Cédric Soares", "positions": ["LD", "DFC"], "overall": 78}, {"id": "p_17_6", "name": "William Carvalho", "positions": ["MC"], "overall": 82}, {"id": "p_17_7", "name": "João Moutinho", "positions": ["MC"], "overall": 83}, {"id": "p_17_8", "name": "Adrien Silva", "positions": ["MC"], "overall": 79}, {"id": "p_17_9", "name": "Renato Sanches", "positions": ["MC"], "overall": 80}, {"id": "p_17_10", "name": "Cristiano Ronaldo", "positions": ["EI", "DC"], "overall": 95}, {"id": "p_17_11", "name": "Nani", "positions": ["ED", "EI"], "overall": 81}, {"id": "p_17_12", "name": "Ricardo Quaresma", "positions": ["ED", "EI"], "overall": 80}, {"id": "p_17_13", "name": "André Silva", "positions": ["DC"], "overall": 76}, {"id": "p_17_14", "name": "João Mário", "positions": ["MC", "ED"], "overall": 78}, {"id": "p_17_15", "name": "Éder", "positions": ["DC"], "overall": 76}, {"id": "p_18_0", "name": "Danijel Subašić", "positions": ["POR"], "overall": 85}, {"id": "p_18_1", "name": "Dejan Lovren", "positions": ["DFC"], "overall": 81}, {"id": "p_18_2", "name": "Domagoj Vida", "positions": ["DFC"], "overall": 80}, {"id": "p_18_3", "name": "Šime Vrsaljko", "positions": ["LD", "DFC"], "overall": 79}, {"id": "p_18_4", "name": "Ivan Strinić", "positions": ["LI", "DFC"], "overall": 77}, {"id": "p_18_5", "name": "Borna Barišić", "positions": ["LI", "DFC"], "overall": 76}, {"id": "p_18_6", "name": "Luka Modrić", "positions": ["MC"], "overall": 93}, {"id": "p_18_7", "name": "Ivan Rakitić", "positions": ["MC"], "overall": 88}, {"id": "p_18_8", "name": "Marcelo Brozović", "positions": ["MC"], "overall": 82}, {"id": "p_18_9", "name": "Ivan Perišić", "positions": ["EI", "ED"], "overall": 86}, {"id": "p_18_10", "name": "Mario Mandžukić", "positions": ["DC"], "overall": 86}, {"id": "p_18_11", "name": "Ante Rebić", "positions": ["ED", "EI"], "overall": 81}, {"id": "p_18_12", "name": "Andrej Kramarić", "positions": ["DC"], "overall": 81}, {"id": "p_18_13", "name": "Milan Badelj", "positions": ["MC"], "overall": 78}, {"id": "p_18_14", "name": "Marko Pjaca", "positions": ["DC", "EI"], "overall": 76}, {"id": "p_18_15", "name": "Nikola Kalinić", "positions": ["DC", "ED"], "overall": 77}, {"id": "p_21_0", "name": "Peter Schmeichel", "positions": ["POR"], "overall": 89}, {"id": "p_21_1", "name": "Lars Olsen", "positions": ["DFC"], "overall": 82}, {"id": "p_21_2", "name": "Kent Nielsen", "positions": ["DFC"], "overall": 77}, {"id": "p_21_3", "name": "Torben Piechnik", "positions": ["DFC"], "overall": 76}, {"id": "p_21_4", "name": "Jan Heintze", "positions": ["LI", "DFC"], "overall": 79}, {"id": "p_21_5", "name": "Kim Christofte", "positions": ["LD", "DFC"], "overall": 75}, {"id": "p_21_6", "name": "John Jensen", "positions": ["MC"], "overall": 80}, {"id": "p_21_7", "name": "Kim Vilfort", "positions": ["MC"], "overall": 83}, {"id": "p_21_8", "name": "Henrik Andersen", "positions": ["MC"], "overall": 78}, {"id": "p_21_9", "name": "Brian Laudrup", "positions": ["EI", "ED"], "overall": 87}, {"id": "p_21_10", "name": "Flemming Povlsen", "positions": ["ED", "EI"], "overall": 81}, {"id": "p_21_11", "name": "Henrik Larsen", "positions": ["DC"], "overall": 83}, {"id": "p_21_12", "name": "Bent Christensen", "positions": ["DC"], "overall": 76}, {"id": "p_21_13", "name": "Lars Elstrup", "positions": ["MC"], "overall": 76}, {"id": "p_21_14", "name": "Peter Rasmussen", "positions": ["DC", "EI"], "overall": 73}, {"id": "p_21_15", "name": "Claus Christiansen", "positions": ["DC", "ED"], "overall": 73}, {"id": "p_22_0", "name": "Thibaut Courtois", "positions": ["POR"], "overall": 89}, {"id": "p_22_1", "name": "Vincent Kompany", "positions": ["DFC"], "overall": 86}, {"id": "p_22_2", "name": "Toby Alderweireld", "positions": ["DFC"], "overall": 84}, {"id": "p_22_3", "name": "Jan Vertonghen", "positions": ["DFC"], "overall": 84}, {"id": "p_22_4", "name": "Thomas Meunier", "positions": ["LD", "DFC"], "overall": 78}, {"id": "p_22_5", "name": "Nacer Chadli", "positions": ["LI", "DFC"], "overall": 78}, {"id": "p_22_6", "name": "Kevin De Bruyne", "positions": ["MC"], "overall": 91}, {"id": "p_22_7", "name": "Axel Witsel", "positions": ["MC"], "overall": 82}, {"id": "p_22_8", "name": "Marouane Fellaini", "positions": ["MC"], "overall": 79}, {"id": "p_22_9", "name": "Eden Hazard", "positions": ["EI", "ED"], "overall": 91}, {"id": "p_22_10", "name": "Romelu Lukaku", "positions": ["DC"], "overall": 87}, {"id": "p_22_11", "name": "Dries Mertens", "positions": ["DC", "EI"], "overall": 82}, {"id": "p_22_12", "name": "Yannick Carrasco", "positions": ["ED", "EI"], "overall": 80}, {"id": "p_22_13", "name": "Mousa Dembélé", "positions": ["MC"], "overall": 80}, {"id": "p_22_14", "name": "Michy Batshuayi", "positions": ["DC"], "overall": 77}, {"id": "p_22_15", "name": "Adnan Januzaj", "positions": ["DC", "ED"], "overall": 76}, {"id": "p_23_0", "name": "Pablo Larios", "positions": ["POR"], "overall": 78}, {"id": "p_23_1", "name": "Fernando Quirarte", "positions": ["DFC"], "overall": 79}, {"id": "p_23_2", "name": "Rafael Amador", "positions": ["DFC"], "overall": 75}, {"id": "p_23_3", "name": "Miguel España", "positions": ["LI", "DFC"], "overall": 75}, {"id": "p_23_4", "name": "Javier López", "positions": ["LD", "DFC"], "overall": 73}, {"id": "p_23_5", "name": "Mario Villa", "positions": ["DFC"], "overall": 73}, {"id": "p_23_6", "name": "Hugo Sánchez", "positions": ["DC"], "overall": 90}, {"id": "p_23_7", "name": "Carlos Hermosillo", "positions": ["DC"], "overall": 75}, {"id": "p_23_8", "name": "Manuel Negrete", "positions": ["MC"], "overall": 81}, {"id": "p_23_9", "name": "Javier Aguirre", "positions": ["MC"], "overall": 78}, {"id": "p_23_10", "name": "Tomás Boy", "positions": ["MC"], "overall": 80}, {"id": "p_23_11", "name": "Luis Flores", "positions": ["EI", "ED"], "overall": 76}, {"id": "p_23_12", "name": "Carlos de los Cobos", "positions": ["MC"], "overall": 74}, {"id": "p_23_13", "name": "Mario Ortiz", "positions": ["DC", "EI"], "overall": 73}, {"id": "p_23_14", "name": "Sergio Lugo", "positions": ["DC", "ED"], "overall": 73}, {"id": "p_23_15", "name": "Javier Hernández sr.", "positions": ["ED", "EI"], "overall": 74}, {"id": "p_24_0", "name": "Brad Friedel", "positions": ["POR"], "overall": 82}, {"id": "p_24_1", "name": "Eddie Pope", "positions": ["DFC"], "overall": 79}, {"id": "p_24_2", "name": "Jeff Agoos", "positions": ["DFC"], "overall": 75}, {"id": "p_24_3", "name": "Gregg Berhalter", "positions": ["DFC"], "overall": 76}, {"id": "p_24_4", "name": "Tony Sanneh", "positions": ["LI", "DFC"], "overall": 75}, {"id": "p_24_5", "name": "Frankie Hejduk", "positions": ["LD", "DFC"], "overall": 76}, {"id": "p_24_6", "name": "Claudio Reyna", "positions": ["MC"], "overall": 84}, {"id": "p_24_7", "name": "John O'Brien", "positions": ["MC"], "overall": 78}, {"id": "p_24_8", "name": "Pablo Mastroeni", "positions": ["MC"], "overall": 75}, {"id": "p_24_9", "name": "Earnie Stewart", "positions": ["MC"], "overall": 77}, {"id": "p_24_10", "name": "Landon Donovan", "positions": ["EI", "ED"], "overall": 84}, {"id": "p_24_11", "name": "DaMarcus Beasley", "positions": ["ED", "EI"], "overall": 79}, {"id": "p_24_12", "name": "Brian McBride", "positions": ["DC"], "overall": 81}, {"id": "p_24_13", "name": "Josh Wolff", "positions": ["DC"], "overall": 75}, {"id": "p_24_14", "name": "Clint Mathis", "positions": ["DC", "EI"], "overall": 77}, {"id": "p_24_15", "name": "Cobi Jones", "positions": ["DC", "ED"], "overall": 76}, {"id": "p_25_0", "name": "Yoshikatsu Kawaguchi", "positions": ["POR"], "overall": 80}, {"id": "p_25_1", "name": "Tsuneyasu Miyamoto", "positions": ["DFC"], "overall": 78}, {"id": "p_25_2", "name": "Naoki Matsuda", "positions": ["DFC"], "overall": 76}, {"id": "p_25_3", "name": "Ryuzo Morioka", "positions": ["DFC"], "overall": 75}, {"id": "p_25_4", "name": "Koji Nakata", "positions": ["LI", "DFC"], "overall": 75}, {"id": "p_25_5", "name": "Hiroaki Morishima", "positions": ["LD", "DFC"], "overall": 74}, {"id": "p_25_6", "name": "Hidetoshi Nakata", "positions": ["MC"], "overall": 86}, {"id": "p_25_7", "name": "Junichi Inamoto", "positions": ["MC"], "overall": 79}, {"id": "p_25_8", "name": "Shinji Ono", "positions": ["MC"], "overall": 81}, {"id": "p_25_9", "name": "Toshiya Fujita", "positions": ["MC"], "overall": 75}, {"id": "p_25_10", "name": "Atsushi Yanagisawa", "positions": ["DC"], "overall": 76}, {"id": "p_25_11", "name": "Naohiro Takahara", "positions": ["DC"], "overall": 76}, {"id": "p_25_12", "name": "Masashi Nakayama", "positions": ["DC", "EI"], "overall": 78}, {"id": "p_25_13", "name": "Shoji Jo", "positions": ["DC", "ED"], "overall": 73}, {"id": "p_25_14", "name": "Akinori Nishizawa", "positions": ["ED", "EI"], "overall": 76}, {"id": "p_25_15", "name": "Teruyoshi Ito", "positions": ["MC"], "overall": 74}, {"id": "p_26_0", "name": "Lee Woon-jae", "positions": ["POR"], "overall": 81}, {"id": "p_26_1", "name": "Hong Myung-bo", "positions": ["DFC"], "overall": 84}, {"id": "p_26_2", "name": "Choi Jin-cheul", "positions": ["DFC"], "overall": 76}, {"id": "p_26_3", "name": "Kim Tae-young", "positions": ["DFC"], "overall": 76}, {"id": "p_26_4", "name": "Lee Young-pyo", "positions": ["LI", "DFC"], "overall": 80}, {"id": "p_26_5", "name": "Song Chong-gug", "positions": ["LD", "DFC"], "overall": 78}, {"id": "p_26_6", "name": "Park Ji-sung", "positions": ["MC"], "overall": 84}, {"id": "p_26_7", "name": "Yoo Sang-chul", "positions": ["MC"], "overall": 81}, {"id": "p_26_8", "name": "Kim Nam-il", "positions": ["MC"], "overall": 77}, {"id": "p_26_9", "name": "Lee Chun-soo", "positions": ["MC"], "overall": 78}, {"id": "p_26_10", "name": "Ahn Jung-hwan", "positions": ["DC"], "overall": 82}, {"id": "p_26_11", "name": "Seol Ki-hyeon", "positions": ["EI", "ED"], "overall": 79}, {"id": "p_26_12", "name": "Hwang Sun-hong", "positions": ["DC"], "overall": 78}, {"id": "p_26_13", "name": "Cha Du-ri", "positions": ["LD", "MC"], "overall": 76}, {"id": "p_26_14", "name": "Kim Do-hoon", "positions": ["DC", "ED"], "overall": 75}, {"id": "p_26_15", "name": "Choi Tae-uk", "positions": ["ED", "EI"], "overall": 75}, {"id": "p_27_0", "name": "Yassine Bounou", "positions": ["POR"], "overall": 86}, {"id": "p_27_1", "name": "Romain Saïss", "positions": ["DFC"], "overall": 80}, {"id": "p_27_2", "name": "Nayef Aguerd", "positions": ["DFC"], "overall": 79}, {"id": "p_27_3", "name": "Achraf Dari", "positions": ["DFC"], "overall": 75}, {"id": "p_27_4", "name": "Noussair Mazraoui", "positions": ["LD", "DFC"], "overall": 80}, {"id": "p_27_5", "name": "Achraf Hakimi", "positions": ["LD", "DFC"], "overall": 86}, {"id": "p_27_6", "name": "Sofyan Amrabat", "positions": ["MC"], "overall": 83}, {"id": "p_27_7", "name": "Azzedine Ounahi", "positions": ["MC"], "overall": 80}, {"id": "p_27_8", "name": "Selim Amallah", "positions": ["MC"], "overall": 75}, {"id": "p_27_9", "name": "Abdelhamid Sabiri", "positions": ["MC"], "overall": 76}, {"id": "p_27_10", "name": "Hakim Ziyech", "positions": ["EI", "ED"], "overall": 84}, {"id": "p_27_11", "name": "Sofiane Boufal", "positions": ["ED", "EI"], "overall": 78}, {"id": "p_27_12", "name": "Youssef En-Nesyri", "positions": ["DC"], "overall": 82}, {"id": "p_27_13", "name": "Abderrazak Hamdallah", "positions": ["DC"], "overall": 75}, {"id": "p_27_14", "name": "Walid Cheddira", "positions": ["DC", "EI"], "overall": 74}, {"id": "p_27_15", "name": "Zakaria Aboukhlal", "positions": ["DC", "ED"], "overall": 75}, {"id": "p_28_0", "name": "Peter Rufai", "positions": ["POR"], "overall": 82}, {"id": "p_28_1", "name": "Uche Okechukwu", "positions": ["DFC"], "overall": 77}, {"id": "p_28_2", "name": "Augustine Eguavoen", "positions": ["DFC"], "overall": 78}, {"id": "p_28_3", "name": "Benedict Iroha", "positions": ["DFC"], "overall": 75}, {"id": "p_28_4", "name": "Chidi Nwanu", "positions": ["LI", "DFC"], "overall": 73}, {"id": "p_28_5", "name": "Mobi Oparaku", "positions": ["LD", "DFC"], "overall": 73}, {"id": "p_28_6", "name": "Jay-Jay Okocha", "positions": ["EI", "ED"], "overall": 87}, {"id": "p_28_7", "name": "Sunday Oliseh", "positions": ["MC"], "overall": 81}, {"id": "p_28_8", "name": "Emmanuel Amunike", "positions": ["MC"], "overall": 82}, {"id": "p_28_9", "name": "Samson Siasia", "positions": ["MC"], "overall": 75}, {"id": "p_28_10", "name": "Mutiu Adepoju", "positions": ["MC"], "overall": 76}, {"id": "p_28_11", "name": "Finidi George", "positions": ["ED", "EI"], "overall": 83}, {"id": "p_28_12", "name": "Rashidi Yekini", "positions": ["DC"], "overall": 85}, {"id": "p_28_13", "name": "Daniel Amokachi", "positions": ["DC"], "overall": 81}, {"id": "p_28_14", "name": "Victor Ikpeba", "positions": ["DC", "EI"], "overall": 79}, {"id": "p_28_15", "name": "Friday Ekpo", "positions": ["DC", "ED"], "overall": 72}, {"id": "p_29_0", "name": "Thomas N'Kono", "positions": ["POR"], "overall": 84}, {"id": "p_29_1", "name": "Stephen Tataw", "positions": ["DFC"], "overall": 78}, {"id": "p_29_2", "name": "Emmanuel Kundé", "positions": ["DFC"], "overall": 78}, {"id": "p_29_3", "name": "Benjamin Massing", "positions": ["DFC"], "overall": 75}, {"id": "p_29_4", "name": "André Kana-Biyik", "positions": ["LI", "DFC"], "overall": 76}, {"id": "p_29_5", "name": "Bertin Ebwellé", "positions": ["LD", "DFC"], "overall": 73}, {"id": "p_29_6", "name": "Roger Milla", "positions": ["DC"], "overall": 86}, {"id": "p_29_7", "name": "François Omam-Biyik", "positions": ["EI", "ED"], "overall": 80}, {"id": "p_29_8", "name": "Cyrille Makanaky", "positions": ["MC"], "overall": 79}, {"id": "p_29_9", "name": "Emile Mbouh", "positions": ["MC"], "overall": 75}, {"id": "p_29_10", "name": "Louis-Paul Mfedé", "positions": ["MC"], "overall": 74}, {"id": "p_29_11", "name": "Victor Ndip Akem", "positions": ["MC"], "overall": 73}, {"id": "p_29_12", "name": "Eugène Ekéké", "positions": ["DC"], "overall": 75}, {"id": "p_29_13", "name": "Jean-Claude Pagal", "positions": ["DC", "EI"], "overall": 73}, {"id": "p_29_14", "name": "Roger Feutmba", "positions": ["DC", "ED"], "overall": 73}, {"id": "p_29_15", "name": "Jules Nyongha", "positions": ["ED", "EI"], "overall": 73}, {"id": "p_31_0", "name": "Justo Villar", "positions": ["POR"], "overall": 82}, {"id": "p_31_1", "name": "Paulo da Silva", "positions": ["DFC"], "overall": 79}, {"id": "p_31_2", "name": "Antolín Alcaraz", "positions": ["DFC"], "overall": 78}, {"id": "p_31_3", "name": "Darío Verón", "positions": ["DFC"], "overall": 75}, {"id": "p_31_4", "name": "Denis Caniza", "positions": ["LI", "DFC"], "overall": 76}, {"id": "p_31_5", "name": "Claudio Morel Rodríguez", "positions": ["LD", "DFC"], "overall": 75}, {"id": "p_31_6", "name": "Roque Santa Cruz", "positions": ["DC"], "overall": 82}, {"id": "p_31_7", "name": "Óscar Cardozo", "positions": ["DC"], "overall": 80}, {"id": "p_31_8", "name": "Cristian Riveros", "positions": ["MC"], "overall": 78}, {"id": "p_31_9", "name": "Víctor Cáceres", "positions": ["MC"], "overall": 76}, {"id": "p_31_10", "name": "Enrique Vera", "positions": ["MC"], "overall": 76}, {"id": "p_31_11", "name": "Edgar Barreto", "positions": ["MC"], "overall": 78}, {"id": "p_31_12", "name": "Nelson Haedo Valdez", "positions": ["EI", "ED"], "overall": 78}, {"id": "p_31_13", "name": "Lucas Barrios", "positions": ["DC", "EI"], "overall": 77}, {"id": "p_31_14", "name": "Edgar Benítez", "positions": ["DC", "EI"], "overall": 75}, {"id": "p_31_15", "name": "Santiago Salcedo", "positions": ["DC", "ED"], "overall": 73}, {"id": "p_32_0", "name": "David Ospina", "positions": ["POR"], "overall": 84}, {"id": "p_32_1", "name": "Mario Yepes", "positions": ["DFC"], "overall": 79}, {"id": "p_32_2", "name": "Cristián Zapata", "positions": ["DFC"], "overall": 78}, {"id": "p_32_3", "name": "Pablo Armero", "positions": ["LI", "DFC"], "overall": 76}, {"id": "p_32_4", "name": "Santiago Arias", "positions": ["LD", "DFC"], "overall": 78}, {"id": "p_32_5", "name": "Éder Álvarez Balanta", "positions": ["DFC"], "overall": 75}, {"id": "p_32_6", "name": "James Rodríguez", "positions": ["EI", "ED"], "overall": 89}, {"id": "p_32_7", "name": "Juan Cuadrado", "positions": ["MC", "ED"], "overall": 82}, {"id": "p_32_8", "name": "Fredy Guarín", "positions": ["MC"], "overall": 80}, {"id": "p_32_9", "name": "Carlos Sánchez", "positions": ["MC"], "overall": 79}, {"id": "p_32_10", "name": "Abel Aguilar", "positions": ["MC"], "overall": 75}, {"id": "p_32_11", "name": "Jackson Martínez", "positions": ["DC"], "overall": 80}, {"id": "p_32_12", "name": "Carlos Bacca", "positions": ["DC"], "overall": 81}, {"id": "p_32_13", "name": "Teófilo Gutiérrez", "positions": ["DC"], "overall": 77}, {"id": "p_32_14", "name": "Juan Fernando Quintero", "positions": ["ED", "EI"], "overall": 78}, {"id": "p_32_15", "name": "Adrián Ramos", "positions": ["DC", "ED"], "overall": 75}, {"id": "p_40_0", "name": "Rüştü Reçber", "positions": ["POR"], "overall": 84}, {"id": "p_40_1", "name": "Alpay Özalan", "positions": ["DFC"], "overall": 80}, {"id": "p_40_2", "name": "Bülent Korkmaz", "positions": ["DFC"], "overall": 78}, {"id": "p_40_3", "name": "Fatih Akyel", "positions": ["DFC"], "overall": 76}, {"id": "p_40_4", "name": "Ümit Davala", "positions": ["LI", "DFC"], "overall": 78}, {"id": "p_40_5", "name": "Ogün Temizkanoğlu", "positions": ["LD", "DFC"], "overall": 73}, {"id": "p_40_6", "name": "Hakan Şükür", "positions": ["DC"], "overall": 84}, {"id": "p_40_7", "name": "Nihat Kahveci", "positions": ["DC"], "overall": 80}, {"id": "p_40_8", "name": "Tugay Kerimoğlu", "positions": ["MC"], "overall": 81}, {"id": "p_40_9", "name": "Emre Belözoğlu", "positions": ["MC"], "overall": 80}, {"id": "p_40_10", "name": "Yıldıray Baştürk", "positions": ["MC"], "overall": 77}, {"id": "p_40_11", "name": "Hasan Şaş", "positions": ["MC"], "overall": 79}, {"id": "p_40_12", "name": "İlhan Mansız", "positions": ["EI", "ED"], "overall": 78}, {"id": "p_40_13", "name": "Ümit Karan", "positions": ["ED", "EI"], "overall": 75}, {"id": "p_40_14", "name": "Tayfun Korkut", "positions": ["DC", "EI"], "overall": 73}, {"id": "p_40_15", "name": "Tayfur Havutçu", "positions": ["DC", "ED"], "overall": 74}, {"id": "p_41_0", "name": "Antonis Nikopolidis", "positions": ["POR"], "overall": 81}, {"id": "p_41_1", "name": "Traianos Dellas", "positions": ["DFC"], "overall": 80}, {"id": "p_41_2", "name": "Michalis Kapsis", "positions": ["DFC"], "overall": 76}, {"id": "p_41_3", "name": "Takis Fyssas", "positions": ["LI", "DFC"], "overall": 76}, {"id": "p_41_4", "name": "Giourkas Seitaridis", "positions": ["LD", "DFC"], "overall": 78}, {"id": "p_41_5", "name": "Stelios Venetidis", "positions": ["LD", "DFC"], "overall": 73}, {"id": "p_41_6", "name": "Theodoros Zagorakis", "positions": ["MC"], "overall": 82}, {"id": "p_41_7", "name": "Kostas Katsouranis", "positions": ["MC"], "overall": 78}, {"id": "p_41_8", "name": "Angelos Basinas", "positions": ["MC"], "overall": 78}, {"id": "p_41_9", "name": "Stylianos Giannakopoulos", "positions": ["MC"], "overall": 75}, {"id": "p_41_10", "name": "Giorgos Karagounis", "positions": ["MC", "ED"], "overall": 79}, {"id": "p_41_11", "name": "Angelos Charisteas", "positions": ["DC"], "overall": 81}, {"id": "p_41_12", "name": "Demis Nikolaidis", "positions": ["DC"], "overall": 77}, {"id": "p_41_13", "name": "Zisis Vryzas", "positions": ["EI", "ED"], "overall": 75}, {"id": "p_41_14", "name": "Vassilios Tsiartas", "positions": ["EI", "ED"], "overall": 76}, {"id": "p_41_15", "name": "Vassilis Lakis", "positions": ["DC", "EI"], "overall": 72}, {"id": "p_42_0", "name": "Florin Prunea", "positions": ["POR"], "overall": 79}, {"id": "p_42_1", "name": "Gheorghe Popescu", "positions": ["DFC"], "overall": 82}, {"id": "p_42_2", "name": "Miodrag Belodedici", "positions": ["DFC"], "overall": 80}, {"id": "p_42_3", "name": "Daniel Prodan", "positions": ["DFC"], "overall": 75}, {"id": "p_42_4", "name": "Dan Petrescu", "positions": ["LD", "DFC"], "overall": 80}, {"id": "p_42_5", "name": "Ioan Lupescu", "positions": ["LI", "DFC"], "overall": 78}, {"id": "p_42_6", "name": "Gheorghe Hagi", "positions": ["MC", "EI"], "overall": 89}, {"id": "p_42_7", "name": "Ilie Dumitrescu", "positions": ["MC"], "overall": 80}, {"id": "p_42_8", "name": "Tibor Selymes", "positions": ["MC"], "overall": 75}, {"id": "p_42_9", "name": "Cristian Dulca", "positions": ["MC"], "overall": 73}, {"id": "p_42_10", "name": "Florin Răducioiu", "positions": ["EI", "ED"], "overall": 79}, {"id": "p_42_11", "name": "Adrian Ilie", "positions": ["ED", "EI"], "overall": 76}, {"id": "p_42_12", "name": "Dorinel Munteanu", "positions": ["MC"], "overall": 76}, {"id": "p_42_13", "name": "Viorel Moldovan", "positions": ["DC"], "overall": 76}, {"id": "p_42_14", "name": "Gheorghe Craioveanu", "positions": ["DC", "ED"], "overall": 73}, {"id": "p_42_15", "name": "Ioan Vlădoiu", "positions": ["DC"], "overall": 73}, {"id": "p_43_0", "name": "Packie Bonner", "positions": ["POR"], "overall": 82}, {"id": "p_43_1", "name": "Paul McGrath", "positions": ["DFC"], "overall": 85}, {"id": "p_43_2", "name": "Mick McCarthy", "positions": ["DFC"], "overall": 76}, {"id": "p_43_3", "name": "Kevin Moran", "positions": ["DFC"], "overall": 78}, {"id": "p_43_4", "name": "Steve Staunton", "positions": ["LI", "DFC"], "overall": 77}, {"id": "p_43_5", "name": "Chris Morris", "positions": ["LD", "DFC"], "overall": 74}, {"id": "p_43_6", "name": "Liam Brady", "positions": ["MC"], "overall": 81}, {"id": "p_43_7", "name": "Andy Townsend", "positions": ["MC"], "overall": 78}, {"id": "p_43_8", "name": "Ray Houghton", "positions": ["MC"], "overall": 79}, {"id": "p_43_9", "name": "Ronnie Whelan", "positions": ["MC"], "overall": 78}, {"id": "p_43_10", "name": "Kevin Sheedy", "positions": ["ED", "EI"], "overall": 78}, {"id": "p_43_11", "name": "John Aldridge", "positions": ["DC"], "overall": 78}, {"id": "p_43_12", "name": "Niall Quinn", "positions": ["DC"], "overall": 78}, {"id": "p_43_13", "name": "Tony Cascarino", "positions": ["DC"], "overall": 76}, {"id": "p_43_14", "name": "David O'Leary", "positions": ["DFC", "MC"], "overall": 77}, {"id": "p_43_15", "name": "David Kelly", "positions": ["DC", "ED"], "overall": 73}, {"id": "p_46_0", "name": "Igor Akinfeev", "positions": ["POR"], "overall": 83}, {"id": "p_46_1", "name": "Sergei Ignashevich", "positions": ["DFC"], "overall": 78}, {"id": "p_46_2", "name": "Ilya Kutepov", "positions": ["DFC"], "overall": 74}, {"id": "p_46_3", "name": "Andrei Semyonov", "positions": ["DFC"], "overall": 73}, {"id": "p_46_4", "name": "Yuri Zhirkov", "positions": ["LI", "DFC"], "overall": 78}, {"id": "p_46_5", "name": "Mário Fernandes", "positions": ["LD", "DFC"], "overall": 76}, {"id": "p_46_6", "name": "Aleksandr Golovin", "positions": ["MC"], "overall": 81}, {"id": "p_46_7", "name": "Roman Zobnin", "positions": ["MC"], "overall": 77}, {"id": "p_46_8", "name": "Alan Dzagoev", "positions": ["MC"], "overall": 76}, {"id": "p_46_9", "name": "Daler Kuzyaev", "positions": ["MC"], "overall": 75}, {"id": "p_46_10", "name": "Denis Cheryshev", "positions": ["EI", "ED"], "overall": 79}, {"id": "p_46_11", "name": "Aleksandr Samedov", "positions": ["ED", "EI"], "overall": 74}, {"id": "p_46_12", "name": "Artem Dzyuba", "positions": ["DC"], "overall": 79}, {"id": "p_46_13", "name": "Fedor Smolov", "positions": ["DC"], "overall": 76}, {"id": "p_46_14", "name": "Anton Miranchuk", "positions": ["DC", "EI"], "overall": 74}, {"id": "p_46_15", "name": "Yuri Gazinsky", "positions": ["DC", "ED"], "overall": 72}, {"id": "p_47_0", "name": "Oleksandr Shovkovskiy", "positions": ["POR"], "overall": 81}, {"id": "p_47_1", "name": "Vladislav Vashchuk", "positions": ["DFC"], "overall": 76}, {"id": "p_47_2", "name": "Andriy Nesmachniy", "positions": ["DFC"], "overall": 75}, {"id": "p_47_3", "name": "Vyacheslav Sviderskyi", "positions": ["DFC"], "overall": 75}, {"id": "p_47_4", "name": "Andriy Husin", "positions": ["LI", "DFC"], "overall": 75}, {"id": "p_47_5", "name": "Bohdan Shust", "positions": ["LD", "DFC"], "overall": 72}, {"id": "p_47_6", "name": "Andriy Shevchenko", "positions": ["DC"], "overall": 88}, {"id": "p_47_7", "name": "Anatoliy Tymoshchuk", "positions": ["MC"], "overall": 84}, {"id": "p_47_8", "name": "Serhiy Rebrov", "positions": ["MC", "EI"], "overall": 80}, {"id": "p_47_9", "name": "Oleh Husyev", "positions": ["MC"], "overall": 76}, {"id": "p_47_10", "name": "Ruslan Rotan", "positions": ["MC"], "overall": 75}, {"id": "p_47_11", "name": "Andriy Voronin", "positions": ["EI", "ED"], "overall": 79}, {"id": "p_47_12", "name": "Maksym Kalynychenko", "positions": ["ED", "EI"], "overall": 76}, {"id": "p_47_13", "name": "Artem Milevskyi", "positions": ["DC"], "overall": 75}, {"id": "p_47_14", "name": "Andriy Vorobei", "positions": ["DC", "EI"], "overall": 73}, {"id": "p_47_15", "name": "Yevhen Levchenko", "positions": ["DC", "ED"], "overall": 72}, {"id": "p_48_0", "name": "Vladimir Stojković", "positions": ["POR"], "overall": 78}, {"id": "p_48_1", "name": "Nemanja Vidić", "positions": ["DFC"], "overall": 87}, {"id": "p_48_2", "name": "Branislav Ivanović", "positions": ["DFC", "LD"], "overall": 84}, {"id": "p_48_3", "name": "Aleksandar Luković", "positions": ["DFC"], "overall": 75}, {"id": "p_48_4", "name": "Neven Subotić", "positions": ["LI", "DFC"], "overall": 78}, {"id": "p_48_5", "name": "Ivan Obradović", "positions": ["LD", "DFC"], "overall": 73}, {"id": "p_48_6", "name": "Dejan Stanković", "positions": ["MC"], "overall": 82}, {"id": "p_48_7", "name": "Zdravko Kuzmanović", "positions": ["MC"], "overall": 75}, {"id": "p_48_8", "name": "Miloš Krasić", "positions": ["MC", "ED"], "overall": 79}, {"id": "p_48_9", "name": "Gojko Kačar", "positions": ["MC"], "overall": 73}, {"id": "p_48_10", "name": "Milan Jovanović", "positions": ["EI", "ED"], "overall": 78}, {"id": "p_48_11", "name": "Zoran Tošić", "positions": ["ED", "EI"], "overall": 76}, {"id": "p_48_12", "name": "Marko Pantelić", "positions": ["DC"], "overall": 76}, {"id": "p_48_13", "name": "Nikola Žigić", "positions": ["DC"], "overall": 78}, {"id": "p_48_14", "name": "Danko Lazović", "positions": ["DC", "EI"], "overall": 75}, {"id": "p_48_15", "name": "Milan Smiljanić", "positions": ["DC", "ED"], "overall": 72}, {"id": "p_49_0", "name": "Frode Grodås", "positions": ["POR"], "overall": 78}, {"id": "p_49_1", "name": "Ronny Johnsen", "positions": ["DFC"], "overall": 81}, {"id": "p_49_2", "name": "Henning Berg", "positions": ["DFC"], "overall": 80}, {"id": "p_49_3", "name": "Dan Eggen", "positions": ["DFC"], "overall": 73}, {"id": "p_49_4", "name": "Gunnar Halle", "positions": ["LD", "DFC"], "overall": 74}, {"id": "p_49_5", "name": "Erland Johnsen", "positions": ["LI", "DFC"], "overall": 75}, {"id": "p_49_6", "name": "Ole Gunnar Solskjær", "positions": ["DC"], "overall": 82}, {"id": "p_49_7", "name": "Tore André Flo", "positions": ["DC"], "overall": 81}, {"id": "p_49_8", "name": "Kjetil Rekdal", "positions": ["MC"], "overall": 76}, {"id": "p_49_9", "name": "Øyvind Leonhardsen", "positions": ["MC"], "overall": 76}, {"id": "p_49_10", "name": "Stig Inge Bjørnebye", "positions": ["LI", "MC"], "overall": 76}, {"id": "p_49_11", "name": "Erik Mykland", "positions": ["MC"], "overall": 74}, {"id": "p_49_12", "name": "Jostein Flo", "positions": ["EI", "DC"], "overall": 75}, {"id": "p_49_13", "name": "Steffen Iversen", "positions": ["DC", "EI"], "overall": 76}, {"id": "p_49_14", "name": "Egil Østenstad", "positions": ["DC", "EI"], "overall": 73}, {"id": "p_49_15", "name": "Håvard Flo", "positions": ["DC", "ED"], "overall": 72}, {"id": "p_team_brasil_1982_0", "name": "Waldir Peres", "positions": ["POR"], "overall": 82}, {"id": "p_team_brasil_1982_1", "name": "Leandro", "positions": ["LD"], "overall": 84}, {"id": "p_team_brasil_1982_2", "name": "Oscar", "positions": ["DFC"], "overall": 83}, {"id": "p_team_brasil_1982_3", "name": "Luízinho", "positions": ["DFC"], "overall": 82}, {"id": "p_team_brasil_1982_4", "name": "Junior", "positions": ["LI"], "overall": 85}, {"id": "p_team_brasil_1982_5", "name": "Toninho Cerezo", "positions": ["MC"], "overall": 85}, {"id": "p_team_brasil_1982_6", "name": "Falcão", "positions": ["MC"], "overall": 92}, {"id": "p_team_brasil_1982_7", "name": "Sócrates", "positions": ["EI", "MC"], "overall": 93}, {"id": "p_team_brasil_1982_8", "name": "Zico", "positions": ["EI", "DC"], "overall": 94}, {"id": "p_team_brasil_1982_9", "name": "Éder", "positions": ["EI"], "overall": 87}, {"id": "p_team_brasil_1982_10", "name": "Paulo Isidoro", "positions": ["ED"], "overall": 83}, {"id": "p_team_brasil_1982_11", "name": "Serginho", "positions": ["DC"], "overall": 82}, {"id": "p_team_brasil_1982_12", "name": "Batista", "positions": ["DFC", "MC"], "overall": 80}, {"id": "p_team_brasil_1982_13", "name": "Dirceu", "positions": ["MC", "EI"], "overall": 84}, {"id": "p_team_brasil_1982_14", "name": "Reinaldo", "positions": ["DC"], "overall": 82}, {"id": "p_team_brasil_1982_15", "name": "Paulo Roberto", "positions": ["MC"], "overall": 83}, {"id": "p_team_argentina_1978_0", "name": "Ubaldo Fillol", "positions": ["POR"], "overall": 86}, {"id": "p_team_argentina_1978_1", "name": "Jorge Olguín", "positions": ["LD"], "overall": 82}, {"id": "p_team_argentina_1978_2", "name": "Daniel Passarella", "positions": ["DFC"], "overall": 90}, {"id": "p_team_argentina_1978_3", "name": "Luis Galván", "positions": ["DFC"], "overall": 82}, {"id": "p_team_argentina_1978_4", "name": "Alberto Tarantini", "positions": ["LI"], "overall": 81}, {"id": "p_team_argentina_1978_5", "name": "Omar Larrosa", "positions": ["MC"], "overall": 82}, {"id": "p_team_argentina_1978_6", "name": "Américo Gallego", "positions": ["MC"], "overall": 83}, {"id": "p_team_argentina_1978_7", "name": "Osvaldo Ardiles", "positions": ["MC"], "overall": 87}, {"id": "p_team_argentina_1978_8", "name": "Leopoldo Luque", "positions": ["DC"], "overall": 85}, {"id": "p_team_argentina_1978_9", "name": "Mario Kempes", "positions": ["DC", "EI"], "overall": 93}, {"id": "p_team_argentina_1978_10", "name": "René Houseman", "positions": ["ED"], "overall": 84}, {"id": "p_team_argentina_1978_11", "name": "Norberto Alonso", "positions": ["EI", "MC"], "overall": 83}, {"id": "p_team_argentina_1978_12", "name": "Ricardo Villa", "positions": ["MC"], "overall": 82}, {"id": "p_team_argentina_1978_13", "name": "Daniel Bertoni", "positions": ["ED"], "overall": 83}, {"id": "p_team_argentina_1978_14", "name": "Hugo Gatti", "positions": ["POR"], "overall": 82}, {"id": "p_team_argentina_1978_15", "name": "Jorge Carrascosa", "positions": ["MC"], "overall": 80}, {"id": "p_team_holanda_1988_0", "name": "Hans van Breukelen", "positions": ["POR"], "overall": 84}, {"id": "p_team_holanda_1988_1", "name": "Berry van Aerle", "positions": ["LD"], "overall": 82}, {"id": "p_team_holanda_1988_2", "name": "Ronald Koeman", "positions": ["DFC"], "overall": 90}, {"id": "p_team_holanda_1988_3", "name": "Adri van Tiggelen", "positions": ["DFC"], "overall": 82}, {"id": "p_team_holanda_1988_4", "name": "Jan Wouters", "positions": ["MC", "DFC"], "overall": 84}, {"id": "p_team_holanda_1988_5", "name": "Gerald Vanenburg", "positions": ["MC"], "overall": 83}, {"id": "p_team_holanda_1988_6", "name": "Ruud Gullit", "positions": ["DC", "EI"], "overall": 95}, {"id": "p_team_holanda_1988_7", "name": "Frank Rijkaard", "positions": ["MC"], "overall": 91}, {"id": "p_team_holanda_1988_8", "name": "Marco van Basten", "positions": ["DC"], "overall": 96}, {"id": "p_team_holanda_1988_9", "name": "John van 't Schip", "positions": ["EI", "MC"], "overall": 84}, {"id": "p_team_holanda_1988_10", "name": "Rob Witschge", "positions": ["MC"], "overall": 82}, {"id": "p_team_holanda_1988_11", "name": "Wim Kieft", "positions": ["DC"], "overall": 83}, {"id": "p_team_holanda_1988_12", "name": "Hans Gillhaus", "positions": ["EI", "DC"], "overall": 82}, {"id": "p_team_holanda_1988_13", "name": "Arnold Mühren", "positions": ["MC"], "overall": 84}, {"id": "p_team_holanda_1988_14", "name": "Erwin Koeman", "positions": ["LD", "MC"], "overall": 83}, {"id": "p_team_holanda_1988_15", "name": "Peter Boeve", "positions": ["DFC"], "overall": 80}, {"id": "p_team_senegal_2002_0", "name": "Tony Sylva", "positions": ["POR"], "overall": 82}, {"id": "p_team_senegal_2002_1", "name": "Lamine Diatta", "positions": ["DFC"], "overall": 82}, {"id": "p_team_senegal_2002_2", "name": "Ferdinand Coly", "positions": ["LD"], "overall": 83}, {"id": "p_team_senegal_2002_3", "name": "Pape Bouba Diop", "positions": ["DFC"], "overall": 82}, {"id": "p_team_senegal_2002_4", "name": "Omar Daf", "positions": ["LI"], "overall": 81}, {"id": "p_team_senegal_2002_5", "name": "Khalilou Fadiga", "positions": ["MC"], "overall": 84}, {"id": "p_team_senegal_2002_6", "name": "Aliou Cissé", "positions": ["MC"], "overall": 82}, {"id": "p_team_senegal_2002_7", "name": "El Hadji Diouf", "positions": ["DC", "EI"], "overall": 86}, {"id": "p_team_senegal_2002_8", "name": "Salif Diao", "positions": ["MC"], "overall": 83}, {"id": "p_team_senegal_2002_9", "name": "Henri Camara", "positions": ["DC"], "overall": 84}, {"id": "p_team_senegal_2002_10", "name": "Souleymane Camara", "positions": ["DC"], "overall": 81}, {"id": "p_team_senegal_2002_11", "name": "Habib Beye", "positions": ["LD", "MC"], "overall": 82}, {"id": "p_team_senegal_2002_12", "name": "Mamadou Niang", "positions": ["DC"], "overall": 82}, {"id": "p_team_senegal_2002_13", "name": "Amdy Faye", "positions": ["MC"], "overall": 81}, {"id": "p_team_senegal_2002_14", "name": "Moussa N'Diaye", "positions": ["EI"], "overall": 81}, {"id": "p_team_senegal_2002_15", "name": "Pape Thiaw", "positions": ["DFC", "MC"], "overall": 80}, {"id": "p_team_costa_rica_2014_0", "name": "Keylor Navas", "positions": ["POR"], "overall": 90}, {"id": "p_team_costa_rica_2014_1", "name": "Michael Umaña", "positions": ["DFC"], "overall": 81}, {"id": "p_team_costa_rica_2014_2", "name": "Óscar Duarte", "positions": ["DFC"], "overall": 82}, {"id": "p_team_costa_rica_2014_3", "name": "Giancarlo González", "positions": ["DFC"], "overall": 81}, {"id": "p_team_costa_rica_2014_4", "name": "Junior Díaz", "positions": ["LI"], "overall": 80}, {"id": "p_team_costa_rica_2014_5", "name": "David Myrie", "positions": ["LD"], "overall": 79}, {"id": "p_team_costa_rica_2014_6", "name": "Bryan Ruiz", "positions": ["MC", "EI"], "overall": 84}, {"id": "p_team_costa_rica_2014_7", "name": "Yeltsin Tejeda", "positions": ["MC"], "overall": 80}, {"id": "p_team_costa_rica_2014_8", "name": "Celso Borges", "positions": ["MC"], "overall": 82}, {"id": "p_team_costa_rica_2014_9", "name": "Joel Campbell", "positions": ["EI", "DC"], "overall": 83}, {"id": "p_team_costa_rica_2014_10", "name": "Marco Ureña", "positions": ["DC"], "overall": 80}, {"id": "p_team_costa_rica_2014_11", "name": "José Miguel Cubero", "positions": ["DFC", "MC"], "overall": 80}, {"id": "p_team_costa_rica_2014_12", "name": "Álvaro Saborío", "positions": ["DC"], "overall": 81}, {"id": "p_team_costa_rica_2014_13", "name": "Johnny Acosta", "positions": ["DFC"], "overall": 79}, {"id": "p_team_costa_rica_2014_14", "name": "Diego Calvo", "positions": ["LD"], "overall": 78}, {"id": "p_team_costa_rica_2014_15", "name": "Randall Brenes", "positions": ["MC"], "overall": 79}, {"id": "p_team_ghana_2010_0", "name": "Richard Kingson", "positions": ["POR"], "overall": 81}, {"id": "p_team_ghana_2010_1", "name": "Hans Sarpei", "positions": ["LI"], "overall": 80}, {"id": "p_team_ghana_2010_2", "name": "John Mensah", "positions": ["DFC"], "overall": 83}, {"id": "p_team_ghana_2010_3", "name": "Jonathan Mensah", "positions": ["DFC"], "overall": 80}, {"id": "p_team_ghana_2010_4", "name": "Samuel Inkoom", "positions": ["LD"], "overall": 80}, {"id": "p_team_ghana_2010_5", "name": "Anthony Annan", "positions": ["MC"], "overall": 81}, {"id": "p_team_ghana_2010_6", "name": "Kevin-Prince Boateng", "positions": ["MC", "EI"], "overall": 85}, {"id": "p_team_ghana_2010_7", "name": "Kwadwo Asamoah", "positions": ["MC", "LI"], "overall": 84}, {"id": "p_team_ghana_2010_8", "name": "Sulley Muntari", "positions": ["MC"], "overall": 83}, {"id": "p_team_ghana_2010_9", "name": "Asamoah Gyan", "positions": ["DC"], "overall": 87}, {"id": "p_team_ghana_2010_10", "name": "André Ayew", "positions": ["EI", "DC"], "overall": 84}, {"id": "p_team_ghana_2010_11", "name": "John Paintsil", "positions": ["LD"], "overall": 80}, {"id": "p_team_ghana_2010_12", "name": "Dominic Adiyiah", "positions": ["DC"], "overall": 80}, {"id": "p_team_ghana_2010_13", "name": "Stephen Appiah", "positions": ["MC"], "overall": 83}, {"id": "p_team_ghana_2010_14", "name": "Laryea Kingston", "positions": ["MC", "EI"], "overall": 80}, {"id": "p_team_ghana_2010_15", "name": "Jordan Ayew", "positions": ["EI", "DC"], "overall": 82}, {"id": "p_team_uruguay_2010_0", "name": "Fernando Muslera", "positions": ["POR"], "overall": 85}, {"id": "p_team_uruguay_2010_1", "name": "Maxi Pereira", "positions": ["LD"], "overall": 82}, {"id": "p_team_uruguay_2010_2", "name": "Diego Lugano", "positions": ["DFC"], "overall": 84}, {"id": "p_team_uruguay_2010_3", "name": "Diego Godín", "positions": ["DFC"], "overall": 90}, {"id": "p_team_uruguay_2010_4", "name": "Jorge Fucile", "positions": ["LI"], "overall": 80}, {"id": "p_team_uruguay_2010_5", "name": "Álvaro Pereira", "positions": ["LI", "MC"], "overall": 82}, {"id": "p_team_uruguay_2010_6", "name": "Egidio Arévalo Ríos", "positions": ["MC"], "overall": 81}, {"id": "p_team_uruguay_2010_7", "name": "Diego Pérez", "positions": ["DFC", "MC"], "overall": 80}, {"id": "p_team_uruguay_2010_8", "name": "Edinson Cavani", "positions": ["DC", "EI"], "overall": 91}, {"id": "p_team_uruguay_2010_9", "name": "Luis Suárez", "positions": ["DC"], "overall": 94}, {"id": "p_team_uruguay_2010_10", "name": "Diego Forlán", "positions": ["DC", "EI"], "overall": 90}, {"id": "p_team_uruguay_2010_11", "name": "Sebastián Abreu", "positions": ["DC"], "overall": 80}, {"id": "p_team_uruguay_2010_12", "name": "Andrés Scotti", "positions": ["DFC"], "overall": 79}, {"id": "p_team_uruguay_2010_13", "name": "Nicolás Lodeiro", "positions": ["MC", "EI"], "overall": 82}, {"id": "p_team_uruguay_2010_14", "name": "Sebastián Eguren", "positions": ["MC"], "overall": 80}, {"id": "p_team_uruguay_2010_15", "name": "Carlos Bueno", "positions": ["DC"], "overall": 79}, {"id": "p_team_suecia_1994_0", "name": "Thomas Ravelli", "positions": ["POR"], "overall": 85}, {"id": "p_team_suecia_1994_1", "name": "Roland Nilsson", "positions": ["LD"], "overall": 83}, {"id": "p_team_suecia_1994_2", "name": "Patrik Andersson", "positions": ["DFC"], "overall": 82}, {"id": "p_team_suecia_1994_3", "name": "Joachim Björklund", "positions": ["DFC"], "overall": 81}, {"id": "p_team_suecia_1994_4", "name": "Pontus Kåmark", "positions": ["DFC"], "overall": 80}, {"id": "p_team_suecia_1994_5", "name": "Klas Ingesson", "positions": ["MC"], "overall": 82}, {"id": "p_team_suecia_1994_6", "name": "Jonas Thern", "positions": ["MC"], "overall": 83}, {"id": "p_team_suecia_1994_7", "name": "Stefan Schwarz", "positions": ["MC"], "overall": 83}, {"id": "p_team_suecia_1994_8", "name": "Kennet Andersson", "positions": ["DC"], "overall": 82}, {"id": "p_team_suecia_1994_9", "name": "Henrik Larsson", "positions": ["DC", "EI"], "overall": 88}, {"id": "p_team_suecia_1994_10", "name": "Martin Dahlin", "positions": ["DC"], "overall": 85}, {"id": "p_team_suecia_1994_11", "name": "Tomas Brolin", "positions": ["EI", "DC"], "overall": 86}, {"id": "p_team_suecia_1994_12", "name": "Håkan Mild", "positions": ["MC"], "overall": 81}, {"id": "p_team_suecia_1994_13", "name": "Jesper Blomqvist", "positions": ["EI"], "overall": 82}, {"id": "p_team_suecia_1994_14", "name": "Jan Eriksson", "positions": ["DFC"], "overall": 79}, {"id": "p_team_suecia_1994_15", "name": "Niklas Alexandersson", "positions": ["LD", "MC"], "overall": 80}, {"id": "p_team_holanda_1988_0", "name": "Hans van Breukelen", "positions": ["POR"], "overall": 84}, {"id": "p_team_holanda_1988_1", "name": "Berry van Aerle", "positions": ["LD"], "overall": 82}, {"id": "p_team_holanda_1988_2", "name": "Ronald Koeman", "positions": ["DFC"], "overall": 90}, {"id": "p_team_holanda_1988_3", "name": "Adri van Tiggelen", "positions": ["DFC"], "overall": 82}, {"id": "p_team_holanda_1988_4", "name": "Jan Wouters", "positions": ["MC", "DFC"], "overall": 84}, {"id": "p_team_holanda_1988_5", "name": "Gerald Vanenburg", "positions": ["MC"], "overall": 83}, {"id": "p_team_holanda_1988_6", "name": "Ruud Gullit", "positions": ["DC", "EI"], "overall": 95}, {"id": "p_team_holanda_1988_7", "name": "Frank Rijkaard", "positions": ["MC"], "overall": 91}, {"id": "p_team_holanda_1988_8", "name": "Marco van Basten", "positions": ["DC"], "overall": 96}, {"id": "p_team_holanda_1988_9", "name": "John van 't Schip", "positions": ["EI", "MC"], "overall": 84}, {"id": "p_team_holanda_1988_10", "name": "Rob Witschge", "positions": ["MC"], "overall": 82}, {"id": "p_team_holanda_1988_11", "name": "Wim Kieft", "positions": ["DC"], "overall": 83}, {"id": "p_team_holanda_1988_12", "name": "Hans Gillhaus", "positions": ["EI", "DC"], "overall": 82}, {"id": "p_team_holanda_1988_13", "name": "Arnold Mühren", "positions": ["MC"], "overall": 84}, {"id": "p_team_holanda_1988_14", "name": "Erwin Koeman", "positions": ["LD", "MC"], "overall": 83}, {"id": "p_team_holanda_1988_15", "name": "Peter Boeve", "positions": ["DFC"], "overall": 80}];
 let rawTeams = [
-  {"id":"team_1","name":"España 2010","players":["p_1_0","p_1_1","p_1_2","p_1_3","p_1_4","p_1_5","p_1_6","p_1_7","p_1_8","p_1_9","p_1_10","p_1_11","p_1_12","p_1_13","p_1_14","p_1_15"],"flag":"assets/flags/es.png","emoji":"🇪🇸","bonus":{"PASE":5},"style":"tiki_taka"},
-  {"id":"team_2","name":"España 2012","players":["p_2_0","p_2_1","p_2_2","p_2_3","p_2_4","p_2_5","p_2_6","p_2_7","p_2_8","p_2_9","p_2_10","p_2_11","p_2_12","p_2_13","p_2_14","p_2_15"],"flag":"assets/flags/es.png","emoji":"🇪🇸","bonus":{"PASE":5},"style":"tiki_taka"},
-  {"id":"team_4","name":"Brasil 2002","players":["p_4_0","p_4_1","p_4_2","p_4_3","p_4_4","p_4_5","p_4_6","p_4_7","p_4_8","p_4_9","p_4_10","p_4_11","p_4_12","p_4_13","p_4_14","p_4_15"],"flag":"assets/flags/br.png","emoji":"🇧🇷","bonus":{"TÉCNICA":5},"style":"samba_total"},
-  {"id":"team_6","name":"Alemania 1990","players":["p_6_0","p_6_1","p_6_2","p_6_3","p_6_4","p_6_5","p_6_6","p_6_7","p_6_8","p_6_9","p_6_10","p_6_11","p_6_12","p_6_13","p_6_14","p_6_15"],"flag":"assets/flags/de.png","emoji":"🇩🇪","bonus":{"DEFENSA":5},"style":"maquinaria_alemana"},
-  {"id":"team_7","name":"Alemania 2014","players":["p_7_0","p_7_1","p_7_2","p_7_3","p_7_4","p_7_5","p_7_6","p_7_7","p_7_8","p_7_9","p_7_10","p_7_11","p_7_12","p_7_13","p_7_14","p_7_15"],"flag":"assets/flags/de.png","emoji":"🇩🇪","bonus":{"DEFENSA":5},"style":"gegenpressing"},
-  {"id":"team_8","name":"Argentina 1986","players":["p_8_0","p_8_1","p_8_2","p_8_3","p_8_4","p_8_5","p_8_6","p_8_7","p_8_8","p_8_9","p_8_10","p_8_11","p_8_12","p_8_13","p_8_14","p_8_15"],"flag":"assets/flags/ar.png","emoji":"🇦🇷","bonus":{"ATAQUE":5},"style":"magia_individual"},
-  {"id":"team_9","name":"Argentina 2022","players":["p_9_0","p_9_1","p_9_2","p_9_3","p_9_4","p_9_5","p_9_6","p_9_7","p_9_8","p_9_9","p_9_10","p_9_11","p_9_12","p_9_13","p_9_14","p_9_15"],"flag":"assets/flags/ar.png","emoji":"🇦🇷","bonus":{"ATAQUE":5},"style":"la_scaloneta"},
-  {"id":"team_10","name":"Francia 1998","players":["p_10_0","p_10_1","p_10_2","p_10_3","p_10_4","p_10_5","p_10_6","p_10_7","p_10_8","p_10_9","p_10_10","p_10_11","p_10_12","p_10_13","p_10_14","p_10_15"],"flag":"assets/flags/fr.png","emoji":"🏳️","bonus":{"PASE":2},"style":"solidez_francesa"},
-  {"id":"team_11","name":"Francia 2018","players":["p_11_0","p_11_1","p_11_2","p_11_3","p_11_4","p_11_5","p_11_6","p_11_7","p_11_8","p_11_9","p_11_10","p_11_11","p_11_12","p_11_13","p_11_14","p_11_15"],"flag":"assets/flags/fr.png","emoji":"🏳️","bonus":{"PASE":2},"style":"velocidad_punzante"},
-  {"id":"team_13","name":"Italia 2006","players":["p_13_0","p_13_1","p_13_2","p_13_3","p_13_4","p_13_5","p_13_6","p_13_7","p_13_8","p_13_9","p_13_10","p_13_11","p_13_12","p_13_13","p_13_14","p_13_15"],"flag":"assets/flags/it.png","emoji":"🇮🇹","bonus":{"DEFENSA":5},"style":"catenaccio"},
-  {"id":"team_17","name":"Portugal 2016","players":["p_17_0","p_17_1","p_17_2","p_17_3","p_17_4","p_17_5","p_17_6","p_17_7","p_17_8","p_17_9","p_17_10","p_17_11","p_17_12","p_17_13","p_17_14","p_17_15"],"flag":"assets/flags/pt.png","emoji":"🇵🇹","bonus":{"TÉCNICA":3},"style":"garra_lusa"},
-  {"id":"team_18","name":"Croacia 2018","players":["p_18_0","p_18_1","p_18_2","p_18_3","p_18_4","p_18_5","p_18_6","p_18_7","p_18_8","p_18_9","p_18_10","p_18_11","p_18_12","p_18_13","p_18_14","p_18_15"],"emoji":"🇭🇷","bonus":{"PASE":3},"style":"muralla_balcanica"},
-  {"id":"team_21","name":"Dinamarca 1992","players":["p_21_0","p_21_1","p_21_2","p_21_3","p_21_4","p_21_5","p_21_6","p_21_7","p_21_8","p_21_9","p_21_10","p_21_11","p_21_12","p_21_13","p_21_14","p_21_15"],"emoji":"🏳️","bonus":{"PASE":2},"style":"dinamita_danesa"},
-  {"id":"team_22","name":"Bélgica 2018","players":["p_22_0","p_22_1","p_22_2","p_22_3","p_22_4","p_22_5","p_22_6","p_22_7","p_22_8","p_22_9","p_22_10","p_22_11","p_22_12","p_22_13","p_22_14","p_22_15"],"emoji":"🏳️","bonus":{"PASE":2},"style":"velocidad_punzante"},
-  {"id":"team_23","name":"México 1986","players":["p_23_0","p_23_1","p_23_2","p_23_3","p_23_4","p_23_5","p_23_6","p_23_7","p_23_8","p_23_9","p_23_10","p_23_11","p_23_12","p_23_13","p_23_14","p_23_15"],"flag":"assets/flags/mx.png","emoji":"🏳️","bonus":{"PASE":2},"style":"tricolor_tecnico"},
-  {"id":"team_24","name":"Estados Unidos 2002","players":["p_24_0","p_24_1","p_24_2","p_24_3","p_24_4","p_24_5","p_24_6","p_24_7","p_24_8","p_24_9","p_24_10","p_24_11","p_24_12","p_24_13","p_24_14","p_24_15"],"emoji":"🏳️","bonus":{"PASE":2},"style":"garra_yanqui"},
-  {"id":"team_25","name":"Japón 2002","players":["p_25_0","p_25_1","p_25_2","p_25_3","p_25_4","p_25_5","p_25_6","p_25_7","p_25_8","p_25_9","p_25_10","p_25_11","p_25_12","p_25_13","p_25_14","p_25_15"],"emoji":"🏳️","bonus":{"PASE":2},"style":"disciplina_nipona"},
-  {"id":"team_26","name":"Corea del Sur 2002","players":["p_26_0","p_26_1","p_26_2","p_26_3","p_26_4","p_26_5","p_26_6","p_26_7","p_26_8","p_26_9","p_26_10","p_26_11","p_26_12","p_26_13","p_26_14","p_26_15"],"emoji":"🏳️","bonus":{"PASE":2},"style":"futbol_directo"},
-  {"id":"team_27","name":"Marruecos 2022","players":["p_27_0","p_27_1","p_27_2","p_27_3","p_27_4","p_27_5","p_27_6","p_27_7","p_27_8","p_27_9","p_27_10","p_27_11","p_27_12","p_27_13","p_27_14","p_27_15"],"emoji":"🏳️","bonus":{"PASE":2},"style":"muralla_atlas"},
-  {"id":"team_28","name":"Nigeria 1994","players":["p_28_0","p_28_1","p_28_2","p_28_3","p_28_4","p_28_5","p_28_6","p_28_7","p_28_8","p_28_9","p_28_10","p_28_11","p_28_12","p_28_13","p_28_14","p_28_15"],"emoji":"🏳️","bonus":{"PASE":2},"style":"superaguilas"},
-  {"id":"team_29","name":"Camerún 1990","players":["p_29_0","p_29_1","p_29_2","p_29_3","p_29_4","p_29_5","p_29_6","p_29_7","p_29_8","p_29_9","p_29_10","p_29_11","p_29_12","p_29_13","p_29_14","p_29_15"],"flag":"assets/flags/cm.png","emoji":"🏳️","bonus":{"PASE":2},"style":"leones_indomables"},
-  {"id":"team_31","name":"Paraguay 2010","players":["p_31_0","p_31_1","p_31_2","p_31_3","p_31_4","p_31_5","p_31_6","p_31_7","p_31_8","p_31_9","p_31_10","p_31_11","p_31_12","p_31_13","p_31_14","p_31_15"],"flag":"assets/flags/py.png","emoji":"🏳️","bonus":{"PASE":2},"style":"muralla_guarani"},
-  {"id":"team_32","name":"Colombia 2014","players":["p_32_0","p_32_1","p_32_2","p_32_3","p_32_4","p_32_5","p_32_6","p_32_7","p_32_8","p_32_9","p_32_10","p_32_11","p_32_12","p_32_13","p_32_14","p_32_15"],"emoji":"🏳️","bonus":{"PASE":2},"style":"fiesta_cafetera"},
-  {"id":"team_40","name":"Turquía 2002","players":["p_40_0","p_40_1","p_40_2","p_40_3","p_40_4","p_40_5","p_40_6","p_40_7","p_40_8","p_40_9","p_40_10","p_40_11","p_40_12","p_40_13","p_40_14","p_40_15"],"emoji":"🏳️","bonus":{"PASE":2},"style":"furia_otomana"},
-  {"id":"team_41","name":"Grecia 2004","players":["p_41_0","p_41_1","p_41_2","p_41_3","p_41_4","p_41_5","p_41_6","p_41_7","p_41_8","p_41_9","p_41_10","p_41_11","p_41_12","p_41_13","p_41_14","p_41_15"],"emoji":"🏳️","bonus":{"PASE":2},"style":"milagro_defensivo"},
-  {"id":"team_42","name":"Rumanía 1994","players":["p_42_0","p_42_1","p_42_2","p_42_3","p_42_4","p_42_5","p_42_6","p_42_7","p_42_8","p_42_9","p_42_10","p_42_11","p_42_12","p_42_13","p_42_14","p_42_15"],"emoji":"🏳️","bonus":{"PASE":2},"style":"magia_carpatica"},
-  {"id":"team_43","name":"Irlanda 1990","players":["p_43_0","p_43_1","p_43_2","p_43_3","p_43_4","p_43_5","p_43_6","p_43_7","p_43_8","p_43_9","p_43_10","p_43_11","p_43_12","p_43_13","p_43_14","p_43_15"],"emoji":"🏳️","bonus":{"PASE":2},"style":"muralla_celta"},
-  {"id":"team_46","name":"Rusia 2018","players":["p_46_0","p_46_1","p_46_2","p_46_3","p_46_4","p_46_5","p_46_6","p_46_7","p_46_8","p_46_9","p_46_10","p_46_11","p_46_12","p_46_13","p_46_14","p_46_15"],"flag":"assets/flags/ru.png","emoji":"🏳️","bonus":{"PASE":2},"style":"punta_lanza"},
-  {"id":"team_47","name":"Ucrania 2006","players":["p_47_0","p_47_1","p_47_2","p_47_3","p_47_4","p_47_5","p_47_6","p_47_7","p_47_8","p_47_9","p_47_10","p_47_11","p_47_12","p_47_13","p_47_14","p_47_15"],"emoji":"🏳️","bonus":{"PASE":2},"style":"tecnica_centroeuropea"},
-  {"id":"team_48","name":"Serbia 2010","players":["p_48_0","p_48_1","p_48_2","p_48_3","p_48_4","p_48_5","p_48_6","p_48_7","p_48_8","p_48_9","p_48_10","p_48_11","p_48_12","p_48_13","p_48_14","p_48_15"],"emoji":"🇷🇸","bonus":{"PASE":2},"style":"tecnica_balcanica"},
-  {"id":"team_49","name":"Noruega 1998","players":["p_49_0","p_49_1","p_49_2","p_49_3","p_49_4","p_49_5","p_49_6","p_49_7","p_49_8","p_49_9","p_49_10","p_49_11","p_49_12","p_49_13","p_49_14","p_49_15"],"emoji":"🏳️","bonus":{"PASE":2},"style":"vikingo_directo"},
+  {"id":"team_1","name":"España 2010","players":["p_1_0","p_1_1","p_1_2","p_1_3","p_1_4","p_1_5","p_1_6","p_1_7","p_1_8","p_1_9","p_1_10","p_1_11","p_1_12","p_1_13","p_1_14","p_1_15"],"flag":"assets/flags/es.png","emoji":"🇪🇸","bonus":{"passing":5},"style":"tiki_taka"},
+  {"id":"team_2","name":"España 2012","players":["p_2_0","p_2_1","p_2_2","p_2_3","p_2_4","p_2_5","p_2_6","p_2_7","p_2_8","p_2_9","p_2_10","p_2_11","p_2_12","p_2_13","p_2_14","p_2_15"],"flag":"assets/flags/es.png","emoji":"🇪🇸","bonus":{"passing":5},"style":"tiki_taka"},
+  {"id":"team_4","name":"Brasil 2002","players":["p_4_0","p_4_1","p_4_2","p_4_3","p_4_4","p_4_5","p_4_6","p_4_7","p_4_8","p_4_9","p_4_10","p_4_11","p_4_12","p_4_13","p_4_14","p_4_15"],"flag":"assets/flags/br.png","emoji":"🇧🇷","bonus":{"technique":5},"style":"samba_total"},
+  {"id":"team_6","name":"Alemania 1990","players":["p_6_0","p_6_1","p_6_2","p_6_3","p_6_4","p_6_5","p_6_6","p_6_7","p_6_8","p_6_9","p_6_10","p_6_11","p_6_12","p_6_13","p_6_14","p_6_15"],"flag":"assets/flags/de.png","emoji":"🇩🇪","bonus":{"defense":5},"style":"maquinaria_alemana"},
+  {"id":"team_7","name":"Alemania 2014","players":["p_7_0","p_7_1","p_7_2","p_7_3","p_7_4","p_7_5","p_7_6","p_7_7","p_7_8","p_7_9","p_7_10","p_7_11","p_7_12","p_7_13","p_7_14","p_7_15"],"flag":"assets/flags/de.png","emoji":"🇩🇪","bonus":{"defense":5},"style":"gegenpressing"},
+  {"id":"team_8","name":"Argentina 1986","players":["p_8_0","p_8_1","p_8_2","p_8_3","p_8_4","p_8_5","p_8_6","p_8_7","p_8_8","p_8_9","p_8_10","p_8_11","p_8_12","p_8_13","p_8_14","p_8_15"],"flag":"assets/flags/ar.png","emoji":"🇦🇷","bonus":{"attack":5},"style":"magia_individual"},
+  {"id":"team_9","name":"Argentina 2022","players":["p_9_0","p_9_1","p_9_2","p_9_3","p_9_4","p_9_5","p_9_6","p_9_7","p_9_8","p_9_9","p_9_10","p_9_11","p_9_12","p_9_13","p_9_14","p_9_15"],"flag":"assets/flags/ar.png","emoji":"🇦🇷","bonus":{"attack":5},"style":"la_scaloneta"},
+  {"id":"team_10","name":"Francia 1998","players":["p_10_0","p_10_1","p_10_2","p_10_3","p_10_4","p_10_5","p_10_6","p_10_7","p_10_8","p_10_9","p_10_10","p_10_11","p_10_12","p_10_13","p_10_14","p_10_15"],"flag":"assets/flags/fr.png","emoji":"🏳️","bonus":{"passing":2},"style":"solidez_francesa"},
+  {"id":"team_11","name":"Francia 2018","players":["p_11_0","p_11_1","p_11_2","p_11_3","p_11_4","p_11_5","p_11_6","p_11_7","p_11_8","p_11_9","p_11_10","p_11_11","p_11_12","p_11_13","p_11_14","p_11_15"],"flag":"assets/flags/fr.png","emoji":"🏳️","bonus":{"passing":2},"style":"velocidad_punzante"},
+  {"id":"team_13","name":"Italia 2006","players":["p_13_0","p_13_1","p_13_2","p_13_3","p_13_4","p_13_5","p_13_6","p_13_7","p_13_8","p_13_9","p_13_10","p_13_11","p_13_12","p_13_13","p_13_14","p_13_15"],"flag":"assets/flags/it.png","emoji":"🇮🇹","bonus":{"defense":5},"style":"catenaccio"},
+  {"id":"team_17","name":"Portugal 2016","players":["p_17_0","p_17_1","p_17_2","p_17_3","p_17_4","p_17_5","p_17_6","p_17_7","p_17_8","p_17_9","p_17_10","p_17_11","p_17_12","p_17_13","p_17_14","p_17_15"],"flag":"assets/flags/pt.png","emoji":"🇵🇹","bonus":{"technique":3},"style":"garra_lusa"},
+  {"id":"team_18","name":"Croacia 2018","players":["p_18_0","p_18_1","p_18_2","p_18_3","p_18_4","p_18_5","p_18_6","p_18_7","p_18_8","p_18_9","p_18_10","p_18_11","p_18_12","p_18_13","p_18_14","p_18_15"],"emoji":"🇭🇷","bonus":{"passing":3},"style":"muralla_balcanica"},
+  {"id":"team_21","name":"Dinamarca 1992","players":["p_21_0","p_21_1","p_21_2","p_21_3","p_21_4","p_21_5","p_21_6","p_21_7","p_21_8","p_21_9","p_21_10","p_21_11","p_21_12","p_21_13","p_21_14","p_21_15"],"emoji":"🏳️","bonus":{"passing":2},"style":"dinamita_danesa"},
+  {"id":"team_22","name":"Bélgica 2018","players":["p_22_0","p_22_1","p_22_2","p_22_3","p_22_4","p_22_5","p_22_6","p_22_7","p_22_8","p_22_9","p_22_10","p_22_11","p_22_12","p_22_13","p_22_14","p_22_15"],"emoji":"🏳️","bonus":{"passing":2},"style":"velocidad_punzante"},
+  {"id":"team_23","name":"México 1986","players":["p_23_0","p_23_1","p_23_2","p_23_3","p_23_4","p_23_5","p_23_6","p_23_7","p_23_8","p_23_9","p_23_10","p_23_11","p_23_12","p_23_13","p_23_14","p_23_15"],"flag":"assets/flags/mx.png","emoji":"🏳️","bonus":{"passing":2},"style":"tricolor_tecnico"},
+  {"id":"team_24","name":"Estados Unidos 2002","players":["p_24_0","p_24_1","p_24_2","p_24_3","p_24_4","p_24_5","p_24_6","p_24_7","p_24_8","p_24_9","p_24_10","p_24_11","p_24_12","p_24_13","p_24_14","p_24_15"],"emoji":"🏳️","bonus":{"passing":2},"style":"garra_yanqui"},
+  {"id":"team_25","name":"Japón 2002","players":["p_25_0","p_25_1","p_25_2","p_25_3","p_25_4","p_25_5","p_25_6","p_25_7","p_25_8","p_25_9","p_25_10","p_25_11","p_25_12","p_25_13","p_25_14","p_25_15"],"emoji":"🏳️","bonus":{"passing":2},"style":"disciplina_nipona"},
+  {"id":"team_26","name":"Corea del Sur 2002","players":["p_26_0","p_26_1","p_26_2","p_26_3","p_26_4","p_26_5","p_26_6","p_26_7","p_26_8","p_26_9","p_26_10","p_26_11","p_26_12","p_26_13","p_26_14","p_26_15"],"emoji":"🏳️","bonus":{"passing":2},"style":"futbol_directo"},
+  {"id":"team_27","name":"Marruecos 2022","players":["p_27_0","p_27_1","p_27_2","p_27_3","p_27_4","p_27_5","p_27_6","p_27_7","p_27_8","p_27_9","p_27_10","p_27_11","p_27_12","p_27_13","p_27_14","p_27_15"],"emoji":"🏳️","bonus":{"passing":2},"style":"muralla_atlas"},
+  {"id":"team_28","name":"Nigeria 1994","players":["p_28_0","p_28_1","p_28_2","p_28_3","p_28_4","p_28_5","p_28_6","p_28_7","p_28_8","p_28_9","p_28_10","p_28_11","p_28_12","p_28_13","p_28_14","p_28_15"],"emoji":"🏳️","bonus":{"passing":2},"style":"superaguilas"},
+  {"id":"team_29","name":"Camerún 1990","players":["p_29_0","p_29_1","p_29_2","p_29_3","p_29_4","p_29_5","p_29_6","p_29_7","p_29_8","p_29_9","p_29_10","p_29_11","p_29_12","p_29_13","p_29_14","p_29_15"],"flag":"assets/flags/cm.png","emoji":"🏳️","bonus":{"passing":2},"style":"leones_indomables"},
+  {"id":"team_31","name":"Paraguay 2010","players":["p_31_0","p_31_1","p_31_2","p_31_3","p_31_4","p_31_5","p_31_6","p_31_7","p_31_8","p_31_9","p_31_10","p_31_11","p_31_12","p_31_13","p_31_14","p_31_15"],"flag":"assets/flags/py.png","emoji":"🏳️","bonus":{"passing":2},"style":"muralla_guarani"},
+  {"id":"team_32","name":"Colombia 2014","players":["p_32_0","p_32_1","p_32_2","p_32_3","p_32_4","p_32_5","p_32_6","p_32_7","p_32_8","p_32_9","p_32_10","p_32_11","p_32_12","p_32_13","p_32_14","p_32_15"],"emoji":"🏳️","bonus":{"passing":2},"style":"fiesta_cafetera"},
+  {"id":"team_40","name":"Turquía 2002","players":["p_40_0","p_40_1","p_40_2","p_40_3","p_40_4","p_40_5","p_40_6","p_40_7","p_40_8","p_40_9","p_40_10","p_40_11","p_40_12","p_40_13","p_40_14","p_40_15"],"emoji":"🏳️","bonus":{"passing":2},"style":"furia_otomana"},
+  {"id":"team_41","name":"Grecia 2004","players":["p_41_0","p_41_1","p_41_2","p_41_3","p_41_4","p_41_5","p_41_6","p_41_7","p_41_8","p_41_9","p_41_10","p_41_11","p_41_12","p_41_13","p_41_14","p_41_15"],"emoji":"🏳️","bonus":{"passing":2},"style":"milagro_defensivo"},
+  {"id":"team_42","name":"Rumanía 1994","players":["p_42_0","p_42_1","p_42_2","p_42_3","p_42_4","p_42_5","p_42_6","p_42_7","p_42_8","p_42_9","p_42_10","p_42_11","p_42_12","p_42_13","p_42_14","p_42_15"],"emoji":"🏳️","bonus":{"passing":2},"style":"magia_carpatica"},
+  {"id":"team_43","name":"Irlanda 1990","players":["p_43_0","p_43_1","p_43_2","p_43_3","p_43_4","p_43_5","p_43_6","p_43_7","p_43_8","p_43_9","p_43_10","p_43_11","p_43_12","p_43_13","p_43_14","p_43_15"],"emoji":"🏳️","bonus":{"passing":2},"style":"muralla_celta"},
+  {"id":"team_46","name":"Rusia 2018","players":["p_46_0","p_46_1","p_46_2","p_46_3","p_46_4","p_46_5","p_46_6","p_46_7","p_46_8","p_46_9","p_46_10","p_46_11","p_46_12","p_46_13","p_46_14","p_46_15"],"flag":"assets/flags/ru.png","emoji":"🏳️","bonus":{"passing":2},"style":"punta_lanza"},
+  {"id":"team_47","name":"Ucrania 2006","players":["p_47_0","p_47_1","p_47_2","p_47_3","p_47_4","p_47_5","p_47_6","p_47_7","p_47_8","p_47_9","p_47_10","p_47_11","p_47_12","p_47_13","p_47_14","p_47_15"],"emoji":"🏳️","bonus":{"passing":2},"style":"tecnica_centroeuropea"},
+  {"id":"team_48","name":"Serbia 2010","players":["p_48_0","p_48_1","p_48_2","p_48_3","p_48_4","p_48_5","p_48_6","p_48_7","p_48_8","p_48_9","p_48_10","p_48_11","p_48_12","p_48_13","p_48_14","p_48_15"],"emoji":"🇷🇸","bonus":{"passing":2},"style":"tecnica_balcanica"},
+  {"id":"team_49","name":"Noruega 1998","players":["p_49_0","p_49_1","p_49_2","p_49_3","p_49_4","p_49_5","p_49_6","p_49_7","p_49_8","p_49_9","p_49_10","p_49_11","p_49_12","p_49_13","p_49_14","p_49_15"],"emoji":"🏳️","bonus":{"passing":2},"style":"vikingo_directo"},
   {"id":"team_brasil_1982","name":"Brasil 1982","style":"samba_total","players":["p_team_brasil_1982_0","p_team_brasil_1982_1","p_team_brasil_1982_2","p_team_brasil_1982_3","p_team_brasil_1982_4","p_team_brasil_1982_5","p_team_brasil_1982_6","p_team_brasil_1982_7","p_team_brasil_1982_8","p_team_brasil_1982_9","p_team_brasil_1982_10","p_team_brasil_1982_11","p_team_brasil_1982_12","p_team_brasil_1982_13","p_team_brasil_1982_14","p_team_brasil_1982_15"]},
   {"id":"team_argentina_1978","name":"Argentina 1978","style":"magia_individual","players":["p_team_argentina_1978_0","p_team_argentina_1978_1","p_team_argentina_1978_2","p_team_argentina_1978_3","p_team_argentina_1978_4","p_team_argentina_1978_5","p_team_argentina_1978_6","p_team_argentina_1978_7","p_team_argentina_1978_8","p_team_argentina_1978_9","p_team_argentina_1978_10","p_team_argentina_1978_11","p_team_argentina_1978_12","p_team_argentina_1978_13","p_team_argentina_1978_14","p_team_argentina_1978_15"]},
   {"id":"team_senegal_2002","name":"Senegal 2002","style":"superaguilas","players":["p_team_senegal_2002_0","p_team_senegal_2002_1","p_team_senegal_2002_2","p_team_senegal_2002_3","p_team_senegal_2002_4","p_team_senegal_2002_5","p_team_senegal_2002_6","p_team_senegal_2002_7","p_team_senegal_2002_8","p_team_senegal_2002_9","p_team_senegal_2002_10","p_team_senegal_2002_11","p_team_senegal_2002_12","p_team_senegal_2002_13","p_team_senegal_2002_14","p_team_senegal_2002_15"]},
@@ -117,7 +117,7 @@ const STYLES = {
  punta_lanza:{name:"Punta de Lanza",bonuses:{attack:9,pace:4}},
  vikingo_directo:{name:"Vikingo Directo",bonuses:{defense:8,pace:5}}
 };
-const STAT_LABELS={attack:"ATAQUE",defense:"DEFENSA",pace:"RITMO",passing:"PASE",technique:"TÉCNICA"};
+const STAT_LABELS={attack:window.t?t("team.attack"):(window.t?t("team.attack"):"ATAQUE"),defense:window.t?t("team.defense"):(window.t?t("team.defense"):"DEFENSA"),pace:window.t?t("team.pace"):(window.t?t("team.pace"):"RITMO"),passing:window.t?t("team.passing"):(window.t?t("team.passing"):"PASE"),technique:window.t?t("team.technique"):(window.t?t("team.technique"):"TÉCNICA")};
 
 /* ========= MATCH STRATEGIES (chosen before each match) ========= */
 // Each strategy can be played, and "counters" points to the strategy key it beats.
@@ -332,6 +332,11 @@ let currentWeather = null;
 let inheritedPlayers = [];
 // Best knockout round reached in current run (for chain run reward)
 let bestRoundReached = -1; // -1=none, 0=groups, 1=octavos, 2=cuartos, 3=semis, 4=final
+function getWeatherLabel(w){
+  if(!w) return "";
+  const W=window.t||(k=>k);
+  return {label:W("weather."+w.id+".label")||w.label, desc:W("weather."+w.id+".desc")||w.desc};
+}
 const WEATHER_TYPES = [
   { id:'sunny',    label:'☀ Soleado',         desc:'Calor intenso · RITMO -15% ambos equipos',    effect:{pace:-0.10} },
   { id:'cloudy',   label:'⛅ Nublado',          desc:'Condiciones neutras',                          effect:{} },
@@ -346,134 +351,134 @@ const WEATHER_TYPES = [
    answer -> moral stays the same regardless of outcome. */
 const PRESS_PREDICTIONS = [
   {
-    q: "«¿Dejaréis la portería a cero en este encuentro?»",
+    q: window.t?t("press.q1"):"«¿Dejaréis la portería a cero en este encuentro?»",
     answers: [
-      { text: "«Sí, vamos a por la portería a cero.»", stance: "positive", label: "Confiado",
+      { text: window.t?t("press.q1a1"):"«Sí, vamos a por la portería a cero.»", stance: "positive", label: "Confiado",
         check: (r) => r.oppGoals === 0 },
-      { text: "«Es difícil de prometer, ya veremos.»", stance: "neutral", label: "Prudente",
+      { text: window.t?t("press.q1a2"):"«Es difícil de prometer, ya veremos.»", stance: "neutral", label: "Prudente",
         check: () => null },
-      { text: "«Lo veo complicado, encajaremos.»", stance: "negative", label: "Pesimista",
+      { text: window.t?t("press.q1a3"):"«Lo veo complicado, encajaremos.»", stance: "negative", label: "Pesimista",
         check: (r) => r.oppGoals > 0 },
     ]
   },
   {
-    q: "«¿Vais a ganar por tres goles o más?»",
+    q: window.t?t("press.q2"):"«¿Vais a ganar por tres goles o más?»",
     answers: [
-      { text: "«Sí, vamos a golear.»", stance: "positive", label: "Ambicioso",
+      { text: window.t?t("press.q2a1"):"«Sí, vamos a golear.»", stance: "positive", label: "Ambicioso",
         check: (r) => (r.myGoals - r.oppGoals) >= 3 },
-      { text: "«No me atrevo a predecir el marcador.»", stance: "neutral", label: "Cauto",
+      { text: window.t?t("press.q2a2"):"«No me atrevo a predecir el marcador.»", stance: "neutral", label: "Cauto",
         check: () => null },
-      { text: "«No, será un partido ajustado.»", stance: "negative", label: "Realista",
+      { text: window.t?t("press.q2a3"):"«No, será un partido ajustado.»", stance: "negative", label: "Realista",
         check: (r) => (r.myGoals - r.oppGoals) < 3 },
     ]
   },
   {
-    q: "«Lleváis varios partidos viendo tarjetas. ¿Seguiréis acumulando en este encuentro?»",
+    q: window.t?t("press.q3"):"«Lleváis varios partidos viendo tarjetas.»",
     answers: [
-      { text: "«No, vamos a jugar limpio esta vez.»", stance: "positive", label: "Comprometido",
+      { text: window.t?t("press.q3a1"):"«No, vamos a jugar limpio esta vez.»", stance: "positive", label: "Comprometido",
         check: (r) => r.cardsCount === 0 },
-      { text: "«No puedo controlar lo que pite el árbitro.»", stance: "neutral", label: "Evasivo",
+      { text: window.t?t("press.q3a2"):"«No puedo controlar lo que pite el árbitro.»", stance: "neutral", label: "Evasivo",
         check: () => null },
-      { text: "«Es probable, el rival nos hará cometer faltas.»", stance: "negative", label: "Sincero",
+      { text: window.t?t("press.q3a3"):"«Es probable, el rival nos hará cometer faltas.»", stance: "negative", label: "Sincero",
         check: (r) => r.cardsCount > 0 },
     ]
   },
   {
-    q: "«¿Marcaréis en la primera mitad?»",
+    q: window.t?t("press.q4"):"«¿Marcaréis en la primera mitad?»",
     answers: [
-      { text: "«Sí, saldremos a por todas desde el inicio.»", stance: "positive", label: "Decidido",
+      { text: window.t?t("press.q4a1"):"«Sí, saldremos a por todas desde el inicio.»", stance: "positive", label: "Decidido",
         check: (r) => r.myGoals > 0 },
-      { text: "«El plan de partido lo decide el míster.»", stance: "neutral", label: "Diplomático",
+      { text: window.t?t("press.q4a2"):"«El plan de partido lo decide el míster.»", stance: "neutral", label: "Diplomático",
         check: () => null },
-      { text: "«Seremos pacientes, no hay prisa por marcar.»", stance: "negative", label: "Paciente",
+      { text: window.t?t("press.q4a3"):"«Seremos pacientes, no hay prisa por marcar.»", stance: "negative", label: "Paciente",
         check: (r) => r.myGoals === 0 },
     ]
   },
   {
-    q: "«¿Va a generar más ocasiones el rival que vosotros?»",
+    q: window.t?t("press.q5"):"«¿Va a generar más ocasiones el rival?»",
     answers: [
-      { text: "«No, vamos a dominar nosotros el partido.»", stance: "positive", label: "Dominante",
+      { text: window.t?t("press.q5a1"):"«No, vamos a dominar nosotros el partido.»", stance: "positive", label: "Dominante",
         check: (r) => r.myGoals >= r.oppGoals },
-      { text: "«Cada partido es distinto, lo veremos en el campo.»", stance: "neutral", label: "Flexible",
+      { text: window.t?t("press.q5a2"):"«Cada partido es distinto, lo veremos en el campo.»", stance: "neutral", label: "Flexible",
         check: () => null },
-      { text: "«Es un rival fuerte, nos costará contenerlo.»", stance: "negative", label: "Respetuoso",
+      { text: window.t?t("press.q5a3"):"«Es un rival fuerte, nos costará contenerlo.»", stance: "negative", label: "Respetuoso",
         check: (r) => r.oppGoals > r.myGoals },
     ]
   },
   {
-    q: "«¿Se va a decidir esto en los 90 minutos, sin penaltis?»",
+    q: window.t?t("press.q6"):"«¿Se va a decidir en los 90 minutos?»",
     answers: [
-      { text: "«Sí, lo resolveremos en el tiempo reglamentario.»", stance: "positive", label: "Seguro",
+      { text: window.t?t("press.q6a1"):"«Sí, lo resolveremos en el tiempo reglamentario.»", stance: "positive", label: "Seguro",
         check: (r) => !r.penalties },
-      { text: "«Lo importante es resolverlo, como sea.»", stance: "neutral", label: "Pragmático",
+      { text: window.t?t("press.q6a2"):"«Lo importante es resolverlo, como sea.»", stance: "neutral", label: "Pragmático",
         check: () => null },
-      { text: "«Puede decidirse en los detalles, incluso en penaltis.»", stance: "negative", label: "Cauteloso",
+      { text: window.t?t("press.q6a3"):"«Puede decidirse en los detalles, incluso en penaltis.»", stance: "negative", label: "Cauteloso",
         check: (r) => r.penalties },
     ]
   },
   {
-    q: "«¿Vais a marcar más de un gol en este partido?»",
+    q: window.t?t("press.q7"):"«¿Vais a marcar más de un gol?»",
     answers: [
-      { text: "«Sí, tenemos gol en las botas.»", stance: "positive", label: "Ofensivo",
+      { text: window.t?t("press.q7a1"):"«Sí, tenemos gol en las botas.»", stance: "positive", label: "Ofensivo",
         check: (r) => r.myGoals > 1 },
-      { text: "«Con uno nos conformamos si hace falta.»", stance: "neutral", label: "Pragmático",
+      { text: window.t?t("press.q7a2"):"«Con uno nos conformamos si hace falta.»", stance: "neutral", label: "Pragmático",
         check: () => null },
-      { text: "«Va a costarnos encontrar el gol hoy.»", stance: "negative", label: "Cauteloso",
+      { text: window.t?t("press.q7a3"):"«Va a costarnos encontrar el gol hoy.»", stance: "negative", label: "Cauteloso",
         check: (r) => r.myGoals <= 1 },
     ]
   },
   {
-    q: "«¿Encajaréis dos goles o más en este partido?»",
+    q: window.t?t("press.q8"):"«¿Encajaréis dos goles o más?»",
     answers: [
-      { text: "«No, vamos a estar sólidos atrás.»", stance: "positive", label: "Defensivo",
+      { text: window.t?t("press.q8a1"):"«No, vamos a estar sólidos atrás.»", stance: "positive", label: "Defensivo",
         check: (r) => r.oppGoals < 2 },
-      { text: "«El fútbol siempre da sorpresas.»", stance: "neutral", label: "Filosófico",
+      { text: window.t?t("press.q8a2"):"«El fútbol siempre da sorpresas.»", stance: "neutral", label: "Filosófico",
         check: () => null },
-      { text: "«El rival tiene mucho gol, puede pasar.»", stance: "negative", label: "Realista",
+      { text: window.t?t("press.q8a3"):"«El rival tiene mucho gol, puede pasar.»", stance: "negative", label: "Realista",
         check: (r) => r.oppGoals >= 2 },
     ]
   },
   {
-    q: "«¿Terminará el partido en empate?»",
+    q: window.t?t("press.q9"):"«¿Terminará el partido en empate?»",
     answers: [
-      { text: "«No, vamos a buscar la victoria hasta el final.»", stance: "positive", label: "Ambicioso",
+      { text: window.t?t("press.q9a1"):"«No, vamos a buscar la victoria hasta el final.»", stance: "positive", label: "Ambicioso",
         check: (r) => !r.draw },
-      { text: "«Cualquier resultado es posible en este torneo.»", stance: "neutral", label: "Realista",
+      { text: window.t?t("press.q9a2"):"«Cualquier resultado es posible en este torneo.»", stance: "neutral", label: "Realista",
         check: () => null },
-      { text: "«Puede que ninguno consiga abrir la lata.»", stance: "negative", label: "Cauteloso",
+      { text: window.t?t("press.q9a3"):"«Puede que ninguno consiga abrir la lata.»", stance: "negative", label: "Cauteloso",
         check: (r) => r.draw },
     ]
   },
   {
-    q: "«¿Marcará alguno de vuestros delanteros estrella?»",
+    q: window.t?t("press.q10"):"«¿Marcará alguno de vuestros delanteros?»",
     answers: [
-      { text: "«Sí, va a estar fino delante de la portería.»", stance: "positive", label: "Confiado",
+      { text: window.t?t("press.q10a1"):"«Sí, va a estar fino delante de la portería.»", stance: "positive", label: "Confiado",
         check: (r) => r.myGoals > 0 },
-      { text: "«El gol es cosa de todo el equipo.»", stance: "neutral", label: "Colectivo",
+      { text: window.t?t("press.q10a2"):"«El gol es cosa de todo el equipo.»", stance: "neutral", label: "Colectivo",
         check: () => null },
-      { text: "«El rival lo va a tener vigilado de cerca.»", stance: "negative", label: "Precavido",
+      { text: window.t?t("press.q10a3"):"«El rival lo va a tener vigilado de cerca.»", stance: "negative", label: "Precavido",
         check: (r) => r.myGoals === 0 },
     ]
   },
   {
-    q: "«¿Va a ser un partido con mucho juego físico?»",
+    q: window.t?t("press.q11"):"«¿Va a ser un partido con mucho juego físico?»",
     answers: [
-      { text: "«No, queremos jugar al fútbol, no a la guerra.»", stance: "positive", label: "Conciliador",
+      { text: window.t?t("press.q11a1"):"«No, queremos jugar al fútbol, no a la guerra.»", stance: "positive", label: "Conciliador",
         check: (r) => r.cardsCount === 0 },
-      { text: "«Eso lo decide el árbitro, no nosotros.»", stance: "neutral", label: "Evasivo",
+      { text: window.t?t("press.q11a2"):"«Eso lo decide el árbitro, no nosotros.»", stance: "neutral", label: "Evasivo",
         check: () => null },
-      { text: "«Va a ser un partido muy disputado, sin duda.»", stance: "negative", label: "Realista",
+      { text: window.t?t("press.q11a3"):"«Va a ser un partido muy disputado, sin duda.»", stance: "negative", label: "Realista",
         check: (r) => r.cardsCount > 0 },
     ]
   },
   {
-    q: "«¿Va a ser un partido de muchas ocasiones para ambos equipos?»",
+    q: window.t?t("press.q12"):"«¿Va a ser un partido de muchas ocasiones?»",
     answers: [
-      { text: "«Sí, esto va a ser ida y vuelta.»", stance: "positive", label: "Espectáculo",
+      { text: window.t?t("press.q12a1"):"«Sí, esto va a ser ida y vuelta.»", stance: "positive", label: "Espectáculo",
         check: (r) => (r.myGoals + r.oppGoals) >= 3 },
-      { text: "«Depende de cómo se plantee el partido.»", stance: "neutral", label: "Flexible",
+      { text: window.t?t("press.q12a2"):"«Depende de cómo se plantee el partido.»", stance: "neutral", label: "Flexible",
         check: () => null },
-      { text: "«Va a ser un partido cerrado y táctico.»", stance: "negative", label: "Realista",
+      { text: window.t?t("press.q12a3"):"«Va a ser un partido cerrado y táctico.»", stance: "negative", label: "Realista",
         check: (r) => (r.myGoals + r.oppGoals) < 3 },
     ]
   },
@@ -482,7 +487,7 @@ const PRESS_PREDICTIONS = [
 
 /* ========= COMPETITION STATE (World Cup format) ========= */
 const ROUND_NAMES = ["Octavos de Final","Cuartos de Final","Semifinal","Final"];
-function getRoundName(idx){ try{ return [t("comp.r16"),t("comp.qf"),t("comp.sf"),t("comp.final")][idx]||ROUND_NAMES[idx]||""; }catch(e){ return ROUND_NAMES[idx]||""; } }
+function getRoundName(idx){ try{ const W=window.t||(k=>k); return [W("comp.r16")||ROUND_NAMES[0],W("comp.qf")||ROUND_NAMES[1],W("comp.sf")||ROUND_NAMES[2],W("comp.final")||ROUND_NAMES[3]][idx]||ROUND_NAMES[idx]||""; }catch(e){ return ROUND_NAMES[idx]||""; } }
 let stage = "group";        // "group" | "knockout" | "done"
 let groupOpponents = [];    // 3 team objects for this group
 let groupMatchIdx = 0;       // 0,1,2 — which group match is next
@@ -525,6 +530,9 @@ const FORMATIONS = {
   ]
 };
 const CAT_NAMES={ofensiva:"Ofensiva",equilibrada:"Equilibrada",defensiva:"Defensiva"};
+function getCatName(cat){const W=window.t||(k=>k);return W("form.cat."+cat)||getCatName(cat)||cat;}
+const FORM_LABEL_MAP={"Ataque total":"form.ataque_total","Mediapunta creativo":"form.mediapunta","Brasil clásico":"form.brasil_clasico","Tridente Ofensivo":"form.tridente","Extremos al ataque":"form.extremos","Superioridad central":"form.superioridad","Vintage ofensivo":"form.vintage_of","El clásico":"form.el_clasico","Posesión y ataque":"form.posesion_ataque","Sólido en todo":"form.solido","Fútbol moderno":"form.futbol_moderno","Control + 2 puntas":"form.control_2puntas","Carrileros activos":"form.carrileros","Defensivo+contragol":"form.defensivo_contra","Fortaleza":"form.fortaleza","5 atrás + 2 arriba":"form.5_atras","Bloque compacto":"form.bloque_compacto","Pivote protector":"form.pivote","Muro defensivo":"form.muro","Contragolpe":"form.contragolpe","Ultra defensivo":"form.ultra_def"};
+function getFormLabel(label){const W=window.t||(k=>k);const key=FORM_LABEL_MAP[label];return key?W(key)||label:label;}
 // Short, neutral one-line description per formation code (shown after the squad is locked)
 const FORMATION_DESC={
   "3-4-3":"Tres centrales y tres delanteros: máxima presencia ofensiva.",
@@ -754,18 +762,19 @@ function maybeShowMobileFormationGate(retryFn){
   if(_formationGateShown) return false;           // already shown this session
   if(phase!=="draft"||draftedCount>0) return false; // only before drafting starts
   _formationGateShown=true;
+  const _fDesc=(window.t&&currentFormation)?t('fdesc.'+(currentFormation.code||'').replace(/-/g,''))||FORMATION_DESC[currentFormation.code]||'':FORMATION_DESC[currentFormation&&currentFormation.code]||'';
   playSound('select');
   document.getElementById("matchOverlay").innerHTML=`
   <div class="match-modal">
-    <h3>Confirma tu formación</h3>
+    <h3>${window.t?t('formation.confirm_title'):'Confirma tu formación'}</h3>
     <div class="match-summary">
-      Vas a jugar con <strong>${currentFormation.code} · ${CAT_NAMES[currentFormation.category]}</strong>.
-      ${FORMATION_DESC[currentFormation.code]?`<br>${FORMATION_DESC[currentFormation.code]}`:''}
+      Vas a jugar con <strong>${currentFormation.code} · ${getCatName(currentFormation&&currentFormation.category)}</strong>.
+      ${_fDesc?('<br>'+_fDesc):''}
       <br><br>Recuerda: la formación <strong>solo puede elegirse ahora</strong>, antes de empezar a fichar jugadores. Después quedará fija para todo el torneo.
     </div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
-      <button class="modal-btn" id="gateContinueBtn">CONTINUAR CON ESTA FORMACIÓN</button>
-      <button class="modal-btn danger" id="gateChangeBtn">CAMBIAR FORMACIÓN</button>
+      <button class="modal-btn" id="gateContinueBtn">${window.t?t('formation.confirm_btn'):'CONTINUAR CON ESTA FORMACIÓN'}</button>
+      <button class="modal-btn danger" id="gateChangeBtn">${window.t?t('formation.change_btn'):'CAMBIAR FORMACIÓN'}</button>
     </div>
   </div>`;
   document.getElementById("gateContinueBtn").addEventListener("click",()=>{
@@ -1004,26 +1013,32 @@ function pickPlayer(player){
 }
 
 function showSelectedPlayerBanner(p){
-  const el=document.getElementById("selectedPlayerBanner");
+  const isDesktop=window.innerWidth>1050;
+  const targetId=isDesktop?"playerCardDesktop":"selectedPlayerBanner";
+  const el=document.getElementById(targetId);
   if(!el) return;
+  // Ocultar el otro contenedor
+  const other=document.getElementById(isDesktop?"selectedPlayerBanner":"playerCardDesktop");
+  if(other){other.style.display="none";other.innerHTML="";}
   el.style.display="block";
-  el.innerHTML=`
+  const html=`
   <div class="box selected-player-banner">
-    <div class="selection-title">JUGADOR SELECCIONADO</div>
+    <div class="selection-title">${window.t?t('draft.selected_player'):'JUGADOR SELECCIONADO'}</div>
     <div class="spb-row">
       <span class="spb-name">${p.name}</span>
       <span class="spb-rating">★${p.rating||0}</span>
     </div>
-    <div class="spb-positions">Posiciones: ${(p.positions||[]).join(' / ')}</div>
-    <div class="hint-line">Colócalo en una posición resaltada del campo.</div>
-    <button class="spb-back-btn" onclick="volverASeleccion()">↩ VOLVER</button>
+    <div class="spb-positions">${window.t?t('draft.positions'):'Posiciones'}: ${(p.positions||[]).join(' / ')}</div>
+    <div class="hint-line">${window.t?t('draft.place_hint'):'Colócalo en una posición resaltada del campo.'}</div>
+    <button class="spb-back-btn" onclick="volverASeleccion()">↩ ${window.t?t('draft.back'):'VOLVER'}</button>
   </div>`;
+  el.innerHTML=html;
 }
 function hideSelectedPlayerBanner(){
-  const el=document.getElementById("selectedPlayerBanner");
-  if(!el) return;
-  el.style.display="none";
-  el.innerHTML="";
+  ["selectedPlayerBanner","playerCardDesktop"].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el){el.style.display="none";el.innerHTML="";}
+  });
 }
 
 function volverASeleccion(){
@@ -1053,11 +1068,11 @@ function renderSlotContent(slot, player, label, rating, starHTML){
    having to check the convocados table. */
 function getSlotStatusIconsHTML(p){
   const icons=[];
-  if(p.injury) icons.push(`<span class="pitch-status-icon pitch-status-injury" title="Lesionado">✚</span>`);
-  if(p.suspended) icons.push(`<span class="pitch-status-icon" title="Sancionado">🚫</span>`);
-  else if((p.yellowCount||0)>=1) icons.push(`<span class="pitch-status-icon" title="Tarjeta amarilla acumulada">🟨</span>`);
+  if(p.injury) icons.push(`<span class="pitch-status-icon pitch-status-injury" title="${window.t?t('player.injured'):'Lesionado'}">✚</span>`);
+  if(p.suspended) icons.push(`<span class="pitch-status-icon" title="${window.t?t('player.suspended'):'Sancionado'}">🚫</span>`);
+  else if((p.yellowCount||0)>=1) icons.push(`<span class="pitch-status-icon" title="${window.t?t('player.yellow_acc'):'Tarjeta amarilla'}">🟨</span>`);
   const streak=scorerStreaks[p.name]||0;
-  if(streak>0) icons.push(`<span class="pitch-status-icon" title="Racha goleadora">🔥</span>`);
+  if(streak>0) icons.push(`<span class="pitch-status-icon" title="${window.t?t('player.streak'):'Racha goleadora'}">🔥</span>`);
   if(!icons.length) return "";
   return `<div class="pitch-status-row">${icons.join("")}</div>`;
 }
@@ -1358,9 +1373,9 @@ function renderCenterSummary(){
   </div>`;
 }
 function stageLabel(){
-  if(stage==="group") return `${t("comp.groups")} · ${t("match.match")||"partido"} ${groupMatchIdx+1}/3`;
+  if(stage==="group") return `${(window.t?t("comp.groups"):"FASE DE GRUPOS")} · ${(window.t?t("match.match"):"partido")} ${groupMatchIdx+1}/3`;
   if(stage==="knockout") return getRoundName(knockoutRound);
-  return t("comp.champion")||"Torneo completado";
+  return (window.t?t("comp.champion"):"¡CAMPEÓN!")||"¡CAMPEÓN!";
 }
 
 function getFatigueBarHTML(p){
@@ -1371,12 +1386,12 @@ function getFatigueBarHTML(p){
 // Ordenación de convocados: 'arrival' | 'position' | 'rating'
 let convSortMode = 'position';
 const CONV_SORT_LABELS = {arrival:'LLEGADA', position:'POSICIÓN', rating:'PUNTOS'};
+function getConvSortLabels(){return {arrival:window.t?t('draft.arrival'):'LLEGADA',position:window.t?t('draft.position'):'POSICIÓN',rating:window.t?t('draft.rating'):'PUNTOS'};}
 const CONV_SORT_NEXT = {arrival:'position', position:'rating', rating:'arrival'};
 window.toggleConvSort = function(){
   convSortMode = CONV_SORT_NEXT[convSortMode];
   const lbl = document.getElementById('convSortLabel');
-  const CONV_SORT_KEYS={arrival:'draft.sort_arrival',position:'draft.sort_position',rating:'draft.sort_rating'};
-  if(lbl) lbl.textContent = window.t?window.t(CONV_SORT_KEYS[convSortMode]):CONV_SORT_LABELS[convSortMode];
+  if(lbl) lbl.textContent = getConvSortLabels()[window.convSortMode||convSortMode] || CONV_SORT_LABELS[convSortMode];
   updateConvocadosTable();
 };
 
@@ -1418,10 +1433,10 @@ function updateConvocadosTable(){
   displayPlayers.forEach((p,i)=>{
     const inPrimary=p.positions&&p.placedPos&&p.positions[0]===p.placedPos;
     if(inPrimary) stars++;
-    const injuryTag=p.injury?` <span class="cross" title="Lesionado">✚(-${p.injury.remaining})</span> `:'';
+    const injuryTag=p.injury?` <span class="cross" title="${window.t?t('player.injured'):'Lesionado'}">✚(-${p.injury.remaining})</span> `:'';
     const cross=p.injury?injuryTag:'';
     const cardBadge=getCardBadge(p);
-    const star=inPrimary?'<span class="star" title="Posición principal ★">★</span>':'';
+    const star=inPrimary?'<span class="star" title="'+(window.t?t('player.natural_pos'):'Posición principal ★')+'">★</span>':'';
     const r=effRating(p);
     const streak=getStreakBadge(p.name);
     const fatigueBar=getFatigueBarHTML(p);
@@ -1434,7 +1449,7 @@ function updateConvocadosTable(){
     const realLabel=(realPos&&realPos!==posLabel)?`<br><span style="font-size:9px;color:var(--text-muted)">${realPos}</span>`:'';
     rows+=`<tr${sel}${clickable}><td>${i+1}</td><td>${p.name}${cross}${cardBadge}${streak}</td><td>${fatigueBar}</td><td><span style="font-weight:700">${posLabel}</span>${star}${realLabel}</td><td>${r}</td></tr>`;
   });
-  el.innerHTML=rows?`<table><thead><tr><th>#</th><th>Jugador</th><th title="Resistencia">Resistencia</th><th>Pos</th><th>★</th></tr></thead><tbody>${rows}</tbody></table>`:"";
+  el.innerHTML=rows?`<table><thead><tr><th>#</th><th>Jugador</th><th title=window.t?t("draft.stamina"):"Resistencia">Resistencia</th><th>Pos</th><th>★</th></tr></thead><tbody>${rows}</tbody></table>`:"";
   // Update star bonus display
   const sbEl=document.getElementById("starBonus");
   const sbVal=document.getElementById("starBonusVal");
@@ -1476,7 +1491,7 @@ function updateBenchTable(){
     const clickable=(canSwap&&!isBlocked)?` onclick="onBenchClick(${i})" style="cursor:pointer"`:(isBlocked?` style="opacity:.55;cursor:not-allowed"`:'');
     rows+=`<tr${sel}${clickable}><td>${p.name}${cross}${cardBadge}</td><td>${fatigueBar}</td><td>${(p.positions||[]).join('/')}</td><td>${p.rating||0}</td></tr>`;
   });
-  el.innerHTML=rows?`<table><thead><tr><th>Jugador</th><th title="Resistencia">Resistencia</th><th>Pos</th><th>★</th></tr></thead><tbody>${rows}</tbody></table>`:"";
+  el.innerHTML=rows?`<table><thead><tr><th>Jugador</th><th title=window.t?t("draft.stamina"):"Resistencia">Resistencia</th><th>Pos</th><th>★</th></tr></thead><tbody>${rows}</tbody></table>`:"";
 }
 
 /* ========= PRE-MATCH SWAPS (convocados <-> bench) ========= */
@@ -1645,7 +1660,7 @@ function renderFormationList(cat){
     const sel=currentFormation.category===cat&&currentFormation.code===f.code;
     const d=document.createElement("div");
     d.className="formation-option"+(sel?" selected":"");
-    d.innerHTML=`<span class="f-code">${f.code}</span><span class="f-badge">${f.label}</span>`;
+    d.innerHTML=`<span class="f-code">${f.code}</span><span class="f-badge">${getFormLabel(f.label)}</span>`;
     d.addEventListener("click",()=>selectFormation(cat,f.code));
     list.appendChild(d);
   });
@@ -1666,7 +1681,7 @@ function selectFormation(cat,code){
   resetDraft();
   renderFormationList(cat);
   const el=document.getElementById("currentFormation");
-  if(el) el.textContent=`${code} · ${CAT_NAMES[cat]}`;
+  if(el) el.textContent=`${code} · ${getCatName(cat)}`;
   renderMobileFormationInfo();
 }
 function lockFormationDisplay(){
@@ -1680,9 +1695,9 @@ function lockFormationDisplay(){
   if(picker)   picker.style.display="none";
   if(infoCard) infoCard.style.display="block";
   const el=document.getElementById("currentFormation");
-  if(el) el.textContent=`${currentFormation.code} · ${CAT_NAMES[currentFormation.category]}`;
+  if(el) el.textContent=`${currentFormation.code} · ${getCatName(currentFormation&&currentFormation.category)}`;
   const descEl=document.getElementById("formationDesc");
-  if(descEl) descEl.textContent=FORMATION_DESC[currentFormation.code]||"";
+  if(descEl) descEl.textContent=_fDesc||FORMATION_DESC[currentFormation.code]||"";
   const badge=document.getElementById("formationBadge");
   if(badge) badge.style.display="none";
   renderMobileFormationInfo();
@@ -1700,8 +1715,8 @@ function renderMobileFormationInfo(){
     el.innerHTML=``;
   } else {
     el.classList.remove("empty");
-    const desc=FORMATION_DESC[currentFormation.code]||"";
-    el.innerHTML=`<strong>${currentFormation.code} · ${CAT_NAMES[currentFormation.category]}</strong><br>${desc}`;
+    const desc=(window.t?t("fdesc."+currentFormation.code.replace(/-/g,""))||null:null)||FORMATION_DESC[currentFormation.code]||"";
+    el.innerHTML=`<strong>${currentFormation.code} · ${getCatName(currentFormation&&currentFormation.category)}</strong><br>${desc}`;
   }
 }
 
@@ -1710,7 +1725,7 @@ function resetDraft(){
   updateDraftCounter();
   updateConvocadosTable();
   rollBtn.disabled=false;
-  rollBtn.textContent=t("draft.select_player");
+  rollBtn.textContent=(window.t?t("draft.select_player"):null)||"SELECCIONAR JUGADOR";
   selectedPlayer=null;
   playerCardEl.innerHTML="";
 }
@@ -1799,7 +1814,7 @@ function showTeamNameModal(){
   <div class="match-modal">
     <h3>¡Equipo completo!</h3>
     <div class="match-summary">Tu plantilla GOAT está lista. ¡Dale un nombre a tu equipo antes de empezar el torneo! Empezarás en la <strong>Fase de Grupos</strong>: 3 partidos, los 2 primeros del grupo avanzan a octavos de final.</div>
-    <input type="text" id="teamNameInput" maxlength="24" placeholder="Ej: Dream Team FC" class="team-name-input" value="${esc(myTeamName==='TU EQUIPO'?'':myTeamName)}">
+    <input type="text" id="teamNameInput" maxlength="24" placeholder="Ej: Dream Team FC" data-i18n-placeholder="ph.team_name" class="team-name-input" value="${esc(myTeamName==='TU EQUIPO'?'':myTeamName)}">
     <span id="teamNameErr" style="display:none;color:#e74c3c;font-size:11px;margin-top:4px">El nombre del equipo no puede estar vacío.</span>
     <button class="modal-btn" id="teamNameConfirmBtn">CONFIRMAR</button>
   </div>`;
@@ -1905,11 +1920,11 @@ function renderRivalBox(){
       <div class="rival-flag">${flagEmoji(nextOpponent.name,48)}</div>
       <h4>${nextOpponent.name}</h4>
       <div class="rival-power-bar">
-        <div class="rival-power-label">PODER RIVAL</div>
+        <div class="rival-power-label">${window.t?t("rival.power"):"PODER RIVAL"}</div>
         <div class="rival-power-value">${Math.round(power)}</div>
         <div class="rival-power-track"><div class="rival-power-fill" style="width:${Math.min(100,power)}%"></div></div>
       </div>
-      <div class="style-label" style="margin-top:10px">Estilo de juego</div>
+      <div class="style-label" style="margin-top:10px">${window.t?t("rival.style"):"Estilo de juego"}</div>
       <div class="rival-style-tag">${nextOpponent.style}</div>
     </div>`;
   document.getElementById("rivalHint").textContent=hint;
@@ -1925,12 +1940,12 @@ function renderStrategySelector(){
   const hintHTML = estrategaHint
     ? `<div style="background:rgba(201,162,39,.12);border:1px solid var(--gold);padding:8px 12px;margin-bottom:10px;font-size:12px;color:var(--gold);display:flex;align-items:center;gap:8px">
         <span style="font-size:16px">⚡</span>
-        <span><strong>ESTRATEGA:</strong> La mejor contra-táctica es <strong>${estrategaHint.name}</strong></span>
+        <span><strong>${window.t?t("rival.strategist"):"ESTRATEGA: La mejor contra-táctica es"}</strong> <strong>${estrategaHint.name}</strong></span>
        </div>`
     : '';
   el.innerHTML=`
     ${hintHTML}
-    <div class="style-label" style="margin-top:12px">${t("strategy.choose")}</div>
+    <div class="style-label" style="margin-top:12px">${window.t?t("strategy.choose"):"ELIGE TU ESTRATEGIA"}</div>
     <div class="strategy-grid">
       ${STRATEGY_ORDER.map(key=>{
         const s=STRATEGIES[key];
@@ -1955,7 +1970,7 @@ function renderMatchHistory(){
   const el=document.getElementById("matchHistoryTable");
   const prog=document.getElementById("matchProgress");
   if(!el) return;
-  if(prog) prog.textContent=stage==="group"?"FASE DE GRUPOS":(ROUND_NAMES[knockoutRound]||"ELIMINATORIAS");
+  if(prog) prog.textContent=stage==="group"?(window.t?t("comp.groups"):"FASE DE GRUPOS"):(ROUND_NAMES[knockoutRound]||(window.t?t("group.bracket_title"):"ELIMINATORIAS"));
   let html="";
   // Always show group table once there are group matches
   if(groupTable.length && matchResults.some(r=>r.stage==="group")){
@@ -1995,8 +2010,8 @@ function renderGroupTableHTML(){
       <td><strong>${r.pts}</strong></td>
     </tr>`;
   });
-  return `<table class="group-table"><thead><tr><th>#</th><th>Equipo</th><th>PJ</th><th>G</th><th>E</th><th>P</th><th>GF-GC</th><th>Pts</th></tr></thead><tbody>${rows}</tbody></table>
-  <div class="hint-line">${t("comp.r16_advance")}</div>`;
+  return `<table class="group-table"><thead><tr><th>#</th><th>Equipo</th><th>PJ</th><th>G</th><th>E</th><th>P</th><th>${window.t?t("group.gf_gc"):"GF-GC"}</th><th>Pts</th></tr></thead><tbody>${rows}</tbody></table>
+  <div class="hint-line">${window.t?t("comp.r16_advance"):"clasificado para octavos"}</div>`;
 }
 function renderBracketHTML(knockoutMatches){
   let rows="";
@@ -2007,8 +2022,8 @@ function renderBracketHTML(knockoutMatches){
   });
   const nextRound=ROUND_NAMES[knockoutRound];
   return `<div class="hint-line" style="margin-top:10px;font-weight:700">ELIMINATORIAS</div>
-  <table><thead><tr><th>Ronda</th><th>Rival</th><th>Resultado</th><th>Res</th></tr></thead><tbody>${rows}</tbody></table>
-  <div class="hint-line">${nextRound&&stage==="knockout"?(t('comp.next_round')+nextRound):'¡Final completada!'}</div>`;
+  <table><thead><tr><th>${window.t?t("group.bracket_round"):"Ronda"}</th><th>${window.t?t("group.bracket_rival"):"Rival"}</th><th>${window.t?t("group.bracket_result"):"Resultado"}</th><th>Res</th></tr></thead><tbody>${rows}</tbody></table>
+  <div class="hint-line">${nextRound&&stage==="knockout"?((window.t?t("comp.next_round"):"Siguiente ronda: ")+nextRound):"¡Final completada!"}</div>`;
 }
 
 /* ========= MATCH SIMULATION ========= */
@@ -2400,16 +2415,16 @@ function generateMatchSummary(myGoals,oppGoals,rivalName){
   <div class="goals-columns">
     <div class="goals-col">
       <div class="goals-col-header"><span class="flag-emoji goat-emoji">🐐</span> ${myTeamName}</div>
-      <ul class="goals-list">${myGoalLines.length?myGoalLines.join(''):'<li class="no-goal">Sin goles</li>'}</ul>
+      <ul class="goals-list">${myGoalLines.length?myGoalLines.join(''):'<li class="no-goal">'+(window.t?t('match.no_goals'):'Sin goles')+'</li>'}</ul>
     </div>
     <div class="goals-col">
       <div class="goals-col-header">${flagEmoji(rivalName,20)} ${rivalName}</div>
-      <ul class="goals-list">${oppGoalLines.length?oppGoalLines.join(''):'<li class="no-goal">Sin goles</li>'}</ul>
+      <ul class="goals-list">${oppGoalLines.length?oppGoalLines.join(''):'<li class="no-goal">'+(window.t?t('match.no_goals'):'Sin goles')+'</li>'}</ul>
     </div>
   </div>`;
 
-  return `<strong>${t("match.possession")}:</strong> ${myTeamName} ${possession}% · ${rivalName} ${oppPoss}%<br>
-<strong>${t("match.shots")}:</strong> ${shots} – ${oppShots}
+  return `<strong>${window.t?t("match.possession"):"Posesión"}:</strong> ${myTeamName} ${possession}% · ${rivalName} ${oppPoss}%<br>
+<strong>${window.t?t("match.shots"):"Tiros a puerta"}:</strong> ${shots} – ${oppShots}
 ${goalsHTML}`;
 }
 
@@ -2759,9 +2774,9 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
   // Resultado
   const wasShootout=!!penaltyInfo;
   let resultText,resultClass;
-  if(draw){ resultText=t("match.draw"); resultClass="res-draw-tag"; }
+  if(draw){ resultText=window.t?t("match.draw"):"EMPATE"; resultClass="res-draw-tag"; }
   else {
-    resultText=won?(wasShootout?t("match.victory"):t("match.victory")):(wasShootout?t("match.defeat"):t("match.defeat"));
+    resultText=won?(window.t?t("match.victory"):"¡VICTORIA!"):(window.t?t("match.defeat"):"DERROTA");
     resultClass=won?"res-win-tag":"res-lose-tag";
   }
 
@@ -2841,7 +2856,7 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
       if(!htShown){
         htShown=true;
         clockEl.textContent=`45+${inj1}'`;
-        halfEl.textContent=t('match.halftime');
+        halfEl.textContent=window.t?t('match.halftime'):'DESCANSO';
         halfEl.style.background='#a07a00';
         fillEl.style.width='50%';
         addSep(`Descanso — 45+${inj1}'`);
@@ -2852,14 +2867,14 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
     let minute;
     if(frac<HT_S){
       minute=Math.min(45+inj1,Math.floor(frac/HT_S*(45+inj1)));
-      halfEl.textContent='1ª PARTE'; halfEl.style.background='var(--accent)';
+      halfEl.textContent='1ª '+(window.t?t('match.first_half'):'PARTE'); halfEl.style.background='var(--accent)';
       fillEl.style.width=`${(frac/HT_S)*50}%`;
       clockEl.textContent=minute>45?`45+${minute-45}'`:`${minute}'`;
     } else {
       const f2=(frac-HT_E)/(1-HT_E);
       minute=46+Math.floor(f2*(MAX_MIN-46));
       minute=Math.min(minute,MAX_MIN);
-      halfEl.textContent='2ª PARTE'; halfEl.style.background='var(--accent)';
+      halfEl.textContent='2ª '+(window.t?t('match.second_half'):'PARTE'); halfEl.style.background='var(--accent)';
       fillEl.style.width=`${50+f2*50}%`;
       clockEl.textContent=minute>90?`90+${minute-90}'`:`${minute}'`;
     }
@@ -2882,8 +2897,8 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
 
   // ── Fase 3: Prórroga ────────────────────────────────────────────────────
   function startExtraTime(){
-    halfEl.textContent=t('match.extratime'); halfEl.style.background='#7a3a0a';
-    addSep('— '+t('match.extratime')+' —');
+    halfEl.textContent=window.t?t('match.extratime'):'PRÓRROGA'; halfEl.style.background='#7a3a0a';
+    addSep('— '+(window.t?t('match.extratime'):'PRÓRROGA')+' —');
     const ET=4000,ET_S=0.47,ET_E=0.53;
     let etHt=false;
     const etStart=performance.now();
@@ -2893,8 +2908,8 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
         if(!etHt){ etHt=true; clockEl.textContent="105'"; halfEl.textContent=t("match.halftime"); halfEl.style.background='#a07a00'; addSep("Descanso prórroga — 105'"); playSound('whistle'); }
         requestAnimationFrame(tickET); return;
       }
-      if(frac<ET_S){ clockEl.textContent=`${91+Math.floor((frac/ET_S)*14)}'`; halfEl.textContent='PRÓRROGA 1ª'; halfEl.style.background='#7a3a0a'; }
-      else { const f2=(frac-ET_E)/(1-ET_E); clockEl.textContent=`${106+Math.floor(f2*14)}'`; halfEl.textContent='PRÓRROGA 2ª'; halfEl.style.background='#7a3a0a'; }
+      if(frac<ET_S){ clockEl.textContent=`${91+Math.floor((frac/ET_S)*14)}'`; halfEl.textContent=(window.t?t('match.extratime'):'PRÓRROGA')+' 1ª'; halfEl.style.background='#7a3a0a'; }
+      else { const f2=(frac-ET_E)/(1-ET_E); clockEl.textContent=`${106+Math.floor(f2*14)}'`; halfEl.textContent=(window.t?t('match.extratime'):'PRÓRROGA')+' 2ª'; halfEl.style.background='#7a3a0a'; }
       if(frac<1){ requestAnimationFrame(tickET); return; }
       clockEl.textContent="120'"; halfEl.textContent=t("match.extratime")+" FIN"; halfEl.style.background='#555';
       playSound('whistle'); setTimeout(startPenalties,900);
@@ -3060,11 +3075,11 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
     let btnLabel,outcome;
     if(stage==='group'){
       if(groupMatchIdx>=3){btnLabel=t("match.group_results");outcome='groupDone';}
-      else{btnLabel=t('match.next_match');outcome='nextGroupMatch';}
+      else{btnLabel=t('match.next_match')||window.t?t('match.next_match'):'SIGUIENTE PARTIDO';outcome='nextGroupMatch';}
     } else {
-      if(!won){btnLabel='FIN DEL TORNEO';outcome='knockoutLost';}
-      else if(knockoutRound>=ROUND_NAMES.length-1){btnLabel='VER RESUMEN FINAL';outcome='champion';}
-      else{btnLabel='SIGUIENTE RONDA';outcome='nextKnockoutMatch';}
+      if(!won){btnLabel=window.t?t('comp.end_tournament'):'FINALIZAR CAMPEONATO';outcome='knockoutLost';}
+      else if(knockoutRound>=ROUND_NAMES.length-1){btnLabel=window.t?t('comp.end_tournament'):'FINALIZAR CAMPEONATO';outcome='champion';}
+      else{btnLabel=window.t?t('comp.next_round'):window.t?t('group.bracket_next'):'SIGUIENTE RONDA';outcome='nextKnockoutMatch';}
     }
     const btn=document.createElement('button');
     btn.className='modal-btn';
@@ -3135,7 +3150,7 @@ function showMatchModal(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,
   if(draw){
     resultText=t("match.draw"); resultClass="res-draw-tag";
   } else {
-    resultText=won?(wasShootout?"¡VICTORIA EN PENALTIS!":"¡VICTORIA!"):(wasShootout?"DERROTA EN PENALTIS":"DERROTA");
+    resultText=won?(window.t?t("match.victory"):"¡VICTORIA!"):(window.t?t("match.defeat"):"DERROTA");
     resultClass=won?"res-win-tag":"res-lose-tag";
   }
   playSound(won||draw?'victory':'defeat');
@@ -3187,9 +3202,9 @@ function showMatchModal(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,
     if(groupMatchIdx>=3) btnLabel=t("match.group_results"), outcome="groupDone";
     else btnLabel=t("match.next_match"), outcome="nextGroupMatch";
   } else { // knockout
-    if(!won){ btnLabel="FIN DEL TORNEO"; outcome="knockoutLost"; }
-    else if(knockoutRound>=ROUND_NAMES.length-1){ btnLabel="VER RESUMEN FINAL"; outcome="champion"; }
-    else { btnLabel="SIGUIENTE RONDA"; outcome="nextKnockoutMatch"; }
+    if(!won){ btnLabel=window.t?t('end.tournament_done'):'FIN DEL TORNEO'; outcome="knockoutLost"; }
+    else if(knockoutRound>=ROUND_NAMES.length-1){ btnLabel=window.t?t('end.view_summary'):'VER RESUMEN FINAL'; outcome="champion"; }
+    else { btnLabel=window.t?t('group.bracket_next'):'SIGUIENTE RONDA'; outcome="nextKnockoutMatch"; }
   }
 
   document.getElementById("matchOverlay").innerHTML=`
@@ -3273,7 +3288,7 @@ function showGroupResultsPopup(){
         <td>${r.gf}-${r.ga}</td><td><strong>${r.pts}</strong></td>
       </tr>`;
     });
-    wrap.innerHTML=`<table class="group-table"><thead><tr><th>#</th><th>Equipo</th><th>PJ</th><th>G</th><th>E</th><th>P</th><th>GF-GC</th><th>Pts</th></tr></thead><tbody>${rows}</tbody></table>`;
+    wrap.innerHTML=`<table class="group-table"><thead><tr><th>#</th><th>Equipo</th><th>PJ</th><th>G</th><th>E</th><th>P</th><th>${window.t?t("group.gf_gc"):"GF-GC"}</th><th>Pts</th></tr></thead><tbody>${rows}</tbody></table>`;
     playSound('reveal');
     i++;
     if(i<sorted.length){
@@ -3318,7 +3333,7 @@ function showEliminatedGroupStage(){
       <div class="victory-score-label">PUNTUACIÓN</div>
       <div class="victory-score-num" style="font-size:48px">${sc.total}</div>
     </div>
-    <button class="modal-btn danger" onclick="location.reload()">NUEVA PARTIDA</button>
+    <button class="modal-btn danger" onclick="location.reload()">${window.t?t('end.new_game'):'NUEVA PARTIDA'}</button>
   </div>`;
 }
 function showEliminated(){
@@ -3338,14 +3353,14 @@ function showEliminated(){
     <h3>${round?round.toUpperCase():"ELIMINATORIAS"}</h3>
     <div class="match-result-tag res-lose-tag">ELIMINADO EN ${round?round.toUpperCase():"ELIMINATORIAS"}</div>
     <div class="victory-score-wrap" style="border:1px solid #333;margin:12px 0;padding:12px">
-      <div class="victory-score-label">PUNTUACIÓN FINAL</div>
+      <div class="victory-score-label">${window.t?t('end.final_score'):'PUNTUACIÓN FINAL'}</div>
       <div class="victory-score-num" style="font-size:52px">${sc.total}</div>
       <div class="victory-grade" style="color:#aaa;font-size:16px">${grade}</div>
     </div>
     ${slots>0?`<p style="font-size:12px;color:var(--gold);margin-bottom:8px">🔗 Run Encadenada: conserva ${slots} jugador${slots>1?"es":""} para el siguiente intento</p>`:""}
     <div style="display:flex;gap:8px;flex-wrap:wrap">
       ${chainBtn}
-      <button class="modal-btn danger" onclick="location.reload()">NUEVA PARTIDA</button>
+      <button class="modal-btn danger" onclick="location.reload()">${window.t?t('end.new_game'):'NUEVA PARTIDA'}</button>
     </div>
   </div>`;
 }
@@ -3428,7 +3443,7 @@ function showVictory(){
   <div class="match-modal victory-modal">
     <div class="match-result-tag res-win-tag">${t("comp.champion")}</div>
     <div class="victory-score-wrap">
-      <div class="victory-score-label">PUNTUACIÓN FINAL</div>
+      <div class="victory-score-label">${window.t?t('end.final_score'):'PUNTUACIÓN FINAL'}</div>
       <div class="victory-score-num">${sc.total}</div>
       <div class="victory-grade" style="color:${gradeColor}">${grade}</div>
     </div>
@@ -3439,7 +3454,7 @@ function showVictory(){
       <div class="vb-row"><span>Gestión de moral (${teamMorale>0?"+":""}${teamMorale})</span><span class="vb-pts">${sc.breakdown.morale} pts</span></div>
       <div class="vb-row"><span>Portería a cero (${sc.cleanSheets} partidos)</span><span class="vb-pts">${sc.breakdown.cleanSheets} pts</span></div>
       <div class="vb-row"><span>Jugadores en posición ★ (${sc.stars}/11)</span><span class="vb-pts">${sc.breakdown.stars} pts</span></div>
-      <div class="vb-row"><span>Rachas de goleador</span><span class="vb-pts">${sc.breakdown.streaks} pts</span></div>
+      <div class="vb-row"><span>${window.t?t('end.scorer_streaks'):'Rachas de goleador'}</span><span class="vb-pts">${sc.breakdown.streaks} pts</span></div>
       ${sc.penWins?`<div class="vb-row"><span>Victorias en penaltis (${sc.penWins})</span><span class="vb-pts">${sc.breakdown.penalties} pts</span></div>`:''}
     </div>
     <button class="modal-btn" onclick="window._launchGoldenAndReload()">${t("comp.end_tournament")}</button>
@@ -3470,23 +3485,23 @@ function showGoldenTicket(){
     <div style="padding:26px 22px 22px;">
       <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:2px;">
         <span style="font-size:18px">🏆</span>
-        <span style="font-family:Bebas Neue,Impact,sans-serif;font-size:22px;letter-spacing:2px;color:#f0c419;text-shadow:0 0 12px rgba(240,196,25,.6)">TICKET GOAT</span>
+        <span style="font-family:Bebas Neue,Impact,sans-serif;font-size:22px;letter-spacing:2px;color:#f0c419;text-shadow:0 0 12px rgba(240,196,25,.6)">${window.t?t('end.ticket_goat'):'TICKET GOAT'}</span>
         <span style="font-size:18px">🏆</span>
       </div>
       <div style="text-align:center;font-size:10px;letter-spacing:3px;color:rgba(240,196,25,.6);text-transform:uppercase;margin-bottom:16px;font-weight:700">Premio por ganar el Mundial</div>
       <div style="height:1px;background:repeating-linear-gradient(90deg,rgba(240,196,25,.5) 0 6px,transparent 6px 12px);margin:14px 0"></div>
       <div style="display:flex;justify-content:space-between;font-size:9px;letter-spacing:1px;color:rgba(240,196,25,.4);text-transform:uppercase;margin-bottom:14px;">
-        <span>Nº <b style="color:rgba(240,196,25,.7)">${serial}</b></span><span>EDICIÓN ORO</span>
+        <span>${window.t?t("ticket.serial"):"Nº"} <b style="color:rgba(240,196,25,.7)">${serial}</b></span><span>${window.t?t("ticket.edition_gold"):"EDICIÓN ORO"}</span>
       </div>
       <div style="text-align:center;margin-bottom:18px;">
-        <div style="font-size:9px;letter-spacing:3px;text-transform:uppercase;color:rgba(240,196,25,.5);margin-bottom:4px;font-weight:700">Puntos acumulados</div>
+        <div style="font-size:9px;letter-spacing:3px;text-transform:uppercase;color:rgba(240,196,25,.5);margin-bottom:4px;font-weight:700">${window.t?t("ticket.acc_pts_gold"):"Puntos acumulados"}</div>
         <div id="gtPrize" style="font-family:'Bebas Neue',Impact,sans-serif;font-size:40px;color:#f0c419;text-shadow:0 0 12px rgba(240,196,25,.4);">0 <span style="font-size:20px;opacity:.85">PTS</span></div>
       </div>
       <div id="gtGrid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px;"></div>
       <div id="gtDots" style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
-        <span style="font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:rgba(240,196,25,.5);font-weight:700;margin-right:4px;">Casillas rascadas</span>
+        <span style="font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:rgba(240,196,25,.5);font-weight:700;margin-right:4px;">${window.t?t('ticket.scratched'):'Casillas rascadas'}</span>
       </div>
-      <button id="gtCashBtn" disabled onclick="gtCashOut(false)" style="width:100%;border:none;border-radius:0;font-family:'Bebas Neue',Impact,sans-serif;font-size:22px;letter-spacing:2px;padding:14px;cursor:pointer;background:linear-gradient(180deg,#ffe27a,#f0c419 55%,#c9960c);color:#08160d;box-shadow:0 6px 0 #8a6a08;opacity:.35;pointer-events:none;">PLANTARSE</button>
+      <button id="gtCashBtn" disabled onclick="gtCashOut(false)" style="width:100%;border:none;border-radius:0;font-family:'Bebas Neue',Impact,sans-serif;font-size:22px;letter-spacing:2px;padding:14px;cursor:pointer;background:linear-gradient(180deg,#ffe27a,#f0c419 55%,#c9960c);color:#08160d;box-shadow:0 6px 0 #8a6a08;opacity:.35;pointer-events:none;">${window.t?t("ticket.cashout"):"PLANTARSE"}</button>
       <div style="text-align:center;font-size:9px;color:rgba(240,196,25,.35);margin-top:14px;letter-spacing:.5px;line-height:1.5">
         Solo cabras 🐐 (+3 pts) y una casilla ❌.<br>Premio especial por ganar el Mundial. ¡No se acumula!
       </div>
@@ -3518,7 +3533,7 @@ function showGoldenTicket(){
     const res=document.createElement('div');
     res.style.cssText='position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:2px;font-family:"Bebas Neue",Impact,sans-serif;background:#1a1200;';
     if(data.type==='bomb'){
-      res.innerHTML=`<span style="font-size:26px">❌</span><span style="font-size:13px;color:#f87171;letter-spacing:.5px">PIERDE</span>`;
+      res.innerHTML=`<span style="font-size:26px">❌</span><span style="font-size:13px;color:#f87171;letter-spacing:.5px">${window.t?t("end.lose"):"PIERDE"}</span>`;
     } else {
       res.innerHTML=`<span style="font-size:26px">🐐</span><span style="font-size:13px;color:#f0c419;letter-spacing:.5px">+4 PTS</span>`;
     }
@@ -3605,10 +3620,10 @@ function showGoldenTicket(){
     <div style="background:linear-gradient(180deg,#3a2a00,#1a1200);border-radius:0;padding:30px 26px;text-align:center;max-width:300px;width:90%;box-shadow:0 0 0 2px #f0c419,0 30px 60px -10px rgba(0,0,0,.9);animation:popIn .3s cubic-bezier(.2,1.4,.4,1)">
       <style>@keyframes popIn{0%{transform:scale(.7);opacity:0}100%{transform:scale(1);opacity:1}}</style>
       <span style="font-size:54px;display:block;margin-bottom:10px">${win?(auto?'🏆':'💰'):'❌'}</span>
-      <h2 style="font-family:'Bebas Neue',Impact,sans-serif;font-size:26px;letter-spacing:1px;color:${win?'#f0c419':'#f87171'};margin-bottom:6px">${win?(auto?'¡TICKET PREMIADO!':'¡TICKET PREMIADO!'):'TICKET ANULADO'}</h2>
+      <h2 style="font-family:'Bebas Neue',Impact,sans-serif;font-size:26px;letter-spacing:1px;color:${win?'#f0c419':'#f87171'};margin-bottom:6px">${win?(window.t?t('ticket.win'):'¡TICKET PREMIADO!'):(window.t?t('ticket.lose'):'TICKET ANULADO')}</h2>
       <p style="font-size:12px;color:rgba(240,196,25,.7);line-height:1.5;margin-bottom:12px">${win?'Tus puntos de campeón han sido guardados.':'La casilla mala te ha quitado los puntos. ¡Casi!'}</p>
       <div style="font-family:'Bebas Neue',Impact,sans-serif;font-size:34px;color:${win?'#f0c419':'#f87171'};margin-bottom:18px">${(win && pts>0)?'+'+pts+' PTS':win?'0 PTS':''}</div>
-      <button onclick="gtClose(${win?pts:0})" style="width:100%;border:none;border-radius:0;padding:12px;font-family:'Bebas Neue',Impact,sans-serif;font-size:15px;letter-spacing:1.5px;background:linear-gradient(180deg,#ffe27a,#f0c419 55%,#c9960c);color:#08160d;cursor:pointer;">CERRAR</button>
+      <button onclick="gtClose(${win?pts:0})" style="width:100%;border:none;border-radius:0;padding:12px;font-family:'Bebas Neue',Impact,sans-serif;font-size:15px;letter-spacing:1.5px;background:linear-gradient(180deg,#ffe27a,#f0c419 55%,#c9960c);color:#08160d;cursor:pointer;">window.t?t('auth.close'):'CERRAR'</button>
     </div>`;
   }
 
@@ -3681,10 +3696,10 @@ function renderWeather(){
   if(!el||!currentWeather) return;
   el.style.display="flex";
   el.innerHTML=`
-    <span class="weather-icon">${currentWeather.label.split(' ')[0]}</span>
+    <span class="weather-icon">${getWeatherLabel(currentWeather).label.split(' ')[0]}</span>
     <div class="weather-block">
-      <span>${currentWeather.label.slice(currentWeather.label.indexOf(' ')+1)}</span>
-      <span class="weather-desc">${currentWeather.desc}</span>
+      <span>${getWeatherLabel(currentWeather).label.slice(getWeatherLabel(currentWeather).label.indexOf(' ')+1)}</span>
+      <span class="weather-desc">${getWeatherLabel(currentWeather).desc}</span>
     </div>`;
 }
 function weatherStatModifier(){
@@ -3732,16 +3747,16 @@ function getStreakBadge(playerName){
   const s=scorerStreaks[playerName]||0;
   if(s<=0) return "";
   const fire="🔥".repeat(Math.min(s,MAX_STREAK_BONUS));
-  return `<span class="streak-badge" title="Racha Goleadora">${fire}+${Math.min(s,MAX_STREAK_BONUS)}</span>`;
+  return `<span class="streak-badge" title="${window.t?t('player.streak_cap'):'Racha Goleadora'}">${fire}+${Math.min(s,MAX_STREAK_BONUS)}</span>`;
 }
 function getCardBadge(p){
   // Shows the player's active card status: a single yellow on file (not
   // yet suspended), or an active suspension (yellow2/double_yellow/red).
   if(p.suspended){
-    return `<span class="card-badge card-badge-suspended" title="Sancionado este partido">🚫</span>`;
+    return `<span class="card-badge card-badge-suspended" title="${window.t?t('player.suspended_match'):'Sancionado este partido'}">🚫</span>`;
   }
   if((p.yellowCount||0)>=1){
-    return `<span class="card-badge card-badge-yellow" title="Tarjeta amarilla acumulada">🟨</span>`;
+    return `<span class="card-badge card-badge-yellow" title="${window.t?t('player.yellow_acc'):'Tarjeta amarilla'}">🟨</span>`;
   }
   return "";
 }
@@ -3799,7 +3814,7 @@ function showPressEventModal(event, callback){
     window._pressAnswered=true;
     document.getElementById("matchOverlay").innerHTML="";
     pendingPrediction=null; // no answer given — no prediction to resolve later
-    showToast("No respondiste a tiempo — la prensa se queda sin declaraciones.", "toast-neutral");
+    showToast(window.t?t('press.no_answer'):'No respondiste a tiempo — la prensa se queda sin declaraciones.', "toast-neutral");
     if(window._pressCallback) window._pressCallback();
   }, DURATION);
 }
@@ -3868,7 +3883,7 @@ function showChainRunModal(){
   const allPlayers=[...usedPlayers,...bench];
   document.getElementById("matchOverlay").innerHTML=`
   <div class="chain-modal">
-    <h3>RUN ENCADENADA</h3>
+    <h3>${window.t?t('end.chained_run'):'RUN ENCADENADA'}</h3>
     <p class="chain-subtitle">Has llegado a ${bestRoundReached>=3?"Semifinales":bestRoundReached>=2?"Cuartos de Final":"Octavos de Final"}. Puedes conservar <strong>${slots} jugador${slots>1?"es":""}</strong> para el siguiente intento. Elige sabiamente.</p>
     <div class="chain-player-grid" id="chainPlayerGrid">
       ${allPlayers.map((p,i)=>`
@@ -3880,7 +3895,7 @@ function showChainRunModal(){
     </div>
     <div class="chain-actions">
       <button class="modal-btn" id="chainConfirmBtn" disabled onclick="confirmChainRun()">CONTINUAR CON ${slots} JUGADOR${slots>1?"ES":""}</button>
-      <button class="modal-btn danger" onclick="location.reload()">NUEVA PARTIDA</button>
+      <button class="modal-btn danger" onclick="location.reload()">${window.t?t('end.new_game'):'NUEVA PARTIDA'}</button>
     </div>
   </div>`;
   window._chainSelected=[];
@@ -4093,7 +4108,7 @@ function buildLedMessages(){
 
   // Weather
   if(currentWeather && currentWeather.id!=='cloudy'){
-    msgs.push(`CLIMA  ${currentWeather.label.replace(/[^\w\s]/g,'').trim().toUpperCase()}`);
+    msgs.push(`CLIMA  ${getWeatherLabel(currentWeather).label.replace(/[^\w\s]/g,'').trim().toUpperCase()}`);
   }
 
   // Scorer streaks
@@ -4145,7 +4160,7 @@ function quickBuild(){
   if(phase==="draft"&&draftedCount===0) lockFormationDisplay();
   revealPreDraftBoxes();
   const btn=document.getElementById("quickBuildWrap");
-  if(btn){ btn.disabled=true; btn.textContent="Generando..."; }
+  if(btn){ btn.disabled=true; btn.textContent=window.t?t("draft.generating"):"Generando..."; }
 
   // Always show the spin animation in the center/pitch area, visible on both mobile and desktop
   // We overlay a temporary fullscreen-ish modal so scroll is irrelevant
@@ -4282,7 +4297,7 @@ function _executeQuickBuild(){
   document.getElementById("benchSection").style.display="block";
   startMatchPhase();
   startLedLoop();
-  showToast("¡Equipo generado! OVR "+baseTeamOVR, "toast-pos");
+  showToast((window.t?t('toast.team_generated'):'¡Equipo generado! OVR ')+baseTeamOVR, "toast-pos");
 }
 
 /* ========= TOP BAR: AUDIO & THEME TOGGLES ========= */
@@ -4379,11 +4394,11 @@ function initFirebaseAuth(){
   }
   function vEmail(v){
     if(!v) return "Correo obligatorio.";
-    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) return "Formato de correo no válido.";
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) return window.t?t("auth.err.email_format"):"Formato de correo no válido.";
     return "";
   }
   function vPassword(v){
-    if(!v) return "Contraseña obligatoria.";
+    if(!v) return window.t?t("auth.err.password_required"):"Contraseña obligatoria.";
     if(v.length<8) return "Mínimo 8 caracteres.";
     return "";
   }
@@ -4404,15 +4419,15 @@ function initFirebaseAuth(){
     btn.textContent=loading?"...":(id==="loginSubmitBtn"?"ENTRAR":"CREAR CUENTA");
   }
   function fbErr(code){
-    return({"auth/email-already-in-use":"Este correo ya está registrado.",
-      "auth/invalid-email":"Correo no válido.",
-      "auth/weak-password":"Contraseña demasiado débil.",
-      "auth/user-not-found":"Usuario o contraseña incorrectos.",
-      "auth/wrong-password":"Usuario o contraseña incorrectos.",
-      "auth/invalid-credential":"Usuario o contraseña incorrectos.",
-      "auth/too-many-requests":"Demasiados intentos. Espera un momento.",
-      "auth/network-request-failed":"Sin conexión. Comprueba tu red.",
-    })[code]||"Error inesperado. Inténtalo de nuevo.";
+    return({"auth/email-already-in-use":window.t?t("auth.err.email_in_use"):"Este correo ya está registrado.",
+      "auth/invalid-email":window.t?t("auth.err.invalid_email"):"Correo no válido.",
+      "auth/weak-password":window.t?t("auth.err.weak_password"):"Contraseña demasiado débil.",
+      "auth/user-not-found":window.t?t("auth.err.user_not_found"):"Usuario o contraseña incorrectos.",
+      "auth/wrong-password":window.t?t("auth.err.user_not_found"):"Usuario o contraseña incorrectos.",
+      "auth/invalid-credential":window.t?t("auth.err.user_not_found"):"Usuario o contraseña incorrectos.",
+      "auth/too-many-requests":window.t?t("auth.err.too_many"):"Demasiados intentos. Espera un momento.",
+      "auth/network-request-failed":window.t?t("auth.err.no_connection"):"Sin conexión. Comprueba tu red.",
+    })[code]||(window.t?t("auth.err.unexpected"):"Error inesperado. Inténtalo de nuevo.");
   }
 
   /* ─── MODAL ─── */
@@ -4478,7 +4493,7 @@ function initFirebaseAuth(){
       let email=identifier;
       if(!identifier.includes("@")){
         const snap=await db.collection("users").where("username_lower","==",identifier.toLowerCase()).get();
-        if(snap.empty){setErr("loginIdentifierErr","Usuario no encontrado.");setBtnLoading("loginSubmitBtn",false);return;}
+        if(snap.empty){setErr("loginIdentifierErr",window.t?t("auth.err.user_lookup"):"Usuario no encontrado.");setBtnLoading("loginSubmitBtn",false);return;}
         email=snap.docs[0].data().email;
       }
       await auth.signInWithEmailAndPassword(email,pass);
@@ -4514,6 +4529,10 @@ function initFirebaseAuth(){
       const data=snap.exists?snap.data():{};
       window.preferredTeamName=data.preferredTeamName||"";
       window.useFixedTeamName=!!data.useFixedTeamName;
+      if(data.lang&&(data.lang==='es'||data.lang==='en')){
+        window.LANG=data.lang;
+        try{localStorage.setItem('g2g_lang',data.lang);}catch(e){}
+      }
       // Sincronizar nombre del equipo para el contador de convocados
       if(window.preferredTeamName) window._currentTeamName=window.preferredTeamName.toUpperCase();
       // Cargar idioma guardado
@@ -4624,6 +4643,8 @@ function initFirebaseAuth(){
           newCb.addEventListener('change',function(){
             window.CHEATS_ACTIVE=this.checked;
             updateTicketBadge(window.CHEATS_ACTIVE?3:undefined);
+            const lw=document.getElementById('langSelectorWrap');
+            if(lw) lw.style.display=window.CHEATS_ACTIVE?'block':'none';
             // Mostrar selector de idioma solo con cheats activos
             const langWrap=$id('langSelectorWrap');
             if(langWrap) langWrap.style.display=window.CHEATS_ACTIVE?'block':'none';
@@ -4654,7 +4675,7 @@ function initFirebaseAuth(){
     const useFixedTeamName=!!(checkbox&&checkbox.checked);
     if(useFixedTeamName&&!preferredTeamName){
       if(checkbox) checkbox.checked=false; // can't activate without a name
-      showToast("Escribe un nombre de equipo antes de activar la opción.", "toast-neg");
+      showToast(window.t?t("toast.name_required"):"Escribe un nombre de equipo antes de activar la opción.", "toast-neg");
       return;
     }
     try{
@@ -4668,7 +4689,7 @@ function initFirebaseAuth(){
       if(!silent) showToast(useFixedTeamName?"Nombre fijo activado.":"Preferencia guardada.", "toast-pos");
     }catch(e){
       console.warn("saveTeamNamePreference error:", e);
-      showToast("No se pudo guardar la preferencia.", "toast-neg");
+      showToast(window.t?t("toast.save_error"):"No se pudo guardar la preferencia.", "toast-neg");
     }
   };
 
@@ -4781,14 +4802,14 @@ function initFirebaseAuth(){
   window.loadRanking=async function(targetId){
     const el=document.getElementById(targetId||'rankingTable');
     if(!el) return;
-    el.innerHTML='<p class="ranking-loading">Cargando ranking...</p>';
+    el.innerHTML='<p class="ranking-loading">'+(window.t?t('ranking.loading_msg'):'Cargando ranking...')+'</p>';
     try{
       const snap=await db.collection("scores")
         .orderBy("score","desc")
         .limit(50)
         .get();
       if(snap.empty){
-        el.innerHTML='<p class="ranking-loading">Aún no hay puntuaciones. ¡Sé el primero!</p>';
+        el.innerHTML='<p class="ranking-loading">'+(window.t?t('ranking.empty'):'Aún no hay puntuaciones. ¡Sé el primero!')+'</p>';
         return;
       }
       let rows=''; let pos=0;
@@ -4808,13 +4829,13 @@ function initFirebaseAuth(){
       });
       el.innerHTML=rows
         ?`<table class="ranking-table">
-            <thead><tr><th>#</th><th>JUGADOR / EQUIPO</th><th style="text-align:right">PTS</th></tr></thead>
+            <thead><tr><th>#</th><th>${window.t?t('ranking.col_player'):'JUGADOR / EQUIPO'}</th><th style="text-align:right">PTS</th></tr></thead>
             <tbody>${rows}</tbody>
           </table>`
-        :'<p class="ranking-loading">Aún no hay puntuaciones. ¡Juega y sé el primero!</p>';
+        : '<p class="ranking-loading">'+(window.t?t('ranking.empty_user'):'Aún no hay puntuaciones. ¡Juega y sé el primero!')+'</p>';
     }catch(e){
       console.warn("Ranking load error:", e);
-      el.innerHTML='<p class="ranking-loading">Error al cargar el ranking.</p>';
+      el.innerHTML='<p class="ranking-loading">'+(window.t?t('ranking.error'):'Error al cargar el ranking.')+'</p>';
     }
   };
 
@@ -5161,21 +5182,21 @@ window.openTicketOverlay = function() {
 
   var auth = window._fbAuth;
   if (!auth) {
-    mt.innerHTML = '<div style="padding:40px;color:#f87171;text-align:center">Firebase no disponible. Recarga la página.</div>';
+    mt.innerHTML = '<div style="padding:40px;color:#f87171;text-align:center">'+(window.t?t('auth.firebase_error'):'Firebase no disponible. Recarga la página.')+'</div>';
     return;
   }
 
   var user = auth.currentUser;
   if (!user) {
-    mt.innerHTML = "<div style='text-align:center;color:#ccc;padding:40px 20px'><div style='font-size:48px'>🔒</div><div style='font-size:20px;color:#f0c419;margin:10px 0;font-family:Bebas Neue,sans-serif'>INICIA SESIÓN</div><p style='font-size:12px;color:#aaa'>Necesitas cuenta para usar los tickets.</p><button onclick='window.closeTicketOverlay()' style='margin-top:16px;border:1px solid #444;background:none;color:#aaa;padding:8px 20px;cursor:pointer;font-size:13px'>CERRAR</button></div>";
+    mt.innerHTML = "<div style='text-align:center;color:#ccc;padding:40px 20px'><div style='font-size:48px'>🔒</div><div style='font-size:20px;color:#f0c419;margin:10px 0;font-family:Bebas Neue,sans-serif'>'+( window.t?t('auth.login_title'):'INICIA SESIÓN')+'</div><p style='font-size:12px;color:#aaa'>Necesitas cuenta para usar los tickets.</p><button onclick='window.closeTicketOverlay()' style='margin-top:16px;border:1px solid #444;background:none;color:#aaa;padding:8px 20px;cursor:pointer;font-size:13px'>CERRAR</button></div>";
     return;
   }
 
-  mt.innerHTML = '<div style="text-align:center;padding:40px;color:#aaa">Cargando...</div>';
+  mt.innerHTML = '<div style="text-align:center;padding:40px;color:#aaa">'+(window.t?t('ticket.loading'):'Cargando...')+'</div>';
 
   getTicketState().then(function(state) {
     if (!state) {
-      mt.innerHTML = '<div style="padding:40px;color:#f87171;text-align:center">Error cargando tickets.</div>';
+      mt.innerHTML = '<div style="padding:40px;color:#f87171;text-align:center">'+(window.t?t('ticket.load_error'):'Error cargando tickets.')+'</div>';
       return;
     }
     var updated = computeCurrentTickets(state.count, state.lastChecked);
@@ -5195,10 +5216,10 @@ window.openTicketOverlay = function() {
       // Diseño de modal de perfil con temporizador en vivo
       mt.innerHTML = `<div class="auth-modal" style="max-width:340px;text-align:center;padding:28px 24px">
         <div style="font-size:48px;margin-bottom:8px">🎟️</div>
-        <div style="font-family:'Bebas Neue',Impact,sans-serif;font-size:22px;letter-spacing:2px;color:var(--gold);margin-bottom:20px">SIN TICKETS</div>
-        <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px;letter-spacing:1px;text-transform:uppercase">Próximo ticket en</div>
+        <div style="font-family:'Bebas Neue',Impact,sans-serif;font-size:22px;letter-spacing:2px;color:var(--gold);margin-bottom:20px">${window.t?t('ticket.no_tickets'):'SIN TICKETS'}</div>
+        <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px;letter-spacing:1px;text-transform:uppercase">${window.t?t('ticket.next_in'):'Próximo ticket en'}</div>
         <div id="ticketCountdown" style="font-family:'Bebas Neue',Impact,sans-serif;font-size:48px;color:#fff;letter-spacing:4px;margin-bottom:24px">--:--:--</div>
-        <button onclick="window.closeTicketOverlay()" style="width:100%;border:none;background:#c0392b;color:#fff;padding:12px;cursor:pointer;font-family:'Bebas Neue',Impact,sans-serif;font-size:16px;letter-spacing:1.5px;transition:.15s" onmouseover="this.style.background='#e74c3c'" onmouseout="this.style.background='#c0392b'">CERRAR</button>
+        <button onclick="window.closeTicketOverlay()" style="width:100%;border:none;background:#c0392b;color:#fff;padding:12px;cursor:pointer;font-family:'Bebas Neue',Impact,sans-serif;font-size:16px;letter-spacing:1.5px;transition:.15s" onmouseover="this.style.background='#e74c3c'" onmouseout="this.style.background='#c0392b'">window.t?t('auth.close'):'CERRAR'</button>
       </div>`;
       // Arrancar cuenta atrás en vivo
       function _tickCountdown(){
@@ -5260,23 +5281,23 @@ function buildTicketInMount(mount, ticketCount, lastRegen, currentScratchPts){
         <span style="font-family:'Bebas Neue',Impact,sans-serif;font-size:22px;letter-spacing:2px;color:#f0c419;text-shadow:0 2px 0 rgba(0,0,0,.4)">GOAL2GOAT</span>
         <span style="font-size:18px">🐐</span>
       </div>
-      <div style="text-align:center;font-size:10px;letter-spacing:3px;color:rgba(246,241,227,.55);text-transform:uppercase;margin-bottom:16px;font-weight:700">Ticket de GoatPoints</div>
+      <div style="text-align:center;font-size:10px;letter-spacing:3px;color:rgba(246,241,227,.55);text-transform:uppercase;margin-bottom:16px;font-weight:700">${window.t?t('ticket.subtitle'):'Ticket de GoatPoints'}</div>
       <div style="height:1px;background:repeating-linear-gradient(90deg,rgba(240,196,25,.35) 0 6px,transparent 6px 12px);margin:14px 0"></div>
       <div style="display:flex;justify-content:space-between;font-size:9px;letter-spacing:1px;color:rgba(246,241,227,.4);text-transform:uppercase;margin-bottom:14px;">
-        <span>Nº <b style="color:rgba(246,241,227,.65)">${serial}</b></span>
-        <span>Boleto ${TICKET_MAX+1-ticketCount}/${TICKET_MAX}</span>
+        <span>${window.t?t("ticket.serial"):"Nº"} <b style="color:rgba(246,241,227,.65)">${serial}</b></span>
+        <span>${window.t?t("ticket.boleto_n"):"Boleto"} ${TICKET_MAX+1-ticketCount}/${TICKET_MAX}</span>
       </div>
       <div style="text-align:center;margin-bottom:18px;">
-        <div style="font-size:9px;letter-spacing:3px;text-transform:uppercase;color:rgba(246,241,227,.5);margin-bottom:4px;font-weight:700">Puntos acumulados en el boleto</div>
+        <div style="font-size:9px;letter-spacing:3px;text-transform:uppercase;color:rgba(246,241,227,.5);margin-bottom:4px;font-weight:700">${window.t?t("ticket.acc_pts"):"Puntos acumulados en el boleto"}</div>
         <div id="tPrize" style="font-family:'Bebas Neue',Impact,sans-serif;font-size:40px;color:#f0c419;text-shadow:0 3px 0 rgba(0,0,0,.35);">0 <span style="font-size:20px;opacity:.85">PTS</span></div>
       </div>
       <div class="scratch-grid" id="tGrid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px;"></div>
       <div id="tDots" style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
-        <span style="font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:rgba(246,241,227,.5);font-weight:700;margin-right:4px;">Casillas rascadas</span>
+        <span style="font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:rgba(246,241,227,.5);font-weight:700;margin-right:4px;">${window.t?t('ticket.scratched'):'Casillas rascadas'}</span>
       </div>
       <div style="margin-bottom:18px;">
         <div style="display:flex;justify-content:space-between;font-size:9px;letter-spacing:1px;text-transform:uppercase;color:rgba(246,241,227,.5);font-weight:700;margin-bottom:5px;">
-          <span>Riesgo de la próxima casilla</span>
+          <span>${window.t?t("ticket.risk_label"):"Riesgo de la próxima casilla"}</span>
           <span style="color:#d94f3d;font-weight:800" id="tRiskVal">8%</span>
         </div>
         <div style="height:6px;border-radius:4px;background:rgba(246,241,227,.12);overflow:hidden;">
@@ -5284,7 +5305,7 @@ function buildTicketInMount(mount, ticketCount, lastRegen, currentScratchPts){
         </div>
       </div>
       <div style="display:flex;flex-direction:column;gap:8px;">
-        <button id="tCashBtn" disabled onclick="ticketCashOut(false)" style="border:none;border-radius:0;font-family:'Bebas Neue',Impact,sans-serif;font-size:22px;letter-spacing:2px;padding:14px;cursor:pointer;background:linear-gradient(180deg,#ffe27a,#f0c419 55%,#c9960c);color:#08160d;box-shadow:0 6px 0 #8a6a08,0 10px 18px -6px rgba(0,0,0,.5);opacity:.35;pointer-events:none;">PLANTARSE</button>
+        <button id="tCashBtn" disabled onclick="ticketCashOut(false)" style="border:none;border-radius:0;font-family:'Bebas Neue',Impact,sans-serif;font-size:22px;letter-spacing:2px;padding:14px;cursor:pointer;background:linear-gradient(180deg,#ffe27a,#f0c419 55%,#c9960c);color:#08160d;box-shadow:0 6px 0 #8a6a08,0 10px 18px -6px rgba(0,0,0,.5);opacity:.35;pointer-events:none;">${window.t?t("ticket.cashout"):"PLANTARSE"}</button>
 
       </div>
       
@@ -5305,7 +5326,7 @@ function buildTicketInMount(mount, ticketCount, lastRegen, currentScratchPts){
     res.style.cssText='position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:2px;font-family:"Bebas Neue",Impact,sans-serif;background:#fff;';
     if(data.type==='bomb'){
       res.style.background='#fff0ee';
-      res.innerHTML=`<span style="font-size:26px">❌</span><span style="font-size:13px;color:#d94f3d;letter-spacing:.5px">PIERDE</span>`;
+      res.innerHTML=`<span style="font-size:26px">❌</span><span style="font-size:13px;color:#d94f3d;letter-spacing:.5px">${window.t?t("end.lose"):"PIERDE"}</span>`;
     } else if(data.type==='star'){
       res.style.background='#fff9e0';
       res.innerHTML=`<span style="font-size:26px">🐐</span><span style="font-size:13px;color:#0c2e1c;letter-spacing:.5px">+4 PTS</span>`;
@@ -5356,8 +5377,8 @@ function buildTicketInMount(mount, ticketCount, lastRegen, currentScratchPts){
     if(riskVal) riskVal.textContent=risk+'%';
     if(riskFill) riskFill.style.width=risk+'%';
     if(riskBtn){
-      if(gameOver) riskBtn.textContent='BOLETO CERRADO';
-      else if(scratchedCount>=GRID_SIZE) riskBtn.textContent='BOLETO COMPLETO';
+      if(gameOver) riskBtn.textContent=window.t?t('ticket.closed'):'BOLETO CERRADO';
+      else if(scratchedCount>=GRID_SIZE) riskBtn.textContent=window.t?t('ticket.complete'):'BOLETO COMPLETO';
       else if(scratchedCount===0) riskBtn.textContent='';
       else riskBtn.innerHTML=`SIGUIENTE RASCADO · <b style="color:#d94f3d">${risk}% riesgo</b>`;
     }
@@ -5460,7 +5481,7 @@ function buildTicketInMount(mount, ticketCount, lastRegen, currentScratchPts){
   function handleTicketBomb(){
     gameOver=true;
     const stamp=$id('ticketStamp');
-    if(stamp){stamp.textContent='PERDISTE';stamp.style.background='#d94f3d';}
+    if(stamp){stamp.textContent=window.t?t('ticket.lost'):'PERDISTE';stamp.style.background='#d94f3d';}
     // Revelar todas las celdas restantes
     Array.from(grid.children).forEach(c=>{
       if(!c.dataset.revealed){
@@ -5477,7 +5498,7 @@ function buildTicketInMount(mount, ticketCount, lastRegen, currentScratchPts){
     if(gameOver||totalPoints<=0) return;
     gameOver=true;
     const stamp=$id('ticketStamp');
-    if(stamp){stamp.textContent='COBRADO';stamp.style.background='#3fae5c';}
+    if(stamp){stamp.textContent=window.t?t('ticket.cashed'):'COBRADO';stamp.style.background='#3fae5c';}
     const pts=totalPoints;
     updateUI();
     showTicketResult(true,pts,auto);
@@ -5494,10 +5515,10 @@ function buildTicketInMount(mount, ticketCount, lastRegen, currentScratchPts){
     <div style="background:linear-gradient(180deg,#0f3d24,#0c2e1c);border-radius:0;padding:30px 26px;text-align:center;max-width:300px;width:90%;box-shadow:0 30px 60px -10px rgba(0,0,0,.8),0 0 0 1px rgba(240,196,25,.2);animation:popIn .3s cubic-bezier(.2,1.4,.4,1)">
       <style>@keyframes popIn{0%{transform:scale(.7);opacity:0}100%{transform:scale(1);opacity:1}}</style>
       <span style="font-size:54px;display:block;margin-bottom:10px">${win?(auto?'🏆':'💰'):'❌'}</span>
-      <h2 style="font-family:'Bebas Neue',Impact,sans-serif;font-size:26px;letter-spacing:1px;color:${win?'#f0c419':'#d94f3d'};margin-bottom:6px">${win?(auto?'¡TICKET PREMIADO!':'¡TICKET PREMIADO!'):'TICKET ANULADO'}</h2>
-      <p style="font-size:12px;color:rgba(246,241,227,.7);line-height:1.5;margin-bottom:12px">${win?(auto?'Rascaste todo el boleto. Premio máximo.':'¡Buena jugada! Te has retirado a tiempo'):'Has perdido los puntos acumulados en este boleto.'}</p>
+      <h2 style="font-family:'Bebas Neue',Impact,sans-serif;font-size:26px;letter-spacing:1px;color:${win?'#f0c419':'#d94f3d'};margin-bottom:6px">${win?(window.t?t('ticket.win'):'¡TICKET PREMIADO!'):(window.t?t('ticket.lose'):'TICKET ANULADO')}</h2>
+      <p style="font-size:12px;color:rgba(246,241,227,.7);line-height:1.5;margin-bottom:12px">${win?(auto?(window.t?t('ticket.max_prize'):'Rascaste todo el boleto. Premio máximo.'):(window.t?t('ticket.good_call'):'¡Buena jugada! Te has retirado a tiempo.')):(window.t?t('ticket.lost_pts'):'Has perdido los puntos acumulados en este boleto.')}</p>
       <div style="font-family:'Bebas Neue',Impact,sans-serif;font-size:34px;color:${win?'#f0c419':'#d94f3d'};margin-bottom:18px">${(win && pts>0)?'+'+pts+' PTS':win?'0 PTS':''}</div>
-      <button onclick="closeTicketAndSave(${win?pts:0})" style="width:100%;border:none;border-radius:0;padding:12px;font-family:'Bebas Neue',Impact,sans-serif;font-size:15px;letter-spacing:1.5px;background:linear-gradient(180deg,#ffe27a,#f0c419 55%,#c9960c);color:#08160d;cursor:pointer;">CERRAR</button>
+      <button onclick="closeTicketAndSave(${win?pts:0})" style="width:100%;border:none;border-radius:0;padding:12px;font-family:'Bebas Neue',Impact,sans-serif;font-size:15px;letter-spacing:1.5px;background:linear-gradient(180deg,#ffe27a,#f0c419 55%,#c9960c);color:#08160d;cursor:pointer;">window.t?t('auth.close'):'CERRAR'</button>
     </div>`;
   }
 
@@ -5636,9 +5657,9 @@ function getPlayersPerTeam(){ return 5 + (window._upgradeCache.scout||0); }
 const UPGRADE_DEFS = [
   {
     id: 'bench',
-    icon: '🪑',
-    name: 'BANQUILLO',
-    desc: 'PLAZAS EN EL BANQUILLO',
+    icon: '<i class="ph ph-bold ph-park" style="color:#c9a227;font-size:14px;vertical-align:middle"></i>',
+    name: window.t?t('upgrade.bench'):'BANQUILLO',
+    desc: window.t?t('upgrade.bench_d'):'PLAZAS EN EL BANQUILLO',
     baseCost: 5,
     maxLevel: 5,
     baseValue: 2,
@@ -5647,8 +5668,8 @@ const UPGRADE_DEFS = [
   {
     id: 'subs',
     icon: '🔄',
-    name: 'CAMBIOS',
-    desc: 'SUSTITUCIONES POR PARTIDO',
+    name: window.t?t('upgrade.subs'):'CAMBIOS',
+    desc: window.t?t('upgrade.subs_d'):'SUSTITUCIONES POR PARTIDO',
     baseCost: 5,
     maxLevel: 5,
     baseValue: 2,
@@ -5657,8 +5678,8 @@ const UPGRADE_DEFS = [
   {
     id: 'scout',
     icon: '🔭',
-    name: 'CONVOCADOS',
-    desc: 'JUGADORES POR EQUIPO AL BARAJAR',
+    name: window.t?t('upgrade.scout'):'CONVOCADOS',
+    desc: window.t?t('upgrade.scout_d'):'JUGADORES POR EQUIPO AL BARAJAR',
     baseCost: 5,
     maxLevel: 5,
     baseValue: 5,
@@ -5667,8 +5688,8 @@ const UPGRADE_DEFS = [
   {
     id: 'recovery',
     icon: '⚡',
-    name: 'RECUPERACIÓN',
-    desc: 'REDUCE LA FATIGA ENTRE PARTIDOS',
+    name: window.t?t('upgrade.recovery'):'RECUPERACIÓN',
+    desc: window.t?t('upgrade.recovery_d'):'REDUCE LA FATIGA ENTRE PARTIDOS',
     baseCost: 5,
     maxLevel: 5,
     baseValue: 0,
@@ -5713,12 +5734,12 @@ async function renderUpgradesTab(){
   const pointsEl = document.getElementById('upgradePointsDisplay');
   if(!list) return;
 
-  list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:12px">Cargando...</div>';
+  list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:12px">'+(window.t?t('ui.loading'):'Cargando...')+'</div>';
   await refreshUpgradeCache(); // sincronizar cache antes de renderizar
 
   const user = window._fbAuth && window._fbAuth.currentUser;
   if(!user){
-    list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted)">Inicia sesión para ver las mejoras.</div>';
+    list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted)">'+(window.t?t('ui.login_req'):'Inicia sesión para ver esto.')+'</div>';
     return;
   }
 
@@ -5744,7 +5765,7 @@ async function renderUpgradesTab(){
 
     const costHtml = nextCost !== null
       ? `<span class="cost-star">★</span>${nextCost}`
-      : `<span style="font-size:9px;color:var(--text-muted);letter-spacing:1px">MAX</span>`;
+      : `<span style="font-size:9px;color:var(--text-muted);letter-spacing:1px">${window.t?t('upgrades.max'):'MAX'}</span>`;
 
     const row = document.createElement('div');
     row.className = 'upgrade-row';
@@ -5822,66 +5843,66 @@ async function renderUpgradesTab(){
 const SKILL_DEFS = [
   // === TÁCTICA ===
   {
-    id: 'estratega', category: 'TÁCTICA',
-    name: 'ESTRATEGA', cost: 40,
+    id: 'estratega', category: window.t?t('skills.cat.tactica'):'TÁCTICA',
+    name: window.t?t('skill.estratega'):'ESTRATEGA', cost: 40,
     icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 3"/></svg>',
-    tooltip: 'Muestra la mejor contra-estrategia antes de cada partido.',
+    tooltip: window.t?t('skill.estratega_d'):'Muestra la mejor contra-estrategia antes de cada partido.',
   },
   {
     id: 'capitan', category: 'TÁCTICA',
-    name: 'CAPITÁN', cost: 30,
+    name: window.t?t('skill.capitan'):'CAPITÁN', cost: 30,
     icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>',
-    tooltip: 'Si vas perdiendo en el descanso, tu ataque sube un 10% en la segunda parte.',
+    tooltip: window.t?t('skill.capitan_d'):'Si vas perdiendo en el descanso, tu ataque sube un 10% en la segunda parte.',
   },
   {
     id: 'remontada', category: 'TÁCTICA',
-    name: 'REMONTADA', cost: 60,
+    name: window.t?t('skill.remontada'):'REMONTADA', cost: 60,
     icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M18 15l-6-6-6 6"/></svg>',
-    tooltip: 'Si vas perdiendo de 2 o más goles, tu ataque sube un 35% el resto del partido.',
+    tooltip: window.t?t('skill.remontada_d'):'Si vas perdiendo de 2 o más goles, tu ataque sube un 35% el resto del partido.',
   },
   {
     id: 'penaltis', category: 'TÁCTICA',
-    name: 'ESPECIALISTA EN PENALTIS', cost: 35,
+    name: window.t?t('skill.penaltis'):'ESPECIALISTA EN PENALTIS', cost: 35,
     icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><line x1="12" y1="3" x2="12" y2="21"/><line x1="3" y1="12" x2="21" y2="12"/></svg>',
-    tooltip: 'Aumenta la probabilidad de anotar en tandas de penaltis en un 15%.',
+    tooltip: window.t?t('skill.penaltis_d'):'Aumenta la probabilidad de anotar en tandas de penaltis en un 15%.',
   },
   // === PLANTILLA ===
   {
-    id: 'medico', category: 'PLANTILLA',
-    name: 'MÉDICO DE ÉLITE', cost: 50,
+    id: 'medico', category: window.t?t('skills.cat.plantilla'):'PLANTILLA',
+    name: window.t?t('skill.medico'):'MÉDICO DE ÉLITE', cost: 50,
     icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>',
-    tooltip: 'Las lesiones leves se recuperan automáticamente al acabar el partido.',
+    tooltip: window.t?t('skill.medico_d'):'Las lesiones leves se recuperan automáticamente al acabar el partido.',
   },
   {
     id: 'ojeador', category: 'PLANTILLA',
-    name: 'OJEADOR', cost: 25,
+    name: window.t?t('skill.ojeador'):'OJEADOR', cost: 25,
     icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>',
-    tooltip: 'Al barajar equipos siempre aparece al menos un jugador con 85 o más de rating.',
+    tooltip: window.t?t('skill.ojeador_d'):'Al barajar equipos siempre aparece al menos un jugador con 85 o más de rating.',
   },
   {
     id: 'cazatalentos', category: 'PLANTILLA',
-    name: 'CAZATALENTOS', cost: 30,
+    name: window.t?t('skill.cazatalentos'):'CAZATALENTOS', cost: 30,
     icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
-    tooltip: 'Los jugadores fuera de su posición natural solo pierden un 5% de rendimiento.',
+    tooltip: window.t?t('skill.cazatalentos_d'):'Los jugadores fuera de su posición natural solo pierden un 5% de rendimiento.',
   },
   {
     id: 'veterano', category: 'PLANTILLA',
-    name: 'VETERANO', cost: 45,
+    name: window.t?t('skill.veterano'):'VETERANO', cost: 45,
     icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>',
-    tooltip: 'Los jugadores con 85+ de rating no pueden recibir tarjeta roja directa.',
+    tooltip: window.t?t('skill.veterano_d'):'Los jugadores con 85+ de rating no pueden recibir tarjeta roja directa.',
   },
   // === ECONOMÍA ===
   {
-    id: 'coleccionista', category: 'ECONOMÍA',
-    name: 'COLECCIONISTA', cost: 20,
+    id: 'coleccionista', category: window.t?t('skills.cat.economia'):'ECONOMÍA',
+    name: window.t?t('skill.coleccionista'):'COLECCIONISTA', cost: 20,
     icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>',
-    tooltip: 'Cada casilla buena del ticket (moneda o cabra) da 1 punto extra.',
+    tooltip: window.t?t('skill.coleccionista_d'):'Cada casilla buena del ticket da 1 punto extra.',
   },
   {
     id: 'patrocinador', category: 'ECONOMÍA',
-    name: 'PATROCINADOR', cost: 20,
+    name: window.t?t('skill.patrocinador'):'PATROCINADOR', cost: 20,
     icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>',
-    tooltip: 'Ganas 1 GOAT Point extra al clasificarte para cuartos de final.',
+    tooltip: window.t?t('skill.patrocinador_d'):'Ganas 1 GOAT Point extra al clasificarte para cuartos de final.',
   },
 ];
 
@@ -5912,9 +5933,9 @@ async function renderSkillsTab(){
   const list = document.getElementById('skillsList');
   const pointsEl = document.getElementById('skillPointsDisplay');
   if(!list) return;
-  list.innerHTML='<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:12px">Cargando...</div>';
+  list.innerHTML='<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:12px">'+(window.t?t('skills.loading'):'Cargando...')+'</div>';
   const user = window._fbAuth&&window._fbAuth.currentUser;
-  if(!user){ list.innerHTML='<div style="text-align:center;padding:20px;color:var(--text-muted)">Inicia sesión para ver las habilidades.</div>'; return; }
+  if(!user){ list.innerHTML='<div style="text-align:center;padding:20px;color:var(--text-muted)">'+(window.t?t('skills.login_msg'):'Inicia sesión para ver las habilidades.')+'</div>'; return; }
   const snap = await window._fbDb.collection('users').doc(user.uid).get();
   const data = snap.exists?snap.data():{};
   let pts = data.scratchPoints||0;
@@ -5950,7 +5971,7 @@ async function renderSkillsTab(){
         <span style="font-size:10px;color:${active?'var(--accent)':'var(--text-muted)'};line-height:1.4;padding:0 4px">${def.tooltip}</span>
       </div>`;
       const footerPart=`<div style="width:100%;padding:6px;background:${active?'rgba(201,162,39,.15)':'rgba(0,0,0,.15)'};border-top:1px solid ${active?'rgba(201,162,39,.3)':'var(--line)'}">
-        <span style="font-family:'Bebas Neue',Impact,sans-serif;font-size:12px;color:${active?'var(--gold)':'var(--text-muted)'};letter-spacing:1px">${active?'✓ ACTIVA · PULSA PARA DESACTIVAR':'★ '+def.cost+' PTS'}</span>
+        <span style="font-family:'Bebas Neue',Impact,sans-serif;font-size:12px;color:${active?'var(--gold)':'var(--text-muted)'};letter-spacing:1px">${active?(window.t?t('skills.active'):'✓ ACTIVA · PULSA PARA DESACTIVAR'):'★ '+def.cost+' PTS'}</span>
       </div>`;
       btn.innerHTML=iconPart+footerPart;
       btn.addEventListener('click', async()=>{
@@ -6051,7 +6072,7 @@ const ACHIEVEMENT_DEFS = [
 ];
 
 const TIER_COLOR = {básico:'#aaa', intermedio:'#2ecc71', difícil:'#e67e22', mítico:'#f0c419'};
-const TIER_LABEL = {básico:'★ 1 PT', intermedio:'★ 2 PTS', difícil:'★ 3 PTS', mítico:'★ 25 PTS'};
+const TIER_LABEL = {básico:window.t?t('tier.basic'):'★ 1 PT', intermedio:window.t?t('tier.inter'):'★ 2 PTS', difícil:window.t?t('tier.hard'):'★ 3 PTS', mítico:window.t?t('tier.mythic'):'★ 25 PTS'};
 
 // Cache de logros
 window._achievementsCache = new Set();
@@ -6130,9 +6151,9 @@ async function checkAllBasicAchievements(unlocked){
 async function renderAchievementsTab(){
   const list=document.getElementById('achievementsList');
   if(!list) return;
-  list.innerHTML='<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:12px">Cargando...</div>';
+  list.innerHTML='<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:12px">'+(window.t?t('skills.loading'):'Cargando...')+'</div>';
   const user=window._fbAuth&&window._fbAuth.currentUser;
-  if(!user){ list.innerHTML='<div style="text-align:center;padding:20px;color:var(--text-muted)">Inicia sesión para ver tus logros.</div>'; return; }
+  if(!user){ list.innerHTML='<div style="text-align:center;padding:20px;color:var(--text-muted)">'+(window.t?t('ui.login_req'):'Inicia sesión.')+'</div>'; return; }
   const snap=await window._fbDb.collection('users').doc(user.uid).get();
   const unlocked=new Set((snap.exists&&snap.data().achievements)||[]);
   const total=ACHIEVEMENT_DEFS.length;
@@ -6160,8 +6181,8 @@ async function renderAchievementsTab(){
     const unlockedBg=isLight?'#e8f4ec':'rgba(0,0,0,.3)';
     const borderColor=isUnlocked?TIER_COLOR[def.tier]:(isLight?'#d4cec4':'var(--line)');
     card.style.cssText='display:flex;align-items:center;gap:10px;padding:10px;border:1px solid '+borderColor+';background:'+(isUnlocked?unlockedBg:lockedBg)+';position:relative;overflow:hidden';
-    const achName=window.t?window.t('ach.'+def.id)||def.name:def.name;
-    const achDesc=window.t?window.t('ach.'+def.id+'.d')||def.desc:def.desc;
+    const achName=window.t?(t('ach.'+def.id)||def.name):def.name;
+    const achDesc=window.t?(t('ach.'+def.id+'.d')||def.desc):def.desc;
     const iconColor=isUnlocked?'#c9a227':(isLight?'#bbb':'var(--text-muted)');
     const iconHtml='<i class="ph ph-bold '+def.icon+'" style="font-size:26px;flex-shrink:0;color:'+iconColor+';'+(isUnlocked?'':' opacity:.5')+'"></i>';
     const checkHtml=isUnlocked?'<i class="ph ph-bold ph-check" style="position:absolute;top:5px;right:6px;font-size:12px;color:'+(TIER_COLOR[def.tier]||'#c9a227')+'" ></i>':'';
@@ -6188,67 +6209,90 @@ async function renderAchievementsTab(){
 })();
 
 
-/* ============================================================
-   APLICAR TRADUCCIONES — recorre data-i18n y actualiza textos
-   ============================================================ */
+
+/* ═══ TRADUCCIONES ═══ */
 window.applyTranslations = function(){
-  // Actualizar todos los elementos con data-i18n
-  document.querySelectorAll('[data-i18n]').forEach(el=>{
-    const key=el.dataset.i18n;
-    const text=window.t(key);
-    if(text!==key) el.textContent=text;
+  if(!window.t) return;
+  // Actualizar elementos con innerHTML (tutoriales y contenido rico)
+  document.querySelectorAll('[data-i18n-html]').forEach(function(el){
+    var key = el.getAttribute('data-i18n-html');
+    var txt = window.t(key);
+    if(txt && txt !== key) el.innerHTML = txt;
   });
-  // Actualizar botones de idioma activo
-  const esBtn=document.getElementById('langEsBtn');
-  const enBtn=document.getElementById('langEnBtn');
-  if(esBtn) esBtn.style.cssText+=(window.LANG==='es')?';border-color:var(--gold);color:var(--gold)':';border-color:var(--line);color:var(--text)';
-  if(enBtn) enBtn.style.cssText+=(window.LANG==='en')?';border-color:var(--gold);color:var(--gold)':';border-color:var(--line);color:var(--text)';
-  // Botones del header
-  const rankBtn=document.querySelector('.ranking-btn');
-  if(rankBtn){ const i=rankBtn.querySelector('i'); rankBtn.textContent=''; if(i)rankBtn.appendChild(i); rankBtn.append(' '+window.t('app.ranking')); }
-  // Tabs del menú perfil
-  const tabLabels={
-    profileTabStats:'profile.stats',
-    profileTabUser:'profile.settings',
-    profileTabUpgrades:'profile.upgrades',
-    profileTabNotes:'profile.skills',
-    profileTabAchievements:'profile.achievements',
+  // Solo actualizar elementos de texto puro (sin hijos elementos)
+  document.querySelectorAll('[data-i18n]').forEach(function(el){
+    if(el.children.length > 0) return; // NUNCA tocar elementos con hijos
+    var key = el.getAttribute('data-i18n');
+    var txt = window.t(key);
+    if(txt && txt !== key) el.textContent = txt;
+  });
+  // Actualizar tabs del perfil (tienen icono como hijo - tratar separado)
+  var tabMap = {
+    'profileTabStats':        'tab.stats',
+    'profileTabUser':         'tab.settings',
+    'profileTabUpgrades':     'tab.upgrades',
+    'profileTabNotes':        'tab.skills',
+    'profileTabAchievements': 'tab.achievements'
   };
-  Object.entries(tabLabels).forEach(([id,key])=>{
-    const btn=document.getElementById(id);
+  Object.keys(tabMap).forEach(function(id){
+    var btn = document.getElementById(id);
     if(!btn) return;
-    const icon=btn.querySelector('i');
-    const badge=btn.querySelector('span');
-    btn.textContent='';
-    if(icon) btn.appendChild(icon);
-    btn.append(' '+window.t(key));
+    var icon = btn.querySelector('i');
+    var badge = btn.querySelector('span');
+    var txt = window.t(tabMap[id]);
+    btn.textContent = txt;
+    if(icon) btn.insertBefore(icon, btn.firstChild);
     if(badge) btn.appendChild(badge);
   });
   // Tabs móvil
-  const mobLabels=[
-    ['mob-tab-campo','mob.campo'],['mob-tab-equipo','mob.equipo'],
-    ['mob-tab-rival','mob.rival'],['mob-tab-historial','mob.historial'],
-    ['mob-tab-info','mob.info'],['mob-tab-ranking','mob.ranking'],
-  ];
-  mobLabels.forEach(([id,key])=>{
-    const btn=document.getElementById(id);
+  var mobMap = {
+    'mob-tab-campo':    'mob.campo',
+    'mob-tab-equipo':   'mob.equipo',
+    'mob-tab-rival':    'mob.rival',
+    'mob-tab-historial':'mob.historial',
+    'mob-tab-info':     'mob.info',
+    'mob-tab-ranking':  'mob.ranking'
+  };
+  Object.keys(mobMap).forEach(function(id){
+    var btn = document.getElementById(id);
     if(!btn) return;
-    const icon=btn.querySelector('i,.mob-tab-icon');
-    const badge=btn.querySelector('.mob-tab-badge');
-    const label=btn.querySelector('.mob-tab-label');
-    if(label) label.textContent=window.t(key);
+    var label = btn.querySelector('.mob-tab-label');
+    if(label) label.textContent = window.t(mobMap[id]);
   });
-  // Botones de acción principales
-  const selectBtn=document.querySelector('[onclick*="showTeamSelectModal"],.main-action-btn');
-  // Actualizar el sort label de convocados
-  const sortLabel=document.getElementById('convSortLabel');
-  if(sortLabel){
-    const CONV_SORT_LABELS_I18N={arrival:'draft.sort_arrival',position:'draft.sort_position',rating:'draft.sort_rating'};
-    sortLabel.textContent=window.t(CONV_SORT_LABELS_I18N[window.convSortMode]||'draft.sort_position');
+  // data-i18n-placeholder
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(function(el){
+    var key = el.getAttribute('data-i18n-placeholder');
+    var txt = window.t(key);
+    if(txt && txt !== key) el.placeholder = txt;
+  });
+  // data-i18n-title
+  document.querySelectorAll('[data-i18n-title]').forEach(function(el){
+    var key = el.getAttribute('data-i18n-title');
+    var txt = window.t(key);
+    if(txt && txt !== key) el.title = txt;
+  });
+  // data-i18n-aria
+  document.querySelectorAll('[data-i18n-aria]').forEach(function(el){
+    var key = el.getAttribute('data-i18n-aria');
+    var txt = window.t(key);
+    if(txt && txt !== key) el.setAttribute('aria-label', txt);
+  });
+  // Botones de idioma activo
+  var esBtn = document.getElementById('langEsBtn');
+  var enBtn = document.getElementById('langEnBtn');
+  if(esBtn) esBtn.style.borderColor = window.LANG==='es' ? 'var(--gold)' : 'var(--line)';
+  if(enBtn) enBtn.style.borderColor = window.LANG==='en' ? 'var(--gold)' : 'var(--line)';
+  if(esBtn) esBtn.style.color = window.LANG==='es' ? 'var(--gold)' : 'var(--text)';
+  if(enBtn) enBtn.style.color = window.LANG==='en' ? 'var(--gold)' : 'var(--text)';
+  // Convocados sort label
+  var sl = document.getElementById('convSortLabel');
+  if(sl){
+    var sortKeys = {position:window.t('draft.position'),arrival:window.t('draft.arrival'),rating:window.t('draft.rating')};
+    sl.textContent = sortKeys[window.convSortMode] || sl.textContent;
   }
 };
 
-// Aplicar traducciones al cargar
-document.addEventListener('DOMContentLoaded',()=>{
+// Aplicar al cargar
+document.addEventListener('DOMContentLoaded', function(){
   if(window.applyTranslations) window.applyTranslations();
 });
