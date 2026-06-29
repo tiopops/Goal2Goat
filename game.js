@@ -1957,9 +1957,10 @@ function renderGroupTableHTML(){
   sorted.forEach((r,i)=>{
     const qualified=i<2;
     const cls=r.isMe?"group-row-me":"";
+    const displayName=getTeamName(r.name);
     rows+=`<tr class="${cls}${qualified?' group-row-qualified':''}">
       <td>${i+1}</td>
-      <td>${r.isMe?('<span class="flag-emoji goat-emoji">🐐</span> '+r.name):(flagEmoji(r.name,18)+' '+r.name)}</td>
+      <td>${r.isMe?('<span class="flag-emoji goat-emoji">🐐</span> '+displayName):(flagEmoji(r.name,18)+' '+displayName)}</td>
       <td>${r.played}</td>
       <td>${r.won}</td>
       <td>${r.drawn}</td>
@@ -1968,7 +1969,7 @@ function renderGroupTableHTML(){
       <td><strong>${r.pts}</strong></td>
     </tr>`;
   });
-  return `<table class="group-table"><thead><tr><th>#</th><th>Equipo</th><th>PJ</th><th>G</th><th>E</th><th>P</th><th>GF-GC</th><th>Pts</th></tr></thead><tbody>${rows}</tbody></table>
+  return `<table class="group-table"><thead><tr><th>#</th><th>${t('result.group_th_team')||'Equipo'}</th><th>${t('result.group_th_pld')||'PJ'}</th><th>${t('result.group_th_w')||'G'}</th><th>${t('result.group_th_d')||'E'}</th><th>${t('result.group_th_l')||'P'}</th><th>GF-GC</th><th>${t('result.group_th_pts')||'Pts'}</th></tr></thead><tbody>${rows}</tbody></table>
   <div class="hint-line">${t("comp.r16_advance")}</div>`;
 }
 function renderBracketHTML(knockoutMatches){
@@ -3255,7 +3256,7 @@ function showGroupResultsPopup(){
       const cls=(r.isMe?"group-row-me":"")+(qual?' group-row-qualified':'');
       rows+=`<tr class="${cls}">
         <td>${idx+1}</td>
-        <td>${r.isMe?('<span class="flag-emoji goat-emoji">🐐</span> '+r.name):(flagEmoji(r.name,18)+' '+r.name)}</td>
+        <td>${r.isMe?('<span class="flag-emoji goat-emoji">🐐</span> '+getTeamName(r.name)):(flagEmoji(r.name,18)+' '+getTeamName(r.name))}</td>
         <td>${r.played}</td><td>${r.won}</td><td>${r.drawn}</td><td>${r.lost}</td>
         <td>${r.gf}-${r.ga}</td><td><strong>${r.pts}</strong></td>
       </tr>`;
