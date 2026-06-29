@@ -949,14 +949,14 @@ function pickPlayer(player){
 function showSelectedPlayerBanner(p){
   const html=`
   <div class="box selected-player-banner">
-    <div class="selection-title">JUGADOR SELECCIONADO</div>
+    <div class="selection-title">${window.t?window.t('draft.selected_title'):'JUGADOR SELECCIONADO'}</div>
     <div class="spb-row">
       <span class="spb-name">${p.name}</span>
       <span class="spb-rating">★${p.rating||0}</span>
     </div>
     <div class="spb-positions">${window.t?window.t('draft.positions'):'Posiciones'}: ${(p.positions||[]).join(' / ')}</div>
-    <div class="hint-line">Colócalo en una posición resaltada del campo.</div>
-    <button class="spb-back-btn" onclick="volverASeleccion()">↩ VOLVER</button>
+    <div class="hint-line">${window.t?window.t('draft.place_hint'):'Colócalo en una posición resaltada del campo.'}</div>
+    <button class="spb-back-btn" onclick="volverASeleccion()">${window.t?window.t('draft.back'):'↩ VOLVER'}</button>
   </div>`;
   const el=document.getElementById("selectedPlayerBanner");
   if(el){ el.style.display="block"; el.innerHTML=html; }
@@ -4331,21 +4331,21 @@ function initFirebaseAuth(){
 
   /* ─── VALIDATION ─── */
   function vUsername(v){
-    if(!v) return "Nombre de usuario obligatorio.";
-    if(v.length<3) return "Mínimo 3 caracteres.";
-    if(v.length>20) return "Máximo 20 caracteres.";
-    if(!/^[a-zA-Z0-9_]+$/.test(v)) return "Solo letras, números y _ (guión bajo).";
-    return "";
+    if(!v) return window.t?window.t('auth.err.username_required'):'Nombre de usuario obligatorio.';
+    if(v.length<3) return window.t?window.t('auth.err.username_min'):'Mínimo 3 caracteres.';
+    if(v.length>20) return window.t?window.t('auth.err.username_max'):'Máximo 20 caracteres.';
+    if(!/^[a-zA-Z0-9_]+$/.test(v)) return window.t?window.t('auth.err.username_format'):'Solo letras, números y _ (guión bajo).';
+    return '';
   }
   function vEmail(v){
-    if(!v) return "Correo obligatorio.";
-    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) return "Formato de correo no válido.";
-    return "";
+    if(!v) return window.t?window.t('auth.err.email_required'):'Correo obligatorio.';
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) return window.t?window.t('auth.err.email_format'):'Formato de correo no válido.';
+    return '';
   }
   function vPassword(v){
-    if(!v) return "Contraseña obligatoria.";
-    if(v.length<8) return "Mínimo 8 caracteres.";
-    return "";
+    if(!v) return window.t?window.t('auth.err.password_required'):'Contraseña obligatoria.';
+    if(v.length<8) return window.t?window.t('auth.err.password_min'):'Mínimo 8 caracteres.';
+    return '';
   }
   function $id(id){return document.getElementById(id);}
   window.$id=$id;
@@ -4361,18 +4361,19 @@ function initFirebaseAuth(){
   function setBtnLoading(id,loading){
     const btn=$id(id); if(!btn) return;
     btn.disabled=loading;
-    btn.textContent=loading?"...":(id==="loginSubmitBtn"?"ENTRAR":"CREAR CUENTA");
+    btn.textContent=loading?(window.t?window.t('auth.loading'):'...'):(id==='loginSubmitBtn'?(window.t?window.t('auth.submit_login'):'ENTRAR'):(window.t?window.t('auth.submit_register'):'CREAR CUENTA'));
   }
   function fbErr(code){
-    return({"auth/email-already-in-use":"Este correo ya está registrado.",
-      "auth/invalid-email":"Correo no válido.",
-      "auth/weak-password":"Contraseña demasiado débil.",
-      "auth/user-not-found":"Usuario o contraseña incorrectos.",
-      "auth/wrong-password":"Usuario o contraseña incorrectos.",
-      "auth/invalid-credential":"Usuario o contraseña incorrectos.",
-      "auth/too-many-requests":"Demasiados intentos. Espera un momento.",
-      "auth/network-request-failed":"Sin conexión. Comprueba tu red.",
-    })[code]||"Error inesperado. Inténtalo de nuevo.";
+    return({
+      'auth/email-already-in-use': window.t?window.t('auth.fb.email_in_use'):'Este correo ya está registrado.',
+      'auth/invalid-email':        window.t?window.t('auth.fb.invalid_email'):'Correo no válido.',
+      'auth/weak-password':        window.t?window.t('auth.fb.weak_password'):'Contraseña demasiado débil.',
+      'auth/user-not-found':       window.t?window.t('auth.fb.wrong_creds'):'Usuario o contraseña incorrectos.',
+      'auth/wrong-password':       window.t?window.t('auth.fb.wrong_creds'):'Usuario o contraseña incorrectos.',
+      'auth/invalid-credential':   window.t?window.t('auth.fb.wrong_creds'):'Usuario o contraseña incorrectos.',
+      'auth/too-many-requests':    window.t?window.t('auth.fb.too_many'):'Demasiados intentos. Espera un momento.',
+      'auth/network-request-failed':window.t?window.t('auth.fb.network'):'Sin conexión. Comprueba tu red.',
+    })[code]||(window.t?window.t('auth.fb.unknown'):'Error inesperado. Inténtalo de nuevo.');
   }
 
   /* ─── MODAL ─── */
@@ -4401,15 +4402,15 @@ function initFirebaseAuth(){
     const pass=($id("regPassword")||{}).value||"";
     const pass2=($id("regPassword2")||{}).value||"";
     const uErr=vUsername(username),eErr=vEmail(email),
-          pErr=vPassword(pass),p2Err=pass!==pass2?"Las contraseñas no coinciden.":"";
-    setErr("regUsernameErr",uErr); setErr("regEmailErr",eErr);
-    setErr("regPasswordErr",pErr); setErr("regPassword2Err",p2Err);
-    setErr("regGlobalErr","");
+          pErr=vPassword(pass),p2Err=pass!==pass2?(window.t?window.t('auth.err.password_match'):'Las contraseñas no coinciden.'):'';
+    setErr('regUsernameErr',uErr); setErr('regEmailErr',eErr);
+    setErr('regPasswordErr',pErr); setErr('regPassword2Err',p2Err);
+    setErr('regGlobalErr','');
     if(uErr||eErr||pErr||p2Err) return;
-    setBtnLoading("regSubmitBtn",true);
+    setBtnLoading('regSubmitBtn',true);
     try{
-      const snap=await db.collection("users").where("username_lower","==",username.toLowerCase()).get();
-      if(!snap.empty){setErr("regUsernameErr","Este nombre de usuario ya está en uso.");setBtnLoading("regSubmitBtn",false);return;}
+      const snap=await db.collection('users').where('username_lower','==',username.toLowerCase()).get();
+      if(!snap.empty){setErr('regUsernameErr',window.t?window.t('auth.err.username_taken'):'Este nombre de usuario ya está en uso.');setBtnLoading('regSubmitBtn',false);return;}
       const cred=await auth.createUserWithEmailAndPassword(email,pass);
       await db.collection('users').doc(cred.user.uid).set({
         username,username_lower:username.toLowerCase(),email,
@@ -4430,20 +4431,20 @@ function initFirebaseAuth(){
   window.submitLogin=async function(){
     const identifier=($id("loginIdentifier")||{}).value?.trim()||"";
     const pass=($id("loginPassword")||{}).value||"";
-    setErr("loginIdentifierErr",""); setErr("loginPasswordErr",""); setErr("loginGlobalErr","");
-    if(!identifier){setErr("loginIdentifierErr","Campo obligatorio.");return;}
-    if(!pass){setErr("loginPasswordErr","Campo obligatorio.");return;}
-    setBtnLoading("loginSubmitBtn",true);
+    setErr('loginIdentifierErr',''); setErr('loginPasswordErr',''); setErr('loginGlobalErr','');
+    if(!identifier){setErr('loginIdentifierErr',window.t?window.t('auth.err.field_required'):'Campo obligatorio.');return;}
+    if(!pass){setErr('loginPasswordErr',window.t?window.t('auth.err.field_required'):'Campo obligatorio.');return;}
+    setBtnLoading('loginSubmitBtn',true);
     try{
       let email=identifier;
-      if(!identifier.includes("@")){
-        const snap=await db.collection("users").where("username_lower","==",identifier.toLowerCase()).get();
-        if(snap.empty){setErr("loginIdentifierErr","Usuario no encontrado.");setBtnLoading("loginSubmitBtn",false);return;}
+      if(!identifier.includes('@')){
+        const snap=await db.collection('users').where('username_lower','==',identifier.toLowerCase()).get();
+        if(snap.empty){setErr('loginIdentifierErr',window.t?window.t('auth.err.user_not_found'):'Usuario no encontrado.');setBtnLoading('loginSubmitBtn',false);return;}
         email=snap.docs[0].data().email;
       }
       await auth.signInWithEmailAndPassword(email,pass);
       window.closeAuthModal();
-    }catch(err){setErr("loginGlobalErr",fbErr(err.code));setBtnLoading("loginSubmitBtn",false);}
+    }catch(err){setErr('loginGlobalErr',fbErr(err.code));setBtnLoading('loginSubmitBtn',false);}
   };
 
   /* ─── LOGOUT ─── */
@@ -4501,11 +4502,12 @@ function initFirebaseAuth(){
       window.preferredTeamName="";
       window.useFixedTeamName=false;
       // Sin sesión: mensaje diferenciado en el welcome overlay
-      const wt=$id("welcomeText");
-      const wrb=$id("welcomeRegisterBtn");
-      if(wt) wt.innerHTML='Bienvenido a <strong style="color:var(--gold)">Goal2Goat</strong>, <strong style="color:var(--gold)">REGÍSTRATE</strong> para guardar tu progreso y tener acceso a contenido exclusivo.<br><br>Goal2Goat es un manager de fútbol con alma de roguelike. Tu apoyo nos ayuda a seguir mejorando el juego, añadiendo contenido nuevo y manteniéndolo libre de publicidad invasiva.';
+      const wt=$id('welcomeText');
+      const wrb=$id('welcomeRegisterBtn');
+      if(wt) wt.innerHTML=window.t?window.t('welcome.text_guest'):'Bienvenido a <strong style="color:var(--gold)">Goal2Goat</strong>, <strong style="color:var(--gold)">REGÍSTRATE</strong> para guardar tu progreso y tener acceso a contenido exclusivo.<br><br>Goal2Goat es un manager de fútbol con alma de roguelike. Tu apoyo nos ayuda a seguir mejorando el juego, añadiendo contenido nuevo y manteniéndolo libre de publicidad invasiva.';
       if(wrb){
         wrb.style.display='block';
+        wrb.textContent=window.t?window.t('welcome.register'):'REGÍSTRATE';
         wrb.onclick=()=>{
           const wo=$id("welcomeOverlay"); if(wo) wo.style.display="none";
           window.showAuthModal&&window.showAuthModal('register');
@@ -6182,7 +6184,15 @@ window.applyTranslations = function(){
   // Re-renderizar rival, clima y selector de estrategia
   if(typeof renderRivalBox==='function' && document.getElementById('rivalBox') && document.getElementById('rivalBox').style.display!=='none') renderRivalBox();
   if(typeof renderWeather==='function') renderWeather();
-  // Re-renderizar pestañas de perfil si están visibles
+  // Re-renderizar welcome si está visible
+  const wo=document.getElementById('welcomeOverlay');
+  if(wo&&wo.style.display!=='none'){
+    const wt=document.getElementById('welcomeText');
+    const wrb=document.getElementById('welcomeRegisterBtn');
+    const isGuest=wrb&&wrb.style.display!=='none';
+    if(wt) wt.innerHTML=window.t?window.t(isGuest?'welcome.text_guest':'welcome.text_user'):'';
+    if(wrb&&isGuest) wrb.textContent=window.t?window.t('welcome.register'):'REGÍSTRATE';
+  }
   if(document.getElementById('profileOverlay')&&document.getElementById('profileOverlay').style.display!=='none'){
     if(typeof renderUpgradesTab==='function'&&document.getElementById('profileUpgradesPane')&&document.getElementById('profileUpgradesPane').classList.contains('profile-tab-pane-active')) renderUpgradesTab();
     if(typeof renderSkillsTab==='function'&&document.getElementById('profileNotesPane')&&document.getElementById('profileNotesPane').classList.contains('profile-tab-pane-active')) renderSkillsTab();
@@ -6196,24 +6206,6 @@ window.applyTranslations = function(){
   // Botones del header
   const rankBtn=document.querySelector('.ranking-btn');
   if(rankBtn){ const i=rankBtn.querySelector('i'); rankBtn.textContent=''; if(i)rankBtn.appendChild(i); rankBtn.append(' '+window.t('app.ranking')); }
-  // Tabs del menú perfil
-  const tabLabels={
-    profileTabStats:'profile.stats',
-    profileTabUser:'profile.settings',
-    profileTabUpgrades:'profile.upgrades',
-    profileTabNotes:'profile.skills',
-    profileTabAchievements:'profile.achievements',
-  };
-  Object.entries(tabLabels).forEach(([id,key])=>{
-    const btn=document.getElementById(id);
-    if(!btn) return;
-    const icon=btn.querySelector('i');
-    const badge=btn.querySelector('span');
-    btn.textContent='';
-    if(icon) btn.appendChild(icon);
-    btn.append(' '+window.t(key));
-    if(badge) btn.appendChild(badge);
-  });
   // Tabs móvil
   const mobLabels=[
     ['mob-tab-campo','mob.campo'],['mob-tab-equipo','mob.equipo'],

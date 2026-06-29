@@ -324,12 +324,12 @@
 <div id="welcomeOverlay" style="position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:50000;display:flex;align-items:center;justify-content:center;">
   <div class="auth-modal" style="max-width:420px;text-align:center">
     <div class="auth-logo">🐐 GOAL2GOAT</div>
-    <p id="welcomeText" style="font-size:13px;color:var(--text);line-height:1.6;margin-bottom:20px">
+    <p id="welcomeText" style="font-size:13px;color:var(--text);line-height:1.6;margin-bottom:20px" data-i18n-html="welcome.text_user">
       Bienvenido a <strong style="color:var(--gold)">Goal2Goat</strong>, un manager de fútbol con alma de roguelike. Tu apoyo nos ayuda a seguir mejorando el juego, añadiendo contenido nuevo y manteniéndolo libre de publicidad invasiva.
     </p>
-    <button id="welcomeRegisterBtn" class="auth-submit-btn" style="display:none;margin-bottom:10px">REGÍSTRATE</button>
-    <a href="https://ko-fi.com/goal2goat" target="_blank" class="support-pay-btn" style="display:block;margin-bottom:10px">APOYA A GOAL2GOAT</a>
-    <button class="auth-submit-btn" id="welcomeStartBtn" style="background:#1a2a1a;border:1px solid var(--gold);color:var(--gold)">EMPEZAR A JUGAR</button>
+    <button id="welcomeRegisterBtn" class="auth-submit-btn" style="display:none;margin-bottom:10px" data-i18n="welcome.register">REGÍSTRATE</button>
+    <a href="https://ko-fi.com/goal2goat" target="_blank" class="support-pay-btn" style="display:block;margin-bottom:10px" data-i18n="app.support">APOYA A GOAL2GOAT</a>
+    <button class="auth-submit-btn" id="welcomeStartBtn" style="background:#1a2a1a;border:1px solid var(--gold);color:var(--gold)" data-i18n="welcome.start">EMPEZAR A JUGAR</button>
   </div>
 </div>
 
@@ -340,48 +340,48 @@
     <div class="auth-logo">🐐 GOAL2GOAT</div>
     <!-- TABS -->
     <div class="auth-tabs">
-      <button class="auth-tab auth-tab-active" id="tabLogin">INICIAR SESIÓN</button>
-      <button class="auth-tab" id="tabRegister">CREAR CUENTA</button>
+      <button class="auth-tab auth-tab-active" id="tabLogin" data-i18n="auth.login_title">INICIAR SESIÓN</button>
+      <button class="auth-tab" id="tabRegister" data-i18n="auth.register_title">CREAR CUENTA</button>
     </div>
     <!-- LOGIN -->
     <div id="authLogin">
       <div class="auth-field">
-        <label>Usuario o correo electrónico</label>
-        <input type="text" id="loginIdentifier" placeholder="Nombre de usuario o email" autocomplete="username">
+        <label data-i18n="auth.identifier_label">Usuario o correo electrónico</label>
+        <input type="text" id="loginIdentifier" data-i18n-placeholder="auth.identifier_ph" placeholder="Nombre de usuario o email" autocomplete="username">
         <span class="auth-error" id="loginIdentifierErr"></span>
       </div>
       <div class="auth-field">
-        <label>Contraseña</label>
-        <input type="password" id="loginPassword" placeholder="Contraseña" autocomplete="current-password">
+        <label data-i18n="auth.password_label">Contraseña</label>
+        <input type="password" id="loginPassword" data-i18n-placeholder="auth.password_ph" placeholder="Contraseña" autocomplete="current-password">
         <span class="auth-error" id="loginPasswordErr"></span>
       </div>
       <span class="auth-error auth-error-global" id="loginGlobalErr"></span>
-      <button class="auth-submit-btn" id="loginSubmitBtn">ENTRAR</button>
+      <button class="auth-submit-btn" id="loginSubmitBtn" data-i18n="auth.submit_login">ENTRAR</button>
     </div>
     <!-- REGISTER -->
     <div id="authRegister" style="display:none">
       <div class="auth-field">
-        <label>Nombre de usuario</label>
-        <input type="text" id="regUsername" placeholder="3-20 caracteres · solo letras, números y _" autocomplete="off" maxlength="20">
+        <label data-i18n="auth.username_label">Nombre de usuario</label>
+        <input type="text" id="regUsername" data-i18n-placeholder="auth.username_ph" placeholder="3-20 caracteres · solo letras, números y _" autocomplete="off" maxlength="20">
         <span class="auth-error" id="regUsernameErr"></span>
       </div>
       <div class="auth-field">
-        <label>Correo electrónico</label>
-        <input type="email" id="regEmail" placeholder="tu@correo.com" autocomplete="email">
+        <label data-i18n="auth.email_label">Correo electrónico</label>
+        <input type="email" id="regEmail" data-i18n-placeholder="auth.email_ph" placeholder="tu@correo.com" autocomplete="email">
         <span class="auth-error" id="regEmailErr"></span>
       </div>
       <div class="auth-field">
-        <label>Contraseña</label>
-        <input type="password" id="regPassword" placeholder="Mínimo 8 caracteres" autocomplete="new-password">
+        <label data-i18n="auth.password_label">Contraseña</label>
+        <input type="password" id="regPassword" data-i18n-placeholder="auth.new_password_ph" placeholder="Mínimo 8 caracteres" autocomplete="new-password">
         <span class="auth-error" id="regPasswordErr"></span>
       </div>
       <div class="auth-field">
-        <label>Repetir contraseña</label>
-        <input type="password" id="regPassword2" placeholder="Repite la contraseña" autocomplete="new-password">
+        <label data-i18n="auth.repeat_password">Repetir contraseña</label>
+        <input type="password" id="regPassword2" data-i18n-placeholder="auth.repeat_password_ph" placeholder="Repite la contraseña" autocomplete="new-password">
         <span class="auth-error" id="regPassword2Err"></span>
       </div>
       <span class="auth-error auth-error-global" id="regGlobalErr"></span>
-      <button class="auth-submit-btn" id="regSubmitBtn">CREAR CUENTA</button>
+      <button class="auth-submit-btn" id="regSubmitBtn" data-i18n="auth.submit_register">CREAR CUENTA</button>
     </div>
   </div>
 </div>

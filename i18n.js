@@ -10,6 +10,18 @@ window.TRANSLATIONS = {
 
   /* ── UI GENERAL ── */
   'app.support':          {es:'APOYA A GOAL2GOAT',   en:'SUPPORT GOAL2GOAT'},
+
+  /* ── WELCOME ── */
+  'welcome.start':        {es:'EMPEZAR A JUGAR',     en:'START PLAYING'},
+  'welcome.register':     {es:'REGÍSTRATE',           en:'SIGN UP'},
+  'welcome.text_guest': {
+    es:'Bienvenido a <strong style="color:var(--gold)">Goal2Goat</strong>, <strong style="color:var(--gold)">REGÍSTRATE</strong> para guardar tu progreso y tener acceso a contenido exclusivo.<br><br>Goal2Goat es un manager de fútbol con alma de roguelike. Tu apoyo nos ayuda a seguir mejorando el juego, añadiendo contenido nuevo y manteniéndolo libre de publicidad invasiva.',
+    en:'Welcome to <strong style="color:var(--gold)">Goal2Goat</strong> — <strong style="color:var(--gold)">SIGN UP</strong> to save your progress and access exclusive content.<br><br>Goal2Goat is a football manager with a roguelike soul. Your support helps us keep improving the game, adding new content and keeping it free from intrusive ads.'
+  },
+  'welcome.text_user': {
+    es:'Bienvenido a <strong style="color:var(--gold)">Goal2Goat</strong>, un manager de fútbol con alma de roguelike. Tu apoyo nos ayuda a seguir mejorando el juego, añadiendo contenido nuevo y manteniéndolo libre de publicidad invasiva.',
+    en:'Welcome to <strong style="color:var(--gold)">Goal2Goat</strong>, a football manager with a roguelike soul. Your support helps us keep improving the game, adding new content and keeping it free from intrusive ads.'
+  },
   'app.ranking':          {es:'RANKING',              en:'RANKING'},
   'app.tickets':          {es:'TICKETS',              en:'TICKETS'},
   'app.version':          {es:'v0.353',               en:'v0.353'},
@@ -25,6 +37,45 @@ window.TRANSLATIONS = {
   'auth.register_title':  {es:'CREAR CUENTA',         en:'CREATE ACCOUNT'},
   'auth.no_account':      {es:'¿No tienes cuenta?',   en:'No account yet?'},
   'auth.has_account':     {es:'¿Ya tienes cuenta?',   en:'Already have an account?'},
+
+  /* ── AUTH — labels y placeholders ── */
+  'auth.identifier_label':    {es:'Usuario o correo electrónico',       en:'Username or email'},
+  'auth.identifier_ph':       {es:'Nombre de usuario o email',          en:'Username or email'},
+  'auth.password_label':      {es:'Contraseña',                         en:'Password'},
+  'auth.password_ph':         {es:'Contraseña',                         en:'Password'},
+  'auth.username_label':      {es:'Nombre de usuario',                  en:'Username'},
+  'auth.username_ph':         {es:'3-20 caracteres · solo letras, números y _', en:'3-20 characters · letters, numbers and _ only'},
+  'auth.email_label':         {es:'Correo electrónico',                 en:'Email address'},
+  'auth.email_ph':            {es:'tu@correo.com',                      en:'you@email.com'},
+  'auth.new_password_ph':     {es:'Mínimo 8 caracteres',                en:'At least 8 characters'},
+  'auth.repeat_password':     {es:'Repetir contraseña',                 en:'Repeat password'},
+  'auth.repeat_password_ph':  {es:'Repite la contraseña',               en:'Repeat password'},
+  'auth.submit_login':        {es:'ENTRAR',                             en:'LOG IN'},
+  'auth.submit_register':     {es:'CREAR CUENTA',                       en:'CREATE ACCOUNT'},
+  'auth.loading':             {es:'...',                                 en:'...'},
+
+  /* ── AUTH — errores de validación ── */
+  'auth.err.username_required':  {es:'Nombre de usuario obligatorio.',        en:'Username is required.'},
+  'auth.err.username_min':       {es:'Mínimo 3 caracteres.',                  en:'At least 3 characters.'},
+  'auth.err.username_max':       {es:'Máximo 20 caracteres.',                 en:'Maximum 20 characters.'},
+  'auth.err.username_format':    {es:'Solo letras, números y _ (guión bajo).', en:'Letters, numbers and _ only.'},
+  'auth.err.email_required':     {es:'Correo obligatorio.',                   en:'Email is required.'},
+  'auth.err.email_format':       {es:'Formato de correo no válido.',          en:'Invalid email format.'},
+  'auth.err.password_required':  {es:'Contraseña obligatoria.',               en:'Password is required.'},
+  'auth.err.password_min':       {es:'Mínimo 8 caracteres.',                  en:'At least 8 characters.'},
+  'auth.err.password_match':     {es:'Las contraseñas no coinciden.',         en:'Passwords do not match.'},
+  'auth.err.field_required':     {es:'Campo obligatorio.',                    en:'This field is required.'},
+  'auth.err.username_taken':     {es:'Este nombre de usuario ya está en uso.', en:'This username is already taken.'},
+  'auth.err.user_not_found':     {es:'Usuario no encontrado.',                en:'User not found.'},
+
+  /* ── AUTH — errores de Firebase ── */
+  'auth.fb.email_in_use':    {es:'Este correo ya está registrado.',           en:'This email is already registered.'},
+  'auth.fb.invalid_email':   {es:'Correo no válido.',                         en:'Invalid email.'},
+  'auth.fb.weak_password':   {es:'Contraseña demasiado débil.',               en:'Password is too weak.'},
+  'auth.fb.wrong_creds':     {es:'Usuario o contraseña incorrectos.',         en:'Incorrect username or password.'},
+  'auth.fb.too_many':        {es:'Demasiados intentos. Espera un momento.',   en:'Too many attempts. Please wait.'},
+  'auth.fb.network':         {es:'Sin conexión. Comprueba tu red.',           en:'No connection. Check your network.'},
+  'auth.fb.unknown':         {es:'Error inesperado. Inténtalo de nuevo.',     en:'Unexpected error. Please try again.'},
 
   /* ── PERFIL PESTAÑAS ── */
   'profile.stats':        {es:'ESTADÍSTICAS',         en:'STATISTICS'},
@@ -248,6 +299,9 @@ window.TRANSLATIONS = {
   'draft.th_stamina':     {es:'Resistencia',          en:'Stamina'},
   'draft.th_pos':         {es:'Pos',                  en:'Pos'},
   'draft.positions':      {es:'Posiciones',           en:'Positions'},
+  'draft.selected_title': {es:'JUGADOR SELECCIONADO', en:'SELECTED PLAYER'},
+  'draft.place_hint':     {es:'Colócalo en una posición resaltada del campo.', en:'Place him in a highlighted position on the pitch.'},
+  'draft.back':           {es:'↩ VOLVER',             en:'↩ BACK'},
   'draft.swap_available': {es:'Cambios disponibles antes del próximo partido', en:'Subs available before next match'},
   'draft.swap_used':      {es:'Ya has usado tu cambio para este partido.',     en:'You have already used your sub for this match.'},
   'draft.choose_team':    {es:'ELIGE UNA SELECCIÓN',          en:'CHOOSE A SQUAD'},
