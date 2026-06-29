@@ -118,23 +118,23 @@
     <div class="auth-tabs">
       <button class="auth-tab auth-tab-active" id="profileTabStats">
         <i class="ph ph-bold ph-chart-bar" style="font-size:20px;color:#2ecc71;display:block;margin-bottom:3px"></i>
-        ESTADÍSTICAS
+        <span data-i18n="profile.stats">ESTADÍSTICAS</span>
       </button>
       <button class="auth-tab" id="profileTabUser">
         <i class="ph ph-bold ph-gear" style="font-size:20px;color:#aaa;display:block;margin-bottom:3px"></i>
-        AJUSTES
+        <span data-i18n="profile.settings">AJUSTES</span>
       </button>
       <button class="auth-tab" id="profileTabUpgrades">
         <i class="ph ph-bold ph-arrow-circle-up" style="font-size:20px;color:#7b9cff;display:block;margin-bottom:3px"></i>
-        MEJORAS <span id="upgradesBadge" style="display:none;width:8px;height:8px;border-radius:50%;background:#f87171;margin-left:4px;vertical-align:middle;animation:ticketPulse 1.5s ease-in-out infinite"></span>
+        <span data-i18n="profile.upgrades">MEJORAS</span> <span id="upgradesBadge" style="display:none;width:8px;height:8px;border-radius:50%;background:#f87171;margin-left:4px;vertical-align:middle;animation:ticketPulse 1.5s ease-in-out infinite"></span>
       </button>
       <button class="auth-tab" id="profileTabNotes">
         <i class="ph ph-bold ph-lightning" style="font-size:20px;color:#f0c419;display:block;margin-bottom:3px"></i>
-        HABILIDADES <span id="skillsBadge" style="display:none;width:8px;height:8px;border-radius:50%;background:#f87171;margin-left:4px;vertical-align:middle;animation:ticketPulse 1.5s ease-in-out infinite"></span>
+        <span data-i18n="profile.skills">HABILIDADES</span> <span id="skillsBadge" style="display:none;width:8px;height:8px;border-radius:50%;background:#f87171;margin-left:4px;vertical-align:middle;animation:ticketPulse 1.5s ease-in-out infinite"></span>
       </button>
       <button class="auth-tab" id="profileTabAchievements">
         <i class="ph ph-bold ph-trophy" style="font-size:20px;color:#e67e22;display:block;margin-bottom:3px"></i>
-        LOGROS <span id="achievementsBadge" style="display:none;width:8px;height:8px;border-radius:50%;background:#f0c419;margin-left:4px;vertical-align:middle;animation:ticketPulse 1.5s ease-in-out infinite"></span>
+        <span data-i18n="profile.achievements">LOGROS</span> <span id="achievementsBadge" style="display:none;width:8px;height:8px;border-radius:50%;background:#f0c419;margin-left:4px;vertical-align:middle;animation:ticketPulse 1.5s ease-in-out infinite"></span>
       </button>
     </div>
 
@@ -146,53 +146,53 @@
       <div id="profileStatsPane" class="profile-tab-pane profile-tab-pane-active">
 
         <!-- Sección: Resultados -->
-        <div class="stats-section-label">RESULTADOS</div>
+        <div class="stats-section-label" data-i18n="stats.results">RESULTADOS</div>
         <div class="profile-stats-grid" style="grid-template-columns:repeat(2,1fr)">
           <div class="profile-stat-card">
             <div class="pstat-val" id="pstat-games">—</div>
-            <div class="pstat-label">PARTIDAS</div>
+            <div class="pstat-label" data-i18n="stats.played">PARTIDAS</div>
           </div>
           <div class="profile-stat-card wins">
             <div class="pstat-val" id="pstat-wins">—</div>
-            <div class="pstat-label">VICTORIAS</div>
+            <div class="pstat-label" data-i18n="stats.wins">VICTORIAS</div>
           </div>
           <div class="profile-stat-card">
             <div class="pstat-val" id="pstat-draws">—</div>
-            <div class="pstat-label">EMPATES</div>
+            <div class="pstat-label" data-i18n="stats.draws">EMPATES</div>
           </div>
           <div class="profile-stat-card losses">
             <div class="pstat-val" id="pstat-losses">—</div>
-            <div class="pstat-label">DERROTAS</div>
+            <div class="pstat-label" data-i18n="stats.losses">DERROTAS</div>
           </div>
         </div>
 
         <!-- Sección: Goles -->
-        <div class="stats-section-label">GOLES</div>
+        <div class="stats-section-label" data-i18n="stats.goals">GOLES</div>
         <div class="profile-stats-grid" style="grid-template-columns:repeat(2,1fr)">
           <div class="profile-stat-card">
             <div class="pstat-val" id="pstat-gf">—</div>
-            <div class="pstat-label">A FAVOR</div>
+            <div class="pstat-label" data-i18n="stats.gf">A FAVOR</div>
           </div>
           <div class="profile-stat-card">
             <div class="pstat-val" id="pstat-ga">—</div>
-            <div class="pstat-label">EN CONTRA</div>
+            <div class="pstat-label" data-i18n="stats.ga">EN CONTRA</div>
           </div>
         </div>
 
         <!-- Sección: Trofeos -->
-        <div class="stats-section-label">TROFEOS</div>
+        <div class="stats-section-label" data-i18n="stats.trophies">TROFEOS</div>
         <div class="profile-stats-grid" style="grid-template-columns:repeat(3,1fr)">
           <div class="profile-stat-card best">
             <div class="pstat-val" id="pstat-best">—</div>
-            <div class="pstat-label">MEJOR PUNT.</div>
+            <div class="pstat-label" data-i18n="stats.best">MEJOR PUNT.</div>
           </div>
           <div class="profile-stat-card titles">
             <div class="pstat-val"><i class="ph ph-bold ph-trophy" style="color:#c9a227;font-size:28px;vertical-align:middle"></i> <span id="pstat-titles">—</span></div>
-            <div class="pstat-label">TÍTULOS</div>
+            <div class="pstat-label" data-i18n="stats.titles">TÍTULOS</div>
           </div>
           <div class="profile-stat-card" style="border-color:var(--gold)">
             <div class="pstat-val" style="color:var(--gold)">🐐 <span id="pstat-scratch-pts">—</span></div>
-            <div class="pstat-label">GOAT PTS</div>
+            <div class="pstat-label" data-i18n="stats.goat_pts">GOAT PTS</div>
           </div>
         </div>
 
@@ -200,22 +200,22 @@
 
       <!-- USUARIO TAB -->
       <div id="profileUserPane" class="profile-tab-pane">
-        <label class="profile-field-label">PREFERENCIAS</label>
+        <label class="profile-field-label" data-i18n="settings.preferences">PREFERENCIAS</label>
         <div class="profile-settings-row">
           <button id="audioToggle" class="settings-item" title="Activar/desactivar sonido">
-            <span class="topbar-dot on"></span><span class="topbar-label">SONIDO</span>
+            <span class="topbar-dot on"></span><span class="topbar-label" data-i18n="settings.sound">SONIDO</span>
           </button>
           <button id="themeToggle" class="settings-item" title="Cambiar tema claro/oscuro">
-            <span class="topbar-dot on"></span><span class="topbar-label">TEMA OSCURO</span>
+            <span class="topbar-dot on"></span><span class="topbar-label" data-i18n="settings.theme">TEMA OSCURO</span>
           </button>
         </div>
-        <label class="profile-field-label" for="preferredTeamNameInput">NOMBRE DEL EQUIPO</label>
-        <input type="text" id="preferredTeamNameInput" maxlength="24" placeholder="Ej: Dream Team FC" class="team-name-input">
+        <label class="profile-field-label" for="preferredTeamNameInput" data-i18n="settings.team_name">NOMBRE DEL EQUIPO</label>
+        <input type="text" id="preferredTeamNameInput" maxlength="24" placeholder="Ej: Dream Team FC" class="team-name-input" data-i18n-placeholder="settings.team_name_placeholder">
         <label class="profile-checkbox-row">
           <input type="checkbox" id="useFixedTeamNameCheckbox">
-          <span>Usar siempre como nombre de equipo</span>
+          <span data-i18n="settings.always_use">Usar siempre como nombre de equipo</span>
         </label>
-        <p class="profile-field-hint">Si lo activas, no se te preguntará el nombre del equipo al formarlo — se usará este automáticamente.</p>
+        <p class="profile-field-hint" data-i18n="settings.always_use_hint">Si lo activas, no se te preguntará el nombre del equipo al formarlo — se usará este automáticamente.</p>
         <div id="langSelectorWrap" style="margin-top:14px;padding-top:14px;border-top:1px solid var(--line);display:none">
           <div class="settings-label" data-i18n="settings.language">IDIOMA</div>
           <div style="display:flex;gap:8px;margin-top:8px">
@@ -228,12 +228,12 @@
         </div>
         <!-- CHEATS: solo visible para tiopops -->
         <div id="cheatsSection" style="display:none;margin-top:18px;border-top:1px dashed #c0392b;padding-top:14px;">
-          <label class="profile-field-label" style="color:#c0392b">⚙️ MODO DEBUG</label>
+          <label class="profile-field-label" style="color:#c0392b" data-i18n="settings.debug">⚙️ MODO DEBUG</label>
           <label class="profile-checkbox-row">
             <input type="checkbox" id="cheatsCheckbox">
-            <span style="color:#c0392b;font-weight:700">CHEATS ACTIVADOS</span>
+            <span style="color:#c0392b;font-weight:700" data-i18n="settings.cheats">CHEATS ACTIVADOS</span>
           </label>
-          <p class="profile-field-hint" style="color:#c0392b;opacity:.7">Tickets siempre 3/3 · Gana todos los partidos · Puntos infinitos</p>
+          <p class="profile-field-hint" style="color:#c0392b;opacity:.7" data-i18n="settings.cheats_desc">Tickets siempre 3/3 · Gana todos los partidos · Puntos infinitos</p>
         </div>
       </div>
 
@@ -241,13 +241,13 @@
       <div id="profileNotesPane" class="profile-tab-pane">
         <div class="upgrades-header">
           <div class="upgrades-title-row">
-            <span class="upgrades-title">HABILIDADES</span>
-            <span class="upgrades-subtitle">Modificadores especiales</span>
+            <span class="upgrades-title" data-i18n="skill.title">HABILIDADES</span>
+            <span class="upgrades-subtitle" data-i18n="skill.subtitle">Modificadores especiales</span>
           </div>
           <div class="upgrades-points-badge">
             <span class="badge-goat">🐐</span>
             <span id="skillPointsDisplay">0</span>
-            <span class="upgrades-pts-label">GOAT POINTS</span>
+            <span class="upgrades-pts-label" data-i18n="skill.pts_label">GOAT POINTS</span>
           </div>
         </div>
         <div class="upgrades-list" id="skillsList"></div>
@@ -257,13 +257,13 @@
       <div id="profileUpgradesPane" class="profile-tab-pane">
         <div class="upgrades-header">
           <div class="upgrades-title-row">
-            <span class="upgrades-title">MEJORAS</span>
-            <span class="upgrades-subtitle">Atributos del manager</span>
+            <span class="upgrades-title" data-i18n="upgrade.title">MEJORAS</span>
+            <span class="upgrades-subtitle" data-i18n="upgrade.subtitle">Atributos del manager</span>
           </div>
           <div class="upgrades-points-badge">
             <span class="badge-goat">🐐</span>
             <span id="upgradePointsDisplay">0</span>
-            <span class="upgrades-pts-label">GOAT POINTS</span>
+            <span class="upgrades-pts-label" data-i18n="upgrade.pts_label">GOAT POINTS</span>
           </div>
         </div>
         <div class="upgrades-list" id="upgradesList"></div>

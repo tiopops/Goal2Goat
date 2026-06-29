@@ -5595,43 +5595,31 @@ function getPlayersPerTeam(){ return 5 + (window._upgradeCache.scout||0); }
 
 const UPGRADE_DEFS = [
   {
-    id: 'bench',
-    icon: '🪑',
-    name: 'BANQUILLO',
-    desc: 'PLAZAS EN EL BANQUILLO',
-    baseCost: 5,
-    maxLevel: 5,
-    baseValue: 2,
+    id: 'bench', icon: '🪑',
+    get name(){ return window.t?window.t('upgrade.bench'):'BANQUILLO'; },
+    get desc(){ return window.t?window.t('upgrade.bench_desc'):'PLAZAS EN EL BANQUILLO'; },
+    baseCost: 5, maxLevel: 5, baseValue: 2,
     tooltip: (lvl) => `${2+lvl} ${t("upgrade.bench_desc")}`
   },
   {
-    id: 'subs',
-    icon: '🔄',
-    name: 'CAMBIOS',
-    desc: 'SUSTITUCIONES POR PARTIDO',
-    baseCost: 5,
-    maxLevel: 5,
-    baseValue: 2,
+    id: 'subs', icon: '🔄',
+    get name(){ return window.t?window.t('upgrade.subs'):'CAMBIOS'; },
+    get desc(){ return window.t?window.t('upgrade.subs_desc'):'SUSTITUCIONES POR PARTIDO'; },
+    baseCost: 5, maxLevel: 5, baseValue: 2,
     tooltip: (lvl) => `${2+lvl} ${t("upgrade.subs_desc")}`
   },
   {
-    id: 'scout',
-    icon: '🔭',
-    name: 'CONVOCADOS',
-    desc: 'JUGADORES POR EQUIPO AL BARAJAR',
-    baseCost: 5,
-    maxLevel: 5,
-    baseValue: 5,
+    id: 'scout', icon: '🔭',
+    get name(){ return window.t?window.t('upgrade.scout'):'CONVOCADOS'; },
+    get desc(){ return window.t?window.t('upgrade.scout_desc'):'JUGADORES POR EQUIPO AL BARAJAR'; },
+    baseCost: 5, maxLevel: 5, baseValue: 5,
     tooltip: (lvl) => `${5+lvl} ${t("upgrade.scout_desc")}`
   },
   {
-    id: 'recovery',
-    icon: '⚡',
-    name: 'RECUPERACIÓN',
-    desc: 'REDUCE LA FATIGA ENTRE PARTIDOS',
-    baseCost: 5,
-    maxLevel: 5,
-    baseValue: 0,
+    id: 'recovery', icon: '⚡',
+    get name(){ return window.t?window.t('upgrade.recovery'):'RECUPERACIÓN'; },
+    get desc(){ return window.t?window.t('upgrade.recovery_desc'):'REDUCE LA FATIGA ENTRE PARTIDOS'; },
+    baseCost: 5, maxLevel: 5, baseValue: 0,
     tooltip: (lvl) => `${lvl*10}% ${t("upgrade.recovery_desc")}`
   },
 ];
@@ -5673,12 +5661,12 @@ async function renderUpgradesTab(){
   const pointsEl = document.getElementById('upgradePointsDisplay');
   if(!list) return;
 
-  list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:12px">Cargando...</div>';
-  await refreshUpgradeCache(); // sincronizar cache antes de renderizar
+  list.innerHTML = `<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:12px">${window.t?window.t('upgrade.loading'):'Cargando...'}</div>`;
+  await refreshUpgradeCache();
 
   const user = window._fbAuth && window._fbAuth.currentUser;
   if(!user){
-    list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted)">Inicia sesión para ver las mejoras.</div>';
+    list.innerHTML = `<div style="text-align:center;padding:20px;color:var(--text-muted)">${window.t?window.t('upgrade.login'):'Inicia sesión para ver las mejoras.'}</div>`;
     return;
   }
 
@@ -5704,7 +5692,7 @@ async function renderUpgradesTab(){
 
     const costHtml = nextCost !== null
       ? `<span class="cost-star">★</span>${nextCost}`
-      : `<span style="font-size:9px;color:var(--text-muted);letter-spacing:1px">MAX</span>`;
+      : `<span style="font-size:9px;color:var(--text-muted);letter-spacing:1px">${window.t?window.t('upgrade.max'):'MAX'}</span>`;
 
     const row = document.createElement('div');
     row.className = 'upgrade-row';
@@ -5722,8 +5710,8 @@ async function renderUpgradesTab(){
         <div class="upgrade-bars">${bars}</div>
         <div class="upgrade-controls">
           <div class="upgrade-cost-badge">${costHtml}</div>
-          <button class="upgrade-btn minus" data-id="${def.id}" title="Recuperar ${prevRefund||0} pts" ${canDowngrade?'':'disabled'}>−</button>
-          <button class="upgrade-btn plus" data-id="${def.id}" title="Coste: ${nextCost||0} pts" ${canUpgrade?'':'disabled'}>+</button>
+          <button class="upgrade-btn minus" data-id="${def.id}" title="${(window.t?window.t('upgrade.refund'):'Recuperar {0} pts').replace('{0}',prevRefund||0)}" ${canDowngrade?'':'disabled'}>−</button>
+          <button class="upgrade-btn plus" data-id="${def.id}" title="${(window.t?window.t('upgrade.cost_title'):'Coste: {0} pts').replace('{0}',nextCost||0)}" ${canUpgrade?'':'disabled'}>+</button>
         </div>
       </div>`;
 
@@ -5782,66 +5770,66 @@ async function renderUpgradesTab(){
 const SKILL_DEFS = [
   // === TÁCTICA ===
   {
-    id: 'estratega', category: 'TÁCTICA',
-    name: 'ESTRATEGA', cost: 40,
+    id: 'estratega', get category(){ return window.t?window.t('skill.category.tactica'):'TÁCTICA'; },
+    get name(){ return window.t?window.t('skill.estratega'):'ESTRATEGA'; }, cost: 40,
     icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 3"/></svg>',
-    tooltip: 'Muestra la mejor contra-estrategia antes de cada partido.',
+    get tooltip(){ return window.t?window.t('skill.estratega_desc'):'Muestra la mejor contra-estrategia antes de cada partido.'; },
   },
   {
-    id: 'capitan', category: 'TÁCTICA',
-    name: 'CAPITÁN', cost: 30,
+    id: 'capitan', get category(){ return window.t?window.t('skill.category.tactica'):'TÁCTICA'; },
+    get name(){ return window.t?window.t('skill.capitan'):'CAPITÁN'; }, cost: 30,
     icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>',
-    tooltip: 'Si vas perdiendo en el descanso, tu ataque sube un 10% en la segunda parte.',
+    get tooltip(){ return window.t?window.t('skill.capitan_desc'):'Si vas perdiendo en el descanso, tu ataque sube un 10% en la segunda parte.'; },
   },
   {
-    id: 'remontada', category: 'TÁCTICA',
-    name: 'REMONTADA', cost: 60,
+    id: 'remontada', get category(){ return window.t?window.t('skill.category.tactica'):'TÁCTICA'; },
+    get name(){ return window.t?window.t('skill.remontada'):'REMONTADA'; }, cost: 60,
     icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M18 15l-6-6-6 6"/></svg>',
-    tooltip: 'Si vas perdiendo de 2 o más goles, tu ataque sube un 35% el resto del partido.',
+    get tooltip(){ return window.t?window.t('skill.remontada_desc'):'Si vas perdiendo de 2 o más goles, tu ataque sube un 35% el resto del partido.'; },
   },
   {
-    id: 'penaltis', category: 'TÁCTICA',
-    name: 'ESPECIALISTA EN PENALTIS', cost: 35,
+    id: 'penaltis', get category(){ return window.t?window.t('skill.category.tactica'):'TÁCTICA'; },
+    get name(){ return window.t?window.t('skill.penaltis'):'ESPECIALISTA EN PENALTIS'; }, cost: 35,
     icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><line x1="12" y1="3" x2="12" y2="21"/><line x1="3" y1="12" x2="21" y2="12"/></svg>',
-    tooltip: 'Aumenta la probabilidad de anotar en tandas de penaltis en un 15%.',
+    get tooltip(){ return window.t?window.t('skill.penaltis_desc'):'Aumenta la probabilidad de anotar en tandas de penaltis en un 15%.'; },
   },
   // === PLANTILLA ===
   {
-    id: 'medico', category: 'PLANTILLA',
-    name: 'MÉDICO DE ÉLITE', cost: 50,
+    id: 'medico', get category(){ return window.t?window.t('skill.category.plantilla'):'PLANTILLA'; },
+    get name(){ return window.t?window.t('skill.medico'):'MÉDICO DE ÉLITE'; }, cost: 50,
     icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>',
-    tooltip: 'Las lesiones leves se recuperan automáticamente al acabar el partido.',
+    get tooltip(){ return window.t?window.t('skill.medico_desc'):'Las lesiones leves se recuperan automáticamente al acabar el partido.'; },
   },
   {
-    id: 'ojeador', category: 'PLANTILLA',
-    name: 'OJEADOR', cost: 25,
+    id: 'ojeador', get category(){ return window.t?window.t('skill.category.plantilla'):'PLANTILLA'; },
+    get name(){ return window.t?window.t('skill.ojeador'):'OJEADOR'; }, cost: 25,
     icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>',
-    tooltip: 'Al barajar equipos siempre aparece al menos un jugador con 85 o más de rating.',
+    get tooltip(){ return window.t?window.t('skill.ojeador_desc'):'Al barajar equipos siempre aparece al menos un jugador con 85 o más de rating.'; },
   },
   {
-    id: 'cazatalentos', category: 'PLANTILLA',
-    name: 'CAZATALENTOS', cost: 30,
+    id: 'cazatalentos', get category(){ return window.t?window.t('skill.category.plantilla'):'PLANTILLA'; },
+    get name(){ return window.t?window.t('skill.cazatalentos'):'CAZATALENTOS'; }, cost: 30,
     icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
-    tooltip: 'Los jugadores fuera de su posición natural solo pierden un 5% de rendimiento.',
+    get tooltip(){ return window.t?window.t('skill.cazatalentos_desc'):'Los jugadores fuera de su posición natural solo pierden un 5% de rendimiento.'; },
   },
   {
-    id: 'veterano', category: 'PLANTILLA',
-    name: 'VETERANO', cost: 45,
+    id: 'veterano', get category(){ return window.t?window.t('skill.category.plantilla'):'PLANTILLA'; },
+    get name(){ return window.t?window.t('skill.veterano'):'VETERANO'; }, cost: 45,
     icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>',
-    tooltip: 'Los jugadores con 85+ de rating no pueden recibir tarjeta roja directa.',
+    get tooltip(){ return window.t?window.t('skill.veterano_desc'):'Los jugadores con 85+ de rating no pueden recibir tarjeta roja directa.'; },
   },
   // === ECONOMÍA ===
   {
-    id: 'coleccionista', category: 'ECONOMÍA',
-    name: 'COLECCIONISTA', cost: 20,
+    id: 'coleccionista', get category(){ return window.t?window.t('skill.category.economia'):'ECONOMÍA'; },
+    get name(){ return window.t?window.t('skill.coleccionista'):'COLECCIONISTA'; }, cost: 20,
     icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>',
-    tooltip: 'Cada casilla buena del ticket (moneda o cabra) da 1 punto extra.',
+    get tooltip(){ return window.t?window.t('skill.coleccionista_desc'):'Cada casilla buena del ticket (moneda o cabra) da 1 punto extra.'; },
   },
   {
-    id: 'patrocinador', category: 'ECONOMÍA',
-    name: 'PATROCINADOR', cost: 20,
+    id: 'patrocinador', get category(){ return window.t?window.t('skill.category.economia'):'ECONOMÍA'; },
+    get name(){ return window.t?window.t('skill.patrocinador'):'PATROCINADOR'; }, cost: 20,
     icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>',
-    tooltip: 'Ganas 1 GOAT Point extra al clasificarte para cuartos de final.',
+    get tooltip(){ return window.t?window.t('skill.patrocinador_desc'):'Ganas 1 GOAT Point extra al clasificarte para cuartos de final.'; },
   },
 ];
 
@@ -5872,9 +5860,9 @@ async function renderSkillsTab(){
   const list = document.getElementById('skillsList');
   const pointsEl = document.getElementById('skillPointsDisplay');
   if(!list) return;
-  list.innerHTML='<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:12px">Cargando...</div>';
+  list.innerHTML=`<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:12px">${window.t?window.t('skill.loading'):'Cargando...'}</div>`;
   const user = window._fbAuth&&window._fbAuth.currentUser;
-  if(!user){ list.innerHTML='<div style="text-align:center;padding:20px;color:var(--text-muted)">Inicia sesión para ver las habilidades.</div>'; return; }
+  if(!user){ list.innerHTML=`<div style="text-align:center;padding:20px;color:var(--text-muted)">${window.t?window.t('skill.login'):'Inicia sesión para ver las habilidades.'}</div>`; return; }
   const snap = await window._fbDb.collection('users').doc(user.uid).get();
   const data = snap.exists?snap.data():{};
   let pts = data.scratchPoints||0;
@@ -5910,7 +5898,7 @@ async function renderSkillsTab(){
         <span style="font-size:10px;color:${active?'var(--accent)':'var(--text-muted)'};line-height:1.4;padding:0 4px">${def.tooltip}</span>
       </div>`;
       const footerPart=`<div style="width:100%;padding:6px;background:${active?'rgba(201,162,39,.15)':'rgba(0,0,0,.15)'};border-top:1px solid ${active?'rgba(201,162,39,.3)':'var(--line)'}">
-        <span style="font-family:'Bebas Neue',Impact,sans-serif;font-size:12px;color:${active?'var(--gold)':'var(--text-muted)'};letter-spacing:1px">${active?'✓ ACTIVA · PULSA PARA DESACTIVAR':'★ '+def.cost+' PTS'}</span>
+        <span style="font-family:'Bebas Neue',Impact,sans-serif;font-size:12px;color:${active?'var(--gold)':'var(--text-muted)'};letter-spacing:1px">${active?(window.t?window.t('skill.active_footer'):'✓ ACTIVA · PULSA PARA DESACTIVAR'):'★ '+def.cost+' PTS'}</span>
       </div>`;
       btn.innerHTML=iconPart+footerPart;
       btn.addEventListener('click', async()=>{
@@ -6011,7 +5999,14 @@ const ACHIEVEMENT_DEFS = [
 ];
 
 const TIER_COLOR = {básico:'#aaa', intermedio:'#2ecc71', difícil:'#e67e22', mítico:'#f0c419'};
-const TIER_LABEL = {básico:'★ 1 PT', intermedio:'★ 2 PTS', difícil:'★ 3 PTS', mítico:'★ 25 PTS'};
+function getTierLabel(tier){
+  return {
+    básico:      window.t?window.t('tier.pts.basic')     :'★ 1 PT',
+    intermedio:  window.t?window.t('tier.pts.intermediate'):'★ 2 PTS',
+    difícil:     window.t?window.t('tier.pts.hard')      :'★ 3 PTS',
+    mítico:      window.t?window.t('tier.pts.mythic')    :'★ 25 PTS',
+  }[tier]||'';
+}
 
 // Cache de logros
 window._achievementsCache = new Set();
@@ -6075,7 +6070,7 @@ function showAchievementToast(def){
   toast.innerHTML=`
     <i class="ph ph-bold ${def.icon}" style="font-size:28px;color:${TIER_COLOR[def.tier]}"></i>
     <div>
-      <div style="font-size:10px;letter-spacing:2px;color:${TIER_COLOR[def.tier]};margin-bottom:2px">${t("match.achievement_unlocked")} · ${TIER_LABEL[def.tier]}</div>
+      <div style="font-size:10px;letter-spacing:2px;color:${TIER_COLOR[def.tier]};margin-bottom:2px">${t("match.achievement_unlocked")} · ${getTierLabel(def.tier)}</div>
       <div style="font-size:16px;color:#fff;letter-spacing:1px">${window.t?window.t('ach.'+def.id)||def.name:def.name}</div>
       <div style="font-size:11px;color:#aaa;margin-top:2px">${window.t?window.t('ach.'+def.id+'.d')||def.desc:def.desc}</div>
     </div>`;
@@ -6090,9 +6085,9 @@ async function checkAllBasicAchievements(unlocked){
 async function renderAchievementsTab(){
   const list=document.getElementById('achievementsList');
   if(!list) return;
-  list.innerHTML='<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:12px">Cargando...</div>';
+  list.innerHTML=`<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:12px">${window.t?window.t('skill.loading'):'Cargando...'}</div>`;
   const user=window._fbAuth&&window._fbAuth.currentUser;
-  if(!user){ list.innerHTML='<div style="text-align:center;padding:20px;color:var(--text-muted)">Inicia sesión para ver tus logros.</div>'; return; }
+  if(!user){ list.innerHTML=`<div style="text-align:center;padding:20px;color:var(--text-muted)">${window.t?window.t('achievements.login'):'Inicia sesión para ver tus logros.'}</div>`; return; }
   const snap=await window._fbDb.collection('users').doc(user.uid).get();
   const unlocked=new Set((snap.exists&&snap.data().achievements)||[]);
   const total=ACHIEVEMENT_DEFS.length;
@@ -6103,8 +6098,8 @@ async function renderAchievementsTab(){
   // Progreso general
   const progress=document.createElement('div');
   progress.style.cssText='display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;font-family:"Bebas Neue",Impact,sans-serif';
-  progress.innerHTML=`<span style="font-size:13px;color:var(--text-muted);letter-spacing:1px">${done} / ${total} LOGROS</span>
-    <span style="font-size:13px;color:var(--gold)">${ACHIEVEMENT_DEFS.filter(a=>unlocked.has(a.id)).reduce((s,a)=>s+a.pts,0)} PTS GANADOS</span>`;
+  progress.innerHTML=`<span style="font-size:13px;color:var(--text-muted);letter-spacing:1px">${done} / ${total} ${window.t?window.t('achievements.progress'):'LOGROS'}</span>
+    <span style="font-size:13px;color:var(--gold)">${ACHIEVEMENT_DEFS.filter(a=>unlocked.has(a.id)).reduce((s,a)=>s+a.pts,0)} ${window.t?window.t('achievements.pts_earned'):'PTS GANADOS'}</span>`;
   list.appendChild(progress);
 
   // Grid 2 columnas
@@ -6126,7 +6121,7 @@ async function renderAchievementsTab(){
     const iconHtml='<i class="ph ph-bold '+def.icon+'" style="font-size:26px;flex-shrink:0;color:'+iconColor+';'+(isUnlocked?'':' opacity:.5')+'"></i>';
     const checkHtml=isUnlocked?'<i class="ph ph-bold ph-check" style="position:absolute;top:5px;right:6px;font-size:12px;color:'+(TIER_COLOR[def.tier]||'#c9a227')+'" ></i>':'';
     const tierColor=TIER_COLOR[def.tier]||'#aaa';
-    const tierLabel=TIER_LABEL[def.tier]||'';
+    const tierLabel=getTierLabel(def.tier)||'';
     const nameColor=isUnlocked?(isLight?'#1a1a1a':'#fff'):(isLight?'#333':'var(--text-muted)');
     const descColor=isUnlocked?(isLight?'#444':'#aaa'):(isLight?'#666':'var(--text-muted)');
     card.innerHTML=iconHtml+checkHtml+
@@ -6158,7 +6153,12 @@ window.applyTranslations = function(){
     const text=window.t(key);
     if(text!==key) el.textContent=text;
   });
-  // Actualizar elementos con data-i18n-html (contenido HTML con etiquetas)
+  // Actualizar placeholders
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el=>{
+    const key=el.dataset.i18nPlaceholder;
+    const text=window.t(key);
+    if(text!==key) el.placeholder=text;
+  });
   document.querySelectorAll('[data-i18n-html]').forEach(el=>{
     const key=el.dataset.i18nHtml;
     const text=window.t(key);
@@ -6182,6 +6182,12 @@ window.applyTranslations = function(){
   // Re-renderizar rival, clima y selector de estrategia
   if(typeof renderRivalBox==='function' && document.getElementById('rivalBox') && document.getElementById('rivalBox').style.display!=='none') renderRivalBox();
   if(typeof renderWeather==='function') renderWeather();
+  // Re-renderizar pestañas de perfil si están visibles
+  if(document.getElementById('profileOverlay')&&document.getElementById('profileOverlay').style.display!=='none'){
+    if(typeof renderUpgradesTab==='function'&&document.getElementById('profileUpgradesPane')&&document.getElementById('profileUpgradesPane').classList.contains('profile-tab-pane-active')) renderUpgradesTab();
+    if(typeof renderSkillsTab==='function'&&document.getElementById('profileNotesPane')&&document.getElementById('profileNotesPane').classList.contains('profile-tab-pane-active')) renderSkillsTab();
+    if(typeof renderAchievementsTab==='function'&&document.getElementById('profileAchievementsPane')&&document.getElementById('profileAchievementsPane').classList.contains('profile-tab-pane-active')) renderAchievementsTab();
+  }
   // Actualizar botones de idioma activo
   const esBtn=document.getElementById('langEsBtn');
   const enBtn=document.getElementById('langEnBtn');
