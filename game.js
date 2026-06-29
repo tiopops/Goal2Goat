@@ -6248,15 +6248,14 @@ window.applyTranslations = function(){
     if(typeof renderAchievementsTab==='function'&&document.getElementById('profileAchievementsPane')&&document.getElementById('profileAchievementsPane').classList.contains('profile-tab-pane-active')) renderAchievementsTab();
   }
   // Actualizar botones de idioma activo
-  ['Es','En','Pt','Fr','De','It'].forEach(l=>{
-    const lang=l.toLowerCase();
-    const active=window.LANG===lang;
-    const style=active?';border-color:var(--gold);color:var(--gold)':';border-color:var(--line);color:var(--text)';
-    const b1=document.getElementById('lang'+l+'Btn');
-    const b2=document.getElementById('lang'+l+'Btn2');
-    if(b1) b1.style.cssText+=style;
-    if(b2) b2.style.cssText+=style;
-  });
+  const esBtn=document.getElementById('langEsBtn');
+  const enBtn=document.getElementById('langEnBtn');
+  if(esBtn) esBtn.style.cssText+=(window.LANG==='es')?';border-color:var(--gold);color:var(--gold)':';border-color:var(--line);color:var(--text)';
+  if(enBtn) enBtn.style.cssText+=(window.LANG==='en')?';border-color:var(--gold);color:var(--gold)':';border-color:var(--line);color:var(--text)';
+  const esBtn2=document.getElementById('langEsBtn2');
+  const enBtn2=document.getElementById('langEnBtn2');
+  if(esBtn2) esBtn2.style.cssText+=(window.LANG==='es')?';border-color:var(--gold);color:var(--gold)':';border-color:var(--line);color:var(--text)';
+  if(enBtn2) enBtn2.style.cssText+=(window.LANG==='en')?';border-color:var(--gold);color:var(--gold)':';border-color:var(--line);color:var(--text)';
   // Botones del header
   // ranking-btn text handled by data-i18n span inside
   // Tabs móvil
@@ -6281,6 +6280,8 @@ window.applyTranslations = function(){
     const CONV_SORT_LABELS_I18N={arrival:'draft.sort_arrival',position:'draft.sort_position',rating:'draft.sort_rating'};
     sortLabel.textContent=window.t(CONV_SORT_LABELS_I18N[window.convSortMode]||'draft.sort_position');
   }
+  // Re-renderizar historial (nombres de países y cabeceras de tabla en tiempo real)
+  if(typeof renderMatchHistory==='function') renderMatchHistory();
 };
 
 // Aplicar traducciones al cargar
