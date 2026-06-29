@@ -836,16 +836,18 @@ function showTeamChoice(t1,p1,t2,p2,isBench=false){
 }
 
 function teamOptionHTML(team,players){
-  const pid=CSS.escape(team.name);
   const styleKey=team._styleKey||'';
-  const styleName=styleKey?(window.t?window.t('style.name.'+styleKey):(STYLES[styleKey]?STYLES[styleKey].name:styleKey)):'';
-  const styleHint=styleKey&&STYLE_HINTS[styleKey]?STYLE_HINTS[styleKey]:'';
+  const styleName=styleKey
+    ? (window.t&&window.t('style.name.'+styleKey)!==('style.name.'+styleKey)
+        ? window.t('style.name.'+styleKey)
+        : (STYLES[styleKey]?STYLES[styleKey].name:styleKey))
+    : '';
   return `<div class="team-option" onclick="selectTeam('${esc(team.name)}')">
     <div class="flag-wrap">${flagEmoji(team.name)}</div>
     <h3>${team.name}</h3>
     ${renderBonuses(team)}
     <div class="style-label">${window.t?window.t('rival.style_label'):'Estilo de juego'}</div>
-    <p class="style-text"><strong>${styleName}</strong>${styleHint?'<br><span style="font-size:10px;color:var(--text-muted)">'+styleHint+'</span>':''}</p>
+    <p class="style-text">${styleName}</p>
   </div>`;
 }
 function esc(s){ return s.replace(/'/g,"&#39;"); }
@@ -6230,6 +6232,10 @@ window.applyTranslations = function(){
   const enBtn=document.getElementById('langEnBtn');
   if(esBtn) esBtn.style.cssText+=(window.LANG==='es')?';border-color:var(--gold);color:var(--gold)':';border-color:var(--line);color:var(--text)';
   if(enBtn) enBtn.style.cssText+=(window.LANG==='en')?';border-color:var(--gold);color:var(--gold)':';border-color:var(--line);color:var(--text)';
+  const esBtn2=document.getElementById('langEsBtn2');
+  const enBtn2=document.getElementById('langEnBtn2');
+  if(esBtn2) esBtn2.style.cssText+=(window.LANG==='es')?';border-color:var(--gold);color:var(--gold)':';border-color:var(--line);color:var(--text)';
+  if(enBtn2) enBtn2.style.cssText+=(window.LANG==='en')?';border-color:var(--gold);color:var(--gold)':';border-color:var(--line);color:var(--text)';
   // Botones del header
   const rankBtn=document.querySelector('.ranking-btn');
   if(rankBtn){ const i=rankBtn.querySelector('i'); rankBtn.textContent=''; if(i)rankBtn.appendChild(i); rankBtn.append(' '+window.t('app.ranking')); }

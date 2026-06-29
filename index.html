@@ -104,16 +104,29 @@
           <span class="topbar-dot on"></span><span class="topbar-label" data-i18n="settings.theme">TEMA OSCURO</span>
         </button>
         <div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--line)">
-          <div style="font-family:'Bebas Neue',Impact,sans-serif;font-size:10px;letter-spacing:1px;color:var(--text-muted);margin-bottom:6px" data-i18n="settings.language">IDIOMA</div>
-          <div style="display:flex;gap:6px">
-            <button onclick="window.setLang('es');toggleSettingsMenu()" style="flex:1;padding:5px 4px;font-family:'Bebas Neue',Impact,sans-serif;font-size:12px;letter-spacing:1px;border:1px solid var(--line);background:var(--panel);color:var(--text);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px"><img src="https://flagcdn.com/w40/es.png" style="height:12px;width:auto;border-radius:1px" alt="ES"> ES</button>
-            <button onclick="window.setLang('en');toggleSettingsMenu()" style="flex:1;padding:5px 4px;font-family:'Bebas Neue',Impact,sans-serif;font-size:12px;letter-spacing:1px;border:1px solid var(--line);background:var(--panel);color:var(--text);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px"><img src="https://flagcdn.com/w40/gb.png" style="height:12px;width:auto;border-radius:1px" alt="EN"> EN</button>
-          </div>
+          <button onclick="toggleSettingsMenu();document.getElementById('langPopup').style.display='flex'" style="width:100%;padding:6px 8px;font-family:'Bebas Neue',Impact,sans-serif;font-size:12px;letter-spacing:1px;border:1px solid var(--line);background:var(--panel);color:var(--text);cursor:pointer;display:flex;align-items:center;gap:6px">
+            🌐 <span data-i18n="settings.language">IDIOMA</span>
+          </button>
         </div>
       </div>
     </div>
   </div>
 </header>
+
+<!-- LANG POPUP -->
+<div id="langPopup" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:60000;align-items:center;justify-content:center" onclick="if(event.target===this)this.style.display='none'">
+  <div style="background:var(--card-bg);border:1px solid var(--line);padding:24px;min-width:280px;max-width:340px;width:90%">
+    <div style="font-family:'Bebas Neue',Impact,sans-serif;font-size:18px;letter-spacing:2px;color:var(--text);margin-bottom:16px;text-align:center" data-i18n="settings.language">IDIOMA</div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <button id="langEsBtn2" onclick="window.setLang('es');document.getElementById('langPopup').style.display='none'" style="padding:12px;font-family:'Bebas Neue',Impact,sans-serif;font-size:16px;letter-spacing:1px;border:2px solid var(--line);background:var(--panel);color:var(--text);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px">
+        <img src="https://flagcdn.com/w40/es.png" style="height:20px;width:auto;border-radius:2px;box-shadow:0 0 0 1px rgba(0,0,0,.15)" alt="ES"> ESPAÑOL
+      </button>
+      <button id="langEnBtn2" onclick="window.setLang('en');document.getElementById('langPopup').style.display='none'" style="padding:12px;font-family:'Bebas Neue',Impact,sans-serif;font-size:16px;letter-spacing:1px;border:2px solid var(--line);background:var(--panel);color:var(--text);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px">
+        <img src="https://flagcdn.com/w40/gb.png" style="height:20px;width:auto;border-radius:2px;box-shadow:0 0 0 1px rgba(0,0,0,.15)" alt="EN"> ENGLISH
+      </button>
+    </div>
+  </div>
+</div>
 
 <!-- PROFILE MODAL -->
 <div id="profileOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:40000;align-items:center;justify-content:center;overflow-y:auto;padding:20px 0">
