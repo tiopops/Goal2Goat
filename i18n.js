@@ -732,6 +732,7 @@ window.TRANSLATIONS = {
   'ticket.no_tickets':         {es:'SIN TICKETS',                  en:'NO TICKETS'},
   'ticket.next_ticket_in':     {es:'Próximo ticket en',             en:'Next ticket in'},
   'ticket.close':              {es:'CERRAR',                        en:'CLOSE'},
+  'ticket.close_x':            {es:'Cerrar',                        en:'Close'},
   'ticket.login_title':        {es:'INICIA SESIÓN',                en:'LOG IN'},
   'ticket.login_msg':          {es:'Necesitas cuenta para usar los tickets.', en:'You need an account to use tickets.'},
   'ticket.loading':            {es:'Cargando...',                  en:'Loading...'},

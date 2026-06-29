@@ -1,5 +1,11 @@
 
 
+/* ── Ticket translation helper — accesses TRANSLATIONS directly for reliability ── */
+function tk(key){
+  const e=window.TRANSLATIONS&&window.TRANSLATIONS[key];
+  return e?(e[window.LANG||'es']||e['es']||key):key;
+}
+
 function flagAsset(name){
 const n=name.toLowerCase();
 // Special non-ISO flags (England/Scotland/Wales, historical countries)
@@ -3449,7 +3455,7 @@ function showGoldenTicket(){
   const serial=String(Math.floor(1000+Math.random()*8999))+'-'+String(Math.floor(1000+Math.random()*8999));
   wrap.innerHTML=`
   <div style="position:relative;width:340px;background:linear-gradient(180deg,#3a2a00 0%,#1a1200 100%);border-radius:18px;box-shadow:0 0 0 2px #f0c419,0 30px 60px -10px rgba(0,0,0,.9);overflow:hidden;">
-    <button onclick=\"window.gtClose(0)\" style=\"position:absolute;top:10px;right:12px;background:none;border:none;color:rgba(240,196,25,.5);font-size:20px;cursor:pointer;z-index:10;line-height:1;padding:4px\" title=\"Cerrar\">✕</button>
+    <button onclick=\"window.gtClose(0)\" style=\"position:absolute;top:10px;right:12px;background:none;border:none;color:rgba(240,196,25,.5);font-size:20px;cursor:pointer;z-index:10;line-height:1;padding:4px\" title=\"${tk('ticket.close_x')}\">✕</button>
     <div style="padding:26px 22px 22px;">
       <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:2px;">
         <span style="font-size:18px">🏆</span>
@@ -5137,12 +5143,6 @@ function updateTicketBadge(count){
 }
 
 /* ── Abrir / cerrar overlay de tickets ── */
-/* helper: translate ticket strings directly from TRANSLATIONS for reliability */
-function tk(key){
-  const e=window.TRANSLATIONS&&window.TRANSLATIONS[key];
-  return e?(e[window.LANG]||e['es']||key):key;
-}
-
 window.openTicketOverlay = function() {
   var ov = document.getElementById('ticketOverlay');
   if (ov) ov.style.display = 'block';
@@ -5242,7 +5242,7 @@ function buildTicketInMount(mount, ticketCount, lastRegen, currentScratchPts){
   mount.innerHTML=`
   <div class="ticket" id="ticketCard" style="position:relative;width:340px;background:linear-gradient(180deg,#0f3d24 0%,#0c2e1c 100%);border-radius:0;box-shadow:0 30px 60px -20px rgba(0,0,0,.7),0 0 0 1px rgba(240,196,25,.15);overflow:visible">
     <div style="display:flex;justify-content:space-around;margin:0 -4px;position:relative;z-index:2">${Array.from({length:12},()=>'<div style="width:16px;height:16px;border-radius:50%;background:#0a1212;border:1px solid rgba(246,241,227,.1);flex-shrink:0"></div>').join('')}</div>
-    <button onclick=\"window.closeTicketOverlay()\" style=\"position:absolute;top:10px;right:12px;background:none;border:none;color:rgba(246,241,227,.5);font-size:20px;cursor:pointer;z-index:10;line-height:1;padding:4px\" title=\"Cerrar\">✕</button>
+    <button onclick=\"window.closeTicketOverlay()\" style=\"position:absolute;top:10px;right:12px;background:none;border:none;color:rgba(246,241,227,.5);font-size:20px;cursor:pointer;z-index:10;line-height:1;padding:4px\" title=\"${tk('ticket.close_x')}\">✕</button>
 
     <div style="padding:26px 22px 22px;">
       <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:2px;">
@@ -5487,7 +5487,7 @@ function buildTicketInMount(mount, ticketCount, lastRegen, currentScratchPts){
       <h2 style="font-family:'Bebas Neue',Impact,sans-serif;font-size:26px;letter-spacing:1px;color:${win?'#f0c419':'#d94f3d'};margin-bottom:6px">${win?tk('ticket.result_win_auto'):tk('ticket.result_lose')}</h2>
       <p style="font-size:12px;color:rgba(246,241,227,.7);line-height:1.5;margin-bottom:12px">${win?(auto?tk('ticket.result_win_auto_msg'):tk('ticket.result_win_cash_msg')):tk('ticket.result_lose_msg')}</p>
       <div style="font-family:'Bebas Neue',Impact,sans-serif;font-size:34px;color:${win?'#f0c419':'#d94f3d'};margin-bottom:18px">${(win && pts>0)?'+'+pts+' PTS':win?'0 PTS':''}</div>
-      <button onclick="closeTicketAndSave(${win?pts:0})" style="width:100%;border:none;border-radius:0;padding:12px;font-family:'Bebas Neue',Impact,sans-serif;font-size:15px;letter-spacing:1.5px;background:linear-gradient(180deg,#ffe27a,#f0c419 55%,#c9960c);color:#08160d;cursor:pointer;">CERRAR</button>
+      <button onclick="closeTicketAndSave(${win?pts:0})" style="width:100%;border:none;border-radius:0;padding:12px;font-family:'Bebas Neue',Impact,sans-serif;font-size:15px;letter-spacing:1.5px;background:linear-gradient(180deg,#ffe27a,#f0c419 55%,#c9960c);color:#08160d;cursor:pointer;">${tk('ticket.close')}</button>
     </div>`;
   }
 
