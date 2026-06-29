@@ -835,16 +835,28 @@ function showTeamChoice(t1,p1,t2,p2,isBench=false){
   },900);
 }
 
+function getTeamName(name){
+  const entry=window.TRANSLATIONS&&window.TRANSLATIONS['team.'+name];
+  return entry?(entry[window.LANG]||entry['es']||name):name;
+}
+
 function teamOptionHTML(team,players){
   const styleKey=team._styleKey||'';
-  const styleName=styleKey
-    ? (window.t&&window.t('style.name.'+styleKey)!==('style.name.'+styleKey)
-        ? window.t('style.name.'+styleKey)
-        : (STYLES[styleKey]?STYLES[styleKey].name:styleKey))
-    : '';
+  let styleName='';
+  if(styleKey){
+    // Intentar traducción directa desde TRANSLATIONS (más fiable que window.t en este contexto)
+    const entry=window.TRANSLATIONS&&window.TRANSLATIONS['style.name.'+styleKey];
+    if(entry){
+      styleName=entry[window.LANG]||entry['es']||styleKey;
+    } else if(STYLES[styleKey]){
+      styleName=STYLES[styleKey].name||styleKey;
+    } else {
+      styleName=styleKey;
+    }
+  }
   return `<div class="team-option" onclick="selectTeam('${esc(team.name)}')">
     <div class="flag-wrap">${flagEmoji(team.name)}</div>
-    <h3>${team.name}</h3>
+    <h3>${getTeamName(team.name)}</h3>
     ${renderBonuses(team)}
     <div class="style-label">${window.t?window.t('rival.style_label'):'Estilo de juego'}</div>
     <p class="style-text">${styleName}</p>
@@ -901,7 +913,7 @@ function showRosterModal(team,players){
   <div class="box roster-modal" style="margin-bottom:0">
     <div class="roster-header">
       ${flagEmoji(team.name,40)}
-      <div class="selection-title" style="margin:0">${team.name}</div>
+      <div class="selection-title" style="margin:0">${getTeamName(team.name)}</div>
     </div>
     <table class="roster-table">
       <thead><tr><th>#</th><th>${window.t?window.t('draft.th_player'):'Jugador'}</th><th>${window.t?window.t('draft.th_pos'):'Pos'}.</th><th>★</th><th></th></tr></thead>
@@ -1858,14 +1870,14 @@ function renderRivalBox(){
     <div class="rival-card">
       <div class="rival-stage-tag">${stageLabel()}</div>
       <div class="rival-flag">${flagEmoji(nextOpponent.name,48)}</div>
-      <h4>${nextOpponent.name}</h4>
+      <h4>${getTeamName(nextOpponent.name)}</h4>
       <div class="rival-power-bar">
         <div class="rival-power-label">${window.t?window.t('rival.power_label'):'PODER RIVAL'}</div>
         <div class="rival-power-value">${Math.round(power)}</div>
         <div class="rival-power-track"><div class="rival-power-fill" style="width:${Math.min(100,power)}%"></div></div>
       </div>
       <div class="style-label" style="margin-top:10px">${window.t?window.t('rival.style_label'):'Estilo de juego'}</div>
-      <div class="rival-style-tag">${nextOpponent._styleKey?(window.t?window.t('style.name.'+nextOpponent._styleKey):(STYLES[nextOpponent._styleKey]?STYLES[nextOpponent._styleKey].name:nextOpponent.style)):nextOpponent.style}</div>
+      <div class="rival-style-tag">${(()=>{const sk=nextOpponent._styleKey||'';if(!sk)return nextOpponent.style||'';const e=window.TRANSLATIONS&&window.TRANSLATIONS['style.name.'+sk];return e?(e[window.LANG]||e['es']||sk):(STYLES[sk]?STYLES[sk].name:sk);})()}</div>
     </div>`;
   document.getElementById("rivalHint").textContent=hint;
   renderStrategySelector();
@@ -2170,7 +2182,7 @@ function playMatch(){
           <ul class="goals-list pen-shots">${myShotsHTML}</ul>
         </div>
         <div class="goals-col">
-          <div class="goals-col-header">${flagEmoji(nextOpponent.name,20)} ${nextOpponent.name}</div>
+          <div class="goals-col-header">${flagEmoji(nextOpponent.name,20)} ${getTeamName(nextOpponent.name)}</div>
           <ul class="goals-list pen-shots">${oppShotsHTML}</ul>
         </div>
       </div>`;
@@ -3171,7 +3183,7 @@ function showMatchModal(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,
       <div class="match-scoreline">${myGoals} – ${oppGoals}</div>
       <div class="match-side">
         ${flagEmoji(nextOpponent.name)}
-        <span class="match-team-name">${nextOpponent.name}</span>
+        <span class="match-team-name">${getTeamName(nextOpponent.name)}</span>
       </div>
     </div>
     <div class="match-result-tag ${resultClass}">${resultText}</div>

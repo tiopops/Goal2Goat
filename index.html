@@ -103,11 +103,9 @@
         <button id="themeToggleHeader" class="settings-item" title="Cambiar tema claro/oscuro">
           <span class="topbar-dot on"></span><span class="topbar-label" data-i18n="settings.theme">TEMA OSCURO</span>
         </button>
-        <div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--line)">
-          <button onclick="toggleSettingsMenu();document.getElementById('langPopup').style.display='flex'" style="width:100%;padding:6px 8px;font-family:'Bebas Neue',Impact,sans-serif;font-size:12px;letter-spacing:1px;border:1px solid var(--line);background:var(--panel);color:var(--text);cursor:pointer;display:flex;align-items:center;gap:6px">
-            🌐 <span data-i18n="settings.language">IDIOMA</span>
-          </button>
-        </div>
+        <button class="settings-item" onclick="toggleSettingsMenu();document.getElementById('langPopup').style.display='flex'">
+          <span class="topbar-dot" style="background:transparent;border:1.5px solid var(--text-muted);display:inline-flex;align-items:center;justify-content:center;font-size:8px">🌐</span><span class="topbar-label" data-i18n="settings.language">IDIOMA</span>
+        </button>
       </div>
     </div>
   </div>
