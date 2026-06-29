@@ -251,52 +251,52 @@ function playSound(name){
 
 /* ---------- STYLE HINTS for rivals ---------- */
 const STYLE_HINTS = {
-  jogo_bonito:"El fútbol más bonito y creativo. Sus jugadores pueden resolver el partido en cualquier momento.",
-  gegenpress:"Presión tras pérdida y transiciones rápidas. No dan descanso al rival.",
-  defensivo:"Bloque compacto y salida rápida. Peligrosos en el contragolpe.",
-  directo:"Juego vertical y ritmo alto. No dan tiempo a pensar.",
-  contraataque:"Espera y golpea. Letales cuando tienen espacios.",
-  tiki_taka:"Dominan el balón y presionan en campo rival desde el primer minuto, pero un bloque bajo y bien plantado les incomoda, y la velocidad a la espalda les genera muchos problemas.",
-  samba_total:"Su ataque desborda con calidad individual, pero a cambio dejan huecos enormes en defensa que cualquier transición rápida puede aprovechar.",
-  catenaccio:"Apenas conceden ocasiones claras, un bloque bajo y compacto que sostiene el resultado durante los noventa minutos sin apenas despeinarse.",
-  gegenpressing:"Presionan sin descanso y recuperan el balón muy arriba, agotando físicamente al rival que intenta jugar con calma desde atrás.",
-  total_football:"Rotan posiciones constantemente y atacan desde cualquier zona del campo, lo que exige mantener el orden colectivo en todo momento.",
-  maquinaria_alemana:"Eficientes y disciplinados, sin apenas fisuras durante el partido, un rival que no perdona los errores propios.",
-  magia_individual:"Casi todo su peligro pasa por un par de jugadores desequilibrantes; el resto del equipo pasa bastante desapercibido.",
-  garra_charrua:"Entrega física y mentalidad guerrera por encima de todo, aunque a veces les falta algo de calidad con el balón en los pies.",
-  ataque_letal:"Tienen una delantera que castiga cualquier error, aunque su defensa concede más ocasiones de las que debería.",
-  solidez_francesa:"Defensa muy sólida y poco vistosa, pero les cuesta generar peligro real cuando tienen el balón.",
-  velocidad_punzante:"Transiciones rapidísimas que castigan cualquier espacio dejado a la espalda de la defensa.",
-  garra_lusa:"Intensidad física y calidad individual en los duelos uno contra uno por todo el campo.",
-  futbol_directo:"Apuestan por el juego directo y los balones largos, con pocas florituras pero mucha insistencia en los duelos aéreos.",
-  naranja_mecanica:"Creativos y técnicos, capaces de generar peligro desde cualquier posición del campo.",
-  muralla_balcanica:"Una defensa paciente y muy difícil de superar, que espera su momento sin precipitarse.",
-  muralla_atlas:"Su organización defensiva ha sorprendido a selecciones mucho más reputadas en los últimos torneos.",
-  once_oro_magiar:"Uno de los ataques más prolíficos de la historia, capaz de anotar con facilidad ante cualquier rival.",
-  dinamita_danesa:"Un equipo impredecible que, en su mejor versión, puede complicarle la vida a cualquiera.",
-  garra_española:"Energía y lucha constante, aunque a veces la pasión les pesa más que la calidad técnica.",
-  disciplina_nipona:"Muy organizados y trabajadores, aunque con poco peligro real cuando llegan al área rival.",
-  disciplina_vikinga:"Un bloque ordenado y físico, sin demasiadas individualidades que desequilibren el partido.",
-  fiesta_cafetera:"Mucho talento técnico y ofensivo, aunque su defensa muestra dudas de vez en cuando.",
-  furia_otomana:"Juegan con mucha intensidad y pasión, al límite en cada disputa del partido.",
-  furia_tartan:"Carácter combativo y fuertes en el choque, aunque algo limitados con el balón en los pies.",
-  garra_chilena:"Compensan con actitud y lucha lo que les pueda faltar en calidad técnica.",
-  garra_yanqui:"Físicos, disciplinados y muy difíciles de batir por la mínima diferencia.",
-  la_scaloneta:"Un bloque sólido con un líder de clase mundial arriba, muy completos en todas las líneas.",
-  leones_indomables:"Explosivos físicamente y muy peligrosos cuando encuentran espacios para correr al contraataque.",
-  magia_carpatica:"Jugadores con mucho talento individual, aunque algo inconsistentes como conjunto.",
-  milagro_defensivo:"Un bloque muy disciplinado que ya ha frenado a algunos de los mejores ataques del mundo.",
-  muralla_celta:"Defensa férrea y muy compacta, conceden muy pocas ocasiones claras durante el partido.",
-  muralla_guarani:"Defensa sacrificada y muy ordenada, suben pocos jugadores cuando atacan.",
-  punta_lanza:"Su peligro ofensivo depende en gran medida de un delantero de referencia que marca la diferencia.",
-  sistema_cerrojo:"Un bloque ultra defensivo cuya prioridad absoluta es no encajar goles, cueste lo que cueste.",
-  tecnica_balcanica:"Buen toque de balón y jugadores con clase, aunque defensivamente pueden mostrar algunas dudas.",
-  tecnica_centroeuropea:"Técnica depurada y buen juego colectivo, con un ritmo de partido más bien pausado.",
-  tricolor_tecnico:"Habilidosos y vistosos con el balón, aunque pueden verse superados ante la intensidad.",
-  vendaval_incaico:"Buen toque de balón y jugadores desequilibrantes cuando llegan a campo rival.",
-  vikingo_directo:"Físicos y directos, especialmente peligrosos en el juego aéreo.",
-  superaguilas:"Explosivos físicamente, con jugadores desequilibrantes que aprovechan los espacios a la carrera.",
-  wunderteam:"Un equipo técnico y ofensivo con una gran tradición histórica a sus espaldas.",
+  get jogo_bonito()          { return window.t?window.t('style.jogo_bonito')          :'El fútbol más bonito y creativo. Sus jugadores pueden resolver el partido en cualquier momento.'; },
+  get gegenpress()           { return window.t?window.t('style.gegenpress')           :'Presión tras pérdida y transiciones rápidas. No dan descanso al rival.'; },
+  get defensivo()            { return window.t?window.t('style.defensivo')            :'Bloque compacto y salida rápida. Peligrosos en el contragolpe.'; },
+  get directo()              { return window.t?window.t('style.directo')              :'Juego vertical y ritmo alto. No dan tiempo a pensar.'; },
+  get contraataque()         { return window.t?window.t('style.contraataque')         :'Espera y golpea. Letales cuando tienen espacios.'; },
+  get tiki_taka()            { return window.t?window.t('style.tiki_taka')            :'Dominan el balón y presionan en campo rival desde el primer minuto, pero un bloque bajo y bien plantado les incomoda, y la velocidad a la espalda les genera muchos problemas.'; },
+  get samba_total()          { return window.t?window.t('style.samba_total')          :'Su ataque desborda con calidad individual, pero a cambio dejan huecos enormes en defensa que cualquier transición rápida puede aprovechar.'; },
+  get catenaccio()           { return window.t?window.t('style.catenaccio')           :'Apenas conceden ocasiones claras, un bloque bajo y compacto que sostiene el resultado durante los noventa minutos sin apenas despeinarse.'; },
+  get gegenpressing()        { return window.t?window.t('style.gegenpressing')        :'Presionan sin descanso y recuperan el balón muy arriba, agotando físicamente al rival que intenta jugar con calma desde atrás.'; },
+  get total_football()       { return window.t?window.t('style.total_football')       :'Rotan posiciones constantemente y atacan desde cualquier zona del campo, lo que exige mantener el orden colectivo en todo momento.'; },
+  get maquinaria_alemana()   { return window.t?window.t('style.maquinaria_alemana')   :'Eficientes y disciplinados, sin apenas fisuras durante el partido, un rival que no perdona los errores propios.'; },
+  get magia_individual()     { return window.t?window.t('style.magia_individual')     :'Casi todo su peligro pasa por un par de jugadores desequilibrantes; el resto del equipo pasa bastante desapercibido.'; },
+  get garra_charrua()        { return window.t?window.t('style.garra_charrua')        :'Entrega física y mentalidad guerrera por encima de todo, aunque a veces les falta algo de calidad con el balón en los pies.'; },
+  get ataque_letal()         { return window.t?window.t('style.ataque_letal')         :'Tienen una delantera que castiga cualquier error, aunque su defensa concede más ocasiones de las que debería.'; },
+  get solidez_francesa()     { return window.t?window.t('style.solidez_francesa')     :'Defensa muy sólida y poco vistosa, pero les cuesta generar peligro real cuando tienen el balón.'; },
+  get velocidad_punzante()   { return window.t?window.t('style.velocidad_punzante')   :'Transiciones rapidísimas que castigan cualquier espacio dejado a la espalda de la defensa.'; },
+  get garra_lusa()           { return window.t?window.t('style.garra_lusa')           :'Intensidad física y calidad individual en los duelos uno contra uno por todo el campo.'; },
+  get futbol_directo()       { return window.t?window.t('style.futbol_directo')       :'Apuestan por el juego directo y los balones largos, con pocas florituras pero mucha insistencia en los duelos aéreos.'; },
+  get naranja_mecanica()     { return window.t?window.t('style.naranja_mecanica')     :'Creativos y técnicos, capaces de generar peligro desde cualquier posición del campo.'; },
+  get muralla_balcanica()    { return window.t?window.t('style.muralla_balcanica')    :'Una defensa paciente y muy difícil de superar, que espera su momento sin precipitarse.'; },
+  get muralla_atlas()        { return window.t?window.t('style.muralla_atlas')        :'Su organización defensiva ha sorprendido a selecciones mucho más reputadas en los últimos torneos.'; },
+  get once_oro_magiar()      { return window.t?window.t('style.once_oro_magiar')      :'Uno de los ataques más prolíficos de la historia, capaz de anotar con facilidad ante cualquier rival.'; },
+  get dinamita_danesa()      { return window.t?window.t('style.dinamita_danesa')      :'Un equipo impredecible que, en su mejor versión, puede complicarle la vida a cualquiera.'; },
+  get garra_española()       { return window.t?window.t('style.garra_española')       :'Energía y lucha constante, aunque a veces la pasión les pesa más que la calidad técnica.'; },
+  get disciplina_nipona()    { return window.t?window.t('style.disciplina_nipona')    :'Muy organizados y trabajadores, aunque con poco peligro real cuando llegan al área rival.'; },
+  get disciplina_vikinga()   { return window.t?window.t('style.disciplina_vikinga')   :'Un bloque ordenado y físico, sin demasiadas individualidades que desequilibren el partido.'; },
+  get fiesta_cafetera()      { return window.t?window.t('style.fiesta_cafetera')      :'Mucho talento técnico y ofensivo, aunque su defensa muestra dudas de vez en cuando.'; },
+  get furia_otomana()        { return window.t?window.t('style.furia_otomana')        :'Juegan con mucha intensidad y pasión, al límite en cada disputa del partido.'; },
+  get furia_tartan()         { return window.t?window.t('style.furia_tartan')         :'Carácter combativo y fuertes en el choque, aunque algo limitados con el balón en los pies.'; },
+  get garra_chilena()        { return window.t?window.t('style.garra_chilena')        :'Compensan con actitud y lucha lo que les pueda faltar en calidad técnica.'; },
+  get garra_yanqui()         { return window.t?window.t('style.garra_yanqui')         :'Físicos, disciplinados y muy difíciles de batir por la mínima diferencia.'; },
+  get la_scaloneta()         { return window.t?window.t('style.la_scaloneta')         :'Un bloque sólido con un líder de clase mundial arriba, muy completos en todas las líneas.'; },
+  get leones_indomables()    { return window.t?window.t('style.leones_indomables')    :'Explosivos físicamente y muy peligrosos cuando encuentran espacios para correr al contraataque.'; },
+  get magia_carpatica()      { return window.t?window.t('style.magia_carpatica')      :'Jugadores con mucho talento individual, aunque algo inconsistentes como conjunto.'; },
+  get milagro_defensivo()    { return window.t?window.t('style.milagro_defensivo')    :'Un bloque muy disciplinado que ya ha frenado a algunos de los mejores ataques del mundo.'; },
+  get muralla_celta()        { return window.t?window.t('style.muralla_celta')        :'Defensa férrea y muy compacta, conceden muy pocas ocasiones claras durante el partido.'; },
+  get muralla_guarani()      { return window.t?window.t('style.muralla_guarani')      :'Defensa sacrificada y muy ordenada, suben pocos jugadores cuando atacan.'; },
+  get punta_lanza()          { return window.t?window.t('style.punta_lanza')          :'Su peligro ofensivo depende en gran medida de un delantero de referencia que marca la diferencia.'; },
+  get sistema_cerrojo()      { return window.t?window.t('style.sistema_cerrojo')      :'Un bloque ultra defensivo cuya prioridad absoluta es no encajar goles, cueste lo que cueste.'; },
+  get tecnica_balcanica()    { return window.t?window.t('style.tecnica_balcanica')    :'Buen toque de balón y jugadores con clase, aunque defensivamente pueden mostrar algunas dudas.'; },
+  get tecnica_centroeuropea(){ return window.t?window.t('style.tecnica_centroeuropea'):'Técnica depurada y buen juego colectivo, con un ritmo de partido más bien pausado.'; },
+  get tricolor_tecnico()     { return window.t?window.t('style.tricolor_tecnico')     :'Habilidosos y vistosos con el balón, aunque pueden verse superados ante la intensidad.'; },
+  get vendaval_incaico()     { return window.t?window.t('style.vendaval_incaico')     :'Buen toque de balón y jugadores desequilibrantes cuando llegan a campo rival.'; },
+  get vikingo_directo()      { return window.t?window.t('style.vikingo_directo')      :'Físicos y directos, especialmente peligrosos en el juego aéreo.'; },
+  get superaguilas()         { return window.t?window.t('style.superaguilas')         :'Explosivos físicamente, con jugadores desequilibrantes que aprovechan los espacios a la carrera.'; },
+  get wunderteam()           { return window.t?window.t('style.wunderteam')           :'Un equipo técnico y ofensivo con una gran tradición histórica a sus espaldas.'; },
 };
 
 /* ---------- TEAM SCOUT HINTS ---------- */
@@ -344,140 +344,72 @@ const WEATHER_TYPES = [
    negative). After the match, the prediction is checked against the real
    result: correct guess -> moral up, wrong guess -> moral down, neutral
    answer -> moral stays the same regardless of outcome. */
-const PRESS_PREDICTIONS = [
-  {
-    q: "«¿Dejaréis la portería a cero en este encuentro?»",
-    answers: [
-      { text: "«Sí, vamos a por la portería a cero.»", stance: "positive", label: "Confiado",
-        check: (r) => r.oppGoals === 0 },
-      { text: "«Es difícil de prometer, ya veremos.»", stance: "neutral", label: "Prudente",
-        check: () => null },
-      { text: "«Lo veo complicado, encajaremos.»", stance: "negative", label: "Pesimista",
-        check: (r) => r.oppGoals > 0 },
-    ]
-  },
-  {
-    q: "«¿Vais a ganar por tres goles o más?»",
-    answers: [
-      { text: "«Sí, vamos a golear.»", stance: "positive", label: "Ambicioso",
-        check: (r) => (r.myGoals - r.oppGoals) >= 3 },
-      { text: "«No me atrevo a predecir el marcador.»", stance: "neutral", label: "Cauto",
-        check: () => null },
-      { text: "«No, será un partido ajustado.»", stance: "negative", label: "Realista",
-        check: (r) => (r.myGoals - r.oppGoals) < 3 },
-    ]
-  },
-  {
-    q: "«Lleváis varios partidos viendo tarjetas. ¿Seguiréis acumulando en este encuentro?»",
-    answers: [
-      { text: "«No, vamos a jugar limpio esta vez.»", stance: "positive", label: "Comprometido",
-        check: (r) => r.cardsCount === 0 },
-      { text: "«No puedo controlar lo que pite el árbitro.»", stance: "neutral", label: "Evasivo",
-        check: () => null },
-      { text: "«Es probable, el rival nos hará cometer faltas.»", stance: "negative", label: "Sincero",
-        check: (r) => r.cardsCount > 0 },
-    ]
-  },
-  {
-    q: "«¿Marcaréis en la primera mitad?»",
-    answers: [
-      { text: "«Sí, saldremos a por todas desde el inicio.»", stance: "positive", label: "Decidido",
-        check: (r) => r.myGoals > 0 },
-      { text: "«El plan de partido lo decide el míster.»", stance: "neutral", label: "Diplomático",
-        check: () => null },
-      { text: "«Seremos pacientes, no hay prisa por marcar.»", stance: "negative", label: "Paciente",
-        check: (r) => r.myGoals === 0 },
-    ]
-  },
-  {
-    q: "«¿Va a generar más ocasiones el rival que vosotros?»",
-    answers: [
-      { text: "«No, vamos a dominar nosotros el partido.»", stance: "positive", label: "Dominante",
-        check: (r) => r.myGoals >= r.oppGoals },
-      { text: "«Cada partido es distinto, lo veremos en el campo.»", stance: "neutral", label: "Flexible",
-        check: () => null },
-      { text: "«Es un rival fuerte, nos costará contenerlo.»", stance: "negative", label: "Respetuoso",
-        check: (r) => r.oppGoals > r.myGoals },
-    ]
-  },
-  {
-    q: "«¿Se va a decidir esto en los 90 minutos, sin penaltis?»",
-    answers: [
-      { text: "«Sí, lo resolveremos en el tiempo reglamentario.»", stance: "positive", label: "Seguro",
-        check: (r) => !r.penalties },
-      { text: "«Lo importante es resolverlo, como sea.»", stance: "neutral", label: "Pragmático",
-        check: () => null },
-      { text: "«Puede decidirse en los detalles, incluso en penaltis.»", stance: "negative", label: "Cauteloso",
-        check: (r) => r.penalties },
-    ]
-  },
-  {
-    q: "«¿Vais a marcar más de un gol en este partido?»",
-    answers: [
-      { text: "«Sí, tenemos gol en las botas.»", stance: "positive", label: "Ofensivo",
-        check: (r) => r.myGoals > 1 },
-      { text: "«Con uno nos conformamos si hace falta.»", stance: "neutral", label: "Pragmático",
-        check: () => null },
-      { text: "«Va a costarnos encontrar el gol hoy.»", stance: "negative", label: "Cauteloso",
-        check: (r) => r.myGoals <= 1 },
-    ]
-  },
-  {
-    q: "«¿Encajaréis dos goles o más en este partido?»",
-    answers: [
-      { text: "«No, vamos a estar sólidos atrás.»", stance: "positive", label: "Defensivo",
-        check: (r) => r.oppGoals < 2 },
-      { text: "«El fútbol siempre da sorpresas.»", stance: "neutral", label: "Filosófico",
-        check: () => null },
-      { text: "«El rival tiene mucho gol, puede pasar.»", stance: "negative", label: "Realista",
-        check: (r) => r.oppGoals >= 2 },
-    ]
-  },
-  {
-    q: "«¿Terminará el partido en empate?»",
-    answers: [
-      { text: "«No, vamos a buscar la victoria hasta el final.»", stance: "positive", label: "Ambicioso",
-        check: (r) => !r.draw },
-      { text: "«Cualquier resultado es posible en este torneo.»", stance: "neutral", label: "Realista",
-        check: () => null },
-      { text: "«Puede que ninguno consiga abrir la lata.»", stance: "negative", label: "Cauteloso",
-        check: (r) => r.draw },
-    ]
-  },
-  {
-    q: "«¿Marcará alguno de vuestros delanteros estrella?»",
-    answers: [
-      { text: "«Sí, va a estar fino delante de la portería.»", stance: "positive", label: "Confiado",
-        check: (r) => r.myGoals > 0 },
-      { text: "«El gol es cosa de todo el equipo.»", stance: "neutral", label: "Colectivo",
-        check: () => null },
-      { text: "«El rival lo va a tener vigilado de cerca.»", stance: "negative", label: "Precavido",
-        check: (r) => r.myGoals === 0 },
-    ]
-  },
-  {
-    q: "«¿Va a ser un partido con mucho juego físico?»",
-    answers: [
-      { text: "«No, queremos jugar al fútbol, no a la guerra.»", stance: "positive", label: "Conciliador",
-        check: (r) => r.cardsCount === 0 },
-      { text: "«Eso lo decide el árbitro, no nosotros.»", stance: "neutral", label: "Evasivo",
-        check: () => null },
-      { text: "«Va a ser un partido muy disputado, sin duda.»", stance: "negative", label: "Realista",
-        check: (r) => r.cardsCount > 0 },
-    ]
-  },
-  {
-    q: "«¿Va a ser un partido de muchas ocasiones para ambos equipos?»",
-    answers: [
-      { text: "«Sí, esto va a ser ida y vuelta.»", stance: "positive", label: "Espectáculo",
-        check: (r) => (r.myGoals + r.oppGoals) >= 3 },
-      { text: "«Depende de cómo se plantee el partido.»", stance: "neutral", label: "Flexible",
-        check: () => null },
-      { text: "«Va a ser un partido cerrado y táctico.»", stance: "negative", label: "Realista",
-        check: (r) => (r.myGoals + r.oppGoals) < 3 },
-    ]
-  },
-];
+function getPressEvents(){
+  const t=k=>window.t?window.t(k):k;
+  return [
+    { get q(){ return t('press.q0'); }, answers: [
+      { get text(){ return t('press.q0a0.text'); }, stance:"positive", get label(){ return t('press.q0a0.label'); }, check:(r)=>r.oppGoals===0 },
+      { get text(){ return t('press.q0a1.text'); }, stance:"neutral",  get label(){ return t('press.q0a1.label'); }, check:()=>null },
+      { get text(){ return t('press.q0a2.text'); }, stance:"negative", get label(){ return t('press.q0a2.label'); }, check:(r)=>r.oppGoals>0 },
+    ]},
+    { get q(){ return t('press.q1'); }, answers: [
+      { get text(){ return t('press.q1a0.text'); }, stance:"positive", get label(){ return t('press.q1a0.label'); }, check:(r)=>(r.myGoals-r.oppGoals)>=3 },
+      { get text(){ return t('press.q1a1.text'); }, stance:"neutral",  get label(){ return t('press.q1a1.label'); }, check:()=>null },
+      { get text(){ return t('press.q1a2.text'); }, stance:"negative", get label(){ return t('press.q1a2.label'); }, check:(r)=>(r.myGoals-r.oppGoals)<3 },
+    ]},
+    { get q(){ return t('press.q2'); }, answers: [
+      { get text(){ return t('press.q2a0.text'); }, stance:"positive", get label(){ return t('press.q2a0.label'); }, check:(r)=>r.cardsCount===0 },
+      { get text(){ return t('press.q2a1.text'); }, stance:"neutral",  get label(){ return t('press.q2a1.label'); }, check:()=>null },
+      { get text(){ return t('press.q2a2.text'); }, stance:"negative", get label(){ return t('press.q2a2.label'); }, check:(r)=>r.cardsCount>0 },
+    ]},
+    { get q(){ return t('press.q3'); }, answers: [
+      { get text(){ return t('press.q3a0.text'); }, stance:"positive", get label(){ return t('press.q3a0.label'); }, check:(r)=>r.myGoals>0 },
+      { get text(){ return t('press.q3a1.text'); }, stance:"neutral",  get label(){ return t('press.q3a1.label'); }, check:()=>null },
+      { get text(){ return t('press.q3a2.text'); }, stance:"negative", get label(){ return t('press.q3a2.label'); }, check:(r)=>r.myGoals===0 },
+    ]},
+    { get q(){ return t('press.q4'); }, answers: [
+      { get text(){ return t('press.q4a0.text'); }, stance:"positive", get label(){ return t('press.q4a0.label'); }, check:(r)=>r.myGoals>=r.oppGoals },
+      { get text(){ return t('press.q4a1.text'); }, stance:"neutral",  get label(){ return t('press.q4a1.label'); }, check:()=>null },
+      { get text(){ return t('press.q4a2.text'); }, stance:"negative", get label(){ return t('press.q4a2.label'); }, check:(r)=>r.oppGoals>r.myGoals },
+    ]},
+    { get q(){ return t('press.q5'); }, answers: [
+      { get text(){ return t('press.q5a0.text'); }, stance:"positive", get label(){ return t('press.q5a0.label'); }, check:(r)=>!r.penalties },
+      { get text(){ return t('press.q5a1.text'); }, stance:"neutral",  get label(){ return t('press.q5a1.label'); }, check:()=>null },
+      { get text(){ return t('press.q5a2.text'); }, stance:"negative", get label(){ return t('press.q5a2.label'); }, check:(r)=>r.penalties },
+    ]},
+    { get q(){ return t('press.q6'); }, answers: [
+      { get text(){ return t('press.q6a0.text'); }, stance:"positive", get label(){ return t('press.q6a0.label'); }, check:(r)=>r.myGoals>1 },
+      { get text(){ return t('press.q6a1.text'); }, stance:"neutral",  get label(){ return t('press.q6a1.label'); }, check:()=>null },
+      { get text(){ return t('press.q6a2.text'); }, stance:"negative", get label(){ return t('press.q6a2.label'); }, check:(r)=>r.myGoals<=1 },
+    ]},
+    { get q(){ return t('press.q7'); }, answers: [
+      { get text(){ return t('press.q7a0.text'); }, stance:"positive", get label(){ return t('press.q7a0.label'); }, check:(r)=>r.oppGoals<2 },
+      { get text(){ return t('press.q7a1.text'); }, stance:"neutral",  get label(){ return t('press.q7a1.label'); }, check:()=>null },
+      { get text(){ return t('press.q7a2.text'); }, stance:"negative", get label(){ return t('press.q7a2.label'); }, check:(r)=>r.oppGoals>=2 },
+    ]},
+    { get q(){ return t('press.q8'); }, answers: [
+      { get text(){ return t('press.q8a0.text'); }, stance:"positive", get label(){ return t('press.q8a0.label'); }, check:(r)=>!r.draw },
+      { get text(){ return t('press.q8a1.text'); }, stance:"neutral",  get label(){ return t('press.q8a1.label'); }, check:()=>null },
+      { get text(){ return t('press.q8a2.text'); }, stance:"negative", get label(){ return t('press.q8a2.label'); }, check:(r)=>r.draw },
+    ]},
+    { get q(){ return t('press.q9'); }, answers: [
+      { get text(){ return t('press.q9a0.text'); }, stance:"positive", get label(){ return t('press.q9a0.label'); }, check:(r)=>r.myGoals>0 },
+      { get text(){ return t('press.q9a1.text'); }, stance:"neutral",  get label(){ return t('press.q9a1.label'); }, check:()=>null },
+      { get text(){ return t('press.q9a2.text'); }, stance:"negative", get label(){ return t('press.q9a2.label'); }, check:(r)=>r.myGoals===0 },
+    ]},
+    { get q(){ return t('press.q10'); }, answers: [
+      { get text(){ return t('press.q10a0.text'); }, stance:"positive", get label(){ return t('press.q10a0.label'); }, check:(r)=>r.cardsCount===0 },
+      { get text(){ return t('press.q10a1.text'); }, stance:"neutral",  get label(){ return t('press.q10a1.label'); }, check:()=>null },
+      { get text(){ return t('press.q10a2.text'); }, stance:"negative", get label(){ return t('press.q10a2.label'); }, check:(r)=>r.cardsCount>0 },
+    ]},
+    { get q(){ return t('press.q11'); }, answers: [
+      { get text(){ return t('press.q11a0.text'); }, stance:"positive", get label(){ return t('press.q11a0.label'); }, check:(r)=>(r.myGoals+r.oppGoals)>=3 },
+      { get text(){ return t('press.q11a1.text'); }, stance:"neutral",  get label(){ return t('press.q11a1.label'); }, check:()=>null },
+      { get text(){ return t('press.q11a2.text'); }, stance:"negative", get label(){ return t('press.q11a2.label'); }, check:(r)=>(r.myGoals+r.oppGoals)<3 },
+    ]},
+  ];
+}
+const PRESS_PREDICTIONS = getPressEvents(); // backward compat — will be replaced by call below
 // getMaxSubs() reemplazado por getMaxSubs() dinámico
 
 /* ========= COMPETITION STATE (World Cup format) ========= */
@@ -3764,14 +3696,14 @@ let pendingPrediction=null; // {event, answerIdx} set when player answers, resol
 function maybeShowPressConference(callback){
   const chance=stage==="knockout"?0.40:0.25;
   if(Math.random()>chance){ callback(); return; }
-  const event=PRESS_PREDICTIONS[Math.floor(Math.random()*PRESS_PREDICTIONS.length)];
+  const event=getPressEvents()[Math.floor(Math.random()*getPressEvents().length)];
   showPressEventModal(event, callback);
 }
 function showPressEventModal(event, callback){
   document.getElementById("matchOverlay").innerHTML=`
   <div class="press-modal">
     <span class="press-icon">🎙</span>
-    <h3>RUEDA DE PRENSA · ANTES DEL PARTIDO</h3>
+    <h3>${window.t?window.t('press.title_full'):'RUEDA DE PRENSA · ANTES DEL PARTIDO'}</h3>
     <p class="press-question">${event.q}</p>
     <div class="press-answers">
       ${event.answers.map((a,i)=>`
@@ -3811,7 +3743,7 @@ function showPressEventModal(event, callback){
     window._pressAnswered=true;
     document.getElementById("matchOverlay").innerHTML="";
     pendingPrediction=null; // no answer given — no prediction to resolve later
-    showToast("No respondiste a tiempo — la prensa se queda sin declaraciones.", "toast-neutral");
+    showToast(window.t?window.t('press.timeout'):'No respondiste a tiempo — la prensa se queda sin declaraciones.', "toast-neutral");
     if(window._pressCallback) window._pressCallback();
   }, DURATION);
 }
@@ -3825,7 +3757,7 @@ window.choosePressAnswer=function(idx){
   // Store the prediction — it will be checked against the real result
   // once this match is played, and resolved in the match result modal.
   pendingPrediction={event, answer};
-  showToast(`Promesa hecha: "${answer.label}"`, "toast-neutral");
+  showToast(`${window.t?window.t('press.promise_made'):'Promesa hecha'}: "${answer.label}"`, "toast-neutral");
   setTimeout(()=>{ if(window._pressCallback) window._pressCallback(); }, 700);
 };
 
@@ -3839,19 +3771,19 @@ function resolvePendingPrediction(matchResult){
 
   if(answer.stance==="neutral"){
     return {label:answer.label, outcome:"neutral", delta:0,
-      text:`🎙 Respuesta neutral: la moral no se ve afectada.`};
+      text:window.t?window.t('press.resolved_neutral'):'🎙 Respuesta neutral: la moral no se ve afectada.'};
   }
   const correct=answer.check(matchResult);
   if(correct===true){
     const delta=8;
     changeMorale(delta);
     return {label:answer.label, outcome:"correct", delta,
-      text:`🎙 Promesa cumplida ("${answer.label}"): +${delta} moral.`};
+      text:(window.t?window.t('press.resolved_correct'):'🎙 Promesa cumplida ("{0}"): +{1} moral.').replace('{0}',answer.label).replace('{1}',delta)};
   } else {
     const delta=-8;
     changeMorale(delta);
     return {label:answer.label, outcome:"wrong", delta,
-      text:`🎙 Promesa incumplida ("${answer.label}"): ${delta} moral.`};
+      text:(window.t?window.t('press.resolved_wrong'):'🎙 Promesa incumplida ("{0}"): {1} moral.').replace('{0}',answer.label).replace('{1}',delta)};
   }
 }
 
