@@ -127,16 +127,16 @@ const STAT_LABELS={attack:"ATAQUE",defense:"DEFENSA",pace:"RITMO",passing:"PASE"
 //  - Gegenpressing is broken by Juego Directo (skip the press with long balls)
 //  - etc.
 const STRATEGIES = {
-  tiki_taka:      { name:"Tiki-Taka",          desc:"Prioriza los pases cortos y la posesión para desgastar al rival y crear espacios.", counters:"bloque_bajo", partialCounters:["gegenpressing","presion_alta"] },
-  contraataque:   { name:"Contraataque",        desc:"Defiende con orden y busca atacar rápidamente tras recuperar el balón.", counters:"ataque_bandas", partialCounters:["posesion","presion_alta"] },
-  catenaccio:     { name:"Catenaccio",          desc:"Centra sus esfuerzos en la defensa y aprovecha las pocas oportunidades de ataque.", counters:"juego_directo", partialCounters:["ataque_bandas","presion_alta"] },
-  presion_alta:   { name:"Presión Alta",        desc:"Presiona al rival en su campo para recuperar el balón cuanto antes.", counters:"tiki_taka", partialCounters:["juego_directo","catenaccio"] },
-  gegenpressing:  { name:"Gegenpressing",       desc:"Tras perder la posesión, todo el equipo intenta recuperarla inmediatamente.", counters:"posesion", partialCounters:["catenaccio","juego_directo"] },
-  posesion:       { name:"Juego de Posesión",   desc:"Mantiene el control del balón para dominar el ritmo del partido.", counters:"contraataque", partialCounters:["presion_alta","gegenpressing"] },
-  juego_directo:  { name:"Juego Directo",       desc:"Busca llegar al área rival con rapidez y el menor número de pases posible.", counters:"gegenpressing", partialCounters:["catenaccio","bloque_bajo"] },
-  futbol_total:   { name:"Fútbol Total",        desc:"Los jugadores intercambian posiciones constantemente para generar superioridades.", counters:"catenaccio", partialCounters:["bloque_bajo","contraataque"] },
-  bloque_bajo:    { name:"Bloque Bajo",         desc:"Repliega al equipo cerca de su área para cerrar espacios y dificultar los ataques rivales.", counters:"futbol_total", partialCounters:["posesion","catenaccio"] },
-  ataque_bandas:  { name:"Ataque por Bandas",   desc:"Utiliza las bandas para crear peligro mediante desbordes y centros al área.", counters:"presion_alta", partialCounters:["contraataque","gegenpressing"] },
+  tiki_taka:      { get name(){ return window.t?window.t('strategy.tiki_taka.name')     :'Tiki-Taka'; },         get desc(){ return window.t?window.t('strategy.tiki_taka.desc')     :'Prioriza los pases cortos y la posesión para desgastar al rival y crear espacios.'; },     counters:'bloque_bajo',    partialCounters:['gegenpressing','presion_alta'] },
+  contraataque:   { get name(){ return window.t?window.t('strategy.contraataque.name')  :'Contraataque'; },      get desc(){ return window.t?window.t('strategy.contraataque.desc')  :'Defiende con orden y busca atacar rápidamente tras recuperar el balón.'; },              counters:'ataque_bandas',  partialCounters:['posesion','presion_alta'] },
+  catenaccio:     { get name(){ return window.t?window.t('strategy.catenaccio.name')    :'Catenaccio'; },        get desc(){ return window.t?window.t('strategy.catenaccio.desc')    :'Centra sus esfuerzos en la defensa y aprovecha las pocas oportunidades de ataque.'; },  counters:'juego_directo',  partialCounters:['ataque_bandas','presion_alta'] },
+  presion_alta:   { get name(){ return window.t?window.t('strategy.presion_alta.name')  :'Presión Alta'; },      get desc(){ return window.t?window.t('strategy.presion_alta.desc')  :'Presiona al rival en su campo para recuperar el balón cuanto antes.'; },                counters:'tiki_taka',      partialCounters:['juego_directo','catenaccio'] },
+  gegenpressing:  { get name(){ return window.t?window.t('strategy.gegenpressing.name') :'Gegenpressing'; },     get desc(){ return window.t?window.t('strategy.gegenpressing.desc') :'Tras perder la posesión, todo el equipo intenta recuperarla inmediatamente.'; },         counters:'posesion',       partialCounters:['catenaccio','juego_directo'] },
+  posesion:       { get name(){ return window.t?window.t('strategy.posesion.name')      :'Juego de Posesión'; }, get desc(){ return window.t?window.t('strategy.posesion.desc')      :'Mantiene el control del balón para dominar el ritmo del partido.'; },                  counters:'contraataque',   partialCounters:['presion_alta','gegenpressing'] },
+  juego_directo:  { get name(){ return window.t?window.t('strategy.juego_directo.name') :'Juego Directo'; },     get desc(){ return window.t?window.t('strategy.juego_directo.desc') :'Busca llegar al área rival con rapidez y el menor número de pases posible.'; },         counters:'gegenpressing',  partialCounters:['catenaccio','bloque_bajo'] },
+  futbol_total:   { get name(){ return window.t?window.t('strategy.futbol_total.name')  :'Fútbol Total'; },      get desc(){ return window.t?window.t('strategy.futbol_total.desc')  :'Los jugadores intercambian posiciones constantemente para generar superioridades.'; },   counters:'catenaccio',     partialCounters:['bloque_bajo','contraataque'] },
+  bloque_bajo:    { get name(){ return window.t?window.t('strategy.bloque_bajo.name')   :'Bloque Bajo'; },       get desc(){ return window.t?window.t('strategy.bloque_bajo.desc')   :'Repliega al equipo cerca de su área para cerrar espacios y dificultar los ataques rivales.'; }, counters:'futbol_total', partialCounters:['posesion','catenaccio'] },
+  ataque_bandas:  { get name(){ return window.t?window.t('strategy.ataque_bandas.name') :'Ataque por Bandas'; }, get desc(){ return window.t?window.t('strategy.ataque_bandas.desc') :'Utiliza las bandas para crear peligro mediante desbordes y centros al área.'; },        counters:'presion_alta',   partialCounters:['contraataque','gegenpressing'] },
 };
 const STRATEGY_ORDER=["tiki_taka","contraataque","catenaccio","presion_alta","gegenpressing","posesion","juego_directo","futbol_total","bloque_bajo","ataque_bandas"];
 
@@ -333,11 +333,11 @@ let inheritedPlayers = [];
 // Best knockout round reached in current run (for chain run reward)
 let bestRoundReached = -1; // -1=none, 0=groups, 1=octavos, 2=cuartos, 3=semis, 4=final
 const WEATHER_TYPES = [
-  { id:'sunny',    label:'☀ Soleado',         desc:'Calor intenso · RITMO -15% ambos equipos',    effect:{pace:-0.10} },
-  { id:'cloudy',   label:'⛅ Nublado',          desc:'Condiciones neutras',                          effect:{} },
-  { id:'rain',     label:'🌧 Lluvia',           desc:'Campo pesado · RITMO -20%, TÉCNICA -10%',     effect:{pace:-0.15, technique:-0.08} },
-  { id:'wind',     label:'💨 Viento fuerte',    desc:'Juego directo · PASE -15%',                   effect:{passing:-0.12} },
-  { id:'hot',      label:'🌡 Calor extremo',    desc:'Fatiga máxima · RITMO -25%, DEFENSA -10%',    effect:{pace:-0.20, defense:-0.08} },
+  { id:'sunny',  get label(){ return window.t?window.t('weather.sunny.label') :'☀ Soleado'; },       get desc(){ return window.t?window.t('weather.sunny.desc') :'Calor intenso · RITMO -15% ambos equipos'; },    effect:{pace:-0.10} },
+  { id:'cloudy', get label(){ return window.t?window.t('weather.cloudy.label'):'⛅ Nublado'; },        get desc(){ return window.t?window.t('weather.cloudy.desc'):'Condiciones neutras'; },                         effect:{} },
+  { id:'rain',   get label(){ return window.t?window.t('weather.rain.label')  :'🌧 Lluvia'; },         get desc(){ return window.t?window.t('weather.rain.desc')  :'Campo pesado · RITMO -20%, TÉCNICA -10%'; },    effect:{pace:-0.15,technique:-0.08} },
+  { id:'wind',   get label(){ return window.t?window.t('weather.wind.label')  :'💨 Viento fuerte'; },  get desc(){ return window.t?window.t('weather.wind.desc')  :'Juego directo · PASE -15%'; },                  effect:{passing:-0.12} },
+  { id:'hot',    get label(){ return window.t?window.t('weather.hot.label')   :'🌡 Calor extremo'; },  get desc(){ return window.t?window.t('weather.hot.desc')   :'Fatiga máxima · RITMO -25%, DEFENSA -10%'; },  effect:{pace:-0.20,defense:-0.08} },
 ];
 /* Predictive pre-match press questions: shown when the rival is revealed,
    BEFORE the match is played. Each answer is a prediction (positive/neutral/
@@ -903,7 +903,7 @@ function teamOptionHTML(team,players){
     <div class="flag-wrap">${flagEmoji(team.name)}</div>
     <h3>${team.name}</h3>
     ${renderBonuses(team)}
-    <div class="style-label">Estilo de juego</div>
+    <div class="style-label">${window.t?window.t('rival.style_label'):'Estilo de juego'}</div>
     <p class="style-text">${team.style}</p>
   </div>`;
 }
@@ -1917,11 +1917,11 @@ function renderRivalBox(){
       <div class="rival-flag">${flagEmoji(nextOpponent.name,48)}</div>
       <h4>${nextOpponent.name}</h4>
       <div class="rival-power-bar">
-        <div class="rival-power-label">PODER RIVAL</div>
+        <div class="rival-power-label">${window.t?window.t('rival.power_label'):'PODER RIVAL'}</div>
         <div class="rival-power-value">${Math.round(power)}</div>
         <div class="rival-power-track"><div class="rival-power-fill" style="width:${Math.min(100,power)}%"></div></div>
       </div>
-      <div class="style-label" style="margin-top:10px">Estilo de juego</div>
+      <div class="style-label" style="margin-top:10px">${window.t?window.t('rival.style_label'):'Estilo de juego'}</div>
       <div class="rival-style-tag">${nextOpponent.style}</div>
     </div>`;
   document.getElementById("rivalHint").textContent=hint;
@@ -1951,7 +1951,7 @@ function renderStrategySelector(){
         return `<button class="strategy-btn${sel}" data-key="${key}" onclick="chooseMatchStrategy('${key}')" title="${esc(s.desc)}"${isOptimal}>${s.name}</button>`;
       }).join('')}
     </div>
-    ${selectedMatchStrategy?`<div class="strategy-desc">${STRATEGIES[selectedMatchStrategy].desc}</div>`:'<div class="strategy-desc strategy-desc-empty">Sin estrategia elegida: sin bonus ni penalización.</div>'}
+    ${selectedMatchStrategy?`<div class="strategy-desc">${STRATEGIES[selectedMatchStrategy].desc}</div>`:`<div class="strategy-desc strategy-desc-empty">${window.t?window.t('strategy.none'):'Sin estrategia elegida: sin bonus ni penalización.'}</div>`}
   `;
 }
 function chooseMatchStrategy(key){
@@ -3033,11 +3033,11 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
       const iPartial=myStrat&&myStrat.partialCounters&&myStrat.partialCounters.includes(rivalKey);
       const counteredBy=STRATEGIES[rivalKey]&&STRATEGIES[rivalKey].counters===myKey;
       let stratMsg,stratClass;
-      if(iCounter){stratMsg=`✓ Tu estrategia (${myStrat.name}) contrarrestó perfectamente a ${oppName}.`;stratClass='strategy-feedback-good';}
-      else if(iPartial){stratMsg=`✓ Tu estrategia (${myStrat.name}) controló bien a ${oppName}.`;stratClass='strategy-feedback-good';}
-      else if(counteredBy){stratMsg=`✗ ${oppName} aprovechó el enfrentamiento táctico.`;stratClass='strategy-feedback-bad';}
-      else if(myKey===rivalKey){stratMsg=`= Ambos jugaron con un enfoque similar (${myStrat.name}).`;stratClass='strategy-feedback-neutral';}
-      else{stratMsg=`Estrategia neutral: ${myStrat.name}, sin ventaja táctica clara.`;stratClass='strategy-feedback-neutral';}
+      if(iCounter){stratMsg=(window.t?window.t('strategy.fb.counter'):'✓ Tu estrategia ({0}) contrarrestó perfectamente a {1}.').replace('{0}',myStrat.name).replace('{1}',oppName);stratClass='strategy-feedback-good';}
+      else if(iPartial){stratMsg=(window.t?window.t('strategy.fb.partial'):'✓ Tu estrategia ({0}) controló bien a {1}.').replace('{0}',myStrat.name).replace('{1}',oppName);stratClass='strategy-feedback-good';}
+      else if(counteredBy){stratMsg=(window.t?window.t('strategy.fb.beaten'):'✗ {0} aprovechó el enfrentamiento táctico.').replace('{0}',oppName);stratClass='strategy-feedback-bad';}
+      else if(myKey===rivalKey){stratMsg=(window.t?window.t('strategy.fb.mirror'):'= Ambos jugaron con un enfoque similar ({0}).').replace('{0}',myStrat.name);stratClass='strategy-feedback-neutral';}
+      else{stratMsg=(window.t?window.t('strategy.fb.neutral'):'Estrategia neutral: {0}, sin ventaja táctica clara.').replace('{0}',myStrat.name);stratClass='strategy-feedback-neutral';}
       const sf=document.createElement('div');
       sf.className=`strategy-feedback ${stratClass}`;
       sf.textContent=stratMsg;
@@ -3185,10 +3185,10 @@ function showMatchModal(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,
     const iPartialCounter = myStrat && myStrat.partialCounters && myStrat.partialCounters.includes(rivalKey);
     const counteredByRival = STRATEGIES[rivalKey] && STRATEGIES[rivalKey].counters===myKey;
     let stratMsg, stratClass;
-    if(iCounter){ stratMsg=`✓ Tu estrategia (${myStrat.name}) contrarrestó perfectamente a ${nextOpponent.name}.`; stratClass="strategy-feedback-good"; }
-    else if(iPartialCounter){ stratMsg=`✓ Tu estrategia (${myStrat.name}) controló bien a ${nextOpponent.name}, aunque no era la elección perfecta.`; stratClass="strategy-feedback-good"; }
-    else if(counteredByRival){ stratMsg=`✗ ${nextOpponent.name} aprovechó mejor el enfrentamiento táctico esta vez.`; stratClass="strategy-feedback-bad"; }
-    else if(myKey===rivalKey){ stratMsg=`= Ambos equipos jugaron con un enfoque similar (${myStrat.name}).`; stratClass="strategy-feedback-neutral"; }
+    if(iCounter){ stratMsg=(window.t?window.t('strategy.fb.counter2'):'✓ Tu estrategia ({0}) contrarrestó perfectamente a {1}.').replace('{0}',myStrat.name).replace('{1}',nextOpponent.name); stratClass="strategy-feedback-good"; }
+    else if(iPartialCounter){ stratMsg=(window.t?window.t('strategy.fb.partial2'):'✓ Tu estrategia ({0}) controló bien a {1}, aunque no era la elección perfecta.').replace('{0}',myStrat.name).replace('{1}',nextOpponent.name); stratClass="strategy-feedback-good"; }
+    else if(counteredByRival){ stratMsg=(window.t?window.t('strategy.fb.beaten2'):'✗ {0} aprovechó mejor el enfrentamiento táctico esta vez.').replace('{0}',nextOpponent.name); stratClass="strategy-feedback-bad"; }
+    else if(myKey===rivalKey){ stratMsg=(window.t?window.t('strategy.fb.mirror2'):'= Ambos equipos jugaron con un enfoque similar ({0}).').replace('{0}',myStrat.name); stratClass="strategy-feedback-neutral"; }
     else { stratMsg=`Estrategia neutral: ${myStrat.name}, sin ventaja táctica clara.`; stratClass="strategy-feedback-neutral"; }
     extraHTML+=`<div class="strategy-feedback ${stratClass}">${stratMsg}</div>`;
   }
@@ -6231,6 +6231,9 @@ window.applyTranslations = function(){
   if(typeof updateConvocadosTable==='function') updateConvocadosTable();
   if(typeof updateBenchTable==='function') updateBenchTable();
   if(typeof updateDraftCounter==='function') updateDraftCounter();
+  // Re-renderizar rival, clima y selector de estrategia
+  if(typeof renderRivalBox==='function' && document.getElementById('rivalBox') && document.getElementById('rivalBox').style.display!=='none') renderRivalBox();
+  if(typeof renderWeather==='function') renderWeather();
   // Actualizar botones de idioma activo
   const esBtn=document.getElementById('langEsBtn');
   const enBtn=document.getElementById('langEnBtn');
