@@ -122,6 +122,12 @@
       <button id="langEnBtn2" onclick="window.setLang('en');document.getElementById('langPopup').style.display='none'" style="padding:12px;font-family:'Bebas Neue',Impact,sans-serif;font-size:16px;letter-spacing:1px;border:2px solid var(--line);background:var(--panel);color:var(--text);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px">
         <img src="https://flagcdn.com/w40/gb.png" style="height:20px;width:auto;border-radius:2px;box-shadow:0 0 0 1px rgba(0,0,0,.15)" alt="EN"> ENGLISH
       </button>
+      <button id="langPtBtn2" onclick="window.setLang('pt');document.getElementById('langPopup').style.display='none'" style="padding:12px;font-family:'Bebas Neue',Impact,sans-serif;font-size:16px;letter-spacing:1px;border:2px solid var(--line);background:var(--panel);color:var(--text);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px">
+        <img src="https://flagcdn.com/w40/br.png" style="height:20px;width:auto;border-radius:2px;box-shadow:0 0 0 1px rgba(0,0,0,.15)" alt="PT"> PORTUGUÊS (BRASIL)
+      </button>
+      <button id="langFrBtn2" onclick="window.setLang('fr');document.getElementById('langPopup').style.display='none'" style="padding:12px;font-family:'Bebas Neue',Impact,sans-serif;font-size:16px;letter-spacing:1px;border:2px solid var(--line);background:var(--panel);color:var(--text);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px">
+        <img src="https://flagcdn.com/w40/fr.png" style="height:20px;width:auto;border-radius:2px;box-shadow:0 0 0 1px rgba(0,0,0,.15)" alt="FR"> FRANÇAIS
+      </button>
     </div>
   </div>
 </div>
@@ -238,9 +244,11 @@
         <!-- IDIOMA — siempre visible -->
         <div id="langSelectorWrap" style="margin-top:14px;padding-top:14px;border-top:1px solid var(--line)">
           <div class="settings-label" data-i18n="settings.language">IDIOMA</div>
-          <div style="display:flex;gap:8px;margin-top:8px">
-            <button id="langEsBtn" onclick="window.setLang('es')" style="flex:1;padding:8px;font-family:'Bebas Neue',Impact,sans-serif;font-size:14px;letter-spacing:1px;border:2px solid var(--line);background:var(--panel);color:var(--text);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px"><img src="https://flagcdn.com/w40/es.png" style="height:16px;width:auto;border-radius:2px;box-shadow:0 0 0 1px rgba(0,0,0,.15)" alt="ES"> ESPAÑOL</button>
-            <button id="langEnBtn" onclick="window.setLang('en')" style="flex:1;padding:8px;font-family:'Bebas Neue',Impact,sans-serif;font-size:14px;letter-spacing:1px;border:2px solid var(--line);background:var(--panel);color:var(--text);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px"><img src="https://flagcdn.com/w40/gb.png" style="height:16px;width:auto;border-radius:2px;box-shadow:0 0 0 1px rgba(0,0,0,.15)" alt="EN"> ENGLISH</button>
+          <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
+            <button id="langEsBtn" onclick="window.setLang('es')" style="flex:1;min-width:120px;padding:8px;font-family:'Bebas Neue',Impact,sans-serif;font-size:14px;letter-spacing:1px;border:2px solid var(--line);background:var(--panel);color:var(--text);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px"><img src="https://flagcdn.com/w40/es.png" style="height:16px;width:auto;border-radius:2px;box-shadow:0 0 0 1px rgba(0,0,0,.15)" alt="ES"> ESPAÑOL</button>
+            <button id="langEnBtn" onclick="window.setLang('en')" style="flex:1;min-width:120px;padding:8px;font-family:'Bebas Neue',Impact,sans-serif;font-size:14px;letter-spacing:1px;border:2px solid var(--line);background:var(--panel);color:var(--text);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px"><img src="https://flagcdn.com/w40/gb.png" style="height:16px;width:auto;border-radius:2px;box-shadow:0 0 0 1px rgba(0,0,0,.15)" alt="EN"> ENGLISH</button>
+            <button id="langPtBtn" onclick="window.setLang('pt')" style="flex:1;min-width:120px;padding:8px;font-family:'Bebas Neue',Impact,sans-serif;font-size:14px;letter-spacing:1px;border:2px solid var(--line);background:var(--panel);color:var(--text);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px"><img src="https://flagcdn.com/w40/br.png" style="height:16px;width:auto;border-radius:2px;box-shadow:0 0 0 1px rgba(0,0,0,.15)" alt="PT"> PORTUGUÊS</button>
+            <button id="langFrBtn" onclick="window.setLang('fr')" style="flex:1;min-width:120px;padding:8px;font-family:'Bebas Neue',Impact,sans-serif;font-size:14px;letter-spacing:1px;border:2px solid var(--line);background:var(--panel);color:var(--text);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px"><img src="https://flagcdn.com/w40/fr.png" style="height:16px;width:auto;border-radius:2px;box-shadow:0 0 0 1px rgba(0,0,0,.15)" alt="FR"> FRANÇAIS</button>
           </div>
         </div>
 
