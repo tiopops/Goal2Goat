@@ -1976,7 +1976,7 @@ function renderBracketHTML(knockoutMatches){
   knockoutMatches.forEach(r=>{
     const cls=r.won?"res-win":"res-lose";
     const tag=r.won?"V":"D";
-    rows+=`<tr><td>${r.roundName}</td><td>${flagEmoji(r.rival,16)} ${r.rival}</td><td>${r.score}</td><td class="${cls}">${tag}</td></tr>`;
+    rows+=`<tr><td>${r.roundName}</td><td>${flagEmoji(r.rival,16)} ${getTeamName(r.rival)}</td><td>${r.score}</td><td class="${cls}">${tag}</td></tr>`;
   });
   const nextRound=ROUND_NAMES[knockoutRound];
   return `<div class="hint-line" style="margin-top:10px;font-weight:700">ELIMINATORIAS</div>
@@ -2156,7 +2156,7 @@ function playMatch(){
   }
 
   // Generar summary DESPUÉS de todos los recálculos de goles
-  let summary=generateMatchSummary(myGoals,oppGoals,nextOpponent.name);
+  let summary=generateMatchSummary(myGoals,oppGoals,getTeamName(nextOpponent.name));
   updateScorerStreaks(generateMatchSummary._scorers||[]);
 
   // Procesar expulsiones durante el partido:
@@ -2181,7 +2181,7 @@ function playMatch(){
       won=penaltyInfo.myWon;
       const myShotsHTML=penaltyInfo.myShots.map(s=>`<li>${s.scored?'✅':'❌'} ${s.name}</li>`).join('');
       const oppShotsHTML=penaltyInfo.oppShots.map(s=>`<li>${s.scored?'✅':'❌'} ${s.name}</li>`).join('');
-      summary+=`<br><br><strong>⚽ TANDA DE PENALTIS: ${myTeamName} ${penaltyInfo.myScore} – ${penaltyInfo.oppScore} ${nextOpponent.name}</strong>
+      summary+=`<br><br><strong>⚽ TANDA DE PENALTIS: ${myTeamName} ${penaltyInfo.myScore} – ${penaltyInfo.oppScore} ${getTeamName(nextOpponent.name)}</strong>
       <div class="goals-columns">
         <div class="goals-col">
           <div class="goals-col-header"><span class="flag-emoji goat-emoji">🐐</span> ${myTeamName}</div>
@@ -2629,7 +2629,7 @@ function forceSwapSuspendedStarters(){
    Los eventos ocurren en sus minutos reales, incluyendo tiempo de descuento. */
 function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,penaltyInfo,newCards,predictionResult,oppEvents){
   const overlay=document.getElementById("matchOverlay");
-  const oppName=nextOpponent?nextOpponent.name:'Rival';
+  const oppName=nextOpponent?getTeamName(nextOpponent.name):'Rival';
 
   // ── Parsear eventos del resumen HTML ──
   const tempDiv=document.createElement('div');
@@ -3160,9 +3160,9 @@ function showMatchModal(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,
     const iPartialCounter = myStrat && myStrat.partialCounters && myStrat.partialCounters.includes(rivalKey);
     const counteredByRival = STRATEGIES[rivalKey] && STRATEGIES[rivalKey].counters===myKey;
     let stratMsg, stratClass;
-    if(iCounter){ stratMsg=(window.t?window.t('strategy.fb.counter2'):'✓ Tu estrategia ({0}) contrarrestó perfectamente a {1}.').replace('{0}',myStrat.name).replace('{1}',nextOpponent.name); stratClass="strategy-feedback-good"; }
-    else if(iPartialCounter){ stratMsg=(window.t?window.t('strategy.fb.partial2'):'✓ Tu estrategia ({0}) controló bien a {1}, aunque no era la elección perfecta.').replace('{0}',myStrat.name).replace('{1}',nextOpponent.name); stratClass="strategy-feedback-good"; }
-    else if(counteredByRival){ stratMsg=(window.t?window.t('strategy.fb.beaten2'):'✗ {0} aprovechó mejor el enfrentamiento táctico esta vez.').replace('{0}',nextOpponent.name); stratClass="strategy-feedback-bad"; }
+    if(iCounter){ stratMsg=(window.t?window.t('strategy.fb.counter2'):'✓ Tu estrategia ({0}) contrarrestó perfectamente a {1}.').replace('{0}',myStrat.name).replace('{1}',getTeamName(nextOpponent.name)); stratClass="strategy-feedback-good"; }
+    else if(iPartialCounter){ stratMsg=(window.t?window.t('strategy.fb.partial2'):'✓ Tu estrategia ({0}) controló bien a {1}, aunque no era la elección perfecta.').replace('{0}',myStrat.name).replace('{1}',getTeamName(nextOpponent.name)); stratClass="strategy-feedback-good"; }
+    else if(counteredByRival){ stratMsg=(window.t?window.t('strategy.fb.beaten2'):'✗ {0} aprovechó mejor el enfrentamiento táctico esta vez.').replace('{0}',getTeamName(nextOpponent.name)); stratClass="strategy-feedback-bad"; }
     else if(myKey===rivalKey){ stratMsg=(window.t?window.t('strategy.fb.mirror2'):'= Ambos equipos jugaron con un enfoque similar ({0}).').replace('{0}',myStrat.name); stratClass="strategy-feedback-neutral"; }
     else { stratMsg=`Estrategia neutral: ${myStrat.name}, sin ventaja táctica clara.`; stratClass="strategy-feedback-neutral"; }
     extraHTML+=`<div class="strategy-feedback ${stratClass}">${stratMsg}</div>`;
@@ -4053,12 +4053,12 @@ function buildLedMessages(){
   const last = matchResults[matchResults.length-1];
   if(last){
     const res = last.won?"VICTORIA":last.draw?"EMPATE":"DERROTA";
-    msgs.push(`ÚLTIMO PARTIDO  ${res}  vs ${last.rival.toUpperCase()}  ${last.score}`);
+    msgs.push(`ÚLTIMO PARTIDO  ${res}  vs ${getTeamName(last.rival).toUpperCase()}  ${last.score}`);
   }
 
   // Next opponent
   if(nextOpponent){
-    msgs.push(`PRÓXIMO RIVAL  ${nextOpponent.name.toUpperCase()}`);
+    msgs.push(`PRÓXIMO RIVAL  ${getTeamName(nextOpponent.name).toUpperCase()}`);
   }
 
   // Injured players
