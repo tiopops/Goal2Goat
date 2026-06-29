@@ -6210,7 +6210,8 @@ window.applyTranslations = function(){
   if(typeof updateConvocadosTable==='function') updateConvocadosTable();
   if(typeof updateBenchTable==='function') updateBenchTable();
   if(typeof updateDraftCounter==='function') updateDraftCounter();
-  // Re-renderizar rival, clima y selector de estrategia
+  // Re-renderizar historial de resultados (nombres de países y cabeceras de tabla)
+  if(typeof renderMatchHistory==='function') renderMatchHistory();
   if(typeof renderRivalBox==='function' && document.getElementById('rivalBox') && document.getElementById('rivalBox').style.display!=='none') renderRivalBox();
   if(typeof renderWeather==='function') renderWeather();
   // Re-renderizar welcome si está visible
@@ -6247,14 +6248,15 @@ window.applyTranslations = function(){
     if(typeof renderAchievementsTab==='function'&&document.getElementById('profileAchievementsPane')&&document.getElementById('profileAchievementsPane').classList.contains('profile-tab-pane-active')) renderAchievementsTab();
   }
   // Actualizar botones de idioma activo
-  const esBtn=document.getElementById('langEsBtn');
-  const enBtn=document.getElementById('langEnBtn');
-  if(esBtn) esBtn.style.cssText+=(window.LANG==='es')?';border-color:var(--gold);color:var(--gold)':';border-color:var(--line);color:var(--text)';
-  if(enBtn) enBtn.style.cssText+=(window.LANG==='en')?';border-color:var(--gold);color:var(--gold)':';border-color:var(--line);color:var(--text)';
-  const esBtn2=document.getElementById('langEsBtn2');
-  const enBtn2=document.getElementById('langEnBtn2');
-  if(esBtn2) esBtn2.style.cssText+=(window.LANG==='es')?';border-color:var(--gold);color:var(--gold)':';border-color:var(--line);color:var(--text)';
-  if(enBtn2) enBtn2.style.cssText+=(window.LANG==='en')?';border-color:var(--gold);color:var(--gold)':';border-color:var(--line);color:var(--text)';
+  ['Es','En','Pt','Fr','De','It'].forEach(l=>{
+    const lang=l.toLowerCase();
+    const active=window.LANG===lang;
+    const style=active?';border-color:var(--gold);color:var(--gold)':';border-color:var(--line);color:var(--text)';
+    const b1=document.getElementById('lang'+l+'Btn');
+    const b2=document.getElementById('lang'+l+'Btn2');
+    if(b1) b1.style.cssText+=style;
+    if(b2) b2.style.cssText+=style;
+  });
   // Botones del header
   // ranking-btn text handled by data-i18n span inside
   // Tabs móvil
