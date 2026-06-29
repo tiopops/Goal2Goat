@@ -707,6 +707,56 @@ window.TRANSLATIONS = {
   'comp.play_match': {es:'JUGAR PARTIDO', en:'PLAY MATCH'},
   'comp.end_tournament': {es:'FINALIZAR CAMPEONATO', en:'END TOURNAMENT'},
 
+  /* ── HUD / marquesina ── */
+  'hud.tagline':      {es:'MONTA TU EQUIPO LEGENDARIO Y CONQUISTA EL MUNDIAL', en:'BUILD YOUR LEGENDARY TEAM AND CONQUER THE WORLD CUP'},
+  'hud.knockout':     {es:'ELIMINATORIAS', en:'KNOCKOUT STAGE'},
+  'hud.last_match':   {es:'ÚLTIMO PARTIDO', en:'LAST MATCH'},
+  'hud.next_rival':   {es:'PRÓXIMO RIVAL',  en:'NEXT OPPONENT'},
+  'hud.injured':      {es:'LESIONADOS',     en:'INJURED'},
+  'hud.top_scorer':   {es:'MÁXIMO GOLEADOR', en:'TOP SCORER'},
+  'hud.morale':       {es:'MORAL',          en:'MORALE'},
+  'hud.weather':      {es:'CLIMA',          en:'WEATHER'},
+  'hud.streak':       {es:'EN RACHA',       en:'ON FIRE'},
+  'hud.ovr':          {es:'NOTA',           en:'OVR'},
+
+  /* ── MODAL NOMBRE DE EQUIPO ── */
+  'team_modal.title':   {es:'¡EQUIPO COMPLETO!', en:'SQUAD COMPLETE!'},
+  'team_modal.body':    {es:'Tu plantilla GOAT está lista. ¡Dale un nombre a tu equipo antes de empezar el torneo! Empezarás en la <strong>Fase de Grupos</strong>: 3 partidos, los 2 primeros del grupo avanzan a octavos de final.', en:'Your GOAT squad is ready. Give your team a name before starting the tournament! You will start in the <strong>Group Stage</strong>: 3 matches, the top 2 in the group advance to the Round of 16.'},
+  'team_modal.placeholder': {es:'Ej: Dream Team FC', en:'E.g. Dream Team FC'},
+  'team_modal.confirm': {es:'CONFIRMAR',         en:'CONFIRM'},
+  'team_modal.error':   {es:'El nombre del equipo no puede estar vacío.', en:'Team name cannot be empty.'},
+
+  /* ── TABLA BRACKET (historial eliminatorias) ── */
+  'bracket.round':    {es:'Ronda',     en:'Round'},
+  'bracket.rival':    {es:'Rival',     en:'Opponent'},
+  'bracket.result':   {es:'Resultado', en:'Result'},
+  'bracket.res':      {es:'Res',       en:'Res'},
+
+  /* ── TICKET — estados del botón ── */
+  'ticket.closed':    {es:'BOLETO CERRADO',   en:'CARD CLOSED'},
+  'ticket.complete':  {es:'BOLETO COMPLETO',  en:'CARD COMPLETE'},
+
+  /* ── NOTAS DE VERSIÓN ── */
+  'patch.title':      {es:'📋 NOTAS DE LA VERSIÓN',  en:'📋 VERSION NOTES'},
+  'patch.v351_match': {es:'v0.351 — Partido',         en:'v0.351 — Match'},
+  'patch.v351_match_1': {es:'Feed de partido en 3 columnas: mi equipo izquierda, minuto centro, rival derecha.', en:'3-column match feed: my team on the left, minute in the centre, opponent on the right.'},
+  'patch.v351_match_2': {es:'Lesiones y tarjetas bidireccionales: la falta que causa una lesión genera tarjeta al jugador que la comete.', en:'Two-way injuries and cards: the foul that causes an injury gives a card to the fouling player.'},
+  'patch.v351_match_3': {es:'El rival también puede sufrir lesiones y tarjetas durante el partido.', en:'The opponent can also suffer injuries and cards during the match.'},
+  'patch.v351_match_4': {es:'Expulsión con banquillo lleno: el jugador permanece en campo con rating 0.', en:'Sending off with a full bench: the player stays on the pitch with 0 rating.'},
+  'patch.v351_match_5': {es:'Los estados de convocados se actualizan solo al finalizar el partido.', en:'Squad statuses update only when the match ends.'},
+  'patch.v351_tickets': {es:'v0.351 — Tickets', en:'v0.351 — Tickets'},
+  'patch.v351_tickets_1': {es:'Composicion: 1 X roja, 1 cabra (+4pts), 7 monedas (+1pt). Máximo 11pts por boleto.', en:'Composition: 1 red X, 1 goat (+4pts), 7 coins (+1pt). Maximum 11pts per card.'},
+  'patch.v351_tickets_2': {es:'Tickets disponibles a las 0:00, 4:00, 8:00, 12:00, 16:00 y 20:00 hora local.', en:'Tickets available at 00:00, 04:00, 08:00, 12:00, 16:00 and 20:00 local time.'},
+  'patch.v351_tickets_3': {es:'Sonido al ganar y al perder el boleto.', en:'Sound when winning and losing the card.'},
+  'patch.v351_upgrades': {es:'v0.351 — Mejoras y Habilidades', en:'v0.351 — Upgrades & Skills'},
+  'patch.v351_upgrades_1': {es:'Nueva pestaña MEJORAS: banquillo, cambios y convocados mejorables con GOAT Points.', en:'New UPGRADES tab: bench, substitutions and squad upgradeable with GOAT Points.'},
+  'patch.v351_upgrades_2': {es:'Nueva pestaña HABILIDADES: modificadores especiales comprables con GOAT Points.', en:'New SKILLS tab: special modifiers purchaseable with GOAT Points.'},
+  'patch.v351_upgrades_3': {es:'Mejora RECUPERACIÓN: reduce la fatiga acumulada por partido.', en:'RECOVERY upgrade: reduces accumulated fatigue per match.'},
+  'patch.v351_upgrades_4': {es:'Las mejoras tienen efecto real en el juego en tiempo real.', en:'Upgrades have real in-game effects in real time.'},
+  'patch.v35_base':   {es:'v0.35 — Sistema base', en:'v0.35 — Base system'},
+  'patch.v35_base_1': {es:'Simulación en vivo 0-90+X minutos con descanso, prórroga y penaltis ABAB.', en:'Live simulation 0-90+X minutes with half time, extra time and ABAB penalties.'},
+  'patch.v35_base_2': {es:'Tickets GOAT Points con rasca y gana y ticket dorado al ganar el Mundial.', en:'GOAT Points scratch cards and golden ticket for winning the World Cup.'},
+
   /* ── TICKETS ── */
   'ticket.title': {es:'BOLETO RASCA Y GANA', en:'SCRATCH CARD'},
   'ticket.header_btn': {es:'TICKETS', en:'TICKETS'},

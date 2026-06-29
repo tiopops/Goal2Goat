@@ -1770,11 +1770,11 @@ function showTeamNameModal(){
   }
   document.getElementById("matchOverlay").innerHTML=`
   <div class="match-modal">
-    <h3>¡Equipo completo!</h3>
-    <div class="match-summary">Tu plantilla GOAT está lista. ¡Dale un nombre a tu equipo antes de empezar el torneo! Empezarás en la <strong>Fase de Grupos</strong>: 3 partidos, los 2 primeros del grupo avanzan a octavos de final.</div>
-    <input type="text" id="teamNameInput" maxlength="24" placeholder="Ej: Dream Team FC" class="team-name-input" value="${esc(myTeamName==='TU EQUIPO'?'':myTeamName)}">
-    <span id="teamNameErr" style="display:none;color:#e74c3c;font-size:11px;margin-top:4px">El nombre del equipo no puede estar vacío.</span>
-    <button class="modal-btn" id="teamNameConfirmBtn">CONFIRMAR</button>
+    <h3 style="text-align:center">${t('team_modal.title')||'¡EQUIPO COMPLETO!'}</h3>
+    <div class="match-summary" data-i18n-html="team_modal.body">${t('team_modal.body')||'Tu plantilla GOAT está lista. ¡Dale un nombre a tu equipo antes de empezar el torneo! Empezarás en la <strong>Fase de Grupos</strong>: 3 partidos, los 2 primeros del grupo avanzan a octavos de final.'}</div>
+    <input type="text" id="teamNameInput" maxlength="24" placeholder="${t('team_modal.placeholder')||'Ej: Dream Team FC'}" class="team-name-input" value="${esc(myTeamName==='TU EQUIPO'?'':myTeamName)}">
+    <span id="teamNameErr" style="display:none;color:#e74c3c;font-size:11px;margin-top:4px">${t('team_modal.error')||'El nombre del equipo no puede estar vacío.'}</span>
+    <button class="modal-btn" id="teamNameConfirmBtn">${t('team_modal.confirm')||'CONFIRMAR'}</button>
   </div>`;
   const inp=document.getElementById("teamNameInput");
   inp.focus();
@@ -1928,7 +1928,7 @@ function renderMatchHistory(){
   const el=document.getElementById("matchHistoryTable");
   const prog=document.getElementById("matchProgress");
   if(!el) return;
-  if(prog) prog.textContent=stage==="group"?(t('result.match_progress_groups')||'FASE DE GRUPOS'):(ROUND_NAMES[knockoutRound]||'ELIMINATORIAS');
+  if(prog) prog.textContent=stage==="group"?(t('result.match_progress_groups')||'FASE DE GRUPOS'):(getRoundName(knockoutRound)||t('hud.knockout')||'ELIMINATORIAS');
   let html="";
   // Always show group table once there are group matches
   if(groupTable.length && matchResults.some(r=>r.stage==="group")){
@@ -1979,9 +1979,9 @@ function renderBracketHTML(knockoutMatches){
     const tag=r.won?"V":"D";
     rows+=`<tr><td>${r.roundName}</td><td>${flagEmoji(r.rival,16)} ${getTeamName(r.rival)}</td><td>${r.score}</td><td class="${cls}">${tag}</td></tr>`;
   });
-  const nextRound=ROUND_NAMES[knockoutRound];
+  const nextRound=getRoundName(knockoutRound);
   return `<div class="hint-line" style="margin-top:10px;font-weight:700">ELIMINATORIAS</div>
-  <table><thead><tr><th>Ronda</th><th>Rival</th><th>Resultado</th><th>Res</th></tr></thead><tbody>${rows}</tbody></table>
+  <table><thead><tr><th>${t('bracket.round')||'Ronda'}</th><th>${t('bracket.rival')||'Rival'}</th><th>${t('bracket.result')||'Resultado'}</th><th>${t('bracket.res')||'Res'}</th></tr></thead><tbody>${rows}</tbody></table>
   <div class="hint-line">${nextRound&&stage==="knockout"?(t('comp.next_round')+nextRound):'¡Final completada!'}</div>`;
 }
 
@@ -2203,7 +2203,7 @@ function playMatch(){
     groupMatchIdx++;
     if(groupMatchIdx>=3) simulateRivalMatches();
   } else {
-    matchResults.push({stage:"knockout", roundName:ROUND_NAMES[knockoutRound], rival:nextOpponent.name, score:scoreLabel, won, draw:false});
+    matchResults.push({stage:"knockout", roundName:getRoundName(knockoutRound), rival:nextOpponent.name, score:scoreLabel, won, draw:false});
   }
 
   // Update morale based on result
@@ -3310,7 +3310,7 @@ function showEliminatedGroupStage(){
   </div>`;
 }
 function showEliminated(){
-  const round=ROUND_NAMES[knockoutRound];
+  const round=getRoundName(knockoutRound);
   const sc=computeFinalScore(false);
   if(typeof window.saveFinalScore==="function") window.saveFinalScore(sc.total);
   const grade=sc.total>=750?t('result.grade.elite')||'ÉLITE':sc.total>=550?t('result.grade.very_good')||'MUY BUENO':sc.total>=350?t('result.grade.good')||'BUENO':t('result.grade.improvable')||'MEJORABLE';
@@ -4038,58 +4038,58 @@ function buildLedMessages(){
 
   // Always: team name + OVR
   if(baseTeamOVR!==null){
-    msgs.push(`🐐 ${myTeamName}  NOTA ${baseTeamOVR}`);
+    msgs.push(`🐐 ${myTeamName}  ${t('hud.ovr')||'NOTA'} ${baseTeamOVR}`);
   } else {
-    msgs.push("GOAL2GOAT  ·  MONTA TU EQUIPO LEGENDARIO Y CONQUISTA EL MUNDIAL");
+    msgs.push(`GOAL2GOAT  ·  ${t('hud.tagline')||'MONTA TU EQUIPO LEGENDARIO Y CONQUISTA EL MUNDIAL'}`);
   }
 
   // Stage info
   if(stage==="group" && groupOpponents.length){
     msgs.push(`${t("comp.groups")}  ·  ${t("comp.play_match")} ${groupMatchIdx+1}/3`);
   } else if(stage==="knockout"){
-    msgs.push(`ELIMINATORIAS  ·  ${(ROUND_NAMES[knockoutRound]||"").toUpperCase()}`);
+    msgs.push(`${(t('hud.knockout')||'ELIMINATORIAS').toUpperCase()}  ·  ${getRoundName(knockoutRound).toUpperCase()}`);
   }
 
   // Last match result
   const last = matchResults[matchResults.length-1];
   if(last){
     const res = last.won?"VICTORIA":last.draw?"EMPATE":"DERROTA";
-    msgs.push(`ÚLTIMO PARTIDO  ${res}  vs ${getTeamName(last.rival).toUpperCase()}  ${last.score}`);
+    msgs.push(`${t('hud.last_match')||'ÚLTIMO PARTIDO'}  ${res}  vs ${getTeamName(last.rival).toUpperCase()}  ${last.score}`);
   }
 
   // Next opponent
   if(nextOpponent){
-    msgs.push(`PRÓXIMO RIVAL  ${getTeamName(nextOpponent.name).toUpperCase()}`);
+    msgs.push(`${t('hud.next_rival')||'PRÓXIMO RIVAL'}  ${getTeamName(nextOpponent.name).toUpperCase()}`);
   }
 
   // Injured players
   const injured = usedPlayers.filter(p=>p.injury);
   if(injured.length){
-    msgs.push(`LESIONADOS  ${injured.map(p=>`${p.name.split(' ')[0]} (${p.injury.remaining}P)`).join('  ')}`);
+    msgs.push(`${t('hud.injured')||'LESIONADOS'}  ${injured.map(p=>`${p.name.split(' ')[0]} (${p.injury.remaining}P)`).join('  ')}`);
   }
 
   // Top scorer (player with most goals in match history — proxy: highest rated attacker)
   const attackers = usedPlayers.filter(p=>p.placedPos&&["DC","EI","ED"].includes(p.placedPos));
   if(attackers.length){
     const top = attackers.reduce((a,b)=>effRating(a)>=effRating(b)?a:b);
-    msgs.push(`MÁXIMO GOLEADOR  ${top.name.toUpperCase()}  ★${effRating(top)}`);
+    msgs.push(`${t('hud.top_scorer')||'MÁXIMO GOLEADOR'}  ${top.name.toUpperCase()}  ★${effRating(top)}`);
   }
 
   // Morale
   if(baseTeamOVR!==null){
     const sign=teamMorale>=0?"+":"";
-    msgs.push(`MORAL  ${sign}${teamMorale}`);
+    msgs.push(`${t('hud.morale')||'MORAL'}  ${sign}${teamMorale}`);
   }
 
   // Weather
   if(currentWeather && currentWeather.id!=='cloudy'){
-    msgs.push(`CLIMA  ${currentWeather.label.replace(/[^\w\s]/g,'').trim().toUpperCase()}`);
+    msgs.push(`${t('hud.weather')||'CLIMA'}  ${currentWeather.label.replace(/[^\w\s]/g,'').trim().toUpperCase()}`);
   }
 
   // Scorer streaks
   const onStreak=usedPlayers.filter(p=>(scorerStreaks[p.name]||0)>0);
   if(onStreak.length){
-    msgs.push(`EN RACHA  ${onStreak.map(p=>`${p.name.split(' ')[0].toUpperCase()} x${scorerStreaks[p.name]}`).join('  ')}`);
+    msgs.push(`${t('hud.streak')||'EN RACHA'}  ${onStreak.map(p=>`${p.name.split(' ')[0].toUpperCase()} x${scorerStreaks[p.name]}`).join('  ')}`);
   }
 
   return msgs.join(SEP + "   ");
@@ -5347,8 +5347,8 @@ function buildTicketInMount(mount, ticketCount, lastRegen, currentScratchPts){
     if(riskVal) riskVal.textContent=risk+'%';
     if(riskFill) riskFill.style.width=risk+'%';
     if(riskBtn){
-      if(gameOver) riskBtn.textContent='BOLETO CERRADO';
-      else if(scratchedCount>=GRID_SIZE) riskBtn.textContent='BOLETO COMPLETO';
+      if(gameOver) riskBtn.textContent=tk('ticket.closed')||'BOLETO CERRADO';
+      else if(scratchedCount>=GRID_SIZE) riskBtn.textContent=tk('ticket.complete')||'BOLETO COMPLETO';
       else if(scratchedCount===0) riskBtn.textContent='';
       else riskBtn.innerHTML=`SIGUIENTE RASCADO · <b style="color:#d94f3d">${risk}% riesgo</b>`;
     }
