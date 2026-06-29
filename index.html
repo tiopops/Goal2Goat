@@ -98,11 +98,18 @@
       <button class="settings-toggle" id="settingsToggle" onclick="toggleSettingsMenu()" title="Ajustes">⚙</button>
       <div class="settings-dropdown" id="settingsDropdown">
         <button id="audioToggleHeader" class="settings-item" title="Activar/desactivar sonido">
-          <span class="topbar-dot on"></span><span class="topbar-label">SONIDO</span>
+          <span class="topbar-dot on"></span><span class="topbar-label" data-i18n="settings.sound">SONIDO</span>
         </button>
         <button id="themeToggleHeader" class="settings-item" title="Cambiar tema claro/oscuro">
-          <span class="topbar-dot on"></span><span class="topbar-label">TEMA OSCURO</span>
+          <span class="topbar-dot on"></span><span class="topbar-label" data-i18n="settings.theme">TEMA OSCURO</span>
         </button>
+        <div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--line)">
+          <div style="font-family:'Bebas Neue',Impact,sans-serif;font-size:10px;letter-spacing:1px;color:var(--text-muted);margin-bottom:6px" data-i18n="settings.language">IDIOMA</div>
+          <div style="display:flex;gap:6px">
+            <button onclick="window.setLang('es');toggleSettingsMenu()" style="flex:1;padding:5px 4px;font-family:'Bebas Neue',Impact,sans-serif;font-size:12px;letter-spacing:1px;border:1px solid var(--line);background:var(--panel);color:var(--text);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px"><img src="https://flagcdn.com/w40/es.png" style="height:12px;width:auto;border-radius:1px" alt="ES"> ES</button>
+            <button onclick="window.setLang('en');toggleSettingsMenu()" style="flex:1;padding:5px 4px;font-family:'Bebas Neue',Impact,sans-serif;font-size:12px;letter-spacing:1px;border:1px solid var(--line);background:var(--panel);color:var(--text);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px"><img src="https://flagcdn.com/w40/gb.png" style="height:12px;width:auto;border-radius:1px" alt="EN"> EN</button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -216,16 +223,20 @@
           <span data-i18n="settings.always_use">Usar siempre como nombre de equipo</span>
         </label>
         <p class="profile-field-hint" data-i18n="settings.always_use_hint">Si lo activas, no se te preguntará el nombre del equipo al formarlo — se usará este automáticamente.</p>
-        <div id="langSelectorWrap" style="margin-top:14px;padding-top:14px;border-top:1px solid var(--line);display:none">
+
+        <!-- IDIOMA — siempre visible -->
+        <div id="langSelectorWrap" style="margin-top:14px;padding-top:14px;border-top:1px solid var(--line)">
           <div class="settings-label" data-i18n="settings.language">IDIOMA</div>
           <div style="display:flex;gap:8px;margin-top:8px">
             <button id="langEsBtn" onclick="window.setLang('es')" style="flex:1;padding:8px;font-family:'Bebas Neue',Impact,sans-serif;font-size:14px;letter-spacing:1px;border:2px solid var(--line);background:var(--panel);color:var(--text);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px"><img src="https://flagcdn.com/w40/es.png" style="height:16px;width:auto;border-radius:2px;box-shadow:0 0 0 1px rgba(0,0,0,.15)" alt="ES"> ESPAÑOL</button>
             <button id="langEnBtn" onclick="window.setLang('en')" style="flex:1;padding:8px;font-family:'Bebas Neue',Impact,sans-serif;font-size:14px;letter-spacing:1px;border:2px solid var(--line);background:var(--panel);color:var(--text);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px"><img src="https://flagcdn.com/w40/gb.png" style="height:16px;width:auto;border-radius:2px;box-shadow:0 0 0 1px rgba(0,0,0,.15)" alt="EN"> ENGLISH</button>
           </div>
         </div>
+
         <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;align-items:center">
           <button onclick="window.showPatchNotes()" style="background:none;border:none;cursor:pointer;font-family:'Bebas Neue',Impact,sans-serif;font-size:13px;letter-spacing:1px;color:var(--gold);padding:0;text-decoration:underline" data-i18n="settings.patch_notes">NOTAS v0.354</button>
         </div>
+
         <!-- CHEATS: solo visible para tiopops -->
         <div id="cheatsSection" style="display:none;margin-top:18px;border-top:1px dashed #c0392b;padding-top:14px;">
           <label class="profile-field-label" style="color:#c0392b" data-i18n="settings.debug">⚙️ MODO DEBUG</label>
@@ -234,6 +245,11 @@
             <span style="color:#c0392b;font-weight:700" data-i18n="settings.cheats">CHEATS ACTIVADOS</span>
           </label>
           <p class="profile-field-hint" style="color:#c0392b;opacity:.7" data-i18n="settings.cheats_desc">Tickets siempre 3/3 · Gana todos los partidos · Puntos infinitos</p>
+        </div>
+
+        <!-- CERRAR SESIÓN — siempre al final -->
+        <div style="margin-top:18px;padding-top:14px;border-top:1px solid var(--line)">
+          <button id="profileLogoutBtn" style="width:100%;padding:10px;font-family:'Bebas Neue',Impact,sans-serif;font-size:14px;letter-spacing:1px;border:1px solid #c0392b;background:none;color:#c0392b;cursor:pointer" data-i18n="auth.logout">CERRAR SESIÓN</button>
         </div>
       </div>
 

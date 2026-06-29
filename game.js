@@ -76,48 +76,54 @@ let rawTeams = [
   {"id":"team_holanda_1988","name":"Holanda 1988","style":"total_football","players":["p_team_holanda_1988_0","p_team_holanda_1988_1","p_team_holanda_1988_2","p_team_holanda_1988_3","p_team_holanda_1988_4","p_team_holanda_1988_5","p_team_holanda_1988_6","p_team_holanda_1988_7","p_team_holanda_1988_8","p_team_holanda_1988_9","p_team_holanda_1988_10","p_team_holanda_1988_11","p_team_holanda_1988_12","p_team_holanda_1988_13","p_team_holanda_1988_14","p_team_holanda_1988_15"]}
 ];
 const STYLES = {
- tiki_taka:{name:"Tiki-Taka",bonuses:{passing:10,pace:5}},
- samba_total:{name:"Samba Total",bonuses:{attack:8,technique:7}},
- ataque_letal:{name:"Ataque Letal",bonuses:{attack:10,pace:5}},
- maquinaria_alemana:{name:"Maquinaria Alemana",bonuses:{defense:8,technique:4,passing:3}},
- gegenpressing:{name:"Gegenpressing",bonuses:{pace:9,defense:6}},
- magia_individual:{name:"Magia Albiceleste",bonuses:{attack:10,technique:5}},
- la_scaloneta:{name:"La Scaloneta",bonuses:{defense:9,passing:6}},
- solidez_francesa:{name:"Solidez Francesa",bonuses:{defense:8,passing:4,pace:3}},
- velocidad_punzante:{name:"Velocidad Punzante",bonuses:{pace:10,attack:5}},
- catenaccio:{name:"Catenaccio",bonuses:{defense:12,passing:3}},
- total_football:{name:"Fútbol Total",bonuses:{passing:6,technique:6,pace:3}},
- naranja_mecanica:{name:"Naranja Mecánica",bonuses:{technique:8,passing:5,pace:2}},
- futbol_directo:{name:"Fútbol Directo",bonuses:{pace:8,attack:4,defense:3}},
- garra_lusa:{name:"Garra Lusa",bonuses:{defense:7,technique:4,pace:4}},
- muralla_balcanica:{name:"Muralla Balcánica",bonuses:{defense:12,technique:3}},
- garra_charrua:{name:"Garra Charrúa",bonuses:{defense:8,attack:5,pace:2}},
- once_oro_magiar:{name:"Once de Oro Magiar",bonuses:{technique:10,passing:5}},
- dinamita_danesa:{name:"Dinamita Danesa",bonuses:{pace:8,attack:6}},
- tricolor_tecnico:{name:"Tricolor Técnico",bonuses:{technique:8,passing:5}},
- garra_yanqui:{name:"Garra Yanqui",bonuses:{defense:8,pace:5}},
- disciplina_nipona:{name:"Disciplina Nipona",bonuses:{passing:8,technique:5}},
- muralla_atlas:{name:"Muralla del Atlas",bonuses:{defense:10,pace:4}},
- superaguilas:{name:"Superáguilas",bonuses:{pace:8,attack:6}},
- leones_indomables:{name:"Leones Indomables",bonuses:{attack:8,defense:5}},
- garra_chilena:{name:"Garra Chilena",bonuses:{attack:7,technique:5}},
- muralla_guarani:{name:"Muralla Guaraní",bonuses:{defense:11,passing:3}},
- fiesta_cafetera:{name:"Fiesta Cafetera",bonuses:{attack:8,technique:5}},
- vendaval_incaico:{name:"Vendaval Incaico",bonuses:{attack:8,pace:5}},
- disciplina_vikinga:{name:"Disciplina Vikinga",bonuses:{defense:7,pace:5}},
- tecnica_centroeuropea:{name:"Técnica Centroeuropea",bonuses:{technique:8,passing:5}},
- tecnica_balcanica:{name:"Técnica Balcánica",bonuses:{technique:9,passing:4}},
- wunderteam:{name:"Wunderteam",bonuses:{attack:9,technique:4}},
- sistema_cerrojo:{name:"Sistema del Cerrojo",bonuses:{defense:10,passing:4}},
- furia_otomana:{name:"Furia Otomana",bonuses:{pace:8,defense:5}},
- milagro_defensivo:{name:"Milagro Defensivo",bonuses:{defense:12,passing:2}},
- magia_carpatica:{name:"Magia Cárpata",bonuses:{technique:9,attack:4}},
- furia_tartan:{name:"Furia Tartán",bonuses:{attack:7,pace:5}},
- muralla_celta:{name:"Muralla Celta",bonuses:{defense:8,technique:4}},
- punta_lanza:{name:"Punta de Lanza",bonuses:{attack:9,pace:4}},
- vikingo_directo:{name:"Vikingo Directo",bonuses:{defense:8,pace:5}}
+ get tiki_taka()            { return {get name(){ return window.t?window.t('style.name.tiki_taka'):'Tiki-Taka'; },bonuses:{passing:10,pace:5}}; },
+ get samba_total()          { return {get name(){ return window.t?window.t('style.name.samba_total'):'Samba Total'; },bonuses:{attack:8,technique:7}}; },
+ get ataque_letal()         { return {get name(){ return window.t?window.t('style.name.ataque_letal'):'Ataque Letal'; },bonuses:{attack:10,pace:5}}; },
+ get maquinaria_alemana()   { return {get name(){ return window.t?window.t('style.name.maquinaria_alemana'):'Maquinaria Alemana'; },bonuses:{defense:8,technique:4,passing:3}}; },
+ get gegenpressing()        { return {get name(){ return window.t?window.t('style.name.gegenpressing'):'Gegenpressing'; },bonuses:{pace:9,defense:6}}; },
+ get magia_individual()     { return {get name(){ return window.t?window.t('style.name.magia_individual'):'Magia Albiceleste'; },bonuses:{attack:10,technique:5}}; },
+ get la_scaloneta()         { return {get name(){ return window.t?window.t('style.name.la_scaloneta'):'La Scaloneta'; },bonuses:{defense:9,passing:6}}; },
+ get solidez_francesa()     { return {get name(){ return window.t?window.t('style.name.solidez_francesa'):'Solidez Francesa'; },bonuses:{defense:8,passing:4,pace:3}}; },
+ get velocidad_punzante()   { return {get name(){ return window.t?window.t('style.name.velocidad_punzante'):'Velocidad Punzante'; },bonuses:{pace:10,attack:5}}; },
+ get catenaccio()           { return {get name(){ return window.t?window.t('style.name.catenaccio'):'Catenaccio'; },bonuses:{defense:12,passing:3}}; },
+ get total_football()       { return {get name(){ return window.t?window.t('style.name.total_football'):'Fútbol Total'; },bonuses:{passing:6,technique:6,pace:3}}; },
+ get naranja_mecanica()     { return {get name(){ return window.t?window.t('style.name.naranja_mecanica'):'Naranja Mecánica'; },bonuses:{technique:8,passing:5,pace:2}}; },
+ get futbol_directo()       { return {get name(){ return window.t?window.t('style.name.futbol_directo'):'Fútbol Directo'; },bonuses:{pace:8,attack:4,defense:3}}; },
+ get garra_lusa()           { return {get name(){ return window.t?window.t('style.name.garra_lusa'):'Garra Lusa'; },bonuses:{defense:7,technique:4,pace:4}}; },
+ get muralla_balcanica()    { return {get name(){ return window.t?window.t('style.name.muralla_balcanica'):'Muralla Balcánica'; },bonuses:{defense:12,technique:3}}; },
+ get garra_charrua()        { return {get name(){ return window.t?window.t('style.name.garra_charrua'):'Garra Charrúa'; },bonuses:{defense:8,attack:5,pace:2}}; },
+ get once_oro_magiar()      { return {get name(){ return window.t?window.t('style.name.once_oro_magiar'):'Once de Oro Magiar'; },bonuses:{technique:10,passing:5}}; },
+ get dinamita_danesa()      { return {get name(){ return window.t?window.t('style.name.dinamita_danesa'):'Dinamita Danesa'; },bonuses:{pace:8,attack:6}}; },
+ get tricolor_tecnico()     { return {get name(){ return window.t?window.t('style.name.tricolor_tecnico'):'Tricolor Técnico'; },bonuses:{technique:8,passing:5}}; },
+ get garra_yanqui()         { return {get name(){ return window.t?window.t('style.name.garra_yanqui'):'Garra Yanqui'; },bonuses:{defense:8,pace:5}}; },
+ get disciplina_nipona()    { return {get name(){ return window.t?window.t('style.name.disciplina_nipona'):'Disciplina Nipona'; },bonuses:{passing:8,technique:5}}; },
+ get muralla_atlas()        { return {get name(){ return window.t?window.t('style.name.muralla_atlas'):'Muralla del Atlas'; },bonuses:{defense:10,pace:4}}; },
+ get superaguilas()         { return {get name(){ return window.t?window.t('style.name.superaguilas'):'Superáguilas'; },bonuses:{pace:8,attack:6}}; },
+ get leones_indomables()    { return {get name(){ return window.t?window.t('style.name.leones_indomables'):'Leones Indomables'; },bonuses:{attack:8,defense:5}}; },
+ get garra_chilena()        { return {get name(){ return window.t?window.t('style.name.garra_chilena'):'Garra Chilena'; },bonuses:{attack:7,technique:5}}; },
+ get muralla_guarani()      { return {get name(){ return window.t?window.t('style.name.muralla_guarani'):'Muralla Guaraní'; },bonuses:{defense:11,passing:3}}; },
+ get fiesta_cafetera()      { return {get name(){ return window.t?window.t('style.name.fiesta_cafetera'):'Fiesta Cafetera'; },bonuses:{attack:8,technique:5}}; },
+ get vendaval_incaico()     { return {get name(){ return window.t?window.t('style.name.vendaval_incaico'):'Vendaval Incaico'; },bonuses:{attack:8,pace:5}}; },
+ get disciplina_vikinga()   { return {get name(){ return window.t?window.t('style.name.disciplina_vikinga'):'Disciplina Vikinga'; },bonuses:{defense:7,pace:5}}; },
+ get tecnica_centroeuropea(){ return {get name(){ return window.t?window.t('style.name.tecnica_centroeuropea'):'Técnica Centroeuropea'; },bonuses:{technique:8,passing:5}}; },
+ get tecnica_balcanica()    { return {get name(){ return window.t?window.t('style.name.tecnica_balcanica'):'Técnica Balcánica'; },bonuses:{technique:9,passing:4}}; },
+ get wunderteam()           { return {get name(){ return window.t?window.t('style.name.wunderteam'):'Wunderteam'; },bonuses:{attack:9,technique:4}}; },
+ get sistema_cerrojo()      { return {get name(){ return window.t?window.t('style.name.sistema_cerrojo'):'Sistema del Cerrojo'; },bonuses:{defense:10,passing:4}}; },
+ get furia_otomana()        { return {get name(){ return window.t?window.t('style.name.furia_otomana'):'Furia Otomana'; },bonuses:{pace:8,defense:5}}; },
+ get milagro_defensivo()    { return {get name(){ return window.t?window.t('style.name.milagro_defensivo'):'Milagro Defensivo'; },bonuses:{defense:12,passing:2}}; },
+ get magia_carpatica()      { return {get name(){ return window.t?window.t('style.name.magia_carpatica'):'Magia Cárpata'; },bonuses:{technique:9,attack:4}}; },
+ get furia_tartan()         { return {get name(){ return window.t?window.t('style.name.furia_tartan'):'Furia Tartán'; },bonuses:{attack:7,pace:5}}; },
+ get muralla_celta()        { return {get name(){ return window.t?window.t('style.name.muralla_celta'):'Muralla Celta'; },bonuses:{defense:8,technique:4}}; },
+ get punta_lanza()          { return {get name(){ return window.t?window.t('style.name.punta_lanza'):'Punta de Lanza'; },bonuses:{attack:9,pace:4}}; },
+ get vikingo_directo()      { return {get name(){ return window.t?window.t('style.name.vikingo_directo'):'Vikingo Directo'; },bonuses:{defense:8,pace:5}}; },
 };
-const STAT_LABELS={attack:"ATAQUE",defense:"DEFENSA",pace:"RITMO",passing:"PASE",technique:"TÉCNICA"};
+const STAT_LABELS={
+  get attack()   { return window.t?window.t('info.attack')   :'ATAQUE'; },
+  get defense()  { return window.t?window.t('info.defense')  :'DEFENSA'; },
+  get pace()     { return window.t?window.t('info.pace')     :'RITMO'; },
+  get passing()  { return window.t?window.t('info.passing')  :'PASE'; },
+  get technique(){ return window.t?window.t('info.technique'):'TÉCNICA'; },
+};
 
 /* ========= MATCH STRATEGIES (chosen before each match) ========= */
 // Each strategy can be played, and "counters" points to the strategy key it beats.
@@ -831,12 +837,15 @@ function showTeamChoice(t1,p1,t2,p2,isBench=false){
 
 function teamOptionHTML(team,players){
   const pid=CSS.escape(team.name);
+  const styleKey=team._styleKey||'';
+  const styleName=styleKey?(window.t?window.t('style.name.'+styleKey):(STYLES[styleKey]?STYLES[styleKey].name:styleKey)):'';
+  const styleHint=styleKey&&STYLE_HINTS[styleKey]?STYLE_HINTS[styleKey]:'';
   return `<div class="team-option" onclick="selectTeam('${esc(team.name)}')">
     <div class="flag-wrap">${flagEmoji(team.name)}</div>
     <h3>${team.name}</h3>
     ${renderBonuses(team)}
     <div class="style-label">${window.t?window.t('rival.style_label'):'Estilo de juego'}</div>
-    <p class="style-text">${team.style}</p>
+    <p class="style-text"><strong>${styleName}</strong>${styleHint?'<br><span style="font-size:10px;color:var(--text-muted)">'+styleHint+'</span>':''}</p>
   </div>`;
 }
 function esc(s){ return s.replace(/'/g,"&#39;"); }
@@ -1854,7 +1863,7 @@ function renderRivalBox(){
         <div class="rival-power-track"><div class="rival-power-fill" style="width:${Math.min(100,power)}%"></div></div>
       </div>
       <div class="style-label" style="margin-top:10px">${window.t?window.t('rival.style_label'):'Estilo de juego'}</div>
-      <div class="rival-style-tag">${nextOpponent.style}</div>
+      <div class="rival-style-tag">${nextOpponent._styleKey?(window.t?window.t('style.name.'+nextOpponent._styleKey):(STYLES[nextOpponent._styleKey]?STYLES[nextOpponent._styleKey].name:nextOpponent.style)):nextOpponent.style}</div>
     </div>`;
   document.getElementById("rivalHint").textContent=hint;
   renderStrategySelector();
@@ -4587,8 +4596,7 @@ function initFirebaseAuth(){
             window.CHEATS_ACTIVE=this.checked;
             updateTicketBadge(window.CHEATS_ACTIVE?3:undefined);
             // Mostrar selector de idioma solo con cheats activos
-            const langWrap=$id('langSelectorWrap');
-            if(langWrap) langWrap.style.display=window.CHEATS_ACTIVE?'block':'none';
+            // langSelectorWrap is always visible (removed cheats gate)
             if(window.CHEATS_ACTIVE){const pse=$id('pstat-scratch-pts');if(pse)pse.textContent=100;}
             showToast(window.CHEATS_ACTIVE?"⚙️ Cheats ON — ganas todos, tickets 3/3, pts 100":"⚙️ Cheats OFF — juego normal","toast-pos");
           });
@@ -6192,6 +6200,25 @@ window.applyTranslations = function(){
     const isGuest=wrb&&wrb.style.display!=='none';
     if(wt) wt.innerHTML=window.t?window.t(isGuest?'welcome.text_guest':'welcome.text_user'):'';
     if(wrb&&isGuest) wrb.textContent=window.t?window.t('welcome.register'):'REGÍSTRATE';
+  }
+  // Re-renderizar selección de equipo si está visible (sin animación de slot)
+  if(window._lastTeamChoice){
+    const {t1,p1,t2,p2,isBench}=window._lastTeamChoice;
+    const isMobile=window.innerWidth<=1050;
+    const targetEl=isMobile?document.getElementById('playerCard'):playerCardEl;
+    if(targetEl&&targetEl.querySelector('.team-option')){
+      const title=isBench?(window.t?window.t('draft.choose_bench'):'ELIGE JUGADOR DE BANQUILLO'):(window.t?window.t('draft.choose_team'):'ELIGE UNA SELECCIÓN');
+      targetEl.innerHTML=`<div class="box"><div class="selection-title">${title}</div><div class="team-options">${teamOptionHTML(t1,p1)}${teamOptionHTML(t2,p2)}</div></div>`;
+    }
+  }
+  // Re-renderizar roster si está visible
+  if(window._lastRoster){
+    const {team,players}=window._lastRoster;
+    const isMobile=window.innerWidth<=1050;
+    const targetEl=isMobile?document.getElementById('playerCard'):playerCardEl;
+    if(targetEl&&targetEl.querySelector('.roster-modal')){
+      showRosterModal(team,players);
+    }
   }
   if(document.getElementById('profileOverlay')&&document.getElementById('profileOverlay').style.display!=='none'){
     if(typeof renderUpgradesTab==='function'&&document.getElementById('profileUpgradesPane')&&document.getElementById('profileUpgradesPane').classList.contains('profile-tab-pane-active')) renderUpgradesTab();
