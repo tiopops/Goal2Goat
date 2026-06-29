@@ -1899,7 +1899,7 @@ function renderMatchHistory(){
   const el=document.getElementById("matchHistoryTable");
   const prog=document.getElementById("matchProgress");
   if(!el) return;
-  if(prog) prog.textContent=stage==="group"?"FASE DE GRUPOS":(ROUND_NAMES[knockoutRound]||"ELIMINATORIAS");
+  if(prog) prog.textContent=stage==="group"?(t('result.match_progress_groups')||'FASE DE GRUPOS'):(ROUND_NAMES[knockoutRound]||'ELIMINATORIAS');
   let html="";
   // Always show group table once there are group matches
   if(groupTable.length && matchResults.some(r=>r.stage==="group")){
@@ -2674,7 +2674,7 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
           allEvents.push({
             minute:injMin,
             type:'card',icon:cardIcon,
-            text:`<strong>${fouler.name}</strong> <span style="font-size:10px;color:#a07a00">(falta sobre ${p.name})</span>`
+            text:`<strong>${fouler.name}</strong> <span style="font-size:10px;color:#a07a00">(${t('match.foul_on')||'falta sobre'} ${p.name})</span>`
           });
           // Si es roja, aplicar también las consecuencias de sanción
           if(p._foulCard==='red'){
@@ -2788,7 +2788,7 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
         halfEl.textContent=t('match.halftime');
         halfEl.style.background='#a07a00';
         fillEl.style.width='50%';
-        addSep(`Descanso — 45+${inj1}'`);
+        addSep(`${t('match.ht_sep')||'Descanso — 45+{0}\''.replace('{0}',inj1)}`||`Descanso — 45+${inj1}'`);
         playSound('whistle');
       }
       requestAnimationFrame(tickReg); return;
@@ -2796,14 +2796,14 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
     let minute;
     if(frac<HT_S){
       minute=Math.min(45+inj1,Math.floor(frac/HT_S*(45+inj1)));
-      halfEl.textContent='1ª PARTE'; halfEl.style.background='var(--accent)';
+      halfEl.textContent=t('match.first_half')||'1ª PARTE'; halfEl.style.background='var(--accent)';
       fillEl.style.width=`${(frac/HT_S)*50}%`;
       clockEl.textContent=minute>45?`45+${minute-45}'`:`${minute}'`;
     } else {
       const f2=(frac-HT_E)/(1-HT_E);
       minute=46+Math.floor(f2*(MAX_MIN-46));
       minute=Math.min(minute,MAX_MIN);
-      halfEl.textContent='2ª PARTE'; halfEl.style.background='var(--accent)';
+      halfEl.textContent=t('match.second_half')||'2ª PARTE'; halfEl.style.background='var(--accent)';
       fillEl.style.width=`${50+f2*50}%`;
       clockEl.textContent=minute>90?`90+${minute-90}'`:`${minute}'`;
     }
@@ -2817,7 +2817,7 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
     if(frac<1){ requestAnimationFrame(tickReg); return; }
     // Fin reglamento
     clockEl.textContent=`90+${inj2}'`; fillEl.style.width='100%';
-    halfEl.textContent='FIN'; halfEl.style.background='#555';
+    halfEl.textContent=t('match.end')||'FIN'; halfEl.style.background='#555';
     playSound('whistle');
     if(penaltyInfo) setTimeout(startExtraTime,900);
     else { playSound(won||draw?'victory':'defeat'); setTimeout(showPostMatch,800); }
@@ -2827,20 +2827,19 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
   // ── Fase 3: Prórroga ────────────────────────────────────────────────────
   function startExtraTime(){
     halfEl.textContent=t('match.extratime'); halfEl.style.background='#7a3a0a';
-    addSep('— '+t('match.extratime')+' —');
-    const ET=4000,ET_S=0.47,ET_E=0.53;
+    addSep('— '+t('match.extratime')+' —');    const ET=4000,ET_S=0.47,ET_E=0.53;
     let etHt=false;
     const etStart=performance.now();
     function tickET(now){
       const frac=Math.min((now-etStart)/ET,1);
       if(frac>=ET_S&&frac<ET_E){
-        if(!etHt){ etHt=true; clockEl.textContent="105'"; halfEl.textContent=t("match.halftime"); halfEl.style.background='#a07a00'; addSep("Descanso prórroga — 105'"); playSound('whistle'); }
+        if(!etHt){ etHt=true; clockEl.textContent="105'"; halfEl.textContent=t("match.halftime"); halfEl.style.background='#a07a00'; addSep(t('match.et_ht_sep')||"Descanso prórroga — 105'"); playSound('whistle'); }
         requestAnimationFrame(tickET); return;
       }
-      if(frac<ET_S){ clockEl.textContent=`${91+Math.floor((frac/ET_S)*14)}'`; halfEl.textContent='PRÓRROGA 1ª'; halfEl.style.background='#7a3a0a'; }
-      else { const f2=(frac-ET_E)/(1-ET_E); clockEl.textContent=`${106+Math.floor(f2*14)}'`; halfEl.textContent='PRÓRROGA 2ª'; halfEl.style.background='#7a3a0a'; }
+      if(frac<ET_S){ clockEl.textContent=`${91+Math.floor((frac/ET_S)*14)}'`; halfEl.textContent=t('match.et_first')||'PRÓRROGA 1ª'; halfEl.style.background='#7a3a0a'; }
+      else { const f2=(frac-ET_E)/(1-ET_E); clockEl.textContent=`${106+Math.floor(f2*14)}'`; halfEl.textContent=t('match.et_second')||'PRÓRROGA 2ª'; halfEl.style.background='#7a3a0a'; }
       if(frac<1){ requestAnimationFrame(tickET); return; }
-      clockEl.textContent="120'"; halfEl.textContent=t("match.extratime")+" FIN"; halfEl.style.background='#555';
+      clockEl.textContent="120'"; halfEl.textContent=t("match.extratime")+" "+(t('match.end')||'FIN'); halfEl.style.background='#555';
       playSound('whistle'); setTimeout(startPenalties,900);
     }
     requestAnimationFrame(tickET);
@@ -2885,7 +2884,9 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
       const penWon=penMy>penOpp;
       if(penWon){ window._consecutivePenWins=(window._consecutivePenWins||0)+1; if(window._consecutivePenWins>=2) unlockAchievement('two_pen_wins'); }
       else window._consecutivePenWins=0;
-      addSep(`${penWon?'🏆':'💔'} ${penWon?myTeamName:oppName} gana la tanda ${penMy}–${penOpp}`);
+      addSep(penWon
+        ? (t('match.pen_win')||'🏆 {0} gana la tanda {1}–{2}').replace('{0}',myTeamName).replace('{1}',penMy).replace('{2}',penOpp)
+        : (t('match.pen_lose')||'💔 {0} gana la tanda {1}–{2}').replace('{0}',oppName).replace('{1}',penOpp).replace('{2}',penMy));
       playSound(penWon?'victory':'defeat');
       setTimeout(showPostMatch,1200);
     }
@@ -2931,19 +2932,28 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
 
     // Lesiones
     if(newInjuries.length){
-      const ILABELS={leve:'leve (1 partido)',básica:'básica (2 partidos)',grave:'grave (3 partidos)'};
+      const ILABELS={
+        leve:   t('match.injury_leve')  ||'leve (1 partido)',
+        básica: t('match.injury_basica')||'básica (2 partidos)',
+        grave:  t('match.injury_grave') ||'grave (3 partidos)',
+      };
       const inj=document.createElement('div');
       inj.className='injury-section';
-      inj.innerHTML=`<p>⚠ Lesiones en ${myTeamName}:</p><ul>${newInjuries.map(p=>`<li><span style="color:#e74c3c">✚</span> ${p.name}: lesión ${ILABELS[p.injury.type]||''}</li>`).join('')}</ul>`;
+      inj.innerHTML=`<p>${(t('match.injuries_short')||'⚠ Lesiones en {0}:').replace('{0}',myTeamName)}</p><ul>${newInjuries.map(p=>`<li><span style="color:#e74c3c">✚</span> ${p.name}: ${t('result.injury_item')||'lesión'} ${ILABELS[p.injury.type]||''}</li>`).join('')}</ul>`;
       infoWrap.appendChild(inj);
     }
 
     // Tarjetas
     if(newCards&&newCards.length){
-      const CARD_LABELS={yellow:{icon:'🟨',text:'amarilla'},yellow2:{icon:'🟨🟨',text:'2ª amarilla — sancionado'},double_yellow:{icon:'🟨🟥',text:'doble amarilla — sancionado'},red:{icon:'🟥',text:'roja directa — sancionado'}};
+      const CARD_LABELS={
+        yellow:       {icon:'🟨', text:t('match.card_yellow_s') ||'amarilla'},
+        yellow2:      {icon:'🟨🟨',text:t('match.card_yellow2_s')||'2ª amarilla — sancionado'},
+        double_yellow:{icon:'🟨🟥',text:t('match.card_double_s') ||'doble amarilla — sancionado'},
+        red:          {icon:'🟥', text:t('match.card_red_s')    ||'roja directa — sancionado'},
+      };
       const cd=document.createElement('div');
       cd.className='card-section';
-      cd.innerHTML=`<p>📋 Tarjetas:</p><ul>${newCards.map(c=>{const l=CARD_LABELS[c.type];return `<li>${l.icon} ${c.player.name}: ${l.text}</li>`;}).join('')}</ul>`;
+      cd.innerHTML=`<p>${t('match.cards_short')||'📋 Tarjetas:'}</p><ul>${newCards.map(c=>{const l=CARD_LABELS[c.type];return `<li>${l.icon} ${c.player.name}: ${l.text}</li>`;}).join('')}</ul>`;
       infoWrap.appendChild(cd);
     }
 
@@ -3006,9 +3016,9 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
       if(groupMatchIdx>=3){btnLabel=t("match.group_results");outcome='groupDone';}
       else{btnLabel=t('match.next_match');outcome='nextGroupMatch';}
     } else {
-      if(!won){btnLabel='FIN DEL TORNEO';outcome='knockoutLost';}
-      else if(knockoutRound>=ROUND_NAMES.length-1){btnLabel='VER RESUMEN FINAL';outcome='champion';}
-      else{btnLabel='SIGUIENTE RONDA';outcome='nextKnockoutMatch';}
+      if(!won){btnLabel=t('match.end_tournament')||'FIN DEL TORNEO';outcome='knockoutLost';}
+      else if(knockoutRound>=ROUND_NAMES.length-1){btnLabel=t('match.see_summary')||'VER RESUMEN FINAL';outcome='champion';}
+      else{btnLabel=t('match.next_round')||'SIGUIENTE RONDA';outcome='nextKnockoutMatch';}
     }
     const btn=document.createElement('button');
     btn.className='modal-btn';
@@ -3079,26 +3089,30 @@ function showMatchModal(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,
   if(draw){
     resultText=t("match.draw"); resultClass="res-draw-tag";
   } else {
-    resultText=won?(wasShootout?"¡VICTORIA EN PENALTIS!":"¡VICTORIA!"):(wasShootout?"DERROTA EN PENALTIS":"DERROTA");
+    resultText=won?(wasShootout?t('match.victory_pen')||'¡VICTORIA EN PENALTIS!':t('match.victory')||'¡VICTORIA!'):(wasShootout?t('match.defeat_pen')||'DERROTA EN PENALTIS':t('match.defeat')||'DERROTA');
     resultClass=won?"res-win-tag":"res-lose-tag";
   }
   playSound(won||draw?'victory':'defeat');
   let extraHTML="";
   if(recovered.length){
-    extraHTML+=`<div class="match-summary recovered-box"><strong>Recuperados:</strong> ${recovered.join(", ")}</div>`;
+    extraHTML+=`<div class="match-summary recovered-box"><strong>${t('match.recovered')||'Recuperados'}:</strong> ${recovered.join(", ")}</div>`;
   }
   if(newInjuries.length){
-    const ILABELS={leve:"leve (1 partido)",básica:"básica (2 partidos)",grave:"grave (3 partidos)"};
-    extraHTML+=`<div class="injury-section"><p>⚠ Lesiones en ${myTeamName} tras el partido:</p><ul>${newInjuries.map(p=>`<li>${p.name}: lesión ${ILABELS[p.injury.type]}</li>`).join('')}</ul><p class="injury-note">Recuerda: puedes hacer hasta <strong>${getMaxSubs()} cambios</strong> entre Convocados y Banquillo antes del próximo partido. Hazlo manualmente desde las tablas de la izquierda.</p></div>`;
+    const ILABELS={
+      leve:   t('result.injury.leve')  ||'leve (1 partido)',
+      básica: t('result.injury.basica')||'básica (2 partidos)',
+      grave:  t('result.injury.grave') ||'grave (3 partidos)',
+    };
+    extraHTML+=`<div class="injury-section"><p>${(t('result.injuries_title')||'⚠ Lesiones en {0} tras el partido:').replace('{0}',myTeamName)}</p><ul>${newInjuries.map(p=>`<li>${p.name}: ${t('result.injury_item')||'lesión'} ${ILABELS[p.injury.type]}</li>`).join('')}</ul><p class="injury-note">${(t('result.injury_note')||'Recuerda: puedes hacer hasta <strong>{0} cambios</strong> entre Convocados y Banquillo antes del próximo partido. Hazlo manualmente desde las tablas de la izquierda.').replace('{0}',getMaxSubs())}</p></div>`;
   }
   if(newCards&&newCards.length){
     const CARD_LABELS={
-      yellow:       {icon:"🟨", text:"amarilla"},
-      yellow2:      {icon:"🟨🟨", text:"2ª amarilla (acumulación) — sancionado el próximo partido"},
-      double_yellow:{icon:"🟨🟥", text:"doble amarilla — expulsado, sancionado el próximo partido"},
-      red:          {icon:"🟥", text:"roja directa — sancionado el próximo partido"},
+      yellow:       {icon:"🟨", text:t('result.card.yellow')      ||'amarilla'},
+      yellow2:      {icon:"🟨🟨",text:t('result.card.yellow2')    ||'2ª amarilla (acumulación) — sancionado el próximo partido'},
+      double_yellow:{icon:"🟨🟥",text:t('result.card.double_yellow')||'doble amarilla — expulsado, sancionado el próximo partido'},
+      red:          {icon:"🟥", text:t('result.card.red')         ||'roja directa — sancionado el próximo partido'},
     };
-    extraHTML+=`<div class="card-section"><p>📋 Tarjetas en ${myTeamName} tras el partido:</p><ul>${newCards.map(c=>{
+    extraHTML+=`<div class="card-section"><p>${(t('result.cards_title')||'📋 Tarjetas en {0} tras el partido:').replace('{0}',myTeamName)}</p><ul>${newCards.map(c=>{
       const lbl=CARD_LABELS[c.type];
       return `<li>${lbl.icon} ${c.player.name}: ${lbl.text}</li>`;
     }).join('')}</ul></div>`;
@@ -3131,9 +3145,9 @@ function showMatchModal(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,
     if(groupMatchIdx>=3) btnLabel=t("match.group_results"), outcome="groupDone";
     else btnLabel=t("match.next_match"), outcome="nextGroupMatch";
   } else { // knockout
-    if(!won){ btnLabel="FIN DEL TORNEO"; outcome="knockoutLost"; }
-    else if(knockoutRound>=ROUND_NAMES.length-1){ btnLabel="VER RESUMEN FINAL"; outcome="champion"; }
-    else { btnLabel="SIGUIENTE RONDA"; outcome="nextKnockoutMatch"; }
+    if(!won){ btnLabel=t('match.end_tournament')||'FIN DEL TORNEO'; outcome="knockoutLost"; }
+    else if(knockoutRound>=ROUND_NAMES.length-1){ btnLabel=t('match.see_summary')||'VER RESUMEN FINAL'; outcome="champion"; }
+    else { btnLabel=t('match.next_round')||'SIGUIENTE RONDA'; outcome="nextKnockoutMatch"; }
   }
 
   document.getElementById("matchOverlay").innerHTML=`
@@ -3197,10 +3211,10 @@ function showGroupResultsPopup(){
   const qualified=meIdx<2;
   document.getElementById("matchOverlay").innerHTML=`
   <div class="match-modal">
-    <h3>FASE DE GRUPOS — RESULTADOS</h3>
-    <div class="match-summary">Así queda la tabla de tu grupo:</div>
+    <h3>${t('result.groups_title')||'FASE DE GRUPOS — RESULTADOS'}</h3>
+    <div class="match-summary">${t('result.groups_table_intro')||'Así queda la tabla de tu grupo:'}</div>
     <div id="groupResultsTableWrap"></div>
-    <button class="modal-btn" id="groupResultsContinueBtn" style="display:none">CONTINUAR</button>
+    <button class="modal-btn" id="groupResultsContinueBtn" style="display:none">${t('result.groups_continue')||'CONTINUAR'}</button>
   </div>`;
   const wrap=document.getElementById("groupResultsTableWrap");
   let i=0;
@@ -3217,7 +3231,7 @@ function showGroupResultsPopup(){
         <td>${r.gf}-${r.ga}</td><td><strong>${r.pts}</strong></td>
       </tr>`;
     });
-    wrap.innerHTML=`<table class="group-table"><thead><tr><th>#</th><th>Equipo</th><th>PJ</th><th>G</th><th>E</th><th>P</th><th>GF-GC</th><th>Pts</th></tr></thead><tbody>${rows}</tbody></table>`;
+    wrap.innerHTML=`<table class="group-table"><thead><tr><th>#</th><th>${t('result.group_th_team')||'Equipo'}</th><th>${t('result.group_th_pld')||'PJ'}</th><th>${t('result.group_th_w')||'G'}</th><th>${t('result.group_th_d')||'E'}</th><th>${t('result.group_th_l')||'P'}</th><th>GF-GC</th><th>${t('result.group_th_pts')||'Pts'}</th></tr></thead><tbody>${rows}</tbody></table>`;
     playSound('reveal');
     i++;
     if(i<sorted.length){
@@ -3227,8 +3241,8 @@ function showGroupResultsPopup(){
       const summary=document.createElement("div");
       summary.className="match-result-tag "+(qualified?"res-win-tag":"res-lose-tag");
       summary.textContent=qualified
-        ? `¡${myTeamName} clasificado para ${t("comp.r16")}! (${meIdx+1}º del grupo)`
-        : `${myTeamName} eliminado en la fase de grupos (${meIdx+1}º del grupo)`;
+        ? (t('result.qualified')||'¡{0} clasificado para {1}! ({2}º del grupo)').replace('{0}',myTeamName).replace('{1}',t('comp.r16')||'Octavos de Final').replace('{2}',meIdx+1).replace('{3}','')
+        : (t('result.eliminated_group')||'{0} eliminado en la fase de grupos ({1}º del grupo)').replace('{0}',myTeamName).replace('{1}',meIdx+1).replace('{2}','');
       wrap.parentNode.insertBefore(summary, btn);
       btn.style.display="block";
       btn.addEventListener("click",()=>{
@@ -3255,41 +3269,43 @@ function showEliminatedGroupStage(){
   if(typeof window.saveFinalScore==="function") window.saveFinalScore(sc.total);
   document.getElementById("matchOverlay").innerHTML=`
   <div class="match-modal">
-    <h3>FASE DE GRUPOS</h3>
-    <div class="match-result-tag res-lose-tag">ELIMINADO EN FASE DE GRUPOS</div>
-    <div class="match-summary">${myTeamName} no ha conseguido clasificarse entre los 2 primeros del grupo.</div>
+    <h3>${t('result.elim_groups_title')||'FASE DE GRUPOS'}</h3>
+    <div class="match-result-tag res-lose-tag">${t('result.elim_groups_tag')||'ELIMINADO EN FASE DE GRUPOS'}</div>
+    <div class="match-summary">${(t('result.elim_groups_text')||'{0} no ha conseguido clasificarse entre los 2 primeros del grupo.').replace('{0}',myTeamName)}</div>
     <div class="victory-score-wrap" style="border-top:1px solid #333;margin-top:12px;padding-top:12px">
-      <div class="victory-score-label">PUNTUACIÓN</div>
+      <div class="victory-score-label">${t('result.score')||'PUNTUACIÓN'}</div>
       <div class="victory-score-num" style="font-size:48px">${sc.total}</div>
     </div>
-    <button class="modal-btn danger" onclick="location.reload()">NUEVA PARTIDA</button>
+    <button class="modal-btn danger" onclick="location.reload()">${t('match.new_game')||'NUEVA PARTIDA'}</button>
   </div>`;
 }
 function showEliminated(){
   const round=ROUND_NAMES[knockoutRound];
   const sc=computeFinalScore(false);
   if(typeof window.saveFinalScore==="function") window.saveFinalScore(sc.total);
-  const grade=sc.total>=750?"ÉLITE":sc.total>=550?"MUY BUENO":sc.total>=350?"BUENO":"MEJORABLE";
+  const grade=sc.total>=750?t('result.grade.elite')||'ÉLITE':sc.total>=550?t('result.grade.very_good')||'MUY BUENO':sc.total>=350?t('result.grade.good')||'BUENO':t('result.grade.improvable')||'MEJORABLE';
   // Run encadenada según la ronda alcanzada:
   // Cuartos (1) → 1 slot, Semis (2) → 2 slots, Final (3) → 3 slots
   const chainSlotsByRound={1:1, 2:2, 3:3};
   const slots=chainSlotsByRound[knockoutRound]||0;
   const chainBtn=slots>0
-    ?`<button class="modal-btn" onclick="document.getElementById('matchOverlay').innerHTML='';showChainRunModal()">🔗 CONSERVAR ${slots} JUGADOR${slots>1?"ES":""}</button>`
+    ?`<button class="modal-btn" onclick="document.getElementById('matchOverlay').innerHTML='';showChainRunModal()">
+        ${(t('result.chain_keep')||'🔗 CONSERVAR {0} JUGADOR{1}').replace('{0}',slots).replace('{1}',slots>1?'ES':'')}
+      </button>`
     :"";
   document.getElementById("matchOverlay").innerHTML=`
   <div class="match-modal">
-    <h3>${round?round.toUpperCase():"ELIMINATORIAS"}</h3>
-    <div class="match-result-tag res-lose-tag">ELIMINADO EN ${round?round.toUpperCase():"ELIMINATORIAS"}</div>
+    <h3>${round?round.toUpperCase():t('comp.r16')||'ELIMINATORIAS'}</h3>
+    <div class="match-result-tag res-lose-tag">${(t('result.elim_ko_tag')||'ELIMINADO EN {0}').replace('{0}',round?round.toUpperCase():'')}</div>
     <div class="victory-score-wrap" style="border:1px solid #333;margin:12px 0;padding:12px">
-      <div class="victory-score-label">PUNTUACIÓN FINAL</div>
+      <div class="victory-score-label">${t('result.final_score')||'PUNTUACIÓN FINAL'}</div>
       <div class="victory-score-num" style="font-size:52px">${sc.total}</div>
       <div class="victory-grade" style="color:#aaa;font-size:16px">${grade}</div>
     </div>
-    ${slots>0?`<p style="font-size:12px;color:var(--gold);margin-bottom:8px">🔗 Run Encadenada: conserva ${slots} jugador${slots>1?"es":""} para el siguiente intento</p>`:""}
+    ${slots>0?`<p style="font-size:12px;color:var(--gold);margin-bottom:8px">${(t('result.chain_info')||'🔗 Run Encadenada: conserva {0} jugador{1} para el siguiente intento').replace('{0}',slots).replace('{1}',slots>1?'es':'')}</p>`:""}
     <div style="display:flex;gap:8px;flex-wrap:wrap">
       ${chainBtn}
-      <button class="modal-btn danger" onclick="location.reload()">NUEVA PARTIDA</button>
+      <button class="modal-btn danger" onclick="location.reload()">${t('match.new_game')||'NUEVA PARTIDA'}</button>
     </div>
   </div>`;
 }
@@ -3365,26 +3381,26 @@ function showVictory(){
   const sc=computeFinalScore(true);
   if(typeof window.saveVictoryStat==="function") window.saveVictoryStat(sc.total);
   if(typeof window.saveFinalScore==="function") window.saveFinalScore(sc.total);
-  const grade=sc.total>=900?"LEGENDARIO":sc.total>=750?"ÉLITE":sc.total>=600?"EXCELENTE":sc.total>=450?"MUY BUENO":"BUENO";
+  const grade=sc.total>=900?t('result.grade.legendary')||'LEGENDARIO':sc.total>=750?t('result.grade.elite')||'ÉLITE':sc.total>=600?t('result.grade.excellent')||'EXCELENTE':sc.total>=450?t('result.grade.very_good')||'MUY BUENO':t('result.grade.good')||'BUENO';
   const gradeColor=sc.total>=900?"#f0c419":sc.total>=750?"#e67e22":sc.total>=600?"#0f6b3b":"#3498db";
 
   document.getElementById("matchOverlay").innerHTML=`
   <div class="match-modal victory-modal">
     <div class="match-result-tag res-win-tag">${t("comp.champion")}</div>
     <div class="victory-score-wrap">
-      <div class="victory-score-label">PUNTUACIÓN FINAL</div>
+      <div class="victory-score-label">${t('result.final_score')||'PUNTUACIÓN FINAL'}</div>
       <div class="victory-score-num">${sc.total}</div>
       <div class="victory-grade" style="color:${gradeColor}">${grade}</div>
     </div>
     <div class="victory-breakdown">
-      <div class="vb-row"><span>Calidad del equipo (OVR ${baseTeamOVR||0})</span><span class="vb-pts">${sc.breakdown.ovr} pts</span></div>
-      <div class="vb-row"><span>Goles marcados (${sc.totalGoals})</span><span class="vb-pts">${sc.breakdown.goals} pts</span></div>
-      <div class="vb-row"><span>Solidez defensiva (${sc.totalConceded} goles encajados)</span><span class="vb-pts">${sc.breakdown.defense} pts</span></div>
-      <div class="vb-row"><span>Gestión de moral (${teamMorale>0?"+":""}${teamMorale})</span><span class="vb-pts">${sc.breakdown.morale} pts</span></div>
-      <div class="vb-row"><span>Portería a cero (${sc.cleanSheets} partidos)</span><span class="vb-pts">${sc.breakdown.cleanSheets} pts</span></div>
-      <div class="vb-row"><span>Jugadores en posición ★ (${sc.stars}/11)</span><span class="vb-pts">${sc.breakdown.stars} pts</span></div>
-      <div class="vb-row"><span>Rachas de goleador</span><span class="vb-pts">${sc.breakdown.streaks} pts</span></div>
-      ${sc.penWins?`<div class="vb-row"><span>Victorias en penaltis (${sc.penWins})</span><span class="vb-pts">${sc.breakdown.penalties} pts</span></div>`:''}
+      <div class="vb-row"><span>${(t('result.vb.ovr')||'Calidad del equipo (OVR {0})').replace('{0}',baseTeamOVR||0)}</span><span class="vb-pts">${sc.breakdown.ovr} pts</span></div>
+      <div class="vb-row"><span>${(t('result.vb.goals')||'Goles marcados ({0})').replace('{0}',sc.totalGoals)}</span><span class="vb-pts">${sc.breakdown.goals} pts</span></div>
+      <div class="vb-row"><span>${(t('result.vb.defense')||'Solidez defensiva ({0} goles encajados)').replace('{0}',sc.totalConceded)}</span><span class="vb-pts">${sc.breakdown.defense} pts</span></div>
+      <div class="vb-row"><span>${(t('result.vb.morale')||'Gestión de moral ({0}{1})').replace('{0}',teamMorale>0?'+':'').replace('{1}',teamMorale)}</span><span class="vb-pts">${sc.breakdown.morale} pts</span></div>
+      <div class="vb-row"><span>${(t('result.vb.clean')||'Portería a cero ({0} partidos)').replace('{0}',sc.cleanSheets)}</span><span class="vb-pts">${sc.breakdown.cleanSheets} pts</span></div>
+      <div class="vb-row"><span>${(t('result.vb.stars')||'Jugadores en posición ★ ({0}/11)').replace('{0}',sc.stars)}</span><span class="vb-pts">${sc.breakdown.stars} pts</span></div>
+      <div class="vb-row"><span>${t('result.vb.streaks')||'Rachas de goleador'}</span><span class="vb-pts">${sc.breakdown.streaks} pts</span></div>
+      ${sc.penWins?`<div class="vb-row"><span>${(t('result.vb.penalties')||'Victorias en penaltis ({0})').replace('{0}',sc.penWins)}</span><span class="vb-pts">${sc.breakdown.penalties} pts</span></div>`:''}
     </div>
     <button class="modal-btn" onclick="window._launchGoldenAndReload()">${t("comp.end_tournament")}</button>
   </div>`;
