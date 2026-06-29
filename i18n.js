@@ -35,6 +35,7 @@ window.TRANSLATIONS = {
   'auth.username':        {es:'Nombre de usuario',    en:'Username'},
   'auth.login_title':     {es:'INICIAR SESIÓN',       en:'LOG IN'},
   'auth.register_title':  {es:'CREAR CUENTA',         en:'CREATE ACCOUNT'},
+  'auth.login_register':  {es:'LOGIN / REGISTRO',     en:'LOG IN / SIGN UP'},
   'auth.no_account':      {es:'¿No tienes cuenta?',   en:'No account yet?'},
   'auth.has_account':     {es:'¿Ya tienes cuenta?',   en:'Already have an account?'},
 

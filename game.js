@@ -6255,8 +6255,7 @@ window.applyTranslations = function(){
   if(esBtn2) esBtn2.style.cssText+=(window.LANG==='es')?';border-color:var(--gold);color:var(--gold)':';border-color:var(--line);color:var(--text)';
   if(enBtn2) enBtn2.style.cssText+=(window.LANG==='en')?';border-color:var(--gold);color:var(--gold)':';border-color:var(--line);color:var(--text)';
   // Botones del header
-  const rankBtn=document.querySelector('.ranking-btn');
-  if(rankBtn){ const i=rankBtn.querySelector('i'); rankBtn.textContent=''; if(i)rankBtn.appendChild(i); rankBtn.append(' '+window.t('app.ranking')); }
+  // ranking-btn text handled by data-i18n span inside
   // Tabs móvil
   const mobLabels=[
     ['mob-tab-campo','mob.campo'],['mob-tab-equipo','mob.equipo'],
