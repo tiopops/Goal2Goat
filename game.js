@@ -6397,12 +6397,15 @@ async function mpAddFriend(){
       return;
     }
     // Comprobar si ya existe relación (en cualquier dirección) — un solo where, filtro en JS
+    // IMPORTANTE: ambas queries deben filtrar por un campo == auth.uid (requisito de las
+    // reglas de seguridad de Firestore, que exigen poder demostrar el acceso sin ejecutar
+    // la query primero). Por eso existing2 usa friendId==user.uid, no userId==targetUid.
     const existing1=await db.collection('friends')
       .where('userId','==',user.uid).get();
     const existing2=await db.collection('friends')
-      .where('userId','==',targetUid).get();
+      .where('friendId','==',user.uid).get();
     const already1=existing1.docs.some(d=>d.data().friendId===targetUid);
-    const already2=existing2.docs.some(d=>d.data().friendId===user.uid);
+    const already2=existing2.docs.some(d=>d.data().userId===targetUid);
     if(already1 || already2){
       if(errEl){errEl.textContent=tk('mp.err_already');errEl.style.display='block';}
       return;
