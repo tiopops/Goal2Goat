@@ -545,6 +545,8 @@ window.TRANSLATIONS = {
   'mp.err_already': {es:'Ya existe una relación de amistad con este usuario.', en:'A friend relationship with this user already exists.', pt:'Já existe uma relação de amizade com este usuário.', fr:'Une relation d\'amitié avec cet utilisateur existe déjà.', de:'Es besteht bereits eine Freundschaftsbeziehung mit diesem Benutzer.', it:'Esiste già una relazione di amicizia con questo utente.'},
   'mp.err_generic': {es:'Ha ocurrido un error. Inténtalo de nuevo.', en:'An error occurred. Please try again.', pt:'Ocorreu um erro. Tente novamente.', fr:'Une erreur s\'est produite. Veuillez réessayer.', de:'Ein Fehler ist aufgetreten. Bitte versuche es erneut.', it:'Si è verificato un errore. Riprova.'},
   'mp.remove': {es:'Eliminar amigo', en:'Remove friend', pt:'Remover amigo', fr:'Supprimer l\'ami', de:'Freund entfernen', it:'Rimuovi amico'},
+  'mp.remove_btn': {es:'ELIMINAR', en:'REMOVE', pt:'REMOVER', fr:'SUPPRIMER', de:'ENTFERNEN', it:'RIMUOVI'},
+  'common.cancel': {es:'CANCELAR', en:'CANCEL', pt:'CANCELAR', fr:'ANNULER', de:'ABBRECHEN', it:'ANNULLA'},
   'mp.confirm_remove': {es:'¿Eliminar a {0} de tus amigos?', en:'Remove {0} from your friends?', pt:'Remover {0} dos seus amigos?', fr:'Supprimer {0} de vos amis ?', de:'{0} aus deinen Freunden entfernen?', it:'Rimuovere {0} dai tuoi amici?'},
 
   /* ── ESTRATEGIAS — nombres y descripciones ── */

@@ -396,6 +396,18 @@
   </div>
 </div>
 
+<!-- CONFIRM REMOVE FRIEND OVERLAY -->
+<div id="mpConfirmRemoveOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:60500;align-items:center;justify-content:center">
+  <div class="auth-modal" style="position:relative;max-width:340px;padding:24px 22px;text-align:center">
+    <div style="font-size:30px;margin-bottom:10px">🗑️</div>
+    <div id="mpConfirmRemoveText" style="font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:.5px;font-size:16px;line-height:1.4;color:var(--text);margin-bottom:18px"></div>
+    <div style="display:flex;gap:10px;justify-content:center">
+      <button id="mpConfirmRemoveCancel" class="mp-btn-challenge" style="opacity:1;padding:8px 18px;font-size:12px" data-i18n="common.cancel">CANCELAR</button>
+      <button id="mpConfirmRemoveOk" class="mp-btn-reject" style="padding:8px 18px;font-size:12px" data-i18n="mp.remove_btn">ELIMINAR</button>
+    </div>
+  </div>
+</div>
+
 <!-- WELCOME POPUP -->
 <div id="welcomeOverlay" style="position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:50000;display:flex;align-items:center;justify-content:center;">
   <div class="auth-modal" style="max-width:420px;text-align:center">

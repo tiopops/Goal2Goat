@@ -6477,7 +6477,8 @@ async function mpRespondRequest(docId,accept){
 /* Cargar lista de amigos aceptados */
 /* Eliminar amigo de la lista (con confirmación) */
 async function mpRemoveFriend(docId, username){
-  if(!confirm((tk('mp.confirm_remove')||'¿Eliminar a {0} de tus amigos?').replace('{0}', username||''))) return;
+  const ok=await mpShowConfirmRemove(username);
+  if(!ok) return;
   const db=window._fbDb;
   if(!db) return;
   try{
@@ -6487,6 +6488,32 @@ async function mpRemoveFriend(docId, username){
     console.error('mpRemoveFriend error:',e);
     alert(tk('mp.err_generic'));
   }
+}
+
+/* Modal de confirmación in-app para eliminar amigo (sustituye al confirm() nativo) */
+function mpShowConfirmRemove(username){
+  return new Promise(resolve=>{
+    const ov=$id('mpConfirmRemoveOverlay');
+    const txt=$id('mpConfirmRemoveText');
+    const okBtn=$id('mpConfirmRemoveOk');
+    const cancelBtn=$id('mpConfirmRemoveCancel');
+    if(!ov||!txt||!okBtn||!cancelBtn){ resolve(false); return; }
+    txt.textContent=(tk('mp.confirm_remove')||'¿Eliminar a {0} de tus amigos?').replace('{0}', username||'');
+    ov.style.display='flex';
+    const cleanup=(result)=>{
+      ov.style.display='none';
+      okBtn.removeEventListener('click', onOk);
+      cancelBtn.removeEventListener('click', onCancel);
+      ov.removeEventListener('click', onOverlayClick);
+      resolve(result);
+    };
+    const onOk=()=>cleanup(true);
+    const onCancel=()=>cleanup(false);
+    const onOverlayClick=(e)=>{ if(e.target===ov) cleanup(false); };
+    okBtn.addEventListener('click', onOk);
+    cancelBtn.addEventListener('click', onCancel);
+    ov.addEventListener('click', onOverlayClick);
+  });
 }
 
 async function renderFriendsList(){
