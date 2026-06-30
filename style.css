@@ -2048,3 +2048,53 @@ body.light-theme #achievementsList div div{
 body.light-theme #achievementsList [style*="text-muted"]{
   color:#888 !important;
 }
+
+/* ════════ MULTIJUGADOR / AMIGOS ════════ */
+.mp-search-input{
+  width:100%;padding:10px 12px;font-size:13px;font-weight:400;text-align:left;
+  text-transform:none;border:1px solid var(--line);margin:0;
+  font-family:inherit;letter-spacing:normal;background:var(--card-bg);color:var(--text);
+  box-sizing:border-box;
+}
+.mp-search-input:focus{outline:none;border-color:var(--gold)}
+.mp-search-input::placeholder{color:var(--text-muted)}
+.mp-add-btn{
+  background:var(--accent);color:#fff;border:none;padding:0 18px;
+  font-family:'Bebas Neue',Impact,sans-serif;font-size:14px;letter-spacing:1px;
+  cursor:pointer;white-space:nowrap;transition:.15s;
+}
+.mp-add-btn:hover{background:#0c5a30}
+.mp-add-btn:disabled{opacity:.6;cursor:default}
+.mp-row{
+  display:flex;align-items:center;justify-content:space-between;gap:8px;
+  padding:10px 4px;border-bottom:1px solid var(--line);
+}
+.mp-row:last-child{border-bottom:none}
+.mp-row-name{
+  font-size:14px;font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:.5px;
+  flex:1;color:var(--text);
+}
+.mp-btn-accept{
+  padding:6px 14px;border:none;background:var(--accent);color:#fff;
+  font-size:11px;cursor:pointer;font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:1px;transition:.15s;
+}
+.mp-btn-accept:hover{background:#0c5a30}
+.mp-btn-reject{
+  padding:6px 14px;border:1px solid var(--red);background:none;color:var(--red);
+  font-size:11px;cursor:pointer;font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:1px;transition:.15s;
+}
+.mp-btn-reject:hover{background:var(--red);color:#fff}
+.mp-btn-challenge{
+  padding:6px 14px;border:1px solid var(--gold);background:none;color:var(--gold);
+  font-size:11px;cursor:pointer;font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:1px;
+  opacity:.55;
+}
+.mp-btn-remove{
+  padding:6px 9px;border:1px solid var(--line);background:none;color:var(--text-muted);
+  font-size:13px;cursor:pointer;line-height:1;transition:.15s;
+}
+.mp-btn-remove:hover{border-color:var(--red);color:var(--red)}
+.mp-empty-state{
+  text-align:center;padding:24px 12px;color:var(--text-muted);font-size:12px;line-height:1.5;
+}
+body.light-theme .mp-search-input{background:#f5f1e8;border-color:#d4cec4;color:#1a1a1a}

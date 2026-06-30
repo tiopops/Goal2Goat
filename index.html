@@ -363,6 +363,39 @@
   </div>
 </div>
 
+<!-- MULTIPLAYER / FRIENDS OVERLAY -->
+<div id="mpOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:60000;align-items:center;justify-content:center">
+  <div class="auth-modal" style="max-width:440px;width:92%;max-height:85vh;display:flex;flex-direction:column;position:relative">
+    <button onclick="window.closeMpOverlay()" class="auth-close" style="position:absolute;top:12px;right:14px">✕</button>
+    <div class="auth-logo" style="font-size:18px" data-i18n="mp.title">🤝 MULTIJUGADOR</div>
+
+    <!-- Add friend by username or email -->
+    <div style="margin-top:6px">
+      <label class="profile-field-label" data-i18n="mp.add_friend_label">AÑADIR AMIGO</label>
+      <div style="display:flex;gap:6px">
+        <input type="text" id="mpFriendInput" data-i18n-placeholder="mp.add_friend_ph" placeholder="Nombre de usuario o email" class="mp-search-input" autocomplete="off">
+        <button id="mpAddFriendBtn" class="mp-add-btn" data-i18n="mp.add_btn">AÑADIR</button>
+      </div>
+      <span id="mpAddFriendErr" style="display:none;color:var(--red);font-size:11px;margin-top:4px"></span>
+      <span id="mpAddFriendOk" style="display:none;color:var(--accent);font-size:11px;margin-top:4px"></span>
+    </div>
+
+    <!-- Pending incoming requests -->
+    <div id="mpRequestsSection" style="display:none;margin-top:16px">
+      <label class="profile-field-label" data-i18n="mp.requests_label">SOLICITUDES PENDIENTES</label>
+      <div id="mpRequestsList"></div>
+    </div>
+
+    <!-- Friends list -->
+    <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--line);flex:1;overflow-y:auto;min-height:120px">
+      <label class="profile-field-label" data-i18n="mp.friends_label">TUS AMIGOS</label>
+      <div id="mpFriendsList">
+        <div class="mp-empty-state" data-i18n="mp.loading">Cargando...</div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- WELCOME POPUP -->
 <div id="welcomeOverlay" style="position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:50000;display:flex;align-items:center;justify-content:center;">
   <div class="auth-modal" style="max-width:420px;text-align:center">
@@ -558,6 +591,9 @@
     <div id="quickBuildWrap">
       <button id="quickBuildBtn" class="main-action-btn quick-build-btn" data-i18n="draft.quick_team">EQUIPO RÁPIDO</button>
     </div>
+    <div id="multiplayerWrap" style="display:none">
+      <button id="multiplayerBtn" class="main-action-btn" style="background:#1a2a3a;border:1px solid #4a90d9;color:#7ec3ff" data-i18n="mp.button">MULTIJUGADOR</button>
+    </div>
     </div>
     <!-- Selection / roster modal goes here on mobile -->
     <div id="playerCard"></div>
@@ -659,9 +695,9 @@
 <div id="rankingOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:40000;align-items:center;justify-content:center;">
   <div class="auth-modal" style="max-width:480px">
     <button class="auth-close" onclick="document.getElementById('rankingOverlay').style.display='none'">✕</button>
-    <div class="auth-logo">🏆 RANKING GLOBAL</div>
-    <p class="ranking-subtitle" style="text-align:center">Top 50 mejores puntuaciones de jugadores registrados</p>
-    <div id="rankingTableDesktop"><p class="ranking-loading">Cargando...</p></div>
+    <div class="auth-logo">🏆 <span data-i18n="ranking.title">RANKING GLOBAL</span></div>
+    <p class="ranking-subtitle" style="text-align:center" data-i18n="ranking.subtitle">Top 50 mejores puntuaciones de jugadores registrados</p>
+    <div id="rankingTableDesktop"><p class="ranking-loading" data-i18n="ranking.loading">Cargando...</p></div>
   </div>
 </div>
 
@@ -671,9 +707,9 @@
 <!-- RANKING PANEL (mobile tab) -->
 <div id="rankingPanel" class="ranking-panel">
   <div class="box">
-    <h3>🏆 RANKING GLOBAL</h3>
-    <p class="ranking-subtitle">Top 50 mejores puntuaciones de jugadores registrados</p>
-    <div id="rankingTable"><p style="color:var(--text-muted);font-size:12px;text-align:center;padding:20px">Cargando ranking...</p></div>
+    <h3>🏆 <span data-i18n="ranking.title">RANKING GLOBAL</span></h3>
+    <p class="ranking-subtitle" data-i18n="ranking.subtitle">Top 50 mejores puntuaciones de jugadores registrados</p>
+    <div id="rankingTable"><p style="color:var(--text-muted);font-size:12px;text-align:center;padding:20px" data-i18n="ranking.loading">Cargando ranking...</p></div>
   </div>
 </div>
 
