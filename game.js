@@ -6248,7 +6248,7 @@ window.applyTranslations = function(){
     if(typeof renderAchievementsTab==='function'&&document.getElementById('profileAchievementsPane')&&document.getElementById('profileAchievementsPane').classList.contains('profile-tab-pane-active')) renderAchievementsTab();
   }
   // Actualizar botones de idioma activo
-  ['Es','En','Pt','Fr'].forEach(l=>{
+  ['Es','En','Pt','Fr','De','It'].forEach(l=>{
     const lang=l.toLowerCase();
     const active=window.LANG===lang;
     const style=active?';border-color:var(--gold);color:var(--gold)':';border-color:var(--line);color:var(--text)';
