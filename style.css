@@ -2098,3 +2098,18 @@ body.light-theme #achievementsList [style*="text-muted"]{
   text-align:center;padding:24px 12px;color:var(--text-muted);font-size:12px;line-height:1.5;
 }
 body.light-theme .mp-search-input{background:#f5f1e8;border-color:#d4cec4;color:#1a1a1a}
+
+/* Modal de Multijugador: mismas dimensiones que el modal de perfil */
+#mpModal{
+  height:710px;
+  max-height:92vh;
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+}
+@media(min-width:641px){
+  #mpModal{
+    max-width:680px !important;
+    width:88vw !important;
+  }
+}

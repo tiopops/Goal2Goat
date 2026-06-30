@@ -6512,13 +6512,20 @@ async function renderFriendsList(){
 
 function mpEsc(s){ return String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
-document.addEventListener('DOMContentLoaded', ()=>{
-  const mpBtn=$id('multiplayerBtn');
+// Wiring directo (sin depender de DOMContentLoaded, que ya puede haberse disparado
+// para cuando este script se ejecuta vía document.write con cache-busting)
+(function(){
+  const mpBtn=document.getElementById('multiplayerBtn');
   if(mpBtn) mpBtn.addEventListener('click', window.openMpOverlay);
-  const addBtn=$id('mpAddFriendBtn');
+  const addBtn=document.getElementById('mpAddFriendBtn');
   if(addBtn) addBtn.addEventListener('click', mpAddFriend);
-  const input=$id('mpFriendInput');
+  const input=document.getElementById('mpFriendInput');
   if(input) input.addEventListener('keydown', e=>{ if(e.key==='Enter') mpAddFriend(); });
+})();
+// Delegación de respaldo: garantiza el click incluso si el listener directo
+// no llegó a engancharse a tiempo (timing de carga del script).
+document.addEventListener('click', e=>{
+  if(e.target && e.target.id==='multiplayerBtn') window.openMpOverlay();
 });
 
 // Aplicar traducciones al cargar
