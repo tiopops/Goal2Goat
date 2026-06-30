@@ -524,7 +524,7 @@ window.TRANSLATIONS = {
 
   /* ── MULTIJUGADOR / AMIGOS ── */
   'mp.button': {es:'MULTIJUGADOR', en:'MULTIPLAYER', pt:'MULTIJOGADOR', fr:'MULTIJOUEUR', de:'MEHRSPIELER', it:'MULTIGIOCATORE'},
-  'mp.title': {es:'🤝 MULTIJUGADOR', en:'🤝 MULTIPLAYER', pt:'🤝 MULTIJOGADOR', fr:'🤝 MULTIJOUEUR', de:'🤝 MEHRSPIELER', it:'🤝 MULTIGIOCATORE'},
+  'mp.title': {es:'MULTIJUGADOR', en:'MULTIPLAYER', pt:'MULTIJOGADOR', fr:'MULTIJOUEUR', de:'MEHRSPIELER', it:'MULTIGIOCATORE'},
   'mp.add_friend_label': {es:'AÑADIR AMIGO', en:'ADD FRIEND', pt:'ADICIONAR AMIGO', fr:'AJOUTER UN AMI', de:'FREUND HINZUFÜGEN', it:'AGGIUNGI AMICO'},
   'mp.add_friend_ph': {es:'Nombre de usuario o email', en:'Username or email', pt:'Nome de usuário ou email', fr:'Nom d\'utilisateur ou email', de:'Benutzername oder E-Mail', it:'Nome utente o email'},
   'mp.add_btn': {es:'AÑADIR', en:'ADD', pt:'ADICIONAR', fr:'AJOUTER', de:'HINZUFÜGEN', it:'AGGIUNGI'},
