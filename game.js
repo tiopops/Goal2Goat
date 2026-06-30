@@ -6335,16 +6335,16 @@ function startMpLiveListeners(){
   stopMpLiveListeners(); // por seguridad, evita duplicados si se reabre rápido
   const user=auth.currentUser;
   if(!user) return;
-  // Solicitudes pendientes recibidas — tiempo real
+  // Solicitudes pendientes recibidas — tiempo real (un solo where, filtro en JS)
   mpUnsubRequests=db.collection('friends')
-    .where('friendId','==',user.uid).where('status','==','pending')
+    .where('friendId','==',user.uid)
     .onSnapshot(()=>renderPendingRequests(), e=>console.error('mpUnsubRequests error:',e));
-  // Amistades aceptadas (en ambas direcciones) — tiempo real
+  // Amistades aceptadas (en ambas direcciones) — tiempo real (un solo where, filtro en JS)
   mpUnsubFriends1=db.collection('friends')
-    .where('userId','==',user.uid).where('status','==','accepted')
+    .where('userId','==',user.uid)
     .onSnapshot(()=>renderFriendsList(), e=>console.error('mpUnsubFriends1 error:',e));
   mpUnsubFriends2=db.collection('friends')
-    .where('friendId','==',user.uid).where('status','==','accepted')
+    .where('friendId','==',user.uid)
     .onSnapshot(()=>renderFriendsList(), e=>console.error('mpUnsubFriends2 error:',e));
 }
 
@@ -6394,12 +6394,14 @@ async function mpAddFriend(){
       if(errEl){errEl.textContent=tk('mp.err_self');errEl.style.display='block';}
       return;
     }
-    // Comprobar si ya existe relación (en cualquier dirección)
+    // Comprobar si ya existe relación (en cualquier dirección) — un solo where, filtro en JS
     const existing1=await db.collection('friends')
-      .where('userId','==',user.uid).where('friendId','==',targetUid).get();
+      .where('userId','==',user.uid).get();
     const existing2=await db.collection('friends')
-      .where('userId','==',targetUid).where('friendId','==',user.uid).get();
-    if(!existing1.empty || !existing2.empty){
+      .where('userId','==',targetUid).get();
+    const already1=existing1.docs.some(d=>d.data().friendId===targetUid);
+    const already2=existing2.docs.some(d=>d.data().friendId===user.uid);
+    if(already1 || already2){
       if(errEl){errEl.textContent=tk('mp.err_already');errEl.style.display='block';}
       return;
     }
@@ -6431,11 +6433,12 @@ async function renderPendingRequests(){
   if(!user||!section||!list) return;
   try{
     const snap=await db.collection('friends')
-      .where('friendId','==',user.uid).where('status','==','pending').get();
-    if(snap.empty){ section.style.display='none'; return; }
+      .where('friendId','==',user.uid).get();
+    const pendingDocs=snap.docs.filter(d=>d.data().status==='pending');
+    if(!pendingDocs.length){ section.style.display='none'; return; }
     section.style.display='block';
     list.innerHTML='';
-    snap.forEach(doc=>{
+    pendingDocs.forEach(doc=>{
       const d=doc.data();
       const row=document.createElement('div');
       row.className='mp-row';
@@ -6483,12 +6486,12 @@ async function renderFriendsList(){
   list.innerHTML=`<div class="mp-empty-state">${tk('mp.loading')}</div>`;
   try{
     const snap1=await db.collection('friends')
-      .where('userId','==',user.uid).where('status','==','accepted').get();
+      .where('userId','==',user.uid).get();
     const snap2=await db.collection('friends')
-      .where('friendId','==',user.uid).where('status','==','accepted').get();
+      .where('friendId','==',user.uid).get();
     const friends=[];
-    snap1.forEach(doc=>{const d=doc.data();friends.push({id:doc.id,uid:d.friendId,username:d.friendUsername});});
-    snap2.forEach(doc=>{const d=doc.data();friends.push({id:doc.id,uid:d.userId,username:d.userUsername});});
+    snap1.forEach(doc=>{const d=doc.data();if(d.status==='accepted')friends.push({id:doc.id,uid:d.friendId,username:d.friendUsername});});
+    snap2.forEach(doc=>{const d=doc.data();if(d.status==='accepted')friends.push({id:doc.id,uid:d.userId,username:d.userUsername});});
     if(!friends.length){
       list.innerHTML=`<div class="mp-empty-state">${tk('mp.no_friends')}</div>`;
       return;
