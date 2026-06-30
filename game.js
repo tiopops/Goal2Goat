@@ -6333,8 +6333,9 @@ window.closeMpOverlay = function(){
 
 function startMpLiveListeners(){
   stopMpLiveListeners(); // por seguridad, evita duplicados si se reabre rápido
-  const user=auth.currentUser;
-  if(!user) return;
+  const auth=window._fbAuth, db=window._fbDb;
+  const user=auth&&auth.currentUser;
+  if(!user||!db) return;
   // Solicitudes pendientes recibidas — tiempo real (un solo where, filtro en JS)
   mpUnsubRequests=db.collection('friends')
     .where('friendId','==',user.uid)
@@ -6366,7 +6367,8 @@ async function mpAddFriend(){
     if(errEl){errEl.textContent=tk('mp.err_empty');errEl.style.display='block';}
     return;
   }
-  const user=auth.currentUser;
+  const auth=window._fbAuth, db=window._fbDb;
+  const user=auth&&auth.currentUser;
   if(!user){
     if(errEl){errEl.textContent=tk('mp.err_login');errEl.style.display='block';}
     return;
@@ -6427,10 +6429,11 @@ async function mpAddFriend(){
 
 /* Cargar solicitudes pendientes recibidas */
 async function renderPendingRequests(){
-  const user=auth.currentUser;
+  const auth=window._fbAuth, db=window._fbDb;
+  const user=auth&&auth.currentUser;
   const section=$id('mpRequestsSection');
   const list=$id('mpRequestsList');
-  if(!user||!section||!list) return;
+  if(!user||!db||!section||!list) return;
   try{
     const snap=await db.collection('friends')
       .where('friendId','==',user.uid).get();
@@ -6456,6 +6459,8 @@ async function renderPendingRequests(){
 }
 
 async function mpRespondRequest(docId,accept){
+  const db=window._fbDb;
+  if(!db) return;
   try{
     if(accept){
       await db.collection('friends').doc(docId).update({status:'accepted', acceptedAt:Date.now()});
@@ -6470,6 +6475,8 @@ async function mpRespondRequest(docId,accept){
 /* Eliminar amigo de la lista (con confirmación) */
 async function mpRemoveFriend(docId, username){
   if(!confirm((tk('mp.confirm_remove')||'¿Eliminar a {0} de tus amigos?').replace('{0}', username||''))) return;
+  const db=window._fbDb;
+  if(!db) return;
   try{
     await db.collection('friends').doc(docId).delete();
     // El refresco es automático vía onSnapshot — no se requiere llamada manual
@@ -6480,9 +6487,10 @@ async function mpRemoveFriend(docId, username){
 }
 
 async function renderFriendsList(){
-  const user=auth.currentUser;
+  const auth=window._fbAuth, db=window._fbDb;
+  const user=auth&&auth.currentUser;
   const list=$id('mpFriendsList');
-  if(!user||!list) return;
+  if(!user||!db||!list) return;
   list.innerHTML=`<div class="mp-empty-state">${tk('mp.loading')}</div>`;
   try{
     const snap1=await db.collection('friends')
