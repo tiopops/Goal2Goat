@@ -4510,7 +4510,7 @@ function initFirebaseAuth(){
       if(settingsMenu) settingsMenu.style.display="none";
       // Botón multijugador: solo visible con login + debug mode activo
       const mpWrap=$id('multiplayerWrap');
-      if(mpWrap) mpWrap.style.display=(window.CHEATS_ACTIVE)?'block':'none';
+      if(mpWrap) mpWrap.style.display=(window.CHEATS_ACTIVE)?'flex':'none';
       // Mostrar botón de tickets en desktop
       const hBtn=$id("headerTicketBtn"); if(hBtn) hBtn.style.display="";
       const pun=$id("profileUsername"); if(pun) pun.textContent=username;
@@ -4635,7 +4635,7 @@ function initFirebaseAuth(){
             if(window.CHEATS_ACTIVE){const pse=$id('pstat-scratch-pts');if(pse)pse.textContent=100;}
             // Botón multijugador: solo visible con login + debug mode activo
             const mpWrap=$id('multiplayerWrap');
-            if(mpWrap) mpWrap.style.display=(window.CHEATS_ACTIVE&&auth.currentUser)?'block':'none';
+            if(mpWrap) mpWrap.style.display=(window.CHEATS_ACTIVE&&auth.currentUser)?'flex':'none';
             showToast(window.CHEATS_ACTIVE?"⚙️ Cheats ON — ganas todos, tickets 3/3, pts 100":"⚙️ Cheats OFF — juego normal","toast-pos");
           });
         }

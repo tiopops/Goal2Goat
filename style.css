@@ -741,6 +741,10 @@ body.dark-theme .vb-row:nth-child(even){background:transparent}
   width:100%;display:flex;align-items:center;justify-content:center;
   padding:0 12px 8px;
 }
+#multiplayerWrap{
+  width:100%;display:flex;align-items:center;justify-content:center;
+  padding:0 12px 8px;
+}
 .quick-build-btn{
   background:#1a2a1a;color:var(--gold);
   border:1px solid var(--gold);
