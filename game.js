@@ -1767,6 +1767,7 @@ function showTeamNameModal(){
   if(window.useFixedTeamName && window.preferredTeamName){
     myTeamName=window.preferredTeamName;
     window._currentTeamName=myTeamName;
+    if(typeof updateDraftCounter==='function') updateDraftCounter();
     if(typeof firebase!=='undefined'){
       try{
         const user=firebase.auth().currentUser;
@@ -1798,6 +1799,9 @@ function showTeamNameModal(){
     }
     myTeamName=val.toUpperCase();
     window._currentTeamName=myTeamName;
+    // La tabla de convocados solo repinta el título al cambiar draftedCount;
+    // hay que forzarlo aquí para que refleje el nombre recién confirmado.
+    if(typeof updateDraftCounter==='function') updateDraftCounter();
     document.getElementById("matchOverlay").innerHTML="";
     // Save team name to Firebase profile if logged in
     if(typeof firebase!=='undefined'){
