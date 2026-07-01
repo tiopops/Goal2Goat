@@ -1221,21 +1221,14 @@ function clearHighlights(){
 
 /* ========= DRAFT COUNTER & TABLES ========= */
 function updateDraftCounter(){
-  const el=document.getElementById("draftCounter");
   const title=document.getElementById("convocadosTitle");
-  if(!el) return;
+  if(!title) return;
   if(draftedCount===11){
     const teamName=(window._currentTeamName||myTeamName||'EQUIPO').toUpperCase();
     // Mostrar nombre del equipo en lugar de "CONVOCADOS 11/11"
-    if(title){
-      title.innerHTML=`<span style="color:var(--gold);font-size:inherit">${teamName}</span>`;
-    }
+    title.innerHTML=`<span style="color:var(--gold);font-size:inherit">${teamName}</span>`;
   } else {
-    if(title){
-      title.innerHTML=`${window.t?window.t('draft.convocados'):'CONVOCADOS'} <span id="draftCounter" class="counter-badge">${draftedCount}/11</span>`;
-    } else {
-      el.textContent=draftedCount+"/11";
-    }
+    title.innerHTML=`${window.t?window.t('draft.convocados'):'CONVOCADOS'} <span id="draftCounter" class="counter-badge">${draftedCount}/11</span>`;
   }
 }
 function effRating(p){
