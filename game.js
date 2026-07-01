@@ -1746,6 +1746,9 @@ function reassignSquad(code){
 let myTeamName = "TU EQUIPO";
 
 function startMatchPhase(){
+  // Modo duelo multijugador: la plantilla se guarda en Firestore y se
+  // espera al rival, en vez de seguir el flujo normal de torneo IA.
+  if(window._duelId){ mpOnDraftComplete(); return; }
   document.getElementById("benchSection").style.display="block";
   document.getElementById("rivalBox").style.display="block";
   document.getElementById("matchHistoryBox").style.display="block";
@@ -3941,6 +3944,10 @@ function loadInheritedPlayers(){
 }
 loadInheritedPlayers();
 
+/* Si hay un duelo multijugador activo en sessionStorage, retomarlo.
+   No interfiere con el modo un jugador si no hay duelo activo. */
+initDuelModeFromSession();
+
 /* If there are inherited players from a chain run, auto-place them on the
    pitch at their primary position, skipping that many draft picks. */
 /* ========= SETTINGS DROPDOWN (header, shown only when logged out) ========= */
@@ -4532,6 +4539,8 @@ function initFirebaseAuth(){
       startSkillListener(user.uid);
       // Listener de logros
       startAchievementsListener(user.uid);
+      // Vigilante de duelos salientes (detecta cuando el rival acepta)
+      startDuelWatcher(user.uid);
     }else{
       if(authBtn)    authBtn.style.display="";
       if(profileBtn) profileBtn.style.display="none";
@@ -4540,6 +4549,7 @@ function initFirebaseAuth(){
       const mpWrap=$id('multiplayerWrap'); if(mpWrap) mpWrap.style.display='none';
       // Limpiar cache de mejoras al cerrar sesión
       stopUpgradeListener();
+      stopDuelWatcher();
       window.currentUsername=null;
       window.preferredTeamName="";
       window.useFixedTeamName=false;
@@ -6648,11 +6658,16 @@ async function renderPendingDuels(){
 /* Aceptar o rechazar un desafío de duelo recibido */
 async function mpRespondDuel(docId, accept){
   const db=window._fbDb;
-  if(!db) return;
+  const auth=window._fbAuth;
+  const user=auth&&auth.currentUser;
+  if(!db||!user) return;
   try{
     if(accept){
-      // Fase 2 se encargará de arrancar el draft sincronizado a partir de este estado.
-      await db.collection('duels').doc(docId).update({status:'accepted', acceptedAt:Date.now()});
+      const draftStartAt=Date.now();
+      await db.collection('duels').doc(docId).update({status:'accepted', acceptedAt:draftStartAt, draftStartAt});
+      const snap=await db.collection('duels').doc(docId).get();
+      const d=snap.data();
+      mpEnterDuelMode(docId, d, user.uid);
     }else{
       await db.collection('duels').doc(docId).update({status:'rejected'});
     }
@@ -6660,6 +6675,173 @@ async function mpRespondDuel(docId, accept){
     console.error('mpRespondDuel error:',e);
     alert(tk('mp.err_generic'));
   }
+}
+
+/* ════════════════════════════════════════════════════════════
+   DUELO — DRAFT SINCRONIZADO (Fase 2)
+   Guarda el duelo activo en sessionStorage y recarga, igual que ya
+   hace la Run Encadenada con 'g2g_inherited'. Así el draft arranca
+   siempre limpio, sin arrastrar estado de una partida anterior.
+   ════════════════════════════════════════════════════════════ */
+const DUEL_DRAFT_SECONDS=90;
+let _duelTimerInterval=null;
+let _duelWatcherUnsub=null;
+
+/* Guarda el duelo en sessionStorage y recarga la página para entrar limpio */
+function mpEnterDuelMode(duelId, duelData, myUid){
+  const isChallenger=duelData.challengerId===myUid;
+  const info={
+    duelId,
+    role: isChallenger?'challenger':'opponent',
+    opponentUsername: isChallenger?duelData.opponentUsername:duelData.challengerUsername,
+    draftStartAt: duelData.draftStartAt||Date.now()
+  };
+  try{ sessionStorage.setItem('g2g_duel_active', JSON.stringify(info)); }catch(e){}
+  location.reload();
+}
+
+/* Vigila (para el retador) si el rival ha aceptado su desafío saliente,
+   incluso con el modal de multijugador cerrado. */
+function startDuelWatcher(uid){
+  stopDuelWatcher();
+  const db=window._fbDb;
+  if(!db) return;
+  _duelWatcherUnsub=db.collection('duels')
+    .where('challengerId','==',uid)
+    .onSnapshot(snap=>{
+      // Si ya estoy en un duelo activo, no reaccionar (evita bucles de recarga)
+      let active=null;
+      try{ active=JSON.parse(sessionStorage.getItem('g2g_duel_active')||'null'); }catch(e){}
+      if(active) return;
+      snap.docChanges().forEach(ch=>{
+        const d=ch.doc.data();
+        if(d.status==='accepted'){ mpEnterDuelMode(ch.doc.id, d, uid); }
+      });
+    }, e=>console.error('startDuelWatcher error:',e));
+}
+function stopDuelWatcher(){
+  if(_duelWatcherUnsub){ _duelWatcherUnsub(); _duelWatcherUnsub=null; }
+}
+
+/* Al cargar la página: si hay un duelo activo en sessionStorage, retomarlo
+   consultando su estado real en Firestore (no confiar solo en lo local). */
+async function initDuelModeFromSession(){
+  let info=null;
+  try{ info=JSON.parse(sessionStorage.getItem('g2g_duel_active')||'null'); }catch(e){}
+  if(!info) return;
+  window._duelId=info.duelId;
+  window._duelRole=info.role;
+  window._duelOpponentUsername=info.opponentUsername;
+  window._duelDraftDeadline=info.draftStartAt+DUEL_DRAFT_SECONDS*1000;
+  // Ocultar elementos de menú irrelevantes en modo duelo
+  const mpwQ=document.getElementById("multiplayerWrap");
+  if(mpwQ) mpwQ.style.display="none";
+  const qb=document.getElementById("quickBuildWrap"); // se sigue usando internamente al agotar el tiempo
+  // Comprobar el estado real del duelo para decidir si mostrar el draft o la espera
+  try{
+    const db=window._fbDb;
+    // La sesión de auth puede tardar un instante en estar lista tras el reload
+    let tries=0;
+    while(!window._fbDb && tries<20){ await new Promise(r=>setTimeout(r,150)); tries++; }
+    const snap=await window._fbDb.collection('duels').doc(window._duelId).get();
+    if(!snap.exists){ mpExitDuelMode(); return; }
+    const d=snap.data();
+    const myReadyField=window._duelRole==='challenger'?'challengerReady':'opponentReady';
+    if(d[myReadyField]){
+      mpShowDuelWaitingScreen();
+    }else{
+      startDuelDraftTimer();
+    }
+  }catch(e){
+    console.error('initDuelModeFromSession error:',e);
+    startDuelDraftTimer(); // fallback: mostrar el temporizador igualmente
+  }
+}
+
+/* Salir de modo duelo (usado ante error o duelo cancelado/inexistente) */
+function mpExitDuelMode(){
+  try{ sessionStorage.removeItem('g2g_duel_active'); }catch(e){}
+  window._duelId=null;
+  if(_duelTimerInterval){ clearInterval(_duelTimerInterval); _duelTimerInterval=null; }
+}
+
+/* Barra de cuenta atrás del draft — visible en todo momento durante el
+   draft/banquillo cuando hay un duelo activo. Al agotarse, autocompleta
+   con el mismo método que EQUIPO RÁPIDO (quickBuild), sin duplicarlo. */
+function startDuelDraftTimer(){
+  let bar=document.getElementById('duelDraftTimerBar');
+  if(!bar){
+    bar=document.createElement('div');
+    bar.id='duelDraftTimerBar';
+    bar.style.cssText='position:fixed;top:0;left:0;right:0;z-index:70000;background:#1a2a3a;border-bottom:2px solid #4a90d9;color:#7ec3ff;text-align:center;padding:6px 10px;font-family:"Bebas Neue",Impact,sans-serif;letter-spacing:1px;font-size:15px';
+    document.body.prepend(bar);
+  }
+  bar.style.display='block';
+  const tick=()=>{
+    const msLeft=window._duelDraftDeadline-Date.now();
+    if(msLeft<=0){
+      bar.textContent=(tk('mp.duel_draft_time_up')||'⏱️ ¡Tiempo agotado! Completando equipo automáticamente...');
+      clearInterval(_duelTimerInterval);
+      _duelTimerInterval=null;
+      if(phase==='draft'||phase==='bench') quickBuild();
+      return;
+    }
+    const s=Math.ceil(msLeft/1000);
+    const mm=Math.floor(s/60), ss=s%60;
+    bar.textContent=(tk('mp.duel_draft_time')||'⏱️ Construye tu equipo: {0}:{1}')
+      .replace('{0}', String(mm)).replace('{1}', String(ss).padStart(2,'0'));
+  };
+  tick();
+  _duelTimerInterval=setInterval(tick,1000);
+}
+
+/* Se ejecuta cuando MI draft/banquillo ha terminado (manual o por tiempo
+   agotado). Serializa mi plantilla y la guarda en el duelo. */
+async function mpOnDraftComplete(){
+  if(_duelTimerInterval){ clearInterval(_duelTimerInterval); _duelTimerInterval=null; }
+  const bar=document.getElementById('duelDraftTimerBar');
+  if(bar) bar.style.display='none';
+  const db=window._fbDb;
+  if(!db||!window._duelId) return;
+  const squad={
+    pitch: usedPlayers.map(p=>({name:p.name, rating:p.rating, positions:p.positions, placedPos:p.placedPos})),
+    bench: bench.map(p=>({name:p.name, rating:p.rating, positions:p.positions})),
+    formation: currentFormation,
+    teamOVR: typeof baseTeamOVR!=='undefined'?baseTeamOVR:computeTeamOVR()
+  };
+  const readyField=window._duelRole==='challenger'?'challengerReady':'opponentReady';
+  const squadField=window._duelRole==='challenger'?'challengerSquad':'opponentSquad';
+  try{
+    await db.collection('duels').doc(window._duelId).update({
+      [squadField]: squad,
+      [readyField]: true
+    });
+  }catch(e){
+    console.error('mpOnDraftComplete error:',e);
+  }
+  mpShowDuelWaitingScreen();
+}
+
+/* Pantalla de espera mientras el rival termina su equipo. Escucha el
+   duelo en tiempo real; cuando ambos están listos, Fase 3 (motor de
+   partidos) tomará el relevo desde aquí. */
+function mpShowDuelWaitingScreen(){
+  document.body.innerHTML=`
+    <div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;background:#0d0d0d;color:#fff;text-align:center;padding:20px">
+      <i class="ph ph-bold ph-users" style="font-size:40px;color:#7b9cff"></i>
+      <div style="font-family:'Bebas Neue',Impact,sans-serif;font-size:22px;letter-spacing:1px" id="duelWaitingText">${tk('mp.duel_waiting')||'Esperando a que tu rival termine su equipo...'}</div>
+    </div>`;
+  const db=window._fbDb;
+  if(!db||!window._duelId) return;
+  db.collection('duels').doc(window._duelId).onSnapshot(snap=>{
+    const d=snap.data();
+    if(!d) return;
+    if(d.challengerReady && d.opponentReady){
+      const txt=document.getElementById('duelWaitingText');
+      if(txt) txt.textContent=tk('mp.duel_both_ready')||'¡Ambos equipos listos! Próximamente: inicio automático de los partidos.';
+      // Fase 3 (motor de partidos multijugador) continuará desde aquí.
+    }
+  }, e=>console.error('mpShowDuelWaitingScreen error:',e));
 }
 
 // Wiring directo (sin depender de DOMContentLoaded, que ya puede haberse disparado
