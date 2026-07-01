@@ -4317,10 +4317,10 @@ function syncThemeToggleUI(isDark){
 
 // Restore saved preferences on load
 (function restorePrefs(){
-  // Welcome popup: always show on load
+  // Welcome popup: always show on load, salvo que haya un duelo multijugador activo
   try{
     const o=document.getElementById("welcomeOverlay");
-    if(o) o.style.display="flex";
+    if(o && !window._duelId) o.style.display="flex";
   }catch(e){}
   syncAudioToggleUI();
   // Theme: dark is the default; only go light if explicitly saved as light
@@ -6733,6 +6733,11 @@ async function initDuelModeFromSession(){
   window._duelRole=info.role;
   window._duelOpponentUsername=info.opponentUsername;
   window._duelDraftDeadline=info.draftStartAt+DUEL_DRAFT_SECONDS*1000;
+  // La pantalla de bienvenida ("EMPEZAR A JUGAR") es obligatoria en cada carga;
+  // en modo duelo la saltamos, ya que el jugador ya confirmó explícitamente al
+  // aceptar/lanzar el desafío.
+  const wo=document.getElementById("welcomeOverlay");
+  if(wo) wo.style.display="none";
   // Ocultar elementos de menú irrelevantes en modo duelo
   const mpwQ=document.getElementById("multiplayerWrap");
   if(mpwQ) mpwQ.style.display="none";
