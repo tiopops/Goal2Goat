@@ -5912,6 +5912,7 @@ function startSkillListener(uid){
 
 // Efecto real de ESTRATEGA: devuelve la mejor contra-estrategia
 window.getEstrategaHint = function(){
+  if(window._duelId) return null; // deshabilitada en duelos multijugador
   if(!window._skillCache.estratega) return null;
   if(!nextOpponent) return null;
   const rivalKey = getRivalStrategyKey(nextOpponent);
@@ -6587,6 +6588,149 @@ async function renderFriendsList(){
 function mpEsc(s){ return String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
 /* ════════════════════════════════════════════════════════════
+   DUELO — CÁLCULO DE PARTIDO (Fase 3, primera entrega)
+   Reutiliza las mismas fórmulas que playMatch() en solitario
+   (tacticalModifier, poissonSample, STRATEGIES) pero aplicadas de
+   forma simétrica a dos plantillas reales en vez de jugador-vs-IA.
+   NOTA: esta primera versión no incluye lesiones/tarjetas en vivo
+   durante el partido (ver aviso en el resumen del chat).
+   ════════════════════════════════════════════════════════════ */
+function duelSquadPower(squad){
+  const pl=(squad.pitch||[]).slice(0,11);
+  const avg=pl.length?pl.reduce((s,p)=>s+(p.rating||75),0)/pl.length:75;
+  const bonusBoost=Object.values(squad.teamStats||{}).reduce((a,b)=>a+(Math.abs(b)||0),0)*0.12;
+  const fatigueAvg=pl.length?pl.reduce((s,p)=>s+(p.fatigue===undefined?100:p.fatigue),0)/pl.length:100;
+  const fatiguePenalty=(100-fatigueAvg)/100*3.5;
+  return avg + bonusBoost - fatiguePenalty;
+}
+function duelStreakBonus(squad){
+  let bonus=0;
+  (squad.pitch||[]).forEach(p=>{
+    if(p.placedPos && ["DC","EI","ED","MC"].includes(p.placedPos)){
+      const streak=(squad.scorerStreaks&&squad.scorerStreaks[p.name])||0;
+      bonus+=Math.min(streak,MAX_STREAK_BONUS)*0.015;
+    }
+  });
+  return bonus;
+}
+function duelCounterModifier(myKey, rivalKey){
+  if(!myKey && !rivalKey) return {myScoreMod:0, oppScoreMod:0};
+  const rivalStrat=STRATEGIES[rivalKey], myStrat=STRATEGIES[myKey];
+  const rivalCountersMe = rivalStrat && rivalStrat.counters===myKey;
+  const iCounterRival    = myStrat && myStrat.counters===rivalKey;
+  const iPartiallyCounterRival = myStrat && myStrat.partialCounters && myStrat.partialCounters.includes(rivalKey);
+  let mod=0;
+  if(iCounterRival)               mod=0.16;
+  else if(iPartiallyCounterRival) mod=0.08;
+  else if(rivalCountersMe)        mod=-0.10;
+  else if(myKey && myKey===rivalKey) mod=-0.04;
+  return {myScoreMod:mod, oppScoreMod:-mod*0.5};
+}
+function computeDuelMatchResult(challengerSquad, opponentSquad, challengerStrategy, opponentStrategy){
+  const chalPower=duelSquadPower(challengerSquad);
+  const oppPower=duelSquadPower(opponentSquad);
+  const diff=(chalPower-oppPower)*0.03;
+  const tactical=tacticalModifier(challengerSquad.teamStats||{}, opponentSquad.teamStats||{});
+  const counter=duelCounterModifier(challengerStrategy, opponentStrategy);
+  const chalMorale=((challengerSquad.teamMorale||0)/50)*0.15;
+  const oppMorale=((opponentSquad.teamMorale||0)/50)*0.15;
+  const chalStreak=duelStreakBonus(challengerSquad);
+  const oppStreak=duelStreakBonus(opponentSquad);
+  const weatherDelta=weatherLambdaEffect(); // condición compartida del partido, igual para ambos
+  const chalCaptain=(challengerSquad.skills&&challengerSquad.skills.capitan&&(challengerSquad.teamMorale||0)<0)?0.10:0;
+  const oppCaptain=(opponentSquad.skills&&opponentSquad.skills.capitan&&(opponentSquad.teamMorale||0)<0)?0.10:0;
+  const chalLambda=Math.max(0.25, 1.15+diff+tactical.myScoreMod+counter.myScoreMod+chalMorale+chalStreak+weatherDelta+chalCaptain);
+  const oppLambda=Math.max(0.25, 1.15-diff+tactical.oppScoreMod+counter.oppScoreMod+oppMorale+oppStreak+weatherDelta+oppCaptain);
+  let challengerGoals=poissonSample(chalLambda);
+  let opponentGoals=poissonSample(oppLambda);
+  if(challengerSquad.skills&&challengerSquad.skills.remontada&&opponentGoals>=challengerGoals+2){
+    challengerGoals=poissonSample(chalLambda*1.35);
+  }
+  if(opponentSquad.skills&&opponentSquad.skills.remontada&&challengerGoals>=opponentGoals+2){
+    opponentGoals=poissonSample(oppLambda*1.35);
+  }
+  return {challengerGoals, opponentGoals};
+}
+
+/* Pantalla de selección de estrategia para el partido actual del duelo */
+function mpShowDuelStrategyScreen(){
+  selectedMatchStrategy=null;
+  document.body.innerHTML=`
+    <div style="min-height:100vh;background:#0d0d0d;color:#fff;padding:24px 16px;display:flex;flex-direction:column;align-items:center;gap:14px">
+      <div style="font-family:'Bebas Neue',Impact,sans-serif;font-size:20px;color:#7ec3ff">${(tk('mp.duel_match_of')||'PARTIDO {0} DE 5').replace('{0}', String(window._duelMatchIndex+1))}</div>
+      <div style="font-size:13px;color:#aaa">${tk('mp.duel_vs')||'Contra'}: ${mpEsc(window._duelOpponentUsername||'')}</div>
+      <div id="strategySelector" style="width:100%;max-width:480px"></div>
+      <button id="duelConfirmStrategyBtn" style="margin-top:14px;padding:10px 26px;background:var(--gold);color:#000;border:none;font-family:'Bebas Neue',Impact,sans-serif;font-size:16px;letter-spacing:1px;cursor:pointer;border-radius:4px">${tk('mp.duel_confirm_strategy')||'CONFIRMAR Y ESPERAR AL RIVAL'}</button>
+      <div id="duelStrategyWaitMsg" style="display:none;font-size:13px;color:#aaa;margin-top:6px">${tk('mp.duel_waiting_strategy')||'Esperando la estrategia del rival...'}</div>
+    </div>`;
+  renderStrategySelector();
+  const btn=document.getElementById('duelConfirmStrategyBtn');
+  if(btn) btn.addEventListener('click', mpConfirmDuelStrategy);
+}
+
+async function mpConfirmDuelStrategy(){
+  const db=window._fbDb;
+  if(!db||!window._duelId) return;
+  const btn=document.getElementById('duelConfirmStrategyBtn');
+  if(btn) btn.disabled=true;
+  const waitMsg=document.getElementById('duelStrategyWaitMsg');
+  if(waitMsg) waitMsg.style.display='block';
+  const field=window._duelRole==='challenger'
+    ? `m${window._duelMatchIndex}_challengerStrategy`
+    : `m${window._duelMatchIndex}_opponentStrategy`;
+  try{
+    await db.collection('duels').doc(window._duelId).update({[field]: selectedMatchStrategy||'__none__'});
+  }catch(e){ console.error('mpConfirmDuelStrategy error:',e); }
+  mpWatchForMatchResult();
+}
+
+/* Espera a que ambas estrategias estén enviadas. El retador calcula el
+   resultado y lo guarda; ambos lo leen de ahí para verlo idéntico. */
+function mpWatchForMatchResult(){
+  const db=window._fbDb;
+  if(!db||!window._duelId) return;
+  const idx=window._duelMatchIndex;
+  const resultField=`m${idx}_result`;
+  const chalKey=`m${idx}_challengerStrategy`, oppKey=`m${idx}_opponentStrategy`;
+  const unsub=db.collection('duels').doc(window._duelId).onSnapshot(async snap=>{
+    const d=snap.data();
+    if(!d) return;
+    if(d.status==='cancelled'){ unsub(); mpExitDuelMode(); location.reload(); return; }
+    if(d[resultField]){ unsub(); mpShowDuelMatchResult(d[resultField]); return; }
+    if(window._duelRole==='challenger' && d[chalKey]!==undefined && d[oppKey]!==undefined){
+      unsub();
+      const chalStrategy=d[chalKey]==='__none__'?null:d[chalKey];
+      const oppStrategy=d[oppKey]==='__none__'?null:d[oppKey];
+      const result=computeDuelMatchResult(d.challengerSquad, d.opponentSquad, chalStrategy, oppStrategy);
+      try{ await db.collection('duels').doc(window._duelId).update({[resultField]: result}); }
+      catch(e){ console.error('mpWatchForMatchResult compute error:',e); }
+      mpShowDuelMatchResult(result);
+    }
+  }, e=>console.error('mpWatchForMatchResult error:',e));
+}
+
+/* Resultado del partido actual — versión simple (marcador), sin animación
+   minuto a minuto todavía. */
+function mpShowDuelMatchResult(result){
+  const myGoals=window._duelRole==='challenger'?result.challengerGoals:result.opponentGoals;
+  const rivalGoals=window._duelRole==='challenger'?result.opponentGoals:result.challengerGoals;
+  const outcome=myGoals>rivalGoals?(tk('mp.duel_you_won')||'¡GANASTE ESTE PARTIDO!')
+    :myGoals<rivalGoals?(tk('mp.duel_you_lost')||'Has perdido este partido')
+    :(tk('mp.duel_draw')||'Empate');
+  document.body.innerHTML=`
+    <div style="min-height:100vh;background:#0d0d0d;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px">
+      <div style="font-family:'Bebas Neue',Impact,sans-serif;font-size:18px;color:#7ec3ff">${(tk('mp.duel_match_of')||'PARTIDO {0} DE 5').replace('{0}', String(window._duelMatchIndex+1))}</div>
+      <div style="font-family:'Bebas Neue',Impact,sans-serif;font-size:48px">${myGoals} - ${rivalGoals}</div>
+      <div style="font-size:14px;color:#aaa">${outcome}</div>
+      <button id="duelExitBtn" style="max-width:260px;padding:10px 22px;margin-top:16px;background:#3a1a1a;border:1px solid #d94a4a;color:#ff7e7e;font-family:'Bebas Neue',Impact,sans-serif;font-size:14px;letter-spacing:1px;border-radius:4px;cursor:pointer">${tk('mp.duel_exit')||'SALIR DEL DUELO'}</button>
+    </div>`;
+  const exitBtn=document.getElementById('duelExitBtn');
+  if(exitBtn) exitBtn.addEventListener('click', mpAbandonDuel);
+  // El bucle hasta 5 partidos, la ventana de cambios entre partidos y el
+  // resumen final llegan en la siguiente entrega.
+}
+
+/* ════════════════════════════════════════════════════════════
    SISTEMA DE DUELOS (Fase 1: invitación y aceptación)
    Colección Firestore: 'duels' — documento por desafío:
    { challengerId, challengerUsername, opponentId, opponentUsername,
@@ -6831,10 +6975,20 @@ async function mpOnDraftComplete(){
   const db=window._fbDb;
   if(!db||!window._duelId) return;
   const squad={
-    pitch: usedPlayers.map(p=>({name:p.name, rating:p.rating, positions:p.positions, placedPos:p.placedPos})),
+    pitch: usedPlayers.map(p=>({name:p.name, rating:p.rating, positions:p.positions, placedPos:p.placedPos, fatigue:(p.fatigue===undefined?100:p.fatigue)})),
     bench: bench.map(p=>({name:p.name, rating:p.rating, positions:p.positions})),
     formation: currentFormation,
-    teamOVR: typeof baseTeamOVR!=='undefined'?baseTeamOVR:computeTeamOVR()
+    teamOVR: typeof baseTeamOVR!=='undefined'?baseTeamOVR:computeTeamOVR(),
+    // Foto del perfil táctico real (attack/defense/pace/passing/technique),
+    // ya calculado a partir de las selecciones históricas fichadas + formación.
+    // Se usará tal cual como perfil del rival real en los partidos del duelo.
+    teamStats:{...teamStats},
+    // Foto de moral y racha en el momento de terminar el equipo — se
+    // actualizarán partido a partido con las mismas fórmulas que en solitario.
+    // La racha es por jugador (scorerStreaks), no un número único de equipo.
+    teamMorale: (typeof teamMorale!=='undefined')?teamMorale:0,
+    scorerStreaks: usedPlayers.reduce((acc,p)=>{ if(scorerStreaks[p.name]) acc[p.name]=scorerStreaks[p.name]; return acc; },{}),
+    skills: window._skillCache?{...window._skillCache}:{}
   };
   const readyField=window._duelRole==='challenger'?'challengerReady':'opponentReady';
   const squadField=window._duelRole==='challenger'?'challengerSquad':'opponentSquad';
@@ -6863,19 +7017,23 @@ function mpShowDuelWaitingScreen(){
   if(exitBtn) exitBtn.addEventListener('click', mpAbandonDuel);
   const db=window._fbDb;
   if(!db||!window._duelId) return;
-  db.collection('duels').doc(window._duelId).onSnapshot(snap=>{
+  const unsub=db.collection('duels').doc(window._duelId).onSnapshot(snap=>{
     const d=snap.data();
     if(!d) return;
     if(d.status==='cancelled'){
       // El rival ha salido del duelo — liberar y volver al juego normal
+      unsub();
       mpExitDuelMode();
       location.reload();
       return;
     }
     if(d.challengerReady && d.opponentReady){
-      const txt=document.getElementById('duelWaitingText');
-      if(txt) txt.textContent=tk('mp.duel_both_ready')||'¡Ambos equipos listos! Próximamente: inicio automático de los partidos.';
-      // Fase 3 (motor de partidos multijugador) continuará desde aquí.
+      if(window._duelMatchesStarted) return; // evita disparar dos veces
+      window._duelMatchesStarted=true;
+      unsub();
+      window._duelMatchIndex=0;
+      mpShowDuelStrategyScreen();
+      return;
     }
   }, e=>console.error('mpShowDuelWaitingScreen error:',e));
 }
