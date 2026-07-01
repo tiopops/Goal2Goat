@@ -6322,7 +6322,7 @@ window.applyTranslations = function(){
    ════════════════════════════════════════════════════════════ */
 
 /* Listeners en vivo del modal de amigos — se activan al abrir, se desconectan al cerrar */
-let mpUnsubFriends1=null, mpUnsubFriends2=null, mpUnsubRequests=null;
+let mpUnsubFriends1=null, mpUnsubFriends2=null, mpUnsubRequests=null, mpUnsubDuels=null;
 
 window.openMpOverlay = function(){
   const ov=$id('mpOverlay');
@@ -6354,12 +6354,17 @@ function startMpLiveListeners(){
   mpUnsubFriends2=db.collection('friends')
     .where('friendId','==',user.uid)
     .onSnapshot(()=>renderFriendsList(), e=>console.error('mpUnsubFriends2 error:',e));
+  // Desafíos de duelo recibidos — tiempo real (un solo where, filtro en JS)
+  mpUnsubDuels=db.collection('duels')
+    .where('opponentId','==',user.uid)
+    .onSnapshot(()=>renderPendingDuels(), e=>console.error('mpUnsubDuels error:',e));
 }
 
 function stopMpLiveListeners(){
   if(mpUnsubFriends1){ mpUnsubFriends1(); mpUnsubFriends1=null; }
   if(mpUnsubFriends2){ mpUnsubFriends2(); mpUnsubFriends2=null; }
   if(mpUnsubRequests){ mpUnsubRequests(); mpUnsubRequests=null; }
+  if(mpUnsubDuels){ mpUnsubDuels(); mpUnsubDuels=null; }
 }
 
 /* Añadir amigo por nombre de usuario o email — solo usuarios YA registrados en Firestore */
@@ -6555,12 +6560,13 @@ async function renderFriendsList(){
       row.className='mp-friend-row';
       row.innerHTML=`
         <td class="mp-row-name">${mpEsc(f.username||'???')}</td>
-        <td class="mp-col-action"><button class="mp-challenge-btn mp-btn-challenge" data-uid="${f.uid}" data-username="${mpEsc(f.username||'')}" disabled title="${tk('mp.coming_soon')}">${tk('mp.challenge')}</button></td>
+        <td class="mp-col-action"><button class="mp-challenge-btn mp-btn-challenge" data-uid="${f.uid}" data-username="${mpEsc(f.username||'')}" title="${tk('mp.challenge')}">${tk('mp.challenge')}</button></td>
         <td class="mp-col-action"><button class="mp-remove-btn mp-btn-remove" data-id="${f.id}" data-username="${mpEsc(f.username||'')}" title="${tk('mp.remove')}">✕</button></td>`;
       tbody.appendChild(row);
     });
     list.appendChild(table);
     list.querySelectorAll('.mp-remove-btn').forEach(b=>b.addEventListener('click',()=>mpRemoveFriend(b.dataset.id, b.dataset.username)));
+    list.querySelectorAll('.mp-challenge-btn').forEach(b=>b.addEventListener('click',()=>mpChallengeFriend(b.dataset.uid, b.dataset.username, b)));
   }catch(e){
     console.error('renderFriendsList error:',e);
     list.innerHTML=`<div class="mp-empty-state" style="color:var(--red)">${tk('mp.err_generic')}</div>`;
@@ -6568,6 +6574,93 @@ async function renderFriendsList(){
 }
 
 function mpEsc(s){ return String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+/* ════════════════════════════════════════════════════════════
+   SISTEMA DE DUELOS (Fase 1: invitación y aceptación)
+   Colección Firestore: 'duels' — documento por desafío:
+   { challengerId, challengerUsername, opponentId, opponentUsername,
+     status: 'pending'|'accepted'|'rejected'|'cancelled', createdAt }
+   La fase de draft sincronizado y la simulación de partidos se
+   implementan en fases posteriores sobre esta base.
+   ════════════════════════════════════════════════════════════ */
+
+/* Enviar desafío a un amigo */
+async function mpChallengeFriend(targetUid, targetUsername, btnEl){
+  const auth=window._fbAuth, db=window._fbDb;
+  const user=auth&&auth.currentUser;
+  if(!user||!db) return;
+  if(btnEl) btnEl.disabled=true;
+  try{
+    // Evitar duplicar un desafío ya pendiente con el mismo rival (un solo where, filtro en JS)
+    const mine=await db.collection('duels').where('challengerId','==',user.uid).get();
+    const already=mine.docs.some(d=>{const x=d.data();return x.opponentId===targetUid && x.status==='pending';});
+    if(already){
+      showToast((tk('mp.duel_pending_own')||'Ya tienes un desafío pendiente con {0}').replace('{0}',targetUsername||''), 'toast-neg');
+      return;
+    }
+    const mySnap=await db.collection('users').doc(user.uid).get();
+    const myUsername=(mySnap.exists&&(mySnap.data().username||mySnap.data().email))||user.email||'???';
+    await db.collection('duels').add({
+      challengerId:user.uid, challengerUsername:myUsername,
+      opponentId:targetUid, opponentUsername:targetUsername,
+      status:'pending', createdAt:Date.now()
+    });
+    showToast((tk('mp.duel_sent')||'Desafío enviado a {0}').replace('{0}',targetUsername||''), 'toast-pos');
+  }catch(e){
+    console.error('mpChallengeFriend error:',e);
+    showToast(tk('mp.err_generic'), 'toast-neg');
+  }finally{
+    if(btnEl) btnEl.disabled=false;
+  }
+}
+
+/* Cargar desafíos de duelo pendientes recibidos */
+async function renderPendingDuels(){
+  const auth=window._fbAuth, db=window._fbDb;
+  const user=auth&&auth.currentUser;
+  const section=$id('mpDuelsSection');
+  const list=$id('mpDuelsList');
+  if(!user||!db||!section||!list) return;
+  try{
+    const snap=await db.collection('duels')
+      .where('opponentId','==',user.uid).get();
+    const pendingDocs=snap.docs.filter(d=>d.data().status==='pending');
+    if(!pendingDocs.length){ section.style.display='none'; return; }
+    section.style.display='block';
+    list.innerHTML='';
+    pendingDocs.forEach(doc=>{
+      const d=doc.data();
+      const row=document.createElement('div');
+      row.className='mp-row';
+      row.innerHTML=`
+        <span class="mp-row-name">${mpEsc(d.challengerUsername||'???')}</span>
+        <button class="mp-btn-accept" data-id="${doc.id}">${tk('mp.accept')}</button>
+        <button class="mp-btn-reject" data-id="${doc.id}">${tk('mp.reject')}</button>`;
+      list.appendChild(row);
+    });
+    list.querySelectorAll('.mp-btn-accept').forEach(b=>b.addEventListener('click',()=>mpRespondDuel(b.dataset.id,true)));
+    list.querySelectorAll('.mp-btn-reject').forEach(b=>b.addEventListener('click',()=>mpRespondDuel(b.dataset.id,false)));
+  }catch(e){
+    console.error('renderPendingDuels error:',e);
+  }
+}
+
+/* Aceptar o rechazar un desafío de duelo recibido */
+async function mpRespondDuel(docId, accept){
+  const db=window._fbDb;
+  if(!db) return;
+  try{
+    if(accept){
+      // Fase 2 se encargará de arrancar el draft sincronizado a partir de este estado.
+      await db.collection('duels').doc(docId).update({status:'accepted', acceptedAt:Date.now()});
+    }else{
+      await db.collection('duels').doc(docId).update({status:'rejected'});
+    }
+  }catch(e){
+    console.error('mpRespondDuel error:',e);
+    alert(tk('mp.err_generic'));
+  }
+}
 
 // Wiring directo (sin depender de DOMContentLoaded, que ya puede haberse disparado
 // para cuando este script se ejecuta vía document.write con cache-busting)
