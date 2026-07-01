@@ -6778,14 +6778,24 @@ function startDuelDraftTimer(){
   if(!bar){
     bar=document.createElement('div');
     bar.id='duelDraftTimerBar';
-    bar.style.cssText='position:fixed;top:0;left:0;right:0;z-index:70000;background:#1a2a3a;border-bottom:2px solid #4a90d9;color:#7ec3ff;text-align:center;padding:6px 10px;font-family:"Bebas Neue",Impact,sans-serif;letter-spacing:1px;font-size:15px';
+    bar.style.cssText='position:fixed;top:0;left:0;right:0;z-index:70000;background:#1a2a3a;border-bottom:2px solid #4a90d9;color:#7ec3ff;text-align:center;padding:6px 10px;font-family:"Bebas Neue",Impact,sans-serif;letter-spacing:1px;font-size:15px;display:flex;align-items:center;justify-content:center;gap:14px';
+    const span=document.createElement('span');
+    span.id='duelDraftTimerText';
+    const exitLink=document.createElement('span');
+    exitLink.id='duelDraftExitLink';
+    exitLink.textContent=tk('mp.duel_exit')||'SALIR DEL DUELO';
+    exitLink.style.cssText='cursor:pointer;color:#ff7e7e;font-size:12px;border:1px solid #d94a4a;padding:2px 8px;border-radius:3px';
+    exitLink.addEventListener('click', mpAbandonDuel);
+    bar.appendChild(span);
+    bar.appendChild(exitLink);
     document.body.prepend(bar);
   }
-  bar.style.display='block';
+  const textEl=document.getElementById('duelDraftTimerText')||bar;
+  bar.style.display='flex';
   const tick=()=>{
     const msLeft=window._duelDraftDeadline-Date.now();
     if(msLeft<=0){
-      bar.textContent=(tk('mp.duel_draft_time_up')||'⏱️ ¡Tiempo agotado! Completando equipo automáticamente...');
+      textEl.textContent=(tk('mp.duel_draft_time_up')||'⏱️ ¡Tiempo agotado! Completando equipo automáticamente...');
       clearInterval(_duelTimerInterval);
       _duelTimerInterval=null;
       if(phase==='draft'||phase==='bench') quickBuild();
@@ -6793,7 +6803,7 @@ function startDuelDraftTimer(){
     }
     const s=Math.ceil(msLeft/1000);
     const mm=Math.floor(s/60), ss=s%60;
-    bar.textContent=(tk('mp.duel_draft_time')||'⏱️ Construye tu equipo: {0}:{1}')
+    textEl.textContent=(tk('mp.duel_draft_time')||'⏱️ Construye tu equipo: {0}:{1}')
       .replace('{0}', String(mm)).replace('{1}', String(ss).padStart(2,'0'));
   };
   tick();
@@ -6835,18 +6845,39 @@ function mpShowDuelWaitingScreen(){
     <div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;background:#0d0d0d;color:#fff;text-align:center;padding:20px">
       <i class="ph ph-bold ph-users" style="font-size:40px;color:#7b9cff"></i>
       <div style="font-family:'Bebas Neue',Impact,sans-serif;font-size:22px;letter-spacing:1px" id="duelWaitingText">${tk('mp.duel_waiting')||'Esperando a que tu rival termine su equipo...'}</div>
+      <button id="duelExitBtn" class="main-action-btn" style="max-width:260px;margin-top:10px;background:#3a1a1a;border:1px solid #d94a4a;color:#ff7e7e">${tk('mp.duel_exit')||'SALIR DEL DUELO'}</button>
     </div>`;
+  const exitBtn=document.getElementById('duelExitBtn');
+  if(exitBtn) exitBtn.addEventListener('click', mpAbandonDuel);
   const db=window._fbDb;
   if(!db||!window._duelId) return;
   db.collection('duels').doc(window._duelId).onSnapshot(snap=>{
     const d=snap.data();
     if(!d) return;
+    if(d.status==='cancelled'){
+      // El rival ha salido del duelo — liberar y volver al juego normal
+      mpExitDuelMode();
+      location.reload();
+      return;
+    }
     if(d.challengerReady && d.opponentReady){
       const txt=document.getElementById('duelWaitingText');
       if(txt) txt.textContent=tk('mp.duel_both_ready')||'¡Ambos equipos listos! Próximamente: inicio automático de los partidos.';
       // Fase 3 (motor de partidos multijugador) continuará desde aquí.
     }
   }, e=>console.error('mpShowDuelWaitingScreen error:',e));
+}
+
+/* Salir voluntariamente de un duelo (desde la pantalla de espera).
+   Marca el duelo como cancelado para que el rival también salga. */
+async function mpAbandonDuel(){
+  const db=window._fbDb;
+  if(db&&window._duelId){
+    try{ await db.collection('duels').doc(window._duelId).update({status:'cancelled'}); }
+    catch(e){ console.error('mpAbandonDuel error:',e); }
+  }
+  mpExitDuelMode();
+  location.reload();
 }
 
 // Wiring directo (sin depender de DOMContentLoaded, que ya puede haberse disparado
