@@ -141,6 +141,8 @@ window.TRANSLATIONS = {
   'upgrade.scout_desc': {es:'JUGADORES POR EQUIPO AL BARAJAR', en:'PLAYERS PER TEAM WHEN ROLLING', pt:'JOGADORES POR TIME AO SORTEAR', fr:'JOUEURS PAR ÉQUIPE AU TIRAGE', de:'SPIELER PRO TEAM BEIM ZIEHEN', it:'GIOCATORI PER SQUADRA AL SORTEGGIO'},
   'upgrade.recovery': {es:'RECUPERACIÓN', en:'RECOVERY', pt:'RECUPERAÇÃO', fr:'RÉCUPÉRATION', de:'ERHOLUNG', it:'RECUPERO'},
   'upgrade.recovery_desc': {es:'REDUCE LA FATIGA ENTRE PARTIDOS', en:'REDUCES MATCH FATIGUE', pt:'REDUZ A FADIGA ENTRE JOGOS', fr:'RÉDUIT LA FATIGUE ENTRE LES MATCHS', de:'VERRINGERT SPIELERMÜDUNG', it:'RIDUCE LA FATICA TRA LE PARTITE'},
+  'upgrade.chain': {es:'RUN ENCADENADA', en:'CHAIN RUN', pt:'RUN ENCADEADA', fr:'RUN ENCHAÎNÉE', de:'KETTEN-RUN', it:'RUN CONCATENATA'},
+  'upgrade.chain_desc': {es:'JUGADORES CONSERVADOS AL ENCADENAR RUN', en:'PLAYERS KEPT WHEN CHAINING A RUN', pt:'JOGADORES MANTIDOS AO ENCADEAR RUN', fr:'JOUEURS CONSERVÉS EN ENCHAÎNANT UNE RUN', de:'SPIELER, DIE BEIM VERKETTEN EINES RUNS ERHALTEN BLEIBEN', it:'GIOCATORI MANTENUTI CONCATENANDO UNA RUN'},
 
   /* ── HABILIDADES ── */
   'skills.title': {es:'HABILIDADES', en:'SKILLS', pt:'HABILIDADES', fr:'COMPÉTENCES', de:'FÄHIGKEITEN', it:'ABILITÀ'},
@@ -531,6 +533,7 @@ window.TRANSLATIONS = {
   'mp.searching': {es:'Buscando...', en:'Searching...', pt:'Procurando...', fr:'Recherche...', de:'Suche...', it:'Ricerca...'},
   'mp.requests_label': {es:'SOLICITUDES PENDIENTES', en:'PENDING REQUESTS', pt:'SOLICITAÇÕES PENDENTES', fr:'DEMANDES EN ATTENTE', de:'AUSSTEHENDE ANFRAGEN', it:'RICHIESTE IN SOSPESO'},
   'mp.friends_label': {es:'TUS AMIGOS', en:'YOUR FRIENDS', pt:'SEUS AMIGOS', fr:'VOS AMIS', de:'DEINE FREUNDE', it:'I TUOI AMICI'},
+  'mp.col_friend': {es:'Amigo', en:'Friend', pt:'Amigo', fr:'Ami', de:'Freund', it:'Amico'},
   'mp.loading': {es:'Cargando...', en:'Loading...', pt:'Carregando...', fr:'Chargement...', de:'Laden...', it:'Caricamento...'},
   'mp.no_friends': {es:'Todavía no tienes amigos añadidos.', en:'You don\'t have any friends added yet.', pt:'Você ainda não tem amigos adicionados.', fr:'Vous n\'avez pas encore ajouté d\'amis.', de:'Du hast noch keine Freunde hinzugefügt.', it:'Non hai ancora amici aggiunti.'},
   'mp.accept': {es:'ACEPTAR', en:'ACCEPT', pt:'ACEITAR', fr:'ACCEPTER', de:'ANNEHMEN', it:'ACCETTA'},

@@ -2073,10 +2073,21 @@ body.light-theme #achievementsList [style*="text-muted"]{
   display:flex;align-items:center;justify-content:space-between;gap:8px;
   padding:10px 4px;border-bottom:1px solid var(--line);
 }
-.mp-row:last-child{border-bottom:none}
+.mp-friends-table{
+  width:100%;border-collapse:collapse;
+}
+.mp-friends-table thead th{
+  text-align:left;font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:.5px;
+  font-size:11px;color:var(--text-muted);padding:4px 6px;border-bottom:1px solid var(--line);
+}
+.mp-friends-table th.mp-col-action,.mp-friends-table td.mp-col-action{
+  text-align:center;width:1%;white-space:nowrap;
+}
+.mp-friends-table td{padding:8px 6px;border-bottom:1px solid var(--line)}
+.mp-friends-table tr:last-child td{border-bottom:none}
 .mp-row-name{
   font-size:14px;font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:.5px;
-  flex:1;color:var(--text);
+  color:var(--text);
 }
 .mp-btn-accept{
   padding:6px 14px;border:none;background:var(--accent);color:#fff;

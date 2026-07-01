@@ -3321,10 +3321,8 @@ function showEliminated(){
   const sc=computeFinalScore(false);
   if(typeof window.saveFinalScore==="function") window.saveFinalScore(sc.total);
   const grade=sc.total>=750?t('result.grade.elite')||'ÉLITE':sc.total>=550?t('result.grade.very_good')||'MUY BUENO':sc.total>=350?t('result.grade.good')||'BUENO':t('result.grade.improvable')||'MEJORABLE';
-  // Run encadenada según la ronda alcanzada:
-  // Cuartos (1) → 1 slot, Semis (2) → 2 slots, Final (3) → 3 slots
-  const chainSlotsByRound={1:1, 2:2, 3:3};
-  const slots=chainSlotsByRound[knockoutRound]||0;
+  // Run encadenada: nº de jugadores conservados según nivel de mejora (mín. octavos alcanzados)
+  const slots=getChainSlots();
   const chainBtn=slots>0
     ?`<button class="modal-btn" onclick="document.getElementById('matchOverlay').innerHTML='';showChainRunModal()">
         ${(t('result.chain_keep')||'🔗 CONSERVAR {0} JUGADOR{1}').replace('{0}',slots).replace('{1}',slots>1?'ES':'')}
@@ -3853,11 +3851,11 @@ function showToast(msg, cls){
 
 /* ========= CHAIN RUN SYSTEM ========= */
 function getChainSlots(){
-  // Slots based on best round reached: octavos=1, cuartos=2, semis=3
-  if(bestRoundReached>=3) return 3; // semis or final
-  if(bestRoundReached>=2) return 2; // cuartos
-  if(bestRoundReached>=1) return 1; // octavos
-  return 0;
+  // Requiere haber llegado como mínimo a octavos para poder conservar jugadores.
+  // El número de jugadores conservados depende del nivel de la mejora "Run Encadenada"
+  // (mejoras > perfil), igual que el resto de mejoras: nivel 0 = 1 jugador, hasta nivel 5 = 6.
+  if(bestRoundReached<1) return 0;
+  return 1 + (window._upgradeCache.chain||0);
 }
 function showChainRunModal(){
   const slots=getChainSlots();
@@ -5595,8 +5593,8 @@ async function loadUserUpgradeLevel(id){
 (function(){
   try{
     const saved=localStorage.getItem('_g2g_upgrades');
-    window._upgradeCache=saved?JSON.parse(saved):{bench:0,subs:0,scout:0};
-  }catch(e){ window._upgradeCache={bench:0,subs:0,scout:0}; }
+    window._upgradeCache=saved?JSON.parse(saved):{bench:0,subs:0,scout:0,chain:0};
+  }catch(e){ window._upgradeCache={bench:0,subs:0,scout:0,chain:0}; }
 })();
 
 let _upgradeListener=null; // referencia al listener para poder cancelarlo
@@ -5613,6 +5611,7 @@ function startUpgradeListener(uid){
         bench: upgs.bench||0,
         subs:  upgs.subs||0,
         scout: upgs.scout||0,
+        chain: upgs.chain||0,
       };
       try{ localStorage.setItem('_g2g_upgrades',JSON.stringify(window._upgradeCache)); }catch(e){}
     }, e=>{ console.warn('upgrade listener error:',e); });
@@ -5620,7 +5619,7 @@ function startUpgradeListener(uid){
 
 function stopUpgradeListener(){
   if(_upgradeListener){ _upgradeListener(); _upgradeListener=null; }
-  window._upgradeCache={bench:0,subs:0,scout:0};
+  window._upgradeCache={bench:0,subs:0,scout:0,chain:0};
   try{ localStorage.removeItem('_g2g_upgrades'); }catch(e){}
 }
 
@@ -5630,7 +5629,7 @@ async function refreshUpgradeCache(){
   try{
     const snap=await window._fbDb.collection('users').doc(window._fbAuth.currentUser.uid).get();
     const upgs=(snap.exists&&snap.data().upgrades)||{};
-    window._upgradeCache={bench:upgs.bench||0,subs:upgs.subs||0,scout:upgs.scout||0};
+    window._upgradeCache={bench:upgs.bench||0,subs:upgs.subs||0,scout:upgs.scout||0,chain:upgs.chain||0};
     try{ localStorage.setItem('_g2g_upgrades',JSON.stringify(window._upgradeCache)); }catch(e){}
   }catch(e){}
 }
@@ -5670,6 +5669,13 @@ const UPGRADE_DEFS = [
     baseCost: 5, maxLevel: 5, baseValue: 0,
     tooltip: (lvl) => `${lvl*10}% ${t("upgrade.recovery_desc")}`
   },
+  {
+    id: 'chain', icon: '🔗',
+    get name(){ return window.t?window.t('upgrade.chain'):'RUN ENCADENADA'; },
+    get desc(){ return window.t?window.t('upgrade.chain_desc'):'JUGADORES CONSERVADOS AL ENCADENAR RUN'; },
+    baseCost: 5, maxLevel: 5, baseValue: 1,
+    tooltip: (lvl) => `${1+lvl} ${t("upgrade.chain_desc")}`
+  },
 ];
 
 // Coste acumulado para subir al nivel N (0-indexed: coste para ir de N-1 a N)
@@ -5701,6 +5707,7 @@ const UPGRADE_ICONS = {
   subs:     '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M7 16l-4-4 4-4"/><path d="M17 8l4 4-4 4"/><line x1="3" y1="12" x2="21" y2="12"/></svg>',
   scout:    '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/><path d="M11 8v6M8 11h6"/></svg>',
   recovery: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>',
+  chain:    '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="2" y="8" width="8" height="8" rx="4"/><rect x="14" y="8" width="8" height="8" rx="4"/><line x1="9" y1="12" x2="15" y2="12"/></svg>',
 };
 
 // Renderizar la pestaña de mejoras
@@ -6535,15 +6542,24 @@ async function renderFriendsList(){
       return;
     }
     list.innerHTML='';
+    const table=document.createElement('table');
+    table.className='mp-friends-table';
+    table.innerHTML=`<thead><tr>
+        <th data-i18n="mp.col_friend">${tk('mp.col_friend')}</th>
+        <th class="mp-col-action"></th>
+        <th class="mp-col-action"></th>
+      </tr></thead><tbody></tbody>`;
+    const tbody=table.querySelector('tbody');
     friends.forEach(f=>{
-      const row=document.createElement('div');
-      row.className='mp-row';
+      const row=document.createElement('tr');
+      row.className='mp-friend-row';
       row.innerHTML=`
-        <span class="mp-row-name">${mpEsc(f.username||'???')}</span>
-        <button class="mp-challenge-btn mp-btn-challenge" data-uid="${f.uid}" data-username="${mpEsc(f.username||'')}" disabled title="${tk('mp.coming_soon')}">${tk('mp.challenge')}</button>
-        <button class="mp-remove-btn mp-btn-remove" data-id="${f.id}" data-username="${mpEsc(f.username||'')}" title="${tk('mp.remove')}">✕</button>`;
-      list.appendChild(row);
+        <td class="mp-row-name">${mpEsc(f.username||'???')}</td>
+        <td class="mp-col-action"><button class="mp-challenge-btn mp-btn-challenge" data-uid="${f.uid}" data-username="${mpEsc(f.username||'')}" disabled title="${tk('mp.coming_soon')}">${tk('mp.challenge')}</button></td>
+        <td class="mp-col-action"><button class="mp-remove-btn mp-btn-remove" data-id="${f.id}" data-username="${mpEsc(f.username||'')}" title="${tk('mp.remove')}">✕</button></td>`;
+      tbody.appendChild(row);
     });
+    list.appendChild(table);
     list.querySelectorAll('.mp-remove-btn').forEach(b=>b.addEventListener('click',()=>mpRemoveFriend(b.dataset.id, b.dataset.username)));
   }catch(e){
     console.error('renderFriendsList error:',e);
