@@ -70,7 +70,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;600;700&family=Press+Start+2P&display=swap" rel="stylesheet">
 <script src="https://unpkg.com/@phosphor-icons/web@2.1.1/src/index.js"></script>
-<script src="i18n.js"></script>
+<script>
+  // Cache-busting: force fresh i18n.js on every page load/refresh
+  document.write('<script src="i18n.js?v=' + Date.now() + '"><\/script>');
+</script>
 <script>
   // Cache-busting: force fresh CSS on every page load/refresh
   document.write('<link rel="stylesheet" href="style.css?v=' + Date.now() + '">');
@@ -510,7 +513,7 @@
         </div>
       </div>
       <div id="benchSection" style="display:none">
-        <div class="bench-title"><span data-i18n="draft.bench">BANQUILLO</span> 🪑 <span id="benchCounter">0/5</span></div>
+        <div class="bench-title"><i class="ph ph-bold ph-chair" style="font-size:16px;vertical-align:middle;margin-right:6px"></i><span data-i18n="draft.bench">BANQUILLO</span> <span id="benchCounter">0/5</span></div>
         <div id="benchTable"></div>
       </div>
     </div>

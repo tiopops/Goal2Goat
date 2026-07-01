@@ -4526,6 +4526,9 @@ function initFirebaseAuth(){
       window.useFixedTeamName=!!data.useFixedTeamName;
       // Sincronizar nombre del equipo para el contador de convocados
       if(window.preferredTeamName) window._currentTeamName=window.preferredTeamName.toUpperCase();
+      // Si el draft ya llegó a 11/11 antes de que esto resolviera, repintar
+      // el título para que muestre el nombre de equipo en vez del genérico.
+      if(typeof updateDraftCounter==='function') updateDraftCounter();
       // Cargar idioma guardado
       if(data.lang && (data.lang==='es'||data.lang==='en')){
         window.LANG=data.lang;
@@ -6649,20 +6652,28 @@ function computeDuelMatchResult(challengerSquad, opponentSquad, challengerStrate
   if(opponentSquad.skills&&opponentSquad.skills.remontada&&challengerGoals>=opponentGoals+2){
     opponentGoals=poissonSample(oppLambda*1.35);
   }
-  return {challengerGoals, opponentGoals};
+  // Fatiga real de los titulares tras el partido — misma fórmula que en solitario
+  const challengerFatigue={}, opponentFatigue={};
+  (challengerSquad.pitch||[]).slice(0,11).forEach(p=>{
+    challengerFatigue[p.name]=Math.max(0, Math.round((p.fatigue===undefined?100:p.fatigue)-(2+Math.random()*4)));
+  });
+  (opponentSquad.pitch||[]).slice(0,11).forEach(p=>{
+    opponentFatigue[p.name]=Math.max(0, Math.round((p.fatigue===undefined?100:p.fatigue)-(2+Math.random()*4)));
+  });
+  return {challengerGoals, opponentGoals, challengerFatigue, opponentFatigue};
 }
 
 /* Pantalla de selección de estrategia para el partido actual del duelo */
 function mpShowDuelStrategyScreen(){
   selectedMatchStrategy=null;
-  document.body.innerHTML=`
+  mpShowDuelOverlay(`
     <div style="min-height:100vh;background:#0d0d0d;color:#fff;padding:24px 16px;display:flex;flex-direction:column;align-items:center;gap:14px">
       <div style="font-family:'Bebas Neue',Impact,sans-serif;font-size:20px;color:#7ec3ff">${(tk('mp.duel_match_of')||'PARTIDO {0} DE 5').replace('{0}', String(window._duelMatchIndex+1))}</div>
       <div style="font-size:13px;color:#aaa">${tk('mp.duel_vs')||'Contra'}: ${mpEsc(window._duelOpponentUsername||'')}</div>
       <div id="strategySelector" style="width:100%;max-width:480px"></div>
       <button id="duelConfirmStrategyBtn" style="margin-top:14px;padding:10px 26px;background:var(--gold);color:#000;border:none;font-family:'Bebas Neue',Impact,sans-serif;font-size:16px;letter-spacing:1px;cursor:pointer;border-radius:4px">${tk('mp.duel_confirm_strategy')||'CONFIRMAR Y ESPERAR AL RIVAL'}</button>
       <div id="duelStrategyWaitMsg" style="display:none;font-size:13px;color:#aaa;margin-top:6px">${tk('mp.duel_waiting_strategy')||'Esperando la estrategia del rival...'}</div>
-    </div>`;
+    </div>`);
   renderStrategySelector();
   const btn=document.getElementById('duelConfirmStrategyBtn');
   if(btn) btn.addEventListener('click', mpConfirmDuelStrategy);
@@ -6717,17 +6728,149 @@ function mpShowDuelMatchResult(result){
   const outcome=myGoals>rivalGoals?(tk('mp.duel_you_won')||'¡GANASTE ESTE PARTIDO!')
     :myGoals<rivalGoals?(tk('mp.duel_you_lost')||'Has perdido este partido')
     :(tk('mp.duel_draw')||'Empate');
-  document.body.innerHTML=`
+  mpShowDuelOverlay(`
     <div style="min-height:100vh;background:#0d0d0d;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px">
       <div style="font-family:'Bebas Neue',Impact,sans-serif;font-size:18px;color:#7ec3ff">${(tk('mp.duel_match_of')||'PARTIDO {0} DE 5').replace('{0}', String(window._duelMatchIndex+1))}</div>
       <div style="font-family:'Bebas Neue',Impact,sans-serif;font-size:48px">${myGoals} - ${rivalGoals}</div>
       <div style="font-size:14px;color:#aaa">${outcome}</div>
       <button id="duelExitBtn" style="max-width:260px;padding:10px 22px;margin-top:16px;background:#3a1a1a;border:1px solid #d94a4a;color:#ff7e7e;font-family:'Bebas Neue',Impact,sans-serif;font-size:14px;letter-spacing:1px;border-radius:4px;cursor:pointer">${tk('mp.duel_exit')||'SALIR DEL DUELO'}</button>
-    </div>`;
+    </div>`);
   const exitBtn=document.getElementById('duelExitBtn');
   if(exitBtn) exitBtn.addEventListener('click', mpAbandonDuel);
-  // El bucle hasta 5 partidos, la ventana de cambios entre partidos y el
-  // resumen final llegan en la siguiente entrega.
+  // Aplicar la fatiga real calculada por el retador a mi propia plantilla local
+  const myFatigueMap=(window._duelRole==='challenger'?result.challengerFatigue:result.opponentFatigue)||{};
+  usedPlayers.forEach(p=>{ if(myFatigueMap[p.name]!==undefined) p.fatigue=myFatigueMap[p.name]; });
+  setTimeout(()=>{ mpAdvanceAfterMatch(); }, 3500);
+}
+
+/* Tras ver el resultado: si quedan partidos, ventana de 15s para tocar
+   convocados/banquillo; si era el 5º, resumen final. */
+function mpAdvanceAfterMatch(){
+  if(window._duelMatchIndex>=4){
+    mpShowDuelFinalSummary();
+  }else{
+    mpShowBetweenMatchWindow();
+  }
+}
+
+/* Ventana entre partidos: revela el banquillo/convocados reales del
+   juego (oculto tras el overlay) durante 15s para hacer cambios. */
+function mpShowBetweenMatchWindow(){
+  mpHideDuelOverlay();
+  document.getElementById("benchSection").style.display="block";
+  document.getElementById("moraleSection").style.display="block";
+  const rivalBox=document.getElementById("rivalBox"); if(rivalBox) rivalBox.style.display="none";
+  const matchHistoryBox=document.getElementById("matchHistoryBox"); if(matchHistoryBox) matchHistoryBox.style.display="none";
+  const playBtn=document.getElementById("playMatchBtn"); if(playBtn) playBtn.style.display="none";
+  refreshPitchRatings();
+  updateConvocadosTable();
+  updateBenchTable();
+  renderMorale();
+  let bar=document.getElementById('duelBetweenBar');
+  if(!bar){
+    bar=document.createElement('div');
+    bar.id='duelBetweenBar';
+    bar.style.cssText='position:fixed;top:0;left:0;right:0;z-index:70000;background:#1a2a3a;border-bottom:2px solid #4a90d9;color:#7ec3ff;text-align:center;padding:6px 10px;font-family:"Bebas Neue",Impact,sans-serif;letter-spacing:1px;font-size:14px;display:flex;align-items:center;justify-content:center;gap:14px';
+    document.body.prepend(bar);
+  }
+  bar.style.display='flex';
+  bar.innerHTML=`<span id="duelBetweenText"></span><button id="duelNextMatchBtn" style="cursor:pointer;color:#111;background:var(--gold);border:none;font-family:'Bebas Neue',Impact,sans-serif;font-size:13px;padding:4px 14px;border-radius:3px">${tk('mp.duel_next_match')||'SIGUIENTE PARTIDO'}</button>`;
+  const deadline=Date.now()+15000;
+  const textEl=document.getElementById('duelBetweenText');
+  const nextBtn=document.getElementById('duelNextMatchBtn');
+  let sent=false;
+  const sendReady=async()=>{
+    if(sent) return; sent=true;
+    if(_duelTimerInterval){ clearInterval(_duelTimerInterval); _duelTimerInterval=null; }
+    bar.style.display='none';
+    document.getElementById("benchSection").style.display="none";
+    document.getElementById("moraleSection").style.display="none";
+    await mpSubmitNextMatchSquad();
+  };
+  if(nextBtn) nextBtn.addEventListener('click', sendReady);
+  const tick=()=>{
+    const msLeft=deadline-Date.now();
+    if(msLeft<=0){ sendReady(); return; }
+    if(textEl) textEl.textContent=(tk('mp.duel_between_time')||'⏱️ Cambios: {0}s').replace('{0}', String(Math.ceil(msLeft/1000)));
+  };
+  tick();
+  _duelTimerInterval=setInterval(tick,1000);
+}
+
+/* Reenvía mi plantilla actualizada (tras posibles cambios) y espera a
+   que el rival también esté listo para el siguiente partido. */
+async function mpSubmitNextMatchSquad(){
+  const db=window._fbDb;
+  if(!db||!window._duelId) return;
+  const squad={
+    pitch: usedPlayers.map(p=>({name:p.name, rating:p.rating, positions:p.positions, placedPos:p.placedPos, fatigue:(p.fatigue===undefined?100:p.fatigue)})),
+    bench: bench.map(p=>({name:p.name, rating:p.rating, positions:p.positions})),
+    formation: currentFormation,
+    teamStats:{...teamStats},
+    teamMorale: (typeof teamMorale!=='undefined')?teamMorale:0,
+    scorerStreaks: usedPlayers.reduce((acc,p)=>{ if(scorerStreaks[p.name]) acc[p.name]=scorerStreaks[p.name]; return acc; },{}),
+    skills: window._skillCache?{...window._skillCache}:{}
+  };
+  const squadField=window._duelRole==='challenger'?'challengerSquad':'opponentSquad';
+  const readyField=window._duelRole==='challenger'?`m${window._duelMatchIndex}_challengerNextReady`:`m${window._duelMatchIndex}_opponentNextReady`;
+  try{
+    await db.collection('duels').doc(window._duelId).update({ [squadField]: squad, [readyField]: true });
+  }catch(e){ console.error('mpSubmitNextMatchSquad error:',e); }
+  mpShowDuelOverlay(`
+    <div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;padding:20px">
+      <div style="font-family:'Bebas Neue',Impact,sans-serif;font-size:18px;color:#7ec3ff">${tk('mp.duel_waiting_next')||'Esperando al rival para el siguiente partido...'}</div>
+    </div>`);
+  const idx=window._duelMatchIndex;
+  const chalField=`m${idx}_challengerNextReady`, oppField=`m${idx}_opponentNextReady`;
+  const unsub=db.collection('duels').doc(window._duelId).onSnapshot(snap=>{
+    const d=snap.data();
+    if(!d) return;
+    if(d.status==='cancelled'){ unsub(); mpExitDuelMode(); location.reload(); return; }
+    if(d[chalField] && d[oppField]){
+      unsub();
+      window._duelMatchIndex=idx+1;
+      mpShowDuelStrategyScreen();
+    }
+  }, e=>console.error('mpSubmitNextMatchSquad watch error:',e));
+}
+
+/* Resumen final: solo vencedor + estadísticas globales de los 5 partidos. */
+async function mpShowDuelFinalSummary(){
+  const db=window._fbDb;
+  if(!db||!window._duelId) return;
+  let d={};
+  try{
+    const snap=await db.collection('duels').doc(window._duelId).get();
+    d=snap.data()||{};
+  }catch(e){ console.error('mpShowDuelFinalSummary error:',e); }
+  let myWins=0, rivalWins=0, myGoalsTotal=0, rivalGoalsTotal=0, draws=0;
+  for(let i=0;i<5;i++){
+    const r=d[`m${i}_result`];
+    if(!r) continue;
+    const myG=window._duelRole==='challenger'?r.challengerGoals:r.opponentGoals;
+    const rG=window._duelRole==='challenger'?r.opponentGoals:r.challengerGoals;
+    myGoalsTotal+=myG; rivalGoalsTotal+=rG;
+    if(myG>rG) myWins++; else if(myG<rG) rivalWins++; else draws++;
+  }
+  const outcome = myWins>rivalWins
+    ? (tk('mp.duel_final_won')||'¡HAS GANADO EL DUELO!')
+    : myWins<rivalWins
+      ? (tk('mp.duel_final_lost')||'Has perdido el duelo')
+      : (tk('mp.duel_final_tie')||'Duelo empatado');
+  mpShowDuelOverlay(`
+    <div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;text-align:center;padding:20px">
+      <div style="font-family:'Bebas Neue',Impact,sans-serif;font-size:26px;color:var(--gold)">${outcome}</div>
+      <div style="font-family:'Bebas Neue',Impact,sans-serif;font-size:20px">${myWins} - ${rivalWins} <span style="font-size:13px;color:#aaa">(${tk('mp.duel_final_matches')||'partidos ganados'})</span></div>
+      <div style="font-size:13px;color:#aaa">${tk('mp.duel_final_goals')||'Goles totales'}: ${myGoalsTotal} - ${rivalGoalsTotal}</div>
+      <div style="font-size:13px;color:#aaa">${tk('mp.duel_final_draws')||'Empates'}: ${draws}</div>
+      <button id="duelExitBtn" style="max-width:260px;padding:10px 22px;margin-top:16px;background:var(--gold);color:#000;border:none;font-family:'Bebas Neue',Impact,sans-serif;font-size:14px;letter-spacing:1px;border-radius:4px;cursor:pointer">${tk('mp.duel_finish')||'FINALIZAR'}</button>
+    </div>`);
+  const exitBtn=document.getElementById('duelExitBtn');
+  if(exitBtn) exitBtn.addEventListener('click', async()=>{
+    try{ await db.collection('duels').doc(window._duelId).update({status:'finished'}); }catch(e){}
+    mpExitDuelMode();
+    location.reload();
+  });
 }
 
 /* ════════════════════════════════════════════════════════════
@@ -6834,6 +6977,26 @@ let _duelTimerInterval=null;
 let _duelWatcherUnsub=null;
 
 /* Guarda el duelo en sessionStorage y recarga la página para entrar limpio */
+/* Overlay reutilizable para las pantallas del duelo — se superpone al
+   juego sin destruir el DOM, para poder revelar banquillo/convocados
+   reales durante la ventana entre partidos. */
+function mpShowDuelOverlay(html){
+  let ov=document.getElementById('duelOverlay');
+  if(!ov){
+    ov=document.createElement('div');
+    ov.id='duelOverlay';
+    ov.style.cssText='position:fixed;inset:0;z-index:80000;background:#0d0d0d;color:#fff;overflow-y:auto';
+    document.body.appendChild(ov);
+  }
+  ov.innerHTML=html;
+  ov.style.display='block';
+  return ov;
+}
+function mpHideDuelOverlay(){
+  const ov=document.getElementById('duelOverlay');
+  if(ov) ov.style.display='none';
+}
+
 function mpEnterDuelMode(duelId, duelData, myUid){
   const isChallenger=duelData.challengerId===myUid;
   const info={
@@ -6972,6 +7135,10 @@ async function mpOnDraftComplete(){
   if(_duelTimerInterval){ clearInterval(_duelTimerInterval); _duelTimerInterval=null; }
   const bar=document.getElementById('duelDraftTimerBar');
   if(bar) bar.style.display='none';
+  // En modo duelo startMatchPhase() no se ejecuta, así que este botón no
+  // se oculta por el camino normal — lo ocultamos aquí explícitamente.
+  const qb=document.getElementById("quickBuildWrap");
+  if(qb) qb.style.display="none";
   const db=window._fbDb;
   if(!db||!window._duelId) return;
   const squad={
@@ -7007,12 +7174,12 @@ async function mpOnDraftComplete(){
    duelo en tiempo real; cuando ambos están listos, Fase 3 (motor de
    partidos) tomará el relevo desde aquí. */
 function mpShowDuelWaitingScreen(){
-  document.body.innerHTML=`
+  mpShowDuelOverlay(`
     <div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;background:#0d0d0d;color:#fff;text-align:center;padding:20px">
       <i class="ph ph-bold ph-users" style="font-size:40px;color:#7b9cff"></i>
       <div style="font-family:'Bebas Neue',Impact,sans-serif;font-size:22px;letter-spacing:1px" id="duelWaitingText">${tk('mp.duel_waiting')||'Esperando a que tu rival termine su equipo...'}</div>
       <button id="duelExitBtn" style="max-width:260px;padding:10px 22px;margin-top:10px;background:#3a1a1a;border:1px solid #d94a4a;color:#ff7e7e;font-family:'Bebas Neue',Impact,sans-serif;font-size:16px;letter-spacing:1px;border-radius:4px;cursor:pointer">${tk('mp.duel_exit')||'SALIR DEL DUELO'}</button>
-    </div>`;
+    </div>`);
   const exitBtn=document.getElementById('duelExitBtn');
   if(exitBtn) exitBtn.addEventListener('click', mpAbandonDuel);
   const db=window._fbDb;
