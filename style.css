@@ -2089,6 +2089,9 @@ body.light-theme #achievementsList [style*="text-muted"]{
   font-size:14px;font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:.5px;
   color:var(--text);
 }
+.mp-stat-row{padding:5px 0;border-bottom:1px solid rgba(255,255,255,.06);display:flex;justify-content:space-between;gap:8px;color:var(--text-muted);font-size:12px}
+.mp-stat-row span:first-child{color:var(--text)}
+.mp-stat-row:last-child{border-bottom:none}
 .mp-btn-accept{
   padding:6px 14px;border:none;background:var(--accent);color:#fff;
   font-size:11px;cursor:pointer;font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:1px;transition:.15s;
