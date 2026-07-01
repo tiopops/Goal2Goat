@@ -327,6 +327,7 @@ function getScoutHint(team){
 const teamStats = { attack:0, defense:0, pace:0, passing:0, technique:0 };
 let selectedPlayer = null;
 let phase = "draft"; // draft | bench | ready
+const DUEL_DRAFT_SECONDS=90; // duración del draft sincronizado en duelos multijugador
 let usedPlayers = [];
 let bench = [];
 let draftedCount = 0;
@@ -6683,7 +6684,6 @@ async function mpRespondDuel(docId, accept){
    hace la Run Encadenada con 'g2g_inherited'. Así el draft arranca
    siempre limpio, sin arrastrar estado de una partida anterior.
    ════════════════════════════════════════════════════════════ */
-const DUEL_DRAFT_SECONDS=90;
 let _duelTimerInterval=null;
 let _duelWatcherUnsub=null;
 
