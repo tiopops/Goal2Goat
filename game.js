@@ -6615,6 +6615,8 @@ async function mpChallengeFriend(targetUid, targetUsername, btnEl){
       challengerId:user.uid, challengerUsername:myUsername,
       opponentId:targetUid, opponentUsername:targetUsername,
       status:'pending', createdAt:Date.now()
+    }).then(ref=>{
+      try{ sessionStorage.setItem('g2g_pending_challenge_id', ref.id); }catch(e){}
     });
     showToast((tk('mp.duel_sent')||'Desafío enviado a {0}').replace('{0}',targetUsername||''), 'toast-pos');
   }catch(e){
@@ -6713,9 +6715,18 @@ function startDuelWatcher(uid){
       let active=null;
       try{ active=JSON.parse(sessionStorage.getItem('g2g_duel_active')||'null'); }catch(e){}
       if(active) return;
+      // Solo reaccionar al desafío que YO envié en esta sesión — evita que duelos
+      // antiguos ya aceptados (de pruebas previas) vuelvan a arrastrar al jugador.
+      let pendingId=null;
+      try{ pendingId=sessionStorage.getItem('g2g_pending_challenge_id'); }catch(e){}
+      if(!pendingId) return;
       snap.docChanges().forEach(ch=>{
+        if(ch.doc.id!==pendingId) return;
         const d=ch.doc.data();
-        if(d.status==='accepted'){ mpEnterDuelMode(ch.doc.id, d, uid); }
+        if(d.status==='accepted'){
+          try{ sessionStorage.removeItem('g2g_pending_challenge_id'); }catch(e){}
+          mpEnterDuelMode(ch.doc.id, d, uid);
+        }
       });
     }, e=>console.error('startDuelWatcher error:',e));
 }
@@ -6766,6 +6777,7 @@ async function initDuelModeFromSession(){
 /* Salir de modo duelo (usado ante error o duelo cancelado/inexistente) */
 function mpExitDuelMode(){
   try{ sessionStorage.removeItem('g2g_duel_active'); }catch(e){}
+  try{ sessionStorage.removeItem('g2g_pending_challenge_id'); }catch(e){}
   window._duelId=null;
   if(_duelTimerInterval){ clearInterval(_duelTimerInterval); _duelTimerInterval=null; }
 }
@@ -6845,7 +6857,7 @@ function mpShowDuelWaitingScreen(){
     <div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;background:#0d0d0d;color:#fff;text-align:center;padding:20px">
       <i class="ph ph-bold ph-users" style="font-size:40px;color:#7b9cff"></i>
       <div style="font-family:'Bebas Neue',Impact,sans-serif;font-size:22px;letter-spacing:1px" id="duelWaitingText">${tk('mp.duel_waiting')||'Esperando a que tu rival termine su equipo...'}</div>
-      <button id="duelExitBtn" class="main-action-btn" style="max-width:260px;margin-top:10px;background:#3a1a1a;border:1px solid #d94a4a;color:#ff7e7e">${tk('mp.duel_exit')||'SALIR DEL DUELO'}</button>
+      <button id="duelExitBtn" style="max-width:260px;padding:10px 22px;margin-top:10px;background:#3a1a1a;border:1px solid #d94a4a;color:#ff7e7e;font-family:'Bebas Neue',Impact,sans-serif;font-size:16px;letter-spacing:1px;border-radius:4px;cursor:pointer">${tk('mp.duel_exit')||'SALIR DEL DUELO'}</button>
     </div>`;
   const exitBtn=document.getElementById('duelExitBtn');
   if(exitBtn) exitBtn.addEventListener('click', mpAbandonDuel);
