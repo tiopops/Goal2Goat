@@ -220,11 +220,36 @@ function tone(ctx, freq, start, dur, type, gainPeak, gainEnd){
   osc.start(ctx.currentTime+start);
   osc.stop(ctx.currentTime+start+dur+0.02);
 }
-function playSound(name){
+/* Aviso sonoro para cualquier cuenta atrás del juego: suena una vez por
+   segundo en los últimos 5 segundos, agudizándose cada vez; se resetea
+   solo (vía el propio parámetro de segundos) en cuanto el contador
+   vuelve a arrancar. 'key' evita que un timer que actualiza más rápido
+   de 1 vez por segundo dispare el aviso varias veces en el mismo segundo. */
+window._countdownBeepLast={};
+function checkCountdownBeep(secondsLeft, key){
+  const k=key||'default';
+  if(secondsLeft>=1 && secondsLeft<=5){
+    if(window._countdownBeepLast[k]!==secondsLeft){
+      window._countdownBeepLast[k]=secondsLeft;
+      playSound('countdown_tick', secondsLeft);
+    }
+  }else{
+    window._countdownBeepLast[k]=null; // fuera del rango de aviso: listo para la próxima cuenta atrás
+  }
+}
+
+function playSound(name, data){
   if(!audioEnabled) return;
   const ctx=getAudioCtx();
   if(!ctx) return;
   switch(name){
+    case 'countdown_tick': { // aviso de cuenta atrás — más agudo cada segundo (5..1)
+      const secLeft=(typeof data==='number')?data:1;
+      const step=Math.max(0, 5-secLeft); // 0 en el aviso de 5s, 4 en el de 1s
+      const freq=700+step*90;
+      tone(ctx, freq, 0, 0.09, 'square', 0.11, 0.0001);
+      break;
+    }
     case 'select': // simple menu click
       tone(ctx, 880, 0, 0.07, 'square', 0.08, 0.0001);
       break;
@@ -2769,9 +2794,10 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
   // ── HTML inicial — diseño match-modal ──
   overlay.innerHTML=`
   <div class="match-modal" style="overflow:hidden;display:flex;flex-direction:column;max-height:85vh">
+    ${window._duelId?`<div style="text-align:center;font-family:'Bebas Neue',Impact,sans-serif;font-size:14px;letter-spacing:1.5px;color:var(--gold);text-transform:uppercase;padding-bottom:4px">${(tk('mp.duel_match_of')||'PARTIDO {0} DE 5').replace('{0}', String(window._duelMatchIndex+1))}</div>`:''}
     <div class="match-header">
       <div class="match-side">
-        <span class="match-flag">🐐</span>
+        ${window._duelId?'<i class="ph ph-bold ph-user" style="font-size:22px;color:#4a90d9"></i>':'<span class="match-flag">🐐</span>'}
         <span class="match-team-name">${myTeamName}</span>
       </div>
       <div style="text-align:center;flex:0 0 auto">
@@ -2785,7 +2811,7 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
         </div>
       </div>
       <div class="match-side">
-        ${nextOpponent?flagEmoji(nextOpponent.name):'<span style="font-size:22px">👤</span>'}
+        ${window._duelId?'<i class="ph ph-bold ph-user" style="font-size:22px;color:#e74c3c"></i>':(nextOpponent?flagEmoji(nextOpponent.name):'<span style="font-size:22px">👤</span>')}
         <span class="match-team-name">${oppName}</span>
       </div>
     </div>
@@ -3798,6 +3824,13 @@ function showPressEventModal(event, callback){
   // so the result later carries no morale effect at all.
   const DURATION=8000;
   const fill=document.getElementById("pressTimerFill");
+  // Aviso sonoro en los últimos 5 segundos, igual que el resto de
+  // cuentas atrás del juego — se cancela si ya se respondió.
+  window._pressBeepTimers=(window._pressBeepTimers||[]).map(id=>{clearTimeout(id);});
+  window._pressBeepTimers=[5,4,3,2,1].map(secLeft=>setTimeout(()=>{
+    if(window._pressAnswered) return;
+    checkCountdownBeep(secLeft, 'pressConference');
+  }, DURATION-secLeft*1000));
   if(fill){
     // Force the browser to paint the initial width:100% state BEFORE
     // starting the transition — a single requestAnimationFrame can fire
@@ -6862,7 +6895,9 @@ function mpRenderStrategyAndBenchPhase(idx){
       mpConfirmStrategyAndSquad();
       return;
     }
-    if(labelEl) labelEl.textContent=`${matchLabel} — `+(tk('mp.duel_between_time')||'⏱️ {0}s').replace('{0}', String(Math.ceil(msLeft/1000)));
+    const secLeft=Math.ceil(msLeft/1000);
+    checkCountdownBeep(secLeft, 'duelStrategyBar');
+    if(labelEl) labelEl.textContent=`${matchLabel} — `+(tk('mp.duel_between_time')||'⏱️ {0}s').replace('{0}', String(secLeft));
     if(fillEl) fillEl.style.width=Math.max(0, msLeft/totalMs*100)+'%';
   };
   tick();
@@ -6954,11 +6989,11 @@ function generateDuelMatchSummary(myGoalEvents, rivalGoalEvents, myShots, rivalS
   const goalsHTML=`
   <div class="goals-columns">
     <div class="goals-col">
-      <div class="goals-col-header"><span class="flag-emoji goat-emoji">🐐</span> ${myLabel}</div>
+      <div class="goals-col-header"><i class="ph ph-bold ph-user" style="color:#4a90d9;vertical-align:middle;margin-right:2px"></i> ${myLabel}</div>
       <ul class="goals-list">${myGoalLines.length?myGoalLines.join(''):'<li class="no-goal">Sin goles</li>'}</ul>
     </div>
     <div class="goals-col">
-      <div class="goals-col-header">👤 ${mpEsc(opponentUsername)}</div>
+      <div class="goals-col-header"><i class="ph ph-bold ph-user" style="color:#e74c3c;vertical-align:middle;margin-right:2px"></i> ${mpEsc(opponentUsername)}</div>
       <ul class="goals-list">${oppGoalLines.length?oppGoalLines.join(''):'<li class="no-goal">Sin goles</li>'}</ul>
     </div>
   </div>`;
@@ -7009,14 +7044,6 @@ function mpAddDuelExitLinkToLiveMatch(){
   link.style.cssText='position:fixed;bottom:12px;right:12px;z-index:90000;cursor:pointer;color:#ff7e7e;background:#3a1a1a;border:1px solid #d94a4a;font-family:"Bebas Neue",Impact,sans-serif;font-size:14px;letter-spacing:.5px;padding:10px 16px;border-radius:5px';
   link.addEventListener('click', mpAbandonDuel);
   document.body.appendChild(link);
-
-  let badge=document.getElementById('duelMatchBadge');
-  if(badge) badge.remove();
-  badge=document.createElement('div');
-  badge.id='duelMatchBadge';
-  badge.textContent=(tk('mp.duel_match_of')||'PARTIDO {0} DE 5').replace('{0}', String(window._duelMatchIndex+1));
-  badge.style.cssText='position:fixed;bottom:16px;left:12px;z-index:90000;color:#7ec3ff;font-family:"Bebas Neue",Impact,sans-serif;font-size:11px;letter-spacing:.5px;opacity:.85;pointer-events:none;text-shadow:0 1px 3px rgba(0,0,0,.8)';
-  document.body.appendChild(badge);
 }
 
 /* Tras ver el resultado: si quedan partidos, ventana de 15s para tocar
@@ -7546,6 +7573,7 @@ function startDuelDraftTimer(){
       return;
     }
     const s=Math.ceil(msLeft/1000);
+    checkCountdownBeep(s, 'duelDraftBar');
     const mm=Math.floor(s/60), ss=s%60;
     textEl.textContent=(tk('mp.duel_draft_time')||'⏱️ Construye tu equipo: {0}:{1}')
       .replace('{0}', String(mm)).replace('{1}', String(ss).padStart(2,'0'));
