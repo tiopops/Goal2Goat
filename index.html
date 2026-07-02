@@ -613,7 +613,10 @@
       <button id="quickBuildBtn" class="main-action-btn quick-build-btn" data-i18n="draft.quick_team">EQUIPO RÁPIDO</button>
     </div>
     <div id="multiplayerWrap" style="display:none">
-      <button id="multiplayerBtn" class="main-action-btn" style="background:#1a2a3a;border:1px solid #4a90d9;color:#7ec3ff" data-i18n="mp.button">MULTIJUGADOR</button>
+      <div style="position:relative;display:inline-block;width:100%;max-width:340px">
+        <button id="multiplayerBtn" class="main-action-btn" style="background:#1a2a3a;border:1px solid #4a90d9;color:#7ec3ff;width:100%" data-i18n="mp.button">MULTIJUGADOR</button>
+        <span id="mpNotifBadge" style="display:none;position:absolute;top:-4px;right:-4px;width:14px;height:14px;background:#e74c3c;border:2px solid #0d0d0d;border-radius:50%"></span>
+      </div>
     </div>
     </div>
     <!-- Selection / roster modal goes here on mobile -->

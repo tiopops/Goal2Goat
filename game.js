@@ -4567,9 +4567,9 @@ function initFirebaseAuth(){
         if(badge) profileBtn.appendChild(badge);
       }
       if(settingsMenu) settingsMenu.style.display="none";
-      // Botón multijugador: solo visible con login + debug mode activo
+      // Botón multijugador: visible para cualquier usuario con sesión iniciada
       const mpWrap=$id('multiplayerWrap');
-      if(mpWrap) mpWrap.style.display=(window.CHEATS_ACTIVE)?'flex':'none';
+      if(mpWrap) mpWrap.style.display='flex';
       // Mostrar botón de tickets en desktop
       const hBtn=$id("headerTicketBtn"); if(hBtn) hBtn.style.display="";
       const pun=$id("profileUsername"); if(pun) pun.textContent=username;
@@ -4598,6 +4598,7 @@ function initFirebaseAuth(){
       startAchievementsListener(user.uid);
       // Vigilante de duelos salientes (detecta cuando el rival acepta)
       startDuelWatcher(user.uid);
+      startMpNotificationListener(user.uid);
     }else{
       if(authBtn)    authBtn.style.display="";
       if(profileBtn) profileBtn.style.display="none";
@@ -4607,6 +4608,7 @@ function initFirebaseAuth(){
       // Limpiar cache de mejoras al cerrar sesión
       stopUpgradeListener();
       stopDuelWatcher();
+      stopMpNotificationListener();
       window.currentUsername=null;
       window.preferredTeamName="";
       window.useFixedTeamName=false;
@@ -4698,9 +4700,9 @@ function initFirebaseAuth(){
             // Mostrar selector de idioma solo con cheats activos
             // langSelectorWrap is always visible (removed cheats gate)
             if(window.CHEATS_ACTIVE){const pse=$id('pstat-scratch-pts');if(pse)pse.textContent=100;}
-            // Botón multijugador: solo visible con login + debug mode activo
+            // Botón multijugador: visible para cualquier usuario con sesión iniciada
             const mpWrap=$id('multiplayerWrap');
-            if(mpWrap) mpWrap.style.display=(window.CHEATS_ACTIVE&&auth.currentUser)?'flex':'none';
+            if(mpWrap) mpWrap.style.display=auth.currentUser?'flex':'none';
             showToast(window.CHEATS_ACTIVE?"⚙️ Cheats ON — ganas todos, tickets 3/3, pts 100":"⚙️ Cheats OFF — juego normal","toast-pos");
           });
         }
@@ -7471,6 +7473,41 @@ function startDuelWatcher(uid){
 }
 function stopDuelWatcher(){
   if(_duelWatcherUnsub){ _duelWatcherUnsub(); _duelWatcherUnsub=null; }
+}
+
+/* Aviso (circulito rojo) en el botón MULTIJUGADOR cuando hay una
+   solicitud de amistad o un desafío de duelo pendientes, sin necesidad
+   de abrir el modal. Un solo where por consulta, filtro en JS. */
+let _mpNotifFriendsUnsub=null, _mpNotifDuelsUnsub=null;
+let _mpNotifState={friends:false, duels:false};
+function mpUpdateNotifBadge(){
+  const badge=document.getElementById('mpNotifBadge');
+  if(!badge) return;
+  badge.style.display=(_mpNotifState.friends||_mpNotifState.duels)?'block':'none';
+}
+function startMpNotificationListener(uid){
+  stopMpNotificationListener();
+  const db=window._fbDb;
+  if(!db) return;
+  _mpNotifFriendsUnsub=db.collection('friends')
+    .where('friendId','==',uid)
+    .onSnapshot(snap=>{
+      _mpNotifState.friends=snap.docs.some(d=>d.data().status==='pending');
+      mpUpdateNotifBadge();
+    }, e=>console.error('mpNotif friends error:',e));
+  _mpNotifDuelsUnsub=db.collection('duels')
+    .where('opponentId','==',uid)
+    .onSnapshot(snap=>{
+      _mpNotifState.duels=snap.docs.some(d=>d.data().status==='pending');
+      mpUpdateNotifBadge();
+    }, e=>console.error('mpNotif duels error:',e));
+}
+function stopMpNotificationListener(){
+  if(_mpNotifFriendsUnsub){ _mpNotifFriendsUnsub(); _mpNotifFriendsUnsub=null; }
+  if(_mpNotifDuelsUnsub){ _mpNotifDuelsUnsub(); _mpNotifDuelsUnsub=null; }
+  _mpNotifState={friends:false, duels:false};
+  const badge=document.getElementById('mpNotifBadge');
+  if(badge) badge.style.display='none';
 }
 
 /* Al cargar la página: si hay un duelo activo en sessionStorage, retomarlo
