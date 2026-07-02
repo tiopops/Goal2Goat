@@ -238,6 +238,34 @@ function checkCountdownBeep(secondsLeft, key){
   }
 }
 
+/* Mantiene una barra fija pegada justo debajo del header mientras este
+   es visible, y la sube a top:0 en cuanto el header sale de la vista al
+   hacer scroll. Reutilizable por cualquier barra del duelo (draft,
+   gestión entre partidos...) — mismo comportamiento en todas. */
+window._mpStickyBarHandlers=window._mpStickyBarHandlers||{};
+function mpAttachStickyBarScroll(barId){
+  const headerEl=document.getElementById('appHeader');
+  const update=()=>{
+    const b=document.getElementById(barId);
+    if(!b) return;
+    if(!headerEl){ b.style.top='0px'; return; }
+    const rect=headerEl.getBoundingClientRect();
+    b.style.top=Math.max(0, rect.bottom)+'px';
+  };
+  if(window._mpStickyBarHandlers[barId]){
+    window.removeEventListener('scroll', window._mpStickyBarHandlers[barId]);
+  }
+  window._mpStickyBarHandlers[barId]=update;
+  window.addEventListener('scroll', update, {passive:true});
+  update();
+}
+function mpDetachStickyBarScroll(barId){
+  if(window._mpStickyBarHandlers[barId]){
+    window.removeEventListener('scroll', window._mpStickyBarHandlers[barId]);
+    window._mpStickyBarHandlers[barId]=null;
+  }
+}
+
 function playSound(name, data){
   if(!audioEnabled) return;
   const ctx=getAudioCtx();
@@ -4546,6 +4574,41 @@ function initFirebaseAuth(){
     }catch(err){setErr('loginGlobalErr',fbErr(err.code));setBtnLoading('loginSubmitBtn',false);}
   };
 
+  /* ─── RECUPERAR CONTRASEÑA ─── */
+  window.submitPasswordReset=async function(){
+    const identifier=($id("loginIdentifier")||{}).value?.trim()||"";
+    setErr('loginIdentifierErr',''); setErr('loginGlobalErr','');
+    const msgEl=$id('loginResetMsg'); if(msgEl){ msgEl.style.display='none'; msgEl.textContent=''; }
+    if(!identifier){
+      setErr('loginIdentifierErr', window.t?window.t('auth.err.reset_need_identifier'):'Escribe tu usuario o email arriba para recuperar la contraseña.');
+      return;
+    }
+    const link=$id('forgotPasswordLink');
+    const originalText=link?link.textContent:'';
+    if(link) link.textContent=window.t?window.t('auth.sending'):'Enviando...';
+    try{
+      let email=identifier;
+      if(!identifier.includes('@')){
+        const snap=await db.collection('users').where('username_lower','==',identifier.toLowerCase()).get();
+        if(snap.empty){
+          setErr('loginIdentifierErr', window.t?window.t('auth.err.user_not_found'):'Usuario no encontrado.');
+          if(link) link.textContent=originalText;
+          return;
+        }
+        email=snap.docs[0].data().email;
+      }
+      await auth.sendPasswordResetEmail(email);
+      if(msgEl){
+        msgEl.textContent=window.t?window.t('auth.reset_sent'):'Te hemos enviado un correo para restablecer tu contraseña.';
+        msgEl.style.display='block';
+      }
+    }catch(err){
+      setErr('loginGlobalErr', fbErr(err.code));
+    }finally{
+      if(link) link.textContent=originalText;
+    }
+  };
+
   /* ─── LOGOUT ─── */
   window.authLogout=async function(){await auth.signOut();};
 
@@ -4934,6 +4997,7 @@ function initFirebaseAuth(){
   wire("tabLogin",         ()=>window.switchAuthTab("login"));
   wire("tabRegister",      ()=>window.switchAuthTab("register"));
   wire("loginSubmitBtn",   ()=>window.submitLogin());
+  wire("forgotPasswordLink", ()=>window.submitPasswordReset());
   wire("regSubmitBtn",     ()=>window.submitRegister());
 
   // Enter key support for auth forms
@@ -6870,20 +6934,7 @@ function mpRenderStrategyAndBenchPhase(idx){
       </div>`;
     document.body.appendChild(bar);
   }
-  const headerEl=document.getElementById('appHeader');
-  const mpUpdateDuelBarPosition=()=>{
-    const b=document.getElementById('duelBetweenBar');
-    if(!b) return;
-    if(!headerEl){ b.style.top='0px'; return; }
-    const rect=headerEl.getBoundingClientRect();
-    // Mientras el header sea visible, la barra va justo debajo; en
-    // cuanto el header sale de la vista al hacer scroll, sube a top:0.
-    b.style.top=Math.max(0, rect.bottom)+'px';
-  };
-  window.removeEventListener('scroll', window._mpDuelBarScrollHandler||(()=>{}));
-  window._mpDuelBarScrollHandler=mpUpdateDuelBarPosition;
-  window.addEventListener('scroll', mpUpdateDuelBarPosition, {passive:true});
-  mpUpdateDuelBarPosition();
+  mpAttachStickyBarScroll('duelBetweenBar');
   bar.style.display='flex';
   const totalMs=30000;
   const deadline=Date.now()+totalMs;
@@ -6912,7 +6963,7 @@ async function mpConfirmStrategyAndSquad(){
   playSound('select');
   if(_duelTimerInterval){ clearInterval(_duelTimerInterval); _duelTimerInterval=null; }
   const bar=document.getElementById('duelBetweenBar'); if(bar) bar.style.display='none';
-  if(window._mpDuelBarScrollHandler){ window.removeEventListener('scroll', window._mpDuelBarScrollHandler); window._mpDuelBarScrollHandler=null; }
+  mpDetachStickyBarScroll('duelBetweenBar');
   const db=window._fbDb;
   if(!db||!window._duelId) return;
   const btn=document.getElementById('duelConfirmStrategyBtn');
@@ -7586,7 +7637,7 @@ function startDuelDraftTimer(){
   if(!bar){
     bar=document.createElement('div');
     bar.id='duelDraftTimerBar';
-    bar.style.cssText='position:fixed;top:0;left:0;right:0;z-index:70000;background:#1a2a3a;border-bottom:2px solid #4a90d9;color:#7ec3ff;text-align:center;padding:6px 10px;font-family:"Bebas Neue",Impact,sans-serif;letter-spacing:1px;font-size:15px;display:flex;align-items:center;justify-content:center;gap:14px';
+    bar.style.cssText='position:fixed;left:0;right:0;z-index:70000;background:#1a2a3a;border-bottom:2px solid #4a90d9;color:#7ec3ff;text-align:center;padding:6px 10px;font-family:"Bebas Neue",Impact,sans-serif;letter-spacing:1px;font-size:15px;display:flex;align-items:center;justify-content:center;gap:14px';
     const span=document.createElement('span');
     span.id='duelDraftTimerText';
     const exitLink=document.createElement('span');
@@ -7596,8 +7647,9 @@ function startDuelDraftTimer(){
     exitLink.addEventListener('click', mpAbandonDuel);
     bar.appendChild(span);
     bar.appendChild(exitLink);
-    document.body.prepend(bar);
+    document.body.appendChild(bar);
   }
+  mpAttachStickyBarScroll('duelDraftTimerBar');
   const textEl=document.getElementById('duelDraftTimerText')||bar;
   bar.style.display='flex';
   const tick=()=>{
@@ -7625,6 +7677,7 @@ async function mpOnDraftComplete(){
   if(_duelTimerInterval){ clearInterval(_duelTimerInterval); _duelTimerInterval=null; }
   const bar=document.getElementById('duelDraftTimerBar');
   if(bar) bar.style.display='none';
+  mpDetachStickyBarScroll('duelDraftTimerBar');
   // En modo duelo startMatchPhase() no se ejecuta, así que este botón no
   // se oculta por el camino normal — lo ocultamos aquí explícitamente.
   const qb=document.getElementById("quickBuildWrap");

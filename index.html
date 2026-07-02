@@ -452,7 +452,11 @@
         <input type="password" id="loginPassword" data-i18n-placeholder="auth.password_ph" placeholder="Contraseña" autocomplete="current-password">
         <span class="auth-error" id="loginPasswordErr"></span>
       </div>
+      <div style="text-align:right;margin:-6px 0 8px">
+        <span id="forgotPasswordLink" style="cursor:pointer;font-size:12px;color:var(--text-muted);text-decoration:underline" data-i18n="auth.forgot_password">¿Olvidaste tu contraseña?</span>
+      </div>
       <span class="auth-error auth-error-global" id="loginGlobalErr"></span>
+      <span class="auth-error-global" id="loginResetMsg" style="display:none;color:var(--accent);font-size:12px;margin-top:4px"></span>
       <button class="auth-submit-btn" id="loginSubmitBtn" data-i18n="auth.submit_login">ENTRAR</button>
     </div>
     <!-- REGISTER -->
@@ -613,8 +617,8 @@
       <button id="quickBuildBtn" class="main-action-btn quick-build-btn" data-i18n="draft.quick_team">EQUIPO RÁPIDO</button>
     </div>
     <div id="multiplayerWrap" style="display:none">
-      <div style="position:relative;display:inline-block;width:100%;max-width:340px">
-        <button id="multiplayerBtn" class="main-action-btn" style="background:#1a2a3a;border:1px solid #4a90d9;color:#7ec3ff;width:100%" data-i18n="mp.button">MULTIJUGADOR</button>
+      <div id="multiplayerBtnWrap" style="position:relative;flex:1 1 auto;max-width:340px">
+        <button id="multiplayerBtn" class="main-action-btn" style="background:#1a2a3a;border:1px solid #4a90d9;color:#7ec3ff;width:100%;max-width:none" data-i18n="mp.button">MULTIJUGADOR</button>
         <span id="mpNotifBadge" style="display:none;position:absolute;top:-4px;right:-4px;width:14px;height:14px;background:#e74c3c;border:2px solid #0d0d0d;border-radius:50%"></span>
       </div>
     </div>
