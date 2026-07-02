@@ -2671,14 +2671,14 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
   const CICONS={yellow:'🟨',yellow2:'🟨🟨',double_yellow:'🟨🟥',red:'🟥'};
   if(newCards&&newCards.length){
     newCards.forEach(c=>allEvents.push({
-      minute:Math.floor(5+Math.random()*90),
+      minute:c.minute!==undefined?c.minute:Math.floor(5+Math.random()*90),
       type:'card',icon:CICONS[c.type]||'🟨',
       text:`<strong>${c.player.name}</strong>`
     }));
   }
   if(newInjuries&&newInjuries.length){
     newInjuries.forEach(p=>{
-      const injMin=Math.floor(20+Math.random()*65);
+      const injMin=p.minute!==undefined?p.minute:Math.floor(20+Math.random()*65);
       // Lesión
       allEvents.push({
         minute:injMin,
@@ -2687,15 +2687,19 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
       });
       // Tarjeta al rival en el mismo minuto (falta que causó la lesión)
       if(p.injury&&p.injury.foulCard){
-        const oppPool=nextOpponent?nextOpponent.players:[];
-        const fouler=oppPool[Math.floor(Math.random()*oppPool.length)];
-        if(fouler){
+        let foulerName=p.foulerName;
+        if(!foulerName){
+          const oppPool=nextOpponent?nextOpponent.players:[];
+          const fouler=oppPool[Math.floor(Math.random()*oppPool.length)];
+          foulerName=fouler?fouler.name:null;
+        }
+        if(foulerName){
           const cardIcon=CICONS[p.injury.foulCard]||'🟨';
           allEvents.push({
             minute:injMin, // mismo minuto que la lesión
             type:'oppcard',
             icon:cardIcon,
-            text:`<strong>${fouler.name}</strong> <span style="font-size:10px;color:#e74c3c">(falta sobre ${p.name})</span>`
+            text:`<strong>${foulerName}</strong> <span style="font-size:10px;color:#e74c3c">(falta sobre ${p.name})</span>`
           });
         }
       }
@@ -2706,7 +2710,7 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
     const CICONS={yellow:'🟨',double_yellow:'🟨🟥',red:'🟥'};
     if(oppEvents.injuries&&oppEvents.injuries.length){
       oppEvents.injuries.forEach(p=>{
-        const injMin=Math.floor(20+Math.random()*65);
+        const injMin=p.minute!==undefined?p.minute:Math.floor(20+Math.random()*65);
         // Lesión del rival (feed derecha)
         allEvents.push({
           minute:injMin,
@@ -2714,26 +2718,33 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
           text:`<strong>${p.name}</strong>`
         });
         // Tarjeta a mi jugador por la falta (feed izquierda), mismo minuto
-        if(p._foulCard && usedPlayers.length){
-          const fouler=usedPlayers[Math.floor(Math.random()*usedPlayers.length)];
-          const cardIcon=CICONS[p._foulCard]||'🟨';
-          allEvents.push({
-            minute:injMin,
-            type:'card',icon:cardIcon,
-            text:`<strong>${fouler.name}</strong> <span style="font-size:10px;color:#a07a00">(${t('match.foul_on')||'falta sobre'} ${p.name})</span>`
-          });
-          // Si es roja, aplicar también las consecuencias de sanción
-          if(p._foulCard==='red'){
-            fouler.suspendedNextMatch=true;
-            fouler.cardStatus='red';
-            newCards.push({player:fouler, type:'red', _foulRed:true});
+        if(p._foulCard){
+          let foulerName=p.foulerName;
+          let fouler=foulerName?usedPlayers.find(pl=>pl.name===foulerName):null;
+          if(!fouler && usedPlayers.length){
+            fouler=usedPlayers[Math.floor(Math.random()*usedPlayers.length)];
+            foulerName=fouler.name;
+          }
+          if(foulerName){
+            const cardIcon=CICONS[p._foulCard]||'🟨';
+            allEvents.push({
+              minute:injMin,
+              type:'card',icon:cardIcon,
+              text:`<strong>${foulerName}</strong> <span style="font-size:10px;color:#a07a00">(${t('match.foul_on')||'falta sobre'} ${p.name})</span>`
+            });
+            // Si es roja, aplicar también las consecuencias de sanción
+            if(p._foulCard==='red' && fouler){
+              fouler.suspendedNextMatch=true;
+              fouler.cardStatus='red';
+              newCards.push({player:fouler, type:'red', _foulRed:true});
+            }
           }
         }
       });
     }
     if(oppEvents.cards&&oppEvents.cards.length){
       oppEvents.cards.forEach(c=>allEvents.push({
-        minute:c.type==='red'||c.type==='double_yellow'?(oppEvents.redMinute||Math.floor(10+Math.random()*70)):Math.floor(5+Math.random()*85),
+        minute:c.minute!==undefined?c.minute:(c.type==='red'||c.type==='double_yellow'?(oppEvents.redMinute||Math.floor(10+Math.random()*70)):Math.floor(5+Math.random()*85)),
         type:'oppcard',icon:CICONS[c.type]||'🟨',
         text:`<strong>${c.player.name}</strong>`
       }));
@@ -6645,12 +6656,13 @@ function duelRollCards(pitchArr){
   const carded=[];
   (pitchArr||[]).forEach(p=>{
     const r=Math.random();
-    if(r<RED_RISK_PER_PLAYER){ carded.push({player:{name:p.name}, type:'red'}); }
-    else if(r<RED_RISK_PER_PLAYER+YELLOW_RISK_PER_PLAYER){ carded.push({player:{name:p.name}, type:'yellow'}); }
+    const minute=Math.floor(5+Math.random()*90);
+    if(r<RED_RISK_PER_PLAYER){ carded.push({player:{name:p.name}, type:'red', minute}); }
+    else if(r<RED_RISK_PER_PLAYER+YELLOW_RISK_PER_PLAYER){ carded.push({player:{name:p.name}, type:'yellow', minute}); }
   });
   return carded;
 }
-function duelRollInjuries(pitchArr){
+function duelRollInjuries(pitchArr, foulerPool){
   const injured=[];
   (pitchArr||[]).forEach(p=>{
     if(injured.length>=1) return;
@@ -6660,7 +6672,12 @@ function duelRollInjuries(pitchArr){
       if(r<0.5){ type='leve'; foulCard=Math.random()<0.8?'yellow':null; }
       else if(r<0.85){ type='básica'; foulCard=Math.random()<0.6?'yellow':'red'; }
       else { type='grave'; foulCard='red'; }
-      injured.push({name:p.name, type, _foulCard:foulCard, injury:{foulCard,type}});
+      const minute=Math.floor(20+Math.random()*65);
+      let foulerName=null;
+      if(foulCard && foulerPool && foulerPool.length){
+        foulerName=foulerPool[Math.floor(Math.random()*foulerPool.length)].name;
+      }
+      injured.push({name:p.name, type, _foulCard:foulCard, injury:{foulCard,type}, minute, foulerName});
     }
   });
   return injured;
@@ -6698,8 +6715,8 @@ function computeDuelMatchResult(challengerSquad, opponentSquad, challengerStrate
   });
   const challengerCards=duelRollCards(challengerSquad.pitch);
   const opponentCards=duelRollCards(opponentSquad.pitch);
-  const challengerInjuries=duelRollInjuries(challengerSquad.pitch);
-  const opponentInjuries=duelRollInjuries(opponentSquad.pitch);
+  const challengerInjuries=duelRollInjuries(challengerSquad.pitch, opponentSquad.pitch);
+  const opponentInjuries=duelRollInjuries(opponentSquad.pitch, challengerSquad.pitch);
   const possession=Math.round(45+Math.random()*20);
   // Goleadores, minutos y tiros — calculados aquí (por el retador) y
   // guardados, para que ambos dispositivos vean exactamente los mismos
@@ -6789,11 +6806,9 @@ function mpRenderStrategyAndBenchPhase(idx){
 
   renderStrategySelector();
 
-  // En móvil, llevar la vista al panel del rival al empezar cada partido
-  if(window.innerWidth<=900){
-    const rb=document.getElementById('rivalBox');
-    if(rb) setTimeout(()=>rb.scrollIntoView({behavior:'smooth', block:'start'}), 150);
-  }
+  // Cambiar el punto de interés móvil al panel del rival al empezar
+  // la gestión del equipo (partido 1 o entre partidos)
+  if(typeof switchMobileTab==='function') setTimeout(()=>switchMobileTab('rival'), 150);
 
   let actionsWrap=document.getElementById('duelStrategyActions');
   if(!actionsWrap){
@@ -6821,7 +6836,19 @@ function mpRenderStrategyAndBenchPhase(idx){
     document.body.appendChild(bar);
   }
   const headerEl=document.getElementById('appHeader');
-  bar.style.top=(headerEl?headerEl.offsetHeight:0)+'px';
+  const mpUpdateDuelBarPosition=()=>{
+    const b=document.getElementById('duelBetweenBar');
+    if(!b) return;
+    if(!headerEl){ b.style.top='0px'; return; }
+    const rect=headerEl.getBoundingClientRect();
+    // Mientras el header sea visible, la barra va justo debajo; en
+    // cuanto el header sale de la vista al hacer scroll, sube a top:0.
+    b.style.top=Math.max(0, rect.bottom)+'px';
+  };
+  window.removeEventListener('scroll', window._mpDuelBarScrollHandler||(()=>{}));
+  window._mpDuelBarScrollHandler=mpUpdateDuelBarPosition;
+  window.addEventListener('scroll', mpUpdateDuelBarPosition, {passive:true});
+  mpUpdateDuelBarPosition();
   bar.style.display='flex';
   const totalMs=30000;
   const deadline=Date.now()+totalMs;
@@ -6848,6 +6875,7 @@ async function mpConfirmStrategyAndSquad(){
   playSound('select');
   if(_duelTimerInterval){ clearInterval(_duelTimerInterval); _duelTimerInterval=null; }
   const bar=document.getElementById('duelBetweenBar'); if(bar) bar.style.display='none';
+  if(window._mpDuelBarScrollHandler){ window.removeEventListener('scroll', window._mpDuelBarScrollHandler); window._mpDuelBarScrollHandler=null; }
   const db=window._fbDb;
   if(!db||!window._duelId) return;
   const btn=document.getElementById('duelConfirmStrategyBtn');
@@ -6978,7 +7006,7 @@ function mpAddDuelExitLinkToLiveMatch(){
   link=document.createElement('div');
   link.id='duelLiveExitLink';
   link.textContent=tk('mp.duel_exit')||'ABANDONAR ENCUENTRO';
-  link.style.cssText='position:fixed;bottom:10px;right:10px;z-index:90000;cursor:pointer;color:#ff7e7e;background:#3a1a1a;border:1px solid #d94a4a;font-family:"Bebas Neue",Impact,sans-serif;font-size:11px;letter-spacing:.5px;padding:5px 10px;border-radius:4px';
+  link.style.cssText='position:fixed;bottom:12px;right:12px;z-index:90000;cursor:pointer;color:#ff7e7e;background:#3a1a1a;border:1px solid #d94a4a;font-family:"Bebas Neue",Impact,sans-serif;font-size:14px;letter-spacing:.5px;padding:10px 16px;border-radius:5px';
   link.addEventListener('click', mpAbandonDuel);
   document.body.appendChild(link);
 
@@ -6987,7 +7015,7 @@ function mpAddDuelExitLinkToLiveMatch(){
   badge=document.createElement('div');
   badge.id='duelMatchBadge';
   badge.textContent=(tk('mp.duel_match_of')||'PARTIDO {0} DE 5').replace('{0}', String(window._duelMatchIndex+1));
-  badge.style.cssText='position:fixed;bottom:10px;left:10px;z-index:90000;color:#7ec3ff;background:rgba(20,32,44,.9);border:1px solid #4a90d9;font-family:"Bebas Neue",Impact,sans-serif;font-size:11px;letter-spacing:.5px;padding:5px 10px;border-radius:4px';
+  badge.style.cssText='position:fixed;bottom:16px;left:12px;z-index:90000;color:#7ec3ff;font-family:"Bebas Neue",Impact,sans-serif;font-size:11px;letter-spacing:.5px;opacity:.85;pointer-events:none;text-shadow:0 1px 3px rgba(0,0,0,.8)';
   document.body.appendChild(badge);
 }
 
