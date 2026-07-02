@@ -2710,7 +2710,7 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
         // Lesión del rival (feed derecha)
         allEvents.push({
           minute:injMin,
-          type:'oppcard',icon:'✚',
+          type:'oppinjury',icon:'✚',
           text:`<strong>${p.name}</strong>`
         });
         // Tarjeta a mi jugador por la falta (feed izquierda), mismo minuto
@@ -2802,9 +2802,9 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
     const item=document.createElement('div');
     item.style.cssText='display:grid;grid-template-columns:1fr 44px 1fr;align-items:center;width:100%;font-size:12px;animation:slideInEvent .3s ease;opacity:0;animation-fill-mode:forwards;padding:3px 0;border-bottom:1px solid rgba(0,0,0,.05)';
     const isMe=type==='mygoal'||type==='card'||type==='injury'||type==='pen_me';
-    const isOpp=type==='oppgoal'||type==='pen_opp'||type==='oppcard';
+    const isOpp=type==='oppgoal'||type==='pen_opp'||type==='oppcard'||type==='oppinjury';
     const myColor=type==='mygoal'||type==='pen_me'?'var(--accent)':type==='card'?'#a07a00':type==='injury'?'#e74c3c':'var(--text)';
-    const oppColor=type==='oppgoal'||type==='pen_opp'?'var(--red)':type==='oppcard'?'#a07a00':'var(--text)';
+    const oppColor=type==='oppgoal'||type==='pen_opp'?'var(--red)':type==='oppcard'?'#a07a00':type==='oppinjury'?'#e74c3c':'var(--text)';
     // Centro: minuto
     const center=`<span style="font-family:'Bebas Neue',Impact,sans-serif;font-size:15px;color:#aaa;text-align:center;display:block;letter-spacing:.5px">${minLabel}</span>`;
     if(isMe){
@@ -6351,6 +6351,7 @@ let mpUnsubFriends1=null, mpUnsubFriends2=null, mpUnsubRequests=null, mpUnsubDue
 window.openMpOverlay = function(){
   const ov=$id('mpOverlay');
   if(!ov) return;
+  playSound('select');
   ov.style.display='flex';
   if(window.applyTranslations) window.applyTranslations();
   startMpLiveListeners();
@@ -6393,6 +6394,7 @@ function stopMpLiveListeners(){
 
 /* Añadir amigo por nombre de usuario o email — solo usuarios YA registrados en Firestore */
 async function mpAddFriend(){
+  playSound('select');
   const input=$id('mpFriendInput');
   const errEl=$id('mpAddFriendErr');
   const okEl=$id('mpAddFriendOk');
@@ -6498,6 +6500,7 @@ async function renderPendingRequests(){
 }
 
 async function mpRespondRequest(docId,accept){
+  playSound('select');
   const db=window._fbDb;
   if(!db) return;
   try{
@@ -6698,7 +6701,22 @@ function computeDuelMatchResult(challengerSquad, opponentSquad, challengerStrate
   const challengerInjuries=duelRollInjuries(challengerSquad.pitch);
   const opponentInjuries=duelRollInjuries(opponentSquad.pitch);
   const possession=Math.round(45+Math.random()*20);
-  return {challengerGoals, opponentGoals, challengerFatigue, opponentFatigue, challengerCards, opponentCards, challengerInjuries, opponentInjuries, possession};
+  // Goleadores, minutos y tiros — calculados aquí (por el retador) y
+  // guardados, para que ambos dispositivos vean exactamente los mismos
+  // nombres y minutos en vez de sortearlos cada uno por su cuenta.
+  const chalAttackers=(challengerSquad.pitch||[]).filter(p=>p.placedPos&&["DC","EI","ED","MC"].includes(p.placedPos));
+  const oppAttackers=(opponentSquad.pitch||[]).filter(p=>p.placedPos&&["DC","EI","ED","MC"].includes(p.placedPos));
+  const chalPool=chalAttackers.length?chalAttackers:(challengerSquad.pitch||[]);
+  const oppPool=oppAttackers.length?oppAttackers:(opponentSquad.pitch||[]);
+  const chalMinutes=[]; for(let i=0;i<challengerGoals;i++) chalMinutes.push(Math.floor(5+Math.random()*85));
+  const oppMinutes=[]; for(let i=0;i<opponentGoals;i++) oppMinutes.push(Math.floor(5+Math.random()*85));
+  chalMinutes.sort((a,b)=>a-b); oppMinutes.sort((a,b)=>a-b);
+  const challengerGoalEvents=chalMinutes.map(min=>({name:chalPool.length?chalPool[Math.floor(Math.random()*chalPool.length)].name:null, minute:min}));
+  const opponentGoalEvents=oppMinutes.map(min=>({name:oppPool.length?oppPool[Math.floor(Math.random()*oppPool.length)].name:null, minute:min}));
+  const shotsChallenger=challengerGoals*2+Math.floor(Math.random()*5)+3;
+  const shotsOpponent=opponentGoals*2+Math.floor(Math.random()*4)+2;
+  return {challengerGoals, opponentGoals, challengerFatigue, opponentFatigue, challengerCards, opponentCards,
+    challengerInjuries, opponentInjuries, possession, challengerGoalEvents, opponentGoalEvents, shotsChallenger, shotsOpponent};
 }
 
 /* Pantalla de selección de estrategia para el partido actual del duelo */
@@ -6706,8 +6724,34 @@ function computeDuelMatchResult(challengerSquad, opponentSquad, challengerStrate
    partido 1 como para los siguientes — usa los elementos REALES del
    juego (banquillo + panel de rival con selector de estrategia), igual
    que en solitario, nunca un popup superpuesto. */
+/* Hash determinista simple — con la misma semilla (duelId+partido) da
+   siempre el mismo resultado en los dos navegadores, sin tener que
+   escribir nada extra a Firestore para sincronizar la decisión. */
+function mpSimpleHash(str){
+  let h=0;
+  for(let i=0;i<str.length;i++){ h=(h*31+str.charCodeAt(i))|0; }
+  return Math.abs(h);
+}
+/* Rueda de prensa antes de un partido del duelo — misma probabilidad
+   que en solitario. Si toca, le aparece a AMBOS jugadores (semilla
+   compartida), cada uno respondiendo la suya. El temporizador de
+   gestión no empieza hasta que esta pantalla se cierra. */
+function mpMaybeShowPressConference(idx, callback){
+  const seed=(window._duelId||'')+':'+idx;
+  const roll=mpSimpleHash(seed+':roll')%100;
+  if(roll>=30){ callback(); return; }
+  const events=getPressEvents();
+  if(!events||!events.length){ callback(); return; }
+  const eventIdx=mpSimpleHash(seed+':event')%events.length;
+  showPressEventModal(events[eventIdx], ()=>{ pendingPrediction=null; callback(); });
+}
+
 function mpShowStrategyAndBenchPhase(){
   const idx=window._duelMatchIndex;
+  mpMaybeShowPressConference(idx, ()=>mpRenderStrategyAndBenchPhase(idx));
+}
+
+function mpRenderStrategyAndBenchPhase(idx){
   selectedMatchStrategy=null;
   swapsUsedThisMatch=0;
   convSortMode='position';
@@ -6716,6 +6760,7 @@ function mpShowStrategyAndBenchPhase(){
   const mo=document.getElementById('matchOverlay');
   if(mo) mo.innerHTML='';
   const liveExit=document.getElementById('duelLiveExitLink'); if(liveExit) liveExit.remove();
+  const matchBadge=document.getElementById('duelMatchBadge'); if(matchBadge) matchBadge.remove();
   mpHideDuelOverlay();
 
   document.getElementById("benchSection").style.display="block";
@@ -6723,6 +6768,10 @@ function mpShowStrategyAndBenchPhase(){
   document.getElementById("rivalBox").style.display="block";
   const matchHistoryBox=document.getElementById("matchHistoryBox"); if(matchHistoryBox) matchHistoryBox.style.display="none";
   const playBtn=document.getElementById("playMatchBtn"); if(playBtn) playBtn.style.display="none";
+  // Por si se llega aquí tras recargar a mitad de duelo (sin pasar por el
+  // draft normal), asegurar que estos botones siguen ocultos.
+  const rollBtnEl=document.getElementById("rollBtn"); if(rollBtnEl) rollBtnEl.style.display="none";
+  const qbWrap=document.getElementById("quickBuildWrap"); if(qbWrap) qbWrap.style.display="none";
   refreshPitchRatings();
   updateConvocadosTable();
   updateBenchTable();
@@ -6740,6 +6789,12 @@ function mpShowStrategyAndBenchPhase(){
 
   renderStrategySelector();
 
+  // En móvil, llevar la vista al panel del rival al empezar cada partido
+  if(window.innerWidth<=900){
+    const rb=document.getElementById('rivalBox');
+    if(rb) setTimeout(()=>rb.scrollIntoView({behavior:'smooth', block:'start'}), 150);
+  }
+
   let actionsWrap=document.getElementById('duelStrategyActions');
   if(!actionsWrap){
     actionsWrap=document.createElement('div');
@@ -6753,37 +6808,44 @@ function mpShowStrategyAndBenchPhase(){
   const btn=document.getElementById('duelConfirmStrategyBtn');
   if(btn) btn.addEventListener('click', mpConfirmStrategyAndSquad);
 
-  // Cuenta atrás de 30s solo a partir del 2º partido — el 1º no tiene
-  // prisa, es continuación directa del draft.
+  // Cuenta atrás de 30s — barra fina de progreso bajo el header, no lo tapa.
   let bar=document.getElementById('duelBetweenBar');
-  if(idx>0){
-    if(!bar){
-      bar=document.createElement('div');
-      bar.id='duelBetweenBar';
-      bar.style.cssText='position:fixed;top:0;left:0;right:0;z-index:70000;background:#1a2a3a;border-bottom:2px solid #4a90d9;color:#7ec3ff;text-align:center;padding:6px 10px;font-family:"Bebas Neue",Impact,sans-serif;letter-spacing:1px;font-size:13px';
-      document.body.prepend(bar);
-    }
-    bar.style.display='block';
-    const deadline=Date.now()+30000;
-    const tick=()=>{
-      const msLeft=deadline-Date.now();
-      if(msLeft<=0){
-        if(_duelTimerInterval){ clearInterval(_duelTimerInterval); _duelTimerInterval=null; }
-        mpConfirmStrategyAndSquad();
-        return;
-      }
-      bar.textContent=(tk('mp.duel_between_time')||'⏱️ Cambios: {0}s').replace('{0}', String(Math.ceil(msLeft/1000)));
-    };
-    tick();
-    _duelTimerInterval=setInterval(tick,1000);
-  }else if(bar){
-    bar.style.display='none';
+  if(!bar){
+    bar=document.createElement('div');
+    bar.id='duelBetweenBar';
+    bar.style.cssText='position:fixed;left:0;right:0;z-index:70000;background:rgba(20,32,44,.94);padding:4px 10px;font-family:"Bebas Neue",Impact,sans-serif;letter-spacing:.5px;font-size:11px;color:#7ec3ff;display:flex;align-items:center;gap:8px';
+    bar.innerHTML=`<span id="duelBarLabel" style="white-space:nowrap"></span>
+      <div style="flex:1;height:6px;background:#0d1620;border-radius:3px;overflow:hidden">
+        <div id="duelBarFill" style="height:100%;width:100%;background:linear-gradient(90deg,#4a90d9,#7ec3ff)"></div>
+      </div>`;
+    document.body.appendChild(bar);
   }
+  const headerEl=document.getElementById('appHeader');
+  bar.style.top=(headerEl?headerEl.offsetHeight:0)+'px';
+  bar.style.display='flex';
+  const totalMs=30000;
+  const deadline=Date.now()+totalMs;
+  const labelEl=document.getElementById('duelBarLabel');
+  const fillEl=document.getElementById('duelBarFill');
+  const matchLabel=(tk('mp.duel_match_of')||'PARTIDO {0} DE 5').replace('{0}', String(idx+1));
+  const tick=()=>{
+    const msLeft=deadline-Date.now();
+    if(msLeft<=0){
+      if(_duelTimerInterval){ clearInterval(_duelTimerInterval); _duelTimerInterval=null; }
+      mpConfirmStrategyAndSquad();
+      return;
+    }
+    if(labelEl) labelEl.textContent=`${matchLabel} — `+(tk('mp.duel_between_time')||'⏱️ {0}s').replace('{0}', String(Math.ceil(msLeft/1000)));
+    if(fillEl) fillEl.style.width=Math.max(0, msLeft/totalMs*100)+'%';
+  };
+  tick();
+  _duelTimerInterval=setInterval(tick,200);
 }
 
 /* Envía plantilla (por si hubo cambios) + estrategia elegida para el
    partido actual, y espera a que el rival haga lo mismo. */
 async function mpConfirmStrategyAndSquad(){
+  playSound('select');
   if(_duelTimerInterval){ clearInterval(_duelTimerInterval); _duelTimerInterval=null; }
   const bar=document.getElementById('duelBetweenBar'); if(bar) bar.style.display='none';
   const db=window._fbDb;
@@ -6814,7 +6876,7 @@ async function mpConfirmStrategyAndSquad(){
   document.getElementById("benchSection").style.display="none";
   document.getElementById("moraleSection").style.display="none";
   document.getElementById("rivalBox").style.display="none";
-  mpShowWaitingPopup(tk('mp.duel_waiting_strategy')||'Esperando la estrategia del rival...');
+  mpShowWaitingPopup(`${(tk('mp.duel_match_of')||'PARTIDO {0} DE 5').replace('{0}', String(idx+1))}<br><span style="font-size:12px;font-weight:normal">${tk('mp.duel_waiting_strategy')||'Esperando la estrategia del rival...'}</span>`);
   mpWatchForMatchResult();
 }
 
@@ -6848,31 +6910,18 @@ function mpWatchForMatchResult(){
 /* Genera el resumen de goles con el mismo formato HTML que usa
    generateMatchSummary() en solitario — showLiveMatch() ya sabe
    interpretarlo, así que no hace falta tocar esa función. */
-function generateDuelMatchSummary(myGoals, rivalGoals, opponentUsername, mySquad, rivalSquad, myPossession){
-  const possession=myPossession!==undefined?myPossession:Math.round(45+Math.random()*20);
+function generateDuelMatchSummary(myGoalEvents, rivalGoalEvents, myShots, rivalShots, opponentUsername, myPossession){
+  const possession=myPossession!==undefined?myPossession:50;
   const oppPoss=100-possession;
-  const shots=myGoals*2+Math.floor(Math.random()*5)+3;
-  const oppShots=rivalGoals*2+Math.floor(Math.random()*4)+2;
-  const myMinutes=[]; const oppMinutes=[];
-  for(let i=0;i<myGoals;i++) myMinutes.push(Math.floor(5+Math.random()*85));
-  for(let i=0;i<rivalGoals;i++) oppMinutes.push(Math.floor(5+Math.random()*85));
-  myMinutes.sort((a,b)=>a-b); oppMinutes.sort((a,b)=>a-b);
-  const myAttackers=(mySquad.pitch||[]).filter(p=>p.placedPos&&["DC","EI","ED","MC"].includes(p.placedPos));
-  const rivalAttackers=(rivalSquad.pitch||[]).filter(p=>p.placedPos&&["DC","EI","ED","MC"].includes(p.placedPos));
-  const myPool=myAttackers.length?myAttackers:(mySquad.pitch||[]);
-  const rivalPool=rivalAttackers.length?rivalAttackers:(rivalSquad.pitch||[]);
   const scorers=[];
-  const myGoalLines=myMinutes.map(min=>{
-    const scorer=myPool.length?myPool[Math.floor(Math.random()*myPool.length)]:null;
-    if(scorer) scorers.push(scorer.name);
-    return `<li>⚽ ${scorer?scorer.name:'Desconocido'} <span class="goal-min">(${min}')</span></li>`;
+  const myGoalLines=(myGoalEvents||[]).map(ev=>{
+    if(ev.name) scorers.push(ev.name);
+    return `<li>⚽ ${ev.name?mpEsc(ev.name):'Desconocido'} <span class="goal-min">(${ev.minute}')</span></li>`;
   });
   generateDuelMatchSummary._scorers=scorers; // para la racha de goleador, igual que en solitario
-  generateDuelMatchSummary._lastStats={possession, oppPoss, shots, oppShots};
-  const oppGoalLines=oppMinutes.map(min=>{
-    const scorer=rivalPool.length?rivalPool[Math.floor(Math.random()*rivalPool.length)]:null;
-    return `<li>⚽ ${scorer?scorer.name:mpEsc(opponentUsername)} <span class="goal-min">(${min}')</span></li>`;
-  });
+  generateDuelMatchSummary._lastStats={possession, oppPoss, shots:myShots, oppShots:rivalShots};
+  const oppGoalLines=(rivalGoalEvents||[]).map(ev=>
+    `<li>⚽ ${ev.name?mpEsc(ev.name):mpEsc(opponentUsername)} <span class="goal-min">(${ev.minute}')</span></li>`);
   const myLabel=(window.myTeamName||myTeamName||'TU EQUIPO');
   const goalsHTML=`
   <div class="goals-columns">
@@ -6887,7 +6936,7 @@ function generateDuelMatchSummary(myGoals, rivalGoals, opponentUsername, mySquad
   </div>`;
   const tt=k=>window.t?window.t(k):k;
   return `<strong>${tt("match.possession")||'Posesión'}:</strong> ${myLabel} ${possession}% · ${mpEsc(opponentUsername)} ${oppPoss}%<br>
-<strong>${tt("match.shots")||'Tiros'}:</strong> ${shots} – ${oppShots}
+<strong>${tt("match.shots")||'Tiros'}:</strong> ${myShots} – ${rivalShots}
 ${goalsHTML}`;
 }
 
@@ -6906,9 +6955,13 @@ function mpPlayDuelMatchAnimation(result, challengerSquad, opponentSquad){
   // Aplicar la fatiga real calculada por el retador a mi propia plantilla local
   const myFatigueMap=(window._duelRole==='challenger'?result.challengerFatigue:result.opponentFatigue)||{};
   usedPlayers.forEach(p=>{ if(myFatigueMap[p.name]!==undefined) p.fatigue=myFatigueMap[p.name]; });
+  const myGoalEvents=(window._duelRole==='challenger'?result.challengerGoalEvents:result.opponentGoalEvents)||[];
+  const rivalGoalEvents=(window._duelRole==='challenger'?result.opponentGoalEvents:result.challengerGoalEvents)||[];
+  const myShots=(window._duelRole==='challenger'?result.shotsChallenger:result.shotsOpponent)||0;
+  const rivalShots=(window._duelRole==='challenger'?result.shotsOpponent:result.shotsChallenger)||0;
   updateScorerStreaks(generateDuelMatchSummary._scorers||[]);
   const myPossession=window._duelRole==='challenger'?result.possession:(100-result.possession);
-  const summary=generateDuelMatchSummary(myGoals, rivalGoals, window._duelOpponentUsername||'Rival', mySquad, rivalSquad, myPossession);
+  const summary=generateDuelMatchSummary(myGoalEvents, rivalGoalEvents, myShots, rivalShots, window._duelOpponentUsername||'Rival', myPossession);
   mpHideDuelOverlay();
   document.getElementById("benchSection").style.display="none";
   document.getElementById("moraleSection").style.display="none";
@@ -6928,6 +6981,14 @@ function mpAddDuelExitLinkToLiveMatch(){
   link.style.cssText='position:fixed;bottom:10px;right:10px;z-index:90000;cursor:pointer;color:#ff7e7e;background:#3a1a1a;border:1px solid #d94a4a;font-family:"Bebas Neue",Impact,sans-serif;font-size:11px;letter-spacing:.5px;padding:5px 10px;border-radius:4px';
   link.addEventListener('click', mpAbandonDuel);
   document.body.appendChild(link);
+
+  let badge=document.getElementById('duelMatchBadge');
+  if(badge) badge.remove();
+  badge=document.createElement('div');
+  badge.id='duelMatchBadge';
+  badge.textContent=(tk('mp.duel_match_of')||'PARTIDO {0} DE 5').replace('{0}', String(window._duelMatchIndex+1));
+  badge.style.cssText='position:fixed;bottom:10px;left:10px;z-index:90000;color:#7ec3ff;background:rgba(20,32,44,.9);border:1px solid #4a90d9;font-family:"Bebas Neue",Impact,sans-serif;font-size:11px;letter-spacing:.5px;padding:5px 10px;border-radius:4px';
+  document.body.appendChild(badge);
 }
 
 /* Tras ver el resultado: si quedan partidos, ventana de 15s para tocar
@@ -7038,6 +7099,7 @@ async function mpShowDuelPostMatchStats(){
 }
 
 async function mpConfirmPostMatchContinue(){
+  playSound('select');
   const db=window._fbDb;
   if(!db||!window._duelId) return;
   const btn=document.getElementById('duelPostMatchContinueBtn');
@@ -7106,11 +7168,24 @@ async function mpShowDuelFinalSummary(){
     rows.push(`<div class="mp-stat-row"><span>${tk('mp.duel_match_short')||'Partido'} ${i+1}</span><span style="color:${resColor}">${myG} - ${rG}</span></div>`);
   }
   const avgPoss=playedCount?Math.round(possessionSum/playedCount):50;
-  const outcome = myWins>rivalWins
+  let iWin=myWins>rivalWins, iLose=myWins<rivalWins;
+  let tiebreakNote='';
+  if(myWins===rivalWins){
+    const myDiff=myGoalsTotal-rivalGoalsTotal, rivalDiff=rivalGoalsTotal-myGoalsTotal;
+    if(myDiff!==rivalDiff){
+      iWin=myDiff>rivalDiff; iLose=!iWin;
+      tiebreakNote=tk('mp.duel_tiebreak_goals')||'(empate en partidos ganados, decidido por diferencia de goles)';
+    }else if(avgPoss!==(100-avgPoss)){
+      iWin=avgPoss>(100-avgPoss); iLose=!iWin;
+      tiebreakNote=tk('mp.duel_tiebreak_possession')||'(empate en partidos y goles, decidido por posesión media)';
+    }
+  }
+  const outcome = iWin
     ? (tk('mp.duel_final_won')||'¡HAS GANADO EL DUELO!')
-    : myWins<rivalWins
+    : iLose
       ? (tk('mp.duel_final_lost')||'Has perdido el duelo')
       : (tk('mp.duel_final_tie')||'Duelo empatado');
+  playSound(iWin?'victory':iLose?'defeat':'whistle');
 
   // Frase narrativa con algún dato destacado
   let narrative='';
@@ -7130,6 +7205,7 @@ async function mpShowDuelFinalSummary(){
   mpShowDuelOverlay(`
     <i class="ph ph-bold ph-trophy" style="font-size:34px;color:var(--gold);display:block;margin-bottom:6px"></i>
     <div style="font-family:'Bebas Neue',Impact,sans-serif;font-size:22px;color:var(--gold)">${outcome}</div>
+    ${tiebreakNote?`<div style="font-size:11px;color:var(--text-muted);margin-top:2px">${tiebreakNote}</div>`:''}
     <div style="font-family:'Bebas Neue',Impact,sans-serif;font-size:26px;margin:6px 0">${myWins} - ${rivalWins}</div>
 
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:0;border-top:1px solid var(--line);margin-top:8px">
@@ -7177,6 +7253,7 @@ async function mpShowDuelFinalSummary(){
 
 /* Enviar desafío a un amigo */
 async function mpChallengeFriend(targetUid, targetUsername, btnEl){
+  playSound('select');
   const auth=window._fbAuth, db=window._fbDb;
   const user=auth&&auth.currentUser;
   if(!user||!db) return;
@@ -7240,6 +7317,7 @@ async function renderPendingDuels(){
 
 /* Aceptar o rechazar un desafío de duelo recibido */
 async function mpRespondDuel(docId, accept){
+  playSound('select');
   const db=window._fbDb;
   const auth=window._fbAuth;
   const user=auth&&auth.currentUser;
@@ -7388,7 +7466,7 @@ async function initDuelModeFromSession(){
       mpPlayDuelMatchAnimation(d[`m${idx}_result`], d.challengerSquad, d.opponentSquad);
     }else if(d[myStratField]!==undefined){
       // Ya envié mi estrategia para este partido — esperar/calcular el resultado
-      mpShowWaitingPopup(tk('mp.duel_waiting_strategy')||'Esperando la estrategia del rival...');
+      mpShowWaitingPopup(`${(tk('mp.duel_match_of')||'PARTIDO {0} DE 5').replace('{0}', String(idx+1))}<br><span style="font-size:12px;font-weight:normal">${tk('mp.duel_waiting_strategy')||'Esperando la estrategia del rival...'}</span>`);
       mpWatchForMatchResult();
     }else{
       // Aún no he elegido estrategia para este partido
@@ -7525,6 +7603,7 @@ function mpShowDuelWaitingScreen(){
 /* Salir voluntariamente de un duelo (desde la pantalla de espera).
    Marca el duelo como cancelado para que el rival también salga. */
 async function mpAbandonDuel(){
+  playSound('select');
   const db=window._fbDb;
   if(db&&window._duelId){
     try{ await db.collection('duels').doc(window._duelId).update({status:'cancelled'}); }
