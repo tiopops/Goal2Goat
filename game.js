@@ -170,7 +170,7 @@ const GIRO_CARDS = [
   { id:'contragolpe', name:'CONTRAGOLPE RELÁMPAGO', icon:'ph-lightning',
     pos:'+18% ritmo', neg:'−10% defensa',
     apply(ctx){ ctx.myLambda+=0.081; ctx.oppLambda+=0.07; } },
-  { id:'muro', name:'MURO DEFENSIVO', icon:'ph-brick',
+  { id:'muro', name:'MURO DEFENSIVO', icon:'ph-wall',
     pos:'+20% defensa', neg:'−12% pase',
     apply(ctx){ ctx.oppLambda-=0.14; ctx.myLambda-=0.054; } },
   { id:'orden_banquillo', name:'ORDEN DEL BANQUILLO', icon:'ph-clipboard-text',
@@ -3550,7 +3550,7 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
       gc.innerHTML=`
         <i class="ph ph-bold ${window._giroCardUsed.icon||'ph-notebook'}" style="font-size:26px;color:var(--gold);flex-shrink:0"></i>
         <div>
-          <strong style="color:var(--gold)">⏸ ${t('giro.used_title')||'Giro Táctico usado'}: ${window._giroCardUsed.name}</strong><br>
+          <strong style="color:var(--gold)">${t('giro.used_title')||'Giro Táctico usado'}: ${window._giroCardUsed.name}</strong><br>
           <span style="color:#bfe8c9">${window._giroCardUsed.pos}</span> · <span style="color:#f3c6c1">${window._giroCardUsed.neg}</span>
         </div>`;
       infoWrap.appendChild(gc);
