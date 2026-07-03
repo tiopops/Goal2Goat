@@ -3111,7 +3111,7 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
     panel.innerHTML=`
       <div style="font-family:'Bebas Neue',Impact,sans-serif;color:var(--gold);letter-spacing:1.2px;font-size:14px">⏸ GIRO TÁCTICO — MIN ${currentMinute}'</div>
       <div style="width:80%;max-width:280px;height:4px;background:#222;border-radius:3px;overflow:hidden">
-        <div id="giroTimerFill" style="height:100%;width:100%;background:var(--gold);transition:width 1s linear"></div>
+        <div id="giroTimerFill" style="height:100%;width:100%;background:var(--gold);transition:width .1s linear"></div>
       </div>
       <div id="giroSub" style="font-size:11px;color:var(--text-muted);min-height:14px">Barajando...</div>
       <div id="giroStageWrap" style="position:relative;width:100%;flex:1;display:flex;align-items:center;justify-content:center;min-height:0"></div>
@@ -3249,18 +3249,21 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
       unfocusAll();
     });
 
-    let secLeft=10;
+    const GIRO_TOTAL_MS=10000;
+    const giroStart=performance.now();
     const fill=panel.querySelector('#giroTimerFill');
+    let lastBeepSec=null;
     const timerHandle=setInterval(()=>{
-      secLeft--;
-      checkCountdownBeep(secLeft,'giroTactico');
-      if(fill) fill.style.width=Math.max(0,(secLeft/10*100))+'%';
-      if(secLeft<=0){
+      const remainMs=Math.max(0, GIRO_TOTAL_MS-(performance.now()-giroStart));
+      const remainSec=Math.ceil(remainMs/1000);
+      if(remainSec!==lastBeepSec){ lastBeepSec=remainSec; checkCountdownBeep(remainSec,'giroTactico'); }
+      if(fill) fill.style.width=(remainMs/GIRO_TOTAL_MS*100)+'%';
+      if(remainMs<=0){
         clearInterval(timerHandle);
         const chosen=focusedKey!==null?cardEls.find(c=>c.key===focusedKey):cardEls[Math.floor(Math.random()*cardEls.length)];
         doResolve(chosen);
       }
-    },1000);
+    },100);
 
     function doResolve(entry){
       if(resolved||!entry) return;
@@ -3303,123 +3306,134 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
 
     const oldMyGoals=myGoals, oldOppGoals=oppGoals, oldWon=won, oldDraw=draw;
 
-    const remFrac=Math.max(0.03,(90-currentMinute)/90);
-    const baseCtx=window._giroLambdaCtx||{myLambda:1.15,oppLambda:1.15};
-    const ctx={ myLambda:baseCtx.myLambda*remFrac, oppLambda:baseCtx.oppLambda*remFrac,
-      fatigue:0, morale:0, cardRiskDelta:0, injuryRiskDelta:0, starBoost:0 };
-    card.apply(ctx);
-    ctx.myLambda=Math.max(0.05,ctx.myLambda);
-    ctx.oppLambda=Math.max(0.05,ctx.oppLambda);
-
-    if(ctx.fatigue){
-      usedPlayers.forEach(p=>{ p.fatigue=Math.max(0,Math.min(100,(p.fatigue===undefined?100:p.fatigue)+ctx.fatigue)); });
-    }
-    if(ctx.morale){ teamMorale=Math.max(-50,Math.min(50,teamMorale+ctx.morale)); }
+    // ── Bloque 1: calcular el contexto del efecto (lambdas, fatiga, moral...) ──
+    let ctx={ myLambda:1.15, oppLambda:1.15, fatigue:0, morale:0, cardRiskDelta:0, injuryRiskDelta:0, starBoost:0 };
     let starPlayer=null;
-    if(ctx.starBoost){
-      starPlayer=usedPlayers.slice().sort((a,b)=>(b.rating||0)-(a.rating||0))[0];
-      if(starPlayer){
-        starPlayer.rating=(starPlayer.rating||70)+ctx.starBoost;
-        // El impulso también debe notarse EN ESTE partido, no solo en
-        // futuros — un jugador reforzado empuja al ataque del equipo.
-        ctx.myLambda+=(ctx.starBoost/100)*0.35;
-      }
-    }
-    ctx.myLambda=Math.max(0.05,ctx.myLambda);
+    try{
+      const remFrac=Math.max(0.03,(90-currentMinute)/90);
+      const baseCtx=window._giroLambdaCtx||{myLambda:1.15,oppLambda:1.15};
+      ctx={ myLambda:baseCtx.myLambda*remFrac, oppLambda:baseCtx.oppLambda*remFrac,
+        fatigue:0, morale:0, cardRiskDelta:0, injuryRiskDelta:0, starBoost:0 };
+      card.apply(ctx);
+      ctx.myLambda=Math.max(0.05,ctx.myLambda);
+      ctx.oppLambda=Math.max(0.05,ctx.oppLambda);
 
-    // Riesgo de tarjeta modificado — se aplica como una probabilidad real
-    // de una tarjeta extra (o menos probable, si el riesgo baja) en lo
-    // que resta de partido, no solo texto decorativo.
+      if(ctx.fatigue){
+        usedPlayers.forEach(p=>{ p.fatigue=Math.max(0,Math.min(100,(p.fatigue===undefined?100:p.fatigue)+ctx.fatigue)); });
+      }
+      if(ctx.morale){ teamMorale=Math.max(-50,Math.min(50,teamMorale+ctx.morale)); }
+      if(ctx.starBoost){
+        starPlayer=usedPlayers.slice().sort((a,b)=>(b.rating||0)-(a.rating||0))[0];
+        if(starPlayer){
+          starPlayer.rating=(starPlayer.rating||70)+ctx.starBoost;
+          ctx.myLambda+=(ctx.starBoost/100)*0.35;
+        }
+      }
+      ctx.myLambda=Math.max(0.05,ctx.myLambda);
+    }catch(e){
+      console.error('[Giro Táctico] Bloque 1 (efecto/fatiga/moral) falló:', e);
+    }
+
+    // ── Bloque 2: riesgo extra de tarjeta/lesión en lo que resta ──
     let pendingCardEvent=null, pendingInjuryEvent=null;
-    if(ctx.cardRiskDelta){
-      const baseCardChance=0.08;
-      const cardChance=Math.max(0,Math.min(0.9,baseCardChance+ctx.cardRiskDelta));
-      if(Math.random()<cardChance && usedPlayers.length){
-        const target=usedPlayers[Math.floor(Math.random()*usedPlayers.length)];
-        const isRed=Math.random()<(RED_RISK_PER_PLAYER/(RED_RISK_PER_PLAYER+YELLOW_RISK_PER_PLAYER));
-        const cardMin=Math.min(MAX_MIN,currentMinute+1+Math.floor(Math.random()*Math.max(1,MAX_MIN-currentMinute)));
-        pendingCardEvent={minute:cardMin, type:'card', icon:isRed?'🟥':'🟨', text:`<strong>${target.name}</strong>`};
-        if(newCards) newCards.push({player:{name:target.name}, type:isRed?'red':'yellow'});
+    try{
+      if(ctx.cardRiskDelta){
+        const baseCardChance=0.08;
+        const cardChance=Math.max(0,Math.min(0.9,baseCardChance+ctx.cardRiskDelta));
+        if(Math.random()<cardChance && usedPlayers.length){
+          const target=usedPlayers[Math.floor(Math.random()*usedPlayers.length)];
+          const isRed=Math.random()<(RED_RISK_PER_PLAYER/(RED_RISK_PER_PLAYER+YELLOW_RISK_PER_PLAYER));
+          const cardMin=Math.min(MAX_MIN,currentMinute+1+Math.floor(Math.random()*Math.max(1,MAX_MIN-currentMinute)));
+          pendingCardEvent={minute:cardMin, type:'card', icon:isRed?'🟥':'🟨', text:`<strong>${target.name}</strong>`};
+          if(newCards) newCards.push({player:{name:target.name}, type:isRed?'red':'yellow'});
+        }
       }
-    }
-    // Riesgo de lesión modificado (p.ej. tras forzar al mejor jugador)
-    if(ctx.injuryRiskDelta && Math.random()<ctx.injuryRiskDelta){
-      const target=starPlayer||(usedPlayers.length?usedPlayers[Math.floor(Math.random()*usedPlayers.length)]:null);
-      if(target && !target.injury){
-        const r=Math.random();
-        const type=r<0.6?'leve':r<0.9?'básica':'grave';
-        const remaining=type==='leve'?1:type==='básica'?2:3;
-        target.injury={remaining,type};
-        target.forcedInjured=true;
-        const injMin=Math.min(MAX_MIN,currentMinute+1+Math.floor(Math.random()*Math.max(1,MAX_MIN-currentMinute)));
-        pendingInjuryEvent={minute:injMin, type:'injury', icon:'✚', text:`<strong>${target.name}</strong>`};
-        if(newInjuries) newInjuries.push({name:target.name, injury:target.injury});
+      if(ctx.injuryRiskDelta && Math.random()<ctx.injuryRiskDelta){
+        const target=starPlayer||(usedPlayers.length?usedPlayers[Math.floor(Math.random()*usedPlayers.length)]:null);
+        if(target && !target.injury){
+          const r=Math.random();
+          const type=r<0.6?'leve':r<0.9?'básica':'grave';
+          const remaining=type==='leve'?1:type==='básica'?2:3;
+          target.injury={remaining,type};
+          target.forcedInjured=true;
+          const injMin=Math.min(MAX_MIN,currentMinute+1+Math.floor(Math.random()*Math.max(1,MAX_MIN-currentMinute)));
+          pendingInjuryEvent={minute:injMin, type:'injury', icon:'✚', text:`<strong>${target.name}</strong>`};
+          if(newInjuries) newInjuries.push({name:target.name, injury:target.injury});
+        }
       }
-    }
-
-    const extraMy=poissonSample(ctx.myLambda);
-    const extraOpp=poissonSample(ctx.oppLambda);
-
-    const myPool=usedPlayers.filter(p=>p.placedPos&&["DC","EI","ED","MC"].includes(p.placedPos));
-    const oppPool=nextOpponent?nextOpponent.players:[];
-    const newMinutes=[];
-    for(let i=0;i<extraMy;i++) newMinutes.push({side:'my', minute:Math.min(MAX_MIN,currentMinute+1+Math.floor(Math.random()*Math.max(1,MAX_MIN-currentMinute)))});
-    for(let i=0;i<extraOpp;i++) newMinutes.push({side:'opp', minute:Math.min(MAX_MIN,currentMinute+1+Math.floor(Math.random()*Math.max(1,MAX_MIN-currentMinute)))});
-    newMinutes.sort((a,b)=>a.minute-b.minute);
-
-    // Descartar eventos futuros aún no mostrados; conservar lo ya ocurrido
-    allEvents=allEvents.slice(0,eventIdx);
-    if(pendingCardEvent) allEvents.push(pendingCardEvent);
-    if(pendingInjuryEvent) allEvents.push(pendingInjuryEvent);
-    newMinutes.forEach(nm=>{
-      if(nm.side==='my'){
-        const scorer=myPool.length?myPool[Math.floor(Math.random()*myPool.length)]:null;
-        allEvents.push({minute:nm.minute, type:'mygoal', icon:'⚽', text:`<strong>${scorer?scorer.name:'Gol'}</strong>`});
-      }else{
-        const scorer=oppPool.length?oppPool[Math.floor(Math.random()*oppPool.length)]:null;
-        allEvents.push({minute:nm.minute, type:'oppgoal', icon:'⚽', text:`<strong>${scorer?scorer.name:'Gol'}</strong>`});
-      }
-    });
-    allEvents.sort((a,b)=>a.minute-b.minute);
-
-    myGoals=curMy+extraMy;
-    oppGoals=curOpp+extraOpp;
-    won=myGoals>oppGoals;
-    draw=myGoals===oppGoals;
-    resultText=draw?t("match.draw"):(won?t("match.victory"):t("match.defeat"));
-    resultClass=draw?"res-draw-tag":(won?"res-win-tag":"res-lose-tag");
-    // Eliminatoria: si tras el giro sigue empatado y no iba ya a penaltis,
-    // se resuelve con una tanda rápida para no dejar el torneo bloqueado.
-    if(!wasShootout && stage!=="group" && draw){
-      const q=simulatePenalties(computeMyPower(), computeOppPower(nextOpponent));
-      won=q.myWon; draw=false;
-      resultText=won?t("match.victory"):t("match.defeat");
-      resultClass=won?"res-win-tag":"res-lose-tag";
+    }catch(e){
+      console.error('[Giro Táctico] Bloque 2 (riesgo tarjeta/lesión) falló:', e);
     }
 
-    // Mantener coherente la tabla de grupos y el historial con el
-    // resultado ya corregido por el Giro Táctico.
-    if(stage==="group"){
-      const meRow=groupTable.find(r=>r.isMe);
-      const oppRow=groupTable.find(r=>r.team===nextOpponent);
-      if(meRow&&oppRow){
-        meRow.gf-=oldMyGoals; meRow.ga-=oldOppGoals;
-        oppRow.gf-=oldOppGoals; oppRow.ga-=oldMyGoals;
-        if(oldDraw){ meRow.drawn--; meRow.pts-=1; oppRow.drawn--; oppRow.pts-=1; }
-        else if(oldWon){ meRow.won--; meRow.pts-=3; oppRow.lost--; }
-        else { meRow.lost--; oppRow.won--; oppRow.pts-=3; }
-        meRow.gf+=myGoals; meRow.ga+=oppGoals;
-        oppRow.gf+=oppGoals; oppRow.ga+=myGoals;
-        if(draw){ meRow.drawn++; meRow.pts+=1; oppRow.drawn++; oppRow.pts+=1; }
-        else if(won){ meRow.won++; meRow.pts+=3; oppRow.lost++; }
-        else { meRow.lost++; oppRow.won++; oppRow.pts+=3; }
+    // ── Bloque 3: resimular los goles restantes y actualizar el marcador ──
+    try{
+      const extraMy=poissonSample(ctx.myLambda);
+      const extraOpp=poissonSample(ctx.oppLambda);
+
+      const myPool=usedPlayers.filter(p=>p.placedPos&&["DC","EI","ED","MC"].includes(p.placedPos));
+      const oppPool=nextOpponent?nextOpponent.players:[];
+      const newMinutes=[];
+      for(let i=0;i<extraMy;i++) newMinutes.push({side:'my', minute:Math.min(MAX_MIN,currentMinute+1+Math.floor(Math.random()*Math.max(1,MAX_MIN-currentMinute)))});
+      for(let i=0;i<extraOpp;i++) newMinutes.push({side:'opp', minute:Math.min(MAX_MIN,currentMinute+1+Math.floor(Math.random()*Math.max(1,MAX_MIN-currentMinute)))});
+      newMinutes.sort((a,b)=>a.minute-b.minute);
+
+      // Descartar eventos futuros aún no mostrados; conservar lo ya ocurrido
+      allEvents=allEvents.slice(0,eventIdx);
+      if(pendingCardEvent) allEvents.push(pendingCardEvent);
+      if(pendingInjuryEvent) allEvents.push(pendingInjuryEvent);
+      newMinutes.forEach(nm=>{
+        if(nm.side==='my'){
+          const scorer=myPool.length?myPool[Math.floor(Math.random()*myPool.length)]:null;
+          allEvents.push({minute:nm.minute, type:'mygoal', icon:'⚽', text:`<strong>${scorer?scorer.name:'Gol'}</strong>`});
+        }else{
+          const scorer=oppPool.length?oppPool[Math.floor(Math.random()*oppPool.length)]:null;
+          allEvents.push({minute:nm.minute, type:'oppgoal', icon:'⚽', text:`<strong>${scorer?scorer.name:'Gol'}</strong>`});
+        }
+      });
+      allEvents.sort((a,b)=>a.minute-b.minute);
+
+      myGoals=curMy+extraMy;
+      oppGoals=curOpp+extraOpp;
+      won=myGoals>oppGoals;
+      draw=myGoals===oppGoals;
+      resultText=draw?t("match.draw"):(won?t("match.victory"):t("match.defeat"));
+      resultClass=draw?"res-draw-tag":(won?"res-win-tag":"res-lose-tag");
+      if(!wasShootout && stage!=="group" && draw){
+        const q=simulatePenalties(computeMyPower(), computeOppPower(nextOpponent));
+        won=q.myWon; draw=false;
+        resultText=won?t("match.victory"):t("match.defeat");
+        resultClass=won?"res-win-tag":"res-lose-tag";
       }
+    }catch(e){
+      console.error('[Giro Táctico] Bloque 3 (resimular goles/marcador) falló:', e);
     }
-    if(matchResults&&matchResults.length){
-      const last=matchResults[matchResults.length-1];
-      last.score=`${myGoals}-${oppGoals}`;
-      last.won=won; last.draw=draw;
-      if(typeof renderMatchHistory==='function') renderMatchHistory();
+
+    // ── Bloque 4: mantener coherente la tabla de grupos y el historial ──
+    try{
+      if(stage==="group"){
+        const meRow=groupTable.find(r=>r.isMe);
+        const oppRow=groupTable.find(r=>r.team===nextOpponent);
+        if(meRow&&oppRow){
+          meRow.gf-=oldMyGoals; meRow.ga-=oldOppGoals;
+          oppRow.gf-=oldOppGoals; oppRow.ga-=oldMyGoals;
+          if(oldDraw){ meRow.drawn--; meRow.pts-=1; oppRow.drawn--; oppRow.pts-=1; }
+          else if(oldWon){ meRow.won--; meRow.pts-=3; oppRow.lost--; }
+          else { meRow.lost--; oppRow.won--; oppRow.pts-=3; }
+          meRow.gf+=myGoals; meRow.ga+=oppGoals;
+          oppRow.gf+=oppGoals; oppRow.ga+=myGoals;
+          if(draw){ meRow.drawn++; meRow.pts+=1; oppRow.drawn++; oppRow.pts+=1; }
+          else if(won){ meRow.won++; meRow.pts+=3; oppRow.lost++; }
+          else { meRow.lost++; oppRow.won++; oppRow.pts+=3; }
+        }
+      }
+      if(matchResults&&matchResults.length){
+        const last=matchResults[matchResults.length-1];
+        last.score=`${myGoals}-${oppGoals}`;
+        last.won=won; last.draw=draw;
+        if(typeof renderMatchHistory==='function') renderMatchHistory();
+      }
+    }catch(e){
+      console.error('[Giro Táctico] Bloque 4 (tabla de grupos/historial) falló:', e);
     }
   }
 
