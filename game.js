@@ -3070,7 +3070,7 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
         // El rival ha pulsado Giro Táctico — pausar aquí también y esperar
         giroPaused=true;
         giroPausedFrac=Math.min((performance.now()-regStart)/REG_DURATION,1);
-        mpGiroShowWaitingOverlay();
+        mpGiroShowWaitingOverlay(pause.ts);
       }else if((!pause||!pause.active) && mpGiroWaitingOverlay){
         // El rival ya ha resuelto su Giro Táctico — adoptar el resultado
         // actualizado y reanudar, sin recalcular nada por mi cuenta.
@@ -3083,8 +3083,11 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
   }
   function mpGiroDetachDuelListener(){
     if(mpGiroListenerUnsub){ mpGiroListenerUnsub(); mpGiroListenerUnsub=null; }
+    if(mpGiroWaitTimerHandle){ clearInterval(mpGiroWaitTimerHandle); mpGiroWaitTimerHandle=null; }
+    if(mpGiroSafetyTimeout){ clearTimeout(mpGiroSafetyTimeout); mpGiroSafetyTimeout=null; }
   }
-  function mpGiroShowWaitingOverlay(){
+  let mpGiroWaitTimerHandle=null, mpGiroSafetyTimeout=null;
+  function mpGiroShowWaitingOverlay(pauseTs){
     const ctxD=window._giroDuelCtx;
     const ov=document.createElement('div');
     ov.id='giroWaitOverlay';
@@ -3093,11 +3096,54 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
       <i class="ph ph-bold ph-hourglass-medium" style="font-size:30px;color:#7b9cff"></i>
       <div style="font-family:'Bebas Neue',Impact,sans-serif;font-size:15px;color:var(--gold);letter-spacing:.5px">
         Espera mientras el rival ${mpEsc(ctxD?ctxD.opponentUsername:'')} da instrucciones a su equipo
-      </div>`;
+      </div>
+      <div style="width:80%;max-width:240px;height:4px;background:#222;border-radius:3px;overflow:hidden">
+        <div id="giroWaitFill" style="height:100%;width:100%;background:#7b9cff;transition:width .1s linear"></div>
+      </div>
+      <div id="giroWaitSub" style="font-size:10px;color:var(--text-muted)"></div>`;
     document.body.appendChild(ov);
     mpGiroWaitingOverlay=ov;
+
+    // Barra sincronizada con el mismo margen de 10s que tiene el rival
+    // para elegir — si el rival ya eligió antes, se para sola al cerrarse
+    // este overlay (lo hace el propio listener).
+    const GIRO_TOTAL_MS=10000;
+    const startTs=pauseTs||Date.now();
+    const fill=document.getElementById('giroWaitFill');
+    const sub=document.getElementById('giroWaitSub');
+    if(mpGiroWaitTimerHandle) clearInterval(mpGiroWaitTimerHandle);
+    mpGiroWaitTimerHandle=setInterval(()=>{
+      const remainMs=Math.max(0, GIRO_TOTAL_MS-(Date.now()-startTs));
+      if(fill) fill.style.width=(remainMs/GIRO_TOTAL_MS*100)+'%';
+      if(sub) sub.textContent=remainMs>0?`${Math.ceil(remainMs/1000)}s`:'';
+      if(remainMs<=0){ clearInterval(mpGiroWaitTimerHandle); mpGiroWaitTimerHandle=null; }
+    },100);
+
+    // Red de seguridad: si por lo que sea la señal de "el rival ya ha
+    // terminado" no llega (retraso de red, evento perdido...), forzar
+    // una lectura directa y reanudar de todos modos — nunca debe
+    // quedarse esperando indefinidamente.
+    if(mpGiroSafetyTimeout) clearTimeout(mpGiroSafetyTimeout);
+    mpGiroSafetyTimeout=setTimeout(async()=>{
+      if(!mpGiroWaitingOverlay) return; // ya se resolvió por el camino normal
+      const ctxD2=window._giroDuelCtx;
+      const db=window._fbDb;
+      try{
+        if(db&&ctxD2&&ctxD2.duelId){
+          const snap=await db.collection('duels').doc(ctxD2.duelId).get();
+          const freshDoc=snap.exists?snap.data():null;
+          if(freshDoc) mpGiroAdoptUpdatedResult(freshDoc);
+        }
+      }catch(e){ console.error('[Giro Táctico Duelo] red de seguridad falló:', e); }
+      finally{
+        mpGiroHideWaitingOverlay();
+        resumeAfterGiro();
+      }
+    }, 13000);
   }
   function mpGiroHideWaitingOverlay(){
+    if(mpGiroWaitTimerHandle){ clearInterval(mpGiroWaitTimerHandle); mpGiroWaitTimerHandle=null; }
+    if(mpGiroSafetyTimeout){ clearTimeout(mpGiroSafetyTimeout); mpGiroSafetyTimeout=null; }
     if(mpGiroWaitingOverlay){ mpGiroWaitingOverlay.remove(); mpGiroWaitingOverlay=null; }
   }
   /* Adopta sin recalcular el resultado ya corregido por quien usó Giro
@@ -3195,7 +3241,7 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
     panel.id='giroPickerPanel';
     panel.style.cssText='position:fixed;inset:0;background:rgba(10,10,10,.97);z-index:95000;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:14px;gap:8px;overflow:hidden';
     panel.innerHTML=`
-      <div style="font-family:'Bebas Neue',Impact,sans-serif;color:var(--gold);letter-spacing:1.2px;font-size:14px">⏸ GIRO TÁCTICO — MIN ${currentMinute}'</div>
+      <div style="font-family:'Bebas Neue',Impact,sans-serif;color:var(--gold);letter-spacing:1.2px;font-size:14px">GIRO TÁCTICO — MIN ${currentMinute}'</div>
       <div style="width:80%;max-width:280px;height:4px;background:#222;border-radius:3px;overflow:hidden">
         <div id="giroTimerFill" style="height:100%;width:100%;background:var(--gold);transition:width .1s linear"></div>
       </div>
@@ -3277,6 +3323,7 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
       let i=0;
       const maxSteps=PATHS.a.length;
       const iv=setInterval(()=>{
+        playSound('spin');
         cardEls.forEach(({el,key})=>{
           const p=PATHS[key][Math.min(i,PATHS[key].length-1)];
           setT(el,p.x,p.y,p.rot,p.s);
