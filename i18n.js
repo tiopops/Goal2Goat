@@ -1057,6 +1057,9 @@ window.TRANSLATIONS = {
   'match.match': {es:'partido', en:'match', pt:'partida', fr:'match', de:'Spiel', it:'partita'},
   'match.recovered': {es:'Recuperados', en:'Recovered', pt:'Recuperados', fr:'Remis sur pied', de:'Erholt', it:'Recuperati'},
   'giro.used_title': {es:'Giro Táctico usado', en:'Tactical Shift used', pt:'Guinada Tática usada', fr:'Virage Tactique utilisé', de:'Taktikwechsel genutzt', it:'Svolta Tattica usata'},
+  'giro.no_pick': {es:'no se eligió ninguna carta a tiempo', en:'no card was chosen in time', pt:'nenhuma carta foi escolhida a tempo', fr:'aucune carte choisie à temps', de:'keine Karte rechtzeitig gewählt', it:'nessuna carta scelta in tempo'},
+  'giro.rival_used': {es:'usó Giro Táctico', en:'used Tactical Shift', pt:'usou Guinada Tática', fr:'a utilisé Virage Tactique', de:'hat Taktikwechsel genutzt', it:'ha usato Svolta Tattica'},
+  'giro.final_uses': {es:'Giros Tácticos usados', en:'Tactical Shifts used', pt:'Guinadas Táticas usadas', fr:'Virages Tactiques utilisés', de:'Genutzte Taktikwechsel', it:'Svolte Tattiche usate'},
 
   /* ── RESULTADO — botones y etiquetas ── */
   'match.victory_pen': {es:'¡VICTORIA EN PENALTIS!', en:'PENALTY SHOOT-OUT WIN!', pt:'VITÓRIA NOS PENALTIS!', fr:'VICTOIRE AUX TIRS AU BUT !', de:'SIEG IM ELFMETERSCHIESSEN!', it:'VITTORIA AI RIGORI!'},

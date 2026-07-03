@@ -1971,6 +1971,7 @@ function pickNextOpponent(){
   applyPendingSuspensions(); // activate/lift card suspensions for the upcoming match
   updateConvocadosTable();
   updateBenchTable();
+  if(typeof startCampoGuideTimer==='function') startCampoGuideTimer();
   if(stage==="group"){
     nextOpponent=groupOpponents[groupMatchIdx];
   } else if(stage==="knockout"){
@@ -2901,7 +2902,7 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
   // ── HTML inicial — diseño match-modal ──
   overlay.innerHTML=`
   <div class="match-modal" style="overflow:hidden;display:flex;flex-direction:column;max-height:85vh;position:relative">
-    ${!window._duelId?`<button id="giroTacticoBtn" style="position:absolute;top:8px;left:8px;z-index:5;display:flex;align-items:center;gap:5px;background:none;border:1px solid ${window._giroCharges>0?'var(--gold)':'#555'};color:${window._giroCharges>0?'var(--gold)':'#777'};font-family:'Bebas Neue',Impact,sans-serif;font-size:11px;letter-spacing:.5px;padding:4px 9px;border-radius:5px;cursor:${window._giroCharges>0?'pointer':'not-allowed'}" ${window._giroCharges>0?'':'disabled'}><i class="ph ph-bold ph-notebook" style="font-size:15px"></i> GIRO TÁCTICO ${window._giroCharges||0}/${getMaxGiroCharges()}</button>`:''}
+    <button id="giroTacticoBtn" style="position:absolute;top:8px;left:8px;z-index:5;display:flex;align-items:center;gap:5px;background:none;border:1px solid ${window._giroCharges>0?'var(--gold)':'#555'};color:${window._giroCharges>0?'var(--gold)':'#777'};font-family:'Bebas Neue',Impact,sans-serif;font-size:11px;letter-spacing:.5px;padding:4px 9px;border-radius:5px;cursor:${window._giroCharges>0?'pointer':'not-allowed'}" ${window._giroCharges>0?'':'disabled'}><i class="ph ph-bold ph-notebook" style="font-size:15px"></i> GIRO TÁCTICO ${window._giroCharges||0}/${getMaxGiroCharges()}</button>
     ${window._duelId?`<div style="text-align:center;font-family:'Bebas Neue',Impact,sans-serif;font-size:14px;letter-spacing:1.5px;color:var(--gold);text-transform:uppercase;padding-bottom:4px">${(tk('mp.duel_match_of')||'PARTIDO {0} DE 5').replace('{0}', String(window._duelMatchIndex+1))}</div>`:''}
     <div class="match-header">
       <div class="match-side">
@@ -3017,7 +3018,7 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
     if(penaltyInfo) setTimeout(startExtraTime,900);
     else {
       playSound(won||draw?'victory':'defeat');
-      if(window._duelId) setTimeout(()=>{ mpAdvanceAfterMatch(); }, 800);
+      if(window._duelId){ mpGiroDetachDuelListener(); setTimeout(()=>{ mpAdvanceAfterMatch(); }, 800); }
       else setTimeout(showPostMatch,800);
     }
   }
@@ -3036,6 +3037,15 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
     giroPaused=true;
     giroPausedFrac=Math.min((performance.now()-regStart)/REG_DURATION,1);
     playSound('select');
+    if(window._duelId && window._giroDuelCtx){
+      const ctxD=window._giroDuelCtx;
+      const db=window._fbDb;
+      if(db&&ctxD.duelId){
+        db.collection('duels').doc(ctxD.duelId).update({
+          [`m${ctxD.matchIndex}_giroPause`]: {by:ctxD.myRole, pauseMinute:currentMinute, active:true, ts:Date.now()}
+        }).catch(e=>console.error('[Giro Táctico Duelo] aviso de pausa falló:', e));
+      }
+    }
     try{
       showGiroCardPicker();
     }catch(e){
@@ -3043,6 +3053,82 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
       resumeAfterGiro();
     }
   }
+
+  /* ---- Sincronización del duelo: esperar/reanudar cuando el RIVAL usa
+     Giro Táctico (yo no soy quien lo pulsa) ---- */
+  let mpGiroListenerUnsub=null, mpGiroWaitingOverlay=null;
+  function mpGiroAttachDuelListener(){
+    if(!window._duelId || !window._giroDuelCtx) return;
+    const ctxD=window._giroDuelCtx;
+    const db=window._fbDb;
+    if(!db||!ctxD.duelId) return;
+    mpGiroListenerUnsub=db.collection('duels').doc(ctxD.duelId).onSnapshot(snap=>{
+      const d=snap.data();
+      if(!d) return;
+      const pause=d[`m${ctxD.matchIndex}_giroPause`];
+      if(pause && pause.active && pause.by!==ctxD.myRole && !giroPaused){
+        // El rival ha pulsado Giro Táctico — pausar aquí también y esperar
+        giroPaused=true;
+        giroPausedFrac=Math.min((performance.now()-regStart)/REG_DURATION,1);
+        mpGiroShowWaitingOverlay();
+      }else if((!pause||!pause.active) && mpGiroWaitingOverlay){
+        // El rival ya ha resuelto su Giro Táctico — adoptar el resultado
+        // actualizado y reanudar, sin recalcular nada por mi cuenta.
+        mpGiroHideWaitingOverlay();
+        try{ mpGiroAdoptUpdatedResult(d); }
+        catch(e){ console.error('[Giro Táctico Duelo] resincronización falló:', e); }
+        resumeAfterGiro();
+      }
+    }, e=>console.error('[Giro Táctico Duelo] listener falló:', e));
+  }
+  function mpGiroDetachDuelListener(){
+    if(mpGiroListenerUnsub){ mpGiroListenerUnsub(); mpGiroListenerUnsub=null; }
+  }
+  function mpGiroShowWaitingOverlay(){
+    const ctxD=window._giroDuelCtx;
+    const ov=document.createElement('div');
+    ov.id='giroWaitOverlay';
+    ov.style.cssText='position:fixed;inset:0;background:rgba(10,10,10,.97);z-index:95000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:20px;text-align:center';
+    ov.innerHTML=`
+      <i class="ph ph-bold ph-hourglass-medium" style="font-size:30px;color:#7b9cff"></i>
+      <div style="font-family:'Bebas Neue',Impact,sans-serif;font-size:15px;color:var(--gold);letter-spacing:.5px">
+        Espera mientras el rival ${mpEsc(ctxD?ctxD.opponentUsername:'')} da instrucciones a su equipo
+      </div>`;
+    document.body.appendChild(ov);
+    mpGiroWaitingOverlay=ov;
+  }
+  function mpGiroHideWaitingOverlay(){
+    if(mpGiroWaitingOverlay){ mpGiroWaitingOverlay.remove(); mpGiroWaitingOverlay=null; }
+  }
+  /* Adopta sin recalcular el resultado ya corregido por quien usó Giro
+     Táctico — mismo mecanismo que ya usan los duelos para sincronizarse. */
+  function mpGiroAdoptUpdatedResult(freshDoc){
+    const ctxD=window._giroDuelCtx;
+    if(!ctxD) return;
+    const idx=ctxD.matchIndex;
+    const freshResult=freshDoc[`m${idx}_result`];
+    if(!freshResult) return;
+    ctxD.result=freshResult;
+    const myGoalEventsField=ctxD.myRole==='challenger'?'challengerGoalEvents':'opponentGoalEvents';
+    const rivalGoalEventsField=ctxD.myRole==='challenger'?'opponentGoalEvents':'challengerGoalEvents';
+    const myEvents=freshResult[myGoalEventsField]||[];
+    const rivalEvents=freshResult[rivalGoalEventsField]||[];
+    myGoals=ctxD.myRole==='challenger'?freshResult.challengerGoals:freshResult.opponentGoals;
+    oppGoals=ctxD.myRole==='challenger'?freshResult.opponentGoals:freshResult.challengerGoals;
+    won=myGoals>oppGoals; draw=myGoals===oppGoals;
+    // Conservar lo ya mostrado (mismo instante de pausa para los dos, ya
+    // que se guarda el minuto exacto de quien pulsó el botón) y añadir
+    // los eventos futuros ya recalculados por el rival.
+    allEvents=allEvents.slice(0,eventIdx);
+    myEvents.filter(ev=>ev.minute>currentMinute).forEach(ev=>{
+      allEvents.push({minute:ev.minute, type:'mygoal', icon:'⚽', text:`<strong>${ev.name||'Gol'}</strong>`});
+    });
+    rivalEvents.filter(ev=>ev.minute>currentMinute).forEach(ev=>{
+      allEvents.push({minute:ev.minute, type:'oppgoal', icon:'⚽', text:`<strong>${ev.name||'Gol'}</strong>`});
+    });
+    allEvents.sort((a,b)=>a.minute-b.minute);
+  }
+  if(window._duelId) mpGiroAttachDuelListener();
 
   function ensureGiroCardStyles(){
     if(document.getElementById('giroCardStylesTag')) return;
@@ -3260,8 +3346,7 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
       if(fill) fill.style.width=(remainMs/GIRO_TOTAL_MS*100)+'%';
       if(remainMs<=0){
         clearInterval(timerHandle);
-        const chosen=focusedKey!==null?cardEls.find(c=>c.key===focusedKey):cardEls[Math.floor(Math.random()*cardEls.length)];
-        doResolve(chosen);
+        handleGiroTimeout();
       }
     },100);
 
@@ -3276,6 +3361,48 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
       setTimeout(()=>{ stage.classList.add('vanishing'); }, 250);
       setTimeout(()=>{ resolveGiroPick(entry.card, panel); }, 750);
     }
+
+    // Si se agota el tiempo sin confirmar ninguna carta (aunque hubiera
+    // una enfocada), no se aplica ningún efecto — pero el uso SÍ se
+    // consume, como penalización por no decidir a tiempo.
+    function handleGiroTimeout(){
+      if(resolved) return;
+      resolved=true;
+      idleActive=false;
+      if(sub) sub.textContent='Tiempo agotado — no se eligió ninguna carta';
+      setTimeout(()=>{ stage.classList.add('vanishing'); }, 400);
+      setTimeout(()=>{
+        if(panel) panel.remove();
+        try{ consumeGiroChargeNoEffect(); }
+        catch(e){ console.error('[Giro Táctico] consumo por tiempo agotado falló:', e); }
+        finally{ resumeAfterGiro(); }
+      }, 900);
+    }
+  }
+
+  // Consume 1 uso de Giro Táctico sin aplicar ningún efecto — se llama
+  // cuando el jugador deja pasar el tiempo sin elegir carta.
+  function consumeGiroChargeNoEffect(){
+    giroUsedThisMatch=true;
+    window._giroCharges=Math.max(0,(window._giroCharges||1)-1);
+    const btn=document.getElementById('giroTacticoBtn');
+    if(btn){
+      btn.disabled=true; btn.style.opacity='.4'; btn.style.cursor='not-allowed'; btn.style.borderColor='#555'; btn.style.color='#777';
+      btn.innerHTML=`<i class="ph ph-bold ph-notebook" style="font-size:15px"></i> GIRO TÁCTICO ${window._giroCharges||0}/${getMaxGiroCharges()}`;
+    }
+    // No se registra window._giroCardUsed — no hubo carta elegida, así
+    // que el resumen final no debe mostrar ningún efecto aplicado.
+    if(window._duelId && window._giroDuelCtx){
+      const ctxD=window._giroDuelCtx;
+      const db=window._fbDb;
+      if(db&&ctxD.duelId){
+        const roleField=ctxD.myRole==='challenger'?'giroChallenger':'giroOpponent';
+        db.collection('duels').doc(ctxD.duelId).update({
+          [`m${ctxD.matchIndex}_giroPause`]: {active:false},
+          [`m${ctxD.matchIndex}_${roleField}`]: {minute:currentMinute, noPick:true}
+        }).catch(e=>console.error('[Giro Táctico Duelo] aviso de "no elegido" falló:', e));
+      }
+    }
   }
 
   function resolveGiroPick(card, panel){
@@ -3283,12 +3410,137 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
     // reanudarse — nunca debe quedarse congelado.
     try{
       if(panel) panel.remove();
-      applyGiroCard(card);
+      if(window._duelId) applyGiroCardDuel(card);
+      else applyGiroCard(card);
     }catch(e){
       console.error('Giro Táctico error:', e);
       if(typeof showToast==='function') showToast('⚠ Giro Táctico: parte del efecto no se pudo aplicar', 'toast-neg');
     }finally{
       resumeAfterGiro();
+    }
+  }
+
+  /* Versión para duelo — calcula el tramo restante usando las plantillas
+     reales de ambos jugadores y escribe el resultado corregido para que
+     el rival lo adopte sin tener que recalcular nada. */
+  function applyGiroCardDuel(card){
+    const ctxD=window._giroDuelCtx;
+    if(!ctxD){ console.error('[Giro Táctico Duelo] sin contexto'); return; }
+    giroUsedThisMatch=true;
+    window._giroCharges=Math.max(0,(window._giroCharges||1)-1);
+    window._giroCardUsed={name:card.name, pos:card.pos, neg:card.neg, icon:card.icon};
+    const btn=document.getElementById('giroTacticoBtn');
+    if(btn){
+      btn.disabled=true; btn.style.opacity='.4'; btn.style.cursor='not-allowed'; btn.style.borderColor='#555'; btn.style.color='#777';
+      btn.innerHTML=`<i class="ph ph-bold ph-notebook" style="font-size:15px"></i> GIRO TÁCTICO ${window._giroCharges||0}/${getMaxGiroCharges()}`;
+    }
+
+    let ctx={myLambda:1.15, oppLambda:1.15, fatigue:0, morale:0, cardRiskDelta:0, injuryRiskDelta:0, starBoost:0};
+    let starPlayer=null;
+    try{
+      const result=ctxD.result||{};
+      const remFrac=Math.max(0.03,(90-currentMinute)/90);
+      const myBaseLambda=(ctxD.myRole==='challenger'?result.challengerBaseLambda:result.opponentBaseLambda)||1.15;
+      const rivalBaseLambda=(ctxD.myRole==='challenger'?result.opponentBaseLambda:result.challengerBaseLambda)||1.15;
+      ctx={myLambda:myBaseLambda*remFrac, oppLambda:rivalBaseLambda*remFrac, fatigue:0, morale:0, cardRiskDelta:0, injuryRiskDelta:0, starBoost:0};
+      card.apply(ctx);
+      ctx.myLambda=Math.max(0.05,ctx.myLambda);
+      ctx.oppLambda=Math.max(0.05,ctx.oppLambda);
+      if(ctx.fatigue){
+        usedPlayers.forEach(p=>{ p.fatigue=Math.max(0,Math.min(100,(p.fatigue===undefined?100:p.fatigue)+ctx.fatigue)); });
+      }
+      if(ctx.morale){ teamMorale=Math.max(-50,Math.min(50,teamMorale+ctx.morale)); }
+      if(ctx.starBoost){
+        starPlayer=usedPlayers.slice().sort((a,b)=>(b.rating||0)-(a.rating||0))[0];
+        if(starPlayer){ starPlayer.rating=(starPlayer.rating||70)+ctx.starBoost; ctx.myLambda+=(ctx.starBoost/100)*0.35; }
+      }
+      ctx.myLambda=Math.max(0.05,ctx.myLambda);
+    }catch(e){
+      console.error('[Giro Táctico Duelo] Bloque 1 (efecto) falló:', e);
+    }
+
+    let pendingCardEvent=null, pendingInjuryEvent=null;
+    try{
+      if(ctx.cardRiskDelta){
+        const baseCardChance=0.08;
+        const cardChance=Math.max(0,Math.min(0.9,baseCardChance+ctx.cardRiskDelta));
+        if(Math.random()<cardChance && usedPlayers.length){
+          const target=usedPlayers[Math.floor(Math.random()*usedPlayers.length)];
+          const isRed=Math.random()<(RED_RISK_PER_PLAYER/(RED_RISK_PER_PLAYER+YELLOW_RISK_PER_PLAYER));
+          const cardMin=Math.min(90,currentMinute+1+Math.floor(Math.random()*Math.max(1,90-currentMinute)));
+          pendingCardEvent={minute:cardMin, type:'card', icon:isRed?'🟥':'🟨', text:`<strong>${target.name}</strong>`};
+        }
+      }
+      if(ctx.injuryRiskDelta && Math.random()<ctx.injuryRiskDelta){
+        const target=starPlayer||(usedPlayers.length?usedPlayers[Math.floor(Math.random()*usedPlayers.length)]:null);
+        if(target && !target.injury){
+          const r=Math.random();
+          const type=r<0.6?'leve':r<0.9?'básica':'grave';
+          target.injury={remaining:type==='leve'?1:type==='básica'?2:3, type};
+          target.forcedInjured=true;
+          const injMin=Math.min(90,currentMinute+1+Math.floor(Math.random()*Math.max(1,90-currentMinute)));
+          pendingInjuryEvent={minute:injMin, type:'injury', icon:'✚', text:`<strong>${target.name}</strong>`};
+        }
+      }
+    }catch(e){
+      console.error('[Giro Táctico Duelo] Bloque 2 (riesgo tarjeta/lesión) falló:', e);
+    }
+
+    try{
+      const extraMy=poissonSample(ctx.myLambda);
+      const extraRival=poissonSample(ctx.oppLambda);
+
+      const myPoolRaw=(ctxD.mySquad.pitch||[]).filter(p=>p.placedPos&&["DC","EI","ED","MC"].includes(p.placedPos));
+      const rivalPoolRaw=(ctxD.rivalSquad.pitch||[]).filter(p=>p.placedPos&&["DC","EI","ED","MC"].includes(p.placedPos));
+      const myPool=myPoolRaw.length?myPoolRaw:(ctxD.mySquad.pitch||[]);
+      const rivalPool=rivalPoolRaw.length?rivalPoolRaw:(ctxD.rivalSquad.pitch||[]);
+
+      const newMyMin=[]; for(let i=0;i<extraMy;i++) newMyMin.push(Math.min(90,currentMinute+1+Math.floor(Math.random()*Math.max(1,90-currentMinute))));
+      const newRivalMin=[]; for(let i=0;i<extraRival;i++) newRivalMin.push(Math.min(90,currentMinute+1+Math.floor(Math.random()*Math.max(1,90-currentMinute))));
+      newMyMin.sort((a,b)=>a-b); newRivalMin.sort((a,b)=>a-b);
+      const newMyEvents=newMyMin.map(min=>({name:myPool.length?myPool[Math.floor(Math.random()*myPool.length)].name:null, minute:min}));
+      const newRivalEvents=newRivalMin.map(min=>({name:rivalPool.length?rivalPool[Math.floor(Math.random()*rivalPool.length)].name:null, minute:min}));
+
+      const result=ctxD.result||{};
+      const myGoalEventsField=ctxD.myRole==='challenger'?'challengerGoalEvents':'opponentGoalEvents';
+      const rivalGoalEventsField=ctxD.myRole==='challenger'?'opponentGoalEvents':'challengerGoalEvents';
+      const pastMyEvents=(result[myGoalEventsField]||[]).filter(ev=>ev.minute<=currentMinute);
+      const pastRivalEvents=(result[rivalGoalEventsField]||[]).filter(ev=>ev.minute<=currentMinute);
+      const updatedMyEvents=[...pastMyEvents, ...newMyEvents];
+      const updatedRivalEvents=[...pastRivalEvents, ...newRivalEvents];
+      const newMyTotal=pastMyEvents.length+extraMy;
+      const newRivalTotal=pastRivalEvents.length+extraRival;
+
+      myGoals=newMyTotal;
+      oppGoals=newRivalTotal;
+      won=myGoals>oppGoals; draw=myGoals===oppGoals;
+
+      allEvents=allEvents.slice(0,eventIdx);
+      if(pendingCardEvent) allEvents.push(pendingCardEvent);
+      if(pendingInjuryEvent) allEvents.push(pendingInjuryEvent);
+      newMyEvents.forEach(ev=>allEvents.push({minute:ev.minute, type:'mygoal', icon:'⚽', text:`<strong>${ev.name||'Gol'}</strong>`}));
+      newRivalEvents.forEach(ev=>allEvents.push({minute:ev.minute, type:'oppgoal', icon:'⚽', text:`<strong>${ev.name||'Gol'}</strong>`}));
+      allEvents.sort((a,b)=>a.minute-b.minute);
+
+      const updatedResult=Object.assign({}, result, {
+        [myGoalEventsField]: updatedMyEvents,
+        [rivalGoalEventsField]: updatedRivalEvents,
+        [ctxD.myRole==='challenger'?'challengerGoals':'opponentGoals']: newMyTotal,
+        [ctxD.myRole==='challenger'?'opponentGoals':'challengerGoals']: newRivalTotal,
+      });
+      ctxD.result=updatedResult;
+
+      const db=window._fbDb;
+      if(db&&ctxD.duelId){
+        const roleField=ctxD.myRole==='challenger'?'giroChallenger':'giroOpponent';
+        db.collection('duels').doc(ctxD.duelId).update({
+          [`m${ctxD.matchIndex}_result`]: updatedResult,
+          [`m${ctxD.matchIndex}_giroPause`]: {active:false},
+          [`m${ctxD.matchIndex}_${roleField}`]: {cardName:card.name, pos:card.pos, neg:card.neg, minute:currentMinute}
+        }).catch(e=>console.error('[Giro Táctico Duelo] guardado del resultado corregido falló:', e));
+      }
+    }catch(e){
+      console.error('[Giro Táctico Duelo] Bloque 3 (resimular goles) falló:', e);
     }
   }
 
@@ -5648,6 +5900,48 @@ document.addEventListener('click', e=>{
   }
 })();
 
+/* ── Temporizador de guía — pestaña CAMPO (móvil) ──
+   Si pasan 20s sin que el jugador pulse "JUGAR PARTIDO" (al empezar el
+   torneo o entre partidos), un aviso silencioso en la pestaña CAMPO le
+   indica dónde está el botón. Sin barra visible ni sonido — no es un
+   temporizador de juego, solo una guía de interfaz. */
+let _campoGuideTimer=null;
+function startCampoGuideTimer(){
+  clearCampoGuideTimer();
+  if(window.innerWidth>1050) return; // solo tiene sentido en móvil
+  _campoGuideTimer=setTimeout(()=>{ notifyMobileCampoTab(); }, 20000);
+}
+function clearCampoGuideTimer(){
+  if(_campoGuideTimer){ clearTimeout(_campoGuideTimer); _campoGuideTimer=null; }
+  const badge=document.querySelector('.mob-tab[data-tab="campo"] .mob-tab-badge-guide');
+  if(badge) badge.style.display='none';
+  const btn=document.querySelector('.mob-tab[data-tab="campo"]');
+  if(btn) btn.style.color='';
+}
+function notifyMobileCampoTab(){
+  if(window.innerWidth>1050) return;
+  const badge=document.querySelector('.mob-tab[data-tab="campo"] .mob-tab-badge-guide');
+  if(badge) badge.style.display='flex';
+  const btn=document.querySelector('.mob-tab[data-tab="campo"]');
+  if(btn) btn.style.color='var(--gold)';
+}
+// Limpiar el aviso en cuanto se visita la pestaña CAMPO
+document.addEventListener('click', e=>{
+  if(e.target.closest('.mob-tab[data-tab="campo"]')) clearCampoGuideTimer();
+});
+// Añadir el HTML del aviso a la pestaña CAMPO al iniciar
+(function(){
+  const campoTab=document.querySelector('.mob-tab[data-tab="campo"]');
+  if(campoTab && !campoTab.querySelector('.mob-tab-badge-guide')){
+    const badge=document.createElement('span');
+    badge.className='mob-tab-badge mob-tab-badge-guide';
+    badge.style.display='none';
+    badge.textContent='!';
+    campoTab.appendChild(badge);
+  }
+})();
+document.getElementById("playMatchBtn").addEventListener("click", clearCampoGuideTimer);
+
 /* ── Notificación de GOAT Points ganados ── */
 function checkPointsAchievements(pts){
   if(pts>=50) unlockAchievement('50_goat_pts');
@@ -6378,6 +6672,10 @@ async function renderUpgradesTab(){
   const list = document.getElementById('upgradesList');
   const pointsEl = document.getElementById('upgradePointsDisplay');
   if(!list) return;
+  // Guardar la posición de scroll para restaurarla tras reconstruir la
+  // lista — si no, el panel salta arriba al desaparecer el botón pulsado.
+  const scrollHost = document.getElementById('profileUpgradesPane');
+  const savedScroll = scrollHost ? scrollHost.scrollTop : 0;
 
   list.innerHTML = `<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:12px">${window.t?window.t('upgrade.loading'):'Cargando...'}</div>`;
   await refreshUpgradeCache();
@@ -6438,6 +6736,10 @@ async function renderUpgradesTab(){
 
     list.appendChild(row);
   });
+
+  // Restaurar la posición de scroll ya reconstruida la lista, para que
+  // el modal no salte arriba al desaparecer el botón que se pulsó.
+  if(scrollHost) requestAnimationFrame(()=>{ scrollHost.scrollTop = savedScroll; });
 
   // Event listeners
   list.querySelectorAll('.upgrade-btn').forEach(btn => {
@@ -6583,6 +6885,10 @@ async function renderSkillsTab(){
   const list = document.getElementById('skillsList');
   const pointsEl = document.getElementById('skillPointsDisplay');
   if(!list) return;
+  // Guardar la posición de scroll para restaurarla tras reconstruir la
+  // lista — si no, el panel salta arriba al desaparecer el botón pulsado.
+  const scrollHost = document.getElementById('profileNotesPane');
+  const savedScroll = scrollHost ? scrollHost.scrollTop : 0;
   list.innerHTML=`<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:12px">${window.t?window.t('skill.loading'):'Cargando...'}</div>`;
   const user = window._fbAuth&&window._fbAuth.currentUser;
   if(!user){ list.innerHTML=`<div style="text-align:center;padding:20px;color:var(--text-muted)">${window.t?window.t('skill.login'):'Inicia sesión para ver las habilidades.'}</div>`; return; }
@@ -6662,6 +6968,10 @@ async function renderSkillsTab(){
       grid.appendChild(btn);
     });
   });
+
+  // Restaurar la posición de scroll ya reconstruida la lista, para que
+  // el modal no salte arriba al desaparecer el botón que se pulsó.
+  if(scrollHost) requestAnimationFrame(()=>{ scrollHost.scrollTop = savedScroll; });
 
   // Eliminar el viejo listener loop que ya no existe
 }
@@ -7374,7 +7684,8 @@ function computeDuelMatchResult(challengerSquad, opponentSquad, challengerStrate
   const shotsChallenger=challengerGoals*2+Math.floor(Math.random()*5)+3;
   const shotsOpponent=opponentGoals*2+Math.floor(Math.random()*4)+2;
   return {challengerGoals, opponentGoals, challengerFatigue, opponentFatigue, challengerCards, opponentCards,
-    challengerInjuries, opponentInjuries, possession, challengerGoalEvents, opponentGoalEvents, shotsChallenger, shotsOpponent};
+    challengerInjuries, opponentInjuries, possession, challengerGoalEvents, opponentGoalEvents, shotsChallenger, shotsOpponent,
+    challengerBaseLambda:chalLambda, opponentBaseLambda:oppLambda};
 }
 
 /* Pantalla de selección de estrategia para el partido actual del duelo */
@@ -7411,6 +7722,11 @@ function mpShowStrategyAndBenchPhase(){
 
 function mpRenderStrategyAndBenchPhase(idx){
   selectedMatchStrategy=null;
+  if(idx===0){
+    // Giro Táctico: usos disponibles para todo el duelo (misma cantidad
+    // real que en solitario: 1 base + mejora comprada).
+    window._giroCharges=getMaxGiroCharges();
+  }
   swapsUsedThisMatch=0;
   convSortMode='position';
   swapSelection=null;
@@ -7624,6 +7940,18 @@ function mpPlayDuelMatchAnimation(result, challengerSquad, opponentSquad){
   document.getElementById("benchSection").style.display="none";
   document.getElementById("moraleSection").style.display="none";
   window._duelLastMatchStats={myGoals,rivalGoals,myCards,rivalCards,myInjuries,rivalInjuries,won,draw};
+  // Contexto para Giro Táctico en duelo — permite recalcular el tramo
+  // restante lo pida quien lo pida, sin depender del retador.
+  window._giroDuelCtx={
+    duelId: window._duelId,
+    matchIndex: window._duelMatchIndex,
+    myRole: window._duelRole,
+    mySquad, rivalSquad,
+    challengerSquad, opponentSquad,
+    opponentUsername: window._duelOpponentUsername,
+    result
+  };
+  window._giroLambdaCtx=null; // este contexto es solo de solitario, no aplica aquí
   showLiveMatch(myGoals, rivalGoals, summary, [], myInjuries, won, draw, null, myCards, null, {injuries:rivalInjuries, cards:rivalCards});
   mpAddDuelExitLinkToLiveMatch();
 }
@@ -7728,6 +8056,30 @@ async function mpShowDuelPostMatchStats(){
         sf.textContent=`${(tk('mp.duel_your_strategy')||'Tu estrategia')} (${myName}): ${verdict}`;
         infoWrap.appendChild(sf);
       }
+      // Giro Táctico — mostrar si alguno de los dos lo usó este partido
+      // (reutiliza la misma lectura de arriba, sin gasto extra).
+      const giroChal=d[`m${idx}_giroChallenger`], giroOpp=d[`m${idx}_giroOpponent`];
+      const myGiro=window._duelRole==='challenger'?giroChal:giroOpp;
+      const rivalGiro=window._duelRole==='challenger'?giroOpp:giroChal;
+      if(myGiro){
+        const gc=document.createElement('div');
+        gc.className='match-summary';
+        gc.style.cssText='border:1px solid var(--gold);border-radius:8px;padding:8px 10px';
+        gc.innerHTML=myGiro.noPick
+          ? `<strong style="color:var(--gold)">${tk('giro.used_title')||'Giro Táctico usado'}</strong>: ${tk('giro.no_pick')||'no se eligió ninguna carta a tiempo'} (min ${myGiro.minute}')`
+          : `<strong style="color:var(--gold)">${tk('giro.used_title')||'Giro Táctico usado'}: ${mpEsc(myGiro.cardName)}</strong><br><span style="color:#bfe8c9">${mpEsc(myGiro.pos)}</span> · <span style="color:#f3c6c1">${mpEsc(myGiro.neg)}</span>`;
+        infoWrap.appendChild(gc);
+      }
+      if(rivalGiro){
+        const gc=document.createElement('div');
+        gc.className='match-summary';
+        gc.style.cssText='border:1px solid #4a90d9;border-radius:8px;padding:8px 10px';
+        const rivalName=mpEsc(window._duelOpponentUsername||'Rival');
+        gc.innerHTML=rivalGiro.noPick
+          ? `<strong style="color:#7ec3ff">${rivalName} ${(tk('giro.rival_used')||'usó Giro Táctico')}</strong>: ${tk('giro.no_pick')||'no eligió ninguna carta a tiempo'} (min ${rivalGiro.minute}')`
+          : `<strong style="color:#7ec3ff">${rivalName} ${(tk('giro.rival_used')||'usó Giro Táctico')}: ${mpEsc(rivalGiro.cardName)}</strong><br><span style="color:#bfe8c9">${mpEsc(rivalGiro.pos)}</span> · <span style="color:#f3c6c1">${mpEsc(rivalGiro.neg)}</span>`;
+        infoWrap.appendChild(gc);
+      }
     }
   }catch(e){ console.error('mpShowDuelPostMatchStats strategy error:',e); }
 
@@ -7792,6 +8144,7 @@ async function mpShowDuelFinalSummary(){
   }catch(e){ console.error('mpShowDuelFinalSummary error:',e); }
   let myWins=0, rivalWins=0, myGoalsTotal=0, rivalGoalsTotal=0, draws=0;
   let myCardsTotal=0, rivalCardsTotal=0, myInjuriesTotal=0, rivalInjuriesTotal=0;
+  let myGiroUses=0, rivalGiroUses=0;
   let possessionSum=0, playedCount=0, biggestWinIdx=-1, biggestWinMargin=0, cleanSheets=0, rivalCleanSheets=0;
   const rows=[];
   for(let i=0;i<5;i++){
@@ -7809,6 +8162,8 @@ async function mpShowDuelFinalSummary(){
     myGoalsTotal+=myG; rivalGoalsTotal+=rG;
     myCardsTotal+=myC.length; rivalCardsTotal+=rC.length;
     myInjuriesTotal+=myI.length; rivalInjuriesTotal+=rI.length;
+    if(d[`m${i}_${window._duelRole==='challenger'?'giroChallenger':'giroOpponent'}`]) myGiroUses++;
+    if(d[`m${i}_${window._duelRole==='challenger'?'giroOpponent':'giroChallenger'}`]) rivalGiroUses++;
     if(rG===0) cleanSheets++;
     if(myG===0) rivalCleanSheets++;
     let res=myG>rG?'W':myG<rG?'L':'D';
@@ -7873,6 +8228,7 @@ async function mpShowDuelFinalSummary(){
       <div style="text-align:center;padding:3px 0">${myCardsTotal}</div><div style="text-align:center;color:var(--text-muted);font-size:10px;padding:0 8px">${tk('mp.duel_final_cards_short')||'Tarjetas'}</div><div style="text-align:center;padding:3px 0">${rivalCardsTotal}</div>
       <div style="text-align:center;padding:3px 0">${myInjuriesTotal}</div><div style="text-align:center;color:var(--text-muted);font-size:10px;padding:0 8px">${tk('mp.duel_final_injuries_short')||'Lesionados'}</div><div style="text-align:center;padding:3px 0">${rivalInjuriesTotal}</div>
       <div style="text-align:center;padding:3px 0">${cleanSheets}</div><div style="text-align:center;color:var(--text-muted);font-size:10px;padding:0 8px">${tk('mp.duel_final_clean_sheets')||'Porterías a cero'}</div><div style="text-align:center;padding:3px 0">${rivalCleanSheets}</div>
+      <div style="text-align:center;padding:3px 0">${myGiroUses}</div><div style="text-align:center;color:var(--text-muted);font-size:10px;padding:0 8px">${tk('giro.final_uses')||'Giros Tácticos usados'}</div><div style="text-align:center;padding:3px 0">${rivalGiroUses}</div>
     </div>
 
     ${narrative?`<div style="font-size:12px;color:var(--gold);font-style:italic;border-top:1px solid var(--line);margin-top:10px;padding-top:8px">${narrative}</div>`:''}
