@@ -142,6 +142,76 @@ const STAT_LABELS={
 //  - Catenaccio is broken by Ataque por Bandas (wide play opens compact centers)
 //  - Gegenpressing is broken by Juego Directo (skip the press with long balls)
 //  - etc.
+/* ════════════════════════════════════════════════════════════
+   GIRO TÁCTICO — habilidad de un jugador: pausa el partido en
+   cualquier momento y elige una de 3 cartas al azar (de estas 20).
+   Cada carta tiene un beneficio y una contrapartida negativa, ambos
+   aplicados a TU equipo durante lo que resta de partido.
+   ════════════════════════════════════════════════════════════ */
+const GIRO_CARDS = [
+  { id:'presion_alta', name:'PRESIÓN ALTA', icon:'ph-arrow-fat-lines-up',
+    pos:'+12% ataque', neg:'−8% resistencia (persistente)',
+    apply(ctx){ ctx.myLambda+=0.084; ctx.fatigue-=8; } },
+  { id:'cierre_atras', name:'CIERRE ATRÁS', icon:'ph-shield-check',
+    pos:'+15% defensa', neg:'−10% ataque',
+    apply(ctx){ ctx.oppLambda-=0.105; ctx.myLambda-=0.07; } },
+  { id:'hidratacion', name:'PAUSA DE HIDRATACIÓN', icon:'ph-drop',
+    pos:'+18% resistencia (persistente)', neg:'−6% ritmo',
+    apply(ctx){ ctx.fatigue+=18; ctx.myLambda-=0.027; } },
+  { id:'golpe_pizarra', name:'GOLPE DE PIZARRA', icon:'ph-chalkboard-teacher',
+    pos:'+8% ataque y +8% defensa', neg:'−14% resistencia (persistente)',
+    apply(ctx){ ctx.myLambda+=0.056; ctx.oppLambda-=0.056; ctx.fatigue-=14; } },
+  { id:'grito_capitan', name:'GRITO DEL CAPITÁN', icon:'ph-megaphone',
+    pos:'+10% moral (persistente)', neg:'más riesgo de tarjeta propia',
+    apply(ctx){ ctx.morale+=10; ctx.cardRiskDelta+=0.05; } },
+  { id:'tiquitaca', name:'TIQUI-TACA FORZADO', icon:'ph-arrows-clockwise',
+    pos:'+14% pase y +10% técnica', neg:'−8% ataque directo',
+    apply(ctx){ ctx.myLambda+=0.054; ctx.myLambda-=0.056; } },
+  { id:'contragolpe', name:'CONTRAGOLPE RELÁMPAGO', icon:'ph-lightning',
+    pos:'+18% ritmo', neg:'−10% defensa',
+    apply(ctx){ ctx.myLambda+=0.081; ctx.oppLambda+=0.07; } },
+  { id:'muro', name:'MURO DEFENSIVO', icon:'ph-brick',
+    pos:'+20% defensa', neg:'−12% pase',
+    apply(ctx){ ctx.oppLambda-=0.14; ctx.myLambda-=0.054; } },
+  { id:'orden_banquillo', name:'ORDEN DEL BANQUILLO', icon:'ph-clipboard-text',
+    pos:'+15% resistencia (persistente)', neg:'−5% moral (persistente)',
+    apply(ctx){ ctx.fatigue+=15; ctx.morale-=5; } },
+  { id:'estrella', name:'ESTRELLA DEL PARTIDO', icon:'ph-star',
+    pos:'+20 valoración al mejor jugador', neg:'más riesgo de lesión (ese jugador)',
+    apply(ctx){ ctx.starBoost=20; ctx.injuryRiskDelta+=0.05; } },
+  { id:'fuera_juego', name:'FUERA DE JUEGO PROVOCADO', icon:'ph-flag',
+    pos:'+10% defensa', neg:'−8% técnica',
+    apply(ctx){ ctx.oppLambda-=0.07; ctx.myLambda-=0.032; } },
+  { id:'balon_parado', name:'BALÓN PARADO ENSAYADO', icon:'ph-target',
+    pos:'+15% ataque', neg:'−10% pase en juego abierto',
+    apply(ctx){ ctx.myLambda+=0.105; ctx.myLambda-=0.04; } },
+  { id:'presion_asfixiante', name:'PRESIÓN ASFIXIANTE', icon:'ph-wind',
+    pos:'+16% defensa y +8% ritmo', neg:'−14% resistencia (persistente)',
+    apply(ctx){ ctx.oppLambda-=0.112; ctx.myLambda+=0.032; ctx.fatigue-=14; } },
+  { id:'rondo', name:'RONDO DE VESTUARIO', icon:'ph-circle-dashed',
+    pos:'+12% técnica', neg:'−6% defensa',
+    apply(ctx){ ctx.myLambda+=0.048; ctx.oppLambda+=0.042; } },
+  { id:'lectura_arbitro', name:'LECTURA DEL ÁRBITRO', icon:'ph-eye',
+    pos:'menos riesgo de tarjeta propia', neg:'−8% ataque',
+    apply(ctx){ ctx.cardRiskDelta-=0.05; ctx.myLambda-=0.056; } },
+  { id:'viento_favor', name:'VIENTO A FAVOR', icon:'ph-wind',
+    pos:'+10% ritmo y +10% pase', neg:'−8% técnica',
+    apply(ctx){ ctx.myLambda+=0.072; ctx.myLambda-=0.032; } },
+  { id:'grada_favor', name:'GRADA A FAVOR', icon:'ph-users-three',
+    pos:'+12% moral (persistente)', neg:'−8% resistencia (persistente)',
+    apply(ctx){ ctx.morale+=12; ctx.fatigue-=8; } },
+  { id:'tiempo_controlado', name:'TIEMPO CONTROLADO', icon:'ph-hourglass-medium',
+    pos:'apenas pierdes resistencia el resto del partido (persistente)', neg:'−8% ataque',
+    apply(ctx){ ctx.fatigue+=10; ctx.myLambda-=0.056; } },
+  { id:'prorroga_mental', name:'PRÓRROGA MENTAL', icon:'ph-brain',
+    pos:'+5% en todas las estadísticas', neg:'−10% resistencia (persistente)',
+    apply(ctx){ ctx.myLambda+=0.035; ctx.oppLambda-=0.035; ctx.fatigue-=10; } },
+  { id:'ultima_bala', name:'ÚLTIMA BALA', icon:'ph-fire',
+    pos:'+25% ataque', neg:'−20% defensa',
+    apply(ctx){ ctx.myLambda+=0.175; ctx.oppLambda+=0.14; } },
+];
+
+
 const STRATEGIES = {
   tiki_taka:      { get name(){ return window.t?window.t('strategy.tiki_taka.name')     :'Tiki-Taka'; },         get desc(){ return window.t?window.t('strategy.tiki_taka.desc')     :'Prioriza los pases cortos y la posesión para desgastar al rival y crear espacios.'; },     counters:'bloque_bajo',    partialCounters:['gegenpressing','presion_alta'] },
   contraataque:   { get name(){ return window.t?window.t('strategy.contraataque.name')  :'Contraataque'; },      get desc(){ return window.t?window.t('strategy.contraataque.desc')  :'Defiende con orden y busca atacar rápidamente tras recuperar el balón.'; },              counters:'ataque_bandas',  partialCounters:['posesion','presion_alta'] },
@@ -384,6 +454,10 @@ const DUEL_DRAFT_SECONDS=90; // duración del draft sincronizado en duelos multi
 let usedPlayers = [];
 let bench = [];
 let draftedCount = 0;
+/* Torneo en curso: mismo criterio que ya usa el juego para bloquear el
+   cambio de formación una vez empezado el draft. Se usa para impedir
+   comprar/vender mejoras y habilidades a mitad de un torneo (anti-trampas). */
+function isTournamentInProgress(){ return phase!=="draft" || draftedCount>0; }
 let baseTeamOVR = null;
 let benchCount = 0;
 let nextOpponent = null;
@@ -1875,6 +1949,8 @@ function showTeamNameModal(){
 
 /* ---------- GROUP STAGE SETUP ---------- */
 function setupGroupStage(){
+  // Giro Táctico: 1 uso disponible por torneo (modo un jugador)
+  window._giroCharges=getMaxGiroCharges();
   const pool=teams.slice();
   shuffle(pool);
   groupOpponents=pool.slice(0,3);
@@ -2184,6 +2260,9 @@ function playMatch(){
   const captainBonus=(window._skillCache&&window._skillCache.capitan&&teamMorale<0)?0.10:0;
   const myLambda=Math.max(0.25, 1.15+diff+tactical.myScoreMod+counter.myScoreMod+earlyBoost+groupNudge+starBonus+moraleBonus+streakBonus+weatherDelta+captainBonus);
   const oppLambda=Math.max(0.25, 1.15-diff+tactical.oppScoreMod+counter.oppScoreMod-earlyBoost*0.6-groupNudge*0.6+weatherDelta);
+  // Giro Táctico (modo un jugador): guarda los ritmos base del partido
+  // para poder recalcular lo que resta si el jugador usa la habilidad.
+  window._giroLambdaCtx={myLambda, oppLambda};
   let myGoals=window.CHEATS_ACTIVE ? (3+Math.floor(Math.random()*3)) : poissonSample(myLambda);
   // REMONTADA: si el rival marcara 2+ más, relanzar con +35%
   if(!window.CHEATS_ACTIVE && window._skillCache&&window._skillCache.remontada){
@@ -2821,7 +2900,8 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
 
   // ── HTML inicial — diseño match-modal ──
   overlay.innerHTML=`
-  <div class="match-modal" style="overflow:hidden;display:flex;flex-direction:column;max-height:85vh">
+  <div class="match-modal" style="overflow:hidden;display:flex;flex-direction:column;max-height:85vh;position:relative">
+    ${!window._duelId?`<button id="giroTacticoBtn" style="position:absolute;top:8px;left:8px;z-index:5;display:flex;align-items:center;gap:5px;background:none;border:1px solid ${window._giroCharges>0?'var(--gold)':'#555'};color:${window._giroCharges>0?'var(--gold)':'#777'};font-family:'Bebas Neue',Impact,sans-serif;font-size:11px;letter-spacing:.5px;padding:4px 9px;border-radius:5px;cursor:${window._giroCharges>0?'pointer':'not-allowed'}" ${window._giroCharges>0?'':'disabled'}><i class="ph ph-bold ph-notebook" style="font-size:15px"></i> GIRO TÁCTICO ${window._giroCharges||0}/${getMaxGiroCharges()}</button>`:''}
     ${window._duelId?`<div style="text-align:center;font-family:'Bebas Neue',Impact,sans-serif;font-size:14px;letter-spacing:1.5px;color:var(--gold);text-transform:uppercase;padding-bottom:4px">${(tk('mp.duel_match_of')||'PARTIDO {0} DE 5').replace('{0}', String(window._duelMatchIndex+1))}</div>`:''}
     <div class="match-header">
       <div class="match-side">
@@ -2888,9 +2968,12 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
   const REG_DURATION=9000;
   const HT_S=0.47,HT_E=0.53;
   let eventIdx=0,htShown=false;
-  const regStart=performance.now();
+  let regStart=performance.now();
+  let currentMinute=0;
+  let giroPaused=false, giroUsedThisMatch=false, giroPausedFrac=0;
 
   function tickReg(now){
+    if(giroPaused) return; // se reanuda manualmente desde resumeAfterGiro()
     const frac=Math.min((now-regStart)/REG_DURATION,1);
     if(frac>=HT_S&&frac<HT_E){
       if(!htShown){
@@ -2918,6 +3001,7 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
       fillEl.style.width=`${50+f2*50}%`;
       clockEl.textContent=minute>90?`90+${minute-90}'`:`${minute}'`;
     }
+    currentMinute=minute;
     while(eventIdx<allEvents.length&&allEvents[eventIdx].minute<=minute){
       const ev=allEvents[eventIdx++];
       const label=ev.minute>90?`90+${ev.minute-90}'`:ev.minute>45&&ev.minute<=45+inj1?`45+${ev.minute-45}'`:`${ev.minute}'`;
@@ -2939,8 +3023,214 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
   }
   requestAnimationFrame(tickReg);
 
+  /* ════════════ GIRO TÁCTICO — lógica de pausa/elección/reanudación ════════════ */
+  const giroBtn=document.getElementById('giroTacticoBtn');
+  if(giroBtn){
+    giroBtn.addEventListener('click', ()=>{
+      if(giroPaused||giroUsedThisMatch||!(window._giroCharges>0)) return;
+      pauseForGiro();
+    });
+  }
+
+  function pauseForGiro(){
+    giroPaused=true;
+    giroPausedFrac=Math.min((performance.now()-regStart)/REG_DURATION,1);
+    playSound('select');
+    showGiroCardPicker();
+  }
+
+  function showGiroCardPicker(){
+    const modal=overlay.querySelector('.match-modal');
+    if(!modal) return;
+    const pool=GIRO_CARDS.slice();
+    shuffle(pool);
+    const picks=pool.slice(0,3);
+    const panel=document.createElement('div');
+    panel.id='giroPickerPanel';
+    panel.style.cssText='position:absolute;inset:0;background:rgba(10,10,10,.96);z-index:20;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:14px;gap:10px';
+    panel.innerHTML=`
+      <div style="font-family:'Bebas Neue',Impact,sans-serif;color:var(--gold);letter-spacing:1.5px;font-size:15px">⏸ GIRO TÁCTICO — MIN ${currentMinute}'</div>
+      <div style="width:90%;max-width:320px;height:5px;background:#222;border-radius:3px;overflow:hidden">
+        <div id="giroTimerFill" style="height:100%;width:100%;background:var(--gold);transition:width 1s linear"></div>
+      </div>
+      <div id="giroCardsWrap" style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;max-width:100%"></div>
+    `;
+    modal.appendChild(panel);
+    const wrap=panel.querySelector('#giroCardsWrap');
+    picks.forEach(card=>{
+      const btn=document.createElement('button');
+      btn.style.cssText='width:150px;background:linear-gradient(160deg,#1c1c1c,#161616);border:1px solid #2a2a2a;border-radius:10px;padding:10px 8px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;color:var(--text)';
+      btn.innerHTML=`
+        <i class="ph ph-bold ${card.icon}" style="font-size:26px;color:var(--gold)"></i>
+        <div style="font-family:'Bebas Neue',Impact,sans-serif;font-size:12px;letter-spacing:.5px;text-align:center">${card.name}</div>
+        <div style="font-size:10px;color:#bfe8c9;text-align:center">${card.pos}</div>
+        <div style="font-size:10px;color:#f3c6c1;text-align:center;border-top:1px dashed #333;padding-top:4px">${card.neg}</div>
+      `;
+      btn.addEventListener('click', ()=>resolveGiroPick(card, panel, timerHandle));
+      wrap.appendChild(btn);
+    });
+    let secLeft=10;
+    const fill=panel.querySelector('#giroTimerFill');
+    const timerHandle=setInterval(()=>{
+      secLeft--;
+      checkCountdownBeep(secLeft,'giroTactico');
+      if(fill) fill.style.width=Math.max(0,(secLeft/10*100))+'%';
+      if(secLeft<=0){
+        clearInterval(timerHandle);
+        resolveGiroPick(picks[Math.floor(Math.random()*picks.length)], panel, timerHandle);
+      }
+    },1000);
+  }
+
+  function resolveGiroPick(card, panel, timerHandle){
+    if(timerHandle) clearInterval(timerHandle);
+    if(panel && panel._resolved) return;
+    if(panel) panel._resolved=true;
+    playSound('select');
+    if(panel) panel.remove();
+    applyGiroCard(card);
+    resumeAfterGiro();
+  }
+
+  function applyGiroCard(card){
+    giroUsedThisMatch=true;
+    window._giroCharges=Math.max(0,(window._giroCharges||1)-1);
+    const btn=document.getElementById('giroTacticoBtn');
+    if(btn){ btn.disabled=true; btn.style.opacity='.4'; btn.style.cursor='not-allowed'; btn.style.borderColor='#555'; btn.style.color='#777'; }
+
+    const oldMyGoals=myGoals, oldOppGoals=oppGoals, oldWon=won, oldDraw=draw;
+
+    const remFrac=Math.max(0.03,(90-currentMinute)/90);
+    const baseCtx=window._giroLambdaCtx||{myLambda:1.15,oppLambda:1.15};
+    const ctx={ myLambda:baseCtx.myLambda*remFrac, oppLambda:baseCtx.oppLambda*remFrac,
+      fatigue:0, morale:0, cardRiskDelta:0, injuryRiskDelta:0, starBoost:0 };
+    card.apply(ctx);
+    ctx.myLambda=Math.max(0.05,ctx.myLambda);
+    ctx.oppLambda=Math.max(0.05,ctx.oppLambda);
+
+    if(ctx.fatigue){
+      usedPlayers.forEach(p=>{ p.fatigue=Math.max(0,Math.min(100,(p.fatigue===undefined?100:p.fatigue)+ctx.fatigue)); });
+    }
+    if(ctx.morale){ teamMorale=Math.max(-50,Math.min(50,teamMorale+ctx.morale)); }
+    let starPlayer=null;
+    if(ctx.starBoost){
+      starPlayer=usedPlayers.slice().sort((a,b)=>(b.rating||0)-(a.rating||0))[0];
+      if(starPlayer){
+        starPlayer.rating=(starPlayer.rating||70)+ctx.starBoost;
+        // El impulso también debe notarse EN ESTE partido, no solo en
+        // futuros — un jugador reforzado empuja al ataque del equipo.
+        ctx.myLambda+=(ctx.starBoost/100)*0.35;
+      }
+    }
+    ctx.myLambda=Math.max(0.05,ctx.myLambda);
+
+    // Riesgo de tarjeta modificado — se aplica como una probabilidad real
+    // de una tarjeta extra (o menos probable, si el riesgo baja) en lo
+    // que resta de partido, no solo texto decorativo.
+    let pendingCardEvent=null, pendingInjuryEvent=null;
+    if(ctx.cardRiskDelta){
+      const baseCardChance=0.08;
+      const cardChance=Math.max(0,Math.min(0.9,baseCardChance+ctx.cardRiskDelta));
+      if(Math.random()<cardChance && usedPlayers.length){
+        const target=usedPlayers[Math.floor(Math.random()*usedPlayers.length)];
+        const isRed=Math.random()<(RED_RISK_PER_PLAYER/(RED_RISK_PER_PLAYER+YELLOW_RISK_PER_PLAYER));
+        const cardMin=Math.min(MAX_MIN,currentMinute+1+Math.floor(Math.random()*Math.max(1,MAX_MIN-currentMinute)));
+        pendingCardEvent={minute:cardMin, type:'card', icon:isRed?'🟥':'🟨', text:`<strong>${target.name}</strong>`};
+        if(newCards) newCards.push({player:{name:target.name}, type:isRed?'red':'yellow'});
+      }
+    }
+    // Riesgo de lesión modificado (p.ej. tras forzar al mejor jugador)
+    if(ctx.injuryRiskDelta && Math.random()<ctx.injuryRiskDelta){
+      const target=starPlayer||(usedPlayers.length?usedPlayers[Math.floor(Math.random()*usedPlayers.length)]:null);
+      if(target && !target.injury){
+        const r=Math.random();
+        const type=r<0.6?'leve':r<0.9?'básica':'grave';
+        const remaining=type==='leve'?1:type==='básica'?2:3;
+        target.injury={remaining,type};
+        target.forcedInjured=true;
+        const injMin=Math.min(MAX_MIN,currentMinute+1+Math.floor(Math.random()*Math.max(1,MAX_MIN-currentMinute)));
+        pendingInjuryEvent={minute:injMin, type:'injury', icon:'✚', text:`<strong>${target.name}</strong>`};
+        if(newInjuries) newInjuries.push({name:target.name, injury:target.injury});
+      }
+    }
+
+    const extraMy=poissonSample(ctx.myLambda);
+    const extraOpp=poissonSample(ctx.oppLambda);
+
+    const myPool=usedPlayers.filter(p=>p.placedPos&&["DC","EI","ED","MC"].includes(p.placedPos));
+    const oppPool=nextOpponent?nextOpponent.players:[];
+    const newMinutes=[];
+    for(let i=0;i<extraMy;i++) newMinutes.push({side:'my', minute:Math.min(MAX_MIN,currentMinute+1+Math.floor(Math.random()*Math.max(1,MAX_MIN-currentMinute)))});
+    for(let i=0;i<extraOpp;i++) newMinutes.push({side:'opp', minute:Math.min(MAX_MIN,currentMinute+1+Math.floor(Math.random()*Math.max(1,MAX_MIN-currentMinute)))});
+    newMinutes.sort((a,b)=>a.minute-b.minute);
+
+    // Descartar eventos futuros aún no mostrados; conservar lo ya ocurrido
+    allEvents=allEvents.slice(0,eventIdx);
+    if(pendingCardEvent) allEvents.push(pendingCardEvent);
+    if(pendingInjuryEvent) allEvents.push(pendingInjuryEvent);
+    newMinutes.forEach(nm=>{
+      if(nm.side==='my'){
+        const scorer=myPool.length?myPool[Math.floor(Math.random()*myPool.length)]:null;
+        allEvents.push({minute:nm.minute, type:'mygoal', icon:'⚽', text:`<strong>${scorer?scorer.name:'Gol'}</strong>`});
+      }else{
+        const scorer=oppPool.length?oppPool[Math.floor(Math.random()*oppPool.length)]:null;
+        allEvents.push({minute:nm.minute, type:'oppgoal', icon:'⚽', text:`<strong>${scorer?scorer.name:'Gol'}</strong>`});
+      }
+    });
+    allEvents.sort((a,b)=>a.minute-b.minute);
+
+    myGoals=curMy+extraMy;
+    oppGoals=curOpp+extraOpp;
+    won=myGoals>oppGoals;
+    draw=myGoals===oppGoals;
+    resultText=draw?t("match.draw"):(won?t("match.victory"):t("match.defeat"));
+    resultClass=draw?"res-draw-tag":(won?"res-win-tag":"res-lose-tag");
+    // Eliminatoria: si tras el giro sigue empatado y no iba ya a penaltis,
+    // se resuelve con una tanda rápida para no dejar el torneo bloqueado.
+    if(!wasShootout && stage!=="group" && draw){
+      const q=simulatePenalties(computeMyPower(), computeOppPower(nextOpponent));
+      won=q.myWon; draw=false;
+      resultText=won?t("match.victory"):t("match.defeat");
+      resultClass=won?"res-win-tag":"res-lose-tag";
+    }
+
+    // Mantener coherente la tabla de grupos y el historial con el
+    // resultado ya corregido por el Giro Táctico.
+    if(stage==="group"){
+      const meRow=groupTable.find(r=>r.isMe);
+      const oppRow=groupTable.find(r=>r.team===nextOpponent);
+      if(meRow&&oppRow){
+        meRow.gf-=oldMyGoals; meRow.ga-=oldOppGoals;
+        oppRow.gf-=oldOppGoals; oppRow.ga-=oldMyGoals;
+        if(oldDraw){ meRow.drawn--; meRow.pts-=1; oppRow.drawn--; oppRow.pts-=1; }
+        else if(oldWon){ meRow.won--; meRow.pts-=3; oppRow.lost--; }
+        else { meRow.lost--; oppRow.won--; oppRow.pts-=3; }
+        meRow.gf+=myGoals; meRow.ga+=oppGoals;
+        oppRow.gf+=oppGoals; oppRow.ga+=myGoals;
+        if(draw){ meRow.drawn++; meRow.pts+=1; oppRow.drawn++; oppRow.pts+=1; }
+        else if(won){ meRow.won++; meRow.pts+=3; oppRow.lost++; }
+        else { meRow.lost++; oppRow.won++; oppRow.pts+=3; }
+      }
+    }
+    if(matchResults&&matchResults.length){
+      const last=matchResults[matchResults.length-1];
+      last.score=`${myGoals}-${oppGoals}`;
+      last.won=won; last.draw=draw;
+      if(typeof renderMatchHistory==='function') renderMatchHistory();
+    }
+
+    window._giroCardUsed={name:card.name, pos:card.pos, neg:card.neg};
+  }
+
+  function resumeAfterGiro(){
+    regStart=performance.now()-giroPausedFrac*REG_DURATION;
+    giroPaused=false;
+    requestAnimationFrame(tickReg);
+  }
+
   // ── Fase 3: Prórroga ────────────────────────────────────────────────────
   function startExtraTime(){
+    const gBtn=document.getElementById('giroTacticoBtn'); if(gBtn) gBtn.style.display='none';
     halfEl.textContent=t('match.extratime'); halfEl.style.background='#7a3a0a';
     addSep('— '+t('match.extratime')+' —');    const ET=4000,ET_S=0.47,ET_E=0.53;
     let etHt=false;
@@ -3036,6 +3326,17 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
     summaryDiv.innerHTML=statsRaw.trim();
     infoWrap.appendChild(summaryDiv);
     // Los goles ya aparecen en el feed secuencial arriba, no se duplican aquí
+
+    // Giro Táctico — si se usó en este partido, mostrar la carta elegida
+    if(window._giroCardUsed){
+      const gc=document.createElement('div');
+      gc.className='match-summary';
+      gc.style.cssText='border:1px solid var(--gold);border-radius:8px;padding:8px 10px';
+      gc.innerHTML=`<strong style="color:var(--gold)">⏸ ${t('giro.used_title')||'Giro Táctico usado'}: ${window._giroCardUsed.name}</strong><br>
+        <span style="color:#bfe8c9">${window._giroCardUsed.pos}</span> · <span style="color:#f3c6c1">${window._giroCardUsed.neg}</span>`;
+      infoWrap.appendChild(gc);
+      window._giroCardUsed=null; // no arrastrar al siguiente partido
+    }
 
     // Recuperados
     if(recovered.length){
@@ -5726,8 +6027,8 @@ async function loadUserUpgradeLevel(id){
 (function(){
   try{
     const saved=localStorage.getItem('_g2g_upgrades');
-    window._upgradeCache=saved?JSON.parse(saved):{bench:0,subs:0,scout:0,chain:0};
-  }catch(e){ window._upgradeCache={bench:0,subs:0,scout:0,chain:0}; }
+    window._upgradeCache=saved?JSON.parse(saved):{bench:0,subs:0,scout:0,chain:0,giro:0};
+  }catch(e){ window._upgradeCache={bench:0,subs:0,scout:0,chain:0,giro:0}; }
 })();
 
 let _upgradeListener=null; // referencia al listener para poder cancelarlo
@@ -5745,6 +6046,7 @@ function startUpgradeListener(uid){
         subs:  upgs.subs||0,
         scout: upgs.scout||0,
         chain: upgs.chain||0,
+        giro:  upgs.giro||0,
       };
       try{ localStorage.setItem('_g2g_upgrades',JSON.stringify(window._upgradeCache)); }catch(e){}
     }, e=>{ console.warn('upgrade listener error:',e); });
@@ -5752,7 +6054,7 @@ function startUpgradeListener(uid){
 
 function stopUpgradeListener(){
   if(_upgradeListener){ _upgradeListener(); _upgradeListener=null; }
-  window._upgradeCache={bench:0,subs:0,scout:0,chain:0};
+  window._upgradeCache={bench:0,subs:0,scout:0,chain:0,giro:0};
   try{ localStorage.removeItem('_g2g_upgrades'); }catch(e){}
 }
 
@@ -5762,7 +6064,7 @@ async function refreshUpgradeCache(){
   try{
     const snap=await window._fbDb.collection('users').doc(window._fbAuth.currentUser.uid).get();
     const upgs=(snap.exists&&snap.data().upgrades)||{};
-    window._upgradeCache={bench:upgs.bench||0,subs:upgs.subs||0,scout:upgs.scout||0,chain:upgs.chain||0};
+    window._upgradeCache={bench:upgs.bench||0,subs:upgs.subs||0,scout:upgs.scout||0,chain:upgs.chain||0,giro:upgs.giro||0};
     try{ localStorage.setItem('_g2g_upgrades',JSON.stringify(window._upgradeCache)); }catch(e){}
   }catch(e){}
 }
@@ -5772,6 +6074,7 @@ function getRecoveryBonus(){ return (window._upgradeCache.recovery||0)*0.10; } /
 function getMaxSubs(){  return 2 + (window._upgradeCache.subs||0); }
 function getScoutTeams(){ return 2; } // ya no se usa para equipos
 function getPlayersPerTeam(){ return 5 + (window._upgradeCache.scout||0); }
+function getMaxGiroCharges(){ return 1 + (window._upgradeCache.giro||0); }
 
 const UPGRADE_DEFS = [
   {
@@ -5808,6 +6111,13 @@ const UPGRADE_DEFS = [
     get desc(){ return window.t?window.t('upgrade.chain_desc'):'JUGADORES CONSERVADOS AL ENCADENAR RUN'; },
     baseCost: 5, maxLevel: 5, baseValue: 1,
     tooltip: (lvl) => `${1+lvl} ${t("upgrade.chain_desc")}`
+  },
+  {
+    id: 'giro', icon: '🔄',
+    get name(){ return window.t?window.t('upgrade.giro'):'GIRO TÁCTICO'; },
+    get desc(){ return window.t?window.t('upgrade.giro_desc'):'USOS DE GIRO TÁCTICO POR TORNEO'; },
+    baseCost: 5, maxLevel: 5, baseValue: 1,
+    tooltip: (lvl) => `${1+lvl} ${t("upgrade.giro_desc")}`
   },
 ];
 
@@ -5863,15 +6173,18 @@ async function renderUpgradesTab(){
   let currentPts = data.scratchPoints || 0;
   let upgrades = data.upgrades || {};
 
+  const locked = isTournamentInProgress();
   if(pointsEl) pointsEl.textContent = currentPts;
-  list.innerHTML = '';
+  list.innerHTML = locked
+    ? `<div style="text-align:center;padding:10px;color:var(--gold);font-size:11px;border:1px solid var(--gold);border-radius:6px;margin-bottom:10px">${window.t?window.t('upgrade.locked_tournament'):'🔒 Bloqueado durante el torneo — podrás comprar mejoras al terminarlo'}</div>`
+    : '';
 
   UPGRADE_DEFS.forEach(def => {
     const currentLevel = upgrades[def.id] || 0;
     const nextCost = currentLevel < def.maxLevel ? upgradeLevelCost(def, currentLevel + 1) : null;
     const prevRefund = currentLevel > 0 ? upgradeLevelCost(def, currentLevel) : null;
-    const canUpgrade = nextCost !== null && currentPts >= nextCost;
-    const canDowngrade = currentLevel > 0;
+    const canUpgrade = nextCost !== null && currentPts >= nextCost && !locked;
+    const canDowngrade = currentLevel > 0 && !locked;
     const currentVal = def.baseValue + currentLevel;
 
     const bars = Array.from({length: def.maxLevel}, (_, i) =>
@@ -5909,6 +6222,7 @@ async function renderUpgradesTab(){
   // Event listeners
   list.querySelectorAll('.upgrade-btn').forEach(btn => {
     btn.addEventListener('click', async () => {
+      if(isTournamentInProgress()) return; // por si acaso, aparte del disabled
       const id = btn.dataset.id;
       const def = UPGRADE_DEFS.find(d => d.id === id);
       if(!def) return;
@@ -6061,6 +6375,13 @@ async function renderSkillsTab(){
   list.style.overflowX='hidden';
   list.style.width='100%';
   list.style.paddingRight='12px';
+  const skillsLocked = isTournamentInProgress();
+  if(skillsLocked){
+    const banner=document.createElement('div');
+    banner.style.cssText='text-align:center;padding:10px;color:var(--gold);font-size:11px;border:1px solid var(--gold);border-radius:6px;margin-bottom:6px';
+    banner.textContent=window.t?window.t('skill.locked_tournament'):'🔒 Bloqueado durante el torneo — podrás activar/desactivar habilidades al terminarlo';
+    list.appendChild(banner);
+  }
 
   // Agrupar por categoría, 2 columnas por tipo
   const categories = [...new Set(SKILL_DEFS.map(d=>d.category))];
@@ -6080,7 +6401,7 @@ async function renderSkillsTab(){
       btn.className='skill-toggle-btn';
       btn.dataset.id=def.id;
       // Mismo tamaño para todos: height fijo con flex column centrado
-      btn.style.cssText=`display:flex;flex-direction:column;align-items:center;justify-content:space-between;gap:0;border:2px solid ${active?'var(--gold)':'var(--line)'};background:${active?'rgba(201,162,39,.12)':'var(--panel)'};color:${active?'var(--gold)':'var(--text)'};cursor:pointer;transition:.15s;text-align:center;width:100%;box-sizing:border-box;overflow:hidden;height:160px`;
+      btn.style.cssText=`display:flex;flex-direction:column;align-items:center;justify-content:space-between;gap:0;border:2px solid ${active?'var(--gold)':'var(--line)'};background:${active?'rgba(201,162,39,.12)':'var(--panel)'};color:${active?'var(--gold)':'var(--text)'};cursor:${skillsLocked?'not-allowed':'pointer'};transition:.15s;text-align:center;width:100%;box-sizing:border-box;overflow:hidden;height:160px;opacity:${skillsLocked?.55:1}`;
       const iconPart=`<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;padding:12px 8px 8px;flex:1">
         <span style="color:${active?'var(--gold)':'var(--accent)'}">${def.icon.replace(/width="22"/g,'width="26"').replace(/height="22"/g,'height="26"')}</span>
         <span style="font-family:'Bebas Neue',Impact,sans-serif;font-size:13px;letter-spacing:.8px;color:${active?'var(--gold)':'var(--text)'};line-height:1.1">${def.name}</span>
@@ -6091,6 +6412,7 @@ async function renderSkillsTab(){
       </div>`;
       btn.innerHTML=iconPart+footerPart;
       btn.addEventListener('click', async()=>{
+        if(skillsLocked) return;
         btn.disabled=true;
         playSound('select');
         const fs2=await window._fbDb.collection('users').doc(user.uid).get();

@@ -147,6 +147,10 @@ window.TRANSLATIONS = {
   'upgrade.recovery_desc': {es:'REDUCE LA FATIGA ENTRE PARTIDOS', en:'REDUCES MATCH FATIGUE', pt:'REDUZ A FADIGA ENTRE JOGOS', fr:'RÉDUIT LA FATIGUE ENTRE LES MATCHS', de:'VERRINGERT SPIELERMÜDUNG', it:'RIDUCE LA FATICA TRA LE PARTITE'},
   'upgrade.chain': {es:'RUN ENCADENADA', en:'CHAIN RUN', pt:'RUN ENCADEADA', fr:'RUN ENCHAÎNÉE', de:'KETTEN-RUN', it:'RUN CONCATENATA'},
   'upgrade.chain_desc': {es:'JUGADORES CONSERVADOS AL ENCADENAR RUN', en:'PLAYERS KEPT WHEN CHAINING A RUN', pt:'JOGADORES MANTIDOS AO ENCADEAR RUN', fr:'JOUEURS CONSERVÉS EN ENCHAÎNANT UNE RUN', de:'SPIELER, DIE BEIM VERKETTEN EINES RUNS ERHALTEN BLEIBEN', it:'GIOCATORI MANTENUTI CONCATENANDO UNA RUN'},
+  'upgrade.giro': {es:'GIRO TÁCTICO', en:'TACTICAL SHIFT', pt:'GUINADA TÁTICA', fr:'VIRAGE TACTIQUE', de:'TAKTIKWECHSEL', it:'SVOLTA TATTICA'},
+  'upgrade.giro_desc': {es:'USOS DE GIRO TÁCTICO POR TORNEO', en:'TACTICAL SHIFT USES PER TOURNAMENT', pt:'USOS DE GUINADA TÁTICA POR TORNEIO', fr:'UTILISATIONS DE VIRAGE TACTIQUE PAR TOURNOI', de:'TAKTIKWECHSEL-NUTZUNGEN PRO TURNIER', it:'USI DI SVOLTA TATTICA PER TORNEO'},
+  'upgrade.locked_tournament': {es:'🔒 Bloqueado durante el torneo — podrás comprar mejoras al terminarlo', en:'🔒 Locked during the tournament — you can buy upgrades once it ends', pt:'🔒 Bloqueado durante o torneio — você poderá comprar melhorias ao terminá-lo', fr:'🔒 Verrouillé pendant le tournoi — vous pourrez acheter des améliorations à la fin', de:'🔒 Während des Turniers gesperrt — Upgrades kannst du nach Abschluss kaufen', it:'🔒 Bloccato durante il torneo — potrai acquistare miglioramenti al termine'},
+  'skill.locked_tournament': {es:'🔒 Bloqueado durante el torneo — podrás activar/desactivar habilidades al terminarlo', en:'🔒 Locked during the tournament — you can toggle skills once it ends', pt:'🔒 Bloqueado durante o torneio — você poderá ativar/desativar habilidades ao terminá-lo', fr:'🔒 Verrouillé pendant le tournoi — vous pourrez activer/désactiver les compétences à la fin', de:'🔒 Während des Turniers gesperrt — Fähigkeiten kannst du nach Abschluss umschalten', it:'🔒 Bloccato durante il torneo — potrai attivare/disattivare le abilità al termine'},
 
   /* ── HABILIDADES ── */
   'skills.title': {es:'HABILIDADES', en:'SKILLS', pt:'HABILIDADES', fr:'COMPÉTENCES', de:'FÄHIGKEITEN', it:'ABILITÀ'},
@@ -1052,6 +1056,7 @@ window.TRANSLATIONS = {
   'comp.of_group': {es:'del grupo', en:'of the group', pt:'do grupo', fr:'du groupe', de:'der Gruppe', it:'del girone'},
   'match.match': {es:'partido', en:'match', pt:'partida', fr:'match', de:'Spiel', it:'partita'},
   'match.recovered': {es:'Recuperados', en:'Recovered', pt:'Recuperados', fr:'Remis sur pied', de:'Erholt', it:'Recuperati'},
+  'giro.used_title': {es:'Giro Táctico usado', en:'Tactical Shift used', pt:'Guinada Tática usada', fr:'Virage Tactique utilisé', de:'Taktikwechsel genutzt', it:'Svolta Tattica usata'},
 
   /* ── RESULTADO — botones y etiquetas ── */
   'match.victory_pen': {es:'¡VICTORIA EN PENALTIS!', en:'PENALTY SHOOT-OUT WIN!', pt:'VITÓRIA NOS PENALTIS!', fr:'VICTOIRE AUX TIRS AU BUT !', de:'SIEG IM ELFMETERSCHIESSEN!', it:'VITTORIA AI RIGORI!'},
