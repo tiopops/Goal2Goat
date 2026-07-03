@@ -3098,26 +3098,36 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
 
   function showGiroCardPicker(){
     ensureGiroCardStyles();
-    const modal=overlay.querySelector('.match-modal');
-    if(!modal) return;
     const pool=GIRO_CARDS.slice();
     shuffle(pool);
     const picks=pool.slice(0,3);
 
+    // Overlay a pantalla completa (no confinado al ancho máximo de la
+    // ventana del partido), para que las cartas puedan verse grandes
+    // también en móvil, ocupando el ancho real de la pantalla.
     const panel=document.createElement('div');
     panel.id='giroPickerPanel';
-    panel.style.cssText='position:absolute;inset:0;background:rgba(10,10,10,.97);z-index:20;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px;gap:6px;overflow:hidden';
+    panel.style.cssText='position:fixed;inset:0;background:rgba(10,10,10,.97);z-index:95000;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:14px;gap:8px;overflow:hidden';
     panel.innerHTML=`
-      <div style="font-family:'Bebas Neue',Impact,sans-serif;color:var(--gold);letter-spacing:1.2px;font-size:12px">⏸ GIRO TÁCTICO — MIN ${currentMinute}'</div>
-      <div style="width:80%;max-width:240px;height:4px;background:#222;border-radius:3px;overflow:hidden">
+      <div style="font-family:'Bebas Neue',Impact,sans-serif;color:var(--gold);letter-spacing:1.2px;font-size:14px">⏸ GIRO TÁCTICO — MIN ${currentMinute}'</div>
+      <div style="width:80%;max-width:280px;height:4px;background:#222;border-radius:3px;overflow:hidden">
         <div id="giroTimerFill" style="height:100%;width:100%;background:var(--gold);transition:width 1s linear"></div>
       </div>
-      <div id="giroSub" style="font-size:9.5px;color:var(--text-muted);min-height:12px">Barajando...</div>
-      <div id="giroStage" style="position:relative;width:100%;max-width:300px;height:160px;flex:none"></div>
+      <div id="giroSub" style="font-size:11px;color:var(--text-muted);min-height:14px">Barajando...</div>
+      <div id="giroStageWrap" style="position:relative;width:100%;flex:1;display:flex;align-items:center;justify-content:center;min-height:0"></div>
     `;
-    modal.appendChild(panel);
+    document.body.appendChild(panel);
 
-    const stage=panel.querySelector('#giroStage');
+    const stageWrap=panel.querySelector('#giroStageWrap');
+    const stage=document.createElement('div');
+    stage.id='giroStage';
+    // Diseño base a 300px; se escala hasta ocupar casi todo el ancho
+    // real de la pantalla en móvil (mismo truco que en el diseño original).
+    const baseW=300;
+    const availW=Math.min(window.innerWidth*0.92, 480);
+    const stageScale=Math.max(1, availW/baseW);
+    stage.style.cssText=`position:relative;width:${baseW}px;height:160px;flex:none;transform:scale(${stageScale});transform-origin:center center`;
+    stageWrap.appendChild(stage);
     const sub=panel.querySelector('#giroSub');
     const keys=['a','b','c'];
     const REST={a:{x:-78,rot:-4},b:{x:0,rot:0},c:{x:78,rot:4}};
@@ -3405,7 +3415,7 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
       if(typeof renderMatchHistory==='function') renderMatchHistory();
     }
 
-    window._giroCardUsed={name:card.name, pos:card.pos, neg:card.neg};
+    window._giroCardUsed={name:card.name, pos:card.pos, neg:card.neg, icon:card.icon};
   }
 
   function resumeAfterGiro(){
@@ -3517,9 +3527,13 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
     if(window._giroCardUsed){
       const gc=document.createElement('div');
       gc.className='match-summary';
-      gc.style.cssText='border:1px solid var(--gold);border-radius:8px;padding:8px 10px';
-      gc.innerHTML=`<strong style="color:var(--gold)">⏸ ${t('giro.used_title')||'Giro Táctico usado'}: ${window._giroCardUsed.name}</strong><br>
-        <span style="color:#bfe8c9">${window._giroCardUsed.pos}</span> · <span style="color:#f3c6c1">${window._giroCardUsed.neg}</span>`;
+      gc.style.cssText='border:1px solid var(--gold);border-radius:8px;padding:10px;display:flex;align-items:center;gap:10px';
+      gc.innerHTML=`
+        <i class="ph ph-bold ${window._giroCardUsed.icon||'ph-notebook'}" style="font-size:26px;color:var(--gold);flex-shrink:0"></i>
+        <div>
+          <strong style="color:var(--gold)">⏸ ${t('giro.used_title')||'Giro Táctico usado'}: ${window._giroCardUsed.name}</strong><br>
+          <span style="color:#bfe8c9">${window._giroCardUsed.pos}</span> · <span style="color:#f3c6c1">${window._giroCardUsed.neg}</span>
+        </div>`;
       infoWrap.appendChild(gc);
       window._giroCardUsed=null; // no arrastrar al siguiente partido
     }
