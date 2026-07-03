@@ -3283,6 +3283,7 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
       applyGiroCard(card);
     }catch(e){
       console.error('Giro Táctico error:', e);
+      if(typeof showToast==='function') showToast('⚠ Giro Táctico: parte del efecto no se pudo aplicar', 'toast-neg');
     }finally{
       resumeAfterGiro();
     }
@@ -3291,8 +3292,14 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
   function applyGiroCard(card){
     giroUsedThisMatch=true;
     window._giroCharges=Math.max(0,(window._giroCharges||1)-1);
+    // Registrar la carta usada YA, antes de cualquier cálculo — así el
+    // resumen final siempre la muestra, pase lo que pase después.
+    window._giroCardUsed={name:card.name, pos:card.pos, neg:card.neg, icon:card.icon};
     const btn=document.getElementById('giroTacticoBtn');
-    if(btn){ btn.disabled=true; btn.style.opacity='.4'; btn.style.cursor='not-allowed'; btn.style.borderColor='#555'; btn.style.color='#777'; }
+    if(btn){
+      btn.disabled=true; btn.style.opacity='.4'; btn.style.cursor='not-allowed'; btn.style.borderColor='#555'; btn.style.color='#777';
+      btn.innerHTML=`<i class="ph ph-bold ph-notebook" style="font-size:15px"></i> GIRO TÁCTICO ${window._giroCharges||0}/${getMaxGiroCharges()}`;
+    }
 
     const oldMyGoals=myGoals, oldOppGoals=oppGoals, oldWon=won, oldDraw=draw;
 
@@ -3414,8 +3421,6 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
       last.won=won; last.draw=draw;
       if(typeof renderMatchHistory==='function') renderMatchHistory();
     }
-
-    window._giroCardUsed={name:card.name, pos:card.pos, neg:card.neg, icon:card.icon};
   }
 
   function resumeAfterGiro(){
