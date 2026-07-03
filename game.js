@@ -3044,7 +3044,60 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
     }
   }
 
+  function ensureGiroCardStyles(){
+    if(document.getElementById('giroCardStylesTag')) return;
+    const style=document.createElement('style');
+    style.id='giroCardStylesTag';
+    style.textContent=`
+      #giroPickerPanel .g-card{
+        position:absolute;top:50%;left:50%;width:96px;height:150px;margin:-75px 0 0 -48px;
+        cursor:pointer;-webkit-tap-highlight-color:transparent;will-change:transform;z-index:2;
+      }
+      #giroPickerPanel .g-card.focused{ z-index:30; }
+      #giroPickerPanel .g-card.dimmed .g-card-face{ filter:brightness(.55) saturate(.6); }
+      #giroPickerPanel .g-card-face{
+        width:100%;height:100%;border-radius:12px;
+        background:radial-gradient(120% 100% at 50% -10%, rgba(232,185,35,.10), transparent 55%),
+                   linear-gradient(160deg,#1c1c1c,#161616);
+        border:1px solid #2a2a2a;
+        box-shadow:0 8px 20px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.03);
+        display:flex;flex-direction:column;align-items:center;padding:9px 7px 7px;
+        position:relative;overflow:hidden;transition:box-shadow .25s ease,filter .25s ease;
+      }
+      #giroPickerPanel .g-card-face::before{
+        content:"";position:absolute;inset:5px;border:1px solid rgba(232,185,35,.35);
+        border-radius:8px;pointer-events:none;
+      }
+      #giroPickerPanel .g-card.focused .g-card-face{ box-shadow:0 14px 30px rgba(0,0,0,.6), 0 0 0 2px var(--gold); }
+      #giroPickerPanel .g-card-tag{
+        font-family:'Bebas Neue',Impact,sans-serif;font-size:7.5px;letter-spacing:1.5px;
+        color:#7a621a;margin-bottom:5px;text-transform:uppercase;
+      }
+      #giroPickerPanel .g-card-icon{ font-size:20px;color:var(--gold);margin-bottom:5px;
+        filter:drop-shadow(0 0 6px rgba(232,185,35,.3)); }
+      #giroPickerPanel .g-card-title{
+        font-family:'Bebas Neue',Impact,sans-serif;font-size:10px;letter-spacing:.4px;
+        color:#fff;text-align:center;margin-bottom:5px;line-height:1.15;
+      }
+      #giroPickerPanel .g-card-divider{ width:22px;height:2px;background:#7a621a;margin-bottom:5px;border-radius:2px; }
+      #giroPickerPanel .g-effect{ width:100%;font-size:8.5px;line-height:1.25;text-align:center;padding:0 1px; }
+      #giroPickerPanel .g-effect-pos{ color:#bfe8c9;margin-bottom:5px; }
+      #giroPickerPanel .g-effect-pos b{ color:var(--accent);font-weight:700; }
+      #giroPickerPanel .g-effect-neg{ color:#f3c6c1;padding-top:5px;border-top:1px dashed #333;margin-top:auto; }
+      #giroPickerPanel .g-effect-neg b{ color:var(--red);font-weight:700; }
+      @keyframes giroPulse{ 0%{transform:scale(1)} 35%{transform:scale(1.09)} 60%{transform:scale(.97)} 100%{transform:scale(1.03)} }
+      #giroPickerPanel .g-card.confirmed .g-card-face{ animation:giroPulse .45s ease; transform-origin:center; }
+      @keyframes giroVanish{ to{ opacity:0; transform:scale(.85); } }
+      #giroStage.vanishing .g-card{ animation:giroVanish .5s ease forwards; }
+      #giroStage.vanishing .g-card:nth-child(1){ animation-delay:0s; }
+      #giroStage.vanishing .g-card:nth-child(2){ animation-delay:.08s; }
+      #giroStage.vanishing .g-card:nth-child(3){ animation-delay:.16s; }
+    `;
+    document.head.appendChild(style);
+  }
+
   function showGiroCardPicker(){
+    ensureGiroCardStyles();
     const modal=overlay.querySelector('.match-modal');
     if(!modal) return;
     const pool=GIRO_CARDS.slice();
@@ -3053,95 +3106,138 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
 
     const panel=document.createElement('div');
     panel.id='giroPickerPanel';
-    panel.style.cssText='position:absolute;inset:0;background:rgba(10,10,10,.97);z-index:20;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px;gap:8px;overflow:hidden';
+    panel.style.cssText='position:absolute;inset:0;background:rgba(10,10,10,.97);z-index:20;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px;gap:6px;overflow:hidden';
     panel.innerHTML=`
-      <div style="font-family:'Bebas Neue',Impact,sans-serif;color:var(--gold);letter-spacing:1.2px;font-size:13px">⏸ GIRO TÁCTICO — MIN ${currentMinute}'</div>
-      <div style="width:88%;max-width:280px;height:4px;background:#222;border-radius:3px;overflow:hidden">
+      <div style="font-family:'Bebas Neue',Impact,sans-serif;color:var(--gold);letter-spacing:1.2px;font-size:12px">⏸ GIRO TÁCTICO — MIN ${currentMinute}'</div>
+      <div style="width:80%;max-width:240px;height:4px;background:#222;border-radius:3px;overflow:hidden">
         <div id="giroTimerFill" style="height:100%;width:100%;background:var(--gold);transition:width 1s linear"></div>
       </div>
-      <div id="giroSub" style="font-size:10px;color:var(--text-muted)">Toca una carta para verla — vuelve a tocarla para elegirla</div>
-      <div id="giroStage" style="position:relative;width:100%;max-width:320px;height:170px;flex:none"></div>
+      <div id="giroSub" style="font-size:9.5px;color:var(--text-muted);min-height:12px">Barajando...</div>
+      <div id="giroStage" style="position:relative;width:100%;max-width:300px;height:160px;flex:none"></div>
     `;
     modal.appendChild(panel);
 
     const stage=panel.querySelector('#giroStage');
     const sub=panel.querySelector('#giroSub');
-    const REST={0:{x:-78,rot:-4},1:{x:0,rot:0},2:{x:78,rot:4}};
-    const cardEls=[];
-
-    picks.forEach((card,i)=>{
-      const el=document.createElement('div');
-      el.className='giro-pick-card';
-      el.style.cssText='position:absolute;top:50%;left:50%;width:96px;height:150px;margin:-75px 0 0 -48px;cursor:pointer;-webkit-tap-highlight-color:transparent;will-change:transform';
-      el.innerHTML=`
-        <div style="width:100%;height:100%;border-radius:10px;background:linear-gradient(160deg,#1c1c1c,#161616);border:1px solid #2a2a2a;box-shadow:0 8px 20px rgba(0,0,0,.5);display:flex;flex-direction:column;align-items:center;padding:8px 6px;position:relative">
-          <i class="ph ph-bold ${card.icon}" style="font-size:22px;color:var(--gold);margin-bottom:5px"></i>
-          <div style="font-family:'Bebas Neue',Impact,sans-serif;font-size:10px;letter-spacing:.4px;text-align:center;color:#fff;line-height:1.15">${card.name}</div>
-          <div style="font-size:8.5px;color:#bfe8c9;text-align:center;margin-top:4px;line-height:1.2">${card.pos}</div>
-          <div style="font-size:8.5px;color:#f3c6c1;text-align:center;border-top:1px dashed #333;padding-top:3px;margin-top:3px;line-height:1.2">${card.neg}</div>
-        </div>`;
-      stage.appendChild(el);
-      cardEls.push({el, card, idx:i});
-    });
-
-    let ready=false, focused=null, resolved=false, hoveredIdx=null;
-    const hoverState=[{s:1,l:0},{s:1,l:0},{s:1,l:0}];
-    let idleActive=false;
+    const keys=['a','b','c'];
+    const REST={a:{x:-78,rot:-4},b:{x:0,rot:0},c:{x:78,rot:4}};
+    // Rutas de cruce del barajado — mismas proporciones que el diseño original
+    const PATHS={
+      a:[{x:0,y:0,rot:0,s:.94},{x:30,y:-8,rot:12,s:.97},{x:-25,y:4,rot:-10,s:.97},
+         {x:50,y:-6,rot:14,s:.98},{x:-36,y:3,rot:-8,s:.98},{x:21,y:-4,rot:6,s:.98},
+         {x:-88,y:-6,rot:-6,s:1.03},{x:REST.a.x,y:0,rot:REST.a.rot,s:1}],
+      b:[{x:0,y:0,rot:0,s:.94},{x:-29,y:5,rot:-11,s:.96},{x:23,y:-6,rot:9,s:.97},
+         {x:-45,y:2,rot:-13,s:.98},{x:34,y:-4,rot:8,s:.98},{x:-20,y:4,rot:-6,s:.98},
+         {x:5,y:-6,rot:2,s:1.03},{x:REST.b.x,y:0,rot:REST.b.rot,s:1}],
+      c:[{x:0,y:0,rot:0,s:.94},{x:-30,y:-6,rot:-12,s:.97},{x:25,y:4,rot:10,s:.97},
+         {x:-50,y:-5,rot:-14,s:.98},{x:36,y:3,rot:8,s:.98},{x:-21,y:-3,rot:-6,s:.98},
+         {x:88,y:-6,rot:6,s:1.03},{x:REST.c.x,y:0,rot:REST.c.rot,s:1}]
+    };
+    const STEP_MS=90;
 
     function setT(el,x,y,rot,s){ el.style.transform=`translate(${x}px,${y}px) rotate(${rot}deg) scale(${s})`; }
 
+    const cardEls=[];
+    picks.forEach((card,i)=>{
+      const key=keys[i];
+      const el=document.createElement('div');
+      el.className='g-card';
+      el.dataset.key=key;
+      el.innerHTML=`
+        <div class="g-card-face">
+          <div class="g-card-tag">Giro Táctico</div>
+          <i class="ph ph-bold ${card.icon} g-card-icon"></i>
+          <div class="g-card-title">${card.name}</div>
+          <div class="g-card-divider"></div>
+          <div class="g-effect g-effect-pos"><b>${card.pos}</b></div>
+          <div class="g-effect g-effect-neg"><b>${card.neg}</b></div>
+        </div>`;
+      el.style.transition=`transform ${STEP_MS}ms cubic-bezier(.4,0,.2,1)`;
+      stage.appendChild(el);
+      cardEls.push({el,card,key});
+    });
+
+    let ready=false, focusedKey=null, resolved=false, hoveredKey=null, idleActive=false;
+    const hoverState={a:{s:1,l:0},b:{s:1,l:0},c:{s:1,l:0}};
+    const idlePhase={a:0,b:2.1,c:4.2};
+
     function idleTick(t){
       if(!idleActive) return;
-      cardEls.forEach(({el,idx})=>{
-        if(focused!==null) return;
-        const r=REST[idx];
-        const bob=Math.sin(t/650+idx*2.1)*5;
-        const hs=hoverState[idx];
-        const targetS=(hoveredIdx===idx)?1.08:1;
+      cardEls.forEach(({el,key})=>{
+        if(focusedKey!==null) return;
+        const r=REST[key];
+        const bob=Math.sin(t/650+idlePhase[key])*5;
+        const hs=hoverState[key];
+        const targetS=(hoveredKey===key)?1.08:1;
         hs.s+=(targetS-hs.s)*0.2;
-        const hoverLift=(hoveredIdx===idx)?-5:0;
+        const hoverLift=(hoveredKey===key)?-5:0;
         setT(el, r.x, bob+hoverLift, r.rot, hs.s);
       });
       requestAnimationFrame(idleTick);
     }
     function startIdle(){ idleActive=true; cardEls.forEach(({el})=>el.style.transition='none'); requestAnimationFrame(idleTick); }
 
-    cardEls.forEach(({el,idx})=>{
-      el.addEventListener('mouseenter', ()=>{ hoveredIdx=idx; });
-      el.addEventListener('mouseleave', ()=>{ if(hoveredIdx===idx) hoveredIdx=null; });
-      el.addEventListener('click',(e)=>{
-        e.stopPropagation();
-        if(!ready||resolved) return;
-        if(focused===idx){ doResolve(picks[idx]); return; }
-        focusCard(idx);
-      });
-    });
+    function runShuffle(){
+      let i=0;
+      const maxSteps=PATHS.a.length;
+      const iv=setInterval(()=>{
+        cardEls.forEach(({el,key})=>{
+          const p=PATHS[key][Math.min(i,PATHS[key].length-1)];
+          setT(el,p.x,p.y,p.rot,p.s);
+        });
+        i++;
+        if(i>=maxSteps){
+          clearInterval(iv);
+          cardEls.forEach(({el,key})=>{
+            el.style.transition='transform .3s cubic-bezier(.34,1.56,.64,1)';
+            setT(el,REST[key].x,0,REST[key].rot,1);
+          });
+          setTimeout(()=>{ ready=true; if(sub) sub.textContent='Toca una carta para verla — vuelve a tocarla para elegirla'; startIdle(); },260);
+        }
+      },STEP_MS);
+    }
+    setTimeout(runShuffle,150);
 
-    function focusCard(idx){
+    function focusCard(key){
       idleActive=false;
-      focused=idx;
-      cardEls.forEach(({el},i)=>{
+      focusedKey=key;
+      const others=keys.filter(k=>k!==key);
+      cardEls.forEach(({el,key:k})=>{
         el.style.transition='transform .32s cubic-bezier(.34,1.56,.64,1)';
-        if(i===idx) setT(el,0,-3,0,1.16);
+        if(k===key){ el.classList.add('focused'); el.classList.remove('dimmed'); setT(el,0,-3,0,1.16); }
         else{
-          const peekX=i<idx?-58:58;
-          setT(el,peekX,10,REST[i].rot,.8);
+          el.classList.remove('focused'); el.classList.add('dimmed');
+          const peekX=(others.indexOf(k)===0)?-52:52;
+          setT(el,peekX,10,REST[k].rot,.8);
         }
       });
       if(sub) sub.textContent='Vuelve a tocarla para elegir esta carta';
     }
-    stage.addEventListener('click',()=>{
-      if(!ready||resolved||focused===null) return;
-      focused=null;
-      cardEls.forEach(({el},i)=>{
+    function unfocusAll(){
+      focusedKey=null;
+      cardEls.forEach(({el})=>el.classList.remove('focused','dimmed'));
+      cardEls.forEach(({el,key})=>{
         el.style.transition='transform .3s cubic-bezier(.34,1.56,.64,1)';
-        setT(el,REST[i].x,0,REST[i].rot,1);
+        setT(el,REST[key].x,0,REST[key].rot,1);
       });
       if(sub) sub.textContent='Toca una carta para verla — vuelve a tocarla para elegirla';
-      setTimeout(()=>{ if(focused===null) startIdle(); },320);
-    });
+      setTimeout(()=>{ if(focusedKey===null) startIdle(); },320);
+    }
 
-    setTimeout(()=>{ ready=true; startIdle(); },200);
+    cardEls.forEach(({el,key})=>{
+      el.addEventListener('mouseenter', ()=>{ hoveredKey=key; });
+      el.addEventListener('mouseleave', ()=>{ if(hoveredKey===key) hoveredKey=null; });
+      el.addEventListener('click',(e)=>{
+        e.stopPropagation();
+        if(!ready||resolved) return;
+        if(focusedKey===key){ doResolve(cardEls.find(c=>c.key===key)); return; }
+        focusCard(key);
+      });
+    });
+    panel.addEventListener('click',()=>{
+      if(!ready||resolved||focusedKey===null) return;
+      unfocusAll();
+    });
 
     let secLeft=10;
     const fill=panel.querySelector('#giroTimerFill');
@@ -3151,18 +3247,21 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
       if(fill) fill.style.width=Math.max(0,(secLeft/10*100))+'%';
       if(secLeft<=0){
         clearInterval(timerHandle);
-        const chosen=focused!==null?picks[focused]:picks[Math.floor(Math.random()*picks.length)];
+        const chosen=focusedKey!==null?cardEls.find(c=>c.key===focusedKey):cardEls[Math.floor(Math.random()*cardEls.length)];
         doResolve(chosen);
       }
     },1000);
 
-    function doResolve(card){
-      if(resolved) return;
+    function doResolve(entry){
+      if(resolved||!entry) return;
       resolved=true;
       idleActive=false;
       clearInterval(timerHandle);
       playSound('select');
-      resolveGiroPick(card, panel);
+      entry.el.classList.add('confirmed');
+      if(sub) sub.textContent='¡Elegida! Aplicando efecto...';
+      setTimeout(()=>{ stage.classList.add('vanishing'); }, 250);
+      setTimeout(()=>{ resolveGiroPick(entry.card, panel); }, 750);
     }
   }
 
