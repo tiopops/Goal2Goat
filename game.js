@@ -3036,7 +3036,12 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
     giroPaused=true;
     giroPausedFrac=Math.min((performance.now()-regStart)/REG_DURATION,1);
     playSound('select');
-    showGiroCardPicker();
+    try{
+      showGiroCardPicker();
+    }catch(e){
+      console.error('Giro Táctico picker error:', e);
+      resumeAfterGiro();
+    }
   }
 
   function showGiroCardPicker(){
@@ -3045,30 +3050,99 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
     const pool=GIRO_CARDS.slice();
     shuffle(pool);
     const picks=pool.slice(0,3);
+
     const panel=document.createElement('div');
     panel.id='giroPickerPanel';
-    panel.style.cssText='position:absolute;inset:0;background:rgba(10,10,10,.96);z-index:20;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:14px;gap:10px';
+    panel.style.cssText='position:absolute;inset:0;background:rgba(10,10,10,.97);z-index:20;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px;gap:8px;overflow:hidden';
     panel.innerHTML=`
-      <div style="font-family:'Bebas Neue',Impact,sans-serif;color:var(--gold);letter-spacing:1.5px;font-size:15px">⏸ GIRO TÁCTICO — MIN ${currentMinute}'</div>
-      <div style="width:90%;max-width:320px;height:5px;background:#222;border-radius:3px;overflow:hidden">
+      <div style="font-family:'Bebas Neue',Impact,sans-serif;color:var(--gold);letter-spacing:1.2px;font-size:13px">⏸ GIRO TÁCTICO — MIN ${currentMinute}'</div>
+      <div style="width:88%;max-width:280px;height:4px;background:#222;border-radius:3px;overflow:hidden">
         <div id="giroTimerFill" style="height:100%;width:100%;background:var(--gold);transition:width 1s linear"></div>
       </div>
-      <div id="giroCardsWrap" style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;max-width:100%"></div>
+      <div id="giroSub" style="font-size:10px;color:var(--text-muted)">Toca una carta para verla — vuelve a tocarla para elegirla</div>
+      <div id="giroStage" style="position:relative;width:100%;max-width:320px;height:170px;flex:none"></div>
     `;
     modal.appendChild(panel);
-    const wrap=panel.querySelector('#giroCardsWrap');
-    picks.forEach(card=>{
-      const btn=document.createElement('button');
-      btn.style.cssText='width:150px;background:linear-gradient(160deg,#1c1c1c,#161616);border:1px solid #2a2a2a;border-radius:10px;padding:10px 8px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;color:var(--text)';
-      btn.innerHTML=`
-        <i class="ph ph-bold ${card.icon}" style="font-size:26px;color:var(--gold)"></i>
-        <div style="font-family:'Bebas Neue',Impact,sans-serif;font-size:12px;letter-spacing:.5px;text-align:center">${card.name}</div>
-        <div style="font-size:10px;color:#bfe8c9;text-align:center">${card.pos}</div>
-        <div style="font-size:10px;color:#f3c6c1;text-align:center;border-top:1px dashed #333;padding-top:4px">${card.neg}</div>
-      `;
-      btn.addEventListener('click', ()=>resolveGiroPick(card, panel, timerHandle));
-      wrap.appendChild(btn);
+
+    const stage=panel.querySelector('#giroStage');
+    const sub=panel.querySelector('#giroSub');
+    const REST={0:{x:-78,rot:-4},1:{x:0,rot:0},2:{x:78,rot:4}};
+    const cardEls=[];
+
+    picks.forEach((card,i)=>{
+      const el=document.createElement('div');
+      el.className='giro-pick-card';
+      el.style.cssText='position:absolute;top:50%;left:50%;width:96px;height:150px;margin:-75px 0 0 -48px;cursor:pointer;-webkit-tap-highlight-color:transparent;will-change:transform';
+      el.innerHTML=`
+        <div style="width:100%;height:100%;border-radius:10px;background:linear-gradient(160deg,#1c1c1c,#161616);border:1px solid #2a2a2a;box-shadow:0 8px 20px rgba(0,0,0,.5);display:flex;flex-direction:column;align-items:center;padding:8px 6px;position:relative">
+          <i class="ph ph-bold ${card.icon}" style="font-size:22px;color:var(--gold);margin-bottom:5px"></i>
+          <div style="font-family:'Bebas Neue',Impact,sans-serif;font-size:10px;letter-spacing:.4px;text-align:center;color:#fff;line-height:1.15">${card.name}</div>
+          <div style="font-size:8.5px;color:#bfe8c9;text-align:center;margin-top:4px;line-height:1.2">${card.pos}</div>
+          <div style="font-size:8.5px;color:#f3c6c1;text-align:center;border-top:1px dashed #333;padding-top:3px;margin-top:3px;line-height:1.2">${card.neg}</div>
+        </div>`;
+      stage.appendChild(el);
+      cardEls.push({el, card, idx:i});
     });
+
+    let ready=false, focused=null, resolved=false, hoveredIdx=null;
+    const hoverState=[{s:1,l:0},{s:1,l:0},{s:1,l:0}];
+    let idleActive=false;
+
+    function setT(el,x,y,rot,s){ el.style.transform=`translate(${x}px,${y}px) rotate(${rot}deg) scale(${s})`; }
+
+    function idleTick(t){
+      if(!idleActive) return;
+      cardEls.forEach(({el,idx})=>{
+        if(focused!==null) return;
+        const r=REST[idx];
+        const bob=Math.sin(t/650+idx*2.1)*5;
+        const hs=hoverState[idx];
+        const targetS=(hoveredIdx===idx)?1.08:1;
+        hs.s+=(targetS-hs.s)*0.2;
+        const hoverLift=(hoveredIdx===idx)?-5:0;
+        setT(el, r.x, bob+hoverLift, r.rot, hs.s);
+      });
+      requestAnimationFrame(idleTick);
+    }
+    function startIdle(){ idleActive=true; cardEls.forEach(({el})=>el.style.transition='none'); requestAnimationFrame(idleTick); }
+
+    cardEls.forEach(({el,idx})=>{
+      el.addEventListener('mouseenter', ()=>{ hoveredIdx=idx; });
+      el.addEventListener('mouseleave', ()=>{ if(hoveredIdx===idx) hoveredIdx=null; });
+      el.addEventListener('click',(e)=>{
+        e.stopPropagation();
+        if(!ready||resolved) return;
+        if(focused===idx){ doResolve(picks[idx]); return; }
+        focusCard(idx);
+      });
+    });
+
+    function focusCard(idx){
+      idleActive=false;
+      focused=idx;
+      cardEls.forEach(({el},i)=>{
+        el.style.transition='transform .32s cubic-bezier(.34,1.56,.64,1)';
+        if(i===idx) setT(el,0,-3,0,1.16);
+        else{
+          const peekX=i<idx?-58:58;
+          setT(el,peekX,10,REST[i].rot,.8);
+        }
+      });
+      if(sub) sub.textContent='Vuelve a tocarla para elegir esta carta';
+    }
+    stage.addEventListener('click',()=>{
+      if(!ready||resolved||focused===null) return;
+      focused=null;
+      cardEls.forEach(({el},i)=>{
+        el.style.transition='transform .3s cubic-bezier(.34,1.56,.64,1)';
+        setT(el,REST[i].x,0,REST[i].rot,1);
+      });
+      if(sub) sub.textContent='Toca una carta para verla — vuelve a tocarla para elegirla';
+      setTimeout(()=>{ if(focused===null) startIdle(); },320);
+    });
+
+    setTimeout(()=>{ ready=true; startIdle(); },200);
+
     let secLeft=10;
     const fill=panel.querySelector('#giroTimerFill');
     const timerHandle=setInterval(()=>{
@@ -3077,19 +3151,32 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
       if(fill) fill.style.width=Math.max(0,(secLeft/10*100))+'%';
       if(secLeft<=0){
         clearInterval(timerHandle);
-        resolveGiroPick(picks[Math.floor(Math.random()*picks.length)], panel, timerHandle);
+        const chosen=focused!==null?picks[focused]:picks[Math.floor(Math.random()*picks.length)];
+        doResolve(chosen);
       }
     },1000);
+
+    function doResolve(card){
+      if(resolved) return;
+      resolved=true;
+      idleActive=false;
+      clearInterval(timerHandle);
+      playSound('select');
+      resolveGiroPick(card, panel);
+    }
   }
 
-  function resolveGiroPick(card, panel, timerHandle){
-    if(timerHandle) clearInterval(timerHandle);
-    if(panel && panel._resolved) return;
-    if(panel) panel._resolved=true;
-    playSound('select');
-    if(panel) panel.remove();
-    applyGiroCard(card);
-    resumeAfterGiro();
+  function resolveGiroPick(card, panel){
+    // Pase lo que pase al aplicar la carta, el partido SIEMPRE debe
+    // reanudarse — nunca debe quedarse congelado.
+    try{
+      if(panel) panel.remove();
+      applyGiroCard(card);
+    }catch(e){
+      console.error('Giro Táctico error:', e);
+    }finally{
+      resumeAfterGiro();
+    }
   }
 
   function applyGiroCard(card){
