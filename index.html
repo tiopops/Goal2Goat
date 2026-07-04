@@ -89,7 +89,7 @@
       title="Volver al inicio"
       onerror="this.style.display='none';document.getElementById('logoFallback').style.display='block'">
     <span id="logoFallback" style="display:none;font-family:'Bebas Neue',Impact,sans-serif;font-size:26px;letter-spacing:3px;color:#c9a227;cursor:pointer;line-height:1" onclick="location.reload()">GOAL2GOAT</span>
-    <div class="version-tag">v0.354</div>
+    <div class="version-tag">v0.4</div>
   </div>
   <div class="app-header-actions">
     <a href="https://ko-fi.com/goal2goat" target="_blank" class="support-btn" style="text-decoration:none;display:inline-flex;align-items:center;justify-content:center" data-i18n="app.support">APOYA A GOAL2GOAT</a>
@@ -264,7 +264,7 @@
         </div>
 
         <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;align-items:center">
-          <button onclick="window.showPatchNotes()" style="background:none;border:none;cursor:pointer;font-family:'Bebas Neue',Impact,sans-serif;font-size:13px;letter-spacing:1px;color:var(--gold);padding:0;text-decoration:underline" data-i18n="settings.patch_notes">NOTAS v0.354</button>
+          <button onclick="window.showPatchNotes()" style="background:none;border:none;cursor:pointer;font-family:'Bebas Neue',Impact,sans-serif;font-size:13px;letter-spacing:1px;color:var(--gold);padding:0;text-decoration:underline" data-i18n="settings.patch_notes">NOTAS v0.4</button>
         </div>
 
         <!-- CHEATS: solo visible para tiopops -->
@@ -336,6 +336,23 @@
     <button onclick="document.getElementById('patchNotesOverlay').style.display='none'" class="auth-close" style="position:absolute;top:12px;right:14px">✕</button>
     <div class="auth-logo" style="font-size:16px" data-i18n="patch.title">📋 NOTAS DE LA VERSIÓN</div>
     <div class="version-notes-scroll">
+      <h4 data-i18n="patch.v04_giro">v0.4 — Giro Táctico</h4>
+      <ul>
+        <li data-i18n="patch.v04_giro_1">Nueva habilidad: pausa el partido y elige 1 de 3 cartas tácticas (20 disponibles) para darle la vuelta al resultado, cada una con un beneficio real y una contrapartida.</li>
+        <li data-i18n="patch.v04_giro_2">Nueva mejora en la pestaña MEJORAS para aumentar los usos disponibles por torneo.</li>
+      </ul>
+      <h4 data-i18n="patch.v04_mp">v0.4 — Multijugador</h4>
+      <ul>
+        <li data-i18n="patch.v04_mp_1">Giro Táctico ahora también disponible en los duelos, sincronizado en tiempo real entre los dos jugadores.</li>
+        <li data-i18n="patch.v04_mp_2">Nueva tanda de penaltis visual e interactiva si un partido del duelo termina en empate: cada uno elige en secreto dónde tira o para, con animación propia.</li>
+        <li data-i18n="patch.v04_mp_3">El duelo finaliza automáticamente si un jugador no interactúa durante más de 1 minuto.</li>
+      </ul>
+      <h4 data-i18n="patch.v04_ui">v0.4 — Interfaz</h4>
+      <ul>
+        <li data-i18n="patch.v04_ui_1">Nuevo fondo de escritorio.</li>
+        <li data-i18n="patch.v04_ui_2">Aviso visual si tardas en encontrar el botón de jugar en móvil.</li>
+        <li data-i18n="patch.v04_ui_3">Varias correcciones de sincronización y estabilidad en el modo duelo.</li>
+      </ul>
       <h4 data-i18n="patch.v351_match">v0.351 — Partido</h4>
       <ul>
         <li data-i18n="patch.v351_match_1">Feed de partido en 3 columnas: mi equipo izquierda, minuto centro, rival derecha.</li>
@@ -665,23 +682,23 @@
       <div class="howto-content">
         <div class="howto-step">
           <span class="howto-num">1</span>
-          <div data-i18n-html="howto.step1">Elige tu <strong>formación</strong> (queda fija todo el torneo) y arma tu once: <strong>SELECCIONAR JUGADOR</strong> o <strong>EQUIPO RÁPIDO</strong>. Coloca cada jugador en su <strong>posición ★</strong> para el 100% de rendimiento.</div>
+          <div data-i18n-html="howto.step1">Elige tu <strong>formación</strong> (queda fija todo el torneo) y completa tu once con <strong>SELECCIONAR JUGADOR</strong> o <strong>EQUIPO RÁPIDO</strong>. Coloca cada jugador en su <strong>posición ★</strong> marcada para que rinda al máximo.</div>
         </div>
         <div class="howto-step">
           <span class="howto-num">2</span>
-          <div data-i18n-html="howto.step2"><strong>Grupos → Octavos → Cuartos → Semis → Final.</strong> Antes de cada partido: rueda de prensa (predicción → moral) y elige una <strong>estrategia</strong> que contrarreste al rival.</div>
+          <div data-i18n-html="howto.step2"><strong>Grupos → Octavos → Cuartos → Semis → Final.</strong> Antes de cada partido, elige una <strong>estrategia</strong> que contrarreste la del rival: acertar la contra te da una ventaja real en el resultado.</div>
         </div>
         <div class="howto-step">
           <span class="howto-num">3</span>
-          <div data-i18n-html="howto.step3">Hasta <strong>2 cambios 🪑</strong> por partido (ampliables con mejoras). Vigila lesiones ✚, sanciones 🚫 y la barra de <strong>Resistencia</strong> — descansa en el banquillo para recuperarla.</div>
+          <div data-i18n-html="howto.step3">No olvides hacer <strong>cambios</strong> entre partidos para rotar a quien necesite descanso. Vigila lesiones, tarjetas y <strong>resistencia</strong> — quien no descansa llega peor al siguiente partido.</div>
         </div>
         <div class="howto-step">
           <span class="howto-num">4</span>
-          <div data-i18n-html="howto.step4">La <strong>moral</strong> sube con goles/aciertos y baja con derrotas/fallos. El <strong>clima</strong> y las <strong>rachas 🔥</strong> también influyen en cada partido.</div>
+          <div data-i18n-html="howto.step4">Todo cuenta en el marcador: la <strong>moral</strong> sube con goles y baja con derrotas, el <strong>clima</strong> y las <strong>rachas</strong> de gol también influyen. Contesta bien en la rueda de prensa para no perder moral.</div>
         </div>
         <div class="howto-step">
           <span class="howto-num">5</span>
-          <div data-i18n-html="howto.step5">Cada run puntúa de <strong>0 a 1000</strong>. Gana el Mundial para acercarte al máximo — tu mejor puntuación se guarda si estás registrado.</div>
+          <div data-i18n-html="howto.step5">Cada partida vale de <strong>0 a 1000 puntos</strong>. Ganar el Mundial te acerca al máximo, y tu mejor marca se guarda si tienes cuenta.</div>
         </div>
       </div>
     </div>
