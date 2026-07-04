@@ -3603,7 +3603,7 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
         db.collection('duels').doc(ctxD.duelId).update({
           [`m${ctxD.matchIndex}_result`]: updatedResult,
           [`m${ctxD.matchIndex}_giroPause`]: {active:false},
-          [`m${ctxD.matchIndex}_${roleField}`]: {cardName:card.name, pos:card.pos, neg:card.neg, minute:currentMinute}
+          [`m${ctxD.matchIndex}_${roleField}`]: {cardName:card.name, pos:card.pos, neg:card.neg, minute:currentMinute, icon:card.icon}
         }).catch(e=>console.error('[Giro Táctico Duelo] guardado del resultado corregido falló:', e));
       }
     }catch(e){
@@ -8132,20 +8132,20 @@ async function mpShowDuelPostMatchStats(){
       if(myGiro){
         const gc=document.createElement('div');
         gc.className='match-summary';
-        gc.style.cssText='border:1px solid var(--gold);border-radius:8px;padding:8px 10px';
+        gc.style.cssText='border:1px solid var(--gold);border-radius:8px;padding:10px;display:flex;align-items:center;gap:10px';
         gc.innerHTML=myGiro.noPick
-          ? `<strong style="color:var(--gold)">${tk('giro.used_title')||'Giro Táctico usado'}</strong>: ${tk('giro.no_pick')||'no se eligió ninguna carta a tiempo'} (min ${myGiro.minute}')`
-          : `<strong style="color:var(--gold)">${tk('giro.used_title')||'Giro Táctico usado'}: ${mpEsc(myGiro.cardName)}</strong><br><span style="color:#bfe8c9">${mpEsc(myGiro.pos)}</span> · <span style="color:#f3c6c1">${mpEsc(myGiro.neg)}</span>`;
+          ? `<i class="ph ph-bold ph-notebook" style="font-size:26px;color:var(--gold);flex-shrink:0"></i><div><strong style="color:var(--gold)">${tk('giro.used_title')||'Giro Táctico usado'}</strong>: ${tk('giro.no_pick')||'no se eligió ninguna carta a tiempo'} (min ${myGiro.minute}')</div>`
+          : `<i class="ph ph-bold ${myGiro.icon||'ph-notebook'}" style="font-size:26px;color:var(--gold);flex-shrink:0"></i><div><strong style="color:var(--gold)">${tk('giro.used_title')||'Giro Táctico usado'}: ${mpEsc(myGiro.cardName)}</strong><br><span style="color:#bfe8c9">${mpEsc(myGiro.pos)}</span> · <span style="color:#f3c6c1">${mpEsc(myGiro.neg)}</span></div>`;
         infoWrap.appendChild(gc);
       }
       if(rivalGiro){
         const gc=document.createElement('div');
         gc.className='match-summary';
-        gc.style.cssText='border:1px solid #4a90d9;border-radius:8px;padding:8px 10px';
+        gc.style.cssText='border:1px solid #4a90d9;border-radius:8px;padding:10px;display:flex;align-items:center;gap:10px';
         const rivalName=mpEsc(window._duelOpponentUsername||'Rival');
         gc.innerHTML=rivalGiro.noPick
-          ? `<strong style="color:#7ec3ff">${rivalName} ${(tk('giro.rival_used')||'usó Giro Táctico')}</strong>: ${tk('giro.no_pick')||'no eligió ninguna carta a tiempo'} (min ${rivalGiro.minute}')`
-          : `<strong style="color:#7ec3ff">${rivalName} ${(tk('giro.rival_used')||'usó Giro Táctico')}: ${mpEsc(rivalGiro.cardName)}</strong><br><span style="color:#bfe8c9">${mpEsc(rivalGiro.pos)}</span> · <span style="color:#f3c6c1">${mpEsc(rivalGiro.neg)}</span>`;
+          ? `<i class="ph ph-bold ph-notebook" style="font-size:26px;color:#7ec3ff;flex-shrink:0"></i><div><strong style="color:#7ec3ff">${rivalName} ${(tk('giro.rival_used')||'usó Giro Táctico')}</strong>: ${tk('giro.no_pick')||'no eligió ninguna carta a tiempo'} (min ${rivalGiro.minute}')</div>`
+          : `<i class="ph ph-bold ${rivalGiro.icon||'ph-notebook'}" style="font-size:26px;color:#7ec3ff;flex-shrink:0"></i><div><strong style="color:#7ec3ff">${rivalName} ${(tk('giro.rival_used')||'usó Giro Táctico')}: ${mpEsc(rivalGiro.cardName)}</strong><br><span style="color:#bfe8c9">${mpEsc(rivalGiro.pos)}</span> · <span style="color:#f3c6c1">${mpEsc(rivalGiro.neg)}</span></div>`;
         infoWrap.appendChild(gc);
       }
     }
