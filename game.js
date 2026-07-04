@@ -3154,12 +3154,12 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
         }
       }catch(e){ console.error('[Giro Táctico Duelo] comprobación de seguridad falló:', e); }
       // Tope de seguridad final por si algo se queda atascado de verdad
-      if(giroSafetyChecks>=12 && mpGiroWaitingOverlay){
+      if(giroSafetyChecks>=24 && mpGiroWaitingOverlay){
         clearInterval(mpGiroSafetyTimeout); mpGiroSafetyTimeout=null;
         mpGiroHideWaitingOverlay();
         resumeAfterGiro();
       }
-    }, 1500);
+    }, 500);
   }
   function mpGiroHideWaitingOverlay(){
     if(mpGiroWaitTimerHandle){ clearInterval(mpGiroWaitTimerHandle); mpGiroWaitTimerHandle=null; }
@@ -3185,7 +3185,7 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
     // Conservar lo ya mostrado (mismo instante de pausa para los dos, ya
     // que se guarda el minuto exacto de quien pulsó el botón) y añadir
     // los eventos futuros ya recalculados por el rival.
-    allEvents=allEvents.slice(0,eventIdx);
+    allEvents.length=eventIdx; // truncar SIN reasignar (allEvents es const)
     myEvents.filter(ev=>ev.minute>currentMinute).forEach(ev=>{
       allEvents.push({minute:ev.minute, type:'mygoal', icon:'⚽', text:`<strong>${ev.name||'Gol'}</strong>`});
     });
@@ -3582,7 +3582,7 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
       oppGoals=newRivalTotal;
       won=myGoals>oppGoals; draw=myGoals===oppGoals;
 
-      allEvents=allEvents.slice(0,eventIdx);
+      allEvents.length=eventIdx; // truncar SIN reasignar (allEvents es const)
       if(pendingCardEvent) allEvents.push(pendingCardEvent);
       if(pendingInjuryEvent) allEvents.push(pendingInjuryEvent);
       newMyEvents.forEach(ev=>allEvents.push({minute:ev.minute, type:'mygoal', icon:'⚽', text:`<strong>${ev.name||'Gol'}</strong>`}));
@@ -3697,7 +3697,7 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
       newMinutes.sort((a,b)=>a.minute-b.minute);
 
       // Descartar eventos futuros aún no mostrados; conservar lo ya ocurrido
-      allEvents=allEvents.slice(0,eventIdx);
+      allEvents.length=eventIdx; // truncar SIN reasignar (allEvents es const)
       if(pendingCardEvent) allEvents.push(pendingCardEvent);
       if(pendingInjuryEvent) allEvents.push(pendingInjuryEvent);
       newMinutes.forEach(nm=>{
@@ -5469,9 +5469,10 @@ function initFirebaseAuth(){
         if(badge) profileBtn.appendChild(badge);
       }
       if(settingsMenu) settingsMenu.style.display="none";
-      // Botón multijugador: visible para cualquier usuario con sesión iniciada
+      // Botón multijugador: visible para cualquier usuario con sesión iniciada,
+      // salvo que haya un duelo activo (se oculta hasta que termine)
       const mpWrap=$id('multiplayerWrap');
-      if(mpWrap) mpWrap.style.display='flex';
+      if(mpWrap) mpWrap.style.display=window._duelId?'none':'flex';
       // Mostrar botón de tickets en desktop
       const hBtn=$id("headerTicketBtn"); if(hBtn) hBtn.style.display="";
       const pun=$id("profileUsername"); if(pun) pun.textContent=username;
@@ -5602,9 +5603,9 @@ function initFirebaseAuth(){
             // Mostrar selector de idioma solo con cheats activos
             // langSelectorWrap is always visible (removed cheats gate)
             if(window.CHEATS_ACTIVE){const pse=$id('pstat-scratch-pts');if(pse)pse.textContent=100;}
-            // Botón multijugador: visible para cualquier usuario con sesión iniciada
+            // Botón multijugador: visible con sesión iniciada, salvo duelo activo
             const mpWrap=$id('multiplayerWrap');
-            if(mpWrap) mpWrap.style.display=auth.currentUser?'flex':'none';
+            if(mpWrap) mpWrap.style.display=(auth.currentUser&&!window._duelId)?'flex':'none';
             showToast(window.CHEATS_ACTIVE?"⚙️ Cheats ON — ganas todos, tickets 3/3, pts 100":"⚙️ Cheats OFF — juego normal","toast-pos");
           });
         }
@@ -8732,6 +8733,7 @@ function mpShowDuelWaitingScreen(){
       if(window._duelMatchesStarted) return; // evita disparar dos veces
       window._duelMatchesStarted=true;
       unsub();
+      mpHideDuelOverlay(); // si no, se queda tapando la rueda de prensa/estrategia
       window._duelMatchIndex=0;
       mpShowStrategyAndBenchPhase();
       return;
