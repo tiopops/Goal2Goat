@@ -449,7 +449,7 @@ body.dark-theme .live-match-modal{border-color:#2a7a40}
 .glossary-table{width:100%;border-collapse:collapse}
 .glossary-table td{padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top;font-size:12px;line-height:1.5;color:#444}
 .glossary-table tr:last-child td{border-bottom:none}
-.glossary-term{font-family:'Bebas Neue',Impact,sans-serif;font-size:13px;letter-spacing:.5px;color:var(--gold);white-space:nowrap;width:1%;padding-right:14px!important}
+.glossary-term{font-family:'Bebas Neue',Impact,sans-serif;font-size:13px;letter-spacing:.5px;color:var(--accent);white-space:nowrap;width:1%;padding-right:14px!important}
 body.dark-theme .glossary-table td{color:var(--text)}
 .howto-num{
   flex:0 0 auto;width:22px;height:22px;border-radius:50%;

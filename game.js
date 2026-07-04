@@ -8167,7 +8167,7 @@ function mpRenderPenaltyShootoutScreen(){
       <div style="font-family:'Bebas Neue',Impact,sans-serif;color:var(--gold);letter-spacing:1.5px;font-size:16px">TANDA DE PENALTIS</div>
       <div id="penScoreLine" style="font-family:'Bebas Neue',Impact,sans-serif;font-size:26px;letter-spacing:2px">0 – 0</div>
       <div id="penKickLabel" style="font-size:11px;color:var(--text-muted)"></div>
-      <div id="penTurnLabel" style="width:min(88vw,80vh,460px);text-align:center;font-family:'Bebas Neue',Impact,sans-serif;font-size:22px;letter-spacing:1px;padding-bottom:8px;border-bottom:3px solid var(--gold)"></div>
+      <div id="penTurnLabel" style="width:min(88vw,80vh,460px);text-align:center;font-family:'Bebas Neue',Impact,sans-serif;font-size:30px;letter-spacing:1px;padding-bottom:8px;border-bottom:3px solid var(--gold)"></div>
       <div style="width:90%;max-width:280px;height:4px;background:#222;border-radius:3px;overflow:hidden">
         <div id="penTimerFill" style="height:100%;width:100%;background:var(--gold);transition:width .1s linear"></div>
       </div>
@@ -8260,14 +8260,16 @@ function mpRenderPenaltyKick(cur, hist){
   mpPenCurState=cur;
   mpPenCurHist=hist;
   const iAmShooter=cur.shooterRole===window._duelRole;
-  const myName=mpEsc(window.currentUsername||(window._duelRole==='challenger'?'TÚ':'TÚ'));
-  const rivalName=mpEsc(window._duelOpponentUsername||'RIVAL');
-  const shooterName=iAmShooter?(myName||'TÚ'):rivalName;
+  const myName=mpEsc(window.currentUsername||'TÚ');
   const round=Math.floor(cur.kickNum/2)+1;
   const label=round<=5?`Ronda ${round} de 5`:`Muerte súbita ${round-5}`;
   const lbl=document.getElementById('penKickLabel'); if(lbl) lbl.textContent=label;
   const turnLbl=document.getElementById('penTurnLabel');
-  if(turnLbl) turnLbl.innerHTML=`<span style="color:${iAmShooter?'#4a90d9':'#e74c3c'}">${shooterName.toUpperCase()}</span> ${iAmShooter?'TIRA':'PARA'} EL PENALTI`;
+  // Siempre describe MI PROPIO papel en este lanzamiento — antes se
+  // mezclaba el nombre de quien tira con el verbo según mi rol, dando
+  // frases sin sentido como "TIOPOPS PARA" cuando en realidad tiopops
+  // estaba tirando y era el otro jugador quien paraba.
+  if(turnLbl) turnLbl.innerHTML=`<span style="color:${iAmShooter?'#4a90d9':'#e74c3c'}">${myName.toUpperCase()}</span> ${iAmShooter?'TIRA':'INTENTA PARAR'} EL PENALTI`;
   const sub=document.getElementById('penSub');
   if(sub) sub.textContent=iAmShooter?'¡Te toca lanzar! Elige tu zona':'¡Te toca parar! Elige dónde te tiras';
 
@@ -8466,11 +8468,9 @@ function mpPlayPenaltyAnimationForEntry(entry){
   const round=Math.floor(entry.kickNum/2)+1;
   const label=round<=5?`Ronda ${round} de 5`:`Muerte súbita ${round-5}`;
   const lbl=document.getElementById('penKickLabel'); if(lbl) lbl.textContent=label;
-  const myName=window.currentUsername||'TÚ';
-  const rivalName=window._duelOpponentUsername||'RIVAL';
-  const shooterName=mpEsc(iShoot?myName:rivalName);
+  const myName=mpEsc(window.currentUsername||'TÚ');
   const turnLbl=document.getElementById('penTurnLabel');
-  if(turnLbl) turnLbl.innerHTML=`<span style="color:${iShoot?'#4a90d9':'#e74c3c'}">${shooterName.toUpperCase()}</span> ${iShoot?'TIRA':'PARA'} EL PENALTI`;
+  if(turnLbl) turnLbl.innerHTML=`<span style="color:${iShoot?'#4a90d9':'#e74c3c'}">${myName.toUpperCase()}</span> ${iShoot?'TIRA':'INTENTA PARAR'} EL PENALTI`;
   return mpPlayPenaltyAnimation(entry.result, entry.shooterZone, entry.keeperZone, iShoot);
 }
 
@@ -8489,6 +8489,10 @@ function mpPlayPenaltyAnimation(result, shooterZone, keeperZone, iShoot){
       const zone=shooterZone||'centro';
       if(result==='fuera'){
         if(jugadorImg) jugadorImg.src=`assets/penaltis/${jPrefix}_falla.png`;
+        // El portero, si sí eligió zona, se muestra reaccionando ahí
+        // igualmente — que el disparo se fuera no significa que su
+        // elección se ignorase visualmente.
+        if(porteroImg) porteroImg.src=keeperZone?`assets/penaltis/${pPrefix}_${keeperZone}_para.png`:`assets/penaltis/${pPrefix}_iddle.png`;
         if(balonImg) balonImg.style.display='none';
         if(sub) sub.textContent='¡FUERA!';
       }else if(result==='gol'){
