@@ -8502,17 +8502,23 @@ function mpPlayPenaltyAnimation(result, shooterZone, keeperZone, iShoot){
         if(porteroImg) porteroImg.src=keeperZone?`assets/penaltis/${pPrefix}_${keeperZone}_para.png`:`assets/penaltis/${pPrefix}_iddle.png`;
         if(balonImg) balonImg.style.display='none';
         if(sub) sub.textContent='¡FUERA!';
+        // Malo para quien tiraba (falló su disparo); neutro para el
+        // portero, que no tuvo que hacer nada.
+        if(iShoot) playSound('defeat');
       }else if(result==='gol'){
         if(jugadorImg) jugadorImg.src=`assets/penaltis/${jPrefix}_gol.png`;
         if(porteroImg) porteroImg.src=keeperZone?`assets/penaltis/${pPrefix}_${keeperZone}_falla.png`:`assets/penaltis/${pPrefix}_iddle.png`;
         if(balonImg){ balonImg.style.display=''; balonImg.src=`assets/penaltis/balon_gol_${zone}.png`; }
         if(sub) sub.textContent='¡GOL!';
-        playSound('goal');
+        // Bueno para quien tiraba (marcó), malo para el portero (encajó).
+        playSound(iShoot?'goal':'defeat');
       }else{ // para
         if(jugadorImg) jugadorImg.src=`assets/penaltis/${jPrefix}_falla.png`;
         if(porteroImg) porteroImg.src=`assets/penaltis/${pPrefix}_${keeperZone}_para.png`;
         if(balonImg) balonImg.style.display='none';
         if(sub) sub.textContent='¡PARADA!';
+        // Bueno para el portero (paró), malo para quien tiraba (falló).
+        playSound(iShoot?'defeat':'victory');
       }
       setTimeout(resolve, 1400);
     }, 2000);
