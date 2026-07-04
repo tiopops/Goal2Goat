@@ -8108,6 +8108,7 @@ function mpRenderPenaltyShootoutScreen(){
       <div style="font-family:'Bebas Neue',Impact,sans-serif;color:var(--gold);letter-spacing:1.5px;font-size:16px">TANDA DE PENALTIS</div>
       <div id="penScoreLine" style="font-family:'Bebas Neue',Impact,sans-serif;font-size:26px;letter-spacing:2px">0 – 0</div>
       <div id="penKickLabel" style="font-size:11px;color:var(--text-muted)"></div>
+      <div id="penTurnLabel" style="font-family:'Bebas Neue',Impact,sans-serif;font-size:14px;letter-spacing:1px"></div>
       <div style="width:90%;max-width:280px;height:4px;background:#222;border-radius:3px;overflow:hidden">
         <div id="penTimerFill" style="height:100%;width:100%;background:var(--gold);transition:width .1s linear"></div>
       </div>
@@ -8204,10 +8205,17 @@ function mpRenderPenaltyKick(cur, hist){
   if(mpPenRenderedKick===cur.kickNum && !cur._forceRerender) return;
   mpPenRenderedKick=cur.kickNum;
   mpPenMyChoice=null;
+  mpPenCurState=cur;
+  mpPenCurHist=hist;
   const iAmShooter=cur.shooterRole===window._duelRole;
+  const myName=mpEsc(window.currentUsername||(window._duelRole==='challenger'?'TÚ':'TÚ'));
+  const rivalName=mpEsc(window._duelOpponentUsername||'RIVAL');
+  const shooterName=iAmShooter?(myName||'TÚ'):rivalName;
   const round=Math.floor(cur.kickNum/2)+1;
   const label=round<=5?`Ronda ${round} de 5`:`Muerte súbita ${round-5}`;
   const lbl=document.getElementById('penKickLabel'); if(lbl) lbl.textContent=label;
+  const turnLbl=document.getElementById('penTurnLabel');
+  if(turnLbl) turnLbl.innerHTML=`<span style="color:${iAmShooter?'#4a90d9':'#e74c3c'}">${shooterName.toUpperCase()}</span> ${iAmShooter?'TIRA':'PARA'} EL PENALTI`;
   const sub=document.getElementById('penSub');
   if(sub) sub.textContent=iAmShooter?'¡Te toca lanzar! Elige tu zona':'¡Te toca parar! Elige dónde te tiras';
 
@@ -8216,15 +8224,7 @@ function mpRenderPenaltyKick(cur, hist){
   const rivalGoalsPen=hist.filter(h=>h.shooterRole!==window._duelRole && h.result==='gol').length;
   const sl=document.getElementById('penScoreLine'); if(sl) sl.textContent=`${myGoalsPen} – ${rivalGoalsPen}`;
 
-  // Historial visual (bolitas verdes/rojas por lanzamiento)
-  const hrow=document.getElementById('penHistoryRow');
-  if(hrow){
-    hrow.innerHTML=hist.map(h=>{
-      const mine=h.shooterRole===window._duelRole;
-      const color=h.result==='gol'?'#4ade80':'#e05a4e';
-      return `<span style="width:10px;height:10px;border-radius:50%;background:${color};border:1px solid ${mine?'#4a90d9':'#e74c3c'}"></span>`;
-    }).join('');
-  }
+  mpRenderPenaltyHistory(hist);
 
   // Capas: si soy tirador -> jugador (yo) + portero_rival; si soy portero -> jugador_rival + portero (yo)
   const jugadorImg=document.getElementById('penJugador');
@@ -8238,6 +8238,23 @@ function mpRenderPenaltyKick(cur, hist){
   mpStartPenaltyTimer(cur);
 }
 
+/* Marcadores de aciertos/fallos — un balón (tuyo en azul, del rival en
+   rojo) relleno si acertó, hueco con aspa si falló. Más claro que los
+   puntos bicolor anteriores. */
+function mpRenderPenaltyHistory(hist){
+  const hrow=document.getElementById('penHistoryRow');
+  if(!hrow) return;
+  hrow.innerHTML=hist.map(h=>{
+    const mine=h.shooterRole===window._duelRole;
+    const color=mine?'#4a90d9':'#e74c3c';
+    const scored=h.result==='gol';
+    return `<div style="width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+      background:${scored?color:'transparent'};border:2px solid ${color};flex-shrink:0">
+      <i class="ph ph-bold ${scored?'ph-check':'ph-x'}" style="font-size:12px;color:${scored?'#fff':color}"></i>
+    </div>`;
+  }).join('');
+}
+
 function mpEnsurePenaltyZoneStyles(){
   if(document.getElementById('penZoneStylesTag')) return;
   const style=document.createElement('style');
@@ -8248,7 +8265,7 @@ function mpEnsurePenaltyZoneStyles(){
       40%{ transform:translate(-50%,-50%) scale(1.35); }
       100%{ transform:translate(-50%,-50%) scale(1.15); }
     }
-    .pen-zone-dot.pressed{ animation:penZonePulse .35s ease forwards; border-color:var(--gold) !important; background:rgba(255,255,255,.18) !important; }
+    .pen-zone-dot.pressed{ animation:penZonePulse .35s ease forwards; border-color:var(--gold) !important; background:rgba(255,220,120,.35) !important; box-shadow:0 0 25px 8px rgba(255,215,80,.85),inset 0 0 15px rgba(255,255,255,.5) !important; }
   `;
   document.head.appendChild(style);
 }
@@ -8263,7 +8280,7 @@ function mpRenderPenaltyZones(iAmShooter, cur){
   PENALTY_ZONES.forEach(z=>{
     const dot=document.createElement('div');
     dot.className='pen-zone-dot';
-    dot.style.cssText=`position:absolute;left:${z.x}%;top:${z.y}%;transform:translate(-50%,-50%);width:15%;height:15%;border-radius:50%;background:rgba(255,255,255,.12);border:4px solid #fff;cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,.5),inset 0 0 10px rgba(255,255,255,.15);transition:transform .15s ease`;
+    dot.style.cssText=`position:absolute;left:${z.x}%;top:${z.y}%;transform:translate(-50%,-50%);width:15%;height:15%;border-radius:50%;background:rgba(255,255,255,.12);border:4px solid #fff;cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,.5),inset 0 0 10px rgba(255,255,255,.15);transition:transform .15s ease;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none;outline:none;touch-action:manipulation`;
     dot.addEventListener('click', ()=>{
       dot.classList.add('pressed');
       // Ocultar el resto de zonas al instante, dejando la pulsación visible
@@ -8274,6 +8291,7 @@ function mpRenderPenaltyZones(iAmShooter, cur){
   });
 }
 
+let mpPenCurState=null, mpPenCurHist=[];
 function mpStartPenaltyTimer(cur){
   if(mpPenTimerHandle) clearInterval(mpPenTimerHandle);
   const fill=document.getElementById('penTimerFill');
@@ -8283,7 +8301,13 @@ function mpStartPenaltyTimer(cur){
     const remainSec=Math.ceil(remainMs/1000);
     if(remainSec!==lastBeepSec){ lastBeepSec=remainSec; checkCountdownBeep(remainSec,'penalty'); }
     if(fill) fill.style.width=(remainMs/PENALTY_KICK_MS*100)+'%';
-    if(remainMs<=0){ clearInterval(mpPenTimerHandle); mpPenTimerHandle=null; }
+    if(remainMs<=0){
+      clearInterval(mpPenTimerHandle); mpPenTimerHandle=null;
+      // Al agotarse el tiempo hay que forzar la resolución — si no,
+      // nadie vuelve a comprobar nada hasta que alguien escriba algo
+      // en Firestore, y el juego se queda esperando indefinidamente.
+      if(cur.shooterRole===window._duelRole) mpMaybeResolveAsShooter(cur, mpPenCurHist);
+    }
   }, 100);
 }
 
@@ -8318,10 +8342,11 @@ async function mpMaybeResolveAsShooter(cur, hist){
   let result, shooterZone=cur.shooterZone, keeperZone=cur.keeperZone;
   if(!cur.shooterZone){
     result='fuera'; // el tirador no eligió a tiempo: disparo fuera
-  }else if(!cur.keeperZone){
-    result='gol'; // el portero no eligió a tiempo: gol automático
   }else{
-    result=(cur.shooterZone===cur.keeperZone)?'para':'gol';
+    // El portero que no elige a tiempo se queda quieto en el centro,
+    // como si esa fuera su elección — no es gol automático.
+    if(!keeperZone) keeperZone='centro';
+    result=(cur.shooterZone===keeperZone)?'para':'gol';
   }
 
   // No se anima aquí — la animación la dispara el listener a partir del
@@ -8379,10 +8404,11 @@ function mpPlayPenaltyAnimationForEntry(entry){
   const round=Math.floor(entry.kickNum/2)+1;
   const label=round<=5?`Ronda ${round} de 5`:`Muerte súbita ${round-5}`;
   const lbl=document.getElementById('penKickLabel'); if(lbl) lbl.textContent=label;
-  const sl=document.getElementById('penScoreLine');
-  if(sl){
-    // Marcador ANTES de este lanzamiento (se actualizará tras resolver)
-  }
+  const myName=window.currentUsername||'TÚ';
+  const rivalName=window._duelOpponentUsername||'RIVAL';
+  const shooterName=mpEsc(iShoot?myName:rivalName);
+  const turnLbl=document.getElementById('penTurnLabel');
+  if(turnLbl) turnLbl.innerHTML=`<span style="color:${iShoot?'#4a90d9':'#e74c3c'}">${shooterName.toUpperCase()}</span> ${iShoot?'TIRA':'PARA'} EL PENALTI`;
   return mpPlayPenaltyAnimation(entry.result, entry.shooterZone, entry.keeperZone, iShoot);
 }
 
