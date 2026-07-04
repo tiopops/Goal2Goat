@@ -450,6 +450,12 @@ function getScoutHint(team){
 const teamStats = { attack:0, defense:0, pace:0, passing:0, technique:0 };
 let selectedPlayer = null;
 let phase = "draft"; // draft | bench | ready
+// Variables del monitor de inactividad de duelo — declaradas aquí,
+// pronto, porque initDuelModeFromSession() se llama muy al principio
+// del script y las necesita disponibles desde ese momento.
+let _duelLastInteraction=Date.now();
+let _duelInactivityInterval=null;
+let _duelInteractionListenersAttached=false;
 const DUEL_DRAFT_SECONDS=90; // duración del draft sincronizado en duelos multijugador
 let usedPlayers = [];
 let bench = [];
@@ -8526,14 +8532,15 @@ function stopMpNotificationListener(){
    más de 1 minuto mientras el duelo está activo, la partida finaliza
    automáticamente — reutiliza el mismo mecanismo que "abandonar duelo",
    así se integra con cualquier pantalla en la que esté el jugador. */
-let _duelLastInteraction=Date.now();
-let _duelInactivityInterval=null;
-['click','touchstart','keydown'].forEach(evt=>{
-  document.addEventListener(evt, ()=>{ _duelLastInteraction=Date.now(); }, {passive:true});
-});
 function startDuelInactivityMonitor(){
   stopDuelInactivityMonitor();
   _duelLastInteraction=Date.now();
+  if(!_duelInteractionListenersAttached){
+    _duelInteractionListenersAttached=true;
+    ['click','touchstart','keydown'].forEach(evt=>{
+      document.addEventListener(evt, ()=>{ _duelLastInteraction=Date.now(); }, {passive:true});
+    });
+  }
   _duelInactivityInterval=setInterval(()=>{
     if(!window._duelId){ stopDuelInactivityMonitor(); return; }
     if(Date.now()-_duelLastInteraction>60000){
