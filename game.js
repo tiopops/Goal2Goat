@@ -7633,13 +7633,12 @@ async function renderFriendsList(){
     const myStatsCard=document.getElementById('mpMyStatsCard');
     if(myStatsCard){
       const played=meData.duelsPlayed||0, won=meData.duelsWon||0, lost=meData.duelsLost||0;
-      const draws=Math.max(0,played-won-lost);
       const winRate=played?Math.round((won/played)*100):0;
-      myStatsCard.innerHTML=`
-        <div class="mp-mystats-num">${played}</div><div class="mp-mystats-lbl">${tk('mp.stats_played')||'Jugados'}</div>
-        <div class="mp-mystats-num" style="color:#4ade80">${won}</div><div class="mp-mystats-lbl">${tk('mp.stats_won')||'Ganados'}</div>
-        <div class="mp-mystats-num" style="color:#ff7e7e">${lost}</div><div class="mp-mystats-lbl">${tk('mp.stats_lost')||'Perdidos'}</div>
-        <div class="mp-mystats-num" style="color:var(--gold)">${winRate}%</div><div class="mp-mystats-lbl">${tk('mp.stats_winrate')||'% victorias'}</div>`;
+      const vals=myStatsCard.querySelectorAll('.pstat-val');
+      if(vals[0]) vals[0].textContent=played;
+      if(vals[1]) vals[1].textContent=won;
+      if(vals[2]) vals[2].textContent=lost;
+      if(vals[3]) vals[3].textContent=winRate+'%';
     }
 
     const snap1=await db.collection('friends')
@@ -8164,16 +8163,16 @@ function mpRenderPenaltyShootoutScreen(){
   const overlay=document.getElementById('matchOverlay');
   if(!overlay) return;
   overlay.innerHTML=`
-    <div class="match-modal" style="max-width:520px;padding:14px;display:flex;flex-direction:column;align-items:center;gap:8px">
+    <div class="match-modal" style="width:auto;max-width:98vw;padding:14px;display:flex;flex-direction:column;align-items:center;gap:8px;box-sizing:border-box">
       <div style="font-family:'Bebas Neue',Impact,sans-serif;color:var(--gold);letter-spacing:1.5px;font-size:16px">TANDA DE PENALTIS</div>
       <div id="penScoreLine" style="font-family:'Bebas Neue',Impact,sans-serif;font-size:26px;letter-spacing:2px">0 – 0</div>
       <div id="penKickLabel" style="font-size:11px;color:var(--text-muted)"></div>
-      <div id="penTurnLabel" style="width:min(90vw,86vh,460px);text-align:center;font-family:'Bebas Neue',Impact,sans-serif;font-size:14px;letter-spacing:1px;padding-bottom:6px;border-bottom:2px solid var(--gold)"></div>
+      <div id="penTurnLabel" style="width:min(88vw,80vh,460px);text-align:center;font-family:'Bebas Neue',Impact,sans-serif;font-size:22px;letter-spacing:1px;padding-bottom:8px;border-bottom:3px solid var(--gold)"></div>
       <div style="width:90%;max-width:280px;height:4px;background:#222;border-radius:3px;overflow:hidden">
         <div id="penTimerFill" style="height:100%;width:100%;background:var(--gold);transition:width .1s linear"></div>
       </div>
       <div id="penSub" style="font-size:12px;color:var(--gold);min-height:14px;font-weight:700"></div>
-      <div id="penStageWrap" style="position:relative;width:min(90vw,86vh,460px);height:min(90vw,86vh,460px);margin:0 auto">
+      <div id="penStageWrap" style="position:relative;width:min(88vw,80vh,460px);height:min(88vw,80vh,460px);margin:0 auto;box-sizing:border-box">
         <img src="assets/penaltis/escenario.png" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain">
         <img id="penBalon" src="assets/penaltis/balon_iddle.png" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain">
         <img id="penPortero" src="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain">
@@ -8335,6 +8334,7 @@ function mpRenderPenaltyZones(iAmShooter, cur){
     dot.className='pen-zone-dot';
     dot.style.cssText=`position:absolute;left:${z.x}%;top:${z.y}%;transform:translate(-50%,-50%);width:15%;height:15%;border-radius:50%;background:rgba(255,255,255,.12);border:4px solid #fff;cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,.5),inset 0 0 10px rgba(255,255,255,.15);transition:transform .15s ease;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none;outline:none;touch-action:manipulation`;
     dot.addEventListener('click', ()=>{
+      playSound('select');
       dot.classList.add('pressed');
       // Ocultar el resto de zonas al instante, dejando la pulsación visible
       Array.from(wrap.children).forEach(c=>{ if(c!==dot) c.style.visibility='hidden'; });
@@ -8377,7 +8377,6 @@ function mpStartPenaltyTimer(cur){
 async function mpSubmitPenaltyChoice(zoneId){
   if(mpPenMyChoice) return; // ya elegí esta ronda
   mpPenMyChoice=zoneId;
-  playSound('select');
   const wrap=document.getElementById('penZones');
   if(wrap) wrap.style.display='none';
   const sub=document.getElementById('penSub'); if(sub) sub.textContent='Esperando al rival...';

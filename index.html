@@ -389,12 +389,24 @@
     <button onclick="window.closeMpOverlay()" class="auth-close" style="position:absolute;top:12px;right:14px">✕</button>
     <div class="auth-logo"><i class="ph ph-bold ph-users" style="font-size:22px;color:#7b9cff;vertical-align:middle;margin-right:8px"></i><span data-i18n="mp.title">MULTIJUGADOR</span></div>
 
-    <!-- Mis estadísticas de duelo -->
-    <div id="mpMyStatsCard" class="mp-mystats-card">
-      <div class="mp-mystats-num">—</div><div class="mp-mystats-lbl">Jugados</div>
-      <div class="mp-mystats-num">—</div><div class="mp-mystats-lbl">Ganados</div>
-      <div class="mp-mystats-num">—</div><div class="mp-mystats-lbl">Perdidos</div>
-      <div class="mp-mystats-num">—</div><div class="mp-mystats-lbl">% victorias</div>
+    <!-- Mis estadísticas de duelo — mismo estilo que la pestaña ESTADÍSTICAS del perfil -->
+    <div id="mpMyStatsCard" class="profile-stats-grid" style="margin-top:10px">
+      <div class="profile-stat-card">
+        <i class="ph ph-bold ph-users-three" style="font-size:20px;color:var(--text-muted)"></i>
+        <div class="pstat-val">—</div><div class="pstat-label">Jugados</div>
+      </div>
+      <div class="profile-stat-card wins">
+        <i class="ph ph-bold ph-trophy" style="font-size:20px;color:var(--gold)"></i>
+        <div class="pstat-val">—</div><div class="pstat-label">Ganados</div>
+      </div>
+      <div class="profile-stat-card losses">
+        <i class="ph ph-bold ph-x-circle" style="font-size:20px;color:#e74c3c"></i>
+        <div class="pstat-val">—</div><div class="pstat-label">Perdidos</div>
+      </div>
+      <div class="profile-stat-card best">
+        <i class="ph ph-bold ph-percent" style="font-size:20px;color:var(--gold)"></i>
+        <div class="pstat-val">—</div><div class="pstat-label">% Victorias</div>
+      </div>
     </div>
 
     <!-- Add friend by username or email -->
@@ -740,34 +752,38 @@
     <div class="box collapsible-box collapsed" id="glossaryBox">
       <h3 class="collapsible-header" onclick="toggleCollapsible('glossaryBox')"><span data-i18n="info.glossary">GLOSARIO</span> <span class="collapse-arrow">▾</span></h3>
       <div class="howto-content">
-        <div class="howto-step" data-i18n-html="glossary.ataque"><strong>Ataque</strong> — Estadística. Cuanto más alto frente a la defensa rival, más probabilidad de marcar goles.</div>
-        <div class="howto-step" data-i18n-html="glossary.banquillo"><strong>Banquillo</strong> — Jugadores no titulares. Descansan ahí para recuperar resistencia entre partidos; puedes meterlos vía cambios.</div>
-        <div class="howto-step" data-i18n-html="glossary.cambios"><strong>Cambios</strong> — Sustituciones disponibles por partido (ampliables con mejoras). Sirven para rotar a quien esté cansado, lesionado o sancionado.</div>
-        <div class="howto-step" data-i18n-html="glossary.clima"><strong>Clima</strong> — Condición aleatoria de cada partido. Afecta al ritmo de gol esperado.</div>
-        <div class="howto-step" data-i18n-html="glossary.convocados"><strong>Convocados</strong> — Los 11 titulares + banquillo elegidos para el torneo. Se gestionan entre partidos.</div>
-        <div class="howto-step" data-i18n-html="glossary.defensa"><strong>Defensa</strong> — Estadística. Frena el ataque rival: cuanto más alta, menos goles encajas.</div>
-        <div class="howto-step" data-i18n-html="glossary.duelo"><strong>Duelo (multijugador)</strong> — Enfrentamiento entre dos jugadores reales, mejor de 5 partidos. Si un partido acaba en empate, se resuelve con tanda de penaltis.</div>
-        <div class="howto-step" data-i18n-html="glossary.estrategia"><strong>Estrategia</strong> — Táctica elegida antes de cada partido. Cada una contrarresta a otras concretas — acertar la contra da ventaja real en el resultado.</div>
-        <div class="howto-step" data-i18n-html="glossary.formacion"><strong>Formación</strong> — Disposición táctica (4-4-2, 4-3-3...). Se elige una vez y queda fija todo el torneo.</div>
-        <div class="howto-step" data-i18n-html="glossary.giro_tactico"><strong>Giro Táctico</strong> — Habilidad limitada por torneo: pausa el partido en directo y elige 1 de 3 cartas al azar, cada una con un beneficio y una contrapartida.</div>
-        <div class="howto-step" data-i18n-html="glossary.goat_points"><strong>GOAT Points</strong> — Moneda del juego. Se ganan jugando (tickets, logros) y se gastan en Mejoras y Habilidades.</div>
-        <div class="howto-step" data-i18n-html="glossary.lesion"><strong>Lesión</strong> — Puede dejar a un jugador fuera varios partidos. Se genera por riesgo aleatorio o por faltas del rival.</div>
-        <div class="howto-step" data-i18n-html="glossary.mejoras"><strong>Mejoras</strong> — Pestaña del perfil: sube de nivel con GOAT Points cosas como banquillo, cambios, recuperación, usos de Giro Táctico, etc. Bloqueada durante un torneo en curso.</div>
-        <div class="howto-step" data-i18n-html="glossary.moral"><strong>Moral</strong> — Estadística del equipo. Sube con goles/victorias/aciertos en rueda de prensa, baja con derrotas/fallos. Influye en el rendimiento del equipo en el partido.</div>
-        <div class="howto-step" data-i18n-html="glossary.pase"><strong>Pase</strong> — Estadística. Mejora el juego colectivo y ayuda a crear más ocasiones de gol.</div>
-        <div class="howto-step" data-i18n-html="glossary.penaltis"><strong>Penaltis (tanda)</strong> — Exclusivo de duelo multijugador: si un partido empata, se decide con lanzamientos alternos, eligiendo zona de tiro/parada en secreto.</div>
-        <div class="howto-step" data-i18n-html="glossary.posicion"><strong>Posición ★</strong> — La posición natural de cada jugador. Colocarlo ahí da su rendimiento máximo; fuera de posición rinde peor.</div>
-        <div class="howto-step" data-i18n-html="glossary.prorroga"><strong>Prórroga</strong> — Tiempo extra en partidos de eliminatoria (modo un jugador) si hay empate, antes de ir a penaltis.</div>
-        <div class="howto-step" data-i18n-html="glossary.racha"><strong>Racha</strong> — Rendimiento reciente de un jugador. Influye ligeramente al alza en el partido si está en buena forma.</div>
-        <div class="howto-step" data-i18n-html="glossary.rendimiento"><strong>Rendimiento del equipo</strong> — Los jugadores ★ en su posición y la estrategia elegida frente a cada rival son lo que más mueve tus estadísticas. ¡Elige bien para inclinar la balanza a tu favor!</div>
-        <div class="howto-step" data-i18n-html="glossary.resistencia"><strong>Resistencia (fatiga)</strong> — Barra de energía de cada jugador. Baja al jugar, sube descansando en el banquillo. Con poca resistencia, el jugador rinde peor.</div>
-        <div class="howto-step" data-i18n-html="glossary.ritmo"><strong>Ritmo</strong> — Estadística. Aporta peligro extra cuando supera al rival en velocidad.</div>
-        <div class="howto-step" data-i18n-html="glossary.rueda_prensa"><strong>Rueda de prensa</strong> — Evento antes de algunos partidos: contestas una pregunta/predicción, afecta a la moral según acierto o promesa cumplida.</div>
-        <div class="howto-step" data-i18n-html="glossary.sancion"><strong>Sanción</strong> — Tarjeta roja o acumulación de amarillas deja a un jugador sin poder jugar el siguiente partido.</div>
-        <div class="howto-step" data-i18n-html="glossary.tarjeta"><strong>Tarjeta</strong> — Amarilla o roja, por juego o por falta. Roja = expulsión inmediata; puede dejar al equipo con menos jugadores.</div>
-        <div class="howto-step" data-i18n-html="glossary.tecnica"><strong>Técnica</strong> — Estadística. Calidad individual: suma peligro tanto en ataque como en control del partido.</div>
-        <div class="howto-step" data-i18n-html="glossary.tickets"><strong>Tickets</strong> — Sistema de rasca y gana (disponible cada 4h) para ganar GOAT Points.</div>
-        <div class="howto-step" data-i18n-html="glossary.torneo"><strong>Torneo</strong> — Estructura del modo un jugador: Grupos → Octavos → Cuartos → Semis → Final. Puntúa de 0 a 1000.</div>
+        <table class="glossary-table">
+          <tbody>
+          <tr><td class="glossary-term" data-i18n="glossary.ataque_term"></td><td class="glossary-desc" data-i18n-html="glossary.ataque"></td></tr>
+          <tr><td class="glossary-term" data-i18n="glossary.banquillo_term"></td><td class="glossary-desc" data-i18n-html="glossary.banquillo"></td></tr>
+          <tr><td class="glossary-term" data-i18n="glossary.cambios_term"></td><td class="glossary-desc" data-i18n-html="glossary.cambios"></td></tr>
+          <tr><td class="glossary-term" data-i18n="glossary.clima_term"></td><td class="glossary-desc" data-i18n-html="glossary.clima"></td></tr>
+          <tr><td class="glossary-term" data-i18n="glossary.convocados_term"></td><td class="glossary-desc" data-i18n-html="glossary.convocados"></td></tr>
+          <tr><td class="glossary-term" data-i18n="glossary.defensa_term"></td><td class="glossary-desc" data-i18n-html="glossary.defensa"></td></tr>
+          <tr><td class="glossary-term" data-i18n="glossary.duelo_term"></td><td class="glossary-desc" data-i18n-html="glossary.duelo"></td></tr>
+          <tr><td class="glossary-term" data-i18n="glossary.estrategia_term"></td><td class="glossary-desc" data-i18n-html="glossary.estrategia"></td></tr>
+          <tr><td class="glossary-term" data-i18n="glossary.formacion_term"></td><td class="glossary-desc" data-i18n-html="glossary.formacion"></td></tr>
+          <tr><td class="glossary-term" data-i18n="glossary.giro_tactico_term"></td><td class="glossary-desc" data-i18n-html="glossary.giro_tactico"></td></tr>
+          <tr><td class="glossary-term" data-i18n="glossary.goat_points_term"></td><td class="glossary-desc" data-i18n-html="glossary.goat_points"></td></tr>
+          <tr><td class="glossary-term" data-i18n="glossary.lesion_term"></td><td class="glossary-desc" data-i18n-html="glossary.lesion"></td></tr>
+          <tr><td class="glossary-term" data-i18n="glossary.mejoras_term"></td><td class="glossary-desc" data-i18n-html="glossary.mejoras"></td></tr>
+          <tr><td class="glossary-term" data-i18n="glossary.moral_term"></td><td class="glossary-desc" data-i18n-html="glossary.moral"></td></tr>
+          <tr><td class="glossary-term" data-i18n="glossary.pase_term"></td><td class="glossary-desc" data-i18n-html="glossary.pase"></td></tr>
+          <tr><td class="glossary-term" data-i18n="glossary.penaltis_term"></td><td class="glossary-desc" data-i18n-html="glossary.penaltis"></td></tr>
+          <tr><td class="glossary-term" data-i18n="glossary.posicion_term"></td><td class="glossary-desc" data-i18n-html="glossary.posicion"></td></tr>
+          <tr><td class="glossary-term" data-i18n="glossary.prorroga_term"></td><td class="glossary-desc" data-i18n-html="glossary.prorroga"></td></tr>
+          <tr><td class="glossary-term" data-i18n="glossary.racha_term"></td><td class="glossary-desc" data-i18n-html="glossary.racha"></td></tr>
+          <tr><td class="glossary-term" data-i18n="glossary.rendimiento_term"></td><td class="glossary-desc" data-i18n-html="glossary.rendimiento"></td></tr>
+          <tr><td class="glossary-term" data-i18n="glossary.resistencia_term"></td><td class="glossary-desc" data-i18n-html="glossary.resistencia"></td></tr>
+          <tr><td class="glossary-term" data-i18n="glossary.ritmo_term"></td><td class="glossary-desc" data-i18n-html="glossary.ritmo"></td></tr>
+          <tr><td class="glossary-term" data-i18n="glossary.rueda_prensa_term"></td><td class="glossary-desc" data-i18n-html="glossary.rueda_prensa"></td></tr>
+          <tr><td class="glossary-term" data-i18n="glossary.sancion_term"></td><td class="glossary-desc" data-i18n-html="glossary.sancion"></td></tr>
+          <tr><td class="glossary-term" data-i18n="glossary.tarjeta_term"></td><td class="glossary-desc" data-i18n-html="glossary.tarjeta"></td></tr>
+          <tr><td class="glossary-term" data-i18n="glossary.tecnica_term"></td><td class="glossary-desc" data-i18n-html="glossary.tecnica"></td></tr>
+          <tr><td class="glossary-term" data-i18n="glossary.tickets_term"></td><td class="glossary-desc" data-i18n-html="glossary.tickets"></td></tr>
+          <tr><td class="glossary-term" data-i18n="glossary.torneo_term"></td><td class="glossary-desc" data-i18n-html="glossary.torneo"></td></tr>
+          </tbody>
+        </table>
       </div>
     </div>
 
