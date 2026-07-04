@@ -3024,7 +3024,13 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
     if(penaltyInfo) setTimeout(startExtraTime,900);
     else {
       playSound(won||draw?'victory':'defeat');
-      if(window._duelId){ mpGiroDetachDuelListener(); setTimeout(()=>{ mpAdvanceAfterMatch(); }, 800); }
+      if(window._duelId){
+      mpGiroDetachDuelListener();
+      // Refrescar con el resultado final (puede haber cambiado por Giro Táctico)
+      if(window._duelLastMatchStats) Object.assign(window._duelLastMatchStats, {myGoals, rivalGoals:oppGoals, won, draw});
+      if(draw){ setTimeout(()=>{ mpMaybeStartPenalties(); }, 800); }
+      else{ setTimeout(()=>{ mpAdvanceAfterMatch(); }, 800); }
+    }
       else setTimeout(showPostMatch,800);
     }
   }
@@ -8039,6 +8045,327 @@ function mpAddDuelExitLinkToLiveMatch(){
 
 /* Tras ver el resultado: si quedan partidos, ventana de 15s para tocar
    convocados/banquillo; si era el 5º, resumen final. */
+/* ════════════════════════════════════════════════════════════════
+   TANDA DE PENALTIS — exclusiva de duelo multijugador. Si un partido
+   del duelo termina en empate, en vez de contar como empate se juega
+   esta tanda visual (5 lanzamientos cada uno + muerte súbita, reglas
+   Mundial) para decidir un ganador real de ese partido.
+   Diseño de sincronización: en cada lanzamiento hay un tirador y un
+   portero (se alternan). El TIRADOR es siempre quien resuelve el
+   lanzamiento y avanza a la siguiente ronda — el otro simplemente
+   adopta el resultado ya escrito, sin recalcular nada (mismo patrón
+   que el resto del duelo). El RETADOR es quien inicializa la tanda
+   (evita que los dos la inicien a la vez).
+   ════════════════════════════════════════════════════════════════ */
+const PENALTY_ZONES=[
+  {id:'arriba_izquierda', x:18, y:30},
+  {id:'arriba_derecha',   x:85, y:30},
+  {id:'centro',           x:51, y:40},
+  {id:'abajo_izquierda',  x:18, y:49},
+  {id:'abajo_derecha',    x:85, y:49},
+];
+const PENALTY_KICK_MS=5000;
+
+function mpPenaltyShooterRoleForKick(kickNum){
+  // Pares = retador tira, impares = rival tira — igual en la tanda
+  // base (5 rondas) y en la muerte súbita.
+  return kickNum%2===0 ? 'challenger' : 'opponent';
+}
+
+async function mpMaybeStartPenalties(){
+  const db=window._fbDb;
+  const idx=window._duelMatchIndex;
+  if(!db||!window._duelId) return;
+  const ref=db.collection('duels').doc(window._duelId);
+  if(window._duelRole==='challenger'){
+    // Solo el retador inicializa, para evitar que los dos lo hagan a la vez
+    try{
+      const snap=await ref.get();
+      const d=snap.exists?snap.data():{};
+      if(!d[`m${idx}_penActive`]){
+        await ref.update({
+          [`m${idx}_penActive`]: true,
+          [`m${idx}_penHistory`]: [],
+          [`m${idx}_penCurrent`]: {kickNum:0, shooterRole:mpPenaltyShooterRoleForKick(0), deadline:Date.now()+PENALTY_KICK_MS, shooterZone:null, keeperZone:null}
+        });
+      }
+    }catch(e){ console.error('[Penaltis] init falló:', e); }
+  }
+  mpRenderPenaltyShootoutScreen();
+}
+
+function mpRenderPenaltyShootoutScreen(){
+  const overlay=document.getElementById('matchOverlay');
+  if(!overlay) return;
+  overlay.innerHTML=`
+    <div class="match-modal" style="max-width:520px;padding:14px;display:flex;flex-direction:column;align-items:center;gap:8px">
+      <div style="font-family:'Bebas Neue',Impact,sans-serif;color:var(--gold);letter-spacing:1.5px;font-size:16px">TANDA DE PENALTIS</div>
+      <div id="penScoreLine" style="font-family:'Bebas Neue',Impact,sans-serif;font-size:26px;letter-spacing:2px">0 – 0</div>
+      <div id="penKickLabel" style="font-size:11px;color:var(--text-muted)"></div>
+      <div style="width:90%;max-width:280px;height:4px;background:#222;border-radius:3px;overflow:hidden">
+        <div id="penTimerFill" style="height:100%;width:100%;background:var(--gold);transition:width .1s linear"></div>
+      </div>
+      <div id="penSub" style="font-size:12px;color:var(--gold);min-height:14px;font-weight:700"></div>
+      <div id="penStageWrap" style="position:relative;width:min(90vw,86vh,460px);height:min(90vw,86vh,460px);margin:0 auto">
+        <img src="assets/penaltis/escenario.png" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain">
+        <img id="penBalon" src="assets/penaltis/balon_iddle.png" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain">
+        <img id="penPortero" src="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain">
+        <img id="penJugador" src="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain">
+        <div id="penZones" style="position:absolute;inset:0"></div>
+      </div>
+      <div id="penHistoryRow" style="display:flex;gap:5px;flex-wrap:wrap;justify-content:center;margin-top:4px"></div>
+    </div>`;
+  mpPenaltyAttachListener();
+}
+
+let mpPenListenerUnsub=null, mpPenTimerHandle=null, mpPenRenderedKick=-1, mpPenMyChoice=null;
+function mpPenaltyAttachListener(){
+  mpPenaltyDetachListener();
+  const db=window._fbDb;
+  if(!db||!window._duelId) return;
+  const idx=window._duelMatchIndex;
+  mpPenListenerUnsub=db.collection('duels').doc(window._duelId).onSnapshot(snap=>{
+    const d=snap.data();
+    if(!d) return;
+    if(d.status==='cancelled'){ mpPenaltyDetachListener(); mpExitDuelMode(); location.reload(); return; }
+    if(d[`m${idx}_penWinner`]){
+      mpPenaltyDetachListener();
+      mpFinishPenaltiesUI(d[`m${idx}_penWinner`], d[`m${idx}_penHistory`]||[]);
+      return;
+    }
+    const cur=d[`m${idx}_penCurrent`];
+    const hist=d[`m${idx}_penHistory`]||[];
+    if(!cur) return;
+    mpRenderPenaltyKick(cur, hist);
+    // El tirador de este lanzamiento es quien resuelve, en cuanto tenga
+    // los dos datos (o se agote el tiempo) — nunca el portero.
+    if(cur.shooterRole===window._duelRole){
+      mpMaybeResolveAsShooter(cur, hist);
+    }
+  }, e=>console.error('[Penaltis] listener falló:', e));
+}
+function mpPenaltyDetachListener(){
+  if(mpPenListenerUnsub){ mpPenListenerUnsub(); mpPenListenerUnsub=null; }
+  if(mpPenTimerHandle){ clearInterval(mpPenTimerHandle); mpPenTimerHandle=null; }
+}
+
+function mpRenderPenaltyKick(cur, hist){
+  if(mpPenRenderedKick===cur.kickNum && !cur._forceRerender) return;
+  mpPenRenderedKick=cur.kickNum;
+  mpPenMyChoice=null;
+  const iAmShooter=cur.shooterRole===window._duelRole;
+  const round=Math.floor(cur.kickNum/2)+1;
+  const label=round<=5?`Ronda ${round} de 5`:`Muerte súbita ${round-5}`;
+  const lbl=document.getElementById('penKickLabel'); if(lbl) lbl.textContent=label;
+  const sub=document.getElementById('penSub');
+  if(sub) sub.textContent=iAmShooter?'¡Te toca lanzar! Elige tu zona':'¡Te toca parar! Elige dónde te tiras';
+
+  // Marcador de penaltis (aciertos hasta ahora)
+  const myGoalsPen=hist.filter(h=>h.shooterRole===window._duelRole && h.result==='gol').length;
+  const rivalGoalsPen=hist.filter(h=>h.shooterRole!==window._duelRole && h.result==='gol').length;
+  const sl=document.getElementById('penScoreLine'); if(sl) sl.textContent=`${myGoalsPen} – ${rivalGoalsPen}`;
+
+  // Historial visual (bolitas verdes/rojas por lanzamiento)
+  const hrow=document.getElementById('penHistoryRow');
+  if(hrow){
+    hrow.innerHTML=hist.map(h=>{
+      const mine=h.shooterRole===window._duelRole;
+      const color=h.result==='gol'?'#4ade80':'#e05a4e';
+      return `<span style="width:10px;height:10px;border-radius:50%;background:${color};border:1px solid ${mine?'#4a90d9':'#e74c3c'}"></span>`;
+    }).join('');
+  }
+
+  // Capas: si soy tirador -> jugador (yo) + portero_rival; si soy portero -> jugador_rival + portero (yo)
+  const jugadorImg=document.getElementById('penJugador');
+  const porteroImg=document.getElementById('penPortero');
+  const balonImg=document.getElementById('penBalon');
+  if(jugadorImg) jugadorImg.src=`assets/penaltis/${iAmShooter?'jugador_iddle':'jugador_rival_iddle'}.png`;
+  if(porteroImg) porteroImg.src=`assets/penaltis/${iAmShooter?'portero_rival_iddle':'portero_iddle'}.png`;
+  if(balonImg) balonImg.src='assets/penaltis/balon_iddle.png';
+
+  mpRenderPenaltyZones(iAmShooter, cur);
+  mpStartPenaltyTimer(cur);
+}
+
+function mpRenderPenaltyZones(iAmShooter, cur){
+  const wrap=document.getElementById('penZones');
+  if(!wrap) return;
+  wrap.innerHTML='';
+  const myField=iAmShooter?'shooterZone':'keeperZone';
+  if(cur[myField]){ wrap.style.display='none'; return; } // ya elegí, ocultar círculos
+  wrap.style.display='block';
+  PENALTY_ZONES.forEach(z=>{
+    const dot=document.createElement('div');
+    dot.style.cssText=`position:absolute;left:${z.x}%;top:${z.y}%;transform:translate(-50%,-50%);width:15%;height:15%;border-radius:50%;background:rgba(224,20,20,.82);border:3px solid #fff;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.4)`;
+    dot.addEventListener('click', ()=>mpSubmitPenaltyChoice(z.id));
+    wrap.appendChild(dot);
+  });
+}
+
+function mpStartPenaltyTimer(cur){
+  if(mpPenTimerHandle) clearInterval(mpPenTimerHandle);
+  const fill=document.getElementById('penTimerFill');
+  let lastBeepSec=null;
+  mpPenTimerHandle=setInterval(()=>{
+    const remainMs=Math.max(0, cur.deadline-Date.now());
+    const remainSec=Math.ceil(remainMs/1000);
+    if(remainSec!==lastBeepSec){ lastBeepSec=remainSec; checkCountdownBeep(remainSec,'penalty'); }
+    if(fill) fill.style.width=(remainMs/PENALTY_KICK_MS*100)+'%';
+    if(remainMs<=0){ clearInterval(mpPenTimerHandle); mpPenTimerHandle=null; }
+  }, 100);
+}
+
+async function mpSubmitPenaltyChoice(zoneId){
+  if(mpPenMyChoice) return; // ya elegí esta ronda
+  mpPenMyChoice=zoneId;
+  playSound('select');
+  const wrap=document.getElementById('penZones');
+  if(wrap) wrap.style.display='none';
+  const sub=document.getElementById('penSub'); if(sub) sub.textContent='Esperando al rival...';
+  const db=window._fbDb;
+  if(!db||!window._duelId) return;
+  const idx=window._duelMatchIndex;
+  try{
+    const snap=await db.collection('duels').doc(window._duelId).get();
+    const d=snap.exists?snap.data():{};
+    const cur=d[`m${idx}_penCurrent`];
+    if(!cur) return;
+    const iAmShooter=cur.shooterRole===window._duelRole;
+    const field=iAmShooter?'shooterZone':'keeperZone';
+    await db.collection('duels').doc(window._duelId).update({[`m${idx}_penCurrent.${field}`]: zoneId});
+  }catch(e){ console.error('[Penaltis] envío de elección falló:', e); }
+}
+
+let mpPenResolvingKick=-1;
+async function mpMaybeResolveAsShooter(cur, hist){
+  if(mpPenResolvingKick===cur.kickNum) return; // ya en proceso
+  const timeUp=Date.now()>=cur.deadline;
+  const bothPicked=cur.shooterZone && cur.keeperZone;
+  if(!bothPicked && !timeUp) return;
+  mpPenResolvingKick=cur.kickNum;
+
+  let result, shooterZone=cur.shooterZone, keeperZone=cur.keeperZone;
+  if(!cur.shooterZone){
+    result='fuera'; // el tirador no eligió a tiempo: disparo fuera
+  }else if(!cur.keeperZone){
+    result='gol'; // el portero no eligió a tiempo: gol automático
+  }else{
+    result=(cur.shooterZone===cur.keeperZone)?'para':'gol';
+  }
+
+  await mpPlayPenaltyAnimation(result, shooterZone, keeperZone, true);
+
+  const newHist=[...hist, {kickNum:cur.kickNum, shooterRole:cur.shooterRole, result, shooterZone, keeperZone}];
+  const db=window._fbDb;
+  const idx=window._duelMatchIndex;
+
+  // Comprobar si la tanda ya está decidida (regla de parada anticipada,
+  // igual que en un jugador)
+  const chalGoals=newHist.filter(h=>h.shooterRole==='challenger'&&h.result==='gol').length;
+  const oppGoals=newHist.filter(h=>h.shooterRole==='opponent'&&h.result==='gol').length;
+  const chalKicksLeftBase=Math.max(0,5-newHist.filter(h=>h.shooterRole==='challenger'&&h.kickNum<10).length);
+  const oppKicksLeftBase=Math.max(0,5-newHist.filter(h=>h.shooterRole==='opponent'&&h.kickNum<10).length);
+  const nextKickNum=cur.kickNum+1;
+  const inSuddenDeath=nextKickNum>=10;
+  let decided=false, winner=null;
+  if(!inSuddenDeath){
+    const diff=chalGoals-oppGoals;
+    if(diff>oppKicksLeftBase){ decided=true; winner='challenger'; }
+    else if(-diff>chalKicksLeftBase){ decided=true; winner='opponent'; }
+  }else{
+    // Muerte súbita: se decide en cuanto se completa un par de tiros con marcador distinto
+    if(nextKickNum%2===0 && chalGoals!==oppGoals){ decided=true; winner=chalGoals>oppGoals?'challenger':'opponent'; }
+  }
+
+  try{
+    if(decided){
+      await db.collection('duels').doc(window._duelId).update({
+        [`m${idx}_penHistory`]: newHist,
+        [`m${idx}_penWinner`]: winner,
+        [`m${idx}_penCurrent`]: null
+      });
+    }else{
+      await db.collection('duels').doc(window._duelId).update({
+        [`m${idx}_penHistory`]: newHist,
+        [`m${idx}_penCurrent`]: {kickNum:nextKickNum, shooterRole:mpPenaltyShooterRoleForKick(nextKickNum), deadline:Date.now()+PENALTY_KICK_MS, shooterZone:null, keeperZone:null}
+      });
+    }
+  }catch(e){ console.error('[Penaltis] avance de ronda falló:', e); }
+}
+
+function mpPlayPenaltyAnimation(result, shooterZone, keeperZone, isShooterClient){
+  return new Promise(resolve=>{
+    const jugadorImg=document.getElementById('penJugador');
+    const porteroImg=document.getElementById('penPortero');
+    const balonImg=document.getElementById('penBalon');
+    const sub=document.getElementById('penSub');
+    // Determinar si YO soy el tirador de este lanzamiento ya renderizado
+    const iShoot=jugadorImg && jugadorImg.src.includes('/jugador_iddle.png');
+    const jPrefix=iShoot?'jugador':'jugador_rival';
+    const pPrefix=iShoot?'portero_rival':'portero';
+    if(sub) sub.textContent='¡Chuta!';
+    if(jugadorImg) jugadorImg.src=`assets/penaltis/${jPrefix}_chuta.png`;
+    playSound('select');
+    setTimeout(()=>{
+      const zone=shooterZone||'centro';
+      if(result==='fuera'){
+        if(jugadorImg) jugadorImg.src=`assets/penaltis/${jPrefix}_falla.png`;
+        if(balonImg) balonImg.style.display='none';
+        if(sub) sub.textContent='¡FUERA!';
+      }else if(result==='gol'){
+        if(jugadorImg) jugadorImg.src=`assets/penaltis/${jPrefix}_gol.png`;
+        if(porteroImg) porteroImg.src=keeperZone?`assets/penaltis/${pPrefix}_${keeperZone}_falla.png`:`assets/penaltis/${pPrefix}_iddle.png`;
+        if(balonImg){ balonImg.style.display=''; balonImg.src=`assets/penaltis/balon_gol_${zone}.png`; }
+        if(sub) sub.textContent='¡GOL!';
+        playSound('goal');
+      }else{ // para
+        if(jugadorImg) jugadorImg.src=`assets/penaltis/${jPrefix}_falla.png`;
+        if(porteroImg) porteroImg.src=`assets/penaltis/${pPrefix}_${keeperZone}_para.png`;
+        if(balonImg) balonImg.style.display='none';
+        if(sub) sub.textContent='¡PARADA!';
+      }
+      setTimeout(resolve, 1400);
+    }, 2000);
+  });
+}
+
+function mpFinishPenaltiesUI(winnerRole, history){
+  const sub=document.getElementById('penSub');
+  const iWon=winnerRole===window._duelRole;
+  if(sub) sub.textContent=iWon?'¡GANAS LA TANDA DE PENALTIS!':'Pierdes la tanda de penaltis';
+  playSound(iWon?'victory':'defeat');
+  if(window._duelLastMatchStats) Object.assign(window._duelLastMatchStats, {won:iWon, draw:false, decidedByPenalties:true});
+  const myPenGoals=history.filter(h=>h.shooterRole===window._duelRole&&h.result==='gol').length;
+  const rivalPenGoals=history.filter(h=>h.shooterRole!==window._duelRole&&h.result==='gol').length;
+  const st=window._duelLastMatchStats||{};
+  setTimeout(()=>{
+    const overlay=document.getElementById('matchOverlay');
+    if(overlay){
+      overlay.innerHTML=`
+      <div class="match-modal" style="overflow:hidden;display:flex;flex-direction:column">
+        <div class="match-header">
+          <div class="match-side">
+            <i class="ph ph-bold ph-user" style="font-size:22px;color:#4a90d9"></i>
+            <span class="match-team-name">${mpEsc(window.myTeamName||myTeamName||'TU EQUIPO')}</span>
+          </div>
+          <div style="text-align:center;flex:0 0 auto">
+            <div class="match-scoreline" style="font-size:42px;letter-spacing:4px">${st.myGoals||0} – ${st.rivalGoals||0}</div>
+            <div style="font-size:11px;color:var(--gold);margin-top:2px">${(tk('match.penalties')||'PENALTIS')} ${myPenGoals}-${rivalPenGoals}</div>
+            <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-top:4px">
+              <div style="font-size:9px;font-weight:700;background:#555;color:#fff;padding:2px 7px;letter-spacing:1px;text-transform:uppercase">${tk('match.end')||'FIN'}</div>
+            </div>
+          </div>
+          <div class="match-side">
+            <i class="ph ph-bold ph-user" style="font-size:22px;color:#e74c3c"></i>
+            <span class="match-team-name">${mpEsc(window._duelOpponentUsername||'RIVAL')}</span>
+          </div>
+        </div>
+      </div>`;
+    }
+    mpAdvanceAfterMatch();
+  }, 1600);
+}
+
 function mpAdvanceAfterMatch(){
   mpShowDuelPostMatchStats();
 }
@@ -8062,9 +8389,9 @@ async function mpShowDuelPostMatchStats(){
   modal.style.overflowY='auto';
 
   const resultClass=st.won?'res-win-tag':st.draw?'res-draw-tag':'res-lose-tag';
-  const resultText=st.won?(tk('mp.duel_you_won')||'¡GANASTE ESTE PARTIDO!')
+  const resultText=(st.won?(tk('mp.duel_you_won')||'¡GANASTE ESTE PARTIDO!')
     :st.draw?(tk('mp.duel_draw')||'Empate')
-    :(tk('mp.duel_you_lost')||'Has perdido este partido');
+    :(tk('mp.duel_you_lost')||'Has perdido este partido')) + (st.decidedByPenalties?' ('+(tk('match.penalties')||'PENALTIS')+')':'');
   const banner=document.createElement('div');
   banner.className=`match-result-tag ${resultClass}`;
   banner.textContent=resultText;
@@ -8235,10 +8562,16 @@ async function mpShowDuelFinalSummary(){
     if(rG===0) cleanSheets++;
     if(myG===0) rivalCleanSheets++;
     let res=myG>rG?'W':myG<rG?'L':'D';
+    let penIndicator='';
+    const penWinner=d[`m${i}_penWinner`];
+    if(res==='D' && penWinner){
+      res=penWinner===window._duelRole?'W':'L';
+      penIndicator=' <span style="font-size:9px;opacity:.7">(pen.)</span>';
+    }
     if(res==='W') myWins++; else if(res==='L') rivalWins++; else draws++;
     if(res==='W' && (myG-rG)>biggestWinMargin){ biggestWinMargin=myG-rG; biggestWinIdx=i; }
     const resColor=res==='W'?'#4ade80':res==='L'?'#ff7e7e':'var(--text-muted)';
-    rows.push(`<div class="mp-stat-row"><span>${tk('mp.duel_match_short')||'Partido'} ${i+1}</span><span style="color:${resColor}">${myG} - ${rG}</span></div>`);
+    rows.push(`<div class="mp-stat-row"><span>${tk('mp.duel_match_short')||'Partido'} ${i+1}</span><span style="color:${resColor}">${myG} - ${rG}${penIndicator}</span></div>`);
   }
   const avgPoss=playedCount?Math.round(possessionSum/playedCount):50;
   let iWin=myWins>rivalWins, iLose=myWins<rivalWins;
