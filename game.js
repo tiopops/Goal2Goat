@@ -810,16 +810,21 @@ function relocateFormationPickerForViewport(){
   const tipsBox=document.getElementById("tipsBox");
   const howTo=document.getElementById("howToPlayBox");
   const statsGuide=document.getElementById("statsGuideBox");
+  const glossary=document.getElementById("glossaryBox");
   const infoPanel=document.getElementById("infoPanel");
   const rightPanel=document.querySelector(".right-panel");
   if(isMobile && infoPanel){
     if(tipsBox && tipsBox.parentElement!==infoPanel){ tipsBox.classList.remove("collapsed"); infoPanel.appendChild(tipsBox); }
     if(howTo && howTo.parentElement!==infoPanel){ howTo.classList.remove("collapsed"); infoPanel.appendChild(howTo); }
     if(statsGuide && statsGuide.parentElement!==infoPanel){ statsGuide.classList.remove("collapsed"); infoPanel.appendChild(statsGuide); }
+    // El glosario se traslada igual, pero se queda plegado (no se le
+    // quita la clase "collapsed" como a los otros tres).
+    if(glossary && glossary.parentElement!==infoPanel){ infoPanel.appendChild(glossary); }
   } else if(!isMobile && rightPanel){
     if(tipsBox && tipsBox.parentElement!==rightPanel) rightPanel.appendChild(tipsBox);
     if(howTo && howTo.parentElement!==rightPanel) rightPanel.appendChild(howTo);
     if(statsGuide && statsGuide.parentElement!==rightPanel) rightPanel.appendChild(statsGuide);
+    if(glossary && glossary.parentElement!==rightPanel) rightPanel.appendChild(glossary);
   }
 }
 
@@ -4875,6 +4880,20 @@ loadInheritedPlayers();
    No interfiere con el modo un jugador si no hay duelo activo. */
 initDuelModeFromSession();
 
+/* Mostrar el botón MULTIJUGADOR al instante si la última vez que se
+   comprobó el usuario tenía sesión iniciada — sin esto, hay que esperar
+   a que Firebase resuelva el estado de autenticación (~1s), y el botón
+   aparece con un retraso perceptible. El listener de auth real corrige
+   esto enseguida si hiciera falta (p.ej. sesión caducada). */
+(function(){
+  try{
+    if(localStorage.getItem('g2g_was_logged_in')==='1' && !sessionStorage.getItem('g2g_duel_active')){
+      const mpWrap=document.getElementById('multiplayerWrap');
+      if(mpWrap) mpWrap.style.display='flex';
+    }
+  }catch(e){}
+})();
+
 /* If there are inherited players from a chain run, auto-place them on the
    pitch at their primary position, skipping that many draft picks. */
 /* ========= SETTINGS DROPDOWN (header, shown only when logged out) ========= */
@@ -5479,6 +5498,7 @@ function initFirebaseAuth(){
       // salvo que haya un duelo activo (se oculta hasta que termine)
       const mpWrap=$id('multiplayerWrap');
       if(mpWrap) mpWrap.style.display=window._duelId?'none':'flex';
+      try{ localStorage.setItem('g2g_was_logged_in','1'); }catch(e){}
       // Mostrar botón de tickets en desktop
       const hBtn=$id("headerTicketBtn"); if(hBtn) hBtn.style.display="";
       const pun=$id("profileUsername"); if(pun) pun.textContent=username;
@@ -5514,6 +5534,7 @@ function initFirebaseAuth(){
       if(settingsMenu) settingsMenu.style.display="";
       const hBtn=$id("headerTicketBtn"); if(hBtn) hBtn.style.display="none";
       const mpWrap=$id('multiplayerWrap'); if(mpWrap) mpWrap.style.display='none';
+      try{ localStorage.removeItem('g2g_was_logged_in'); }catch(e){}
       // Limpiar cache de mejoras al cerrar sesión
       stopUpgradeListener();
       stopDuelWatcher();
@@ -5942,7 +5963,15 @@ function switchMobileTab(tab){
   if(tab==='ranking'){
     if(ranking){
       ranking.classList.add('mob-active');
-      setTimeout(()=>ranking.scrollIntoView({behavior:'smooth',block:'start'}),50);
+      // Cálculo manual en vez de scrollIntoView — así no depende de que
+      // el navegador soporte bien scroll-margin-top con el header fijo.
+      setTimeout(()=>{
+        const header=document.getElementById('appHeader');
+        const headerH=header?header.getBoundingClientRect().height:0;
+        const rect=ranking.getBoundingClientRect();
+        const targetY=window.scrollY+rect.top-headerH-6;
+        window.scrollTo({top:Math.max(0,targetY), behavior:'smooth'});
+      },80);
     }
     if(typeof window.loadRanking==='function') window.loadRanking('rankingTable');
   }
@@ -7598,6 +7627,21 @@ async function renderFriendsList(){
   if(!user||!db||!list) return;
   list.innerHTML=`<div class="mp-empty-state">${tk('mp.loading')}</div>`;
   try{
+    // Mis propias estadísticas de duelo, para la tarjeta de arriba
+    const meSnap=await db.collection('users').doc(user.uid).get();
+    const meData=meSnap.exists?meSnap.data():{};
+    const myStatsCard=document.getElementById('mpMyStatsCard');
+    if(myStatsCard){
+      const played=meData.duelsPlayed||0, won=meData.duelsWon||0, lost=meData.duelsLost||0;
+      const draws=Math.max(0,played-won-lost);
+      const winRate=played?Math.round((won/played)*100):0;
+      myStatsCard.innerHTML=`
+        <div class="mp-mystats-num">${played}</div><div class="mp-mystats-lbl">${tk('mp.stats_played')||'Jugados'}</div>
+        <div class="mp-mystats-num" style="color:#4ade80">${won}</div><div class="mp-mystats-lbl">${tk('mp.stats_won')||'Ganados'}</div>
+        <div class="mp-mystats-num" style="color:#ff7e7e">${lost}</div><div class="mp-mystats-lbl">${tk('mp.stats_lost')||'Perdidos'}</div>
+        <div class="mp-mystats-num" style="color:var(--gold)">${winRate}%</div><div class="mp-mystats-lbl">${tk('mp.stats_winrate')||'% victorias'}</div>`;
+    }
+
     const snap1=await db.collection('friends')
       .where('userId','==',user.uid).get();
     const snap2=await db.collection('friends')
@@ -7609,11 +7653,24 @@ async function renderFriendsList(){
       list.innerHTML=`<div class="mp-empty-state">${tk('mp.no_friends')}</div>`;
       return;
     }
+    // Estadísticas de cada amigo, en paralelo (una lectura por amigo —
+    // el perfil de usuario ya es de lectura pública para cualquiera).
+    const friendDocs=await Promise.all(friends.map(f=>
+      db.collection('users').doc(f.uid).get().catch(()=>null)
+    ));
+    friends.forEach((f,i)=>{
+      const fd=friendDocs[i]&&friendDocs[i].exists?friendDocs[i].data():{};
+      f.played=fd.duelsPlayed||0; f.won=fd.duelsWon||0; f.lost=fd.duelsLost||0;
+    });
+
     list.innerHTML='';
     const table=document.createElement('table');
     table.className='mp-friends-table';
     table.innerHTML=`<thead><tr>
         <th data-i18n="mp.col_friend">${tk('mp.col_friend')}</th>
+        <th class="mp-col-stat" title="${tk('mp.stats_played')||'Jugados'}">${tk('mp.col_played')||'J'}</th>
+        <th class="mp-col-stat" title="${tk('mp.stats_won')||'Ganados'}">${tk('mp.col_won')||'G'}</th>
+        <th class="mp-col-stat" title="${tk('mp.stats_lost')||'Perdidos'}">${tk('mp.col_lost')||'P'}</th>
         <th class="mp-col-action"></th>
         <th class="mp-col-action"></th>
       </tr></thead><tbody></tbody>`;
@@ -7623,8 +7680,11 @@ async function renderFriendsList(){
       row.className='mp-friend-row';
       row.innerHTML=`
         <td class="mp-row-name">${mpEsc(f.username||'???')}</td>
-        <td class="mp-col-action"><button class="mp-challenge-btn mp-btn-challenge" data-uid="${f.uid}" data-username="${mpEsc(f.username||'')}" title="${tk('mp.challenge')}">${tk('mp.challenge')}</button></td>
-        <td class="mp-col-action"><button class="mp-remove-btn mp-btn-remove" data-id="${f.id}" data-username="${mpEsc(f.username||'')}" title="${tk('mp.remove')}">✕</button></td>`;
+        <td class="mp-col-stat">${f.played}</td>
+        <td class="mp-col-stat" style="color:#4ade80">${f.won}</td>
+        <td class="mp-col-stat" style="color:#ff7e7e">${f.lost}</td>
+        <td class="mp-col-action"><button class="mp-challenge-btn mp-btn-challenge" data-uid="${f.uid}" data-username="${mpEsc(f.username||'')}" title="${tk('mp.challenge')}"><i class="ph ph-bold ph-play"></i></button></td>
+        <td class="mp-col-action"><button class="mp-remove-btn mp-btn-remove" data-id="${f.id}" data-username="${mpEsc(f.username||'')}" title="${tk('mp.remove')}"><i class="ph ph-bold ph-trash"></i></button></td>`;
       tbody.appendChild(row);
     });
     list.appendChild(table);
@@ -8712,6 +8772,23 @@ async function mpShowDuelFinalSummary(){
       ? (tk('mp.duel_final_lost')||'Has perdido el duelo')
       : (tk('mp.duel_final_tie')||'Duelo empatado');
   playSound(iWin?'victory':iLose?'defeat':'whistle');
+
+  // Guardar estadísticas de duelo (una sola vez, aunque se recargue la
+  // pantalla) — cada jugador anota las suyas propias en su documento.
+  const statsField=`statsRecorded_${window._duelRole}`;
+  if(!d[statsField]){
+    try{
+      const user=window._fbAuth&&window._fbAuth.currentUser;
+      if(user){
+        await db.collection('users').doc(user.uid).set({
+          duelsPlayed: firebase.firestore.FieldValue.increment(1),
+          duelsWon: firebase.firestore.FieldValue.increment(iWin?1:0),
+          duelsLost: firebase.firestore.FieldValue.increment(iLose?1:0),
+        }, {merge:true});
+      }
+      await db.collection('duels').doc(window._duelId).update({[statsField]: true});
+    }catch(e){ console.error('[Duelo] guardado de estadísticas falló:', e); }
+  }
 
   // Frase narrativa con algún dato destacado
   let narrative='';
