@@ -8144,7 +8144,6 @@ function mpPenaltyAttachListener(){
       mpPenPendingFinish=winner?{winnerRole:winner, history:hist}:null;
       mpPenAnimating=true;
       mpPlayPenaltyAnimationForEntry(entry).then(()=>{
-        mpPenAnimating=false;
         // Actualizar el marcador ya con este lanzamiento incluido
         const shownHist=hist.slice(0,mpPenAnimatedCount);
         const myGoalsPen=shownHist.filter(h=>h.shooterRole===window._duelRole&&h.result==='gol').length;
@@ -8158,13 +8157,19 @@ function mpPenaltyAttachListener(){
             return `<span style="width:10px;height:10px;border-radius:50%;background:${color};border:1px solid ${mine?'#4a90d9':'#e74c3c'}"></span>`;
           }).join('');
         }
-        if(mpPenPendingFinish){
-          mpPenaltyDetachListener();
-          mpFinishPenaltiesUI(mpPenPendingFinish.winnerRole, mpPenPendingFinish.history);
-        }else if(cur){
-          mpRenderPenaltyKick(cur, shownHist);
-          if(cur.shooterRole===window._duelRole) mpMaybeResolveAsShooter(cur, shownHist);
-        }
+        // Pequeño respiro antes de pasar al siguiente lanzamiento — se
+        // mantiene "animando" activo durante la pausa para que ningún
+        // aviso del listener se cuele a mitad y solape fotogramas.
+        setTimeout(()=>{
+          mpPenAnimating=false;
+          if(mpPenPendingFinish){
+            mpPenaltyDetachListener();
+            mpFinishPenaltiesUI(mpPenPendingFinish.winnerRole, mpPenPendingFinish.history);
+          }else if(cur){
+            mpRenderPenaltyKick(cur, shownHist);
+            if(cur.shooterRole===window._duelRole) mpMaybeResolveAsShooter(cur, shownHist);
+          }
+        }, 450);
       });
       return; // no procesar nada más hasta que esta animación termine
     }
