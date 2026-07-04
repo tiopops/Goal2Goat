@@ -8185,6 +8185,7 @@ function mpRenderPenaltyShootoutScreen(){
 }
 
 let mpPenListenerUnsub=null, mpPenTimerHandle=null, mpPenRenderedKick=-1, mpPenMyChoice=null;
+let mpPenLatestCur=null; // siempre el último "cur" leído de Firestore, sin filtrar por si ya se renderizó
 let mpPenAnimatedCount=0, mpPenAnimating=false, mpPenPendingFinish=null, mpPenResolvingKick=-1;
 function mpPenaltyAttachListener(){
   mpPenaltyDetachListener();
@@ -8200,6 +8201,7 @@ function mpPenaltyAttachListener(){
     const hist=d[`m${idx}_penHistory`]||[];
     const cur=d[`m${idx}_penCurrent`];
     const winner=d[`m${idx}_penWinner`];
+    if(cur) mpPenLatestCur=cur; // siempre al día, aunque el render se salte por dedup
 
     // Si hay un lanzamiento en el historial que este dispositivo aún no
     // ha animado, reproducirlo ANTES que cualquier otra cosa — así los
@@ -8371,7 +8373,12 @@ function mpStartPenaltyTimer(cur){
       // Al agotarse el tiempo hay que forzar la resolución — si no,
       // nadie vuelve a comprobar nada hasta que alguien escriba algo
       // en Firestore, y el juego se queda esperando indefinidamente.
-      if(cur.shooterRole===window._duelRole) mpMaybeResolveAsShooter(cur, mpPenCurHist);
+      // OJO: usar SIEMPRE el estado más reciente (mpPenLatestCur), no
+      // el "cur" capturado al arrancar el temporizador — si no, una
+      // elección hecha DESPUÉS de empezar a contar (pero antes de que
+      // se agote el tiempo) se ignoraría por completo.
+      const freshCur=mpPenLatestCur||cur;
+      if(freshCur.shooterRole===window._duelRole) mpMaybeResolveAsShooter(freshCur, mpPenCurHist);
     }
   }, 100);
 }
