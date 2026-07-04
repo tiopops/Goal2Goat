@@ -8065,6 +8065,12 @@ const PENALTY_ZONES=[
   {id:'abajo_derecha',    x:85, y:49},
 ];
 const PENALTY_KICK_MS=5000;
+// Tiempo que tardan los dos dispositivos en terminar de ver la animación
+// del lanzamiento anterior (2000ms chuta + 1400ms resultado + 450ms
+// respiro) antes de que aparezcan los círculos del siguiente — hay que
+// sumarlo al plazo, si no los 5s ya se han comido casi enteros para
+// cuando el jugador por fin puede elegir.
+const PENALTY_ANIM_DELAY_MS=3850;
 
 function mpPenaltyShooterRoleForKick(kickNum){
   // Pares = retador tira, impares = rival tira — igual en la tanda
@@ -8352,7 +8358,7 @@ async function mpMaybeResolveAsShooter(cur, hist){
     }else{
       await db.collection('duels').doc(window._duelId).update({
         [`m${idx}_penHistory`]: newHist,
-        [`m${idx}_penCurrent`]: {kickNum:nextKickNum, shooterRole:mpPenaltyShooterRoleForKick(nextKickNum), deadline:Date.now()+PENALTY_KICK_MS, shooterZone:null, keeperZone:null}
+        [`m${idx}_penCurrent`]: {kickNum:nextKickNum, shooterRole:mpPenaltyShooterRoleForKick(nextKickNum), deadline:Date.now()+PENALTY_ANIM_DELAY_MS+PENALTY_KICK_MS, shooterZone:null, keeperZone:null}
       });
     }
   }catch(e){ console.error('[Penaltis] avance de ronda falló:', e); }
