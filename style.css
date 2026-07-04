@@ -18,6 +18,20 @@ html,body{height:100%}
 /* El body arranca con clases dark-theme aplicadas desde el <head>
    para evitar el fogonazo. La transición solo se activa después. */
 body{background:var(--bg);font-family:'Inter',Arial,sans-serif;color:var(--text);font-size:13px}
+@media(min-width:1051px){
+  body{
+    background-image:linear-gradient(rgba(0,0,0,.35),rgba(0,0,0,.35)), url('assets/images/walpaper.png');
+    background-size:cover;
+    background-position:center;
+    background-attachment:fixed;
+  }
+  body.light-theme{
+    background-image:linear-gradient(rgba(0,0,0,.35),rgba(0,0,0,.35)), url('assets/images/walpaper.png') !important;
+    background-size:cover !important;
+    background-position:center !important;
+    background-attachment:fixed !important;
+  }
+}
 body.theme-ready{transition:background .2s,color .2s}
 
 /* ===================== LAYOUT ===================== */
