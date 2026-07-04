@@ -124,7 +124,7 @@ body.dark-theme .version-tag{color:#555}
 }
 #appHeader{
   width:100%;display:flex;align-items:center;justify-content:space-between;
-  padding:6px 16px;background:#1a1a1a;border-bottom:2px solid #333;
+  padding:6px 16px;background:rgba(26,26,26,.72);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);border-bottom:2px solid #333;
   flex-shrink:0;gap:12px;box-sizing:border-box;overflow:hidden;
 }
 .app-header-logo{
@@ -539,7 +539,7 @@ body.dark-theme .stat-pace,
 body.dark-theme .stat-passing,
 body.dark-theme .stat-technique{background:#0a0c0d;color:var(--gold);border-color:var(--gold)}
 body.dark-theme #centerBottom{background:#0a0c0d;border-color:var(--line)}
-body.dark-theme #appHeader{background:#0a0c0d;border-color:var(--line)}
+body.dark-theme #appHeader{background:rgba(10,12,13,.72);border-color:var(--line)}
 body.dark-theme .team-name-input{background:var(--card-bg);color:var(--text);border-color:var(--line)}
 body.dark-theme .pen-shots,
 body.dark-theme .goal-min,
@@ -1524,7 +1524,7 @@ body.light-theme .panel{
 }
 body.light-theme .right-panel{background:#faf8f4}
 body.light-theme .center-panel{background:#e8e2d8}
-body.light-theme #appHeader{background:#1a1a1a;border-color:#333}
+body.light-theme #appHeader{background:rgba(26,26,26,.72);border-color:#333}
 
 /* ── Boxes ── */
 body.light-theme .box{
@@ -1811,7 +1811,7 @@ body.light-theme #langEsBtn,body.light-theme #langEnBtn{
    ============================================= */
 
 /* Fondo entre paneles */
-body.light-theme{background:#f2ede4 !important}
+body.light-theme{background-color:#f2ede4 !important}
 
 /* NOTA MEDIA bar */
 body.light-theme .ovr-team{
