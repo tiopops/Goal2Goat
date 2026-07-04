@@ -8108,7 +8108,7 @@ function mpRenderPenaltyShootoutScreen(){
       <div style="font-family:'Bebas Neue',Impact,sans-serif;color:var(--gold);letter-spacing:1.5px;font-size:16px">TANDA DE PENALTIS</div>
       <div id="penScoreLine" style="font-family:'Bebas Neue',Impact,sans-serif;font-size:26px;letter-spacing:2px">0 – 0</div>
       <div id="penKickLabel" style="font-size:11px;color:var(--text-muted)"></div>
-      <div id="penTurnLabel" style="font-family:'Bebas Neue',Impact,sans-serif;font-size:14px;letter-spacing:1px"></div>
+      <div id="penTurnLabel" style="width:min(90vw,86vh,460px);text-align:center;font-family:'Bebas Neue',Impact,sans-serif;font-size:14px;letter-spacing:1px;padding-bottom:6px;border-bottom:2px solid var(--gold)"></div>
       <div style="width:90%;max-width:280px;height:4px;background:#222;border-radius:3px;overflow:hidden">
         <div id="penTimerFill" style="height:100%;width:100%;background:var(--gold);transition:width .1s linear"></div>
       </div>
@@ -8156,14 +8156,7 @@ function mpPenaltyAttachListener(){
         const myGoalsPen=shownHist.filter(h=>h.shooterRole===window._duelRole&&h.result==='gol').length;
         const rivalGoalsPen=shownHist.filter(h=>h.shooterRole!==window._duelRole&&h.result==='gol').length;
         const sl=document.getElementById('penScoreLine'); if(sl) sl.textContent=`${myGoalsPen} – ${rivalGoalsPen}`;
-        const hrow=document.getElementById('penHistoryRow');
-        if(hrow){
-          hrow.innerHTML=shownHist.map(h=>{
-            const mine=h.shooterRole===window._duelRole;
-            const color=h.result==='gol'?'#4ade80':'#e05a4e';
-            return `<span style="width:10px;height:10px;border-radius:50%;background:${color};border:1px solid ${mine?'#4a90d9':'#e74c3c'}"></span>`;
-          }).join('');
-        }
+        mpRenderPenaltyHistory(shownHist);
         // Pequeño respiro antes de pasar al siguiente lanzamiento — se
         // mantiene "animando" activo durante la pausa para que ningún
         // aviso del listener se cuele a mitad y solape fotogramas.
@@ -8296,6 +8289,16 @@ function mpStartPenaltyTimer(cur){
   if(mpPenTimerHandle) clearInterval(mpPenTimerHandle);
   const fill=document.getElementById('penTimerFill');
   let lastBeepSec=null;
+  // Forzar que la barra arranque visualmente al máximo, aunque el reloj
+  // real ya llevara un pelín de retraso por variaciones de carga entre
+  // dispositivos — así nunca se ve "ya empezada".
+  if(fill){
+    fill.style.transition='none';
+    fill.style.width='100%';
+    requestAnimationFrame(()=>{
+      requestAnimationFrame(()=>{ fill.style.transition='width .1s linear'; });
+    });
+  }
   mpPenTimerHandle=setInterval(()=>{
     const remainMs=Math.max(0, cur.deadline-Date.now());
     const remainSec=Math.ceil(remainMs/1000);

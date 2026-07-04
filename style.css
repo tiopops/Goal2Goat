@@ -1374,6 +1374,7 @@ body.dark-theme .press-prediction-neutral{background:#1a1a1a;border-color:#333;c
   height:100%;
   overflow-y:auto;
   overflow-x:hidden;
+  padding-right:8px;
 }
 /* El contenido scrolleable va dentro de cada pane que lo necesite */
 .profile-tab-stack{
@@ -1396,6 +1397,7 @@ body.dark-theme .press-prediction-neutral{background:#1a1a1a;border-color:#333;c
 #profileNotesPane.profile-tab-pane-active{
   overflow-y:auto;
   max-height:calc(85vh - 160px);
+  padding-right:8px;
 }
 #profileStatsPane.profile-tab-pane-active,
 #profileUserPane.profile-tab-pane-active{
@@ -1512,7 +1514,7 @@ body.light-theme{
   --card-bg:#ffffff;
   --table-header-bg:#ede8df;
   --row-hover:#f5f1e8;
-  background:var(--bg);
+  background-color:var(--bg);
   color:var(--text);
 }
 
