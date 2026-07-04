@@ -3066,6 +3066,7 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
       const d=snap.data();
       if(!d) return;
       const pause=d[`m${ctxD.matchIndex}_giroPause`];
+      console.log('[Giro Táctico Duelo] snapshot recibido, pendingWrites:', snap.metadata.hasPendingWrites, 'pause:', pause, 'esperando:', !!mpGiroWaitingOverlay);
       if(pause && pause.active && pause.by!==ctxD.myRole && !giroPaused){
         // El rival ha pulsado Giro Táctico — pausar aquí también y esperar
         giroPaused=true;
@@ -3074,6 +3075,7 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
       }else if((!pause||!pause.active) && mpGiroWaitingOverlay){
         // El rival ya ha resuelto su Giro Táctico — adoptar el resultado
         // actualizado y reanudar, sin recalcular nada por mi cuenta.
+        console.log('[Giro Táctico Duelo] reanudando por el listener en tiempo real (camino normal)');
         mpGiroHideWaitingOverlay();
         try{ mpGiroAdoptUpdatedResult(d); }
         catch(e){ console.error('[Giro Táctico Duelo] resincronización falló:', e); }
@@ -3084,7 +3086,7 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
   function mpGiroDetachDuelListener(){
     if(mpGiroListenerUnsub){ mpGiroListenerUnsub(); mpGiroListenerUnsub=null; }
     if(mpGiroWaitTimerHandle){ clearInterval(mpGiroWaitTimerHandle); mpGiroWaitTimerHandle=null; }
-    if(mpGiroSafetyTimeout){ clearTimeout(mpGiroSafetyTimeout); mpGiroSafetyTimeout=null; }
+    if(mpGiroSafetyTimeout){ clearInterval(mpGiroSafetyTimeout); mpGiroSafetyTimeout=null; }
   }
   let mpGiroWaitTimerHandle=null, mpGiroSafetyTimeout=null;
   function mpGiroShowWaitingOverlay(pauseTs){
@@ -3119,31 +3121,43 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
       if(remainMs<=0){ clearInterval(mpGiroWaitTimerHandle); mpGiroWaitTimerHandle=null; }
     },100);
 
-    // Red de seguridad: si por lo que sea la señal de "el rival ya ha
-    // terminado" no llega (retraso de red, evento perdido...), forzar
-    // una lectura directa y reanudar de todos modos — nunca debe
-    // quedarse esperando indefinidamente.
-    if(mpGiroSafetyTimeout) clearTimeout(mpGiroSafetyTimeout);
-    mpGiroSafetyTimeout=setTimeout(async()=>{
-      if(!mpGiroWaitingOverlay) return; // ya se resolvió por el camino normal
+    // Red de seguridad: comprobación activa cada 1.5s (no solo esperar al
+    // aviso en tiempo real) — si por lo que sea la señal de "el rival ya
+    // ha terminado" no llega, esto lo detecta mucho antes que un único
+    // plazo largo, sin dejar nunca al jugador esperando de más.
+    if(mpGiroSafetyTimeout) clearInterval(mpGiroSafetyTimeout);
+    let giroSafetyChecks=0;
+    mpGiroSafetyTimeout=setInterval(async()=>{
+      giroSafetyChecks++;
+      if(!mpGiroWaitingOverlay){ clearInterval(mpGiroSafetyTimeout); mpGiroSafetyTimeout=null; return; }
       const ctxD2=window._giroDuelCtx;
       const db=window._fbDb;
       try{
         if(db&&ctxD2&&ctxD2.duelId){
           const snap=await db.collection('duels').doc(ctxD2.duelId).get();
           const freshDoc=snap.exists?snap.data():null;
-          if(freshDoc) mpGiroAdoptUpdatedResult(freshDoc);
+          const freshPause=freshDoc?freshDoc[`m${ctxD2.matchIndex}_giroPause`]:null;
+          if(freshDoc && (!freshPause||!freshPause.active) && mpGiroWaitingOverlay){
+            console.log('[Giro Táctico Duelo] reanudando por la comprobación de refuerzo (el listener en tiempo real no llegó a tiempo)');
+            clearInterval(mpGiroSafetyTimeout); mpGiroSafetyTimeout=null;
+            mpGiroAdoptUpdatedResult(freshDoc);
+            mpGiroHideWaitingOverlay();
+            resumeAfterGiro();
+            return;
+          }
         }
-      }catch(e){ console.error('[Giro Táctico Duelo] red de seguridad falló:', e); }
-      finally{
+      }catch(e){ console.error('[Giro Táctico Duelo] comprobación de seguridad falló:', e); }
+      // Tope de seguridad final por si algo se queda atascado de verdad
+      if(giroSafetyChecks>=12 && mpGiroWaitingOverlay){
+        clearInterval(mpGiroSafetyTimeout); mpGiroSafetyTimeout=null;
         mpGiroHideWaitingOverlay();
         resumeAfterGiro();
       }
-    }, 13000);
+    }, 1500);
   }
   function mpGiroHideWaitingOverlay(){
     if(mpGiroWaitTimerHandle){ clearInterval(mpGiroWaitTimerHandle); mpGiroWaitTimerHandle=null; }
-    if(mpGiroSafetyTimeout){ clearTimeout(mpGiroSafetyTimeout); mpGiroSafetyTimeout=null; }
+    if(mpGiroSafetyTimeout){ clearInterval(mpGiroSafetyTimeout); mpGiroSafetyTimeout=null; }
     if(mpGiroWaitingOverlay){ mpGiroWaitingOverlay.remove(); mpGiroWaitingOverlay=null; }
   }
   /* Adopta sin recalcular el resultado ya corregido por quien usó Giro
@@ -8508,6 +8522,31 @@ function stopMpNotificationListener(){
 
 /* Al cargar la página: si hay un duelo activo en sessionStorage, retomarlo
    consultando su estado real en Firestore (no confiar solo en lo local). */
+/* Inactividad en duelo: si un jugador no interactúa con nada durante
+   más de 1 minuto mientras el duelo está activo, la partida finaliza
+   automáticamente — reutiliza el mismo mecanismo que "abandonar duelo",
+   así se integra con cualquier pantalla en la que esté el jugador. */
+let _duelLastInteraction=Date.now();
+let _duelInactivityInterval=null;
+['click','touchstart','keydown'].forEach(evt=>{
+  document.addEventListener(evt, ()=>{ _duelLastInteraction=Date.now(); }, {passive:true});
+});
+function startDuelInactivityMonitor(){
+  stopDuelInactivityMonitor();
+  _duelLastInteraction=Date.now();
+  _duelInactivityInterval=setInterval(()=>{
+    if(!window._duelId){ stopDuelInactivityMonitor(); return; }
+    if(Date.now()-_duelLastInteraction>60000){
+      stopDuelInactivityMonitor();
+      console.log('[Duelo] finalizado automáticamente por inactividad (más de 1 minuto sin interacción)');
+      mpAbandonDuel();
+    }
+  }, 10000);
+}
+function stopDuelInactivityMonitor(){
+  if(_duelInactivityInterval){ clearInterval(_duelInactivityInterval); _duelInactivityInterval=null; }
+}
+
 async function initDuelModeFromSession(){
   let info=null;
   try{ info=JSON.parse(sessionStorage.getItem('g2g_duel_active')||'null'); }catch(e){}
@@ -8516,6 +8555,7 @@ async function initDuelModeFromSession(){
   window._duelRole=info.role;
   window._duelOpponentUsername=info.opponentUsername;
   window._duelDraftDeadline=info.draftStartAt+DUEL_DRAFT_SECONDS*1000;
+  startDuelInactivityMonitor();
   // La pantalla de bienvenida ("EMPEZAR A JUGAR") es obligatoria en cada carga;
   // en modo duelo la saltamos, ya que el jugador ya confirmó explícitamente al
   // aceptar/lanzar el desafío.
@@ -8572,6 +8612,7 @@ function mpExitDuelMode(){
   try{ sessionStorage.removeItem('g2g_pending_challenge_id'); }catch(e){}
   window._duelId=null;
   if(_duelTimerInterval){ clearInterval(_duelTimerInterval); _duelTimerInterval=null; }
+  stopDuelInactivityMonitor();
 }
 
 /* Barra de cuenta atrás del draft — visible en todo momento durante el
