@@ -2918,7 +2918,7 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
     ${window._duelId?`<div style="text-align:center;font-family:'Bebas Neue',Impact,sans-serif;font-size:14px;letter-spacing:1.5px;color:var(--gold);text-transform:uppercase;padding-bottom:4px">${(tk('mp.duel_match_of')||'PARTIDO {0} DE 5').replace('{0}', String(window._duelMatchIndex+1))}</div>`:''}
     <div class="match-header">
       <div class="match-side">
-        ${window._duelId?'<i class="ph ph-bold ph-user" style="font-size:22px;color:#4a90d9"></i>':(window._myCrestData?renderCrestThumb(26):'<i class="ph ph-bold ph-user" style="font-size:22px;color:#4a90d9"></i>')}
+        ${window._duelId?'<i class="ph ph-bold ph-user" style="font-size:22px;color:#4a90d9"></i>':(window._myCrestData?renderCrestThumb(36):'<i class="ph ph-bold ph-user" style="font-size:22px;color:#4a90d9"></i>')}
         <span class="match-team-name">${myTeamName}</span>
       </div>
       <div style="text-align:center;flex:0 0 auto">
@@ -4120,7 +4120,7 @@ function showMatchModal(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,
   <div class="match-modal">
     <div class="match-header">
       <div class="match-side">
-        ${window._myCrestData?renderCrestThumb(24):'<i class="ph ph-bold ph-user" style="font-size:22px;color:#4a90d9"></i>'}
+        ${window._myCrestData?renderCrestThumb(34):'<i class="ph ph-bold ph-user" style="font-size:22px;color:#4a90d9"></i>'}
         <span class="match-team-name">${myTeamName}</span>
       </div>
       <div class="match-scoreline">${myGoals} – ${oppGoals}</div>
@@ -8778,7 +8778,7 @@ function refreshAllCrestThumbs(){
   document.querySelectorAll('.crest-thumb-svg').forEach(svg=>renderCrestInto(svg, window._myCrestData));
   document.querySelectorAll('.crest-header-icon').forEach(el=>{
     el.innerHTML = window._myCrestData
-      ? renderCrestThumb(26)
+      ? renderCrestThumb(36)
       : '<i class="ph ph-bold ph-user" style="font-size:22px;color:#7b9cff"></i>';
   });
 }
@@ -8882,13 +8882,27 @@ function openCrestEditor(){
     showToast('✅ Escudo guardado', 'toast-pos');
     overlay.remove();
   });
-  document.getElementById('crestResetBtn').addEventListener('click', async()=>{
-    if(!confirm('¿Borrar el escudo por completo? Volverás a ver el icono de usuario por defecto.')) return;
-    await resetMyCrestData();
-    _crestEditState = defaultCrestData();
-    buildCrestControlsUI(document.getElementById('crestControlsCol'));
-    crestRenderAll();
-    showToast('🗑️ Escudo eliminado', 'toast-pos');
+  document.getElementById('crestResetBtn').addEventListener('click', ()=>{
+    const confirmOv = document.createElement('div');
+    confirmOv.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:80000;display:flex;align-items:center;justify-content:center;padding:20px';
+    confirmOv.innerHTML = `
+      <div style="background:var(--card-bg);border:2px solid #e74c3c;border-radius:8px;padding:20px;max-width:320px;text-align:center">
+        <p style="color:var(--text);font-size:13px;margin:0 0 16px">¿Borrar el escudo actual?</p>
+        <div style="display:flex;gap:10px">
+          <button id="crestConfirmCancel" style="flex:1;background:none;border:1px solid var(--line);color:var(--text);border-radius:6px;padding:8px;cursor:pointer;font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:1px">CANCELAR</button>
+          <button id="crestConfirmYes" style="flex:1;background:#e74c3c;border:none;color:#fff;border-radius:6px;padding:8px;cursor:pointer;font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:1px">OK</button>
+        </div>
+      </div>`;
+    document.body.appendChild(confirmOv);
+    document.getElementById('crestConfirmCancel').addEventListener('click', ()=>confirmOv.remove());
+    document.getElementById('crestConfirmYes').addEventListener('click', async()=>{
+      confirmOv.remove();
+      await resetMyCrestData();
+      _crestEditState = defaultCrestData();
+      buildCrestControlsUI(document.getElementById('crestControlsCol'));
+      crestRenderAll();
+      showToast('🗑️ Escudo eliminado', 'toast-pos');
+    });
   });
 }
 
@@ -8929,8 +8943,8 @@ function buildCrestControlsUI(container){
         <div class="crest-slider-group">
           <div class="crest-slider-row"><label>Tamaño</label><input type="range" id="crestIconScale" min="50" max="180" value="100"></div>
           <div class="crest-slider-row"><label>Rotar</label><input type="range" id="crestIconRotate" min="0" max="360" value="0"></div>
-          <div class="crest-slider-row"><label>Mover X</label><input type="range" id="crestIconX" min="-120" max="120" value="0"></div>
-          <div class="crest-slider-row"><label>Mover Y</label><input type="range" id="crestIconY" min="-120" max="120" value="0"></div>
+          <div class="crest-slider-row"><label>Mover X</label><input type="range" id="crestIconX" min="-200" max="200" value="0"></div>
+          <div class="crest-slider-row"><label>Mover Y</label><input type="range" id="crestIconY" min="-200" max="200" value="0"></div>
         </div>
       </div>
     </div>
@@ -8946,8 +8960,8 @@ function buildCrestControlsUI(container){
         <div class="crest-slider-group">
           <div class="crest-slider-row"><label>Tamaño</label><input type="range" id="crestRankScale" min="50" max="180" value="100"></div>
           <div class="crest-slider-row"><label>Rotar</label><input type="range" id="crestRankRotate" min="0" max="360" value="0"></div>
-          <div class="crest-slider-row"><label>Mover X</label><input type="range" id="crestRankX" min="-120" max="120" value="0"></div>
-          <div class="crest-slider-row"><label>Mover Y</label><input type="range" id="crestRankY" min="-100" max="100" value="0"></div>
+          <div class="crest-slider-row"><label>Mover X</label><input type="range" id="crestRankX" min="-200" max="200" value="0"></div>
+          <div class="crest-slider-row"><label>Mover Y</label><input type="range" id="crestRankY" min="-200" max="200" value="0"></div>
         </div>
       </div>
     </div>
