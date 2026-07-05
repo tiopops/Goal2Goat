@@ -1067,11 +1067,7 @@ body.dark-theme .settings-item:hover{background:var(--row-hover);color:var(--gol
     overflow-x:hidden!important;
   }
 
-  #appHeader{
-    position:sticky!important;top:0!important;z-index:200!important;width:100%!important;
-    padding-top:calc(6px + env(safe-area-inset-top, 20px))!important;
-    box-sizing:border-box!important;
-  }
+  #appHeader{position:sticky!important;top:0!important;z-index:200!important;width:100%!important}
 
   .app{
     display:block!important;
