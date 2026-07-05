@@ -176,7 +176,8 @@
     <div class="profile-tab-stack">
 
       <!-- ESTADÍSTICAS TAB -->
-      <div id="profileStatsPane" class="profile-tab-pane profile-tab-pane-active">
+      <div id="profileStatsPane" class="profile-tab-pane profile-tab-pane-active" style="position:relative">
+        <div class="crest-corner-thumb" style="position:absolute;top:0;right:0;width:44px;height:44px;z-index:2"></div>
 
         <!-- Sección: Resultados -->
         <div class="stats-section-label" data-i18n="stats.results">RESULTADOS</div>
@@ -232,7 +233,8 @@
       </div>
 
       <!-- USUARIO TAB -->
-      <div id="profileUserPane" class="profile-tab-pane">
+      <div id="profileUserPane" class="profile-tab-pane" style="position:relative">
+        <div class="crest-corner-thumb" style="position:absolute;top:0;right:0;width:44px;height:44px;z-index:2"></div>
         <label class="profile-field-label" data-i18n="settings.preferences">PREFERENCIAS</label>
         <div class="profile-settings-row">
           <button id="audioToggle" class="settings-item" title="Activar/desactivar sonido">
@@ -249,6 +251,9 @@
           <span data-i18n="settings.always_use">Usar siempre como nombre de equipo</span>
         </label>
         <p class="profile-field-hint" data-i18n="settings.always_use_hint">Si lo activas, no se te preguntará el nombre del equipo al formarlo — se usará este automáticamente.</p>
+        <button id="customizeCrestBtn" onclick="window.openCrestEditor()" style="width:100%;margin-top:10px;font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:1px;font-size:12px;background:none;border:1px solid var(--gold);color:var(--gold);border-radius:6px;padding:9px 14px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px">
+          <i class="ph ph-bold ph-shield-star"></i> <span data-i18n="settings.customize_crest">PERSONALIZAR EQUIPO</span>
+        </button>
 
         <!-- IDIOMA — siempre visible -->
         <div id="langSelectorWrap" style="margin-top:14px;padding-top:14px;border-top:1px solid var(--line)">

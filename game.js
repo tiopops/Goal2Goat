@@ -2918,7 +2918,7 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
     ${window._duelId?`<div style="text-align:center;font-family:'Bebas Neue',Impact,sans-serif;font-size:14px;letter-spacing:1.5px;color:var(--gold);text-transform:uppercase;padding-bottom:4px">${(tk('mp.duel_match_of')||'PARTIDO {0} DE 5').replace('{0}', String(window._duelMatchIndex+1))}</div>`:''}
     <div class="match-header">
       <div class="match-side">
-        ${window._duelId?'<i class="ph ph-bold ph-user" style="font-size:22px;color:#4a90d9"></i>':'<span class="match-flag">🐐</span>'}
+        ${window._duelId?'<i class="ph ph-bold ph-user" style="font-size:22px;color:#4a90d9"></i>':(window._myCrestData?renderCrestThumb(26):'<span class="match-flag">🐐</span>')}
         <span class="match-team-name">${myTeamName}</span>
       </div>
       <div style="text-align:center;flex:0 0 auto">
@@ -4120,7 +4120,7 @@ function showMatchModal(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,
   <div class="match-modal">
     <div class="match-header">
       <div class="match-side">
-        <span class="flag-emoji match-flag">🐐</span>
+        ${window._myCrestData?renderCrestThumb(24):'<span class="flag-emoji match-flag">🐐</span>'}
         <span class="match-team-name">${myTeamName}</span>
       </div>
       <div class="match-scoreline">${myGoals} – ${oppGoals}</div>
@@ -4895,6 +4895,16 @@ initDuelModeFromSession();
   }catch(e){}
 })();
 
+/* Cargar el escudo guardado desde caché local al instante, sin esperar
+   a Firebase — así ya está disponible la primera vez que se pinte la
+   cabecera de partido o las miniaturas del perfil. */
+(function(){
+  try{
+    const cached = localStorage.getItem('g2g_crest_data');
+    if(cached) window._myCrestData = JSON.parse(cached);
+  }catch(e){}
+})();
+
 /* If there are inherited players from a chain run, auto-place them on the
    pitch at their primary position, skipping that many draft picks. */
 /* ========= SETTINGS DROPDOWN (header, shown only when logged out) ========= */
@@ -5506,6 +5516,8 @@ function initFirebaseAuth(){
       window.currentUsername=username;
       const data=snap.exists?snap.data():{};
       window.preferredTeamName=data.preferredTeamName||"";
+      if(data.customCrest){ window._myCrestData=data.customCrest; try{ localStorage.setItem('g2g_crest_data', JSON.stringify(data.customCrest)); }catch(e){} }
+      refreshAllCrestThumbs();
       window.useFixedTeamName=!!data.useFixedTeamName;
       // Sincronizar nombre del equipo para el contador de convocados
       if(window.preferredTeamName) window._currentTeamName=window.preferredTeamName.toUpperCase();
@@ -5562,6 +5574,7 @@ function initFirebaseAuth(){
   /* ─── PROFILE MODAL ─── */
   window.showProfileModal=async function(){
     const o=$id("profileOverlay"); if(o) o.style.display="flex";
+    refreshAllCrestThumbs();
     const user=auth.currentUser;
     if(!user) return;
     // Show loading state
@@ -8562,6 +8575,471 @@ function mpFinishPenaltiesUI(winnerRole, history){
     mpAdvanceAfterMatch();
   }, 1600);
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   ESCUDO PERSONALIZADO — el jugador diseña el escudo de su equipo
+   combinando 3 capas (forma+fondo, icono, detalle de rango). Se
+   guarda en el perfil (Firestore + caché local) y sustituye a la
+   cabra 🐐 en la cabecera de partido en modo un jugador, además de
+   mostrarse en miniatura en el perfil.
+   ═══════════════════════════════════════════════════════════════ */
+const CREST_COLORS = ['#f0c419','#e74c3c','#2ecc71','#3498db','#9b59b6','#1a1a1a','#ffffff','#e67e22','#1abc9c','#34495e','#e91e63','#795548'];
+
+const CREST_SHAPES = {
+  classic: 'M100 10 L180 35 V95 C180 145 145 175 100 195 C55 175 20 145 20 95 V35 Z',
+  round:   'M100 10 A90 90 0 1 1 99.99 10 Z',
+  modern:  'M100 12 L175 45 L175 120 C175 165 140 188 100 196 C60 188 25 165 25 120 L25 45 Z',
+  banner:  'M25 20 H175 V150 L100 190 L25 150 Z',
+  hexagon: 'M100 8 L182 55 V145 L100 192 L18 145 V55 Z',
+  diamond: 'M100 6 L194 100 L100 194 L6 100 Z',
+  oval:    'M100 6 C150 6 176 46 176 100 C176 154 150 194 100 194 C50 194 24 154 24 100 C24 46 50 6 100 6 Z',
+  arch:    'M20 190 V70 C20 25 60 6 100 6 C140 6 180 25 180 70 V190 Z',
+};
+const CREST_SHAPE_KEYS = ['ninguno', ...Object.keys(CREST_SHAPES)];
+const CREST_SHAPE_LABELS = {ninguno:'Ninguno',classic:'Clásico',round:'Redondo',modern:'Moderno',banner:'Bandera',hexagon:'Hexágono',diamond:'Rombo',oval:'Óvalo',arch:'Arco'};
+
+const CREST_PATTERNS = ['solid','stripes','half','quarters','diagonal','border','dots','cross'];
+const CREST_PATTERN_LABELS = {solid:'Liso',stripes:'Rayas',half:'Mitad',quarters:'Cuartos',diagonal:'Diagonal',border:'Borde',dots:'Lunares',cross:'Cruz'};
+
+const CREST_ICONS = [
+  'ninguno','ph-star','ph-crown','ph-shield','ph-lightning','ph-trophy',
+  'ph-fire','ph-mountains','ph-anchor','ph-sword','ph-horse','ph-bird',
+  'ph-cat','ph-tree','ph-sun','ph-waves','ph-diamonds-four','ph-medal',
+  'ph-skull','ph-rocket','ph-fish','ph-moon-stars','ph-globe','ph-hand-fist',
+  'ph-flag','ph-compass',
+];
+// Nota: "ph-soccer-ball" no se ha podido confirmar como icono real de
+// Phosphor con certeza — se deja fuera de la lista por defecto para
+// evitar que el icono central aparezca vacío. Si existe, se puede
+// añadir de nuevo sin problema.
+
+const CREST_RANKS = ['ninguno','banda_3','banda_5','corona','laurel','laurel_estrella','trofeos','estrella_grande'];
+const CREST_RANK_LABELS = {
+  ninguno:'Ninguno', banda_3:'Banda 3★', banda_5:'Banda 5★', corona:'Corona',
+  laurel:'Laurel', laurel_estrella:'Laurel+★', trofeos:'Trofeos', estrella_grande:'★ Grande'
+};
+
+function defaultCrestData(){
+  return {
+    shape:'classic', pattern:'solid', bgColor:'#1a1a1a', bg2Color:'#f0c419', shapeScale:100, shapeRotate:0,
+    icon:'ph-star', iconColor:'#f0c419', iconScale:100, iconRotate:0, iconX:0, iconY:0,
+    rank:'ninguno', rankScale:100, rankRotate:0, rankX:0, rankY:0,
+  };
+}
+
+const CREST_STAR_PATH = 'M0 -9 L2.6 -2.8 9 -2.8 3.8 1.1 5.9 7.7 0 3.8 -5.9 7.7 -3.8 1.1 -9 -2.8 -2.6 -2.8 Z';
+
+function buildCrestBackgroundLayer(d){
+  const shapeKey = d.shape;
+  const path = CREST_SHAPES[shapeKey];
+  if(!path) return {defs:'', inner:''};
+  let defsExtra = '';
+  let fillAttr = d.bgColor;
+
+  if(d.pattern==='stripes'){
+    defsExtra = `<pattern id="pat" width="22" height="22" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <rect width="22" height="22" fill="${d.bgColor}"/><rect width="11" height="22" fill="${d.bg2Color}"/>
+    </pattern>`;
+    fillAttr = 'url(#pat)';
+  } else if(d.pattern==='dots'){
+    defsExtra = `<pattern id="pat" width="24" height="24" patternUnits="userSpaceOnUse">
+      <rect width="24" height="24" fill="${d.bgColor}"/><circle cx="12" cy="12" r="5" fill="${d.bg2Color}"/>
+    </pattern>`;
+    fillAttr = 'url(#pat)';
+  }
+
+  const clipDef = `<clipPath id="crestClipShape"><path d="${path}"/></clipPath>`;
+  let inner = '';
+  if(d.pattern==='solid' || d.pattern==='stripes' || d.pattern==='dots'){
+    inner = `<path d="${path}" fill="${fillAttr}" stroke="#000" stroke-width="3" stroke-opacity=".25"/>`;
+  } else if(d.pattern==='half'){
+    inner = `<g clip-path="url(#crestClipShape)">
+      <rect x="0" y="0" width="100" height="200" fill="${d.bgColor}"/>
+      <rect x="100" y="0" width="100" height="200" fill="${d.bg2Color}"/>
+    </g><path d="${path}" fill="none" stroke="#000" stroke-width="3" stroke-opacity=".25"/>`;
+  } else if(d.pattern==='quarters'){
+    inner = `<g clip-path="url(#crestClipShape)">
+      <rect x="0" y="0" width="100" height="100" fill="${d.bgColor}"/>
+      <rect x="100" y="0" width="100" height="100" fill="${d.bg2Color}"/>
+      <rect x="0" y="100" width="100" height="100" fill="${d.bg2Color}"/>
+      <rect x="100" y="100" width="100" height="100" fill="${d.bgColor}"/>
+    </g><path d="${path}" fill="none" stroke="#000" stroke-width="3" stroke-opacity=".25"/>`;
+  } else if(d.pattern==='diagonal'){
+    inner = `<g clip-path="url(#crestClipShape)">
+      <rect x="0" y="0" width="200" height="200" fill="${d.bgColor}"/>
+      <polygon points="0,0 200,0 0,200" fill="${d.bg2Color}"/>
+    </g><path d="${path}" fill="none" stroke="#000" stroke-width="3" stroke-opacity=".25"/>`;
+  } else if(d.pattern==='cross'){
+    inner = `<g clip-path="url(#crestClipShape)">
+      <rect x="0" y="0" width="200" height="200" fill="${d.bgColor}"/>
+      <rect x="78" y="0" width="44" height="200" fill="${d.bg2Color}"/>
+      <rect x="0" y="78" width="200" height="44" fill="${d.bg2Color}"/>
+    </g><path d="${path}" fill="none" stroke="#000" stroke-width="3" stroke-opacity=".25"/>`;
+  } else if(d.pattern==='border'){
+    inner = `<path d="${path}" fill="${d.bg2Color}"/>
+      <g transform="translate(100 100) scale(0.86) translate(-100 -100)"><path d="${path}" fill="${d.bgColor}"/></g>`;
+  }
+  return {defs: clipDef + defsExtra, inner};
+}
+
+function buildCrestRankLayer(d){
+  if(!d.rank || d.rank==='ninguno') return '';
+  const scale = (d.rankScale||100)/100;
+  const tx = d.rankX||0, ty = d.rankY||0;
+  const rot = d.rankRotate||0;
+  const wrap = (anchorY, content) => `<g transform="translate(${100+tx} ${anchorY+ty}) rotate(${rot}) scale(${scale})">${content}</g>`;
+
+  if(d.rank==='banda_3' || d.rank==='banda_5'){
+    const n = d.rank==='banda_3' ? 3 : 5;
+    const spacing = 15;
+    let stars = '';
+    for(let i=0;i<n;i++){
+      const x = (i-(n-1)/2)*spacing;
+      const y = -Math.abs(i-(n-1)/2)*1.5 + 3;
+      stars += `<path d="${CREST_STAR_PATH}" transform="translate(${x} ${y}) scale(0.55)" fill="#f0c419"/>`;
+    }
+    const bandW = n===3 ? 46 : 66;
+    return wrap(172, `<path d="M${-bandW} -8 Q0 14 ${bandW} -8 L${bandW} 8 Q0 26 ${-bandW} 8 Z" fill="#c0392b" stroke="#000" stroke-opacity=".3" stroke-width="1.5"/>${stars}`);
+  }
+  if(d.rank==='corona'){
+    return wrap(26, `<g fill="#f0c419" stroke="#000" stroke-opacity=".3" stroke-width="1">
+      <path d="M-20 6 L-16 -10 -7 -1 0 -14 7 -1 16 -10 20 6 Z"/><rect x="-20" y="6" width="40" height="6" rx="1"/></g>`);
+  }
+  if(d.rank==='laurel' || d.rank==='laurel_estrella'){
+    const leaf = (x,y,r)=>`<ellipse cx="${x}" cy="${y}" rx="6" ry="3" fill="#2ecc71" stroke="#000" stroke-opacity=".2" stroke-width=".6" transform="rotate(${r} ${x} ${y})"/>`;
+    let leaves = '';
+    for(let i=0;i<5;i++){
+      const yy = -i*11;
+      leaves += leaf(-30+i*2, yy, -40+i*6);
+      leaves += leaf(30-i*2, yy, 40-i*6);
+    }
+    const star = d.rank==='laurel_estrella' ? `<path d="${CREST_STAR_PATH}" transform="translate(0 -22) scale(1.1)" fill="#f0c419"/>` : '';
+    return wrap(172, leaves + star);
+  }
+  if(d.rank==='trofeos'){
+    const box = 16 * scale;
+    const spacing = box * 1.15;
+    let out = '';
+    [-1,0,1].forEach(i=>{
+      const cx = 100 + i*spacing + tx, cy = 20 + ty;
+      out += `<foreignObject x="${cx-box/2}" y="${cy-box/2}" width="${box}" height="${box}" transform="rotate(${rot} ${cx} ${cy})">
+        <div xmlns="http://www.w3.org/1999/xhtml" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#f0c419;font-size:${box*0.85}px;text-shadow:0 1px 2px rgba(0,0,0,.6)"><i class="ph ph-bold ph-trophy"></i></div>
+      </foreignObject>`;
+    });
+    return out;
+  }
+  if(d.rank==='estrella_grande'){
+    return wrap(24, `<path d="${CREST_STAR_PATH}" transform="scale(2.2)" fill="#f0c419" stroke="#000" stroke-opacity=".3" stroke-width=".5"/>`);
+  }
+  return '';
+}
+
+function buildCrestSVGInner(d){
+  if(!d) d = defaultCrestData();
+  let defs = '', bgLayer = '';
+  if(d.shape && d.shape!=='ninguno'){
+    const bg = buildCrestBackgroundLayer(d);
+    defs = bg.defs;
+    const shapeScaleF = (d.shapeScale||100)/100;
+    bgLayer = `<g transform="translate(100 100) rotate(${d.shapeRotate||0}) scale(${shapeScaleF}) translate(-100 -100)">${bg.inner}</g>`;
+  }
+  const rankLayer = buildCrestRankLayer(d);
+  let iconLayer = '';
+  if(d.icon && d.icon!=='ninguno'){
+    const iScale = (d.iconScale||100)/100;
+    const iconBoxSize = 90*iScale;
+    const iconX = 100+(d.iconX||0)-iconBoxSize/2;
+    const iconY = 100+(d.iconY||0)-iconBoxSize/2;
+    const iconCx = 100+(d.iconX||0), iconCy = 100+(d.iconY||0);
+    iconLayer = `<foreignObject x="${iconX}" y="${iconY}" width="${iconBoxSize}" height="${iconBoxSize}" transform="rotate(${d.iconRotate||0} ${iconCx} ${iconCy})">
+      <div xmlns="http://www.w3.org/1999/xhtml" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center">
+        <i class="ph ph-bold ${d.icon}" style="color:${d.iconColor};font-size:${58*iScale}px;filter:drop-shadow(0 2px 3px rgba(0,0,0,.5))"></i>
+      </div>
+    </foreignObject>`;
+  }
+  return `<defs>${defs}</defs>${bgLayer}${rankLayer}${iconLayer}`;
+}
+
+function renderCrestInto(svgEl, data){
+  if(!svgEl) return;
+  try{ svgEl.innerHTML = buildCrestSVGInner(data); }
+  catch(e){ console.error('[Escudo] error al dibujar:', e); }
+}
+
+/* Miniatura del escudo actual, para usar en la cabecera de partido y
+   en las esquinas del perfil. Si no hay escudo guardado, no pinta
+   nada (el llamador debe mostrar el emoji de cabra como hasta ahora). */
+function renderCrestThumb(sizePx){
+  if(!window._myCrestData) return '';
+  return `<svg viewBox="0 0 200 200" style="width:${sizePx}px;height:${sizePx}px;display:block" class="crest-thumb-svg">${buildCrestSVGInner(window._myCrestData)}</svg>`;
+}
+function refreshAllCrestThumbs(){
+  document.querySelectorAll('.crest-thumb-svg').forEach(svg=>renderCrestInto(svg, window._myCrestData));
+  document.querySelectorAll('.crest-corner-thumb').forEach(el=>{
+    el.innerHTML = window._myCrestData ? renderCrestThumb(44) : '';
+  });
+}
+
+/* Cargar el escudo guardado (caché local instantánea + Firestore real) */
+function loadMyCrestData(){
+  try{
+    const cached = localStorage.getItem('g2g_crest_data');
+    if(cached) window._myCrestData = JSON.parse(cached);
+  }catch(e){}
+  const auth = window._fbAuth, db = window._fbDb;
+  const user = auth && auth.currentUser;
+  if(user && db){
+    db.collection('users').doc(user.uid).get().then(snap=>{
+      const data = snap.exists ? snap.data() : {};
+      if(data.customCrest){
+        window._myCrestData = data.customCrest;
+        try{ localStorage.setItem('g2g_crest_data', JSON.stringify(data.customCrest)); }catch(e){}
+      }
+      refreshAllCrestThumbs();
+    }).catch(e=>console.error('[Escudo] carga falló:', e));
+  }
+}
+
+async function saveMyCrestData(data){
+  window._myCrestData = data;
+  try{ localStorage.setItem('g2g_crest_data', JSON.stringify(data)); }catch(e){}
+  const auth = window._fbAuth, db = window._fbDb;
+  const user = auth && auth.currentUser;
+  if(user && db){
+    try{ await db.collection('users').doc(user.uid).set({customCrest:data}, {merge:true}); }
+    catch(e){ console.error('[Escudo] guardado falló:', e); }
+  }
+  refreshAllCrestThumbs();
+}
+
+async function resetMyCrestData(){
+  const basic = {shape:'classic', pattern:'solid', bgColor:'#1a1a1a', bg2Color:'#f0c419', shapeScale:100, shapeRotate:0,
+    icon:'ninguno', iconColor:'#f0c419', iconScale:100, iconRotate:0, iconX:0, iconY:0,
+    rank:'ninguno', rankScale:100, rankRotate:0, rankX:0, rankY:0};
+  await saveMyCrestData(basic);
+  return basic;
+}
+
+/* ===== Ventana del editor ===== */
+let _crestEditState = null;
+function openCrestEditor(){
+  _crestEditState = window._myCrestData ? JSON.parse(JSON.stringify(window._myCrestData)) : defaultCrestData();
+  const overlay = document.createElement('div');
+  overlay.id = 'crestEditorOverlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:70000;display:flex;align-items:center;justify-content:center;padding:16px';
+  overlay.innerHTML = `
+    <div id="crestWindow" style="width:100%;max-width:680px;height:710px;max-height:92vh;background:var(--card-bg);border:2px solid var(--gold);border-radius:8px;display:flex;flex-direction:column;overflow:hidden;padding:18px;box-sizing:border-box;position:relative">
+      <button id="crestCloseBtn" class="auth-close" style="position:absolute;top:10px;right:12px">✕</button>
+      <h1 style="font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:1.5px;color:var(--gold);font-size:18px;margin:0 0 12px;display:flex;align-items:center;gap:8px"><i class="ph ph-bold ph-shield-star"></i> PERSONALIZAR ESCUDO</h1>
+      <div style="display:flex;flex-direction:column;gap:14px;flex:1;min-height:0;overflow-y:auto" id="crestBodySplit">
+        <div id="crestPreviewCol" style="flex-shrink:0;display:flex;flex-direction:row;align-items:center;gap:14px;position:sticky;top:0;background:var(--card-bg);z-index:5;padding-bottom:8px">
+          <div style="width:110px;height:110px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 30%, #2c3134, #17191b);border-radius:10px;border:1px solid var(--line)">
+            <svg id="crestSvg" viewBox="0 0 200 200" width="90" height="90"></svg>
+          </div>
+          <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:8px">
+            <input type="text" id="crestTeamNameInput" maxlength="24" placeholder="Nombre del equipo" style="width:100%;background:#0d1011;border:1px solid var(--line);color:var(--text);padding:7px 9px;border-radius:6px;font-size:12px;font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:.5px">
+            <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text-muted)">
+              <input type="checkbox" id="crestUseFixedNameCheckbox"> Usar siempre como nombre de equipo
+            </label>
+            <div style="display:flex;gap:8px">
+              <button id="crestSaveBtn" style="flex:1;font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:1px;font-size:12px;background:var(--gold);color:#000;border:none;border-radius:6px;padding:9px 14px;cursor:pointer"><i class="ph ph-bold ph-check-circle"></i> GUARDAR ESCUDO</button>
+              <button id="crestResetBtn" title="Borrar diseño y volver al básico" style="width:38px;flex-shrink:0;background:none;border:1px solid #e74c3c;color:#e74c3c;border-radius:6px;cursor:pointer;font-size:16px"><i class="ph ph-bold ph-trash"></i></button>
+            </div>
+          </div>
+        </div>
+        <div id="crestControlsCol" style="flex:1;min-width:0"></div>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+
+  // Prellenar nombre de equipo desde los campos ya existentes del perfil
+  const teamInput = document.getElementById('crestTeamNameInput');
+  const fixedCheckbox = document.getElementById('crestUseFixedNameCheckbox');
+  const existingNameInput = document.getElementById('preferredTeamNameInput');
+  const existingFixedCheckbox = document.getElementById('useFixedTeamNameCheckbox');
+  if(existingNameInput) teamInput.value = existingNameInput.value || '';
+  if(existingFixedCheckbox) fixedCheckbox.checked = existingFixedCheckbox.checked;
+  teamInput.addEventListener('input', ()=>{ if(existingNameInput) existingNameInput.value = teamInput.value; });
+  fixedCheckbox.addEventListener('change', ()=>{ if(existingFixedCheckbox){ existingFixedCheckbox.checked = fixedCheckbox.checked; existingFixedCheckbox.dispatchEvent(new Event('change')); } });
+
+  buildCrestControlsUI(document.getElementById('crestControlsCol'));
+  crestRenderAll();
+
+  document.getElementById('crestCloseBtn').addEventListener('click', ()=>overlay.remove());
+  document.getElementById('crestSaveBtn').addEventListener('click', async()=>{
+    await saveMyCrestData(_crestEditState);
+    if(existingNameInput && typeof existingNameInput.dispatchEvent==='function') existingNameInput.dispatchEvent(new Event('input'));
+    showToast('✅ Escudo guardado', 'toast-pos');
+    overlay.remove();
+  });
+  document.getElementById('crestResetBtn').addEventListener('click', async()=>{
+    if(!confirm('¿Borrar el diseño actual y volver al básico?')) return;
+    const basic = await resetMyCrestData();
+    _crestEditState = JSON.parse(JSON.stringify(basic));
+    buildCrestControlsUI(document.getElementById('crestControlsCol'));
+    crestRenderAll();
+  });
+}
+
+function crestRenderAll(){
+  renderCrestInto(document.getElementById('crestSvg'), _crestEditState);
+}
+
+function buildCrestControlsUI(container){
+  container.innerHTML = `
+    <div class="panel crest-panel" id="crestPanel1" style="background:#1e2326;border:1px solid var(--line);border-radius:8px;margin-bottom:10px;overflow:hidden">
+      <div class="crest-panel-header" data-panel="crestPanel1" style="display:flex;align-items:center;gap:8px;padding:12px 14px;cursor:pointer;font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:.5px;font-size:13px;color:var(--gold)">
+        <span class="crest-layer-num">1</span> FORMA Y FONDO <i class="ph ph-bold ph-caret-down chev" style="margin-left:auto"></i>
+      </div>
+      <div class="crest-panel-body" style="max-height:0;overflow:hidden;transition:max-height .25s ease;padding:0 14px">
+        <label class="crest-field-label">Silueta</label>
+        <div class="crest-option-grid" id="crestShapeOptions"></div>
+        <label class="crest-field-label">Patrón</label>
+        <div class="crest-option-grid wide" id="crestPatternOptions"></div>
+        <label class="crest-field-label">Color principal</label>
+        <div class="crest-option-grid" id="crestBgColorOptions"></div>
+        <label class="crest-field-label" id="crestSecondColorLabel" style="display:none">Color secundario</label>
+        <div class="crest-option-grid" id="crestBg2ColorOptions" style="display:none"></div>
+        <div class="crest-slider-group">
+          <div class="crest-slider-row"><label>Tamaño</label><input type="range" id="crestShapeScale" min="70" max="130" value="100"></div>
+          <div class="crest-slider-row"><label>Rotar</label><input type="range" id="crestShapeRotate" min="0" max="360" value="0"></div>
+        </div>
+      </div>
+    </div>
+    <div class="panel crest-panel" id="crestPanel2" style="background:#1e2326;border:1px solid var(--line);border-radius:8px;margin-bottom:10px;overflow:hidden">
+      <div class="crest-panel-header" data-panel="crestPanel2" style="display:flex;align-items:center;gap:8px;padding:12px 14px;cursor:pointer;font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:.5px;font-size:13px;color:var(--gold)">
+        <span class="crest-layer-num">2</span> ICONO CENTRAL <i class="ph ph-bold ph-caret-down chev" style="margin-left:auto"></i>
+      </div>
+      <div class="crest-panel-body" style="max-height:0;overflow:hidden;transition:max-height .25s ease;padding:0 14px">
+        <label class="crest-field-label">Icono</label>
+        <div class="crest-option-grid" id="crestIconOptions"></div>
+        <label class="crest-field-label">Color</label>
+        <div class="crest-option-grid" id="crestIconColorOptions"></div>
+        <div class="crest-slider-group">
+          <div class="crest-slider-row"><label>Tamaño</label><input type="range" id="crestIconScale" min="50" max="180" value="100"></div>
+          <div class="crest-slider-row"><label>Rotar</label><input type="range" id="crestIconRotate" min="0" max="360" value="0"></div>
+          <div class="crest-slider-row"><label>Mover X</label><input type="range" id="crestIconX" min="-120" max="120" value="0"></div>
+          <div class="crest-slider-row"><label>Mover Y</label><input type="range" id="crestIconY" min="-120" max="120" value="0"></div>
+        </div>
+      </div>
+    </div>
+    <div class="panel crest-panel" id="crestPanel3" style="background:#1e2326;border:1px solid var(--line);border-radius:8px;margin-bottom:10px;overflow:hidden">
+      <div class="crest-panel-header" data-panel="crestPanel3" style="display:flex;align-items:center;gap:8px;padding:12px 14px;cursor:pointer;font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:.5px;font-size:13px;color:var(--gold)">
+        <span class="crest-layer-num">3</span> DETALLE DE RANGO <i class="ph ph-bold ph-caret-down chev" style="margin-left:auto"></i>
+      </div>
+      <div class="crest-panel-body" style="max-height:0;overflow:hidden;transition:max-height .25s ease;padding:0 14px">
+        <label class="crest-field-label">Tipo</label>
+        <div class="crest-option-grid wide" id="crestRankOptions"></div>
+        <div class="crest-slider-group">
+          <div class="crest-slider-row"><label>Tamaño</label><input type="range" id="crestRankScale" min="50" max="180" value="100"></div>
+          <div class="crest-slider-row"><label>Rotar</label><input type="range" id="crestRankRotate" min="0" max="360" value="0"></div>
+          <div class="crest-slider-row"><label>Mover X</label><input type="range" id="crestRankX" min="-120" max="120" value="0"></div>
+          <div class="crest-slider-row"><label>Mover Y</label><input type="range" id="crestRankY" min="-100" max="100" value="0"></div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  // Estilos puntuales (una sola vez para todo el documento)
+  if(!document.getElementById('crestEditorStylesTag')){
+    const st = document.createElement('style');
+    st.id = 'crestEditorStylesTag';
+    st.textContent = `
+      .crest-panel-body.open{max-height:1200px !important;padding:0 14px 14px !important}
+      .crest-panel-header .chev{transition:transform .2s;color:var(--text-muted);font-size:14px}
+      .crest-panel-body.open ~ .crest-panel-header .chev, .crest-panel.open .chev{transform:rotate(180deg)}
+      .crest-layer-num{width:16px;height:16px;border-radius:50%;background:var(--gold);color:#000;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0}
+      .crest-option-grid{display:grid;grid-template-columns:repeat(auto-fill, minmax(38px, 1fr));gap:7px;margin-bottom:10px}
+      .crest-option-grid.wide{grid-template-columns:repeat(auto-fill, minmax(64px, 1fr))}
+      .crest-swatch{width:100%;aspect-ratio:1;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:.15s;max-width:30px;justify-self:center}
+      .crest-swatch.active{border-color:#fff;transform:scale(1.12)}
+      .crest-icon-btn{width:100%;aspect-ratio:1;border-radius:7px;background:#262b2e;border:1px solid var(--line);color:var(--text-muted);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px;transition:.15s;max-width:38px}
+      .crest-icon-btn:hover{border-color:var(--gold);color:var(--gold)}
+      .crest-icon-btn.active{background:rgba(240,196,25,.12);border-color:var(--gold);color:var(--gold)}
+      .crest-icon-btn.wide{max-width:none;aspect-ratio:auto;padding:8px 4px;font-size:9px;text-transform:uppercase;text-align:center}
+      .crest-shape-btn{width:100%;aspect-ratio:1;border-radius:7px;background:#262b2e;border:1px solid var(--line);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.15s;max-width:46px}
+      .crest-shape-btn svg{width:60%;height:60%;display:block}
+      .crest-shape-btn:hover{border-color:var(--gold)}
+      .crest-shape-btn.active{background:rgba(240,196,25,.12);border-color:var(--gold)}
+      .crest-field-label{font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;display:block;margin:10px 0 6px}
+      .crest-slider-row{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+      .crest-slider-row label{font-size:10px;color:var(--text-muted);width:48px;flex-shrink:0}
+      .crest-slider-row input[type=range]{flex:1;accent-color:var(--gold)}
+      .crest-slider-group{display:grid;grid-template-columns:1fr;gap:0;margin-top:10px;padding-top:10px;border-top:1px dashed var(--line)}
+      @media(min-width:480px){ .crest-slider-group{grid-template-columns:1fr 1fr;gap:0 14px} }
+    `;
+    document.head.appendChild(st);
+  }
+
+  container.querySelectorAll('.crest-panel-header').forEach(h=>{
+    h.addEventListener('click', ()=>{
+      const body = h.nextElementSibling;
+      body.classList.toggle('open');
+      h.classList.toggle('open');
+    });
+  });
+  container.querySelector('#crestPanel1 .crest-panel-body').classList.add('open');
+  container.querySelector('#crestPanel1 .crest-panel-header').classList.add('open');
+
+  crestBuildOptions('crestShapeOptions', CREST_SHAPE_KEYS, k=>k===_crestEditState.shape, k=>_crestEditState.shape=k, k=>{
+    const b = document.createElement('div'); b.className='crest-shape-btn'; b.title = CREST_SHAPE_LABELS[k];
+    b.innerHTML = k==='ninguno' ? `<i class="ph ph-bold ph-prohibit" style="color:#666;font-size:16px"></i>` : `<svg viewBox="0 0 200 200"><path d="${CREST_SHAPES[k]}" fill="#8a9094"/></svg>`;
+    return b;
+  });
+  crestBuildOptions('crestPatternOptions', CREST_PATTERNS, p=>p===_crestEditState.pattern, p=>{
+    _crestEditState.pattern=p;
+    const showSecond = p!=='solid';
+    document.getElementById('crestSecondColorLabel').style.display = showSecond?'block':'none';
+    document.getElementById('crestBg2ColorOptions').style.display = showSecond?'grid':'none';
+  }, p=>{ const b=document.createElement('div'); b.className='crest-icon-btn wide'; b.textContent=CREST_PATTERN_LABELS[p]; return b; });
+  crestBuildOptions('crestBgColorOptions', CREST_COLORS, c=>c===_crestEditState.bgColor, c=>_crestEditState.bgColor=c, c=>{ const b=document.createElement('div'); b.className='crest-swatch'; b.style.background=c; return b; });
+  crestBuildOptions('crestBg2ColorOptions', CREST_COLORS, c=>c===_crestEditState.bg2Color, c=>_crestEditState.bg2Color=c, c=>{ const b=document.createElement('div'); b.className='crest-swatch'; b.style.background=c; return b; });
+  const showSecond0 = _crestEditState.pattern!=='solid';
+  document.getElementById('crestSecondColorLabel').style.display = showSecond0?'block':'none';
+  document.getElementById('crestBg2ColorOptions').style.display = showSecond0?'grid':'none';
+
+  crestBuildOptions('crestIconOptions', CREST_ICONS, ic=>ic===_crestEditState.icon, ic=>_crestEditState.icon=ic, ic=>{
+    const b=document.createElement('div'); b.className='crest-icon-btn';
+    b.innerHTML = ic==='ninguno' ? `<i class="ph ph-bold ph-prohibit" style="color:#666"></i>` : `<i class="ph ph-bold ${ic}"></i>`;
+    return b;
+  });
+  crestBuildOptions('crestIconColorOptions', CREST_COLORS, c=>c===_crestEditState.iconColor, c=>_crestEditState.iconColor=c, c=>{ const b=document.createElement('div'); b.className='crest-swatch'; b.style.background=c; return b; });
+
+  crestBuildOptions('crestRankOptions', CREST_RANKS, r=>r===_crestEditState.rank, r=>_crestEditState.rank=r, r=>{ const b=document.createElement('div'); b.className='crest-icon-btn wide'; b.textContent=CREST_RANK_LABELS[r]; return b; });
+
+  crestBindSlider('crestShapeScale','shapeScale'); crestBindSlider('crestShapeRotate','shapeRotate');
+  crestBindSlider('crestIconScale','iconScale'); crestBindSlider('crestIconRotate','iconRotate');
+  crestBindSlider('crestIconX','iconX'); crestBindSlider('crestIconY','iconY');
+  crestBindSlider('crestRankScale','rankScale'); crestBindSlider('crestRankRotate','rankRotate');
+  crestBindSlider('crestRankX','rankX'); crestBindSlider('crestRankY','rankY');
+}
+
+function crestBuildOptions(containerId, items, isActive, onClick, renderItem){
+  const c = document.getElementById(containerId);
+  c.innerHTML = '';
+  items.forEach(item=>{
+    const el = renderItem(item);
+    if(isActive(item)) el.classList.add('active');
+    el.addEventListener('click', ()=>{
+      onClick(item);
+      buildCrestControlsUI(document.getElementById('crestControlsCol'));
+      crestRenderAll();
+    });
+    c.appendChild(el);
+  });
+}
+function crestBindSlider(id, key){
+  const el = document.getElementById(id);
+  if(!el) return;
+  el.value = _crestEditState[key] || 0;
+  el.addEventListener('input', ()=>{
+    _crestEditState[key] = parseInt(el.value, 10);
+    crestRenderAll();
+  });
+}
+window.openCrestEditor = openCrestEditor;
+
 
 function mpAdvanceAfterMatch(){
   mpShowDuelPostMatchStats();
