@@ -2166,3 +2166,8 @@ body.light-theme .mp-search-input{background:#f5f1e8;border-color:#d4cec4;color:
     width:88vw !important;
   }
 }
+
+/* Aviso de descarga de APK — solo en interfaz móvil */
+@media(max-width:1050px){
+  #welcomeApkBanner{display:block!important}
+}

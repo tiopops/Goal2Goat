@@ -14,6 +14,14 @@ window.TRANSLATIONS = {
   /* ── WELCOME ── */
   'welcome.start': {es:'EMPEZAR A JUGAR', en:'START PLAYING', pt:'COMEÇAR A JOGAR', fr:'COMMENCER À JOUER', de:'SPIELEN BEGINNEN', it:'INIZIA A GIOCARE'},
   'welcome.register': {es:'REGÍSTRATE', en:'SIGN UP', pt:'REGISTRE-SE', fr:'S\'INSCRIRE', de:'REGISTRIEREN', it:'REGISTRATI'},
+  'welcome.apk_banner': {
+    es:'Para una mejor experiencia en tu dispositivo móvil, <a href="downloads/Goal2Goat.apk" download style="color:var(--gold);font-weight:700;text-decoration:underline">descarga la APK desde aquí</a>.',
+    en:'For a better experience on your mobile device, <a href="downloads/Goal2Goat.apk" download style="color:var(--gold);font-weight:700;text-decoration:underline">download the APK here</a>.',
+    pt:'Para uma melhor experiência no seu dispositivo móvel, <a href="downloads/Goal2Goat.apk" download style="color:var(--gold);font-weight:700;text-decoration:underline">baixe o APK aqui</a>.',
+    fr:'Pour une meilleure expérience sur votre appareil mobile, <a href="downloads/Goal2Goat.apk" download style="color:var(--gold);font-weight:700;text-decoration:underline">téléchargez l\'APK ici</a>.',
+    de:'Für ein besseres Erlebnis auf deinem Mobilgerät, <a href="downloads/Goal2Goat.apk" download style="color:var(--gold);font-weight:700;text-decoration:underline">lade hier die APK herunter</a>.',
+    it:'Per un\'esperienza migliore sul tuo dispositivo mobile, <a href="downloads/Goal2Goat.apk" download style="color:var(--gold);font-weight:700;text-decoration:underline">scarica l\'APK qui</a>.'
+  },
   'welcome.text_guest': {
     es:'Bienvenido a <strong style="color:var(--gold)">Goal2Goat</strong>, <strong style="color:var(--gold)">REGÍSTRATE</strong> para guardar tu progreso y tener acceso a contenido exclusivo.<br><br>Goal2Goat es un manager de fútbol con alma de roguelike. Tu apoyo nos ayuda a seguir mejorando el juego, añadiendo contenido nuevo y manteniéndolo libre de publicidad invasiva.',
     en:'Welcome to <strong style="color:var(--gold)">Goal2Goat</strong> — <strong style="color:var(--gold)">SIGN UP</strong> to save your progress and access exclusive content.<br><br>Goal2Goat is a football manager with a roguelike soul. Your support helps us keep improving the game, adding new content and keeping it free from intrusive ads.',
