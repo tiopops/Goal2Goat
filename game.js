@@ -8840,7 +8840,7 @@ function openCrestEditor(){
     <div id="crestWindow" style="width:100%;max-width:680px;height:710px;max-height:92vh;background:var(--card-bg);border:2px solid var(--gold);border-radius:8px;display:flex;flex-direction:column;overflow:hidden;padding:18px;box-sizing:border-box;position:relative">
       <button id="crestCloseBtn" class="auth-close" style="position:absolute;top:10px;right:12px">✕</button>
       <h1 style="font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:1.5px;color:var(--gold);font-size:18px;margin:0 0 12px;display:flex;align-items:center;gap:8px"><i class="ph ph-bold ph-shield-star"></i> PERSONALIZAR ESCUDO</h1>
-      <div style="display:flex;flex-direction:column;gap:14px;flex:1;min-height:0;overflow-y:auto" id="crestBodySplit">
+      <div style="display:flex;flex-direction:column;gap:14px;flex:1;min-height:0;overflow-y:auto;padding-right:8px" id="crestBodySplit">
         <div id="crestPreviewCol" style="flex-shrink:0;display:flex;flex-direction:row;align-items:center;gap:14px;position:sticky;top:0;background:var(--card-bg);z-index:5;padding-bottom:8px">
           <div style="width:110px;height:110px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 30%, #2c3134, #17191b);border-radius:10px;border:1px solid var(--line)">
             <svg id="crestSvg" viewBox="0 0 200 200" width="90" height="90"></svg>
