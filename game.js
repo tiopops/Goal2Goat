@@ -2118,7 +2118,7 @@ function renderGroupTableHTML(){
     const displayName=getTeamName(r.name);
     rows+=`<tr class="${cls}${qualified?' group-row-qualified':''}">
       <td>${i+1}</td>
-      <td>${r.isMe?('<span class="flag-emoji goat-emoji">🐐</span> '+displayName):(flagEmoji(r.name,18)+' '+displayName)}</td>
+      <td>${r.isMe?((window._myCrestData?renderCrestThumb(18):'<i class="ph ph-bold ph-user" style="font-size:15px;color:#4a90d9;vertical-align:middle"></i>')+' '+displayName):(flagEmoji(r.name,18)+' '+displayName)}</td>
       <td>${r.played}</td>
       <td>${r.won}</td>
       <td>${r.drawn}</td>
@@ -2346,7 +2346,7 @@ function playMatch(){
       summary+=`<br><br><strong>⚽ TANDA DE PENALTIS: ${myTeamName} ${penaltyInfo.myScore} – ${penaltyInfo.oppScore} ${getTeamName(nextOpponent.name)}</strong>
       <div class="goals-columns">
         <div class="goals-col">
-          <div class="goals-col-header"><span class="flag-emoji goat-emoji">🐐</span> ${myTeamName}</div>
+          <div class="goals-col-header">${window._myCrestData?renderCrestThumb(20):'<i class="ph ph-bold ph-user" style="font-size:16px;color:#4a90d9;vertical-align:middle"></i>'} ${myTeamName}</div>
           <ul class="goals-list pen-shots">${myShotsHTML}</ul>
         </div>
         <div class="goals-col">
@@ -2534,7 +2534,7 @@ function generateMatchSummary(myGoals,oppGoals,rivalName){
   const goalsHTML=`
   <div class="goals-columns">
     <div class="goals-col">
-      <div class="goals-col-header"><span class="flag-emoji goat-emoji">🐐</span> ${myTeamName}</div>
+      <div class="goals-col-header">${window._myCrestData?renderCrestThumb(20):'<i class="ph ph-bold ph-user" style="font-size:16px;color:#4a90d9;vertical-align:middle"></i>'} ${myTeamName}</div>
       <ul class="goals-list">${myGoalLines.length?myGoalLines.join(''):'<li class="no-goal">Sin goles</li>'}</ul>
     </div>
     <div class="goals-col">
@@ -2918,7 +2918,7 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
     ${window._duelId?`<div style="text-align:center;font-family:'Bebas Neue',Impact,sans-serif;font-size:14px;letter-spacing:1.5px;color:var(--gold);text-transform:uppercase;padding-bottom:4px">${(tk('mp.duel_match_of')||'PARTIDO {0} DE 5').replace('{0}', String(window._duelMatchIndex+1))}</div>`:''}
     <div class="match-header">
       <div class="match-side">
-        ${window._duelId?'<i class="ph ph-bold ph-user" style="font-size:22px;color:#4a90d9"></i>':(window._myCrestData?renderCrestThumb(36):'<i class="ph ph-bold ph-user" style="font-size:22px;color:#4a90d9"></i>')}
+        ${window._duelId?(window._myCrestData?renderCrestThumb(28):'<i class="ph ph-bold ph-user" style="font-size:22px;color:#4a90d9"></i>'):(window._myCrestData?renderCrestThumb(36):'<i class="ph ph-bold ph-user" style="font-size:22px;color:#4a90d9"></i>')}
         <span class="match-team-name">${myTeamName}</span>
       </div>
       <div style="text-align:center;flex:0 0 auto">
@@ -2932,7 +2932,7 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
         </div>
       </div>
       <div class="match-side">
-        ${window._duelId?'<i class="ph ph-bold ph-user" style="font-size:22px;color:#e74c3c"></i>':(nextOpponent?flagEmoji(nextOpponent.name):'<span style="font-size:22px">👤</span>')}
+        ${window._duelId?(window._rivalCrestData?renderRivalCrestThumb(28):'<i class="ph ph-bold ph-user" style="font-size:22px;color:#e74c3c"></i>'):(nextOpponent?flagEmoji(nextOpponent.name):'<span style="font-size:22px">👤</span>')}
         <span class="match-team-name">${oppName}</span>
       </div>
     </div>
@@ -4192,7 +4192,7 @@ function showGroupResultsPopup(){
       const cls=(r.isMe?"group-row-me":"")+(qual?' group-row-qualified':'');
       rows+=`<tr class="${cls}">
         <td>${idx+1}</td>
-        <td>${r.isMe?('<span class="flag-emoji goat-emoji">🐐</span> '+getTeamName(r.name)):(flagEmoji(r.name,18)+' '+getTeamName(r.name))}</td>
+        <td>${r.isMe?((window._myCrestData?renderCrestThumb(18):'<i class="ph ph-bold ph-user" style="font-size:15px;color:#4a90d9;vertical-align:middle"></i>')+' '+getTeamName(r.name)):(flagEmoji(r.name,18)+' '+getTeamName(r.name))}</td>
         <td>${r.played}</td><td>${r.won}</td><td>${r.drawn}</td><td>${r.lost}</td>
         <td>${r.gf}-${r.ga}</td><td><strong>${r.pts}</strong></td>
       </tr>`;
@@ -8047,11 +8047,11 @@ function generateDuelMatchSummary(myGoalEvents, rivalGoalEvents, myShots, rivalS
   const goalsHTML=`
   <div class="goals-columns">
     <div class="goals-col">
-      <div class="goals-col-header"><i class="ph ph-bold ph-user" style="color:#4a90d9;vertical-align:middle;margin-right:2px"></i> ${myLabel}</div>
+      <div class="goals-col-header">${window._myCrestData?renderCrestThumb(18):'<i class="ph ph-bold ph-user" style="color:#4a90d9;vertical-align:middle;margin-right:2px"></i>'} ${myLabel}</div>
       <ul class="goals-list">${myGoalLines.length?myGoalLines.join(''):'<li class="no-goal">Sin goles</li>'}</ul>
     </div>
     <div class="goals-col">
-      <div class="goals-col-header"><i class="ph ph-bold ph-user" style="color:#e74c3c;vertical-align:middle;margin-right:2px"></i> ${mpEsc(opponentUsername)}</div>
+      <div class="goals-col-header">${window._rivalCrestData?renderRivalCrestThumb(18):'<i class="ph ph-bold ph-user" style="color:#e74c3c;vertical-align:middle;margin-right:2px"></i>'} ${mpEsc(opponentUsername)}</div>
       <ul class="goals-list">${oppGoalLines.length?oppGoalLines.join(''):'<li class="no-goal">Sin goles</li>'}</ul>
     </div>
   </div>`;
@@ -8555,7 +8555,7 @@ function mpFinishPenaltiesUI(winnerRole, history){
       <div class="match-modal" style="overflow:hidden;display:flex;flex-direction:column">
         <div class="match-header">
           <div class="match-side">
-            <i class="ph ph-bold ph-user" style="font-size:22px;color:#4a90d9"></i>
+            ${window._myCrestData?renderCrestThumb(28):'<i class="ph ph-bold ph-user" style="font-size:22px;color:#4a90d9"></i>'}
             <span class="match-team-name">${mpEsc(window.myTeamName||myTeamName||'TU EQUIPO')}</span>
           </div>
           <div style="text-align:center;flex:0 0 auto">
@@ -8566,7 +8566,7 @@ function mpFinishPenaltiesUI(winnerRole, history){
             </div>
           </div>
           <div class="match-side">
-            <i class="ph ph-bold ph-user" style="font-size:22px;color:#e74c3c"></i>
+            ${window._rivalCrestData?renderRivalCrestThumb(28):'<i class="ph ph-bold ph-user" style="font-size:22px;color:#e74c3c"></i>'}
             <span class="match-team-name">${mpEsc(window._duelOpponentUsername||'RIVAL')}</span>
           </div>
         </div>
@@ -8606,12 +8606,12 @@ const CREST_ICONS = [
   'ph-fire','ph-mountains','ph-anchor','ph-sword','ph-horse','ph-bird',
   'ph-cat','ph-tree','ph-sun','ph-waves','ph-diamonds-four','ph-medal',
   'ph-skull','ph-rocket','ph-fish','ph-moon-stars','ph-globe','ph-hand-fist',
-  'ph-flag','ph-compass',
+  'ph-flag','ph-compass','ph-bat','ph-hand-peace','ph-basketball','ph-dragon',
 ];
-// Nota: "ph-soccer-ball" no se ha podido confirmar como icono real de
-// Phosphor con certeza — se deja fuera de la lista por defecto para
-// evitar que el icono central aparezca vacío. Si existe, se puede
-// añadir de nuevo sin problema.
+// Nota: no he podido confirmar con total certeza que todos estos nombres
+// de icono existan en Phosphor (en concreto "ph-bat" y "ph-dragon" son
+// menos comunes) — si alguno aparece vacío al seleccionarlo, dímelo y lo
+// sustituyo por una alternativa confirmada.
 
 const CREST_RANKS = ['ninguno','banda_3','banda_5','corona','laurel','laurel_estrella','trofeos','estrella_grande'];
 const CREST_RANK_LABELS = {
@@ -8770,12 +8770,18 @@ function renderCrestInto(svgEl, data){
 /* Miniatura del escudo actual, para usar en la cabecera de partido y
    en las esquinas del perfil. Si no hay escudo guardado, no pinta
    nada (el llamador debe mostrar el emoji de cabra como hasta ahora). */
-function renderCrestThumb(sizePx){
-  if(!window._myCrestData) return '';
-  return `<svg viewBox="0 0 200 200" style="width:${sizePx}px;height:${sizePx}px;display:block" class="crest-thumb-svg">${buildCrestSVGInner(window._myCrestData)}</svg>`;
+function renderCrestThumb(sizePx, data){
+  data = data || window._myCrestData;
+  if(!data) return '';
+  return `<svg viewBox="0 0 200 200" style="width:${sizePx}px;height:${sizePx}px;display:block" class="crest-thumb-svg">${buildCrestSVGInner(data)}</svg>`;
+}
+function renderRivalCrestThumb(sizePx){
+  if(!window._rivalCrestData) return '';
+  return `<svg viewBox="0 0 200 200" style="width:${sizePx}px;height:${sizePx}px;display:block" class="crest-rival-thumb-svg">${buildCrestSVGInner(window._rivalCrestData)}</svg>`;
 }
 function refreshAllCrestThumbs(){
   document.querySelectorAll('.crest-thumb-svg').forEach(svg=>renderCrestInto(svg, window._myCrestData));
+  document.querySelectorAll('.crest-rival-thumb-svg').forEach(svg=>renderCrestInto(svg, window._rivalCrestData));
   document.querySelectorAll('.crest-header-icon').forEach(el=>{
     el.innerHTML = window._myCrestData
       ? renderCrestThumb(36)
@@ -8926,7 +8932,7 @@ function buildCrestControlsUI(container){
         <label class="crest-field-label" id="crestSecondColorLabel" style="display:none">Color secundario</label>
         <div class="crest-option-grid" id="crestBg2ColorOptions" style="display:none"></div>
         <div class="crest-slider-group">
-          <div class="crest-slider-row"><label>Tamaño</label><input type="range" id="crestShapeScale" min="70" max="130" value="100"></div>
+          <div class="crest-slider-row"><label>Tamaño</label><input type="range" id="crestShapeScale" min="40" max="220" value="100"></div>
           <div class="crest-slider-row"><label>Rotar</label><input type="range" id="crestShapeRotate" min="0" max="360" value="0"></div>
         </div>
       </div>
@@ -8941,7 +8947,7 @@ function buildCrestControlsUI(container){
         <label class="crest-field-label">Color</label>
         <div class="crest-option-grid" id="crestIconColorOptions"></div>
         <div class="crest-slider-group">
-          <div class="crest-slider-row"><label>Tamaño</label><input type="range" id="crestIconScale" min="50" max="180" value="100"></div>
+          <div class="crest-slider-row"><label>Tamaño</label><input type="range" id="crestIconScale" min="20" max="280" value="100"></div>
           <div class="crest-slider-row"><label>Rotar</label><input type="range" id="crestIconRotate" min="0" max="360" value="0"></div>
           <div class="crest-slider-row"><label>Mover X</label><input type="range" id="crestIconX" min="-200" max="200" value="0"></div>
           <div class="crest-slider-row"><label>Mover Y</label><input type="range" id="crestIconY" min="-200" max="200" value="0"></div>
@@ -8958,7 +8964,7 @@ function buildCrestControlsUI(container){
         <label class="crest-field-label">Color</label>
         <div class="crest-option-grid" id="crestRankColorOptions"></div>
         <div class="crest-slider-group">
-          <div class="crest-slider-row"><label>Tamaño</label><input type="range" id="crestRankScale" min="50" max="180" value="100"></div>
+          <div class="crest-slider-row"><label>Tamaño</label><input type="range" id="crestRankScale" min="20" max="280" value="100"></div>
           <div class="crest-slider-row"><label>Rotar</label><input type="range" id="crestRankRotate" min="0" max="360" value="0"></div>
           <div class="crest-slider-row"><label>Mover X</label><input type="range" id="crestRankX" min="-200" max="200" value="0"></div>
           <div class="crest-slider-row"><label>Mover Y</label><input type="range" id="crestRankY" min="-200" max="200" value="0"></div>
@@ -9510,6 +9516,7 @@ function mpEnterDuelMode(duelId, duelData, myUid){
     duelId,
     role: isChallenger?'challenger':'opponent',
     opponentUsername: isChallenger?duelData.opponentUsername:duelData.challengerUsername,
+    opponentUid: isChallenger?duelData.opponentId:duelData.challengerId,
     draftStartAt: duelData.draftStartAt||Date.now()
   };
   try{ sessionStorage.setItem('g2g_duel_active', JSON.stringify(info)); }catch(e){}
@@ -9611,6 +9618,19 @@ function stopDuelInactivityMonitor(){
   if(_duelInactivityInterval){ clearInterval(_duelInactivityInterval); _duelInactivityInterval=null; }
 }
 
+/* Carga el escudo del rival en un duelo, para que cada jugador aparezca
+   con el suyo propio en vez de con el icono genérico. Lectura pública
+   del perfil del rival, igual que ya hacemos con sus estadísticas. */
+function loadRivalCrestData(uid){
+  const db=window._fbDb;
+  if(!db||!uid) return;
+  db.collection('users').doc(uid).get().then(snap=>{
+    const data=snap.exists?snap.data():{};
+    window._rivalCrestData=data.customCrest||null;
+    refreshAllCrestThumbs();
+  }).catch(e=>console.error('[Escudo] carga del rival falló:', e));
+}
+
 async function initDuelModeFromSession(){
   let info=null;
   try{ info=JSON.parse(sessionStorage.getItem('g2g_duel_active')||'null'); }catch(e){}
@@ -9619,6 +9639,7 @@ async function initDuelModeFromSession(){
   window._duelRole=info.role;
   window._duelOpponentUsername=info.opponentUsername;
   window._duelDraftDeadline=info.draftStartAt+DUEL_DRAFT_SECONDS*1000;
+  if(info.opponentUid) loadRivalCrestData(info.opponentUid);
   startDuelInactivityMonitor();
   // La pantalla de bienvenida ("EMPEZAR A JUGAR") es obligatoria en cada carga;
   // en modo duelo la saltamos, ya que el jugador ya confirmó explícitamente al
@@ -9675,6 +9696,7 @@ function mpExitDuelMode(){
   try{ sessionStorage.removeItem('g2g_duel_active'); }catch(e){}
   try{ sessionStorage.removeItem('g2g_pending_challenge_id'); }catch(e){}
   window._duelId=null;
+  window._rivalCrestData=null;
   if(_duelTimerInterval){ clearInterval(_duelTimerInterval); _duelTimerInterval=null; }
   stopDuelInactivityMonitor();
 }
