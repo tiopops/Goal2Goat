@@ -8611,10 +8611,10 @@ const CREST_ICONS = [
 // "ph-bat" y "ph-dragon" no existían de verdad en Phosphor (por eso salían
 // vacíos) — los quité y puse "ph-heart" (pedido) y "ph-eye" en su lugar.
 
-const CREST_RANKS = ['ninguno','banda_3','banda_5','corona','laurel','laurel_estrella','trofeos','estrella_grande'];
+const CREST_RANKS = ['ninguno','ph-crown','ph-star','ph-trophy','ph-medal','ph-seal-check','ph-flag','ph-shield-star'];
 const CREST_RANK_LABELS = {
-  ninguno:'Ninguno', banda_3:'Banda 3★', banda_5:'Banda 5★', corona:'Corona',
-  laurel:'Laurel', laurel_estrella:'Laurel+★', trofeos:'Trofeos', estrella_grande:'★ Grande'
+  ninguno:'Ninguno', 'ph-crown':'Corona', 'ph-star':'Estrella', 'ph-trophy':'Copa',
+  'ph-medal':'Medalla', 'ph-seal-check':'Sello', 'ph-flag':'Bandera', 'ph-shield-star':'Escudo'
 };
 
 function defaultCrestData(){
@@ -8686,51 +8686,11 @@ function buildCrestRankLayer(d){
   const tx = d.rankX||0, ty = d.rankY||0;
   const rot = d.rankRotate||0;
   const rc = d.rankColor||'#f0c419';
-  const wrap = (anchorY, content) => `<g transform="translate(${100+tx} ${anchorY+ty}) rotate(${rot}) scale(${scale})">${content}</g>`;
-
-  if(d.rank==='banda_3' || d.rank==='banda_5'){
-    const n = d.rank==='banda_3' ? 3 : 5;
-    const spacing = 15;
-    let stars = '';
-    for(let i=0;i<n;i++){
-      const x = (i-(n-1)/2)*spacing;
-      const y = -Math.abs(i-(n-1)/2)*1.5 + 3;
-      stars += `<path d="${CREST_STAR_PATH}" transform="translate(${x} ${y}) scale(0.55)" fill="#fff"/>`;
-    }
-    const bandW = n===3 ? 46 : 66;
-    return wrap(172, `<path d="M${-bandW} -8 Q0 14 ${bandW} -8 L${bandW} 8 Q0 26 ${-bandW} 8 Z" fill="${rc}" stroke="#000" stroke-opacity=".3" stroke-width="1.5"/>${stars}`);
-  }
-  if(d.rank==='corona'){
-    return wrap(26, `<g fill="${rc}" stroke="#000" stroke-opacity=".3" stroke-width="1">
-      <path d="M-20 6 L-16 -10 -7 -1 0 -14 7 -1 16 -10 20 6 Z"/><rect x="-20" y="6" width="40" height="6" rx="1"/></g>`);
-  }
-  if(d.rank==='laurel' || d.rank==='laurel_estrella'){
-    const leaf = (x,y,r)=>`<ellipse cx="${x}" cy="${y}" rx="6" ry="3" fill="${rc}" stroke="#000" stroke-opacity=".2" stroke-width=".6" transform="rotate(${r} ${x} ${y})"/>`;
-    let leaves = '';
-    for(let i=0;i<5;i++){
-      const yy = -i*11;
-      leaves += leaf(-30+i*2, yy, -40+i*6);
-      leaves += leaf(30-i*2, yy, 40-i*6);
-    }
-    const star = d.rank==='laurel_estrella' ? `<path d="${CREST_STAR_PATH}" transform="translate(0 -22) scale(1.1)" fill="#fff" stroke="#000" stroke-opacity=".2" stroke-width=".5"/>` : '';
-    return wrap(172, leaves + star);
-  }
-  if(d.rank==='trofeos'){
-    const box = 16 * scale;
-    const spacing = box * 1.15;
-    let out = '';
-    [-1,0,1].forEach(i=>{
-      const cx = 100 + i*spacing + tx, cy = 20 + ty;
-      out += `<foreignObject x="${cx-box/2}" y="${cy-box/2}" width="${box}" height="${box}" transform="rotate(${rot} ${cx} ${cy})">
-        <div xmlns="http://www.w3.org/1999/xhtml" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:${rc};font-size:${box*0.85}px;text-shadow:0 1px 2px rgba(0,0,0,.6)"><i class="ph ph-bold ph-trophy"></i></div>
-      </foreignObject>`;
-    });
-    return out;
-  }
-  if(d.rank==='estrella_grande'){
-    return wrap(24, `<path d="${CREST_STAR_PATH}" transform="scale(2.2)" fill="${rc}" stroke="#000" stroke-opacity=".3" stroke-width=".5"/>`);
-  }
-  return '';
+  const box = 46 * scale;
+  const cx = 100 + tx, cy = 26 + ty;
+  return `<foreignObject x="${cx-box/2}" y="${cy-box/2}" width="${box}" height="${box}" transform="rotate(${rot} ${cx} ${cy})">
+    <div xmlns="http://www.w3.org/1999/xhtml" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:${rc};font-size:${box*0.8}px;filter:drop-shadow(0 1px 2px rgba(0,0,0,.5))"><i class="ph ph-bold ${d.rank}"></i></div>
+  </foreignObject>`;
 }
 
 function buildCrestSVGInner(d){
@@ -8958,7 +8918,7 @@ function buildCrestControlsUI(container){
       </div>
       <div class="crest-panel-body" style="max-height:0;overflow:hidden;transition:max-height .25s ease;padding:0 14px">
         <label class="crest-field-label">Tipo</label>
-        <div class="crest-option-grid wide" id="crestRankOptions"></div>
+        <div class="crest-option-grid" id="crestRankOptions"></div>
         <label class="crest-field-label">Color</label>
         <div class="crest-option-grid" id="crestRankColorOptions"></div>
         <div class="crest-slider-group">
@@ -9036,7 +8996,11 @@ function buildCrestControlsUI(container){
   });
   crestBuildOptions('crestIconColorOptions', CREST_COLORS, c=>c===_crestEditState.iconColor, c=>_crestEditState.iconColor=c, c=>{ const b=document.createElement('div'); b.className='crest-swatch'; b.style.background=c; return b; });
 
-  crestBuildOptions('crestRankOptions', CREST_RANKS, r=>r===_crestEditState.rank, r=>_crestEditState.rank=r, r=>{ const b=document.createElement('div'); b.className='crest-icon-btn wide'; b.textContent=CREST_RANK_LABELS[r]; return b; });
+  crestBuildOptions('crestRankOptions', CREST_RANKS, r=>r===_crestEditState.rank, r=>_crestEditState.rank=r, r=>{
+    const b=document.createElement('div'); b.className='crest-icon-btn'; b.title=CREST_RANK_LABELS[r];
+    b.innerHTML = r==='ninguno' ? `<i class="ph ph-bold ph-prohibit" style="color:#666"></i>` : `<i class="ph ph-bold ${r}"></i>`;
+    return b;
+  });
   crestBuildOptions('crestRankColorOptions', CREST_COLORS, c=>c===_crestEditState.rankColor, c=>_crestEditState.rankColor=c, c=>{ const b=document.createElement('div'); b.className='crest-swatch'; b.style.background=c; return b; });
 
   crestBindSlider('crestShapeScale','shapeScale'); crestBindSlider('crestShapeRotate','shapeRotate');
