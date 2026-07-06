@@ -8620,8 +8620,8 @@ const CREST_RANK_LABELS = {
 function defaultCrestData(){
   return {
     shape:'classic', pattern:'solid', bgColor:'#1a1a1a', bg2Color:'#f0c419', shapeScale:100, shapeRotate:0,
-    icon:'ph-star', iconColor:'#f0c419', iconScale:100, iconRotate:0, iconX:0, iconY:0, iconFilled:false,
-    rank:'ninguno', rankColor:'#f0c419', rankScale:100, rankRotate:0, rankX:0, rankY:0, rankFilled:false,
+    icon:'ph-star', iconColor:'#f0c419', iconScale:100, iconRotate:0, iconX:0, iconY:0,
+    rank:'ninguno', rankColor:'#f0c419', rankScale:100, rankRotate:0, rankX:0, rankY:0,
   };
 }
 
@@ -8700,10 +8700,8 @@ function buildCrestRankLayer(d){
 
   const box = 46 * scale;
   const cx = 100 + tx, cy = 26 + ty;
-  const fillCircle = d.rankFilled ? `<circle cx="${cx}" cy="${cy}" r="${box*0.52}" fill="${rc}" transform="rotate(${rot} ${cx} ${cy})"/>` : '';
-  const iconColor = d.rankFilled ? '#fff' : rc;
-  return `${fillCircle}<foreignObject x="${cx-box/2}" y="${cy-box/2}" width="${box}" height="${box}" transform="rotate(${rot} ${cx} ${cy})">
-    <div xmlns="http://www.w3.org/1999/xhtml" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:${iconColor};font-size:${box*0.8}px;filter:drop-shadow(0 1px 2px rgba(0,0,0,.5))"><i class="ph ph-bold ${d.rank}"></i></div>
+  return `<foreignObject x="${cx-box/2}" y="${cy-box/2}" width="${box}" height="${box}" transform="rotate(${rot} ${cx} ${cy})">
+    <div xmlns="http://www.w3.org/1999/xhtml" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:${rc};font-size:${box*0.8}px;filter:drop-shadow(0 1px 2px rgba(0,0,0,.5))"><i class="ph ph-bold ${d.rank}"></i></div>
   </foreignObject>`;
 }
 
@@ -8724,11 +8722,9 @@ function buildCrestSVGInner(d){
     const iconX = 100+(d.iconX||0)-iconBoxSize/2;
     const iconY = 100+(d.iconY||0)-iconBoxSize/2;
     const iconCx = 100+(d.iconX||0), iconCy = 100+(d.iconY||0);
-    const iconFillCircle = d.iconFilled ? `<circle cx="${iconCx}" cy="${iconCy}" r="${iconBoxSize*0.52}" fill="${d.iconColor}" transform="rotate(${d.iconRotate||0} ${iconCx} ${iconCy})"/>` : '';
-    const iconRenderColor = d.iconFilled ? '#fff' : d.iconColor;
-    iconLayer = `${iconFillCircle}<foreignObject x="${iconX}" y="${iconY}" width="${iconBoxSize}" height="${iconBoxSize}" transform="rotate(${d.iconRotate||0} ${iconCx} ${iconCy})">
+    iconLayer = `<foreignObject x="${iconX}" y="${iconY}" width="${iconBoxSize}" height="${iconBoxSize}" transform="rotate(${d.iconRotate||0} ${iconCx} ${iconCy})">
       <div xmlns="http://www.w3.org/1999/xhtml" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center">
-        <i class="ph ph-bold ${d.icon}" style="color:${iconRenderColor};font-size:${58*iScale}px;filter:drop-shadow(0 2px 3px rgba(0,0,0,.5))"></i>
+        <i class="ph ph-bold ${d.icon}" style="color:${d.iconColor};font-size:${58*iScale}px;filter:drop-shadow(0 2px 3px rgba(0,0,0,.5))"></i>
       </div>
     </foreignObject>`;
   }
@@ -8920,9 +8916,6 @@ function buildCrestControlsUI(container){
         <div class="crest-option-grid" id="crestIconOptions"></div>
         <label class="crest-field-label">Color</label>
         <div class="crest-option-grid" id="crestIconColorOptions"></div>
-        <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text-muted);margin-bottom:6px">
-          <input type="checkbox" id="crestIconFilledCheckbox"> Fondo relleno en vez de transparente
-        </label>
         <div class="crest-slider-group">
           <div class="crest-slider-row"><label>Tamaño</label><input type="range" id="crestIconScale" min="20" max="280" value="100"></div>
           <div class="crest-slider-row"><label>Rotar</label><input type="range" id="crestIconRotate" min="0" max="360" value="0"></div>
@@ -8940,9 +8933,6 @@ function buildCrestControlsUI(container){
         <div class="crest-option-grid" id="crestRankOptions"></div>
         <label class="crest-field-label">Color</label>
         <div class="crest-option-grid" id="crestRankColorOptions"></div>
-        <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text-muted);margin-bottom:6px">
-          <input type="checkbox" id="crestRankFilledCheckbox"> Fondo relleno en vez de transparente
-        </label>
         <div class="crest-slider-group">
           <div class="crest-slider-row"><label>Tamaño</label><input type="range" id="crestRankScale" min="20" max="280" value="100"></div>
           <div class="crest-slider-row"><label>Rotar</label><input type="range" id="crestRankRotate" min="0" max="360" value="0"></div>
@@ -9031,13 +9021,6 @@ function buildCrestControlsUI(container){
   crestBindSlider('crestIconX','iconX'); crestBindSlider('crestIconY','iconY');
   crestBindSlider('crestRankScale','rankScale'); crestBindSlider('crestRankRotate','rankRotate');
   crestBindSlider('crestRankX','rankX'); crestBindSlider('crestRankY','rankY');
-
-  const iconFilledCb = document.getElementById('crestIconFilledCheckbox');
-  iconFilledCb.checked = !!_crestEditState.iconFilled;
-  iconFilledCb.addEventListener('change', ()=>{ _crestEditState.iconFilled = iconFilledCb.checked; crestRenderAll(); });
-  const rankFilledCb = document.getElementById('crestRankFilledCheckbox');
-  rankFilledCb.checked = !!_crestEditState.rankFilled;
-  rankFilledCb.addEventListener('change', ()=>{ _crestEditState.rankFilled = rankFilledCb.checked; crestRenderAll(); });
 }
 
 function crestBuildOptions(containerId, items, isActive, onClick, renderItem){
