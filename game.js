@@ -1895,7 +1895,9 @@ function startMatchPhase(){
   document.getElementById("rivalBox").style.display="block";
   document.getElementById("matchHistoryBox").style.display="block";
   document.getElementById("playMatchBtn").style.display="block";
-  const abandonBtn0=document.getElementById("abandonTournamentBtn"); if(abandonBtn0 && !window._duelId) abandonBtn0.style.display="block";
+  const matchActionWrap0=document.getElementById("matchActionWrap");
+  if(matchActionWrap0) matchActionWrap0.style.display="flex";
+  const abandonBtn0=document.getElementById("abandonTournamentBtn"); if(abandonBtn0) abandonBtn0.style.display=window._duelId?"none":"block";
   document.getElementById("moraleSection").style.display="block";
   renderMorale();
   const qb=document.getElementById("quickBuildWrap");
@@ -7900,6 +7902,7 @@ function mpRenderStrategyAndBenchPhase(idx){
   document.getElementById("rivalBox").style.display="block";
   const matchHistoryBox=document.getElementById("matchHistoryBox"); if(matchHistoryBox) matchHistoryBox.style.display="none";
   const playBtn=document.getElementById("playMatchBtn"); if(playBtn) playBtn.style.display="none";
+  const matchActionWrap1=document.getElementById("matchActionWrap"); if(matchActionWrap1) matchActionWrap1.style.display="none";
   const abandonBtn1=document.getElementById("abandonTournamentBtn"); if(abandonBtn1) abandonBtn1.style.display="none";
   // Por si se llega aquí tras recargar a mitad de duelo (sin pasar por el
   // draft normal), asegurar que estos botones siguen ocultos.
