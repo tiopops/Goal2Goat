@@ -7901,7 +7901,7 @@ function mpRenderStrategyAndBenchPhase(idx){
   // Cabecera del panel de rival, adaptada a un oponente humano
   const rivalInfo=document.getElementById('rivalInfo');
   if(rivalInfo) rivalInfo.innerHTML=`<div style="text-align:center;padding:4px 0 8px">
-      <i class="ph ph-bold ph-user" style="font-size:26px;color:#7b9cff"></i>
+      ${window._rivalCrestData?renderRivalCrestThumb(40):'<i class="ph ph-bold ph-user" style="font-size:26px;color:#7b9cff"></i>'}
       <div style="font-family:'Bebas Neue',Impact,sans-serif;font-size:16px;margin-top:4px">${mpEsc(window._duelOpponentUsername||'')}</div>
     </div>`;
   const rivalHint=document.getElementById('rivalHint');
@@ -8606,12 +8606,10 @@ const CREST_ICONS = [
   'ph-fire','ph-mountains','ph-anchor','ph-sword','ph-horse','ph-bird',
   'ph-cat','ph-tree','ph-sun','ph-waves','ph-diamonds-four','ph-medal',
   'ph-skull','ph-rocket','ph-fish','ph-moon-stars','ph-globe','ph-hand-fist',
-  'ph-flag','ph-compass','ph-bat','ph-hand-peace','ph-basketball','ph-dragon',
+  'ph-flag','ph-compass','ph-heart','ph-hand-peace','ph-basketball','ph-eye',
 ];
-// Nota: no he podido confirmar con total certeza que todos estos nombres
-// de icono existan en Phosphor (en concreto "ph-bat" y "ph-dragon" son
-// menos comunes) — si alguno aparece vacío al seleccionarlo, dímelo y lo
-// sustituyo por una alternativa confirmada.
+// "ph-bat" y "ph-dragon" no existían de verdad en Phosphor (por eso salían
+// vacíos) — los quité y puse "ph-heart" (pedido) y "ph-eye" en su lugar.
 
 const CREST_RANKS = ['ninguno','banda_3','banda_5','corona','laurel','laurel_estrella','trofeos','estrella_grande'];
 const CREST_RANK_LABELS = {
@@ -8697,24 +8695,24 @@ function buildCrestRankLayer(d){
     for(let i=0;i<n;i++){
       const x = (i-(n-1)/2)*spacing;
       const y = -Math.abs(i-(n-1)/2)*1.5 + 3;
-      stars += `<path d="${CREST_STAR_PATH}" transform="translate(${x} ${y}) scale(0.55)" fill="${rc}"/>`;
+      stars += `<path d="${CREST_STAR_PATH}" transform="translate(${x} ${y}) scale(0.55)" fill="#fff"/>`;
     }
     const bandW = n===3 ? 46 : 66;
-    return wrap(172, `<path d="M${-bandW} -8 Q0 14 ${bandW} -8 L${bandW} 8 Q0 26 ${-bandW} 8 Z" fill="#c0392b" stroke="#000" stroke-opacity=".3" stroke-width="1.5"/>${stars}`);
+    return wrap(172, `<path d="M${-bandW} -8 Q0 14 ${bandW} -8 L${bandW} 8 Q0 26 ${-bandW} 8 Z" fill="${rc}" stroke="#000" stroke-opacity=".3" stroke-width="1.5"/>${stars}`);
   }
   if(d.rank==='corona'){
     return wrap(26, `<g fill="${rc}" stroke="#000" stroke-opacity=".3" stroke-width="1">
       <path d="M-20 6 L-16 -10 -7 -1 0 -14 7 -1 16 -10 20 6 Z"/><rect x="-20" y="6" width="40" height="6" rx="1"/></g>`);
   }
   if(d.rank==='laurel' || d.rank==='laurel_estrella'){
-    const leaf = (x,y,r)=>`<ellipse cx="${x}" cy="${y}" rx="6" ry="3" fill="#2ecc71" stroke="#000" stroke-opacity=".2" stroke-width=".6" transform="rotate(${r} ${x} ${y})"/>`;
+    const leaf = (x,y,r)=>`<ellipse cx="${x}" cy="${y}" rx="6" ry="3" fill="${rc}" stroke="#000" stroke-opacity=".2" stroke-width=".6" transform="rotate(${r} ${x} ${y})"/>`;
     let leaves = '';
     for(let i=0;i<5;i++){
       const yy = -i*11;
       leaves += leaf(-30+i*2, yy, -40+i*6);
       leaves += leaf(30-i*2, yy, 40-i*6);
     }
-    const star = d.rank==='laurel_estrella' ? `<path d="${CREST_STAR_PATH}" transform="translate(0 -22) scale(1.1)" fill="${rc}"/>` : '';
+    const star = d.rank==='laurel_estrella' ? `<path d="${CREST_STAR_PATH}" transform="translate(0 -22) scale(1.1)" fill="#fff" stroke="#000" stroke-opacity=".2" stroke-width=".5"/>` : '';
     return wrap(172, leaves + star);
   }
   if(d.rank==='trofeos'){
@@ -8773,11 +8771,11 @@ function renderCrestInto(svgEl, data){
 function renderCrestThumb(sizePx, data){
   data = data || window._myCrestData;
   if(!data) return '';
-  return `<svg viewBox="0 0 200 200" style="width:${sizePx}px;height:${sizePx}px;display:block" class="crest-thumb-svg">${buildCrestSVGInner(data)}</svg>`;
+  return `<svg viewBox="0 0 200 200" style="width:${sizePx}px;height:${sizePx}px;display:inline-block;vertical-align:middle" class="crest-thumb-svg">${buildCrestSVGInner(data)}</svg>`;
 }
 function renderRivalCrestThumb(sizePx){
   if(!window._rivalCrestData) return '';
-  return `<svg viewBox="0 0 200 200" style="width:${sizePx}px;height:${sizePx}px;display:block" class="crest-rival-thumb-svg">${buildCrestSVGInner(window._rivalCrestData)}</svg>`;
+  return `<svg viewBox="0 0 200 200" style="width:${sizePx}px;height:${sizePx}px;display:inline-block;vertical-align:middle" class="crest-rival-thumb-svg">${buildCrestSVGInner(window._rivalCrestData)}</svg>`;
 }
 function refreshAllCrestThumbs(){
   document.querySelectorAll('.crest-thumb-svg').forEach(svg=>renderCrestInto(svg, window._myCrestData));
