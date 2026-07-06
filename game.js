@@ -7913,7 +7913,7 @@ function mpRenderStrategyAndBenchPhase(idx){
   // Cabecera del panel de rival, adaptada a un oponente humano
   const rivalInfo=document.getElementById('rivalInfo');
   if(rivalInfo) rivalInfo.innerHTML=`<div style="text-align:center;padding:4px 0 8px">
-      ${window._rivalCrestData?renderRivalCrestThumb(40):'<i class="ph ph-bold ph-user" style="font-size:26px;color:#7b9cff"></i>'}
+      ${window._rivalCrestData?renderRivalCrestThumb(90):'<i class="ph ph-bold ph-user" style="font-size:56px;color:#7b9cff"></i>'}
       <div style="font-family:'Bebas Neue',Impact,sans-serif;font-size:16px;margin-top:4px">${mpEsc(window._duelOpponentUsername||'')}</div>
     </div>`;
   const rivalHint=document.getElementById('rivalHint');
