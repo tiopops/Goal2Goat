@@ -1156,6 +1156,14 @@ body.dark-theme .settings-item:hover{background:var(--row-hover);color:var(--gol
     width:14px;height:14px;font-size:8px;
     display:flex;align-items:center;justify-content:center;font-weight:700;
   }
+  @keyframes mobTabGuidePulse{
+    0%{ transform:scale(1); box-shadow:0 0 0 0 rgba(224,60,60,.6); }
+    70%{ transform:scale(1.25); box-shadow:0 0 0 6px rgba(224,60,60,0); }
+    100%{ transform:scale(1); box-shadow:0 0 0 0 rgba(224,60,60,0); }
+  }
+  .mob-tab-badge-guide{
+    animation:mobTabGuidePulse 1.3s ease-in-out infinite;
+  }
 
   /* Spacer so content isn't hidden behind the fixed tab bar */
   body::after{content:'';display:block;height:74px}

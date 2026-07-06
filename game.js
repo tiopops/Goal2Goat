@@ -151,65 +151,65 @@ const STAT_LABELS={
    ════════════════════════════════════════════════════════════ */
 const GIRO_CARDS = [
   { id:'presion_alta', name:'PRESIÓN ALTA', icon:'ph-arrow-fat-lines-up',
-    pos:'+12% ataque', neg:'−8% resistencia (persistente)',
-    apply(ctx){ ctx.myLambda+=0.084; ctx.fatigue-=8; } },
+    pos:'+20% ataque', neg:'−8% resistencia (persistente)',
+    apply(ctx){ ctx.myLambda+=0.14; ctx.fatigue-=8; } },
   { id:'cierre_atras', name:'CIERRE ATRÁS', icon:'ph-shield-check',
-    pos:'+15% defensa', neg:'−10% ataque',
-    apply(ctx){ ctx.oppLambda-=0.105; ctx.myLambda-=0.07; } },
+    pos:'+22% defensa', neg:'−7% ataque',
+    apply(ctx){ ctx.oppLambda-=0.16; ctx.myLambda-=0.05; } },
   { id:'hidratacion', name:'PAUSA DE HIDRATACIÓN', icon:'ph-drop',
-    pos:'+18% resistencia (persistente)', neg:'−6% ritmo',
-    apply(ctx){ ctx.fatigue+=18; ctx.myLambda-=0.027; } },
+    pos:'+18% resistencia (persistente)', neg:'−4% ritmo',
+    apply(ctx){ ctx.fatigue+=18; ctx.myLambda-=0.02; } },
   { id:'golpe_pizarra', name:'GOLPE DE PIZARRA', icon:'ph-chalkboard-teacher',
-    pos:'+8% ataque y +8% defensa', neg:'−14% resistencia (persistente)',
-    apply(ctx){ ctx.myLambda+=0.056; ctx.oppLambda-=0.056; ctx.fatigue-=14; } },
+    pos:'+13% ataque y +13% defensa', neg:'−14% resistencia (persistente)',
+    apply(ctx){ ctx.myLambda+=0.09; ctx.oppLambda-=0.09; ctx.fatigue-=14; } },
   { id:'grito_capitan', name:'GRITO DEL CAPITÁN', icon:'ph-megaphone',
-    pos:'+10% moral (persistente)', neg:'más riesgo de tarjeta propia',
-    apply(ctx){ ctx.morale+=10; ctx.cardRiskDelta+=0.05; } },
+    pos:'+14% moral (persistente)', neg:'más riesgo de tarjeta propia',
+    apply(ctx){ ctx.morale+=14; ctx.cardRiskDelta+=0.05; } },
   { id:'tiquitaca', name:'TIQUI-TACA FORZADO', icon:'ph-arrows-clockwise',
-    pos:'+14% pase y +10% técnica', neg:'−8% ataque directo',
-    apply(ctx){ ctx.myLambda+=0.054; ctx.myLambda-=0.056; } },
+    pos:'+16% pase y control del balón', neg:'−4% defensa (te expones al contragolpe)',
+    apply(ctx){ ctx.myLambda+=0.10; ctx.oppLambda+=0.03; } },
   { id:'contragolpe', name:'CONTRAGOLPE RELÁMPAGO', icon:'ph-lightning',
-    pos:'+18% ritmo', neg:'−10% defensa',
-    apply(ctx){ ctx.myLambda+=0.081; ctx.oppLambda+=0.07; } },
+    pos:'+21% ritmo', neg:'−7% defensa',
+    apply(ctx){ ctx.myLambda+=0.15; ctx.oppLambda+=0.05; } },
   { id:'muro', name:'MURO DEFENSIVO', icon:'ph-wall',
-    pos:'+20% defensa', neg:'−12% pase',
-    apply(ctx){ ctx.oppLambda-=0.14; ctx.myLambda-=0.054; } },
+    pos:'+26% defensa', neg:'−9% pase',
+    apply(ctx){ ctx.oppLambda-=0.18; ctx.myLambda-=0.04; } },
   { id:'orden_banquillo', name:'ORDEN DEL BANQUILLO', icon:'ph-clipboard-text',
     pos:'+15% resistencia (persistente)', neg:'−5% moral (persistente)',
     apply(ctx){ ctx.fatigue+=15; ctx.morale-=5; } },
   { id:'estrella', name:'ESTRELLA DEL PARTIDO', icon:'ph-star',
-    pos:'+20 valoración al mejor jugador', neg:'más riesgo de lesión (ese jugador)',
-    apply(ctx){ ctx.starBoost=20; ctx.injuryRiskDelta+=0.05; } },
+    pos:'+25 valoración al mejor jugador y +6% ataque', neg:'más riesgo de lesión (ese jugador)',
+    apply(ctx){ ctx.starBoost=25; ctx.myLambda+=0.03; ctx.injuryRiskDelta+=0.05; } },
   { id:'fuera_juego', name:'FUERA DE JUEGO PROVOCADO', icon:'ph-flag',
-    pos:'+10% defensa', neg:'−8% técnica',
-    apply(ctx){ ctx.oppLambda-=0.07; ctx.myLambda-=0.032; } },
+    pos:'+16% defensa', neg:'−6% técnica',
+    apply(ctx){ ctx.oppLambda-=0.11; ctx.myLambda-=0.03; } },
   { id:'balon_parado', name:'BALÓN PARADO ENSAYADO', icon:'ph-target',
-    pos:'+15% ataque', neg:'−10% pase en juego abierto',
-    apply(ctx){ ctx.myLambda+=0.105; ctx.myLambda-=0.04; } },
+    pos:'+22% ataque', neg:'−5% pase en juego abierto',
+    apply(ctx){ ctx.myLambda+=0.16; ctx.myLambda-=0.03; } },
   { id:'presion_asfixiante', name:'PRESIÓN ASFIXIANTE', icon:'ph-wind',
-    pos:'+16% defensa y +8% ritmo', neg:'−14% resistencia (persistente)',
-    apply(ctx){ ctx.oppLambda-=0.112; ctx.myLambda+=0.032; ctx.fatigue-=14; } },
+    pos:'+21% defensa y +11% ritmo', neg:'−14% resistencia (persistente)',
+    apply(ctx){ ctx.oppLambda-=0.15; ctx.myLambda+=0.05; ctx.fatigue-=14; } },
   { id:'rondo', name:'RONDO DE VESTUARIO', icon:'ph-circle-dashed',
-    pos:'+12% técnica', neg:'−6% defensa',
-    apply(ctx){ ctx.myLambda+=0.048; ctx.oppLambda+=0.042; } },
+    pos:'+18% técnica y cohesión de equipo', neg:'−3% defensa (algo de riesgo)',
+    apply(ctx){ ctx.myLambda+=0.09; ctx.oppLambda+=0.01; } },
   { id:'lectura_arbitro', name:'LECTURA DEL ÁRBITRO', icon:'ph-eye',
-    pos:'menos riesgo de tarjeta propia', neg:'−8% ataque',
-    apply(ctx){ ctx.cardRiskDelta-=0.05; ctx.myLambda-=0.056; } },
+    pos:'mucho menos riesgo de tarjeta propia', neg:'−4% ataque',
+    apply(ctx){ ctx.cardRiskDelta-=0.06; ctx.myLambda-=0.03; } },
   { id:'viento_favor', name:'VIENTO A FAVOR', icon:'ph-wind',
-    pos:'+10% ritmo y +10% pase', neg:'−8% técnica',
-    apply(ctx){ ctx.myLambda+=0.072; ctx.myLambda-=0.032; } },
+    pos:'+16% ritmo y +14% pase', neg:'−3% técnica',
+    apply(ctx){ ctx.myLambda+=0.11; ctx.myLambda-=0.02; } },
   { id:'grada_favor', name:'GRADA A FAVOR', icon:'ph-users-three',
-    pos:'+12% moral (persistente)', neg:'−8% resistencia (persistente)',
-    apply(ctx){ ctx.morale+=12; ctx.fatigue-=8; } },
+    pos:'+16% moral (persistente)', neg:'−8% resistencia (persistente)',
+    apply(ctx){ ctx.morale+=16; ctx.fatigue-=8; } },
   { id:'tiempo_controlado', name:'TIEMPO CONTROLADO', icon:'ph-hourglass-medium',
-    pos:'apenas pierdes resistencia el resto del partido (persistente)', neg:'−8% ataque',
-    apply(ctx){ ctx.fatigue+=10; ctx.myLambda-=0.056; } },
+    pos:'apenas pierdes resistencia el resto del partido (persistente)', neg:'−4% ataque',
+    apply(ctx){ ctx.fatigue+=14; ctx.myLambda-=0.03; } },
   { id:'prorroga_mental', name:'PRÓRROGA MENTAL', icon:'ph-brain',
-    pos:'+5% en todas las estadísticas', neg:'−10% resistencia (persistente)',
-    apply(ctx){ ctx.myLambda+=0.035; ctx.oppLambda-=0.035; ctx.fatigue-=10; } },
+    pos:'+9% en todas las estadísticas', neg:'−10% resistencia (persistente)',
+    apply(ctx){ ctx.myLambda+=0.06; ctx.oppLambda-=0.06; ctx.fatigue-=10; } },
   { id:'ultima_bala', name:'ÚLTIMA BALA', icon:'ph-fire',
-    pos:'+25% ataque', neg:'−20% defensa',
-    apply(ctx){ ctx.myLambda+=0.175; ctx.oppLambda+=0.14; } },
+    pos:'+32% ataque', neg:'−15% defensa',
+    apply(ctx){ ctx.myLambda+=0.22; ctx.oppLambda+=0.10; } },
 ];
 
 
@@ -637,6 +637,15 @@ let formationIsLocked=false; // set true the moment SELECCIONAR JUGADOR/EQUIPO R
 
 /* ---------- DOM REFS ---------- */
 const rollBtn = document.getElementById("rollBtn");
+const abandonTournamentBtnEl = document.getElementById("abandonTournamentBtn");
+if(abandonTournamentBtnEl){
+  abandonTournamentBtnEl.addEventListener("click", ()=>{
+    showConfirmPopup(
+      '¿Abandonar el torneo? Se perderá todo el progreso conseguido.',
+      ()=>location.reload()
+    );
+  });
+}
 // Use the correct card container based on viewport
 function getPlayerCardEl(){
   return window.innerWidth<=1050
@@ -1886,6 +1895,7 @@ function startMatchPhase(){
   document.getElementById("rivalBox").style.display="block";
   document.getElementById("matchHistoryBox").style.display="block";
   document.getElementById("playMatchBtn").style.display="block";
+  const abandonBtn0=document.getElementById("abandonTournamentBtn"); if(abandonBtn0 && !window._duelId) abandonBtn0.style.display="block";
   document.getElementById("moraleSection").style.display="block";
   renderMorale();
   const qb=document.getElementById("quickBuildWrap");
@@ -5991,6 +6001,7 @@ function switchMobileTab(tab){
   }
 }
 function notifyMobileRivalTab(){
+  return; // Notificación desactivada a petición del usuario
   if(window.innerWidth>1050) return;
   const badge=document.querySelector('.mob-tab[data-tab="rival"] .mob-tab-badge');
   if(badge){ badge.style.display='flex'; }
@@ -7889,6 +7900,7 @@ function mpRenderStrategyAndBenchPhase(idx){
   document.getElementById("rivalBox").style.display="block";
   const matchHistoryBox=document.getElementById("matchHistoryBox"); if(matchHistoryBox) matchHistoryBox.style.display="none";
   const playBtn=document.getElementById("playMatchBtn"); if(playBtn) playBtn.style.display="none";
+  const abandonBtn1=document.getElementById("abandonTournamentBtn"); if(abandonBtn1) abandonBtn1.style.display="none";
   // Por si se llega aquí tras recargar a mitad de duelo (sin pasar por el
   // draft normal), asegurar que estos botones siguen ocultos.
   const rollBtnEl=document.getElementById("rollBtn"); if(rollBtnEl) rollBtnEl.style.display="none";
@@ -8760,6 +8772,28 @@ function refreshAllCrestThumbs(){
 }
 
 /* Cargar el escudo guardado (caché local instantánea + Firestore real) */
+/* Ventana de confirmación reutilizable (mismo diseño que "borrar
+   escudo") — evita depender de confirm() nativo, que no funciona
+   dentro del WebView de Android sin configuración extra. */
+function showConfirmPopup(message, onConfirm, confirmLabel){
+  const confirmOv = document.createElement('div');
+  confirmOv.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:80000;display:flex;align-items:center;justify-content:center;padding:20px';
+  confirmOv.innerHTML = `
+    <div style="background:var(--card-bg);border:2px solid #e74c3c;border-radius:8px;padding:20px;max-width:320px;text-align:center">
+      <p style="color:var(--text);font-size:13px;margin:0 0 16px">${message}</p>
+      <div style="display:flex;gap:10px">
+        <button id="genConfirmCancel" style="flex:1;background:none;border:1px solid var(--line);color:var(--text);border-radius:6px;padding:8px;cursor:pointer;font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:1px">CANCELAR</button>
+        <button id="genConfirmYes" style="flex:1;background:#e74c3c;border:none;color:#fff;border-radius:6px;padding:8px;cursor:pointer;font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:1px">${confirmLabel||'OK'}</button>
+      </div>
+    </div>`;
+  document.body.appendChild(confirmOv);
+  document.getElementById('genConfirmCancel').addEventListener('click', ()=>confirmOv.remove());
+  document.getElementById('genConfirmYes').addEventListener('click', ()=>{
+    confirmOv.remove();
+    onConfirm();
+  });
+}
+
 function loadMyCrestData(){
   try{
     const cached = localStorage.getItem('g2g_crest_data');
@@ -8818,11 +8852,11 @@ function openCrestEditor(){
       <h1 style="font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:1.5px;color:var(--gold);font-size:18px;margin:0 0 12px;display:flex;align-items:center;gap:8px"><i class="ph ph-bold ph-shield-star"></i> PERSONALIZAR ESCUDO</h1>
       <div style="display:flex;flex-direction:column;gap:14px;flex:1;min-height:0;overflow-y:auto;padding-right:8px" id="crestBodySplit">
         <div id="crestPreviewCol" style="flex-shrink:0;display:flex;flex-direction:row;align-items:center;gap:14px;position:sticky;top:0;background:var(--card-bg);z-index:5;padding-bottom:8px">
-          <div style="width:110px;height:110px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 30%, #2c3134, #17191b);border-radius:10px;border:1px solid var(--line)">
+          <div style="width:110px;height:110px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:var(--panel);border-radius:10px;border:1px solid var(--line)">
             <svg id="crestSvg" viewBox="0 0 200 200" width="90" height="90"></svg>
           </div>
           <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:8px">
-            <input type="text" id="crestTeamNameInput" maxlength="24" placeholder="Nombre del equipo" style="width:100%;background:#0d1011;border:1px solid var(--line);color:var(--text);padding:7px 9px;border-radius:6px;font-size:12px;font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:.5px">
+            <input type="text" id="crestTeamNameInput" maxlength="24" placeholder="Nombre del equipo" style="width:100%;background:var(--dark);border:1px solid var(--line);color:var(--text);padding:7px 9px;border-radius:6px;font-size:12px;font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:.5px">
             <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text-muted)">
               <input type="checkbox" id="crestUseFixedNameCheckbox"> Usar siempre como nombre de equipo
             </label>
@@ -8888,7 +8922,7 @@ function crestRenderAll(){
 
 function buildCrestControlsUI(container){
   container.innerHTML = `
-    <div class="panel crest-panel" id="crestPanel1" style="background:#1e2326;border:1px solid var(--line);border-radius:8px;margin-bottom:10px;overflow:hidden">
+    <div class="panel crest-panel" id="crestPanel1" style="background:var(--panel);border:1px solid var(--line);border-radius:8px;margin-bottom:10px;overflow:hidden">
       <div class="crest-panel-header" data-panel="crestPanel1" style="display:flex;align-items:center;gap:8px;padding:12px 14px;cursor:pointer;font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:.5px;font-size:13px;color:var(--gold)">
         <span class="crest-layer-num">1</span> FORMA Y FONDO <i class="ph ph-bold ph-caret-down chev" style="margin-left:auto"></i>
       </div>
@@ -8907,7 +8941,7 @@ function buildCrestControlsUI(container){
         </div>
       </div>
     </div>
-    <div class="panel crest-panel" id="crestPanel2" style="background:#1e2326;border:1px solid var(--line);border-radius:8px;margin-bottom:10px;overflow:hidden">
+    <div class="panel crest-panel" id="crestPanel2" style="background:var(--panel);border:1px solid var(--line);border-radius:8px;margin-bottom:10px;overflow:hidden">
       <div class="crest-panel-header" data-panel="crestPanel2" style="display:flex;align-items:center;gap:8px;padding:12px 14px;cursor:pointer;font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:.5px;font-size:13px;color:var(--gold)">
         <span class="crest-layer-num">2</span> ICONO CENTRAL <i class="ph ph-bold ph-caret-down chev" style="margin-left:auto"></i>
       </div>
@@ -8924,7 +8958,7 @@ function buildCrestControlsUI(container){
         </div>
       </div>
     </div>
-    <div class="panel crest-panel" id="crestPanel3" style="background:#1e2326;border:1px solid var(--line);border-radius:8px;margin-bottom:10px;overflow:hidden">
+    <div class="panel crest-panel" id="crestPanel3" style="background:var(--panel);border:1px solid var(--line);border-radius:8px;margin-bottom:10px;overflow:hidden">
       <div class="crest-panel-header" data-panel="crestPanel3" style="display:flex;align-items:center;gap:8px;padding:12px 14px;cursor:pointer;font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:.5px;font-size:13px;color:var(--gold)">
         <span class="crest-layer-num">3</span> DETALLE DE RANGO <i class="ph ph-bold ph-caret-down chev" style="margin-left:auto"></i>
       </div>
@@ -8956,11 +8990,11 @@ function buildCrestControlsUI(container){
       .crest-option-grid.wide{grid-template-columns:repeat(auto-fill, minmax(64px, 1fr))}
       .crest-swatch{width:100%;aspect-ratio:1;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:.15s;max-width:30px;justify-self:center}
       .crest-swatch.active{border-color:#fff;transform:scale(1.12)}
-      .crest-icon-btn{width:100%;aspect-ratio:1;border-radius:7px;background:#262b2e;border:1px solid var(--line);color:var(--text-muted);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px;transition:.15s;max-width:38px}
+      .crest-icon-btn{width:100%;aspect-ratio:1;border-radius:7px;background:var(--card-bg);border:1px solid var(--line);color:var(--text-muted);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px;transition:.15s;max-width:38px}
       .crest-icon-btn:hover{border-color:var(--gold);color:var(--gold)}
       .crest-icon-btn.active{background:rgba(240,196,25,.12);border-color:var(--gold);color:var(--gold)}
       .crest-icon-btn.wide{max-width:none;aspect-ratio:auto;padding:8px 4px;font-size:9px;text-transform:uppercase;text-align:center}
-      .crest-shape-btn{width:100%;aspect-ratio:1;border-radius:7px;background:#262b2e;border:1px solid var(--line);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.15s;max-width:46px}
+      .crest-shape-btn{width:100%;aspect-ratio:1;border-radius:7px;background:var(--card-bg);border:1px solid var(--line);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.15s;max-width:46px}
       .crest-shape-btn svg{width:60%;height:60%;display:block}
       .crest-shape-btn:hover{border-color:var(--gold)}
       .crest-shape-btn.active{background:rgba(240,196,25,.12);border-color:var(--gold)}
@@ -9796,7 +9830,13 @@ function mpShowDuelWaitingScreen(){
 
 /* Salir voluntariamente de un duelo (desde la pantalla de espera).
    Marca el duelo como cancelado para que el rival también salga. */
-async function mpAbandonDuel(){
+function mpAbandonDuel(){
+  showConfirmPopup(
+    '¿Abandonar el duelo? Se perderá el progreso de este encuentro.',
+    ()=>mpAbandonDuelConfirmed()
+  );
+}
+async function mpAbandonDuelConfirmed(){
   playSound('select');
   const db=window._fbDb;
   if(db&&window._duelId){
