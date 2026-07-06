@@ -8401,13 +8401,12 @@ function mpStartPenaltyTimer(cur){
   if(mpPenTimerHandle) clearInterval(mpPenTimerHandle);
   const fill=document.getElementById('penTimerFill');
   let lastBeepSec=null;
-  // La barra VISUAL siempre cuenta sus propios 5 segundos completos desde
-  // el momento en que aparece en ESTE dispositivo — no depende del reloj
-  // compartido (cur.deadline), que puede llevar ya algo de retraso real
-  // si este dispositivo tardó más que el otro en la animación previa.
-  // El reloj compartido se sigue usando solo para decidir cuándo se
-  // resuelve automáticamente el lanzamiento (eso sí tiene que ser el
-  // mismo para los dos).
+  // La barra cuenta SIEMPRE sus propios 5 segundos completos desde el
+  // momento en que aparece en ESTE dispositivo. Como quien tira es
+  // siempre quien resuelve (nunca el portero), no hace falta ningún
+  // reloj compartido ni adivinar cuánto tarda cada dispositivo en la
+  // animación previa — cada uno usa su propio reloj real para su
+  // propio turno, sin depender de lo que tarde el otro.
   const localStart=Date.now();
   if(fill){ fill.style.transition='none'; fill.style.width='100%'; }
   requestAnimationFrame(()=>{
@@ -8419,8 +8418,7 @@ function mpStartPenaltyTimer(cur){
     if(remainSec!==lastBeepSec){ lastBeepSec=remainSec; checkCountdownBeep(remainSec,'penalty'); }
     if(fill) fill.style.width=(localRemainMs/PENALTY_KICK_MS*100)+'%';
 
-    const sharedRemainMs=cur.deadline-Date.now();
-    if(sharedRemainMs<=0){
+    if(localRemainMs<=0){
       clearInterval(mpPenTimerHandle); mpPenTimerHandle=null;
       // Al agotarse el tiempo hay que forzar la resolución — si no,
       // nadie vuelve a comprobar nada hasta que alguien escriba algo
