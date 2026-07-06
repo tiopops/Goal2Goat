@@ -7919,6 +7919,25 @@ function mpRenderStrategyAndBenchPhase(idx){
       ${window._rivalCrestData?renderRivalCrestThumb(90):'<i class="ph ph-bold ph-user" style="font-size:56px;color:#7b9cff"></i>'}
       <div style="font-family:'Bebas Neue',Impact,sans-serif;font-size:16px;margin-top:4px">${mpEsc(window._duelOpponentUsername||'')}</div>
     </div>`;
+  // Red de seguridad: si el escudo del rival nunca llegó a cargarse (p.ej.
+  // sesión de duelo antigua sin el dato del rival), reintentar aquí
+  // directamente desde el propio documento del duelo, y volver a pintar
+  // esta cabecera en cuanto se resuelva.
+  if(window._rivalCrestData===undefined && window._duelId && window._fbDb){
+    window._fbDb.collection('duels').doc(window._duelId).get().then(snap=>{
+      const dd=snap.exists?snap.data():null;
+      if(!dd) return;
+      const rivalUid = window._duelRole==='challenger' ? dd.opponentId : dd.challengerId;
+      if(!rivalUid) return;
+      return loadRivalCrestData(rivalUid);
+    }).then(()=>{
+      const ri=document.getElementById('rivalInfo');
+      if(ri && window._rivalCrestData) ri.innerHTML=`<div style="text-align:center;padding:4px 0 8px">
+          ${renderRivalCrestThumb(90)}
+          <div style="font-family:'Bebas Neue',Impact,sans-serif;font-size:16px;margin-top:4px">${mpEsc(window._duelOpponentUsername||'')}</div>
+        </div>`;
+    }).catch(e=>console.error('[Escudo] reintento del rival falló:', e));
+  }
   const rivalHint=document.getElementById('rivalHint');
   if(rivalHint) rivalHint.innerHTML=`<div class="style-label">${(tk('mp.duel_match_of')||'PARTIDO {0} DE 5').replace('{0}', String(idx+1))}</div>`;
   const weatherDisplay=document.getElementById('weatherDisplay'); if(weatherDisplay) weatherDisplay.style.display='none';
@@ -8382,22 +8401,26 @@ function mpStartPenaltyTimer(cur){
   if(mpPenTimerHandle) clearInterval(mpPenTimerHandle);
   const fill=document.getElementById('penTimerFill');
   let lastBeepSec=null;
-  // Forzar que la barra arranque visualmente al máximo, aunque el reloj
-  // real ya llevara un pelín de retraso por variaciones de carga entre
-  // dispositivos — así nunca se ve "ya empezada".
-  if(fill){
-    fill.style.transition='none';
-    fill.style.width='100%';
-    requestAnimationFrame(()=>{
-      requestAnimationFrame(()=>{ fill.style.transition='width .1s linear'; });
-    });
-  }
+  // La barra VISUAL siempre cuenta sus propios 5 segundos completos desde
+  // el momento en que aparece en ESTE dispositivo — no depende del reloj
+  // compartido (cur.deadline), que puede llevar ya algo de retraso real
+  // si este dispositivo tardó más que el otro en la animación previa.
+  // El reloj compartido se sigue usando solo para decidir cuándo se
+  // resuelve automáticamente el lanzamiento (eso sí tiene que ser el
+  // mismo para los dos).
+  const localStart=Date.now();
+  if(fill){ fill.style.transition='none'; fill.style.width='100%'; }
+  requestAnimationFrame(()=>{
+    requestAnimationFrame(()=>{ if(fill) fill.style.transition='width .1s linear'; });
+  });
   mpPenTimerHandle=setInterval(()=>{
-    const remainMs=Math.max(0, cur.deadline-Date.now());
-    const remainSec=Math.ceil(remainMs/1000);
+    const localRemainMs=Math.max(0, PENALTY_KICK_MS-(Date.now()-localStart));
+    const remainSec=Math.ceil(localRemainMs/1000);
     if(remainSec!==lastBeepSec){ lastBeepSec=remainSec; checkCountdownBeep(remainSec,'penalty'); }
-    if(fill) fill.style.width=(remainMs/PENALTY_KICK_MS*100)+'%';
-    if(remainMs<=0){
+    if(fill) fill.style.width=(localRemainMs/PENALTY_KICK_MS*100)+'%';
+
+    const sharedRemainMs=cur.deadline-Date.now();
+    if(sharedRemainMs<=0){
       clearInterval(mpPenTimerHandle); mpPenTimerHandle=null;
       // Al agotarse el tiempo hay que forzar la resolución — si no,
       // nadie vuelve a comprobar nada hasta que alguien escriba algo
@@ -9635,8 +9658,8 @@ function stopDuelInactivityMonitor(){
    del perfil del rival, igual que ya hacemos con sus estadísticas. */
 function loadRivalCrestData(uid){
   const db=window._fbDb;
-  if(!db||!uid) return;
-  db.collection('users').doc(uid).get().then(snap=>{
+  if(!db||!uid) return Promise.resolve();
+  return db.collection('users').doc(uid).get().then(snap=>{
     const data=snap.exists?snap.data():{};
     window._rivalCrestData=data.customCrest||null;
     refreshAllCrestThumbs();
@@ -9651,7 +9674,7 @@ async function initDuelModeFromSession(){
   window._duelRole=info.role;
   window._duelOpponentUsername=info.opponentUsername;
   window._duelDraftDeadline=info.draftStartAt+DUEL_DRAFT_SECONDS*1000;
-  if(info.opponentUid) loadRivalCrestData(info.opponentUid);
+  if(info.opponentUid) await loadRivalCrestData(info.opponentUid);
   startDuelInactivityMonitor();
   // La pantalla de bienvenida ("EMPEZAR A JUGAR") es obligatoria en cada carga;
   // en modo duelo la saltamos, ya que el jugador ya confirmó explícitamente al
