@@ -8428,7 +8428,7 @@ function mpStartPenaltyTimer(cur){
       // elección hecha DESPUÉS de empezar a contar (pero antes de que
       // se agote el tiempo) se ignoraría por completo.
       const freshCur=mpPenLatestCur||cur;
-      if(freshCur.shooterRole===window._duelRole) mpMaybeResolveAsShooter(freshCur, mpPenCurHist);
+      if(freshCur.shooterRole===window._duelRole) mpMaybeResolveAsShooter(freshCur, mpPenCurHist, true);
     }
   }, 100);
 }
@@ -8453,9 +8453,8 @@ async function mpSubmitPenaltyChoice(zoneId){
   }catch(e){ console.error('[Penaltis] envío de elección falló:', e); }
 }
 
-async function mpMaybeResolveAsShooter(cur, hist){
+async function mpMaybeResolveAsShooter(cur, hist, timeUp){
   if(mpPenResolvingKick===cur.kickNum) return; // ya en proceso
-  const timeUp=Date.now()>=cur.deadline;
   const bothPicked=cur.shooterZone && cur.keeperZone;
   if(!bothPicked && !timeUp) return;
   mpPenResolvingKick=cur.kickNum;
