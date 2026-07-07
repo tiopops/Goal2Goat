@@ -64,6 +64,45 @@
     return sel;
   }
 
+  // Coloca el recuadro de texto evitando taparle el elemento señalado:
+  // lo pone debajo si hay hueco, si no arriba, y si tampoco cabe, lo dej
+  // centrado pero SIN solaparse con el propio elemento (lo desplaza).
+  function positionBox(box, targetEl){
+    box.style.left = '50%';
+    box.style.right = '';
+    box.style.transform = 'translateX(-50%)';
+
+    if(!targetEl){
+      box.style.top = '';
+      box.style.bottom = '20px';
+      return;
+    }
+
+    const rect = targetEl.getBoundingClientRect();
+    const viewportH = window.innerHeight;
+    const margin = 14;
+    const boxHeight = box.offsetHeight || 220;
+
+    const spaceBelow = viewportH - rect.bottom;
+    const spaceAbove = rect.top;
+
+    if(spaceBelow >= boxHeight + margin){
+      box.style.top = (rect.bottom + margin) + 'px';
+      box.style.bottom = '';
+    } else if(spaceAbove >= boxHeight + margin){
+      box.style.bottom = (viewportH - rect.top + margin) + 'px';
+      box.style.top = '';
+    } else if(spaceBelow >= spaceAbove){
+      // Ni arriba ni abajo hay hueco de sobra: se pone en el lado con
+      // más espacio, pegado al borde de la pantalla, nunca sobre el target.
+      box.style.top = '';
+      box.style.bottom = '10px';
+    } else {
+      box.style.bottom = '';
+      box.style.top = '10px';
+    }
+  }
+
   function renderStep(){
     clearHighlights();
     const steps = getSteps();
@@ -104,17 +143,21 @@
     });
     const prevBtn = box.querySelector('#g2gTutPrev');
     if(prevBtn) prevBtn.addEventListener('click', ()=>{ currentStep--; renderStep(); });
+
+    // Esperar a que el scroll (animado) se asiente antes de medir dónde
+    // colocar el recuadro, para no taparle el elemento que señala.
+    setTimeout(()=>positionBox(box, targetEl), 350);
   }
 
   function startTutorial(){
     currentStep = 0;
     overlayEl = document.createElement('div');
     overlayEl.id = 'g2gTutOverlay';
-    overlayEl.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:90000;pointer-events:none';
+    overlayEl.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:999990;pointer-events:none';
     overlayEl.innerHTML = `
       <div id="g2gTutBox" style="pointer-events:auto;position:fixed;left:50%;bottom:20px;transform:translateX(-50%);
         width:92%;max-width:380px;background:#1a1d1f;border:2px solid var(--gold,#f0c419);border-radius:10px;
-        padding:16px;box-shadow:0 8px 24px rgba(0,0,0,.5)"></div>
+        padding:16px;box-shadow:0 8px 24px rgba(0,0,0,.5);z-index:999999"></div>
     `;
     document.body.appendChild(overlayEl);
     ensureStyles();
@@ -138,7 +181,7 @@
         outline-offset:3px;
         border-radius:8px;
         box-shadow:0 0 0 6px rgba(240,196,25,.25), 0 0 24px rgba(240,196,25,.5) !important;
-        z-index:90001 !important;
+        z-index:999995 !important;
         transition:box-shadow .2s;
       }
     `;
