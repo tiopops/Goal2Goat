@@ -32,13 +32,15 @@
       },
       {
         selector: '#pitchBox',
+        mockPreview: 'pitch',
         title: '3 · La posición ★ importa',
-        text: 'Cada jugador tiene una posición natural marcada con ★. Colocado ahí rinde al máximo — fuera de sitio, rinde peor.'
+        text: 'Cada jugador tiene una posición natural marcada con ★. Colocado ahí rinde al máximo — fuera de sitio, rinde peor. Hemos colocado unos jugadores de ejemplo al azar para que lo veas — no forman parte de tu equipo real.'
       },
       {
         selector: null,
+        mockPreview: 'strategy',
         title: '4 · Elige estrategia antes de cada partido',
-        text: 'Más adelante, antes de cada partido del torneo, podrás elegir una <strong>estrategia</strong> que contrarreste la del rival. Acertar la contra te da una ventaja real en el resultado — no lo tienes delante ahora mismo, pero aparecerá en su momento.'
+        text: 'Antes de cada partido del torneo podrás elegir una <strong>estrategia</strong> que contrarreste la del rival. Acertar la contra te da una ventaja real en el resultado. Para que veas cómo es, hemos cargado un rival de ejemplo al azar — los botones no funcionan ahora mismo, es solo para que lo veas.'
       },
       {
         selector: () => isMobileLayout() ? '#mobileTabBar' : '.app',
@@ -53,6 +55,111 @@
   let currentStep = 0;
   let overlayEl = null;
   let highlightEls = [];
+
+  // Estado guardado mientras alguna vista previa "real" está activa,
+  // para poder devolverlo todo exactamente a como estaba al salir del paso.
+  let activePreviewKind = null; // null | 'strategy' | 'pitch'
+  let savedNextOpponent, savedSelectedStrategy, savedMobileTab, savedRivalHTML, savedHintHTML, savedStrategyHTML;
+  let savedPitchSlotsHTML = [];
+
+  function setupRealPreview(kind){
+    if(kind === 'pitch'){ setupPitchPreview(); return; }
+    if(kind !== 'strategy') return;
+    if(typeof nextOpponent === 'undefined' || typeof teams === 'undefined' || typeof renderRivalBox !== 'function') return;
+    if(nextOpponent) return; // ya hay un rival real cargado (no debería pasar en el draft, pero por seguridad no tocamos nada)
+
+    activePreviewKind = 'strategy';
+    savedNextOpponent = nextOpponent;
+    savedSelectedStrategy = (typeof selectedMatchStrategy !== 'undefined') ? selectedMatchStrategy : null;
+
+    const rivalInfoEl = document.getElementById('rivalInfo');
+    const rivalHintEl = document.getElementById('rivalHint');
+    const strategyEl = document.getElementById('strategySelector');
+    savedRivalHTML = rivalInfoEl ? rivalInfoEl.innerHTML : '';
+    savedHintHTML = rivalHintEl ? rivalHintEl.textContent : '';
+    savedStrategyHTML = strategyEl ? strategyEl.innerHTML : '';
+
+    // Cargar un rival de ejemplo, al azar, usando el mismo mecanismo que
+    // usa el propio juego — solo lectura de datos ya existentes.
+    nextOpponent = teams[Math.floor(Math.random()*teams.length)];
+    renderRivalBox();
+
+    // En móvil, cambiar a la pestaña RIVAL para que se vea de verdad.
+    if(window.innerWidth <= 1050 && typeof switchMobileTab === 'function'){
+      const activeTab = document.querySelector('.mob-tab.active');
+      savedMobileTab = activeTab ? activeTab.dataset.tab : 'campo';
+      switchMobileTab('rival');
+    }
+
+    // Bloquear los clics reales sobre la interfaz de ejemplo — es solo
+    // para mirar, no para elegir una estrategia de verdad por accidente.
+    const strategyElNow = document.getElementById('strategySelector');
+    const rivalInfoElNow = document.getElementById('rivalInfo');
+    [strategyElNow, rivalInfoElNow].forEach(el=>{
+      if(el){ el.style.pointerEvents = 'none'; el.dataset.g2gTutBlocked = '1'; }
+    });
+  }
+
+  function restoreRealPreview(){
+    if(activePreviewKind === 'strategy') restoreStrategyPreview();
+    else if(activePreviewKind === 'pitch') restorePitchPreview();
+    activePreviewKind = null;
+  }
+
+  function restoreStrategyPreview(){
+    nextOpponent = savedNextOpponent;
+    if(typeof selectedMatchStrategy !== 'undefined') selectedMatchStrategy = savedSelectedStrategy;
+
+    const rivalInfoEl = document.getElementById('rivalInfo');
+    const rivalHintEl = document.getElementById('rivalHint');
+    const strategyEl = document.getElementById('strategySelector');
+    if(rivalInfoEl){ rivalInfoEl.innerHTML = savedRivalHTML; rivalInfoEl.style.pointerEvents = ''; delete rivalInfoEl.dataset.g2gTutBlocked; }
+    if(rivalHintEl) rivalHintEl.textContent = savedHintHTML;
+    if(strategyEl){ strategyEl.innerHTML = savedStrategyHTML; strategyEl.style.pointerEvents = ''; delete strategyEl.dataset.g2gTutBlocked; }
+
+    if(savedMobileTab && window.innerWidth <= 1050 && typeof switchMobileTab === 'function'){
+      switchMobileTab(savedMobileTab);
+    }
+    savedMobileTab = null;
+  }
+
+  // Coloca jugadores reales al azar (elegidos por su posición natural,
+  // para que se vea la ★) usando renderSlotContent — la misma función
+  // que usa el juego para pintar un jugador en el campo. NO toca
+  // usedPlayers, draftedCount ni phase: es puramente visual, así que
+  // basta con volver a pintar el campo vacío para deshacerlo del todo.
+  function setupPitchPreview(){
+    if(typeof pitchEl === 'undefined' || typeof playersDB === 'undefined' || typeof renderSlotContent !== 'function') return;
+    const slots = pitchEl.querySelectorAll('.position');
+    if(!slots.length) return;
+
+    activePreviewKind = 'pitch';
+    savedPitchSlotsHTML = [];
+
+    slots.forEach(slot=>{
+      savedPitchSlotsHTML.push({slot, html: slot.innerHTML});
+      const label = slot.dataset.label;
+      const candidates = playersDB.filter(p => p.positions && p.positions[0] === label);
+      const pool = candidates.length ? candidates : playersDB.filter(p => p.positions && p.positions.includes(label));
+      if(!pool.length) return;
+      const player = pool[Math.floor(Math.random()*pool.length)];
+      const inPos = player.positions && player.positions[0] === label;
+      const rating = player.overall || 70;
+      const starHTML = inPos ? ' <span class="star">★</span>' : '';
+      renderSlotContent(slot, player, label, rating, starHTML);
+      slot.style.pointerEvents = 'none';
+      slot.dataset.g2gTutBlocked = '1';
+    });
+  }
+
+  function restorePitchPreview(){
+    savedPitchSlotsHTML.forEach(({slot, html})=>{
+      slot.innerHTML = html;
+      slot.style.pointerEvents = '';
+      delete slot.dataset.g2gTutBlocked;
+    });
+    savedPitchSlotsHTML = [];
+  }
 
   function clearHighlights(){
     highlightEls.forEach(el => el.classList.remove('g2g-tut-highlight'));
@@ -72,38 +179,53 @@
     box.style.right = '';
     box.style.transform = 'translateX(-50%)';
 
+    const viewportH = window.innerHeight;
+    const margin = 14;
+    const boxHeight = box.offsetHeight || 220;
+    // Deja hueco para la barra de estado del móvil (hora, batería...) y
+    // para no pegarse del todo al borde inferior de la pantalla.
+    const SAFE_TOP = 30;
+    const SAFE_BOTTOM = 10;
+
     if(!targetEl){
       box.style.top = '';
-      box.style.bottom = '20px';
+      box.style.bottom = SAFE_BOTTOM + 'px';
       return;
     }
 
     const rect = targetEl.getBoundingClientRect();
-    const viewportH = window.innerHeight;
-    const margin = 14;
-    const boxHeight = box.offsetHeight || 220;
-
     const spaceBelow = viewportH - rect.bottom;
     const spaceAbove = rect.top;
 
+    let topPx = null, bottomPx = null;
+
     if(spaceBelow >= boxHeight + margin){
-      box.style.top = (rect.bottom + margin) + 'px';
-      box.style.bottom = '';
+      topPx = rect.bottom + margin;
     } else if(spaceAbove >= boxHeight + margin){
-      box.style.bottom = (viewportH - rect.top + margin) + 'px';
-      box.style.top = '';
+      bottomPx = viewportH - rect.top + margin;
     } else if(spaceBelow >= spaceAbove){
-      // Ni arriba ni abajo hay hueco de sobra: se pone en el lado con
-      // más espacio, pegado al borde de la pantalla, nunca sobre el target.
-      box.style.top = '';
-      box.style.bottom = '10px';
+      bottomPx = SAFE_BOTTOM;
     } else {
+      topPx = SAFE_TOP;
+    }
+
+    // Nunca dejar que el recuadro invada la barra de estado arriba, ni
+    // que se salga por abajo de la pantalla.
+    if(topPx !== null){
+      if(topPx < SAFE_TOP) topPx = SAFE_TOP;
+      if(topPx + boxHeight > viewportH - SAFE_BOTTOM) topPx = Math.max(SAFE_TOP, viewportH - SAFE_BOTTOM - boxHeight);
+      box.style.top = topPx + 'px';
       box.style.bottom = '';
-      box.style.top = '10px';
+    } else {
+      if(bottomPx < SAFE_BOTTOM) bottomPx = SAFE_BOTTOM;
+      if(bottomPx + boxHeight > viewportH - SAFE_TOP) bottomPx = Math.max(SAFE_BOTTOM, viewportH - SAFE_TOP - boxHeight);
+      box.style.bottom = bottomPx + 'px';
+      box.style.top = '';
     }
   }
 
   function renderStep(){
+    restoreRealPreview();
     clearHighlights();
     const steps = getSteps();
     const step = steps[currentStep];
@@ -119,6 +241,20 @@
       targetEl.classList.add('g2g-tut-highlight');
       highlightEls.push(targetEl);
       targetEl.scrollIntoView({behavior:'smooth', block:'center'});
+    }
+
+    if(step.mockPreview){
+      setupRealPreview(step.mockPreview);
+      // Tras cargar el rival de ejemplo, señalar el panel real relleno
+      if(!targetEl){
+        const rivalPanelTarget = document.getElementById('rivalInfo');
+        if(rivalPanelTarget){
+          targetEl = rivalPanelTarget;
+          targetEl.classList.add('g2g-tut-highlight');
+          highlightEls.push(targetEl);
+          setTimeout(()=>targetEl.scrollIntoView({behavior:'smooth', block:'center'}), 60);
+        }
+      }
     }
 
     const text = typeof step.text === 'function' ? step.text() : step.text;
@@ -156,7 +292,7 @@
     overlayEl.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:999990;pointer-events:none';
     overlayEl.innerHTML = `
       <div id="g2gTutBox" style="pointer-events:auto;position:fixed;left:50%;bottom:20px;transform:translateX(-50%);
-        width:92%;max-width:380px;background:#1a1d1f;border:2px solid var(--gold,#f0c419);border-radius:10px;
+        width:92%;max-width:380px;max-height:80vh;overflow-y:auto;background:#1a1d1f;border:2px solid var(--gold,#f0c419);border-radius:10px;
         padding:16px;box-shadow:0 8px 24px rgba(0,0,0,.5);z-index:999999"></div>
     `;
     document.body.appendChild(overlayEl);
@@ -166,6 +302,7 @@
 
   function endTutorial(){
     clearHighlights();
+    restoreRealPreview();
     if(overlayEl){ overlayEl.remove(); overlayEl = null; }
     try{ localStorage.setItem(SEEN_KEY, '1'); }catch(e){}
   }
