@@ -1014,6 +1014,7 @@ window.TRANSLATIONS = {
     de:'Jeder Durchgang ist <strong>0 bis 1000 Punkte</strong> wert. Die WM zu gewinnen bringt dich näher ans Maximum, und dein bester Wert wird gespeichert, wenn du ein Konto hast.',
     it:'Ogni partita vale da <strong>0 a 1000 punti</strong>. Vincere il Mondiale ti avvicina al massimo, e il tuo punteggio migliore viene salvato se hai un account.'
   },
+  'howto.replay_tutorial': {es:'VER TUTORIAL DE NUEVO', en:'WATCH TUTORIAL AGAIN', pt:'VER TUTORIAL DE NOVO', fr:'REVOIR LE TUTORIEL', de:'TUTORIAL ERNEUT ANSEHEN', it:'RIVEDI IL TUTORIAL'},
 
   /* ── STATS GUIDE — descripciones ── */
   'info.attack.desc': {

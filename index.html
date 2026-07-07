@@ -735,6 +735,9 @@
           <span class="howto-num">5</span>
           <div data-i18n-html="howto.step5">Cada partida vale de <strong>0 a 1000 puntos</strong>. Ganar el Mundial te acerca al máximo, y tu mejor marca se guarda si tienes cuenta.</div>
         </div>
+        <button id="replayTutorialBtn" style="width:100%;margin-top:12px;font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:1px;font-size:13px;background:none;border:1px solid var(--gold);color:var(--gold);border-radius:6px;padding:9px 14px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px">
+          <i class="ph ph-bold ph-play-circle"></i> <span data-i18n="howto.replay_tutorial">VER TUTORIAL DE NUEVO</span>
+        </button>
       </div>
     </div>
 
@@ -868,6 +871,7 @@
 <script>
   // Cache-busting: force fresh game.js on every page load/refresh
   document.write('<script src="game.js?v=' + Date.now() + '"><\/script>');
+  document.write('<script src="tutorial.js?v=' + Date.now() + '"><\/script>');
 </script>
 <!-- Firebase loads AFTER game.js so it never blocks the game -->
 <script>

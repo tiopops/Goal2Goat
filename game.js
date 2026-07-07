@@ -2405,7 +2405,7 @@ function playMatch(){
 
   renderMatchHistory();
   updateLed();
-  showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,penaltyInfo,newCards,predictionResult,oppEvents);
+  showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,penaltyInfo,newCards,predictionResult,oppEvents,myPower,oppPower);
 }
 document.getElementById("playMatchBtn").addEventListener("click",playMatch);
 
@@ -2801,7 +2801,7 @@ function forceSwapSuspendedStarters(){
 /* ========= LIVE MATCH SIMULATION — diseño match-modal + animación secuencial =========
    Usa el diseño visual de match-modal pero muestra todo de forma secuencial.
    Los eventos ocurren en sus minutos reales, incluyendo tiempo de descuento. */
-function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,penaltyInfo,newCards,predictionResult,oppEvents){
+function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,penaltyInfo,newCards,predictionResult,oppEvents,myPower,oppPower){
   const overlay=document.getElementById("matchOverlay");
   const oppName=window._duelId?(window._duelOpponentUsername||'Rival'):(nextOpponent?getTeamName(nextOpponent.name):'Rival');
 
@@ -3039,6 +3039,32 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
     clockEl.textContent=`90+${inj2}'`; fillEl.style.width='100%';
     halfEl.textContent=t('match.end')||'FIN'; halfEl.style.background='#555';
     playSound('whistle');
+    // Giro Táctico puede haber cambiado el marcador final respecto al que
+    // se simuló al principio del partido — hay que comprobar otra vez si
+    // ahora hace falta la tanda de penaltis (o si ya no hace falta),
+    // porque "penaltyInfo" se calculó ANTES de jugar el partido.
+    if(stage==='knockout' && !window._duelId){
+      if(myGoals===oppGoals && !penaltyInfo){
+        penaltyInfo=simulatePenalties(myPower, oppPower);
+        won=penaltyInfo.myWon; draw=false;
+        const myShotsHTML=penaltyInfo.myShots.map(s=>`<li>${s.scored?'✅':'❌'} ${s.name}</li>`).join('');
+        const oppShotsHTML=penaltyInfo.oppShots.map(s=>`<li>${s.scored?'✅':'❌'} ${s.name}</li>`).join('');
+        summary+=`<br><br><strong>⚽ TANDA DE PENALTIS: ${myTeamName} ${penaltyInfo.myScore} – ${penaltyInfo.oppScore} ${getTeamName(nextOpponent.name)}</strong>
+        <div class="goals-columns">
+          <div class="goals-col">
+            <div class="goals-col-header">${window._myCrestData?renderCrestThumb(20):'<i class="ph ph-bold ph-user" style="font-size:16px;color:#4a90d9;vertical-align:middle"></i>'} ${myTeamName}</div>
+            <ul class="goals-list pen-shots">${myShotsHTML}</ul>
+          </div>
+          <div class="goals-col">
+            <div class="goals-col-header">${flagEmoji(nextOpponent.name,20)} ${getTeamName(nextOpponent.name)}</div>
+            <ul class="goals-list pen-shots">${oppShotsHTML}</ul>
+          </div>
+        </div>`;
+      } else if(myGoals!==oppGoals && penaltyInfo){
+        penaltyInfo=null;
+        won=myGoals>oppGoals; draw=false;
+      }
+    }
     if(penaltyInfo) setTimeout(startExtraTime,900);
     else {
       playSound(won||draw?'victory':'defeat');
@@ -3098,9 +3124,42 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
       const pause=d[`m${ctxD.matchIndex}_giroPause`];
       console.log('[Giro Táctico Duelo] snapshot recibido, pendingWrites:', snap.metadata.hasPendingWrites, 'pause:', pause, 'esperando:', !!mpGiroWaitingOverlay);
       if(pause && pause.active && pause.by!==ctxD.myRole && !giroPaused){
-        // El rival ha pulsado Giro Táctico — pausar aquí también y esperar
+        // El rival ha pulsado Giro Táctico — antes de pausar aquí también,
+        // sincronizar MI reloj local al minuto COMPARTIDO (pause.pauseMinute),
+        // no dejarlo en el mío propio. Si no, cuando el rival resuelva la
+        // carta basándose en SU minuto, y yo adopte el resultado basándome
+        // en el MÍO (que puede ser distinto por un pelín de desajuste entre
+        // dispositivos, p.ej. si un gol acababa de mostrarse en uno pero no
+        // en el otro), los dos terminamos con marcadores/eventos distintos.
         giroPaused=true;
-        giroPausedFrac=Math.min((performance.now()-regStart)/REG_DURATION,1);
+        const targetMinute=pause.pauseMinute;
+        if(typeof targetMinute==='number' && targetMinute>currentMinute){
+          // Adelantar mi reloj: procesar los eventos que aún no había
+          // mostrado hasta ese minuto compartido, igual que haría el tick
+          // normal, para que el marcador y el historial coincidan.
+          while(eventIdx<allEvents.length && allEvents[eventIdx].minute<=targetMinute){
+            const ev=allEvents[eventIdx++];
+            const label=ev.minute>90?`90+${ev.minute-90}'`:ev.minute>45&&ev.minute<=45+inj1?`45+${ev.minute-45}'`:`${ev.minute}'`;
+            addEvt(ev.icon,ev.text,label,ev.type);
+            if(ev.type==='mygoal'){ curMy++; scoreEl.textContent=`${curMy} – ${curOpp}`; flashScore(); }
+            else if(ev.type==='oppgoal'){ curOpp++; scoreEl.textContent=`${curMy} – ${curOpp}`; flashScore(); }
+          }
+          currentMinute=targetMinute;
+          // Fracción equivalente a ese minuto, usando la misma fórmula
+          // (invertida) que el propio bucle de reloj — así resumeAfterGiro()
+          // reanuda exactamente desde ese punto compartido.
+          if(targetMinute<=45+inj1){
+            giroPausedFrac=(targetMinute/(45+inj1))*HT_S;
+          }else{
+            const f2=(targetMinute-46)/(MAX_MIN-46);
+            giroPausedFrac=f2*(1-HT_E)+HT_E;
+          }
+        }else{
+          // Si mi reloj ya iba igual o por delante, no hace falta tocar
+          // nada — nos quedamos donde estamos, sin deshacer eventos ya
+          // mostrados.
+          giroPausedFrac=Math.min((performance.now()-regStart)/REG_DURATION,1);
+        }
         mpGiroShowWaitingOverlay(pause.ts);
       }else if((!pause||!pause.active) && mpGiroWaitingOverlay){
         // El rival ya ha resuelto su Giro Táctico — adoptar el resultado
