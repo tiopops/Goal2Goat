@@ -302,11 +302,11 @@
         background:#1a1d1f;border:2px solid var(--gold,#f0c419);border-radius:10px;
         padding:16px;box-shadow:0 8px 24px rgba(0,0,0,.5);box-sizing:border-box"></div>
     `;
-    // Se añade directamente a <html>, no a <body> — así queda fuera de
-    // cualquier posible contexto de apilamiento que pudiera crear algún
-    // contenedor de la página, sea cual sea. Es la forma más segura
-    // posible de garantizar que quede siempre por encima de todo.
-    document.documentElement.appendChild(overlayEl);
+    // Se añade a <body> (no a <html>) — así los elementos que se
+    // resaltan (que también viven dentro de <body>) son hermanos
+    // directos de esta capa y pueden comparar su z-index contra ella
+    // con normalidad, en vez de quedar atrapados en un contexto aparte.
+    document.body.appendChild(overlayEl);
     ensureStyles();
     renderStep();
   }
@@ -316,6 +316,9 @@
     restoreRealPreview();
     if(overlayEl){ overlayEl.remove(); overlayEl = null; }
     try{ localStorage.setItem(SEEN_KEY, '1'); }catch(e){}
+    if(isMobileLayout() && typeof switchMobileTab === 'function'){
+      switchMobileTab('campo');
+    }
   }
 
   function ensureStyles(){
