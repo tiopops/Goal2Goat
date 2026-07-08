@@ -173,6 +173,11 @@
   function clearHighlights(){
     highlightEls.forEach(el => {
       el.classList.remove('g2g-tut-highlight');
+      el.style.removeProperty('z-index');
+      el.style.removeProperty('outline');
+      el.style.removeProperty('outline-offset');
+      el.style.removeProperty('box-shadow');
+      el.style.removeProperty('border-radius');
       if(el.dataset.g2gForcedRelative){ el.style.position = ''; delete el.dataset.g2gForcedRelative; }
     });
     highlightEls = [];
@@ -181,6 +186,15 @@
   function addHighlight(el){
     const pos = getComputedStyle(el).position;
     if(pos === 'static'){ el.style.position = 'relative'; el.dataset.g2gForcedRelative = '1'; }
+    // Un selector por id (como #mobileTabBar) siempre gana en
+    // especificidad a una clase, aunque las dos usen !important — por
+    // eso la clase CSS sola no bastaba. Con setProperty(...,'important')
+    // se aplica como estilo en línea con prioridad, que sí gana siempre.
+    el.style.setProperty('z-index', '2147483646', 'important');
+    el.style.setProperty('outline', '3px solid #f0c419', 'important');
+    el.style.setProperty('outline-offset', '3px', 'important');
+    el.style.setProperty('box-shadow', '0 0 0 6px rgba(240,196,25,.25), 0 0 24px rgba(240,196,25,.6)', 'important');
+    el.style.setProperty('border-radius', '8px', 'important');
     el.classList.add('g2g-tut-highlight');
     highlightEls.push(el);
   }
@@ -281,14 +295,18 @@
     transitioning = false;
     overlayEl = document.createElement('div');
     overlayEl.id = 'g2gTutOverlay';
-    overlayEl.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:999990;pointer-events:none';
+    overlayEl.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:2147483647;pointer-events:none;isolation:isolate';
     overlayEl.innerHTML = `
-      <div id="g2gTutBox" style="pointer-events:auto;position:fixed;left:50%;transform:translateX(-50%);z-index:999999;
+      <div id="g2gTutBox" style="pointer-events:auto;position:fixed;left:50%;transform:translateX(-50%);z-index:2147483647;
         width:92%;max-width:380px;max-height:45vh;overflow-y:auto;
         background:#1a1d1f;border:2px solid var(--gold,#f0c419);border-radius:10px;
         padding:16px;box-shadow:0 8px 24px rgba(0,0,0,.5);box-sizing:border-box"></div>
     `;
-    document.body.appendChild(overlayEl);
+    // Se añade directamente a <html>, no a <body> — así queda fuera de
+    // cualquier posible contexto de apilamiento que pudiera crear algún
+    // contenedor de la página, sea cual sea. Es la forma más segura
+    // posible de garantizar que quede siempre por encima de todo.
+    document.documentElement.appendChild(overlayEl);
     ensureStyles();
     renderStep();
   }
@@ -310,7 +328,7 @@
         outline-offset:3px;
         border-radius:8px;
         box-shadow:0 0 0 6px rgba(240,196,25,.25), 0 0 24px rgba(240,196,25,.5) !important;
-        z-index:999995 !important;
+        z-index:2147483646 !important;
         transition:box-shadow .2s;
       }
     `;
