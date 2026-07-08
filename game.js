@@ -4953,9 +4953,10 @@ function loadInheritedPlayers(){
 }
 loadInheritedPlayers();
 
-/* Si hay un duelo multijugador activo en sessionStorage, retomarlo.
-   No interfiere con el modo un jugador si no hay duelo activo. */
-initDuelModeFromSession();
+/* Si hay un duelo multijugador activo en sessionStorage, retomarlo:
+   la llamada real vive al final de multiplayer.js (donde también vive
+   initDuelModeFromSession), ya que llamarla aquí, antes de que ese
+   archivo cargue, rompía la recarga tras aceptar un duelo. */
 
 /* Mostrar el botón MULTIJUGADOR al instante si la última vez que se
    comprobó el usuario tenía sesión iniciada — sin esto, hay que esperar

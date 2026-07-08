@@ -1976,3 +1976,9 @@ async function mpAbandonDuelConfirmed(){
 document.addEventListener('click', e=>{
   if(e.target && e.target.id==='multiplayerBtn') window.openMpOverlay();
 });
+
+/* Si hay un duelo multijugador activo en sessionStorage, retomarlo —
+   esto tiene que ejecutarse aquí (no en game.js) porque depende de
+   funciones definidas en este mismo archivo. No interfiere con el
+   modo un jugador si no hay duelo activo. */
+initDuelModeFromSession();
