@@ -221,13 +221,16 @@
 
   function positionSpotlightRect(left, top, width, height){
     const spotlight = overlayEl.querySelector('#g2gTutSpotlight');
-    if(left === null){ spotlight.style.boxShadow = ''; return; }
+    if(left === null){ spotlight.classList.remove('g2g-tut-pulse'); return; }
     const pad = 4;
     spotlight.style.top = (top - pad) + 'px';
     spotlight.style.left = (left - pad) + 'px';
     spotlight.style.width = (width + pad*2) + 'px';
     spotlight.style.height = (height + pad*2) + 'px';
-    spotlight.style.boxShadow = '0 0 0 9999px rgba(0,0,0,.6), 0 0 0 3px #f0c419, 0 0 24px rgba(240,196,25,.6)';
+    // El oscurecido y el brillo dorado van juntos en la animación CSS
+    // de abajo (no como estilo en línea), para que el pulso funcione
+    // sin que un valor fijo lo tape.
+    spotlight.classList.add('g2g-tut-pulse');
   }
 
   function resolveSelector(sel){
@@ -358,7 +361,25 @@
         padding:16px;box-shadow:0 8px 24px rgba(0,0,0,.5);box-sizing:border-box"></div>
     `;
     document.body.appendChild(overlayEl);
+    ensurePulseStyle();
     renderStep();
+  }
+
+  function ensurePulseStyle(){
+    if(document.getElementById('g2gTutPulseStyleTag')) return;
+    const style = document.createElement('style');
+    style.id = 'g2gTutPulseStyleTag';
+    style.textContent = `
+      @keyframes g2gTutPulse{
+        0%,100%{ outline-color:rgba(240,196,25,.65); box-shadow:0 0 0 9999px rgba(0,0,0,.6), 0 0 14px rgba(240,196,25,.35); }
+        50%{ outline-color:rgba(240,196,25,1); box-shadow:0 0 0 9999px rgba(0,0,0,.6), 0 0 26px rgba(240,196,25,.75); }
+      }
+      #g2gTutSpotlight.g2g-tut-pulse{
+        outline:3px solid #f0c419;
+        animation:g2gTutPulse 1.6s ease-in-out infinite;
+      }
+    `;
+    document.head.appendChild(style);
   }
 
   function endTutorial(){
