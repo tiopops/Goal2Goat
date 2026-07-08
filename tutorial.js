@@ -38,7 +38,7 @@
         selector: '#pitchBox',
         mockPreview: 'pitch',
         title: '3 · La posición ★ importa',
-        text: 'Cada jugador tiene una posición natural marcada con ★. Colocado ahí rinde al máximo — fuera de sitio, rinde peor. Hemos colocado unos jugadores de ejemplo al azar para que lo veas — no forman parte de tu equipo real.'
+        text: 'Cada jugador tiene una posición natural marcada con ★. Colocado ahí rinde al máximo — fuera de sitio, rinde peor. Hemos colocado unos jugadores de ejemplo al azar para que lo veas — no forman parte de tu equipo real. <br><br>Truco: entre partido y partido del torneo puedes hacer <strong>cambios</strong> para rotar a quien necesite descanso.'
       },
       {
         selector: null,
@@ -52,7 +52,7 @@
         text: () => (isMobileLayout()
           ? 'En el móvil, estas pestañas de abajo cambian entre el campo, tu equipo, el rival y el historial — todo está siempre a un toque.'
           : 'En escritorio tienes tu plantilla, el campo y la información del rival visibles los tres a la vez, sin necesidad de cambiar de pantalla.')
-          + ' <br><br>Puedes volver a ver este tutorial cuando quieras desde <strong>CÓMO JUGAR</strong>.'
+          + ' <br><br>Si te registras, desde tu perfil podrás desbloquear <strong>mejoras y habilidades</strong> con GOAT Points. <br><br>Puedes volver a ver este tutorial cuando quieras desde <strong>CÓMO JUGAR</strong>.'
       },
     ];
   }
@@ -65,7 +65,7 @@
   // ───────── Vistas previas seguras (leen datos reales, nunca dejan
   // nada a medias) ─────────
   let activePreviewKind = null; // null | 'strategy' | 'pitch'
-  let savedMobileTab, savedRivalHTML, savedHintHTML, savedStrategyHTML;
+  let savedMobileTab, savedRivalHTML, savedHintHTML, savedStrategyHTML, savedRivalBoxDisplay;
   let savedPitchSlotsHTML = [];
 
   function setupRealPreview(kind){
@@ -82,15 +82,19 @@
   function setupStrategyPreview(){
     if(typeof teams === 'undefined' || typeof STRATEGY_ORDER === 'undefined' || typeof STRATEGIES === 'undefined') return;
 
+    const rivalBoxEl = document.getElementById('rivalBox');
     const rivalInfoEl = document.getElementById('rivalInfo');
     const rivalHintEl = document.getElementById('rivalHint');
     const strategyEl = document.getElementById('strategySelector');
-    if(!rivalInfoEl || !strategyEl) return;
+    if(!rivalBoxEl || !rivalInfoEl || !strategyEl) return;
 
     activePreviewKind = 'strategy';
+    savedRivalBoxDisplay = rivalBoxEl.style.display;
     savedRivalHTML = rivalInfoEl.innerHTML;
     savedHintHTML = rivalHintEl ? rivalHintEl.textContent : '';
     savedStrategyHTML = strategyEl.innerHTML;
+
+    rivalBoxEl.style.display = 'block';
 
     const randomTeam = teams[Math.floor(Math.random()*teams.length)];
     const teamName = (typeof getTeamName==='function') ? getTeamName(randomTeam.name) : randomTeam.name;
@@ -119,9 +123,11 @@
   }
 
   function restoreStrategyPreview(){
+    const rivalBoxEl = document.getElementById('rivalBox');
     const rivalInfoEl = document.getElementById('rivalInfo');
     const rivalHintEl = document.getElementById('rivalHint');
     const strategyEl = document.getElementById('strategySelector');
+    if(rivalBoxEl) rivalBoxEl.style.display = savedRivalBoxDisplay;
     if(rivalInfoEl){ rivalInfoEl.innerHTML = savedRivalHTML; rivalInfoEl.style.pointerEvents = ''; }
     if(rivalHintEl) rivalHintEl.textContent = savedHintHTML;
     if(strategyEl){ strategyEl.innerHTML = savedStrategyHTML; strategyEl.style.pointerEvents = ''; }
@@ -165,8 +171,18 @@
 
   // ───────── Resaltado del elemento señalado ─────────
   function clearHighlights(){
-    highlightEls.forEach(el => el.classList.remove('g2g-tut-highlight'));
+    highlightEls.forEach(el => {
+      el.classList.remove('g2g-tut-highlight');
+      if(el.dataset.g2gForcedRelative){ el.style.position = ''; delete el.dataset.g2gForcedRelative; }
+    });
     highlightEls = [];
+  }
+
+  function addHighlight(el){
+    const pos = getComputedStyle(el).position;
+    if(pos === 'static'){ el.style.position = 'relative'; el.dataset.g2gForcedRelative = '1'; }
+    el.classList.add('g2g-tut-highlight');
+    highlightEls.push(el);
   }
 
   function resolveSelector(sel){
@@ -213,16 +229,15 @@
     // Para el paso de estrategia (sin selector fijo), señalar el panel
     // real ya relleno con el rival de ejemplo.
     if(!targetEl && step.mockPreview === 'strategy'){
-      targetEl = document.getElementById('rivalInfo');
+      targetEl = document.getElementById('rivalBox');
     }
 
     if(step.extraSelector){
       const extraEl = document.querySelector(step.extraSelector);
-      if(extraEl){ extraEl.classList.add('g2g-tut-highlight'); highlightEls.push(extraEl); }
+      if(extraEl) addHighlight(extraEl);
     }
     if(targetEl){
-      targetEl.classList.add('g2g-tut-highlight');
-      highlightEls.push(targetEl);
+      addHighlight(targetEl);
       targetEl.scrollIntoView({behavior:'smooth', block:'center'});
     }
 
@@ -268,7 +283,7 @@
     overlayEl.id = 'g2gTutOverlay';
     overlayEl.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:999990;pointer-events:none';
     overlayEl.innerHTML = `
-      <div id="g2gTutBox" style="pointer-events:auto;position:fixed;left:50%;transform:translateX(-50%);
+      <div id="g2gTutBox" style="pointer-events:auto;position:fixed;left:50%;transform:translateX(-50%);z-index:999999;
         width:92%;max-width:380px;max-height:45vh;overflow-y:auto;
         background:#1a1d1f;border:2px solid var(--gold,#f0c419);border-radius:10px;
         padding:16px;box-shadow:0 8px 24px rgba(0,0,0,.5);box-sizing:border-box"></div>
@@ -291,7 +306,6 @@
     style.id = 'g2gTutStylesTag';
     style.textContent = `
       .g2g-tut-highlight{
-        position:relative;
         outline:3px solid var(--gold,#f0c419) !important;
         outline-offset:3px;
         border-radius:8px;
