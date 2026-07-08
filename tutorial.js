@@ -171,32 +171,43 @@
 
   // ───────── Resaltado del elemento señalado ─────────
   function clearHighlights(){
-    highlightEls.forEach(el => {
-      el.classList.remove('g2g-tut-highlight');
-      el.style.removeProperty('z-index');
-      el.style.removeProperty('outline');
-      el.style.removeProperty('outline-offset');
-      el.style.removeProperty('box-shadow');
-      el.style.removeProperty('border-radius');
-      if(el.dataset.g2gForcedRelative){ el.style.position = ''; delete el.dataset.g2gForcedRelative; }
-    });
     highlightEls = [];
+    if(overlayEl) positionSpotlightRect(null);
   }
 
   function addHighlight(el){
-    const pos = getComputedStyle(el).position;
-    if(pos === 'static'){ el.style.position = 'relative'; el.dataset.g2gForcedRelative = '1'; }
-    // Un selector por id (como #mobileTabBar) siempre gana en
-    // especificidad a una clase, aunque las dos usen !important — por
-    // eso la clase CSS sola no bastaba. Con setProperty(...,'important')
-    // se aplica como estilo en línea con prioridad, que sí gana siempre.
-    el.style.setProperty('z-index', '2147483646', 'important');
-    el.style.setProperty('outline', '3px solid #f0c419', 'important');
-    el.style.setProperty('outline-offset', '3px', 'important');
-    el.style.setProperty('box-shadow', '0 0 0 6px rgba(240,196,25,.25), 0 0 24px rgba(240,196,25,.6)', 'important');
-    el.style.setProperty('border-radius', '8px', 'important');
-    el.classList.add('g2g-tut-highlight');
     highlightEls.push(el);
+    positionSpotlight(el);
+  }
+
+  function highlightUnion(elA, elB){
+    highlightEls.push(elA, elB);
+    const a = elA.getBoundingClientRect();
+    const b = elB.getBoundingClientRect();
+    const union = {
+      top: Math.min(a.top, b.top),
+      left: Math.min(a.left, b.left),
+      right: Math.max(a.right, b.right),
+      bottom: Math.max(a.bottom, b.bottom),
+    };
+    positionSpotlightRect(union.left, union.top, union.right-union.left, union.bottom-union.top);
+  }
+
+  function positionSpotlight(el){
+    if(!el){ positionSpotlightRect(null); return; }
+    const rect = el.getBoundingClientRect();
+    positionSpotlightRect(rect.left, rect.top, rect.width, rect.height);
+  }
+
+  function positionSpotlightRect(left, top, width, height){
+    const spotlight = overlayEl.querySelector('#g2gTutSpotlight');
+    if(left === null){ spotlight.style.boxShadow = ''; return; }
+    const pad = 4;
+    spotlight.style.top = (top - pad) + 'px';
+    spotlight.style.left = (left - pad) + 'px';
+    spotlight.style.width = (width + pad*2) + 'px';
+    spotlight.style.height = (height + pad*2) + 'px';
+    spotlight.style.boxShadow = '0 0 0 9999px rgba(0,0,0,.6), 0 0 0 3px #f0c419, 0 0 24px rgba(240,196,25,.6)';
   }
 
   function resolveSelector(sel){
@@ -246,14 +257,20 @@
       targetEl = document.getElementById('rivalBox');
     }
 
-    if(step.extraSelector){
-      const extraEl = document.querySelector(step.extraSelector);
-      if(extraEl) addHighlight(extraEl);
-    }
+    let extraEl = null;
+    if(step.extraSelector) extraEl = document.querySelector(step.extraSelector);
+
     if(targetEl){
-      addHighlight(targetEl);
       targetEl.scrollIntoView({behavior:'smooth', block:'center'});
     }
+    // Si hay dos elementos a la vez (p.ej. SELECCIONAR JUGADOR + EQUIPO
+    // RÁPIDO), la "linterna" cubre el rectángulo que abarca a los dos.
+    setTimeout(()=>{
+      if(targetEl && extraEl) highlightUnion(targetEl, extraEl);
+      else if(targetEl) addHighlight(targetEl);
+      else if(extraEl) addHighlight(extraEl);
+      else positionSpotlight(null);
+    }, 320);
 
     const text = typeof step.text === 'function' ? step.text() : step.text;
 
@@ -295,19 +312,21 @@
     transitioning = false;
     overlayEl = document.createElement('div');
     overlayEl.id = 'g2gTutOverlay';
-    overlayEl.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:2147483647;pointer-events:none;isolation:isolate';
+    // Ya no hay una capa oscura cubriendo toda la pantalla — el propio
+    // oscurecimiento se genera con la "linterna" (ver renderStep),
+    // que es una sombra que rodea el hueco señalado. Así la zona
+    // señalada nunca puede quedar tapada por nada, porque el
+    // oscurecimiento en sí nunca llega a pasar por encima de ella.
+    overlayEl.style.cssText = 'position:fixed;inset:0;z-index:2147483647;pointer-events:none';
     overlayEl.innerHTML = `
-      <div id="g2gTutBox" style="pointer-events:auto;position:fixed;left:50%;transform:translateX(-50%);z-index:2147483647;
+      <div id="g2gTutSpotlight" style="position:fixed;pointer-events:none;border-radius:8px;
+        transition:top .25s ease,left .25s ease,width .25s ease,height .25s ease;"></div>
+      <div id="g2gTutBox" style="pointer-events:auto;position:fixed;left:50%;transform:translateX(-50%);
         width:92%;max-width:380px;max-height:45vh;overflow-y:auto;
         background:#1a1d1f;border:2px solid var(--gold,#f0c419);border-radius:10px;
         padding:16px;box-shadow:0 8px 24px rgba(0,0,0,.5);box-sizing:border-box"></div>
     `;
-    // Se añade a <body> (no a <html>) — así los elementos que se
-    // resaltan (que también viven dentro de <body>) son hermanos
-    // directos de esta capa y pueden comparar su z-index contra ella
-    // con normalidad, en vez de quedar atrapados en un contexto aparte.
     document.body.appendChild(overlayEl);
-    ensureStyles();
     renderStep();
   }
 
@@ -319,23 +338,6 @@
     if(isMobileLayout() && typeof switchMobileTab === 'function'){
       switchMobileTab('campo');
     }
-  }
-
-  function ensureStyles(){
-    if(document.getElementById('g2gTutStylesTag')) return;
-    const style = document.createElement('style');
-    style.id = 'g2gTutStylesTag';
-    style.textContent = `
-      .g2g-tut-highlight{
-        outline:3px solid var(--gold,#f0c419) !important;
-        outline-offset:3px;
-        border-radius:8px;
-        box-shadow:0 0 0 6px rgba(240,196,25,.25), 0 0 24px rgba(240,196,25,.5) !important;
-        z-index:2147483646 !important;
-        transition:box-shadow .2s;
-      }
-    `;
-    document.head.appendChild(style);
   }
 
   function bindReplayButton(){
