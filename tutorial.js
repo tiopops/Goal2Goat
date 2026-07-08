@@ -343,7 +343,12 @@
     // que es una sombra que rodea el hueco señalado. Así la zona
     // señalada nunca puede quedar tapada por nada, porque el
     // oscurecimiento en sí nunca llega a pasar por encima de ella.
-    overlayEl.style.cssText = 'position:fixed;inset:0;z-index:2147483647;pointer-events:none';
+    // Mientras el tutorial está activo, el único elemento clicable de
+    // toda la interfaz debe ser el propio recuadro del tutorial — por
+    // eso esta capa NO usa pointer-events:none (así bloquea todo lo
+    // que hay debajo), y solo el recuadro (#g2gTutBox) recupera sus
+    // propios clics con pointer-events:auto.
+    overlayEl.style.cssText = 'position:fixed;inset:0;z-index:2147483647;pointer-events:auto';
     overlayEl.innerHTML = `
       <div id="g2gTutSpotlight" style="position:fixed;pointer-events:none;border-radius:8px;
         transition:top .25s ease,left .25s ease,width .25s ease,height .25s ease;"></div>
