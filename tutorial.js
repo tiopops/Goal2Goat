@@ -170,7 +170,27 @@
   }
 
   // ───────── Resaltado del elemento señalado ─────────
+  let spotlightTrackHandler = null;
+  function stopSpotlightTracking(){
+    if(spotlightTrackHandler){
+      window.removeEventListener('scroll', spotlightTrackHandler, true);
+      window.removeEventListener('resize', spotlightTrackHandler);
+      spotlightTrackHandler = null;
+    }
+  }
+  // Vuelve a colocar la linterna si la página se desplaza o cambia de
+  // tamaño mientras el paso está activo — así se autocorrige aunque el
+  // contenido tarde un poco en asentarse, en vez de depender de acertar
+  // el tiempo exacto de espera.
+  function startSpotlightTracking(applyFn){
+    stopSpotlightTracking();
+    spotlightTrackHandler = () => applyFn();
+    window.addEventListener('scroll', spotlightTrackHandler, true);
+    window.addEventListener('resize', spotlightTrackHandler);
+  }
+
   function clearHighlights(){
+    stopSpotlightTracking();
     highlightEls = [];
     if(overlayEl) positionSpotlightRect(null);
   }
@@ -261,16 +281,22 @@
     if(step.extraSelector) extraEl = document.querySelector(step.extraSelector);
 
     if(targetEl){
-      targetEl.scrollIntoView({behavior:'smooth', block:'center'});
+      // Sin animación (behavior:'auto') — con scroll suave, medir la
+      // posición mientras todavía se estaba moviendo dejaba la
+      // linterna descuadrada la primera vez que se mostraba cada paso.
+      targetEl.scrollIntoView({behavior:'auto', block:'center'});
     }
-    // Si hay dos elementos a la vez (p.ej. SELECCIONAR JUGADOR + EQUIPO
-    // RÁPIDO), la "linterna" cubre el rectángulo que abarca a los dos.
-    setTimeout(()=>{
+
+    const applySpotlight = () => {
       if(targetEl && extraEl) highlightUnion(targetEl, extraEl);
       else if(targetEl) addHighlight(targetEl);
       else if(extraEl) addHighlight(extraEl);
       else positionSpotlight(null);
-    }, 320);
+    };
+    // Si hay dos elementos a la vez (p.ej. SELECCIONAR JUGADOR + EQUIPO
+    // RÁPIDO), la "linterna" cubre el rectángulo que abarca a los dos.
+    setTimeout(applySpotlight, 60);
+    startSpotlightTracking(applySpotlight);
 
     const text = typeof step.text === 'function' ? step.text() : step.text;
 
