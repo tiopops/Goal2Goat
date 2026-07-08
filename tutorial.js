@@ -49,9 +49,10 @@
       {
         selector: () => isMobileLayout() ? '#mobileTabBar' : '.app',
         title: '5 · Tu centro de mando',
-        text: () => isMobileLayout()
+        text: () => (isMobileLayout()
           ? 'En el móvil, estas pestañas de abajo cambian entre el campo, tu equipo, el rival y el historial — todo está siempre a un toque.'
-          : 'En escritorio tienes tu plantilla, el campo y la información del rival visibles los tres a la vez, sin necesidad de cambiar de pantalla.'
+          : 'En escritorio tienes tu plantilla, el campo y la información del rival visibles los tres a la vez, sin necesidad de cambiar de pantalla.')
+          + ' <br><br>Puedes volver a ver este tutorial cuando quieras desde <strong>CÓMO JUGAR</strong>.'
       },
     ];
   }
@@ -64,7 +65,7 @@
   // ───────── Vistas previas seguras (leen datos reales, nunca dejan
   // nada a medias) ─────────
   let activePreviewKind = null; // null | 'strategy' | 'pitch'
-  let savedNextOpponent, savedSelectedStrategy, savedMobileTab, savedRivalHTML, savedHintHTML, savedStrategyHTML;
+  let savedMobileTab, savedRivalHTML, savedHintHTML, savedStrategyHTML;
   let savedPitchSlotsHTML = [];
 
   function setupRealPreview(kind){
@@ -79,22 +80,34 @@
   }
 
   function setupStrategyPreview(){
-    if(typeof nextOpponent === 'undefined' || typeof teams === 'undefined' || typeof renderRivalBox !== 'function') return;
-    if(nextOpponent) return; // ya había un rival real cargado — no tocar nada, por seguridad
-
-    activePreviewKind = 'strategy';
-    savedNextOpponent = nextOpponent;
-    savedSelectedStrategy = (typeof selectedMatchStrategy !== 'undefined') ? selectedMatchStrategy : null;
+    if(typeof teams === 'undefined' || typeof STRATEGY_ORDER === 'undefined' || typeof STRATEGIES === 'undefined') return;
 
     const rivalInfoEl = document.getElementById('rivalInfo');
     const rivalHintEl = document.getElementById('rivalHint');
     const strategyEl = document.getElementById('strategySelector');
-    savedRivalHTML = rivalInfoEl ? rivalInfoEl.innerHTML : '';
-    savedHintHTML = rivalHintEl ? rivalHintEl.textContent : '';
-    savedStrategyHTML = strategyEl ? strategyEl.innerHTML : '';
+    if(!rivalInfoEl || !strategyEl) return;
 
-    nextOpponent = teams[Math.floor(Math.random()*teams.length)];
-    renderRivalBox();
+    activePreviewKind = 'strategy';
+    savedRivalHTML = rivalInfoEl.innerHTML;
+    savedHintHTML = rivalHintEl ? rivalHintEl.textContent : '';
+    savedStrategyHTML = strategyEl.innerHTML;
+
+    const randomTeam = teams[Math.floor(Math.random()*teams.length)];
+    const teamName = (typeof getTeamName==='function') ? getTeamName(randomTeam.name) : randomTeam.name;
+    const flag = (typeof flagEmoji==='function') ? flagEmoji(randomTeam.name, 22) : '';
+
+    rivalInfoEl.innerHTML = `
+      <div style="text-align:center;padding:6px 0">
+        ${flag}
+        <div style="font-family:'Bebas Neue',Impact,sans-serif;font-size:15px;margin-top:4px">${teamName}</div>
+      </div>`;
+    if(rivalHintEl) rivalHintEl.textContent = 'Rival de ejemplo — no es tu próximo partido real.';
+
+    const buttonsHTML = STRATEGY_ORDER.map(key=>{
+      const s = STRATEGIES[key];
+      return `<button class="strategy-btn">${s.name}</button>`;
+    }).join('');
+    strategyEl.innerHTML = `<div class="strategy-grid">${buttonsHTML}</div>`;
 
     if(isMobileLayout() && typeof switchMobileTab === 'function'){
       const activeTab = document.querySelector('.mob-tab.active');
@@ -102,15 +115,10 @@
       switchMobileTab('rival');
     }
 
-    [document.getElementById('strategySelector'), document.getElementById('rivalInfo')].forEach(el=>{
-      if(el){ el.style.pointerEvents = 'none'; }
-    });
+    [strategyEl, rivalInfoEl].forEach(el=>{ el.style.pointerEvents = 'none'; });
   }
 
   function restoreStrategyPreview(){
-    nextOpponent = savedNextOpponent;
-    if(typeof selectedMatchStrategy !== 'undefined') selectedMatchStrategy = savedSelectedStrategy;
-
     const rivalInfoEl = document.getElementById('rivalInfo');
     const rivalHintEl = document.getElementById('rivalHint');
     const strategyEl = document.getElementById('strategySelector');
@@ -166,6 +174,30 @@
   }
 
   // ───────── Paso actual ─────────
+  function positionBox(box, targetEl){
+    const SAFE_TOP = 34;   // deja hueco a la hora/batería del móvil
+    const SAFE_BOTTOM = 12;
+    const viewportH = window.innerHeight;
+
+    if(!targetEl){
+      box.style.top = '';
+      box.style.bottom = SAFE_BOTTOM + 'px';
+      return;
+    }
+    const rect = targetEl.getBoundingClientRect();
+    const targetMidY = rect.top + rect.height/2;
+
+    if(targetMidY > viewportH/2){
+      // El elemento está en la mitad de abajo: el recuadro va arriba del todo.
+      box.style.top = SAFE_TOP + 'px';
+      box.style.bottom = '';
+    } else {
+      // El elemento está en la mitad de arriba: el recuadro va abajo del todo.
+      box.style.bottom = SAFE_BOTTOM + 'px';
+      box.style.top = '';
+    }
+  }
+
   function renderStep(){
     restoreRealPreview();
     clearHighlights();
@@ -217,6 +249,7 @@
     const prevBtn = box.querySelector('#g2gTutPrev');
     if(prevBtn) prevBtn.addEventListener('click', ()=>guarded(()=>{ currentStep--; renderStep(); }));
 
+    setTimeout(()=>positionBox(box, targetEl), 300);
     transitioning = false;
   }
 
@@ -233,9 +266,10 @@
     transitioning = false;
     overlayEl = document.createElement('div');
     overlayEl.id = 'g2gTutOverlay';
-    overlayEl.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:999990;display:flex;align-items:center;justify-content:center;padding:16px;box-sizing:border-box';
+    overlayEl.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:999990;pointer-events:none';
     overlayEl.innerHTML = `
-      <div id="g2gTutBox" style="width:100%;max-width:380px;max-height:80vh;overflow-y:auto;
+      <div id="g2gTutBox" style="pointer-events:auto;position:fixed;left:50%;transform:translateX(-50%);
+        width:92%;max-width:380px;max-height:45vh;overflow-y:auto;
         background:#1a1d1f;border:2px solid var(--gold,#f0c419);border-radius:10px;
         padding:16px;box-shadow:0 8px 24px rgba(0,0,0,.5);box-sizing:border-box"></div>
     `;
@@ -262,7 +296,7 @@
         outline-offset:3px;
         border-radius:8px;
         box-shadow:0 0 0 6px rgba(240,196,25,.25), 0 0 24px rgba(240,196,25,.5) !important;
-        z-index:999985 !important;
+        z-index:999995 !important;
         transition:box-shadow .2s;
       }
     `;
