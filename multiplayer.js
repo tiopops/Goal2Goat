@@ -1186,8 +1186,8 @@ function mpFinishPenaltiesUI(winnerRole, history){
       <div class="match-modal" style="overflow:hidden;display:flex;flex-direction:column">
         <div class="match-header">
           <div class="match-side">
-            <span class="match-team-name">${mpEsc(window.myTeamName||myTeamName||'TU EQUIPO')}</span>
             ${window._myCrestData?renderCrestThumb(40):'<i class="ph ph-bold ph-user" style="font-size:32px;color:#4a90d9"></i>'}
+            <span class="match-team-name">${mpEsc(window.myTeamName||myTeamName||'TU EQUIPO')}</span>
           </div>
           <div style="text-align:center;flex:0 0 auto">
             <div class="match-scoreline" style="font-size:42px;letter-spacing:4px">${st.myGoals||0} – ${st.rivalGoals||0}</div>
@@ -1197,8 +1197,8 @@ function mpFinishPenaltiesUI(winnerRole, history){
             </div>
           </div>
           <div class="match-side">
-            <span class="match-team-name">${mpEsc(window._duelOpponentUsername||'RIVAL')}</span>
             ${window._rivalCrestData?renderRivalCrestThumb(40):'<i class="ph ph-bold ph-user" style="font-size:32px;color:#e74c3c"></i>'}
+            <span class="match-team-name">${mpEsc(window._duelOpponentUsername||'RIVAL')}</span>
           </div>
         </div>
       </div>`;
