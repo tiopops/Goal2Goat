@@ -3039,6 +3039,11 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
     clockEl.textContent=`90+${inj2}'`; fillEl.style.width='100%';
     halfEl.textContent=t('match.end')||'FIN'; halfEl.style.background='#555';
     playSound('whistle');
+    // Giro Táctico no puede usarse ni tras terminar el partido ni
+    // durante la prórroga/penaltis — se desactiva aquí mismo, antes de
+    // decidir qué camino sigue el partido (para que no quede un hueco
+    // en el que el botón siga siendo pulsable).
+    { const gBtnEnd=document.getElementById('giroTacticoBtn'); if(gBtnEnd){ gBtnEnd.style.display='none'; gBtnEnd.disabled=true; } }
     // Giro Táctico puede haber cambiado el marcador final respecto al que
     // se simuló al principio del partido — hay que comprobar otra vez si
     // ahora hace falta la tanda de penaltis (o si ya no hace falta),
