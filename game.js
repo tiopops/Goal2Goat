@@ -27,7 +27,7 @@ const map={
 'méxico':'mx','mexico':'mx','nigeria':'ng','noruega':'no',
 'paraguay':'py','perú':'pe','peru':'pe','rumanía':'ro','rumania':'ro',
 'rusia':'ru','suecia':'se','suiza':'ch','turquía':'tr','turquia':'tr',
-'ucrania':'ua','senegal':'sn','costa rica':'cr','ghana':'gh'
+'ucrania':'ua','senegal':'sn','costa rica':'cr','ghana':'gh','cabo verde':'cv'
 };
 for (const k in map){ if(n.includes(k)) return map[k]; }
 return 'un';
@@ -2045,7 +2045,7 @@ function renderRivalBox(){
   document.getElementById("rivalInfo").innerHTML=`
     <div class="rival-card">
       <div class="rival-stage-tag">${stageLabel()}</div>
-      <div class="rival-flag">${flagEmoji(nextOpponent.name,48)}</div>
+      <div class="rival-flag">${flagEmoji(nextOpponent.name,72)}</div>
       <h4>${getTeamName(nextOpponent.name)}</h4>
       <div class="rival-power-bar">
         <div class="rival-power-label">${window.t?window.t('rival.power_label'):'PODER RIVAL'}</div>
@@ -2926,7 +2926,7 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
   // ── HTML inicial — diseño match-modal ──
   overlay.innerHTML=`
   <div class="match-modal" style="overflow:hidden;display:flex;flex-direction:column;max-height:85vh;position:relative">
-    <button id="giroTacticoBtn" style="position:absolute;top:8px;left:8px;z-index:5;display:flex;align-items:center;gap:5px;background:none;border:1px solid ${window._giroCharges>0?'var(--gold)':'#555'};color:${window._giroCharges>0?'var(--gold)':'#777'};font-family:'Bebas Neue',Impact,sans-serif;font-size:11px;letter-spacing:.5px;padding:4px 9px;border-radius:5px;cursor:${window._giroCharges>0?'pointer':'not-allowed'}" ${window._giroCharges>0?'':'disabled'}><i class="ph ph-bold ph-notebook" style="font-size:15px"></i> GIRO TÁCTICO ${window._giroCharges||0}/${getMaxGiroCharges()}</button>
+    <button id="giroTacticoBtn" style="position:absolute;top:8px;left:8px;z-index:5;display:flex;align-items:center;gap:6px;background:none;border:1px solid ${window._giroCharges>0?'var(--gold)':'#555'};color:${window._giroCharges>0?'var(--gold)':'#777'};font-family:'Bebas Neue',Impact,sans-serif;font-size:14px;letter-spacing:.5px;padding:7px 12px;border-radius:6px;cursor:${window._giroCharges>0?'pointer':'not-allowed'}" ${window._giroCharges>0?'':'disabled'}><i class="ph ph-bold ph-notebook" style="font-size:19px"></i> GIRO TÁCTICO ${window._giroCharges||0}/${getMaxGiroCharges()}</button>
     ${window._duelId?`<div style="text-align:center;font-family:'Bebas Neue',Impact,sans-serif;font-size:14px;letter-spacing:1.5px;color:var(--gold);text-transform:uppercase;padding-bottom:4px">${(tk('mp.duel_match_of')||'PARTIDO {0} DE 5').replace('{0}', String(window._duelMatchIndex+1))}</div>`:''}
     <div class="match-header">
       <div class="match-side">
