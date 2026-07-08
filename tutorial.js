@@ -26,25 +26,25 @@
       {
         selector: '.formation-tabs',
         title: '1 · Elige tu formación',
-        text: 'Ofensiva, Equilibrada o Defensiva — la formación que elijas aquí queda fija todo el torneo, así que piénsala bien.'
+        text: 'Elige entre Ofensiva, Equilibrada o Defensiva — la formación que elijas aquí quedará fija durante todo el torneo, así que piénsala bien.'
       },
       {
         selector: '#rollBtn',
         extraSelector: '#quickBuildBtn',
         title: '2 · Arma tu plantilla',
-        text: '<strong>SELECCIONAR JUGADOR</strong> te deja elegir uno a uno. <strong>EQUIPO RÁPIDO</strong> completa el resto por ti al instante.'
+        text: '<strong>SELECCIONAR JUGADOR</strong> te permite elegir a tus jugadores de uno en uno de manera aleatoria entre varias selecciones al azar hasta completar tu equipo.<br><br><strong>EQUIPO RÁPIDO</strong> generará por ti una selección completamente al azar para empezar a jugar inmediatamente.'
       },
       {
         selector: '#pitchBox',
         mockPreview: 'pitch',
         title: '3 · La posición ★ importa',
-        text: 'Cada jugador tiene una posición natural marcada con ★. Colocado ahí rinde al máximo — fuera de sitio, rinde peor. Hemos colocado unos jugadores de ejemplo al azar para que lo veas — no forman parte de tu equipo real. <br><br>Truco: entre partido y partido del torneo puedes hacer <strong>cambios</strong> para rotar a quien necesite descanso.'
+        text: 'Cuando coloques un jugador en su posición natural, aparecerá marcado con una ★ que indica que está rindiendo al máximo. Fuera de su posición rendirá peor, afectando negativamente a las estadísticas de tu equipo. Hemos colocado unos jugadores de ejemplo al azar en sus posiciones naturales para que puedas verlo.<br><br>Recuerda que entre partido y partido del torneo puedes hacer cambios para rotar a quien necesite descanso, evitar sanciones mayores o recuperarse de una lesión.'
       },
       {
         selector: null,
         mockPreview: 'strategy',
         title: '4 · Elige estrategia antes de cada partido',
-        text: 'Antes de cada partido del torneo podrás elegir una <strong>estrategia</strong> que contrarreste la del rival. Acertar la contra te da una ventaja real en el resultado. Para que veas cómo es, hemos cargado un rival de ejemplo al azar — los botones no funcionan ahora mismo, es solo para que lo veas.'
+        text: 'Antes de cada partido del torneo podrás elegir una estrategia para contrarrestar el juego del rival. Lee detenidamente el estilo de juego del contrincante, pues una estrategia correcta te dará una ventaja real en el resultado. Para que veas cómo es, hemos cargado un rival al azar a modo de ejemplo.'
       },
       {
         selector: () => isMobileLayout() ? '#mobileTabBar' : '.app',
@@ -99,11 +99,18 @@
     const randomTeam = teams[Math.floor(Math.random()*teams.length)];
     const teamName = (typeof getTeamName==='function') ? getTeamName(randomTeam.name) : randomTeam.name;
     const flag = (typeof flagEmoji==='function') ? flagEmoji(randomTeam.name, 22) : '';
+    const styleKey = randomTeam._styleKey || '';
+    let styleName = styleKey;
+    if(styleKey){
+      const tr = window.TRANSLATIONS && window.TRANSLATIONS['style.name.'+styleKey];
+      styleName = tr ? (tr[window.LANG] || tr['es'] || styleKey) : (typeof STYLES!=='undefined' && STYLES[styleKey] ? STYLES[styleKey].name : styleKey);
+    }
 
     rivalInfoEl.innerHTML = `
       <div style="text-align:center;padding:6px 0">
         ${flag}
         <div style="font-family:'Bebas Neue',Impact,sans-serif;font-size:15px;margin-top:4px">${teamName}</div>
+        ${styleKey ? `<div class="style-label" style="margin-top:8px">Estilo de juego</div><div class="rival-style-tag">${styleName}</div>` : ''}
       </div>`;
     if(rivalHintEl) rivalHintEl.textContent = 'Rival de ejemplo — no es tu próximo partido real.';
 

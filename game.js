@@ -2930,8 +2930,8 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
     ${window._duelId?`<div style="text-align:center;font-family:'Bebas Neue',Impact,sans-serif;font-size:14px;letter-spacing:1.5px;color:var(--gold);text-transform:uppercase;padding-bottom:4px">${(tk('mp.duel_match_of')||'PARTIDO {0} DE 5').replace('{0}', String(window._duelMatchIndex+1))}</div>`:''}
     <div class="match-header">
       <div class="match-side">
-        ${window._duelId?(window._myCrestData?renderCrestThumb(28):'<i class="ph ph-bold ph-user" style="font-size:22px;color:#4a90d9"></i>'):(window._myCrestData?renderCrestThumb(36):'<i class="ph ph-bold ph-user" style="font-size:22px;color:#4a90d9"></i>')}
         <span class="match-team-name">${myTeamName}</span>
+        ${window._duelId?(window._myCrestData?renderCrestThumb(40):'<i class="ph ph-bold ph-user" style="font-size:32px;color:#4a90d9"></i>'):(window._myCrestData?renderCrestThumb(48):'<i class="ph ph-bold ph-user" style="font-size:32px;color:#4a90d9"></i>')}
       </div>
       <div style="text-align:center;flex:0 0 auto">
         <div class="match-scoreline" id="liveScore" style="font-size:42px;letter-spacing:4px">0 – 0</div>
@@ -2944,8 +2944,8 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
         </div>
       </div>
       <div class="match-side">
-        ${window._duelId?(window._rivalCrestData?renderRivalCrestThumb(28):'<i class="ph ph-bold ph-user" style="font-size:22px;color:#e74c3c"></i>'):(nextOpponent?flagEmoji(nextOpponent.name):'<span style="font-size:22px">👤</span>')}
         <span class="match-team-name">${oppName}</span>
+        ${window._duelId?(window._rivalCrestData?renderRivalCrestThumb(40):'<i class="ph ph-bold ph-user" style="font-size:32px;color:#e74c3c"></i>'):(nextOpponent?flagEmoji(nextOpponent.name,48):'<span style="font-size:32px">👤</span>')}
       </div>
     </div>
     <div id="liveEvents" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;align-items:stretch;gap:2px;padding:4px 0;min-height:80px;max-height:260px"></div>
