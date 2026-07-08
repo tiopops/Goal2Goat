@@ -924,6 +924,16 @@ function mpRenderPenaltyKick(cur, hist){
   if(balonImg) balonImg.src='assets/penaltis/balon_iddle.png';
 
   mpRenderPenaltyZones(iAmShooter, cur);
+  // DIAGNÓSTICO TEMPORAL — mismo propósito que en la animación.
+  const dbg2=document.getElementById('penDebugTag')||(()=>{
+    const t=document.createElement('div');
+    t.id='penDebugTag';
+    t.style.cssText='font-size:9px;color:#888;text-align:center;font-family:monospace;padding:2px;word-break:break-all';
+    const parent=document.getElementById('penKickLabel');
+    if(parent&&parent.parentNode) parent.parentNode.insertBefore(t, parent.nextSibling);
+    return t;
+  })();
+  if(dbg2) dbg2.textContent=`[debug-elige] kickNum=${cur.kickNum} cur.shooterRole=${cur.shooterRole} window._duelRole=${window._duelRole} iAmShooter=${iAmShooter} shooterZone=${cur.shooterZone} keeperZone=${cur.keeperZone}`;
   mpStartPenaltyTimer(cur);
 }
 
@@ -1123,6 +1133,17 @@ function mpPlayPenaltyAnimationForEntry(entry){
   const myName=mpEsc(window.currentUsername||'TÚ');
   const turnLbl=document.getElementById('penTurnLabel');
   if(turnLbl) turnLbl.innerHTML=`<span style="color:${iShoot?'#4a90d9':'#e74c3c'}">${myName.toUpperCase()}</span> ${iShoot?'TIRA':'INTENTA PARAR'} EL PENALTI`;
+  // DIAGNÓSTICO TEMPORAL — para localizar el fallo de roles con datos
+  // reales en vez de a ciegas. Quitar en cuanto se confirme la causa.
+  const dbg=document.getElementById('penDebugTag')||(()=>{
+    const t=document.createElement('div');
+    t.id='penDebugTag';
+    t.style.cssText='font-size:9px;color:#888;text-align:center;font-family:monospace;padding:2px;word-break:break-all';
+    const parent=document.getElementById('penKickLabel');
+    if(parent&&parent.parentNode) parent.parentNode.insertBefore(t, parent.nextSibling);
+    return t;
+  })();
+  if(dbg) dbg.textContent=`[debug] kickNum=${entry.kickNum} entry.shooterRole=${entry.shooterRole} window._duelRole=${window._duelRole} iShoot=${iShoot} shooterZone=${entry.shooterZone} keeperZone=${entry.keeperZone} result=${entry.result}`;
   return mpPlayPenaltyAnimation(entry.result, entry.shooterZone, entry.keeperZone, iShoot);
 }
 
