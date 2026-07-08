@@ -1027,13 +1027,24 @@ async function mpSubmitPenaltyChoice(zoneId){
   const db=window._fbDb;
   if(!db||!window._duelId) return;
   const idx=window._duelMatchIndex;
+  // Usar el lanzamiento que YO tenía delante cuando pulsé (mpPenCurState),
+  // no volver a leer Firestore aquí — si para entonces el lanzamiento ya
+  // había avanzado al siguiente (los papeles se intercambian en cada
+  // uno), una lectura nueva daría el rol equivocado y la elección se
+  // guardaría en el campo que no era (tirador↔portero mezclados).
+  const cur=mpPenCurState;
+  if(!cur) return;
+  const iAmShooter=cur.shooterRole===window._duelRole;
+  const field=iAmShooter?'shooterZone':'keeperZone';
   try{
+    // Comprobación de seguridad: si para cuando esto se envía el
+    // lanzamiento ya avanzó al siguiente (kickNum distinto), esta
+    // elección ya no tiene sentido — se descarta en vez de escribirla
+    // en el campo de un lanzamiento que no es al que respondía.
     const snap=await db.collection('duels').doc(window._duelId).get();
     const d=snap.exists?snap.data():{};
-    const cur=d[`m${idx}_penCurrent`];
-    if(!cur) return;
-    const iAmShooter=cur.shooterRole===window._duelRole;
-    const field=iAmShooter?'shooterZone':'keeperZone';
+    const liveCur=d[`m${idx}_penCurrent`];
+    if(!liveCur || liveCur.kickNum!==cur.kickNum) return;
     await db.collection('duels').doc(window._duelId).update({[`m${idx}_penCurrent.${field}`]: zoneId});
   }catch(e){ console.error('[Penaltis] envío de elección falló:', e); }
 }

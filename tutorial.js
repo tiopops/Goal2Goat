@@ -106,13 +106,15 @@
       styleName = tr ? (tr[window.LANG] || tr['es'] || styleKey) : (typeof STYLES!=='undefined' && STYLES[styleKey] ? STYLES[styleKey].name : styleKey);
     }
 
+    const scoutHint = (typeof getScoutHint==='function') ? getScoutHint(randomTeam) : '';
+
     rivalInfoEl.innerHTML = `
       <div style="text-align:center;padding:6px 0">
         ${flag}
         <div style="font-family:'Bebas Neue',Impact,sans-serif;font-size:15px;margin-top:4px">${teamName}</div>
         ${styleKey ? `<div class="style-label" style="margin-top:8px">Estilo de juego</div><div class="rival-style-tag">${styleName}</div>` : ''}
       </div>`;
-    if(rivalHintEl) rivalHintEl.textContent = 'Rival de ejemplo — no es tu próximo partido real.';
+    if(rivalHintEl) rivalHintEl.textContent = scoutHint;
 
     const buttonsHTML = STRATEGY_ORDER.map(key=>{
       const s = STRATEGIES[key];
