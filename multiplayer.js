@@ -859,9 +859,17 @@ function mpPenaltyAttachListener(){
           if(mpPenPendingFinish){
             mpPenaltyDetachListener();
             mpFinishPenaltiesUI(mpPenPendingFinish.winnerRole, mpPenPendingFinish.history);
-          }else if(cur){
-            mpRenderPenaltyKick(cur, shownHist);
-            if(cur.shooterRole===window._duelRole) mpMaybeResolveAsShooter(cur, shownHist);
+          }else{
+            // OJO: usar el estado más reciente conocido (mpPenLatestCur),
+            // no el "cur" capturado hace ~4s cuando empezó esta animación
+            // — si durante la espera el rival ya había elegido su zona
+            // para el siguiente lanzamiento, ese "cur" antiguo ya no
+            // refleja la realidad y el juego actuaría con datos viejos.
+            const freshCur=mpPenLatestCur||cur;
+            if(freshCur){
+              mpRenderPenaltyKick(freshCur, shownHist);
+              if(freshCur.shooterRole===window._duelRole) mpMaybeResolveAsShooter(freshCur, shownHist);
+            }
           }
         }, 450);
       });
@@ -1055,67 +1063,53 @@ async function mpMaybeResolveAsShooter(cur, hist, timeUp){
   if(!bothPicked && !timeUp) return;
   mpPenResolvingKick=cur.kickNum;
 
+  let result, shooterZone=cur.shooterZone, keeperZone=cur.keeperZone;
+  if(!cur.shooterZone){
+    result='fuera'; // el tirador no eligió a tiempo: disparo fuera
+  }else{
+    // El portero que no elige a tiempo se queda quieto en el centro,
+    // como si esa fuera su elección — no es gol automático.
+    if(!keeperZone) keeperZone='centro';
+    result=(cur.shooterZone===keeperZone)?'para':'gol';
+  }
+
+  // No se anima aquí — la animación la dispara el listener a partir del
+  // historial, igual en los dos dispositivos, para que se vea idéntica.
+  const newHist=[...hist, {kickNum:cur.kickNum, shooterRole:cur.shooterRole, result, shooterZone, keeperZone}];
   const db=window._fbDb;
   const idx=window._duelMatchIndex;
-  if(!db||!window._duelId) return;
+
+  // Comprobar si la tanda ya está decidida (regla de parada anticipada,
+  // igual que en un jugador)
+  const chalGoals=newHist.filter(h=>h.shooterRole==='challenger'&&h.result==='gol').length;
+  const oppGoals=newHist.filter(h=>h.shooterRole==='opponent'&&h.result==='gol').length;
+  const chalKicksLeftBase=Math.max(0,5-newHist.filter(h=>h.shooterRole==='challenger'&&h.kickNum<10).length);
+  const oppKicksLeftBase=Math.max(0,5-newHist.filter(h=>h.shooterRole==='opponent'&&h.kickNum<10).length);
+  const nextKickNum=cur.kickNum+1;
+  const inSuddenDeath=nextKickNum>=10;
+  let decided=false, winner=null;
+  if(!inSuddenDeath){
+    const diff=chalGoals-oppGoals;
+    if(diff>oppKicksLeftBase){ decided=true; winner='challenger'; }
+    else if(-diff>chalKicksLeftBase){ decided=true; winner='opponent'; }
+  }else{
+    // Muerte súbita: se decide en cuanto se completa un par de tiros con marcador distinto
+    if(nextKickNum%2===0 && chalGoals!==oppGoals){ decided=true; winner=chalGoals>oppGoals?'challenger':'opponent'; }
+  }
 
   try{
-    // Todo dentro de una transacción: lee el estado MÁS RECIENTE del
-    // servidor en el momento exacto de escribir, no el que se leyó
-    // hace un rato en el listener. Si dos escrituras se solapaban en
-    // el tiempo (por retraso de red), la segunda podía pisar a la
-    // primera y perderse un lanzamiento entero del historial — con la
-    // transacción eso ya no puede pasar, Firestore la reintenta sola
-    // si detecta que el documento cambió mientras tanto.
-    await db.runTransaction(async (transaction)=>{
-      const docRef=db.collection('duels').doc(window._duelId);
-      const snap=await transaction.get(docRef);
-      const d=snap.exists?snap.data():{};
-      const liveCur=d[`m${idx}_penCurrent`];
-      const liveHist=d[`m${idx}_penHistory`]||[];
-
-      // Si para cuando se ejecuta esto el lanzamiento ya se resolvió
-      // (otro dispositivo se adelantó) o ya no coincide, no hacer nada.
-      if(!liveCur || liveCur.kickNum!==cur.kickNum) return;
-
-      let result, shooterZone=liveCur.shooterZone, keeperZone=liveCur.keeperZone;
-      if(!shooterZone){
-        result='fuera'; // el tirador no eligió a tiempo: disparo fuera
-      }else{
-        if(!keeperZone) keeperZone='centro';
-        result=(shooterZone===keeperZone)?'para':'gol';
-      }
-
-      const newHist=[...liveHist, {kickNum:liveCur.kickNum, shooterRole:liveCur.shooterRole, result, shooterZone, keeperZone}];
-
-      const chalGoals=newHist.filter(h=>h.shooterRole==='challenger'&&h.result==='gol').length;
-      const oppGoals=newHist.filter(h=>h.shooterRole==='opponent'&&h.result==='gol').length;
-      const chalKicksLeftBase=Math.max(0,5-newHist.filter(h=>h.shooterRole==='challenger'&&h.kickNum<10).length);
-      const oppKicksLeftBase=Math.max(0,5-newHist.filter(h=>h.shooterRole==='opponent'&&h.kickNum<10).length);
-      const nextKickNum=liveCur.kickNum+1;
-      const inSuddenDeath=nextKickNum>=10;
-      let decided=false, winner=null;
-      if(!inSuddenDeath){
-        const diff=chalGoals-oppGoals;
-        if(diff>oppKicksLeftBase){ decided=true; winner='challenger'; }
-        else if(-diff>chalKicksLeftBase){ decided=true; winner='opponent'; }
-      }else{
-        if(nextKickNum%2===0 && chalGoals!==oppGoals){ decided=true; winner=chalGoals>oppGoals?'challenger':'opponent'; }
-      }
-
-      if(decided){
-        transaction.update(docRef, {
-          [`m${idx}_penHistory`]: newHist,
-          [`m${idx}_penWinner`]: winner,
-          [`m${idx}_penCurrent`]: null
-        });
-      }else{
-        transaction.update(docRef, {
-          [`m${idx}_penHistory`]: newHist,
-          [`m${idx}_penCurrent`]: {kickNum:nextKickNum, shooterRole:mpPenaltyShooterRoleForKick(nextKickNum), deadline:Date.now()+PENALTY_ANIM_DELAY_MS+PENALTY_KICK_MS, shooterZone:null, keeperZone:null}
-        });
-      }
-    });
+    if(decided){
+      await db.collection('duels').doc(window._duelId).update({
+        [`m${idx}_penHistory`]: newHist,
+        [`m${idx}_penWinner`]: winner,
+        [`m${idx}_penCurrent`]: null
+      });
+    }else{
+      await db.collection('duels').doc(window._duelId).update({
+        [`m${idx}_penHistory`]: newHist,
+        [`m${idx}_penCurrent`]: {kickNum:nextKickNum, shooterRole:mpPenaltyShooterRoleForKick(nextKickNum), deadline:Date.now()+PENALTY_ANIM_DELAY_MS+PENALTY_KICK_MS, shooterZone:null, keeperZone:null}
+      });
+    }
   }catch(e){ console.error('[Penaltis] avance de ronda falló:', e); }
 }
 
