@@ -913,6 +913,18 @@ function mpRenderPenaltyKick(cur, hist){
   // frases sin sentido como "TIOPOPS PARA" cuando en realidad tiopops
   // estaba tirando y era el otro jugador quien paraba.
   if(turnLbl) turnLbl.innerHTML=`<span style="color:${iAmShooter?'#4a90d9':'#e74c3c'}">${myName.toUpperCase()}</span> ${iAmShooter?'TIRA':'INTENTA PARAR'} EL PENALTI`;
+  // DIAGNÓSTICO TEMPORAL — solo kickNum y shooterRole, para confirmar
+  // si el número de lanzamiento avanza de 1 en 1 (correcto) o de 2 en
+  // 2 (lo que explicaría que el mismo jugador tire siempre). Quitar en
+  // cuanto se confirme.
+  const dbgKick=document.getElementById('penDebugKick')||(()=>{
+    const t=document.createElement('div');
+    t.id='penDebugKick';
+    t.style.cssText='font-size:10px;color:#888;text-align:center;font-family:monospace;padding:2px';
+    if(lbl&&lbl.parentNode) lbl.parentNode.insertBefore(t, lbl.nextSibling);
+    return t;
+  })();
+  if(dbgKick) dbgKick.textContent=`[debug] kickNum=${cur.kickNum} shooterRole=${cur.shooterRole} duelRole=${window._duelRole}`;
   const sub=document.getElementById('penSub');
   if(sub) sub.textContent=iAmShooter?'¡Te toca lanzar! Elige tu zona':'¡Te toca parar! Elige dónde te tiras';
 

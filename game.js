@@ -914,8 +914,8 @@ function showTeamChoice(t1,p1,t2,p2,isBench=false){
   const spin=setInterval(()=>{
     const r1=pool[Math.floor(Math.random()*pool.length)];
     const r2=pool[Math.floor(Math.random()*pool.length)];
-    reel1.innerHTML=flagEmoji(r1.name,56);
-    reel2.innerHTML=flagEmoji(r2.name,56);
+    reel1.innerHTML=flagEmoji(r1.name,72);
+    reel2.innerHTML=flagEmoji(r2.name,72);
     playSound('spin');
     i++;
   },80);
@@ -953,7 +953,7 @@ function teamOptionHTML(team,players){
     }
   }
   return `<div class="team-option" onclick="selectTeam('${esc(team.name)}')">
-    <div class="flag-wrap">${flagEmoji(team.name)}</div>
+    <div class="flag-wrap">${flagEmoji(team.name,72)}</div>
     <h3>${getTeamName(team.name)}</h3>
     ${renderBonuses(team)}
     <div class="style-label">${window.t?window.t('rival.style_label'):'Estilo de juego'}</div>
@@ -1010,7 +1010,7 @@ function showRosterModal(team,players){
   rosterTarget.innerHTML=`
   <div class="box roster-modal" style="margin-bottom:0">
     <div class="roster-header">
-      ${flagEmoji(team.name,40)}
+      ${flagEmoji(team.name,72)}
       <div class="selection-title" style="margin:0">${getTeamName(team.name)}</div>
     </div>
     <table class="roster-table">
@@ -1956,7 +1956,7 @@ function spinRivalReveal(){
   const pool=teams;
   const spin=setInterval(()=>{
     const r=pool[Math.floor(Math.random()*pool.length)];
-    reel.innerHTML=flagEmoji(r.name,56);
+    reel.innerHTML=flagEmoji(r.name,72);
     playSound('spin');
   },80);
   setTimeout(()=>{
@@ -2880,7 +2880,7 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
         </div>
       </div>
       <div class="match-side">
-        ${window._duelId?(window._rivalCrestData?renderRivalCrestThumb(40):'<i class="ph ph-bold ph-user" style="font-size:32px;color:#e74c3c"></i>'):(nextOpponent?flagEmoji(nextOpponent.name,48):'<span style="font-size:32px">👤</span>')}
+        ${window._duelId?(window._rivalCrestData?renderRivalCrestThumb(40):'<i class="ph ph-bold ph-user" style="font-size:32px;color:#e74c3c"></i>'):(nextOpponent?flagEmoji(nextOpponent.name,72):'<span style="font-size:32px">👤</span>')}
         <span class="match-team-name">${oppName}</span>
       </div>
     </div>
@@ -4137,7 +4137,7 @@ function showMatchModal(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,
       </div>
       <div class="match-scoreline">${myGoals} – ${oppGoals}</div>
       <div class="match-side">
-        ${flagEmoji(nextOpponent.name)}
+        ${flagEmoji(nextOpponent.name,72)}
         <span class="match-team-name">${getTeamName(nextOpponent.name)}</span>
       </div>
     </div>
@@ -5142,8 +5142,8 @@ function quickBuild(){
   const spin=setInterval(()=>{
     const ta=pool[Math.floor(Math.random()*pool.length)];
     const tb=pool[Math.floor(Math.random()*pool.length)];
-    if(r1) r1.innerHTML=flagEmoji(ta.name,56);
-    if(r2) r2.innerHTML=flagEmoji(tb.name,56);
+    if(r1) r1.innerHTML=flagEmoji(ta.name,72);
+    if(r2) r2.innerHTML=flagEmoji(tb.name,72);
     playSound('spin');
   },80);
 

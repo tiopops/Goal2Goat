@@ -38,7 +38,7 @@
         selector: '#pitchBox',
         mockPreview: 'pitch',
         title: '3 · La posición ★ importa',
-        text: 'Cuando coloques un jugador en su posición natural, aparecerá marcado con una ★ que indica que está rindiendo al máximo. Fuera de su posición rendirá peor, afectando negativamente a las estadísticas de tu equipo. Hemos colocado unos jugadores de ejemplo al azar en sus posiciones naturales para que puedas verlo.<br><br>Recuerda que entre partido y partido del torneo puedes hacer cambios para rotar a quien necesite descanso, evitar sanciones mayores o recuperarse de una lesión.'
+        text: 'Coloca a cada jugador en su posición natural y aparecerá marcado con una ★, rindiendo al máximo. Fuera de sitio, rendirá peor.<br><br>Entre partido y partido puedes hacer cambios para rotar a quien necesite descanso, evitar sanciones o recuperarse de una lesión.'
       },
       {
         selector: null,
@@ -98,7 +98,7 @@
 
     const randomTeam = teams[Math.floor(Math.random()*teams.length)];
     const teamName = (typeof getTeamName==='function') ? getTeamName(randomTeam.name) : randomTeam.name;
-    const flag = (typeof flagEmoji==='function') ? flagEmoji(randomTeam.name, 22) : '';
+    const flag = (typeof flagEmoji==='function') ? flagEmoji(randomTeam.name, 72) : '';
     const styleKey = randomTeam._styleKey || '';
     let styleName = styleKey;
     if(styleKey){
@@ -325,13 +325,13 @@
       </div>
     `;
 
-    box.querySelector('#g2gTutSkip').addEventListener('click', ()=>guarded(endTutorial));
-    box.querySelector('#g2gTutNext').addEventListener('click', ()=>guarded(()=>{
+    box.querySelector('#g2gTutSkip').addEventListener('click', ()=>{ playTutSound(); guarded(endTutorial); });
+    box.querySelector('#g2gTutNext').addEventListener('click', ()=>{ playTutSound(); guarded(()=>{
       if(currentStep < total-1){ currentStep++; renderStep(); }
       else endTutorial();
-    }));
+    }); });
     const prevBtn = box.querySelector('#g2gTutPrev');
-    if(prevBtn) prevBtn.addEventListener('click', ()=>guarded(()=>{ currentStep--; renderStep(); }));
+    if(prevBtn) prevBtn.addEventListener('click', ()=>{ playTutSound(); guarded(()=>{ currentStep--; renderStep(); }); });
 
     setTimeout(()=>positionBox(box, targetEl), 300);
     transitioning = false;
@@ -401,11 +401,15 @@
     }
   }
 
+  function playTutSound(){
+    try{ if(typeof playSound==='function') playSound('select'); }catch(e){}
+  }
+
   function bindReplayButton(){
     const btn = document.getElementById('replayTutorialBtn');
     if(btn && !btn.dataset.g2gBound){
       btn.dataset.g2gBound = '1';
-      btn.addEventListener('click', startTutorial);
+      btn.addEventListener('click', ()=>{ playTutSound(); startTutorial(); });
     }
   }
   document.addEventListener('DOMContentLoaded', bindReplayButton);
