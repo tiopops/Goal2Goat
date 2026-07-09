@@ -1006,24 +1006,28 @@ function mpStartPenaltyTimer(cur){
   if(mpPenTimerHandle) clearInterval(mpPenTimerHandle);
   const fill=document.getElementById('penTimerFill');
   let lastBeepSec=null;
-  // La barra cuenta SIEMPRE sus propios 5 segundos completos desde el
-  // momento en que aparece en ESTE dispositivo. Como quien tira es
-  // siempre quien resuelve (nunca el portero), no hace falta ningún
-  // reloj compartido ni adivinar cuánto tarda cada dispositivo en la
-  // animación previa — cada uno usa su propio reloj real para su
-  // propio turno, sin depender de lo que tarde el otro.
-  const localStart=Date.now();
+  // OJO: usar el plazo COMPARTIDO (cur.deadline, ya guardado en
+  // Firestore al escribir el lanzamiento), no un reloj local propio de
+  // cada dispositivo contando desde que él mismo terminó de renderizar
+  // la pantalla. Si un dispositivo tarda un poco más en recibir/pintar
+  // el turno (animación, red...), su reloj local podía agotarse ANTES
+  // de que ese jugador llegara siquiera a ver la pantalla para actuar
+  // — resolviendo el lanzamiento sin darle una oportunidad real. Con
+  // el plazo compartido, los dos dispositivos cuentan desde el MISMO
+  // punto de referencia, así que el tiempo restante es el mismo para
+  // los dos sea cual sea la velocidad de cada uno en renderizar.
+  const sharedDeadline = cur.deadline || (Date.now()+PENALTY_KICK_MS);
   if(fill){ fill.style.transition='none'; fill.style.width='100%'; }
   requestAnimationFrame(()=>{
     requestAnimationFrame(()=>{ if(fill) fill.style.transition='width .1s linear'; });
   });
   mpPenTimerHandle=setInterval(()=>{
-    const localRemainMs=Math.max(0, PENALTY_KICK_MS-(Date.now()-localStart));
-    const remainSec=Math.ceil(localRemainMs/1000);
+    const remainMs=Math.max(0, sharedDeadline-Date.now());
+    const remainSec=Math.ceil(remainMs/1000);
     if(remainSec!==lastBeepSec){ lastBeepSec=remainSec; checkCountdownBeep(remainSec,'penalty'); }
-    if(fill) fill.style.width=(localRemainMs/PENALTY_KICK_MS*100)+'%';
+    if(fill) fill.style.width=(remainMs/PENALTY_KICK_MS*100)+'%';
 
-    if(localRemainMs<=0){
+    if(remainMs<=0){
       clearInterval(mpPenTimerHandle); mpPenTimerHandle=null;
       // Al agotarse el tiempo hay que forzar la resolución — si no,
       // nadie vuelve a comprobar nada hasta que alguien escriba algo
