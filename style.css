@@ -1090,12 +1090,8 @@ body.dark-theme .settings-item:hover{background:var(--row-hover);color:var(--gol
 
   
   
-  #centerBottom{width:100%!important;max-width:100%!important}
-  #rollBtnWrap{width:100%!important;max-width:100%!important}
-  #matchActionWrap{width:100%!important;max-width:100%!important}
-  #quickBuildWrap{width:100%!important;max-width:100%!important;padding:0 12px 8px!important}
-  #multiplayerWrap{width:100%!important;max-width:100%!important;padding:0 12px 8px!important}
-  #multiplayerBtnWrap{max-width:100%!important}
+  #actionButtonsCol{width:100%!important;max-width:100%!important;padding:0 12px}
+  #centerBottom{width:100%!important;max-width:100%!important;padding:8px 0!important}
   .main-action-btn,.quick-build-btn{max-width:100%!important;width:100%!important}
 
   /* Left/right panels: hidden by default, shown by tab JS */
