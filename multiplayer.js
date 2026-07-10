@@ -1231,6 +1231,12 @@ function mpFinishPenaltiesUI(winnerRole, history){
   setTimeout(()=>{
     const overlay=document.getElementById('matchOverlay');
     if(overlay){
+      const resultBanner = window._duelIsPenaltiesOnly
+        ? `<div style="text-align:center;padding:16px 0 4px">
+             <div style="font-family:'Bebas Neue',Impact,sans-serif;font-size:26px;letter-spacing:1px;color:${iWon?'var(--gold)':'#e74c3c'}">${iWon?'¡GANAS LA TANDA DE PENALTIS!':'PIERDES LA TANDA DE PENALTIS'}</div>
+           </div>
+           <button id="mpPenaltiesOnlyBackBtn" style="margin:14px auto 4px;display:block;font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:1px;font-size:13px;background:var(--gold);color:#000;border:none;border-radius:6px;padding:10px 24px;cursor:pointer">VOLVER AL INICIO</button>`
+        : '';
       overlay.innerHTML=`
       <div class="match-modal" style="overflow:hidden;display:flex;flex-direction:column">
         <div class="match-header">
@@ -1250,18 +1256,21 @@ function mpFinishPenaltiesUI(winnerRole, history){
             <span class="match-team-name">${mpEsc(window._duelOpponentUsername||'RIVAL')}</span>
           </div>
         </div>
+        ${resultBanner}
       </div>`;
     }
     if(window._duelIsPenaltiesOnly){
       // Modo TANDA DE PENALTIS: aquí acaba, no se continúa a otro
-      // partido — se marca el duelo como terminado y se vuelve al
-      // inicio, igual que al abandonar, pero sin el aviso de "perderás
-      // el progreso" (la tanda ya se jugó entera y se resolvió).
+      // partido — se marca el duelo como terminado y se muestra el
+      // resultado fijo, con un botón para volver cuando el jugador
+      // quiera (en vez de recargar sola a los pocos segundos, que no
+      // daba tiempo a leer el resultado).
       const db=window._fbDb;
       if(db&&window._duelId){
         db.collection('duels').doc(window._duelId).update({status:'finished'}).catch(e=>console.error(e));
       }
-      setTimeout(()=>{ mpExitDuelMode(); location.reload(); }, 1400);
+      const backBtn=document.getElementById('mpPenaltiesOnlyBackBtn');
+      if(backBtn) backBtn.addEventListener('click', ()=>{ playSound('select'); mpExitDuelMode(); location.reload(); });
       return;
     }
     mpAdvanceAfterMatch();
