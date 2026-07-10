@@ -215,8 +215,8 @@ function mpShowConfirmRemove(username){
       ov.removeEventListener('click', onOverlayClick);
       resolve(result);
     };
-    const onOk=()=>cleanup(true);
-    const onCancel=()=>cleanup(false);
+    const onOk=()=>{ playSound('select'); cleanup(true); };
+    const onCancel=()=>{ playSound('select'); cleanup(false); };
     const onOverlayClick=(e)=>{ if(e.target===ov) cleanup(false); };
     okBtn.addEventListener('click', onOk);
     cancelBtn.addEventListener('click', onCancel);
@@ -298,7 +298,7 @@ async function renderFriendsList(){
       tbody.appendChild(row);
     });
     list.appendChild(table);
-    list.querySelectorAll('.mp-remove-btn').forEach(b=>b.addEventListener('click',()=>mpRemoveFriend(b.dataset.id, b.dataset.username)));
+    list.querySelectorAll('.mp-remove-btn').forEach(b=>b.addEventListener('click',()=>{ playSound('select'); mpRemoveFriend(b.dataset.id, b.dataset.username); }));
     list.querySelectorAll('.mp-challenge-btn').forEach(b=>b.addEventListener('click',()=>{
       if(b.dataset.penaltiesTest) mpChallengeFriendPenaltiesTest(b.dataset.uid, b.dataset.username, b);
       else mpChallengeFriend(b.dataset.uid, b.dataset.username, b);
