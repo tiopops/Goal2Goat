@@ -831,6 +831,7 @@ function mpRenderPenaltyShootoutScreen(){
       <div id="penHistoryRow" style="display:flex;gap:5px;flex-wrap:wrap;justify-content:center;margin-top:4px"></div>
     </div>`;
   mpPenaltyAttachListener();
+  mpAddDuelExitLinkToLiveMatch();
 }
 
 let mpPenListenerUnsub=null, mpPenTimerHandle=null, mpPenRenderedKick=-1, mpPenMyChoice=null;
