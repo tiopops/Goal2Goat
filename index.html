@@ -659,7 +659,7 @@
 
     <!-- GO button + next rival compact strip under pitch -->
     <div id="centerBottom">
-      <button id="rollBtn" class="main-action-btn" data-i18n="draft.select_player">SELECCIONAR JUGADOR</button>
+      <button id="rollBtn" class="main-action-btn" style="width:100%;max-width:none" data-i18n="draft.select_player">SELECCIONAR JUGADOR</button>
       <div id="matchActionWrap" style="display:none;flex-direction:column;gap:8px;flex:1 1 auto;width:100%">
         <button id="playMatchBtn" class="main-action-btn" style="width:100%;max-width:none" data-i18n="match.play_btn">JUGAR PARTIDO</button>
       </div>
@@ -669,11 +669,11 @@
     <div id="abandonTournamentWrap" style="display:none;width:100%;box-sizing:border-box;padding:0 12px 8px">
       <button id="abandonTournamentBtn" class="main-action-btn" style="width:100%;max-width:none;background:#3a1a1a;border:1px solid #e74c3c;color:#ff7e7e" data-i18n="match.abandon_tournament">ABANDONAR TORNEO</button>
     </div>
-    <div id="quickBuildWrap">
-      <button id="quickBuildBtn" class="main-action-btn quick-build-btn" data-i18n="draft.quick_team">EQUIPO RÁPIDO</button>
+    <div id="quickBuildWrap" style="box-sizing:border-box">
+      <button id="quickBuildBtn" class="main-action-btn quick-build-btn" style="width:100%;max-width:none" data-i18n="draft.quick_team">EQUIPO RÁPIDO</button>
     </div>
-    <div id="multiplayerWrap" style="display:none">
-      <div id="multiplayerBtnWrap" style="position:relative;flex:1 1 auto;max-width:340px">
+    <div id="multiplayerWrap" style="display:none;box-sizing:border-box">
+      <div id="multiplayerBtnWrap" style="position:relative;width:100%;box-sizing:border-box">
         <button id="multiplayerBtn" class="main-action-btn" style="background:#1a2a3a;border:1px solid #4a90d9;color:#7ec3ff;width:100%;max-width:none" data-i18n="mp.button">MULTIJUGADOR</button>
         <span id="mpNotifBadge" style="display:none;position:absolute;top:-4px;right:-4px;width:14px;height:14px;background:#e74c3c;border:2px solid #0d0d0d;border-radius:50%"></span>
       </div>
