@@ -661,7 +661,7 @@
     <!-- Todo este bloque comparte un único contenedor con un solo ancho
          máximo — así es imposible que un botón acabe más ancho o más
          estrecho que otro, sea cual sea la pantalla. -->
-    <div id="actionButtonsCol" style="display:flex;flex-direction:column;gap:8px;width:100%;max-width:340px;margin:0 auto">
+    <div id="actionButtonsCol" style="display:grid;grid-template-columns:1fr;gap:8px;width:100%;max-width:340px;margin:0 auto">
       <div id="centerBottom">
         <div id="rollBtnWrap" style="display:flex;flex:1 1 auto;width:100%">
           <button id="rollBtn" class="main-action-btn" style="width:100%;max-width:none" data-i18n="draft.select_player">SELECCIONAR JUGADOR</button>
