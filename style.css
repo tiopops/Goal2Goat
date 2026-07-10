@@ -1091,6 +1091,8 @@ body.dark-theme .settings-item:hover{background:var(--row-hover);color:var(--gol
   
   
   #centerBottom{width:100%!important;max-width:100%!important}
+  #rollBtnWrap{width:100%!important;max-width:100%!important}
+  #matchActionWrap{width:100%!important;max-width:100%!important}
   #quickBuildWrap{width:100%!important;max-width:100%!important;padding:0 12px 8px!important}
   #multiplayerWrap{width:100%!important;max-width:100%!important;padding:0 12px 8px!important}
   #multiplayerBtnWrap{max-width:100%!important}
