@@ -459,7 +459,7 @@
     <div style="margin-bottom:10px"><i class="ph ph-bold ph-trash" style="font-size:30px;color:var(--red)"></i></div>
     <div id="mpConfirmRemoveText" style="font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:.5px;font-size:16px;line-height:1.4;color:var(--text);margin-bottom:18px"></div>
     <div style="display:flex;gap:10px;justify-content:center">
-      <button id="mpConfirmRemoveCancel" class="mp-btn-challenge" style="opacity:1;padding:8px 18px;font-size:12px" data-i18n="common.cancel">CANCELAR</button>
+      <button id="mpConfirmRemoveCancel" class="mp-btn-reject" style="border-color:var(--gold);color:var(--gold);padding:8px 18px;font-size:12px" data-i18n="common.cancel">CANCELAR</button>
       <button id="mpConfirmRemoveOk" class="mp-btn-reject" style="padding:8px 18px;font-size:12px" data-i18n="mp.remove_btn">ELIMINAR</button>
     </div>
   </div>
@@ -871,6 +871,9 @@
 <script>
   // Cache-busting: force fresh game.js on every page load/refresh
   document.write('<script src="game.js?v=' + Date.now() + '"><\/script>');
+  document.write('<script src="upgrades-data.js?v=' + Date.now() + '"><\/script>');
+  document.write('<script src="skills-data.js?v=' + Date.now() + '"><\/script>');
+  document.write('<script src="achievements-data.js?v=' + Date.now() + '"><\/script>');
   document.write('<script src="giro-cards.js?v=' + Date.now() + '"><\/script>');
   document.write('<script src="multiplayer.js?v=' + Date.now() + '"><\/script>');
   document.write('<script src="crest-editor.js?v=' + Date.now() + '"><\/script>');

@@ -971,10 +971,15 @@ function mpRenderPenaltyHistory(hist){
   hrow.innerHTML=hist.map(h=>{
     const mine=h.shooterRole===window._duelRole;
     const color=mine?'#4a90d9':'#e74c3c';
-    const scored=h.result==='gol';
+    // El significado de "acierto" se invierte según de quién sea el
+    // turno: si YO tiro (azul), acierto = marqué gol. Si el RIVAL tira
+    // y yo paro (rojo), acierto = NO me marcaron gol (da igual si fue
+    // parada mía o el rival falló solo) — el icono siempre refleja MI
+    // propio resultado en ese lanzamiento, nunca el del rival.
+    const success = mine ? (h.result==='gol') : (h.result!=='gol');
     return `<div style="width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;
-      background:${scored?color:'transparent'};border:2px solid ${color};flex-shrink:0">
-      <i class="ph ph-bold ${scored?'ph-check':'ph-x'}" style="font-size:12px;color:${scored?'#fff':color}"></i>
+      background:${success?color:'transparent'};border:2px solid ${color};flex-shrink:0">
+      <i class="ph ph-bold ${success?'ph-check':'ph-x'}" style="font-size:12px;color:${success?'#fff':color}"></i>
     </div>`;
   }).join('');
 }
@@ -1848,7 +1853,8 @@ function loadRivalCrestData(uid){
   if(!db||!uid) return Promise.resolve();
   return db.collection('users').doc(uid).get().then(snap=>{
     const data=snap.exists?snap.data():{};
-    window._rivalCrestData=data.customCrest||null;
+    window._rivalCrestImage=data.customCrestImage||null;
+    window._rivalCrestData=window._rivalCrestImage?null:(data.customCrest||null);
     refreshAllCrestThumbs();
   }).catch(e=>console.error('[Escudo] carga del rival falló:', e));
 }

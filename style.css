@@ -1119,6 +1119,18 @@ body.dark-theme .settings-item:hover{background:var(--row-hover);color:var(--gol
 
   .desktop-only{display:none!important}
 
+  /* MULTIJUGADOR — compactar la tabla de amigos para que quepan los
+     botones de acción sin necesitar scroll lateral en pantallas
+     estrechas. */
+  .mp-friends-table th.mp-col-stat,.mp-friends-table td.mp-col-stat{
+    padding-left:5px!important;padding-right:5px!important;font-size:11px!important;
+  }
+  .mp-friends-table td.mp-col-action:first-of-type{padding-left:6px!important}
+  .mp-friends-table td.mp-col-action{padding-left:4px!important}
+  .mp-btn-labeled{padding:6px 7px!important;gap:4px!important}
+  .mp-btn-labeled span{font-size:9px!important}
+  .mp-btn-labeled i{font-size:12px!important}
+
   /* RANKING PANEL on mobile */
   .ranking-panel{display:none;width:100%;box-sizing:border-box;padding:10px;scroll-margin-top:70px}
   .ranking-panel.mob-active{display:block!important}
@@ -2144,6 +2156,7 @@ body.light-theme #achievementsList [style*="text-muted"]{
   font-size:11px;cursor:pointer;font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:1px;transition:.15s;
 }
 .mp-btn-reject:hover{background:var(--red);color:#fff}
+#mpConfirmRemoveCancel:hover{background:var(--gold)!important;color:#000!important}
 .mp-btn-challenge{
   width:32px;height:32px;padding:0;border:1px solid var(--gold);border-radius:50%;background:none;color:var(--gold);
   font-size:15px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;

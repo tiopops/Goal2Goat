@@ -172,19 +172,33 @@ function renderCrestInto(svgEl, data){
    en las esquinas del perfil. Si no hay escudo guardado, no pinta
    nada (el llamador debe mostrar el emoji de cabra como hasta ahora). */
 function renderCrestThumb(sizePx, data){
+  // Si el usuario subió una imagen propia, esa tiene prioridad sobre
+  // el escudo por capas — son dos modos que no conviven a la vez.
+  if(!data && window._myCrestImage){
+    return `<img src="${window._myCrestImage}" class="crest-thumb-svg" style="width:${sizePx}px;height:${sizePx}px;display:inline-block;vertical-align:middle;border-radius:4px;object-fit:cover">`;
+  }
   data = data || window._myCrestData;
   if(!data) return '';
   return `<svg viewBox="0 0 200 200" style="width:${sizePx}px;height:${sizePx}px;display:inline-block;vertical-align:middle" class="crest-thumb-svg">${buildCrestSVGInner(data)}</svg>`;
 }
 function renderRivalCrestThumb(sizePx){
+  if(window._rivalCrestImage){
+    return `<img src="${window._rivalCrestImage}" class="crest-rival-thumb-svg" style="width:${sizePx}px;height:${sizePx}px;display:inline-block;vertical-align:middle;border-radius:4px;object-fit:cover">`;
+  }
   if(!window._rivalCrestData) return '';
   return `<svg viewBox="0 0 200 200" style="width:${sizePx}px;height:${sizePx}px;display:inline-block;vertical-align:middle" class="crest-rival-thumb-svg">${buildCrestSVGInner(window._rivalCrestData)}</svg>`;
 }
 function refreshAllCrestThumbs(){
-  document.querySelectorAll('.crest-thumb-svg').forEach(svg=>renderCrestInto(svg, window._myCrestData));
-  document.querySelectorAll('.crest-rival-thumb-svg').forEach(svg=>renderCrestInto(svg, window._rivalCrestData));
+  document.querySelectorAll('.crest-thumb-svg').forEach(el=>{
+    const sizePx = parseInt(el.style.width)||36;
+    el.outerHTML = renderCrestThumb(sizePx);
+  });
+  document.querySelectorAll('.crest-rival-thumb-svg').forEach(el=>{
+    const sizePx = parseInt(el.style.width)||36;
+    el.outerHTML = renderRivalCrestThumb(sizePx);
+  });
   document.querySelectorAll('.crest-header-icon').forEach(el=>{
-    el.innerHTML = window._myCrestData
+    el.innerHTML = (window._myCrestData||window._myCrestImage)
       ? renderCrestThumb(36)
       : '<i class="ph ph-bold ph-user" style="font-size:22px;color:#7b9cff"></i>';
   });
@@ -217,15 +231,22 @@ function loadMyCrestData(){
   try{
     const cached = localStorage.getItem('g2g_crest_data');
     if(cached) window._myCrestData = JSON.parse(cached);
+    const cachedImg = localStorage.getItem('g2g_crest_image');
+    if(cachedImg) window._myCrestImage = cachedImg;
   }catch(e){}
   const auth = window._fbAuth, db = window._fbDb;
   const user = auth && auth.currentUser;
   if(user && db){
     db.collection('users').doc(user.uid).get().then(snap=>{
       const data = snap.exists ? snap.data() : {};
-      if(data.customCrest){
+      if(data.customCrestImage){
+        window._myCrestImage = data.customCrestImage;
+        window._myCrestData = null;
+        try{ localStorage.setItem('g2g_crest_image', data.customCrestImage); localStorage.removeItem('g2g_crest_data'); }catch(e){}
+      }else if(data.customCrest){
         window._myCrestData = data.customCrest;
-        try{ localStorage.setItem('g2g_crest_data', JSON.stringify(data.customCrest)); }catch(e){}
+        window._myCrestImage = null;
+        try{ localStorage.setItem('g2g_crest_data', JSON.stringify(data.customCrest)); localStorage.removeItem('g2g_crest_image'); }catch(e){}
       }
       refreshAllCrestThumbs();
     }).catch(e=>console.error('[Escudo] carga falló:', e));
@@ -234,27 +255,140 @@ function loadMyCrestData(){
 
 async function saveMyCrestData(data){
   window._myCrestData = data;
-  try{ localStorage.setItem('g2g_crest_data', JSON.stringify(data)); }catch(e){}
+  window._myCrestImage = null; // el editor por capas y la imagen subida no conviven — se borra la anterior
+  try{ localStorage.setItem('g2g_crest_data', JSON.stringify(data)); localStorage.removeItem('g2g_crest_image'); }catch(e){}
   const auth = window._fbAuth, db = window._fbDb;
   const user = auth && auth.currentUser;
   if(user && db){
-    try{ await db.collection('users').doc(user.uid).set({customCrest:data}, {merge:true}); }
+    try{ await db.collection('users').doc(user.uid).set({customCrest:data, customCrestImage: firebase.firestore.FieldValue.delete()}, {merge:true}); }
     catch(e){ console.error('[Escudo] guardado falló:', e); }
+  }
+  refreshAllCrestThumbs();
+}
+
+/* Guardar una imagen subida por el usuario como escudo — sustituye por
+   completo al escudo por capas (se borra el anterior, nunca conviven
+   los dos a la vez, tal como se guarda solo un campo por usuario). */
+async function saveMyCrestImage(dataUrl){
+  window._myCrestImage = dataUrl;
+  window._myCrestData = null;
+  try{ localStorage.setItem('g2g_crest_image', dataUrl); localStorage.removeItem('g2g_crest_data'); }catch(e){}
+  const auth = window._fbAuth, db = window._fbDb;
+  const user = auth && auth.currentUser;
+  if(user && db){
+    try{ await db.collection('users').doc(user.uid).set({customCrestImage:dataUrl, customCrest: firebase.firestore.FieldValue.delete()}, {merge:true}); }
+    catch(e){ console.error('[Escudo] guardado de imagen falló:', e); }
   }
   refreshAllCrestThumbs();
 }
 
 async function resetMyCrestData(){
   window._myCrestData = null;
-  try{ localStorage.removeItem('g2g_crest_data'); }catch(e){}
+  window._myCrestImage = null;
+  try{ localStorage.removeItem('g2g_crest_data'); localStorage.removeItem('g2g_crest_image'); }catch(e){}
   const auth = window._fbAuth, db = window._fbDb;
   const user = auth && auth.currentUser;
   if(user && db){
-    try{ await db.collection('users').doc(user.uid).set({customCrest: firebase.firestore.FieldValue.delete()}, {merge:true}); }
+    try{ await db.collection('users').doc(user.uid).set({customCrest: firebase.firestore.FieldValue.delete(), customCrestImage: firebase.firestore.FieldValue.delete()}, {merge:true}); }
     catch(e){ console.error('[Escudo] borrado falló:', e); }
   }
   refreshAllCrestThumbs();
   return null;
+}
+
+/* ===== Recortador de imagen subida (selección 1:1) ===== */
+function openCrestCropModal(imageDataUrl, parentOverlay){
+  const VIEWPORT = 260; // tamaño del visor cuadrado, en px de pantalla
+  const OUTPUT = 300;   // resolución del PNG final guardado
+
+  const cropOv = document.createElement('div');
+  cropOv.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:71000;display:flex;align-items:center;justify-content:center;padding:16px';
+  cropOv.innerHTML = `
+    <div style="width:100%;max-width:340px;background:var(--card-bg);border:2px solid var(--gold);border-radius:8px;padding:18px;box-sizing:border-box;text-align:center">
+      <h2 style="font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:1px;color:var(--gold);font-size:15px;margin:0 0 12px">RECORTAR IMAGEN</h2>
+      <div id="cropViewport" style="width:${VIEWPORT}px;height:${VIEWPORT}px;margin:0 auto;border-radius:8px;overflow:hidden;position:relative;background:#000;touch-action:none;cursor:grab">
+        <img id="cropImg" src="${imageDataUrl}" style="position:absolute;top:0;left:0;transform-origin:0 0;user-select:none;-webkit-user-drag:none">
+      </div>
+      <input type="range" id="cropZoom" min="1" max="3" step="0.01" value="1" style="width:100%;margin-top:14px;accent-color:var(--gold)">
+      <div style="font-size:10px;color:var(--text-muted);margin-top:2px">Arrastra para mover · desliza para acercar</div>
+      <div style="display:flex;gap:10px;margin-top:16px">
+        <button id="cropCancelBtn" style="flex:1;background:none;border:1px solid var(--line);color:var(--text);border-radius:6px;padding:9px;cursor:pointer;font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:1px">CANCELAR</button>
+        <button id="cropConfirmBtn" style="flex:1;background:var(--gold);border:none;color:#000;border-radius:6px;padding:9px;cursor:pointer;font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:1px">CONFIRMAR</button>
+      </div>
+    </div>`;
+  document.body.appendChild(cropOv);
+
+  const viewport = document.getElementById('cropViewport');
+  const img = document.getElementById('cropImg');
+  const zoomSlider = document.getElementById('cropZoom');
+  let baseScale=1, naturalW=0, naturalH=0, zoom=1, offsetX=0, offsetY=0;
+  let dragging=false, dragStartX=0, dragStartY=0, dragOffX=0, dragOffY=0;
+
+  function clampOffsets(){
+    const dispW = naturalW*baseScale*zoom, dispH = naturalH*baseScale*zoom;
+    offsetX = Math.min(0, Math.max(VIEWPORT-dispW, offsetX));
+    offsetY = Math.min(0, Math.max(VIEWPORT-dispH, offsetY));
+  }
+  function applyTransform(){
+    clampOffsets();
+    img.style.transform = `translate(${offsetX}px,${offsetY}px) scale(${baseScale*zoom})`;
+  }
+  img.onload = () => {
+    naturalW = img.naturalWidth; naturalH = img.naturalHeight;
+    baseScale = Math.max(VIEWPORT/naturalW, VIEWPORT/naturalH);
+    zoom = 1;
+    // Centrado inicial
+    offsetX = (VIEWPORT - naturalW*baseScale)/2;
+    offsetY = (VIEWPORT - naturalH*baseScale)/2;
+    applyTransform();
+  };
+
+  zoomSlider.addEventListener('input', ()=>{
+    zoom = parseFloat(zoomSlider.value);
+    applyTransform();
+  });
+
+  function pointerDown(x,y){ dragging=true; dragStartX=x; dragStartY=y; dragOffX=offsetX; dragOffY=offsetY; viewport.style.cursor='grabbing'; }
+  function pointerMove(x,y){
+    if(!dragging) return;
+    offsetX = dragOffX + (x-dragStartX);
+    offsetY = dragOffY + (y-dragStartY);
+    applyTransform();
+  }
+  function pointerUp(){ dragging=false; viewport.style.cursor='grab'; }
+
+  viewport.addEventListener('mousedown', e=>{ pointerDown(e.clientX,e.clientY); e.preventDefault(); });
+  window.addEventListener('mousemove', e=>pointerMove(e.clientX,e.clientY));
+  window.addEventListener('mouseup', pointerUp);
+  viewport.addEventListener('touchstart', e=>{ const t=e.touches[0]; pointerDown(t.clientX,t.clientY); }, {passive:true});
+  viewport.addEventListener('touchmove', e=>{ const t=e.touches[0]; pointerMove(t.clientX,t.clientY); e.preventDefault(); }, {passive:false});
+  viewport.addEventListener('touchend', pointerUp);
+
+  function cleanup(){
+    window.removeEventListener('mousemove', pointerMove);
+    window.removeEventListener('mouseup', pointerUp);
+    cropOv.remove();
+  }
+  document.getElementById('cropCancelBtn').addEventListener('click', cleanup);
+  document.getElementById('cropConfirmBtn').addEventListener('click', async ()=>{
+    const effScale = baseScale*zoom;
+    const cropX = -offsetX/effScale, cropY = -offsetY/effScale;
+    const cropSize = VIEWPORT/effScale;
+    const canvas = document.createElement('canvas');
+    canvas.width = OUTPUT; canvas.height = OUTPUT;
+    const ctx = canvas.getContext('2d');
+    // PNG (no JPEG) para conservar la transparencia si la imagen la tiene.
+    ctx.drawImage(img, cropX, cropY, cropSize, cropSize, 0, 0, OUTPUT, OUTPUT);
+    const dataUrl = canvas.toDataURL('image/png');
+    await saveMyCrestImage(dataUrl);
+    // Reflejar en la vista previa del editor, sustituyendo el SVG por capas
+    const svgPrev = document.getElementById('crestSvg');
+    const imgPrev = document.getElementById('crestImgPreview');
+    if(svgPrev) svgPrev.style.display = 'none';
+    if(imgPrev){ imgPrev.src = dataUrl; imgPrev.style.display = 'block'; }
+    showToast('✅ Imagen de escudo guardada', 'toast-pos');
+    cleanup();
+  });
 }
 
 /* ===== Ventana del editor ===== */
@@ -271,8 +405,15 @@ function openCrestEditor(){
       <h1 style="font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:1.5px;color:var(--gold);font-size:18px;margin:0 0 12px;display:flex;align-items:center;gap:8px"><i class="ph ph-bold ph-shield-star"></i> PERSONALIZAR ESCUDO</h1>
       <div style="display:flex;flex-direction:column;gap:14px;flex:1;min-height:0;overflow-y:auto;padding-right:8px" id="crestBodySplit">
         <div id="crestPreviewCol" style="flex-shrink:0;display:flex;flex-direction:row;align-items:center;gap:14px;position:sticky;top:0;background:var(--card-bg);z-index:5;padding-bottom:8px">
-          <div style="width:110px;height:110px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:var(--panel);border-radius:10px;border:1px solid var(--line)">
-            <svg id="crestSvg" viewBox="0 0 200 200" width="90" height="90"></svg>
+          <div style="width:110px;height:110px;flex-shrink:0;position:relative">
+            <div style="width:110px;height:110px;display:flex;align-items:center;justify-content:center;background:var(--panel);border-radius:10px;border:1px solid var(--line);overflow:hidden">
+              <svg id="crestSvg" viewBox="0 0 200 200" width="90" height="90"></svg>
+              <img id="crestImgPreview" style="display:none;width:100%;height:100%;object-fit:cover">
+            </div>
+            <button id="crestUploadBtn" title="Subir imagen propia" style="position:absolute;bottom:-4px;right:-4px;width:26px;height:26px;border-radius:50%;background:#1a1d1f;border:2px solid var(--gold);color:var(--gold);display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0">
+              <i class="ph ph-bold ph-pencil-simple" style="font-size:13px"></i>
+            </button>
+            <input type="file" id="crestImageInput" accept="image/*" style="display:none">
           </div>
           <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:8px">
             <input type="text" id="crestTeamNameInput" maxlength="24" placeholder="Nombre del equipo" style="width:100%;background:var(--dark);border:1px solid var(--line);color:var(--text);padding:7px 9px;border-radius:6px;font-size:12px;font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:.5px">
@@ -303,8 +444,28 @@ function openCrestEditor(){
 
   buildCrestControlsUI(document.getElementById('crestControlsCol'));
   crestRenderAll();
+  if(window._myCrestImage){
+    const svgPrev = document.getElementById('crestSvg');
+    const imgPrev = document.getElementById('crestImgPreview');
+    if(svgPrev) svgPrev.style.display = 'none';
+    if(imgPrev){ imgPrev.src = window._myCrestImage; imgPrev.style.display = 'block'; }
+  }
 
   document.getElementById('crestCloseBtn').addEventListener('click', ()=>overlay.remove());
+  document.getElementById('crestUploadBtn').addEventListener('click', ()=>{
+    document.getElementById('crestImageInput').click();
+  });
+  document.getElementById('crestImageInput').addEventListener('change', (e)=>{
+    const file = e.target.files && e.target.files[0];
+    e.target.value = ''; // permite volver a elegir el mismo archivo después
+    if(!file) return;
+    if(!file.type.startsWith('image/')){ showToast('Elige un archivo de imagen', 'toast-neg'); return; }
+    if(file.size > 10*1024*1024){ showToast('La imagen es demasiado grande (máx. 10MB)', 'toast-neg'); return; }
+    const reader = new FileReader();
+    reader.onload = () => openCrestCropModal(reader.result, overlay);
+    reader.onerror = () => showToast('No se pudo leer la imagen', 'toast-neg');
+    reader.readAsDataURL(file);
+  });
   document.getElementById('crestSaveBtn').addEventListener('click', async()=>{
     await saveMyCrestData(_crestEditState);
     if(existingNameInput && typeof existingNameInput.dispatchEvent==='function') existingNameInput.dispatchEvent(new Event('input'));
@@ -337,6 +498,14 @@ function openCrestEditor(){
 
 function crestRenderAll(){
   renderCrestInto(document.getElementById('crestSvg'), _crestEditState);
+  // Si se estaba mostrando la imagen subida y el usuario toca un
+  // control de capas, se entiende que quiere volver al escudo por
+  // capas — se enseña el SVG de nuevo (el campo de imagen solo se
+  // borra de verdad al pulsar GUARDAR ESCUDO, no antes).
+  const svgPrev = document.getElementById('crestSvg');
+  const imgPrev = document.getElementById('crestImgPreview');
+  if(svgPrev) svgPrev.style.display = '';
+  if(imgPrev) imgPrev.style.display = 'none';
 }
 
 function buildCrestControlsUI(container){

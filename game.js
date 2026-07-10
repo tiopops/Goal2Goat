@@ -6720,83 +6720,8 @@ function getScoutTeams(){ return 2; } // ya no se usa para equipos
 function getPlayersPerTeam(){ return 5 + (window._upgradeCache.scout||0); }
 function getMaxGiroCharges(){ return 1 + (window._upgradeCache.giro||0); }
 
-const UPGRADE_DEFS = [
-  {
-    id: 'bench', icon: '🪑',
-    get name(){ return window.t?window.t('upgrade.bench'):'BANQUILLO'; },
-    get desc(){ return window.t?window.t('upgrade.bench_desc'):'PLAZAS EN EL BANQUILLO'; },
-    baseCost: 5, maxLevel: 5, baseValue: 2,
-    tooltip: (lvl) => `${2+lvl} ${t("upgrade.bench_desc")}`
-  },
-  {
-    id: 'subs', icon: '🔄',
-    get name(){ return window.t?window.t('upgrade.subs'):'CAMBIOS'; },
-    get desc(){ return window.t?window.t('upgrade.subs_desc'):'SUSTITUCIONES POR PARTIDO'; },
-    baseCost: 5, maxLevel: 5, baseValue: 2,
-    tooltip: (lvl) => `${2+lvl} ${t("upgrade.subs_desc")}`
-  },
-  {
-    id: 'scout', icon: '🔭',
-    get name(){ return window.t?window.t('upgrade.scout'):'CONVOCADOS'; },
-    get desc(){ return window.t?window.t('upgrade.scout_desc'):'JUGADORES POR EQUIPO AL BARAJAR'; },
-    baseCost: 5, maxLevel: 5, baseValue: 5,
-    tooltip: (lvl) => `${5+lvl} ${t("upgrade.scout_desc")}`
-  },
-  {
-    id: 'recovery', icon: '⚡',
-    get name(){ return window.t?window.t('upgrade.recovery'):'RECUPERACIÓN'; },
-    get desc(){ return window.t?window.t('upgrade.recovery_desc'):'REDUCE LA FATIGA ENTRE PARTIDOS'; },
-    baseCost: 5, maxLevel: 5, baseValue: 0,
-    tooltip: (lvl) => `${lvl*10}% ${t("upgrade.recovery_desc")}`
-  },
-  {
-    id: 'chain', icon: '🔗',
-    get name(){ return window.t?window.t('upgrade.chain'):'RUN ENCADENADA'; },
-    get desc(){ return window.t?window.t('upgrade.chain_desc'):'JUGADORES CONSERVADOS AL ENCADENAR RUN'; },
-    baseCost: 5, maxLevel: 5, baseValue: 1,
-    tooltip: (lvl) => `${1+lvl} ${t("upgrade.chain_desc")}`
-  },
-  {
-    id: 'giro', icon: '🔄',
-    get name(){ return window.t?window.t('upgrade.giro'):'GIRO TÁCTICO'; },
-    get desc(){ return window.t?window.t('upgrade.giro_desc'):'USOS DE GIRO TÁCTICO POR TORNEO'; },
-    baseCost: 5, maxLevel: 5, baseValue: 1,
-    tooltip: (lvl) => `${1+lvl} ${t("upgrade.giro_desc")}`
-  },
-];
-
-// Coste acumulado para subir al nivel N (0-indexed: coste para ir de N-1 a N)
-function upgradeLevelCost(def, toLevel){
-  // nivel 1 = baseCost, nivel 2 = baseCost*2, nivel 3 = baseCost*4...
-  return def.baseCost * Math.pow(2, toLevel - 1);
-}
-
-// Cargar upgrades de Firestore
-async function loadUpgrades(){
-  const user = window._fbAuth && window._fbAuth.currentUser;
-  if(!user) return {};
-  try{
-    const snap = await window._fbDb.collection('users').doc(user.uid).get();
-    return (snap.exists && snap.data().upgrades) || {};
-  }catch(e){ return {}; }
-}
-
-// Guardar upgrades en Firestore
-async function saveUpgrades(upgrades){
-  const user = window._fbAuth && window._fbAuth.currentUser;
-  if(!user) return;
-  await window._fbDb.collection('users').doc(user.uid).set({upgrades}, {merge:true});
-}
-
-// Iconos SVG para mejoras (sin emoji)
-const UPGRADE_ICONS = {
-  bench:    '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 10v4M20 10v4M2 14h20M6 14v4M18 14v4"/></svg>',
-  subs:     '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M7 16l-4-4 4-4"/><path d="M17 8l4 4-4 4"/><line x1="3" y1="12" x2="21" y2="12"/></svg>',
-  scout:    '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/><path d="M11 8v6M8 11h6"/></svg>',
-  recovery: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>',
-  chain:    '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="2" y="8" width="8" height="8" rx="4"/><rect x="14" y="8" width="8" height="8" rx="4"/><line x1="9" y1="12" x2="15" y2="12"/></svg>',
-  giro:     '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/><path d="M3 21v-5h5"/></svg>',
-};
+/* El catálogo de mejoras (UPGRADE_DEFS, UPGRADE_ICONS) vive ahora en
+   upgrades-data.js, cargado justo después de este archivo. */
 
 // Renderizar la pestaña de mejoras
 async function renderUpgradesTab(){
@@ -6922,71 +6847,6 @@ async function renderUpgradesTab(){
    - Se guardan en Firestore: users/{uid}.skills
    ============================================================ */
 
-const SKILL_DEFS = [
-  // === TÁCTICA ===
-  {
-    id: 'estratega', get category(){ return window.t?window.t('skill.category.tactica'):'TÁCTICA'; },
-    get name(){ return window.t?window.t('skill.estratega'):'ESTRATEGA'; }, cost: 40,
-    icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 3"/></svg>',
-    get tooltip(){ return window.t?window.t('skill.estratega_desc'):'Muestra la mejor contra-estrategia antes de cada partido.'; },
-  },
-  {
-    id: 'capitan', get category(){ return window.t?window.t('skill.category.tactica'):'TÁCTICA'; },
-    get name(){ return window.t?window.t('skill.capitan'):'CAPITÁN'; }, cost: 30,
-    icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>',
-    get tooltip(){ return window.t?window.t('skill.capitan_desc'):'Si vas perdiendo en el descanso, tu ataque sube un 10% en la segunda parte.'; },
-  },
-  {
-    id: 'remontada', get category(){ return window.t?window.t('skill.category.tactica'):'TÁCTICA'; },
-    get name(){ return window.t?window.t('skill.remontada'):'REMONTADA'; }, cost: 60,
-    icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M18 15l-6-6-6 6"/></svg>',
-    get tooltip(){ return window.t?window.t('skill.remontada_desc'):'Si vas perdiendo de 2 o más goles, tu ataque sube un 35% el resto del partido.'; },
-  },
-  {
-    id: 'penaltis', get category(){ return window.t?window.t('skill.category.tactica'):'TÁCTICA'; },
-    get name(){ return window.t?window.t('skill.penaltis'):'ESPECIALISTA EN PENALTIS'; }, cost: 35,
-    icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><line x1="12" y1="3" x2="12" y2="21"/><line x1="3" y1="12" x2="21" y2="12"/></svg>',
-    get tooltip(){ return window.t?window.t('skill.penaltis_desc'):'Aumenta la probabilidad de anotar en tandas de penaltis en un 15%.'; },
-  },
-  // === PLANTILLA ===
-  {
-    id: 'medico', get category(){ return window.t?window.t('skill.category.plantilla'):'PLANTILLA'; },
-    get name(){ return window.t?window.t('skill.medico'):'MÉDICO DE ÉLITE'; }, cost: 50,
-    icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>',
-    get tooltip(){ return window.t?window.t('skill.medico_desc'):'Las lesiones leves se recuperan automáticamente al acabar el partido.'; },
-  },
-  {
-    id: 'ojeador', get category(){ return window.t?window.t('skill.category.plantilla'):'PLANTILLA'; },
-    get name(){ return window.t?window.t('skill.ojeador'):'OJEADOR'; }, cost: 25,
-    icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>',
-    get tooltip(){ return window.t?window.t('skill.ojeador_desc'):'Al barajar equipos siempre aparece al menos un jugador con 85 o más de rating.'; },
-  },
-  {
-    id: 'cazatalentos', get category(){ return window.t?window.t('skill.category.plantilla'):'PLANTILLA'; },
-    get name(){ return window.t?window.t('skill.cazatalentos'):'CAZATALENTOS'; }, cost: 30,
-    icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
-    get tooltip(){ return window.t?window.t('skill.cazatalentos_desc'):'Los jugadores fuera de su posición natural solo pierden un 5% de rendimiento.'; },
-  },
-  {
-    id: 'veterano', get category(){ return window.t?window.t('skill.category.plantilla'):'PLANTILLA'; },
-    get name(){ return window.t?window.t('skill.veterano'):'VETERANO'; }, cost: 45,
-    icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>',
-    get tooltip(){ return window.t?window.t('skill.veterano_desc'):'Los jugadores con 85+ de rating no pueden recibir tarjeta roja directa.'; },
-  },
-  // === ECONOMÍA ===
-  {
-    id: 'coleccionista', get category(){ return window.t?window.t('skill.category.economia'):'ECONOMÍA'; },
-    get name(){ return window.t?window.t('skill.coleccionista'):'COLECCIONISTA'; }, cost: 20,
-    icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>',
-    get tooltip(){ return window.t?window.t('skill.coleccionista_desc'):'Cada casilla buena del ticket (moneda o cabra) da 1 punto extra.'; },
-  },
-  {
-    id: 'patrocinador', get category(){ return window.t?window.t('skill.category.economia'):'ECONOMÍA'; },
-    get name(){ return window.t?window.t('skill.patrocinador'):'PATROCINADOR'; }, cost: 20,
-    icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>',
-    get tooltip(){ return window.t?window.t('skill.patrocinador_desc'):'Ganas 1 GOAT Point extra al clasificarte para cuartos de final.'; },
-  },
-];
 
 // Cache de habilidades activas
 window._skillCache = {};
@@ -6998,6 +6858,9 @@ function startSkillListener(uid){
     window._skillCache = (snap.data().skills)||{};
   });
 }
+
+/* El catálogo de habilidades (SKILL_DEFS) vive ahora en
+   skills-data.js, cargado justo después de este archivo. */
 
 // Efecto real de ESTRATEGA: devuelve la mejor contra-estrategia
 window.getEstrategaHint = function(){
@@ -7119,56 +6982,6 @@ window.showPatchNotes=function(){
    Se guardan en Firestore: users/{uid}.achievements (set de ids)
    ============================================================ */
 
-const ACHIEVEMENT_DEFS = [
-  // BÁSICOS — 1 PT
-  {id:'first_match',      tier:'básico',  pts:1,  icon:'ph-megaphone',        name:'PITIDO INICIAL',       desc:'Completa tu primer partido'},
-  {id:'first_win',        tier:'básico',  pts:1,  icon:'ph-trophy',         name:'PRIMERA VICTORIA',     desc:'Gana tu primer partido'},
-  {id:'first_ticket',     tier:'básico',  pts:1,  icon:'ph-ticket',         name:'PRIMER RASCA',         desc:'Gana puntos en tu primer ticket'},
-  {id:'clean_sheet',      tier:'básico',  pts:1,  icon:'ph-shield-check',   name:'PORTERÍA A CERO',      desc:'Gana un partido sin encajar ningún gol'},
-  {id:'no_subs_win',      tier:'básico',  pts:1,  icon:'ph-swap',          name:'SIN ROTACIONES',       desc:'Gana un partido sin usar ningún cambio'},
-  {id:'first_groups',     tier:'básico',  pts:1,  icon:'ph-flag', name:'FASE SUPERADA',        desc:'Clasifícate para octavos de final'},
-  {id:'score_5',          tier:'básico',  pts:1,  icon:'ph-soccer-ball',    name:'GOLEADA',              desc:'Marca 5 goles o más en un partido'},
-  {id:'win_comeback',     tier:'básico',  pts:1,  icon:'ph-arrow-bend-up-left','name':'VUELTA AL PARTIDO',  desc:'Gana un partido después de ir perdiendo'},
-  {id:'use_skill',        tier:'básico',  pts:1,  icon:'ph-lightning',      name:'PRIMER PODER',         desc:'Activa tu primera habilidad'},
-  {id:'full_bench',       tier:'básico',  pts:1,  icon:'ph-users',          name:'PLANTILLA COMPLETA',   desc:'Llega a un partido con el banquillo lleno'},
-  {id:'hattrick_player',  tier:'básico',  pts:1,  icon:'ph-number-three',            name:'HAT-TRICK',            desc:'Un mismo jugador marca 3 goles en un partido'},
-  {id:'win_no_concede2',  tier:'básico',  pts:1,  icon:'ph-wall',           name:'DOBLE CERROJO',        desc:'No encajes goles en 2 partidos consecutivos'},
-  {id:'all_stars',        tier:'básico',  pts:1,  icon:'ph-star',           name:'ONCE PERFECTO',        desc:'Coloca los 11 titulares en su posición natural ★'},
-  {id:'first_pen_win',    tier:'básico',  pts:1,  icon:'ph-crosshair',      name:'NERVIOS DE ACERO',     desc:'Gana una tanda de penaltis'},
-  {id:'upgrade_once',     tier:'básico',  pts:1,  icon:'ph-arrow-circle-up','name':'PRIMERA MEJORA',     desc:'Sube por primera vez cualquier mejora'},
-
-  // INTERMEDIOS — 2 PTS
-  {id:'groups_unbeaten',  tier:'intermedio', pts:2, icon:'ph-shield',        name:'INVICTO EN GRUPOS',   desc:'Pasa la fase de grupos sin perder ningún partido'},
-  {id:'groups_no_concede',tier:'intermedio', pts:2, icon:'ph-shield-star', name:'MURALLA EN GRUPOS',   desc:'No encajes ningún gol en toda la fase de grupos'},
-  {id:'quarters',         tier:'intermedio', pts:2, icon:'ph-medal',         name:'CUARTOS',              desc:'Clasifícate para cuartos de final'},
-  {id:'semis',            tier:'intermedio', pts:2, icon:'ph-medal', name:'SEMIFINAL',              desc:'Llega a semifinales'},
-  {id:'comeback_2',       tier:'intermedio', pts:2, icon:'ph-arrow-fat-lines-up',  name:'REMONTADA ÉPICA',     desc:'Gana un partido después de ir perdiendo de 2 goles'},
-  {id:'perfect_tactic',   tier:'intermedio', pts:2, icon:'ph-graph',      name:'TÁCTICA MAESTRA',     desc:'Usa la contra-estrategia perfecta y gana el partido'},
-  {id:'no_injuries_semis',tier:'intermedio', pts:2, icon:'ph-plus-circle', name:'HIERRO FORJADO',      desc:'Llega a semifinales sin ningún jugador lesionado'},
-  {id:'score_7',          tier:'intermedio', pts:2, icon:'ph-fire',          name:'ARROLLADOR',           desc:'Marca 7 goles o más en un partido'},
-  {id:'5_nineties',       tier:'intermedio', pts:2, icon:'ph-crown',         name:'EQUIPO DE LEYENDA',   desc:'Forma un equipo con 5 jugadores de rating 90 o superior'},
-  {id:'two_pen_wins',     tier:'intermedio', pts:2, icon:'ph-target',        name:'REY DE PENALTIS',     desc:'Gana dos tandas de penaltis en el mismo torneo'},
-  {id:'use_3_skills',     tier:'intermedio', pts:2, icon:'ph-toolbox',     name:'ESPECIALISTA',         desc:'Activa simultáneamente 3 habilidades distintas'},
-  {id:'win_5_row',        tier:'intermedio', pts:2, icon:'ph-trend-up',      name:'RACHA GANADORA',      desc:'Gana 5 partidos consecutivos'},
-  {id:'50_goat_pts',      tier:'intermedio', pts:2, icon:'ph-coins',         name:'BUEN CONTRATO',       desc:'Acumula 50 GOAT Points sin gastar ninguno'},
-  {id:'score_10_group',   tier:'intermedio', pts:2, icon:'ph-chart-bar',     name:'MÁQUINA GOLEADORA',   desc:'Marca 10 goles o más en toda la fase de grupos'},
-  {id:'win_all_groups',   tier:'intermedio', pts:2, icon:'ph-check-square',  name:'PLENO EN GRUPOS',     desc:'Gana los 3 partidos de la fase de grupos'},
-
-  // DIFÍCILES — 3 PTS
-  {id:'champion',         tier:'difícil', pts:3, icon:'ph-trophy',          name:'CAMPEÓN MUNDIAL',      desc:'Gana el Mundial'},
-  {id:'champion_unbeaten',tier:'difícil', pts:3, icon:'ph-star',       name:'CAMPEÓN INVICTO',      desc:'Gana el Mundial sin perder ningún partido'},
-  {id:'all_wins',         tier:'difícil', pts:3, icon:'ph-circles-four',        name:'SIETE DE SIETE',       desc:'Gana los 7 partidos del torneo sin empatar'},
-  {id:'100_pts',          tier:'difícil', pts:3, icon:'ph-bank',           name:'CAJA FUERTE',          desc:'Acumula 100 GOAT Points sin gastar ninguno'},
-  {id:'concede_1',        tier:'difícil', pts:3, icon:'ph-lock',            name:'BAJO SIETE LLAVES',    desc:'Encaja solo 1 gol o menos en todo el torneo'},
-  {id:'5_skills',         tier:'difícil', pts:3, icon:'ph-lightning',       name:'MANAGER TOTAL',        desc:'Activa simultáneamente 5 habilidades'},
-  {id:'hattrick_final',   tier:'difícil', pts:3, icon:'ph-number-three',             name:'HÉROE DE LA FINAL',    desc:'Un jugador marca 3 goles en la final del Mundial'},
-  {id:'10_clean_sheets',  tier:'difícil', pts:3, icon:'ph-shield-check',    name:'PORTERO LEGENDARIO',   desc:'Consigue 10 porterías a cero a lo largo de tus partidas'},
-  {id:'pen_win_final',    tier:'difícil', pts:3, icon:'ph-crosshair','name':'FINAL EN PENALTIS',  desc:'Gana la final del Mundial en la tanda de penaltis'},
-  {id:'all_achievements_basic', tier:'difícil', pts:3, icon:'ph-seal-check','name':'PROFESIONAL',       desc:'Desbloquea todos los logros básicos'},
-
-  // MÍTICO — 25 PTS
-  {id:'triple_crown',     tier:'mítico',  pts:25, icon:'ph-crown',   name:'GOAT ABSOLUTO',        desc:'Gana el Mundial 3 veces'},
-];
 
 const TIER_COLOR = {básico:'#aaa', intermedio:'#2ecc71', difícil:'#e67e22', mítico:'#f0c419'};
 function getTierLabel(tier){
@@ -7231,6 +7044,9 @@ async function unlockAchievement(id){
     if(pEl3) pEl3.textContent=newPts;
   }catch(e){ console.warn('Achievement error:',e); }
 }
+
+/* El catálogo de logros (ACHIEVEMENT_DEFS) vive ahora en
+   achievements-data.js, cargado justo después de este archivo. */
 
 function showAchievementToast(def){
   const toast=document.createElement('div');
