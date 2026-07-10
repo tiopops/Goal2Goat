@@ -662,8 +662,12 @@
       <button id="rollBtn" class="main-action-btn" data-i18n="draft.select_player">SELECCIONAR JUGADOR</button>
       <div id="matchActionWrap" style="display:none;flex-direction:column;gap:8px;flex:1 1 auto;width:100%">
         <button id="playMatchBtn" class="main-action-btn" style="width:100%;max-width:none" data-i18n="match.play_btn">JUGAR PARTIDO</button>
-        <button id="abandonTournamentBtn" class="main-action-btn" style="width:100%;max-width:none;background:#3a1a1a;border:1px solid #e74c3c;color:#ff7e7e" data-i18n="match.abandon_tournament">ABANDONAR TORNEO</button>
       </div>
+    </div>
+    <!-- Mismo patrón exacto que #quickBuildWrap (ya confirmado del tamaño
+         correcto) — así no hay ningún cálculo nuevo que pueda desajustarse. -->
+    <div id="abandonTournamentWrap" style="display:none;width:100%;box-sizing:border-box;padding:0 12px 8px">
+      <button id="abandonTournamentBtn" class="main-action-btn" style="width:100%;max-width:none;background:#3a1a1a;border:1px solid #e74c3c;color:#ff7e7e" data-i18n="match.abandon_tournament">ABANDONAR TORNEO</button>
     </div>
     <div id="quickBuildWrap">
       <button id="quickBuildBtn" class="main-action-btn quick-build-btn" data-i18n="draft.quick_team">EQUIPO RÁPIDO</button>

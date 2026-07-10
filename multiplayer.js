@@ -491,6 +491,7 @@ function mpRenderStrategyAndBenchPhase(idx){
   const playBtn=document.getElementById("playMatchBtn"); if(playBtn) playBtn.style.display="none";
   const matchActionWrap1=document.getElementById("matchActionWrap"); if(matchActionWrap1) matchActionWrap1.style.display="none";
   const abandonBtn1=document.getElementById("abandonTournamentBtn"); if(abandonBtn1) abandonBtn1.style.display="none";
+  const abandonWrap1=document.getElementById("abandonTournamentWrap"); if(abandonWrap1) abandonWrap1.style.display="none";
   // Por si se llega aquí tras recargar a mitad de duelo (sin pasar por el
   // draft normal), asegurar que estos botones siguen ocultos.
   const rollBtnEl=document.getElementById("rollBtn"); if(rollBtnEl) rollBtnEl.style.display="none";

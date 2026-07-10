@@ -787,7 +787,11 @@ rollBtn.addEventListener("click",()=>{
   // Lock the formation choice the moment drafting actually begins —
   // not just once the squad is fully built. The player should see
   // immediately that they can no longer change it.
-  if(phase==="draft"&&draftedCount===0) lockFormationDisplay();
+  if(phase==="draft"&&draftedCount===0){
+    lockFormationDisplay();
+    const abandonWrap=document.getElementById("abandonTournamentWrap");
+    if(abandonWrap && !window._duelId) abandonWrap.style.display="block";
+  }
   if(phase==="draft") rollTeams();
   else if(phase==="bench") rollBench();
 });
@@ -1833,7 +1837,7 @@ function startMatchPhase(){
   document.getElementById("playMatchBtn").style.display="block";
   const matchActionWrap0=document.getElementById("matchActionWrap");
   if(matchActionWrap0) matchActionWrap0.style.display="flex";
-  const abandonBtn0=document.getElementById("abandonTournamentBtn"); if(abandonBtn0) abandonBtn0.style.display=window._duelId?"none":"block";
+  const abandonWrap0=document.getElementById("abandonTournamentWrap"); if(abandonWrap0) abandonWrap0.style.display=window._duelId?"none":"block";
   document.getElementById("moraleSection").style.display="block";
   renderMorale();
   const qb=document.getElementById("quickBuildWrap");
