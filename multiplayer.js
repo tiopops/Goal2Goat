@@ -763,6 +763,11 @@ const PENALTY_ZONES=[
   {id:'abajo_derecha',    x:85, y:49},
 ];
 const PENALTY_KICK_MS=5000;
+// Margen extra sobre el plazo compartido, para absorber diferencias de
+// velocidad de red/dispositivo entre los dos jugadores — así el que
+// tarda un poco más en recibir su turno no se queda sin oportunidad
+// real de actuar.
+const PENALTY_EXTRA_BUFFER_MS=4000;
 // Tiempo que tardan los dos dispositivos en terminar de ver la animación
 // del lanzamiento anterior (2000ms chuta + 1400ms resultado + 450ms
 // respiro) antes de que aparezcan los círculos del siguiente — hay que
@@ -1012,36 +1017,34 @@ function mpStartPenaltyTimer(cur){
   if(mpPenTimerHandle) clearInterval(mpPenTimerHandle);
   const fill=document.getElementById('penTimerFill');
   let lastBeepSec=null;
-  // OJO: usar el plazo COMPARTIDO (cur.deadline, ya guardado en
-  // Firestore al escribir el lanzamiento), no un reloj local propio de
-  // cada dispositivo contando desde que él mismo terminó de renderizar
-  // la pantalla. Si un dispositivo tarda un poco más en recibir/pintar
-  // el turno (animación, red...), su reloj local podía agotarse ANTES
-  // de que ese jugador llegara siquiera a ver la pantalla para actuar
-  // — resolviendo el lanzamiento sin darle una oportunidad real. Con
-  // el plazo compartido, los dos dispositivos cuentan desde el MISMO
-  // punto de referencia, así que el tiempo restante es el mismo para
-  // los dos sea cual sea la velocidad de cada uno en renderizar.
-  const sharedDeadline = cur.deadline || (Date.now()+PENALTY_KICK_MS);
+  // Dos relojes distintos, a propósito:
+  // 1) La BARRA VISUAL usa el reloj local de ESTE dispositivo, empezando
+  //    en el momento en que él mismo pinta la pantalla — así cada
+  //    jugador ve siempre una cuenta atrás completa y justa desde su
+  //    propio punto de vista, sea cual sea el retraso de red que haya
+  //    tenido para llegar hasta aquí.
+  // 2) El PLAZO REAL para forzar la resolución usa el plazo compartido
+  //    (cur.deadline) más un margen extra generoso — así el tirador no
+  //    fuerza el resultado mientras el portero todavía podría estar
+  //    esperando su turno por culpa de un simple retraso de red.
+  const localStart=Date.now();
+  const sharedDeadline = (cur.deadline||(Date.now()+PENALTY_KICK_MS)) + PENALTY_EXTRA_BUFFER_MS;
   if(fill){ fill.style.transition='none'; fill.style.width='100%'; }
   requestAnimationFrame(()=>{
     requestAnimationFrame(()=>{ if(fill) fill.style.transition='width .1s linear'; });
   });
   mpPenTimerHandle=setInterval(()=>{
-    const remainMs=Math.max(0, sharedDeadline-Date.now());
-    const remainSec=Math.ceil(remainMs/1000);
+    const localRemainMs=Math.max(0, PENALTY_KICK_MS-(Date.now()-localStart));
+    const remainSec=Math.ceil(localRemainMs/1000);
     if(remainSec!==lastBeepSec){ lastBeepSec=remainSec; checkCountdownBeep(remainSec,'penalty'); }
-    if(fill) fill.style.width=(remainMs/PENALTY_KICK_MS*100)+'%';
+    if(fill) fill.style.width=(localRemainMs/PENALTY_KICK_MS*100)+'%';
 
-    if(remainMs<=0){
+    if(Date.now()>=sharedDeadline){
       clearInterval(mpPenTimerHandle); mpPenTimerHandle=null;
-      // Al agotarse el tiempo hay que forzar la resolución — si no,
-      // nadie vuelve a comprobar nada hasta que alguien escriba algo
-      // en Firestore, y el juego se queda esperando indefinidamente.
+      // Al agotarse el plazo compartido (con su margen) hay que forzar
+      // la resolución — si no, el juego se queda esperando indefinidamente.
       // OJO: usar SIEMPRE el estado más reciente (mpPenLatestCur), no
-      // el "cur" capturado al arrancar el temporizador — si no, una
-      // elección hecha DESPUÉS de empezar a contar (pero antes de que
-      // se agote el tiempo) se ignoraría por completo.
+      // el "cur" capturado al arrancar el temporizador.
       const freshCur=mpPenLatestCur||cur;
       if(freshCur.shooterRole===window._duelRole) mpMaybeResolveAsShooter(freshCur, mpPenCurHist, true);
     }
