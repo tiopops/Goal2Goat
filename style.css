@@ -757,8 +757,8 @@ body.dark-theme .vb-row:nth-child(even){background:transparent}
 
 /* QUICK BUILD BUTTON */
 #quickBuildWrap{
-  width:100%;display:flex;align-items:center;justify-content:center;
-  padding:0 12px 8px;
+  width:100%;max-width:340px;margin:0 auto;display:flex;align-items:center;justify-content:center;
+  padding:0 12px 8px;box-sizing:border-box;
 }
 #multiplayerWrap{
   width:100%;display:flex;align-items:center;justify-content:center;

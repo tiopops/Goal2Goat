@@ -334,6 +334,20 @@ function openCrestCropModal(imageDataUrl, parentOverlay){
     clampOffsets();
     img.style.transform = `translate(${offsetX}px,${offsetY}px) scale(${baseScale*zoom})`;
   }
+  // Cambia el zoom manteniendo fijo el punto de la imagen que hay bajo
+  // (px,py) — el centro del recuadro para el deslizador, o el punto
+  // medio entre los dos dedos para el pellizco — en vez de anclar
+  // siempre a la esquina superior izquierda, que daba saltos raros.
+  function zoomAroundPoint(px, py, newZoom){
+    const effScaleOld = baseScale*zoom;
+    const natFocusX = (px-offsetX)/effScaleOld;
+    const natFocusY = (py-offsetY)/effScaleOld;
+    zoom = Math.min(3, Math.max(1, newZoom));
+    const effScaleNew = baseScale*zoom;
+    offsetX = px - natFocusX*effScaleNew;
+    offsetY = py - natFocusY*effScaleNew;
+    applyTransform();
+  }
   img.onload = () => {
     naturalW = img.naturalWidth; naturalH = img.naturalHeight;
     baseScale = Math.max(VIEWPORT/naturalW, VIEWPORT/naturalH);
@@ -345,8 +359,7 @@ function openCrestCropModal(imageDataUrl, parentOverlay){
   };
 
   zoomSlider.addEventListener('input', ()=>{
-    zoom = parseFloat(zoomSlider.value);
-    applyTransform();
+    zoomAroundPoint(VIEWPORT/2, VIEWPORT/2, parseFloat(zoomSlider.value));
   });
 
   function pointerDown(x,y){ dragging=true; dragStartX=x; dragStartY=y; dragOffX=offsetX; dragOffY=offsetY; viewport.style.cursor='grabbing'; }
@@ -380,9 +393,11 @@ function openCrestCropModal(imageDataUrl, parentOverlay){
     if(e.touches.length===2){
       const dist=touchDist(e.touches);
       const rawZoom=pinchStartZoom*(dist/pinchStartDist);
-      zoom=Math.min(3, Math.max(1, rawZoom));
+      const rect=viewport.getBoundingClientRect();
+      const midX=(e.touches[0].clientX+e.touches[1].clientX)/2-rect.left;
+      const midY=(e.touches[0].clientY+e.touches[1].clientY)/2-rect.top;
+      zoomAroundPoint(midX, midY, rawZoom);
       zoomSlider.value=String(zoom);
-      applyTransform();
     }else{
       const t=e.touches[0]; pointerMove(t.clientX,t.clientY);
     }
