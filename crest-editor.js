@@ -220,8 +220,9 @@ function showConfirmPopup(message, onConfirm, confirmLabel){
       </div>
     </div>`;
   document.body.appendChild(confirmOv);
-  document.getElementById('genConfirmCancel').addEventListener('click', ()=>confirmOv.remove());
+  document.getElementById('genConfirmCancel').addEventListener('click', ()=>{ playSound('select'); confirmOv.remove(); });
   document.getElementById('genConfirmYes').addEventListener('click', ()=>{
+    playSound('select');
     confirmOv.remove();
     onConfirm();
   });

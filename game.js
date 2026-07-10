@@ -4258,6 +4258,7 @@ function showEliminatedGroupStage(){
   </div>`;
 }
 function showEliminated(){
+  playSound('defeat');
   const round=getRoundName(knockoutRound);
   const sc=computeFinalScore(false);
   if(typeof window.saveFinalScore==="function") window.saveFinalScore(sc.total);
