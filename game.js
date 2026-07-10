@@ -787,7 +787,11 @@ rollBtn.addEventListener("click",()=>{
   // Lock the formation choice the moment drafting actually begins —
   // not just once the squad is fully built. The player should see
   // immediately that they can no longer change it.
-  if(phase==="draft"&&draftedCount===0) lockFormationDisplay();
+  if(phase==="draft"&&draftedCount===0){
+    lockFormationDisplay();
+    const abandonBtn=document.getElementById("abandonTournamentBtn");
+    if(abandonBtn && !window._duelId) abandonBtn.style.display="block";
+  }
   if(phase==="draft") rollTeams();
   else if(phase==="bench") rollBench();
 });
@@ -5120,7 +5124,11 @@ function quickBuild(){
   if(maybeShowMobileFormationGate(()=>quickBuild())) return; // pauses for confirmation on mobile, first time only
   // Lock the formation choice the moment quick-build is used, same as
   // manual drafting — the formation is no longer changeable from here on.
-  if(phase==="draft"&&draftedCount===0) lockFormationDisplay();
+  if(phase==="draft"&&draftedCount===0){
+    lockFormationDisplay();
+    const abandonBtn=document.getElementById("abandonTournamentBtn");
+    if(abandonBtn && !window._duelId) abandonBtn.style.display="block";
+  }
   revealPreDraftBoxes();
   const btn=document.getElementById("quickBuildWrap");
   if(btn){ btn.disabled=true; btn.textContent=window.t?window.t('draft.generating_btn'):'Generando...'; }

@@ -311,7 +311,7 @@ function openCrestCropModal(imageDataUrl, parentOverlay){
         <img id="cropImg" src="${imageDataUrl}" style="position:absolute;top:0;left:0;transform-origin:0 0;user-select:none;-webkit-user-drag:none">
       </div>
       <input type="range" id="cropZoom" min="1" max="3" step="0.01" value="1" style="width:100%;margin-top:14px;accent-color:var(--gold)">
-      <div style="font-size:10px;color:var(--text-muted);margin-top:2px">Arrastra para mover · desliza para acercar</div>
+      <div style="font-size:10px;color:var(--text-muted);margin-top:2px">Arrastra para mover · pellizca o desliza para acercar</div>
       <div style="display:flex;gap:10px;margin-top:16px">
         <button id="cropCancelBtn" style="flex:1;background:none;border:1px solid var(--line);color:var(--text);border-radius:6px;padding:9px;cursor:pointer;font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:1px">CANCELAR</button>
         <button id="cropConfirmBtn" style="flex:1;background:var(--gold);border:none;color:#000;border-radius:6px;padding:9px;cursor:pointer;font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:1px">CONFIRMAR</button>
@@ -361,9 +361,37 @@ function openCrestCropModal(imageDataUrl, parentOverlay){
   viewport.addEventListener('mousedown', e=>{ pointerDown(e.clientX,e.clientY); e.preventDefault(); });
   window.addEventListener('mousemove', e=>pointerMove(e.clientX,e.clientY));
   window.addEventListener('mouseup', pointerUp);
-  viewport.addEventListener('touchstart', e=>{ const t=e.touches[0]; pointerDown(t.clientX,t.clientY); }, {passive:true});
-  viewport.addEventListener('touchmove', e=>{ const t=e.touches[0]; pointerMove(t.clientX,t.clientY); e.preventDefault(); }, {passive:false});
-  viewport.addEventListener('touchend', pointerUp);
+  let pinchStartDist=0, pinchStartZoom=1;
+  function touchDist(touches){
+    const dx=touches[0].clientX-touches[1].clientX;
+    const dy=touches[0].clientY-touches[1].clientY;
+    return Math.hypot(dx,dy);
+  }
+  viewport.addEventListener('touchstart', e=>{
+    if(e.touches.length===2){
+      dragging=false; // el pellizco manda, se cancela cualquier arrastre de un dedo en curso
+      pinchStartDist=touchDist(e.touches);
+      pinchStartZoom=zoom;
+    }else{
+      const t=e.touches[0]; pointerDown(t.clientX,t.clientY);
+    }
+  }, {passive:true});
+  viewport.addEventListener('touchmove', e=>{
+    if(e.touches.length===2){
+      const dist=touchDist(e.touches);
+      const rawZoom=pinchStartZoom*(dist/pinchStartDist);
+      zoom=Math.min(3, Math.max(1, rawZoom));
+      zoomSlider.value=String(zoom);
+      applyTransform();
+    }else{
+      const t=e.touches[0]; pointerMove(t.clientX,t.clientY);
+    }
+    e.preventDefault();
+  }, {passive:false});
+  viewport.addEventListener('touchend', e=>{
+    if(e.touches.length<2) pinchStartDist=0;
+    if(e.touches.length===0) pointerUp();
+  });
 
   function cleanup(){
     window.removeEventListener('mousemove', pointerMove);
