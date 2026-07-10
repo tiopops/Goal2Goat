@@ -1133,7 +1133,7 @@ body.dark-theme .settings-item:hover{background:var(--row-hover);color:var(--gol
 
   /* RANKING PANEL on mobile */
   .ranking-panel{display:none;width:100%;box-sizing:border-box;padding:10px;scroll-margin-top:70px}
-  .ranking-panel.mob-active{display:block!important}
+  .ranking-panel.mob-active{display:block!important;min-height:calc(100vh - 64px)}
 
   /* TAB BAR — fixed at bottom of viewport */
   #mobileTabBar{
