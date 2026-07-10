@@ -503,7 +503,7 @@ function mpRenderStrategyAndBenchPhase(idx){
   // Cabecera del panel de rival, adaptada a un oponente humano
   const rivalInfo=document.getElementById('rivalInfo');
   if(rivalInfo) rivalInfo.innerHTML=`<div style="text-align:center;padding:4px 0 8px">
-      ${window._rivalCrestData?renderRivalCrestThumb(90):'<i class="ph ph-bold ph-user" style="font-size:56px;color:#7b9cff"></i>'}
+      ${(window._rivalCrestData||window._rivalCrestImage)?renderRivalCrestThumb(90):'<i class="ph ph-bold ph-user" style="font-size:56px;color:#7b9cff"></i>'}
       <div style="font-family:'Bebas Neue',Impact,sans-serif;font-size:16px;margin-top:4px">${mpEsc(window._duelOpponentUsername||'')}</div>
     </div>`;
   // Red de seguridad: si el escudo del rival nunca llegó a cargarse (p.ej.
@@ -668,11 +668,11 @@ function generateDuelMatchSummary(myGoalEvents, rivalGoalEvents, myShots, rivalS
   const goalsHTML=`
   <div class="goals-columns">
     <div class="goals-col">
-      <div class="goals-col-header">${window._myCrestData?renderCrestThumb(18):'<i class="ph ph-bold ph-user" style="color:#4a90d9;vertical-align:middle;margin-right:2px"></i>'} ${myLabel}</div>
+      <div class="goals-col-header">${(window._myCrestData||window._myCrestImage)?renderCrestThumb(18):'<i class="ph ph-bold ph-user" style="color:#4a90d9;vertical-align:middle;margin-right:2px"></i>'} ${myLabel}</div>
       <ul class="goals-list">${myGoalLines.length?myGoalLines.join(''):'<li class="no-goal">Sin goles</li>'}</ul>
     </div>
     <div class="goals-col">
-      <div class="goals-col-header">${window._rivalCrestData?renderRivalCrestThumb(18):'<i class="ph ph-bold ph-user" style="color:#e74c3c;vertical-align:middle;margin-right:2px"></i>'} ${mpEsc(opponentUsername)}</div>
+      <div class="goals-col-header">${(window._rivalCrestData||window._rivalCrestImage)?renderRivalCrestThumb(18):'<i class="ph ph-bold ph-user" style="color:#e74c3c;vertical-align:middle;margin-right:2px"></i>'} ${mpEsc(opponentUsername)}</div>
       <ul class="goals-list">${oppGoalLines.length?oppGoalLines.join(''):'<li class="no-goal">Sin goles</li>'}</ul>
     </div>
   </div>`;
@@ -1241,7 +1241,7 @@ function mpFinishPenaltiesUI(winnerRole, history){
       <div class="match-modal" style="overflow:hidden;display:flex;flex-direction:column">
         <div class="match-header">
           <div class="match-side">
-            ${window._myCrestData?renderCrestThumb(40):'<i class="ph ph-bold ph-user" style="font-size:32px;color:#4a90d9"></i>'}
+            ${(window._myCrestData||window._myCrestImage)?renderCrestThumb(40):'<i class="ph ph-bold ph-user" style="font-size:32px;color:#4a90d9"></i>'}
             <span class="match-team-name">${mpEsc(window.myTeamName||myTeamName||'TU EQUIPO')}</span>
           </div>
           <div style="text-align:center;flex:0 0 auto">
@@ -1252,7 +1252,7 @@ function mpFinishPenaltiesUI(winnerRole, history){
             </div>
           </div>
           <div class="match-side">
-            ${window._rivalCrestData?renderRivalCrestThumb(40):'<i class="ph ph-bold ph-user" style="font-size:32px;color:#e74c3c"></i>'}
+            ${(window._rivalCrestData||window._rivalCrestImage)?renderRivalCrestThumb(40):'<i class="ph ph-bold ph-user" style="font-size:32px;color:#e74c3c"></i>'}
             <span class="match-team-name">${mpEsc(window._duelOpponentUsername||'RIVAL')}</span>
           </div>
         </div>

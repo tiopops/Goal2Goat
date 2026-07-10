@@ -2066,7 +2066,7 @@ function renderGroupTableHTML(){
     const displayName=getTeamName(r.name);
     rows+=`<tr class="${cls}${qualified?' group-row-qualified':''}">
       <td>${i+1}</td>
-      <td>${r.isMe?((window._myCrestData?renderCrestThumb(18):'<i class="ph ph-bold ph-user" style="font-size:15px;color:#4a90d9;vertical-align:middle"></i>')+' '+displayName):(flagEmoji(r.name,18)+' '+displayName)}</td>
+      <td>${r.isMe?(((window._myCrestData||window._myCrestImage)?renderCrestThumb(18):'<i class="ph ph-bold ph-user" style="font-size:15px;color:#4a90d9;vertical-align:middle"></i>')+' '+displayName):(flagEmoji(r.name,18)+' '+displayName)}</td>
       <td>${r.played}</td>
       <td>${r.won}</td>
       <td>${r.drawn}</td>
@@ -2294,7 +2294,7 @@ function playMatch(){
       summary+=`<br><br><strong>⚽ TANDA DE PENALTIS: ${myTeamName} ${penaltyInfo.myScore} – ${penaltyInfo.oppScore} ${getTeamName(nextOpponent.name)}</strong>
       <div class="goals-columns">
         <div class="goals-col">
-          <div class="goals-col-header">${window._myCrestData?renderCrestThumb(20):'<i class="ph ph-bold ph-user" style="font-size:16px;color:#4a90d9;vertical-align:middle"></i>'} ${myTeamName}</div>
+          <div class="goals-col-header">${(window._myCrestData||window._myCrestImage)?renderCrestThumb(20):'<i class="ph ph-bold ph-user" style="font-size:16px;color:#4a90d9;vertical-align:middle"></i>'} ${myTeamName}</div>
           <ul class="goals-list pen-shots">${myShotsHTML}</ul>
         </div>
         <div class="goals-col">
@@ -2482,7 +2482,7 @@ function generateMatchSummary(myGoals,oppGoals,rivalName){
   const goalsHTML=`
   <div class="goals-columns">
     <div class="goals-col">
-      <div class="goals-col-header">${window._myCrestData?renderCrestThumb(20):'<i class="ph ph-bold ph-user" style="font-size:16px;color:#4a90d9;vertical-align:middle"></i>'} ${myTeamName}</div>
+      <div class="goals-col-header">${(window._myCrestData||window._myCrestImage)?renderCrestThumb(20):'<i class="ph ph-bold ph-user" style="font-size:16px;color:#4a90d9;vertical-align:middle"></i>'} ${myTeamName}</div>
       <ul class="goals-list">${myGoalLines.length?myGoalLines.join(''):'<li class="no-goal">Sin goles</li>'}</ul>
     </div>
     <div class="goals-col">
@@ -2866,7 +2866,7 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
     ${window._duelId?`<div style="text-align:center;font-family:'Bebas Neue',Impact,sans-serif;font-size:14px;letter-spacing:1.5px;color:var(--gold);text-transform:uppercase;padding-bottom:4px">${(tk('mp.duel_match_of')||'PARTIDO {0} DE 5').replace('{0}', String(window._duelMatchIndex+1))}</div>`:''}
     <div class="match-header">
       <div class="match-side">
-        ${window._duelId?(window._myCrestData?renderCrestThumb(40):'<i class="ph ph-bold ph-user" style="font-size:32px;color:#4a90d9"></i>'):(window._myCrestData?renderCrestThumb(48):'<i class="ph ph-bold ph-user" style="font-size:32px;color:#4a90d9"></i>')}
+        ${window._duelId?((window._myCrestData||window._myCrestImage)?renderCrestThumb(40):'<i class="ph ph-bold ph-user" style="font-size:32px;color:#4a90d9"></i>'):((window._myCrestData||window._myCrestImage)?renderCrestThumb(48):'<i class="ph ph-bold ph-user" style="font-size:32px;color:#4a90d9"></i>')}
         <span class="match-team-name">${myTeamName}</span>
       </div>
       <div style="text-align:center;flex:0 0 auto">
@@ -2880,7 +2880,7 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
         </div>
       </div>
       <div class="match-side">
-        ${window._duelId?(window._rivalCrestData?renderRivalCrestThumb(40):'<i class="ph ph-bold ph-user" style="font-size:32px;color:#e74c3c"></i>'):(nextOpponent?flagEmoji(nextOpponent.name,72):'<span style="font-size:32px">👤</span>')}
+        ${window._duelId?((window._rivalCrestData||window._rivalCrestImage)?renderRivalCrestThumb(40):'<i class="ph ph-bold ph-user" style="font-size:32px;color:#e74c3c"></i>'):(nextOpponent?flagEmoji(nextOpponent.name,72):'<span style="font-size:32px">👤</span>')}
         <span class="match-team-name">${oppName}</span>
       </div>
     </div>
@@ -2993,7 +2993,7 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
         summary+=`<br><br><strong>⚽ TANDA DE PENALTIS: ${myTeamName} ${penaltyInfo.myScore} – ${penaltyInfo.oppScore} ${getTeamName(nextOpponent.name)}</strong>
         <div class="goals-columns">
           <div class="goals-col">
-            <div class="goals-col-header">${window._myCrestData?renderCrestThumb(20):'<i class="ph ph-bold ph-user" style="font-size:16px;color:#4a90d9;vertical-align:middle"></i>'} ${myTeamName}</div>
+            <div class="goals-col-header">${(window._myCrestData||window._myCrestImage)?renderCrestThumb(20):'<i class="ph ph-bold ph-user" style="font-size:16px;color:#4a90d9;vertical-align:middle"></i>'} ${myTeamName}</div>
             <ul class="goals-list pen-shots">${myShotsHTML}</ul>
           </div>
           <div class="goals-col">
@@ -4132,7 +4132,7 @@ function showMatchModal(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,
   <div class="match-modal">
     <div class="match-header">
       <div class="match-side">
-        ${window._myCrestData?renderCrestThumb(34):'<i class="ph ph-bold ph-user" style="font-size:22px;color:#4a90d9"></i>'}
+        ${(window._myCrestData||window._myCrestImage)?renderCrestThumb(34):'<i class="ph ph-bold ph-user" style="font-size:22px;color:#4a90d9"></i>'}
         <span class="match-team-name">${myTeamName}</span>
       </div>
       <div class="match-scoreline">${myGoals} – ${oppGoals}</div>
@@ -4204,7 +4204,7 @@ function showGroupResultsPopup(){
       const cls=(r.isMe?"group-row-me":"")+(qual?' group-row-qualified':'');
       rows+=`<tr class="${cls}">
         <td>${idx+1}</td>
-        <td>${r.isMe?((window._myCrestData?renderCrestThumb(18):'<i class="ph ph-bold ph-user" style="font-size:15px;color:#4a90d9;vertical-align:middle"></i>')+' '+getTeamName(r.name)):(flagEmoji(r.name,18)+' '+getTeamName(r.name))}</td>
+        <td>${r.isMe?(((window._myCrestData||window._myCrestImage)?renderCrestThumb(18):'<i class="ph ph-bold ph-user" style="font-size:15px;color:#4a90d9;vertical-align:middle"></i>')+' '+getTeamName(r.name)):(flagEmoji(r.name,18)+' '+getTeamName(r.name))}</td>
         <td>${r.played}</td><td>${r.won}</td><td>${r.drawn}</td><td>${r.lost}</td>
         <td>${r.gf}-${r.ga}</td><td><strong>${r.pts}</strong></td>
       </tr>`;
@@ -4913,8 +4913,13 @@ loadInheritedPlayers();
    cabecera de partido o las miniaturas del perfil. */
 (function(){
   try{
-    const cached = localStorage.getItem('g2g_crest_data');
-    if(cached) window._myCrestData = JSON.parse(cached);
+    const cachedImg = localStorage.getItem('g2g_crest_image');
+    if(cachedImg){
+      window._myCrestImage = cachedImg;
+    }else{
+      const cached = localStorage.getItem('g2g_crest_data');
+      if(cached) window._myCrestData = JSON.parse(cached);
+    }
   }catch(e){}
 })();
 
@@ -5529,7 +5534,13 @@ function initFirebaseAuth(){
       window.currentUsername=username;
       const data=snap.exists?snap.data():{};
       window.preferredTeamName=data.preferredTeamName||"";
-      if(data.customCrest){ window._myCrestData=data.customCrest; try{ localStorage.setItem('g2g_crest_data', JSON.stringify(data.customCrest)); }catch(e){} }
+      if(data.customCrestImage){
+        window._myCrestImage=data.customCrestImage; window._myCrestData=null;
+        try{ localStorage.setItem('g2g_crest_image', data.customCrestImage); localStorage.removeItem('g2g_crest_data'); }catch(e){}
+      }else if(data.customCrest){
+        window._myCrestData=data.customCrest; window._myCrestImage=null;
+        try{ localStorage.setItem('g2g_crest_data', JSON.stringify(data.customCrest)); localStorage.removeItem('g2g_crest_image'); }catch(e){}
+      }
       refreshAllCrestThumbs();
       window.useFixedTeamName=!!data.useFixedTeamName;
       // Sincronizar nombre del equipo para el contador de convocados

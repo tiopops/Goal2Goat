@@ -414,10 +414,11 @@ function openCrestEditor(){
               <svg id="crestSvg" viewBox="0 0 200 200" width="90" height="90"></svg>
               <img id="crestImgPreview" style="display:none;width:100%;height:100%;object-fit:cover">
             </div>
-            <label for="crestImageInput" id="crestUploadBtn" title="Subir imagen propia" style="position:absolute;bottom:-6px;right:-6px;z-index:5;width:30px;height:30px;border-radius:50%;background:#1a1d1f;border:2px solid var(--gold);color:var(--gold);display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0">
-              <i class="ph ph-bold ph-pencil-simple" style="font-size:14px;pointer-events:none"></i>
-            </label>
-            <input type="file" id="crestImageInput" accept="image/*" style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none">
+            <div style="position:absolute;bottom:-6px;right:-6px;width:30px;height:30px;border-radius:50%;background:#1a1d1f;border:2px solid var(--gold);color:var(--gold);display:flex;align-items:center;justify-content:center;pointer-events:none">
+              <i class="ph ph-bold ph-pencil-simple" style="font-size:14px"></i>
+            </div>
+            <input type="file" id="crestImageInput" accept="image/*" title="Subir imagen propia"
+              style="position:absolute;bottom:-6px;right:-6px;width:30px;height:30px;border-radius:50%;opacity:0;cursor:pointer;-webkit-appearance:none;appearance:none;padding:0;margin:0;font-size:0">
           </div>
           <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:8px">
             <input type="text" id="crestTeamNameInput" maxlength="24" placeholder="Nombre del equipo" style="width:100%;background:var(--dark);border:1px solid var(--line);color:var(--text);padding:7px 9px;border-radius:6px;font-size:12px;font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:.5px">
