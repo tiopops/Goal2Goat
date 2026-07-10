@@ -287,8 +287,12 @@ async function renderFriendsList(){
         <td class="mp-col-stat" style="color:#4ade80">${f.won}</td>
         <td class="mp-col-stat" style="color:#ff7e7e">${f.lost}</td>
         <td class="mp-col-action">
-          <button class="mp-challenge-btn mp-btn-challenge" data-uid="${f.uid}" data-username="${mpEsc(f.username||'')}" title="${tk('mp.challenge')}"><i class="ph ph-bold ph-play"></i></button>
-          <button class="mp-challenge-btn mp-btn-challenge" style="background:rgba(240,196,25,.12);border-color:var(--gold);color:var(--gold);margin-left:4px" data-uid="${f.uid}" data-username="${mpEsc(f.username||'')}" data-penalties-test="1" title="PRUEBA: ir directo a penaltis"><i class="ph ph-bold ph-soccer-ball"></i></button>
+          <button class="mp-challenge-btn mp-btn-challenge mp-btn-labeled" data-uid="${f.uid}" data-username="${mpEsc(f.username||'')}" title="${tk('mp.challenge')}">
+            <i class="ph ph-bold ph-play"></i><span>Partido</span>
+          </button>
+          <button class="mp-challenge-btn mp-btn-challenge mp-btn-labeled" style="background:rgba(240,196,25,.12);border-color:var(--gold);color:var(--gold);margin-left:4px" data-uid="${f.uid}" data-username="${mpEsc(f.username||'')}" data-penalties-test="1" title="Reto directo a una tanda de penaltis, sin jugar partidos">
+            <i class="ph ph-bold ph-soccer-ball"></i><span>Penaltis</span>
+          </button>
         </td>
         <td class="mp-col-action"><button class="mp-remove-btn mp-btn-remove" data-id="${f.id}" data-username="${mpEsc(f.username||'')}" title="${tk('mp.remove')}"><i class="ph ph-bold ph-trash"></i></button></td>`;
       tbody.appendChild(row);
@@ -1045,8 +1049,15 @@ function mpStartPenaltyTimer(cur){
       // la resolución — si no, el juego se queda esperando indefinidamente.
       // OJO: usar SIEMPRE el estado más reciente (mpPenLatestCur), no
       // el "cur" capturado al arrancar el temporizador.
+      // IMPORTANTE: por tiempo agotado, CUALQUIERA de los dos puede
+      // forzar la resolución — no solo el tirador. Si solo lo pudiera
+      // hacer el tirador y su dispositivo se quedaba pillado, se
+      // desconectaba, o tardaba demasiado, el portero se quedaba
+      // esperando para siempre sin ninguna forma de desatascarlo. La
+      // protección contra dobles escrituras (mpPenResolvingKick) ya
+      // evita que esto cause un resultado duplicado o inconsistente.
       const freshCur=mpPenLatestCur||cur;
-      if(freshCur.shooterRole===window._duelRole) mpMaybeResolveAsShooter(freshCur, mpPenCurHist, true);
+      mpMaybeResolveAsShooter(freshCur, mpPenCurHist, true);
     }
   }, 100);
 }
@@ -1235,6 +1246,18 @@ function mpFinishPenaltiesUI(winnerRole, history){
           </div>
         </div>
       </div>`;
+    }
+    if(window._duelIsPenaltiesOnly){
+      // Modo TANDA DE PENALTIS: aquí acaba, no se continúa a otro
+      // partido — se marca el duelo como terminado y se vuelve al
+      // inicio, igual que al abandonar, pero sin el aviso de "perderás
+      // el progreso" (la tanda ya se jugó entera y se resolvió).
+      const db=window._fbDb;
+      if(db&&window._duelId){
+        db.collection('duels').doc(window._duelId).update({status:'finished'}).catch(e=>console.error(e));
+      }
+      setTimeout(()=>{ mpExitDuelMode(); location.reload(); }, 1400);
+      return;
     }
     mpAdvanceAfterMatch();
   }, 1600);
@@ -1859,7 +1882,14 @@ async function initDuelModeFromSession(){
     if(!snap.exists){ mpExitDuelMode(); return; }
     const d=snap.data();
     const myReadyField=window._duelRole==='challenger'?'challengerReady':'opponentReady';
+    window._duelIsPenaltiesOnly = !!d.debugPenaltiesOnly;
     if(!d[myReadyField]){
+      if(d.debugPenaltiesOnly){
+        // Modo TANDA DE PENALTIS: no hace falta formar equipo — se
+        // marca "listo" al instante con una plantilla vacía de relleno.
+        await mpMarkReadyPenaltiesOnly();
+        return;
+      }
       startDuelDraftTimer();
       return;
     }
@@ -1951,6 +1981,23 @@ function startDuelDraftTimer(){
 
 /* Se ejecuta cuando MI draft/banquillo ha terminado (manual o por tiempo
    agotado). Serializa mi plantilla y la guarda en el duelo. */
+/* Modo TANDA DE PENALTIS — marca "listo" al instante, sin pasar por el
+   draft, con una plantilla de relleno mínima (no se usa para nada real,
+   solo para no dejar el campo vacío en Firestore). */
+async function mpMarkReadyPenaltiesOnly(){
+  const db=window._fbDb;
+  if(!db||!window._duelId) return;
+  const readyField=window._duelRole==='challenger'?'challengerReady':'opponentReady';
+  const squadField=window._duelRole==='challenger'?'challengerSquad':'opponentSquad';
+  try{
+    await db.collection('duels').doc(window._duelId).update({
+      [squadField]: {placeholder:true},
+      [readyField]: true
+    });
+  }catch(e){ console.error('mpMarkReadyPenaltiesOnly error:',e); }
+  mpShowDuelWaitingScreen();
+}
+
 async function mpOnDraftComplete(){
   if(_duelTimerInterval){ clearInterval(_duelTimerInterval); _duelTimerInterval=null; }
   const bar=document.getElementById('duelDraftTimerBar');

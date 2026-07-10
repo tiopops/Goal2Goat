@@ -2150,6 +2150,12 @@ body.light-theme #achievementsList [style*="text-muted"]{
   transition:.15s;
 }
 .mp-btn-challenge:hover{background:var(--gold);color:#000}
+.mp-btn-labeled{
+  width:auto!important;height:auto!important;border-radius:6px!important;
+  flex-direction:row;gap:6px;padding:7px 10px!important;line-height:1;
+}
+.mp-btn-labeled span{font-size:10px;font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:.5px;text-transform:uppercase}
+.mp-btn-labeled i{font-size:14px}
 .mp-btn-remove{
   width:32px;height:32px;padding:0;border:1px solid var(--red);border-radius:50%;background:none;color:var(--red);
   font-size:14px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;line-height:1;transition:.15s;
