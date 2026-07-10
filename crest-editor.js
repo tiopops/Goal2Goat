@@ -370,7 +370,7 @@ function openCrestCropModal(imageDataUrl, parentOverlay){
     cropOv.remove();
   }
   document.getElementById('cropCancelBtn').addEventListener('click', cleanup);
-  document.getElementById('cropConfirmBtn').addEventListener('click', async ()=>{
+  document.getElementById('cropConfirmBtn').addEventListener('click', ()=>{
     const effScale = baseScale*zoom;
     const cropX = -offsetX/effScale, cropY = -offsetY/effScale;
     const cropSize = VIEWPORT/effScale;
@@ -380,19 +380,23 @@ function openCrestCropModal(imageDataUrl, parentOverlay){
     // PNG (no JPEG) para conservar la transparencia si la imagen la tiene.
     ctx.drawImage(img, cropX, cropY, cropSize, cropSize, 0, 0, OUTPUT, OUTPUT);
     const dataUrl = canvas.toDataURL('image/png');
-    await saveMyCrestImage(dataUrl);
-    // Reflejar en la vista previa del editor, sustituyendo el SVG por capas
+    // Solo se deja preparada — igual que un cambio de forma/color en el
+    // editor por capas, no se guarda de verdad en Firestore hasta que
+    // el jugador pulse GUARDAR ESCUDO. Si no, subir la imagen y luego
+    // pulsar GUARDAR ESCUDO sin querer sobrescribía la imagen recién
+    // subida con el escudo por capas por defecto.
+    _crestEditImagePending = dataUrl;
     const svgPrev = document.getElementById('crestSvg');
     const imgPrev = document.getElementById('crestImgPreview');
     if(svgPrev) svgPrev.style.display = 'none';
     if(imgPrev){ imgPrev.src = dataUrl; imgPrev.style.display = 'block'; }
-    showToast('✅ Imagen de escudo guardada', 'toast-pos');
     cleanup();
   });
 }
 
 /* ===== Ventana del editor ===== */
 let _crestEditState = null;
+let _crestEditImagePending = null; // imagen recién recortada, pendiente de confirmar con GUARDAR ESCUDO
 function openCrestEditor(){
   _crestEditState = window._myCrestData ? JSON.parse(JSON.stringify(window._myCrestData)) : defaultCrestData();
   if(!_crestEditState.rankColor) _crestEditState.rankColor = '#f0c419';
@@ -410,10 +414,10 @@ function openCrestEditor(){
               <svg id="crestSvg" viewBox="0 0 200 200" width="90" height="90"></svg>
               <img id="crestImgPreview" style="display:none;width:100%;height:100%;object-fit:cover">
             </div>
-            <button id="crestUploadBtn" title="Subir imagen propia" style="position:absolute;bottom:-4px;right:-4px;width:26px;height:26px;border-radius:50%;background:#1a1d1f;border:2px solid var(--gold);color:var(--gold);display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0">
-              <i class="ph ph-bold ph-pencil-simple" style="font-size:13px"></i>
-            </button>
-            <input type="file" id="crestImageInput" accept="image/*" style="display:none">
+            <label for="crestImageInput" id="crestUploadBtn" title="Subir imagen propia" style="position:absolute;bottom:-6px;right:-6px;z-index:5;width:30px;height:30px;border-radius:50%;background:#1a1d1f;border:2px solid var(--gold);color:var(--gold);display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0">
+              <i class="ph ph-bold ph-pencil-simple" style="font-size:14px;pointer-events:none"></i>
+            </label>
+            <input type="file" id="crestImageInput" accept="image/*" style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none">
           </div>
           <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:8px">
             <input type="text" id="crestTeamNameInput" maxlength="24" placeholder="Nombre del equipo" style="width:100%;background:var(--dark);border:1px solid var(--line);color:var(--text);padding:7px 9px;border-radius:6px;font-size:12px;font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:.5px">
@@ -444,6 +448,7 @@ function openCrestEditor(){
 
   buildCrestControlsUI(document.getElementById('crestControlsCol'));
   crestRenderAll();
+  _crestEditImagePending = window._myCrestImage || null;
   if(window._myCrestImage){
     const svgPrev = document.getElementById('crestSvg');
     const imgPrev = document.getElementById('crestImgPreview');
@@ -452,9 +457,6 @@ function openCrestEditor(){
   }
 
   document.getElementById('crestCloseBtn').addEventListener('click', ()=>overlay.remove());
-  document.getElementById('crestUploadBtn').addEventListener('click', ()=>{
-    document.getElementById('crestImageInput').click();
-  });
   document.getElementById('crestImageInput').addEventListener('change', (e)=>{
     const file = e.target.files && e.target.files[0];
     e.target.value = ''; // permite volver a elegir el mismo archivo después
@@ -467,7 +469,11 @@ function openCrestEditor(){
     reader.readAsDataURL(file);
   });
   document.getElementById('crestSaveBtn').addEventListener('click', async()=>{
-    await saveMyCrestData(_crestEditState);
+    if(_crestEditImagePending){
+      await saveMyCrestImage(_crestEditImagePending);
+    }else{
+      await saveMyCrestData(_crestEditState);
+    }
     if(existingNameInput && typeof existingNameInput.dispatchEvent==='function') existingNameInput.dispatchEvent(new Event('input'));
     showToast('✅ Escudo guardado', 'toast-pos');
     overlay.remove();
@@ -500,8 +506,10 @@ function crestRenderAll(){
   renderCrestInto(document.getElementById('crestSvg'), _crestEditState);
   // Si se estaba mostrando la imagen subida y el usuario toca un
   // control de capas, se entiende que quiere volver al escudo por
-  // capas — se enseña el SVG de nuevo (el campo de imagen solo se
-  // borra de verdad al pulsar GUARDAR ESCUDO, no antes).
+  // capas — se cancela la imagen pendiente y se enseña el SVG de
+  // nuevo (nada de esto toca Firestore todavía; eso solo pasa al
+  // pulsar GUARDAR ESCUDO).
+  _crestEditImagePending = null;
   const svgPrev = document.getElementById('crestSvg');
   const imgPrev = document.getElementById('crestImgPreview');
   if(svgPrev) svgPrev.style.display = '';
