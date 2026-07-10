@@ -286,13 +286,19 @@ async function renderFriendsList(){
         <td class="mp-col-stat">${f.played}</td>
         <td class="mp-col-stat" style="color:#4ade80">${f.won}</td>
         <td class="mp-col-stat" style="color:#ff7e7e">${f.lost}</td>
-        <td class="mp-col-action"><button class="mp-challenge-btn mp-btn-challenge" data-uid="${f.uid}" data-username="${mpEsc(f.username||'')}" title="${tk('mp.challenge')}"><i class="ph ph-bold ph-play"></i></button></td>
+        <td class="mp-col-action">
+          <button class="mp-challenge-btn mp-btn-challenge" data-uid="${f.uid}" data-username="${mpEsc(f.username||'')}" title="${tk('mp.challenge')}"><i class="ph ph-bold ph-play"></i></button>
+          <button class="mp-challenge-btn mp-btn-challenge" style="background:rgba(240,196,25,.12);border-color:var(--gold);color:var(--gold);margin-left:4px" data-uid="${f.uid}" data-username="${mpEsc(f.username||'')}" data-penalties-test="1" title="PRUEBA: ir directo a penaltis"><i class="ph ph-bold ph-soccer-ball"></i></button>
+        </td>
         <td class="mp-col-action"><button class="mp-remove-btn mp-btn-remove" data-id="${f.id}" data-username="${mpEsc(f.username||'')}" title="${tk('mp.remove')}"><i class="ph ph-bold ph-trash"></i></button></td>`;
       tbody.appendChild(row);
     });
     list.appendChild(table);
     list.querySelectorAll('.mp-remove-btn').forEach(b=>b.addEventListener('click',()=>mpRemoveFriend(b.dataset.id, b.dataset.username)));
-    list.querySelectorAll('.mp-challenge-btn').forEach(b=>b.addEventListener('click',()=>mpChallengeFriend(b.dataset.uid, b.dataset.username, b)));
+    list.querySelectorAll('.mp-challenge-btn').forEach(b=>b.addEventListener('click',()=>{
+      if(b.dataset.penaltiesTest) mpChallengeFriendPenaltiesTest(b.dataset.uid, b.dataset.username, b);
+      else mpChallengeFriend(b.dataset.uid, b.dataset.username, b);
+    }));
   }catch(e){
     console.error('renderFriendsList error:',e);
     list.innerHTML=`<div class="mp-empty-state" style="color:var(--red)">${tk('mp.err_generic')}</div>`;
@@ -1549,6 +1555,35 @@ async function mpShowDuelFinalSummary(){
    ════════════════════════════════════════════════════════════ */
 
 /* Enviar desafío a un amigo */
+/* BOTÓN DE PRUEBAS — reta directo a una tanda de penaltis, sin jugar
+   los 5 partidos, para poder testear el sistema de penaltis rápido.
+   Quitar el botón (y esta función) cuando ya no haga falta. */
+async function mpChallengeFriendPenaltiesTest(targetUid, targetUsername, btnEl){
+  playSound('select');
+  const auth=window._fbAuth, db=window._fbDb;
+  const user=auth&&auth.currentUser;
+  if(!user||!db) return;
+  if(btnEl) btnEl.disabled=true;
+  try{
+    const mySnap=await db.collection('users').doc(user.uid).get();
+    const myUsername=(mySnap.exists&&(mySnap.data().username||mySnap.data().email))||user.email||'???';
+    await db.collection('duels').add({
+      challengerId:user.uid, challengerUsername:myUsername,
+      opponentId:targetUid, opponentUsername:targetUsername,
+      status:'pending', createdAt:Date.now(),
+      debugPenaltiesOnly:true
+    }).then(ref=>{
+      try{ sessionStorage.setItem('g2g_pending_challenge_id', ref.id); }catch(e){}
+    });
+    showToast('⚽ Reto de penaltis (prueba) enviado a '+(targetUsername||''), 'toast-pos');
+  }catch(e){
+    console.error('mpChallengeFriendPenaltiesTest error:',e);
+    showToast(tk('mp.err_generic'), 'toast-neg');
+  }finally{
+    if(btnEl) btnEl.disabled=false;
+  }
+}
+
 async function mpChallengeFriend(targetUid, targetUsername, btnEl){
   playSound('select');
   const auth=window._fbAuth, db=window._fbDb;
@@ -1829,6 +1864,13 @@ async function initDuelModeFromSession(){
       mpShowDuelWaitingScreen();
       return;
     }
+    if(d.debugPenaltiesOnly){
+      // Botón de pruebas: si se recarga a mitad, volver directo a la
+      // tanda de penaltis en vez de intentar retomar un partido normal.
+      window._duelMatchIndex=0;
+      mpMaybeStartPenalties();
+      return;
+    }
     // Ambos equipos ya listos: retomar exactamente en el partido/sub-fase
     // correctos, en vez de reiniciar siempre desde el partido 1.
     const idx=d.currentMatchIndex||0;
@@ -1974,6 +2016,13 @@ function mpShowDuelWaitingScreen(){
       unsub();
       mpHideDuelOverlay(); // si no, se queda tapando la rueda de prensa/estrategia
       window._duelMatchIndex=0;
+      if(d.debugPenaltiesOnly){
+        // Botón de pruebas: saltar directo a la tanda de penaltis, sin
+        // jugar los 5 partidos. Solo para testear el propio sistema de
+        // penaltis rápido — quitar cuando ya no haga falta.
+        mpMaybeStartPenalties();
+        return;
+      }
       mpShowStrategyAndBenchPhase();
       return;
     }
