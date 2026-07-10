@@ -1040,6 +1040,13 @@ function mpStartPenaltyTimer(cur){
   //    esperando su turno por culpa de un simple retraso de red.
   const localStart=Date.now();
   const sharedDeadline = (cur.deadline||(Date.now()+PENALTY_KICK_MS)) + PENALTY_EXTRA_BUFFER_MS;
+  // El portero, si tiene que forzar la resolución como respaldo (por si
+  // el tirador se quedó pillado/desconectado), espera un poco más que
+  // el tirador antes de intentarlo — así, en el caso normal (el
+  // tirador funciona bien), solo UN dispositivo escribe en Firestore
+  // en el momento del plazo, evitando que los dos escriban casi a la
+  // vez y se descuadre el historial entre ellos.
+  const fallbackDeadline = sharedDeadline + 2500;
   if(fill){ fill.style.transition='none'; fill.style.width='100%'; }
   requestAnimationFrame(()=>{
     requestAnimationFrame(()=>{ if(fill) fill.style.transition='width .1s linear'; });
@@ -1050,19 +1057,21 @@ function mpStartPenaltyTimer(cur){
     if(remainSec!==lastBeepSec){ lastBeepSec=remainSec; checkCountdownBeep(remainSec,'penalty'); }
     if(fill) fill.style.width=(localRemainMs/PENALTY_KICK_MS*100)+'%';
 
-    if(Date.now()>=sharedDeadline){
+    const freshCurEarly=mpPenLatestCur||cur;
+    const iAmShooterNow=freshCurEarly.shooterRole===window._duelRole;
+    const myDeadline=iAmShooterNow?sharedDeadline:fallbackDeadline;
+
+    if(Date.now()>=myDeadline){
       clearInterval(mpPenTimerHandle); mpPenTimerHandle=null;
-      // Al agotarse el plazo compartido (con su margen) hay que forzar
-      // la resolución — si no, el juego se queda esperando indefinidamente.
+      // Al agotarse el plazo (con su margen) hay que forzar la
+      // resolución — si no, el juego se queda esperando indefinidamente.
       // OJO: usar SIEMPRE el estado más reciente (mpPenLatestCur), no
       // el "cur" capturado al arrancar el temporizador.
-      // IMPORTANTE: por tiempo agotado, CUALQUIERA de los dos puede
-      // forzar la resolución — no solo el tirador. Si solo lo pudiera
-      // hacer el tirador y su dispositivo se quedaba pillado, se
-      // desconectaba, o tardaba demasiado, el portero se quedaba
-      // esperando para siempre sin ninguna forma de desatascarlo. La
-      // protección contra dobles escrituras (mpPenResolvingKick) ya
-      // evita que esto cause un resultado duplicado o inconsistente.
+      // El tirador siempre tiene prioridad e intenta resolver primero,
+      // en el plazo normal. El portero solo actúa de respaldo, y solo
+      // tras un margen extra — así casi nunca escriben los dos a la
+      // vez. La protección contra dobles escrituras (mpPenResolvingKick)
+      // sigue ahí además, por si acaso.
       const freshCur=mpPenLatestCur||cur;
       mpMaybeResolveAsShooter(freshCur, mpPenCurHist, true);
     }
