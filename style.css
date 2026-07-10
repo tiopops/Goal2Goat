@@ -222,8 +222,8 @@ body.dark-theme .version-tag{color:#555}
 
 /* CENTER BOTTOM STRIP */
 #centerBottom{
-  width:100%;display:flex;align-items:stretch;justify-content:center;
-  padding:0;background:none;border:none;flex-shrink:0;
+  width:100%;display:flex;align-items:center;justify-content:center;gap:10px;
+  padding:8px 12px;background:#1a1a1a;border-top:1px solid #333;flex-shrink:0;
 }
 .main-action-btn{
   background:var(--gold);color:#000;
@@ -757,8 +757,8 @@ body.dark-theme .vb-row:nth-child(even){background:transparent}
 
 /* QUICK BUILD BUTTON */
 #quickBuildWrap{
-  width:100%;max-width:340px;margin:0 auto;display:flex;align-items:center;justify-content:center;
-  padding:0 12px 8px;box-sizing:border-box;
+  width:100%;display:flex;align-items:center;justify-content:center;
+  padding:0 12px 8px;
 }
 #multiplayerWrap{
   width:100%;display:flex;align-items:center;justify-content:center;
@@ -1090,8 +1090,10 @@ body.dark-theme .settings-item:hover{background:var(--row-hover);color:var(--gol
 
   
   
-  #actionButtonsCol{width:100%!important;max-width:100%!important;padding:0 12px}
-  #centerBottom{width:100%!important;max-width:100%!important;padding:8px 0!important}
+  #centerBottom{width:100%!important;max-width:100%!important}
+  #quickBuildWrap{width:100%!important;max-width:100%!important;padding:0 12px 8px!important}
+  #multiplayerWrap{width:100%!important;max-width:100%!important;padding:0 12px 8px!important}
+  #multiplayerBtnWrap{max-width:100%!important}
   .main-action-btn,.quick-build-btn{max-width:100%!important;width:100%!important}
 
   /* Left/right panels: hidden by default, shown by tab JS */

@@ -658,27 +658,20 @@
     </div>
 
     <!-- GO button + next rival compact strip under pitch -->
-    <!-- Todo este bloque comparte un único contenedor con un solo ancho
-         máximo — así es imposible que un botón acabe más ancho o más
-         estrecho que otro, sea cual sea la pantalla. -->
-    <div id="actionButtonsCol" style="display:grid;grid-template-columns:1fr;gap:8px;width:100%;max-width:340px;margin:0 auto">
-      <div id="centerBottom">
-        <div id="rollBtnWrap" style="display:flex;flex:1 1 auto;width:100%">
-          <button id="rollBtn" class="main-action-btn" style="width:100%;max-width:none" data-i18n="draft.select_player">SELECCIONAR JUGADOR</button>
-        </div>
-        <div id="matchActionWrap" style="display:none;flex:1 1 auto;width:100%">
-          <button id="playMatchBtn" class="main-action-btn" style="width:100%;max-width:none" data-i18n="match.play_btn">JUGAR PARTIDO</button>
-        </div>
+    <div id="centerBottom">
+      <button id="rollBtn" class="main-action-btn" data-i18n="draft.select_player">SELECCIONAR JUGADOR</button>
+      <div id="matchActionWrap" style="display:none;flex-direction:column;gap:8px;flex:1 1 auto;max-width:340px;width:100%">
+        <button id="playMatchBtn" class="main-action-btn" style="width:100%;max-width:none" data-i18n="match.play_btn">JUGAR PARTIDO</button>
+        <button id="abandonTournamentBtn" class="main-action-btn" style="width:100%;max-width:none;background:#3a1a1a;border:1px solid #e74c3c;color:#ff7e7e" data-i18n="match.abandon_tournament">ABANDONAR TORNEO</button>
       </div>
-      <button id="abandonTournamentBtn" class="main-action-btn" style="display:none;width:100%;max-width:none;background:#3a1a1a;border:1px solid #e74c3c;color:#ff7e7e" data-i18n="match.abandon_tournament">ABANDONAR TORNEO</button>
-      <div id="quickBuildWrap" style="width:100%">
-        <button id="quickBuildBtn" class="main-action-btn quick-build-btn" style="width:100%;max-width:none" data-i18n="draft.quick_team">EQUIPO RÁPIDO</button>
-      </div>
-      <div id="multiplayerWrap" style="display:none;width:100%">
-        <div id="multiplayerBtnWrap" style="position:relative;width:100%">
-          <button id="multiplayerBtn" class="main-action-btn" style="background:#1a2a3a;border:1px solid #4a90d9;color:#7ec3ff;width:100%;max-width:none" data-i18n="mp.button">MULTIJUGADOR</button>
-          <span id="mpNotifBadge" style="display:none;position:absolute;top:-4px;right:-4px;width:14px;height:14px;background:#e74c3c;border:2px solid #0d0d0d;border-radius:50%"></span>
-        </div>
+    </div>
+    <div id="quickBuildWrap">
+      <button id="quickBuildBtn" class="main-action-btn quick-build-btn" data-i18n="draft.quick_team">EQUIPO RÁPIDO</button>
+    </div>
+    <div id="multiplayerWrap" style="display:none">
+      <div id="multiplayerBtnWrap" style="position:relative;flex:1 1 auto;max-width:340px">
+        <button id="multiplayerBtn" class="main-action-btn" style="background:#1a2a3a;border:1px solid #4a90d9;color:#7ec3ff;width:100%;max-width:none" data-i18n="mp.button">MULTIJUGADOR</button>
+        <span id="mpNotifBadge" style="display:none;position:absolute;top:-4px;right:-4px;width:14px;height:14px;background:#e74c3c;border:2px solid #0d0d0d;border-radius:50%"></span>
       </div>
     </div>
     </div>
