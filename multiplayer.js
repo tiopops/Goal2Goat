@@ -1115,14 +1115,12 @@ async function mpMaybeResolveAsShooter(cur, hist, timeUp){
   mpPenResolvingKick=cur.kickNum;
 
   let result, shooterZone=cur.shooterZone, keeperZone=cur.keeperZone;
-  if(!cur.shooterZone){
-    result='fuera'; // el tirador no eligió a tiempo: disparo fuera
-  }else{
-    // El portero que no elige a tiempo se queda quieto en el centro,
-    // como si esa fuera su elección — no es gol automático.
-    if(!keeperZone) keeperZone='centro';
-    result=(cur.shooterZone===keeperZone)?'para':'gol';
-  }
+  // Si el tirador no elige a tiempo, se trata como si hubiera pulsado
+  // el centro (igual que ya pasaba con el portero) — ya no se va fuera
+  // automáticamente.
+  if(!shooterZone) shooterZone='centro';
+  if(!keeperZone) keeperZone='centro';
+  result=(shooterZone===keeperZone)?'para':'gol';
 
   // No se anima aquí — la animación la dispara el listener a partir del
   // historial, igual en los dos dispositivos, para que se vea idéntica.
