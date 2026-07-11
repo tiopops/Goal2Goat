@@ -921,27 +921,19 @@ function mpRenderPenaltyKick(cur, hist){
   mpPenCurHist=hist;
   const iAmShooter=cur.shooterRole===window._duelRole;
   const myName=mpEsc(window.currentUsername||'TÚ');
+  const rivalName=mpEsc(window._duelOpponentUsername||'RIVAL');
   const round=Math.floor(cur.kickNum/2)+1;
   const label=round<=5?`Ronda ${round} de 5`:`Muerte súbita ${round-5}`;
   const lbl=document.getElementById('penKickLabel'); if(lbl) lbl.textContent=label;
   const turnLbl=document.getElementById('penTurnLabel');
-  // Siempre describe MI PROPIO papel en este lanzamiento — antes se
-  // mezclaba el nombre de quien tira con el verbo según mi rol, dando
-  // frases sin sentido como "TIOPOPS PARA" cuando en realidad tiopops
-  // estaba tirando y era el otro jugador quien paraba.
-  if(turnLbl) turnLbl.innerHTML=`<span style="color:${iAmShooter?'#4a90d9':'#e74c3c'}">${myName.toUpperCase()}</span> ${iAmShooter?'TIRA':'INTENTA PARAR'} EL PENALTI`;
-  // DIAGNÓSTICO TEMPORAL — solo kickNum y shooterRole, para confirmar
-  // si el número de lanzamiento avanza de 1 en 1 (correcto) o de 2 en
-  // 2 (lo que explicaría que el mismo jugador tire siempre). Quitar en
-  // cuanto se confirme.
-  const dbgKick=document.getElementById('penDebugKick')||(()=>{
-    const t=document.createElement('div');
-    t.id='penDebugKick';
-    t.style.cssText='font-size:10px;color:#888;text-align:center;font-family:monospace;padding:2px';
-    if(lbl&&lbl.parentNode) lbl.parentNode.insertBefore(t, lbl.nextSibling);
-    return t;
-  })();
-  if(dbgKick) dbgKick.textContent=`[debug] kickNum=${cur.kickNum} shooterRole=${cur.shooterRole} duelRole=${window._duelRole}`;
+  // Muestra siempre el nombre de quien tira este lanzamiento (yo o el
+  // rival), en azul si soy yo, en rojo si es el rival — el verbo es
+  // siempre "TIRA", porque siempre describe la acción del tirador.
+  if(turnLbl){
+    const shooterName=iAmShooter?myName:rivalName;
+    const shooterColor=iAmShooter?'#4a90d9':'#e74c3c';
+    turnLbl.innerHTML=`<span style="color:${shooterColor}">${shooterName.toUpperCase()}</span> TIRA EL PENALTI`;
+  }
   const sub=document.getElementById('penSub');
   if(sub) sub.textContent=iAmShooter?'¡Te toca lanzar! Elige tu zona':'¡Te toca parar! Elige dónde te tiras';
 
