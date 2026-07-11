@@ -280,6 +280,7 @@ async function saveMyCrestImage(dataUrl){
     try{ await db.collection('users').doc(user.uid).set({customCrestImage:dataUrl, customCrest: firebase.firestore.FieldValue.delete()}, {merge:true}); }
     catch(e){ console.error('[Escudo] guardado de imagen falló:', e); }
   }
+  if(typeof unlockAchievement==='function') unlockAchievement('mp_custom_crest');
   refreshAllCrestThumbs();
 }
 

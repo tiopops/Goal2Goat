@@ -4419,6 +4419,9 @@ function showVictory(){
   <div class="match-modal victory-modal">
     <div class="match-result-tag res-win-tag">${t("comp.champion")}</div>
     <div class="victory-score-wrap">
+      <button id="shareVictoryBtn" title="Compartir" style="position:absolute;top:4px;right:4px;width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.35);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0">
+        <i class="ph ph-bold ph-share-network" style="font-size:17px"></i>
+      </button>
       <div class="victory-score-label">${t('result.final_score')||'PUNTUACIÓN FINAL'}</div>
       <div class="victory-score-num">${sc.total}</div>
       <div class="victory-grade" style="color:${gradeColor}">${grade}</div>
@@ -4435,6 +4438,34 @@ function showVictory(){
     </div>
     <button class="modal-btn" onclick="window._launchGoldenAndReload()">${t("comp.end_tournament")}</button>
   </div>`;
+  const shareBtn=document.getElementById('shareVictoryBtn');
+  if(shareBtn) shareBtn.addEventListener('click', ()=>{ playSound('select'); shareMyVictory(sc, grade); });
+}
+
+/* Igual que compartir el equipo, pero añadiendo al final el resultado
+   real de haber ganado el campeonato — puntuación, nivel alcanzado y
+   el desglose de puntos. */
+async function shareMyVictory(sc, grade){
+  const base=buildTeamShareText();
+  const lines=[
+    base,
+    ``,
+    `🏆 ¡CAMPEÓN DEL MUNDO!`,
+    `Puntuación final: ${sc.total} — ${grade}`,
+    `⚽ ${sc.totalGoals} goles marcados · 🧤 ${sc.totalConceded} encajados`,
+    sc.penWins?`🎯 ${sc.penWins} tanda(s) de penaltis ganada(s)`:null,
+  ].filter(Boolean);
+  const text=lines.join('\n');
+  if(navigator.share){
+    try{ await navigator.share({text}); }catch(e){ /* cancelado por el usuario */ }
+  }else{
+    try{
+      await navigator.clipboard.writeText(text);
+      showToast('📋 Copiado al portapapeles', 'toast-pos');
+    }catch(e){
+      alert(text);
+    }
+  }
 }
 
 window._launchGoldenAndReload=function(){ showGoldenTicket(); };
@@ -4442,12 +4473,16 @@ window._launchGoldenAndReload=function(){ showGoldenTicket(); };
 /* ── TICKET DORADO: solo cabras y una X roja. Se gasta al instante. ── */
 function showGoldenTicket(){
   const GOLD_GRID=9;
-  // 1 bomba, 8 cabras (3pts cada una → max 24pts)
-  const bombIdx=Math.floor(Math.random()*GOLD_GRID);
+  // 8 cabras (3pts cada una → max 24pts) + 1 bomba.
+  // La bomba NO se coloca aquí — se decide de forma diferida (ver
+  // gtReveal), para garantizar que el primer rasguño nunca puede ser
+  // la bomba. Así nadie se queda a 0 puntos sin haber tenido ni una
+  // sola oportunidad real.
   const cellsData=[];
   for(let i=0;i<GOLD_GRID;i++){
-    cellsData.push(i===bombIdx ? {type:'bomb',value:0} : {type:'star',value:3});
+    cellsData.push({type:'star',value:3});
   }
+  let bombPlaced=false;
 
   // Crear overlay encima del modal de victoria
   const wrap=document.createElement('div');
@@ -4562,6 +4597,17 @@ function showGoldenTicket(){
     if(cell.dataset.revealed) return;
     cell.dataset.revealed='1';
     canvas.style.opacity='0'; canvas.style.transition='opacity .35s ease'; canvas.style.pointerEvents='none';
+    // Colocar la bomba, si todavía no se ha colocado: nunca en el
+    // primer rasguño (gtScratched===0 en este punto significa que este
+    // es el primero), y siempre entre las casillas que aún no se han
+    // destapado (para no pisar ninguna ya revelada como segura).
+    if(!bombPlaced && gtScratched>0){
+      const remaining=[];
+      Array.from(grid.children).forEach((c,ci)=>{ if(!c.dataset.revealed || ci===idx) remaining.push(ci); });
+      const pick=remaining[Math.floor(Math.random()*remaining.length)];
+      cellsData[pick]={type:'bomb',value:0};
+      bombPlaced=true;
+    }
     const data=cellsData[idx];
     const dot=dotsRow.querySelector(`[data-di="${idx}"]`);
     gtScratched++;
@@ -5348,10 +5394,17 @@ function syncThemeToggleUI(isDark){
 
 // Restore saved preferences on load
 (function restorePrefs(){
-  // Welcome popup: always show on load, salvo que haya un duelo multijugador activo
+  // Welcome popup: solo una vez por sesión del navegador — se guarda en
+  // sessionStorage, que se borra al cerrar la pestaña/navegador, pero
+  // NO al simplemente recargar la página. Así no molesta en cada
+  // actualización durante una misma visita.
   try{
     const o=document.getElementById("welcomeOverlay");
-    if(o && !window._duelId) o.style.display="flex";
+    const alreadyShown=sessionStorage.getItem('g2g_welcome_shown')==='1';
+    if(o && !window._duelId && !alreadyShown){
+      o.style.display="flex";
+      sessionStorage.setItem('g2g_welcome_shown','1');
+    }
   }catch(e){}
   syncAudioToggleUI();
   // Theme: dark is the default; only go light if explicitly saved as light
@@ -7063,6 +7116,17 @@ function getTierLabel(tier){
 // Cache de logros
 window._achievementsCache = new Set();
 
+/* Registro de qué logros ya se han "visto" en la pestaña de Logros —
+   para poder destacar los recién conseguidos la primera vez que el
+   jugador entra a mirar, y solo esa vez. */
+function getSeenAchievementIds(){
+  try{ return new Set(JSON.parse(localStorage.getItem('g2g_achievements_seen')||'[]')); }
+  catch(e){ return new Set(); }
+}
+function markAchievementsAsSeen(ids){
+  try{ localStorage.setItem('g2g_achievements_seen', JSON.stringify([...ids])); }catch(e){}
+}
+
 function startAchievementsListener(uid){
   if(!window._fbDb||!uid) return;
   window._fbDb.collection('users').doc(uid).onSnapshot(snap=>{
@@ -7145,6 +7209,7 @@ async function renderAchievementsTab(){
   if(!user){ list.innerHTML=`<div style="text-align:center;padding:20px;color:var(--text-muted)">${window.t?window.t('achievements.login'):'Inicia sesión para ver tus logros.'}</div>`; return; }
   const snap=await window._fbDb.collection('users').doc(user.uid).get();
   const unlocked=new Set((snap.exists&&snap.data().achievements)||[]);
+  const seenIds=getSeenAchievementIds();
   const total=ACHIEVEMENT_DEFS.length;
   const done=[...unlocked].filter(id=>ACHIEVEMENT_DEFS.find(a=>a.id===id)).length;
   list.innerHTML='';
@@ -7164,22 +7229,25 @@ async function renderAchievementsTab(){
 
   ACHIEVEMENT_DEFS.forEach(def=>{
     const isUnlocked=unlocked.has(def.id);
+    const isNew=isUnlocked && !seenIds.has(def.id);
     const isLight=document.body.classList.contains('light-theme');
     const card=document.createElement('div');
     const lockedBg=isLight?'#ede8df':'#1a1e20';
     const unlockedBg=isLight?'#e8f4ec':'rgba(0,0,0,.3)';
     const borderColor=isUnlocked?TIER_COLOR[def.tier]:(isLight?'#d4cec4':'var(--line)');
-    card.style.cssText='display:flex;align-items:center;gap:10px;padding:10px;border:1px solid '+borderColor+';background:'+(isUnlocked?unlockedBg:lockedBg)+';position:relative;overflow:hidden';
+    card.style.cssText='display:flex;align-items:center;gap:10px;padding:10px;border:1px solid '+borderColor+';background:'+(isUnlocked?unlockedBg:lockedBg)+';position:relative;overflow:hidden'
+      +(isNew?';box-shadow:0 0 0 2px var(--gold),0 0 14px rgba(240,196,25,.6);animation:ticketPulse 1.5s ease-in-out infinite':'');
     const achName=window.t?window.t('ach.'+def.id)||def.name:def.name;
     const achDesc=window.t?window.t('ach.'+def.id+'.d')||def.desc:def.desc;
     const iconColor=isUnlocked?'#c9a227':(isLight?'#bbb':'var(--text-muted)');
     const iconHtml='<i class="ph ph-bold '+def.icon+'" style="font-size:26px;flex-shrink:0;color:'+iconColor+';'+(isUnlocked?'':' opacity:.5')+'"></i>';
     const checkHtml=isUnlocked?'<i class="ph ph-bold ph-check" style="position:absolute;top:5px;right:6px;font-size:12px;color:'+(TIER_COLOR[def.tier]||'#c9a227')+'" ></i>':'';
+    const newBadgeHtml=isNew?'<div style="position:absolute;top:-1px;left:-1px;background:var(--gold);color:#000;font-size:8px;font-weight:700;letter-spacing:.5px;padding:2px 6px;border-bottom-right-radius:6px">'+(window.t?window.t('achievements.new'):'¡NUEVO!')+'</div>':'';
     const tierColor=TIER_COLOR[def.tier]||'#aaa';
     const tierLabel=getTierLabel(def.tier)||'';
     const nameColor=isUnlocked?(isLight?'#1a1a1a':'#fff'):(isLight?'#333':'var(--text-muted)');
     const descColor=isUnlocked?(isLight?'#444':'#aaa'):(isLight?'#666':'var(--text-muted)');
-    card.innerHTML=iconHtml+checkHtml+
+    card.innerHTML=iconHtml+checkHtml+newBadgeHtml+
       '<div style="min-width:0;flex:1">'+ 
       '<div style="font-size:12px;letter-spacing:.8px;color:'+nameColor+';line-height:1.2;font-weight:700">'+achName+'</div>'+
       '<div style="font-size:9px;color:'+descColor+';line-height:1.4;margin-top:2px">'+achDesc+'</div>'+
@@ -7187,6 +7255,10 @@ async function renderAchievementsTab(){
       '</div>';
     grid.appendChild(card);
   });
+  // Marcar como "vistos" todos los desbloqueados — así el resaltado de
+  // "recién conseguido" solo aparece la primera vez que se entra a
+  // esta pestaña después de ganarlo, no en visitas siguientes.
+  markAchievementsAsSeen(unlocked);
 }
 
 

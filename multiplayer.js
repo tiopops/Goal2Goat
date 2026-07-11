@@ -128,6 +128,7 @@ async function mpAddFriend(){
       createdAt:Date.now()
     });
     if(okEl){okEl.textContent=tk('mp.request_sent').replace('{0}',targetData.username||targetData.email);okEl.style.display='block';}
+    if(typeof unlockAchievement==='function') unlockAchievement('mp_first_friend');
     if(input) input.value='';
   }catch(e){
     console.error('mpAddFriend error:',e);
@@ -1252,6 +1253,7 @@ async function mpFinishPenaltiesUI(winnerRole, history){
   const iWon=winnerRole===window._duelRole;
   if(sub) sub.textContent=iWon?'¡GANAS LA TANDA DE PENALTIS!':'Pierdes la tanda de penaltis';
   playSound(iWon?'victory':'defeat');
+  if(iWon && typeof unlockAchievement==='function') unlockAchievement('mp_pen_win');
   if(window._duelLastMatchStats) Object.assign(window._duelLastMatchStats, {won:iWon, draw:false, decidedByPenalties:true});
   const myPenGoals=history.filter(h=>h.shooterRole===window._duelRole&&h.result==='gol').length;
   const rivalPenGoals=history.filter(h=>h.shooterRole!==window._duelRole&&h.result==='gol').length;
@@ -1491,6 +1493,42 @@ function mpWatchForBothContinued(idx){
 }
 
 /* Resumen final: solo vencedor + estadísticas globales de los 5 partidos. */
+/* Comprueba y desbloquea los logros relacionados con el RESULTADO de
+   un duelo multijugador completo (5 partidos) — se llama una vez por
+   duelo, justo cuando se sabe si se ganó o se perdió. Lleva también
+   los contadores persistentes que necesitan estos logros (racha,
+   victorias totales, duelos jugados contra cada amigo). */
+async function mpCheckDuelAchievements(iWin, rivalUid){
+  if(typeof unlockAchievement!=='function') return;
+  unlockAchievement('mp_first_duel');
+  const db=window._fbDb;
+  const user=window._fbAuth&&window._fbAuth.currentUser;
+  if(!db||!user) return;
+  try{
+    const ref=db.collection('users').doc(user.uid);
+    const snap=await ref.get();
+    const data=snap.exists?snap.data():{};
+
+    if(iWin){
+      unlockAchievement('mp_first_win');
+      const newStreak=(data.mpDuelWinStreak||0)+1;
+      const newTotalWins=(data.mpDuelTotalWins||0)+1;
+      if(newStreak>=3) unlockAchievement('mp_win_streak_3');
+      if(newTotalWins>=10) unlockAchievement('mp_win_10');
+      await ref.set({mpDuelWinStreak:newStreak, mpDuelTotalWins:newTotalWins}, {merge:true});
+    }else{
+      await ref.set({mpDuelWinStreak:0}, {merge:true});
+    }
+
+    if(rivalUid){
+      const counts=data.mpRivalryCounts||{};
+      const newCount=(counts[rivalUid]||0)+1;
+      if(newCount>=5) unlockAchievement('mp_rivalry_5');
+      await ref.set({mpRivalryCounts:{...counts, [rivalUid]:newCount}}, {merge:true});
+    }
+  }catch(e){ console.error('[Logros] comprobación de duelo falló:', e); }
+}
+
 async function mpShowDuelFinalSummary(){
   const db=window._fbDb;
   if(!db||!window._duelId) return;
@@ -1537,6 +1575,8 @@ async function mpShowDuelFinalSummary(){
   }
   const avgPoss=playedCount?Math.round(possessionSum/playedCount):50;
   let iWin=myWins>rivalWins, iLose=myWins<rivalWins;
+  const rivalUid = window._duelRole==='challenger' ? d.opponentId : d.challengerId;
+  mpCheckDuelAchievements(iWin, rivalUid);
   let tiebreakNote='';
   if(myWins===rivalWins){
     const myDiff=myGoalsTotal-rivalGoalsTotal, rivalDiff=rivalGoalsTotal-myGoalsTotal;

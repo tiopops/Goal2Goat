@@ -47,10 +47,14 @@ const UPGRADE_DEFS = [
   },
   {
     id: 'chain', icon: '🔗',
-    get name(){ return window.t?window.t('upgrade.chain'):'RUN ENCADENADA'; },
-    get desc(){ return window.t?window.t('upgrade.chain_desc'):'JUGADORES CONSERVADOS AL ENCADENAR RUN'; },
+    get name(){ return window.t?window.t('upgrade.chain'):'CONTINUIDAD'; },
+    get desc(){ return window.t?window.t('upgrade.chain_desc'):'JUGADORES QUE CONSERVAS AL EMPEZAR UN NUEVO TORNEO'; },
     baseCost: 5, maxLevel: 5, baseValue: 1,
-    tooltip: (lvl) => `${1+lvl} ${t("upgrade.chain_desc")}`
+    tooltip: (lvl) => {
+      const n=1+lvl;
+      const word=window.t?window.t(n===1?'upgrade.chain_unit_singular':'upgrade.chain_unit_plural'):(n===1?'jugador conservado':'jugadores conservados');
+      return `${n} ${word}`;
+    }
   },
   {
     id: 'giro', icon: '🔄',

@@ -728,7 +728,7 @@ body.dark-theme .recovered-box{background:#0a4a28;border-color:#0f6b3b}
 /* VICTORY SCORING SCREEN */
 .victory-modal{max-width:520px}
 .victory-score-wrap{
-  text-align:center;padding:20px 0 12px;border-bottom:1px solid var(--line);margin-bottom:12px;
+  text-align:center;padding:20px 0 12px;border-bottom:1px solid var(--line);margin-bottom:12px;position:relative;
 }
 .victory-score-label{
   font-size:10px;letter-spacing:2px;color:var(--text-muted);font-weight:700;margin-bottom:4px;

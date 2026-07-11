@@ -27,6 +27,11 @@ const ACHIEVEMENT_DEFS = [
   {id:'all_stars',        tier:'básico',  pts:1,  icon:'ph-star',           name:'ONCE PERFECTO',        desc:'Coloca los 11 titulares en su posición natural ★'},
   {id:'first_pen_win',    tier:'básico',  pts:1,  icon:'ph-crosshair',      name:'NERVIOS DE ACERO',     desc:'Gana una tanda de penaltis'},
   {id:'upgrade_once',     tier:'básico',  pts:1,  icon:'ph-arrow-circle-up','name':'PRIMERA MEJORA',     desc:'Sube por primera vez cualquier mejora'},
+  {id:'mp_first_friend',  tier:'básico',  pts:1,  icon:'ph-user-plus',      name:'PRIMER RIVAL',         desc:'Añade a tu primer amigo'},
+  {id:'mp_first_duel',    tier:'básico',  pts:1,  icon:'ph-swords',         name:'CARA A CARA',          desc:'Completa tu primer duelo multijugador'},
+  {id:'mp_first_win',     tier:'básico',  pts:1,  icon:'ph-handshake',      name:'GLORIA COMPARTIDA',    desc:'Gana tu primer duelo multijugador'},
+  {id:'mp_pen_win',       tier:'básico',  pts:1,  icon:'ph-target',         name:'TANDA DECISIVA',       desc:'Gana una tanda de penaltis en multijugador'},
+  {id:'mp_custom_crest',  tier:'básico',  pts:1,  icon:'ph-image',          name:'IDENTIDAD PROPIA',     desc:'Sube tu propia imagen como escudo'},
 
   // INTERMEDIOS — 2 PTS
   {id:'groups_unbeaten',  tier:'intermedio', pts:2, icon:'ph-shield',        name:'INVICTO EN GRUPOS',   desc:'Pasa la fase de grupos sin perder ningún partido'},
@@ -44,6 +49,8 @@ const ACHIEVEMENT_DEFS = [
   {id:'50_goat_pts',      tier:'intermedio', pts:2, icon:'ph-coins',         name:'BUEN CONTRATO',       desc:'Acumula 50 GOAT Points sin gastar ninguno'},
   {id:'score_10_group',   tier:'intermedio', pts:2, icon:'ph-chart-bar',     name:'MÁQUINA GOLEADORA',   desc:'Marca 10 goles o más en toda la fase de grupos'},
   {id:'win_all_groups',   tier:'intermedio', pts:2, icon:'ph-check-square',  name:'PLENO EN GRUPOS',     desc:'Gana los 3 partidos de la fase de grupos'},
+  {id:'mp_rivalry_5',     tier:'intermedio', pts:2, icon:'ph-users-three',   name:'RIVALIDAD SANA',      desc:'Juega 5 duelos multijugador contra el mismo amigo'},
+  {id:'mp_win_streak_3',  tier:'intermedio', pts:2, icon:'ph-trend-up',      name:'RACHA ONLINE',        desc:'Gana 3 duelos multijugador seguidos'},
 
   // DIFÍCILES — 3 PTS
   {id:'champion',         tier:'difícil', pts:3, icon:'ph-trophy',          name:'CAMPEÓN MUNDIAL',      desc:'Gana el Mundial'},
@@ -56,6 +63,7 @@ const ACHIEVEMENT_DEFS = [
   {id:'10_clean_sheets',  tier:'difícil', pts:3, icon:'ph-shield-check',    name:'PORTERO LEGENDARIO',   desc:'Consigue 10 porterías a cero a lo largo de tus partidas'},
   {id:'pen_win_final',    tier:'difícil', pts:3, icon:'ph-crosshair','name':'FINAL EN PENALTIS',  desc:'Gana la final del Mundial en la tanda de penaltis'},
   {id:'all_achievements_basic', tier:'difícil', pts:3, icon:'ph-seal-check','name':'PROFESIONAL',       desc:'Desbloquea todos los logros básicos'},
+  {id:'mp_win_10',        tier:'difícil', pts:3, icon:'ph-medal-military', name:'IMBATIBLE EN DUELOS',  desc:'Gana 10 duelos multijugador'},
 
   // MÍTICO — 25 PTS
   {id:'triple_crown',     tier:'mítico',  pts:25, icon:'ph-crown',   name:'GOAT ABSOLUTO',        desc:'Gana el Mundial 3 veces'},
