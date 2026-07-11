@@ -1149,6 +1149,19 @@ async function mpMaybeResolveAsShooter(cur, hist, timeUp){
   }
 
   try{
+    // Comprobación de seguridad, justo antes de escribir: releer el
+    // estado actual del servidor por si el OTRO dispositivo ya resolvió
+    // este mismo lanzamiento mientras se calculaba el resultado aquí
+    // (la causa real de que a veces se duplicara o desordenara el
+    // historial). Si el número de lanzamiento ya no coincide, alguien
+    // se adelantó — no se escribe nada, para no duplicar ni pisar nada.
+    const verifySnap=await db.collection('duels').doc(window._duelId).get();
+    const verifyData=verifySnap.exists?verifySnap.data():{};
+    const verifyCur=verifyData[`m${idx}_penCurrent`];
+    const verifyHist=verifyData[`m${idx}_penHistory`]||[];
+    if(!verifyCur || verifyCur.kickNum!==cur.kickNum || verifyHist.length!==hist.length){
+      return; // el otro dispositivo ya se adelantó — abortar sin escribir
+    }
     if(decided){
       await db.collection('duels').doc(window._duelId).update({
         [`m${idx}_penHistory`]: newHist,
