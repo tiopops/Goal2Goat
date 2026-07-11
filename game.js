@@ -5976,9 +5976,10 @@ function initFirebaseAuth(){
   };
 
   /* ─── CLOSE ON BACKDROP ─── */
+  // El popup de login/registro (authOverlay) NO se cierra al pulsar
+  // fuera — solo con la X o al completar la acción. Los demás
+  // (perfil, ranking) sí mantienen ese comportamiento.
   document.addEventListener("click",e=>{
-    const auth=$id("authOverlay");
-    if(auth&&e.target===auth) window.closeAuthModal();
     const prof=$id("profileOverlay");
     if(prof&&e.target===prof) window.closeProfileModal();
     const rank=$id("rankingOverlay");
@@ -7236,21 +7237,20 @@ async function renderAchievementsTab(){
     const unlockedBg=isLight?'#e8f4ec':'rgba(0,0,0,.3)';
     const borderColor=isUnlocked?TIER_COLOR[def.tier]:(isLight?'#d4cec4':'var(--line)');
     card.style.cssText='display:flex;align-items:center;gap:10px;padding:10px;border:1px solid '+borderColor+';background:'+(isUnlocked?unlockedBg:lockedBg)+';position:relative;overflow:hidden'
-      +(isNew?';box-shadow:0 0 0 2px var(--gold),0 0 14px rgba(240,196,25,.6);animation:ticketPulse 1.5s ease-in-out infinite':'');
+      +(isNew?';animation:achNewPulse 1.6s ease-in-out infinite':'');
     const achName=window.t?window.t('ach.'+def.id)||def.name:def.name;
     const achDesc=window.t?window.t('ach.'+def.id+'.d')||def.desc:def.desc;
     const iconColor=isUnlocked?'#c9a227':(isLight?'#bbb':'var(--text-muted)');
     const iconHtml='<i class="ph ph-bold '+def.icon+'" style="font-size:26px;flex-shrink:0;color:'+iconColor+';'+(isUnlocked?'':' opacity:.5')+'"></i>';
     const checkHtml=isUnlocked?'<i class="ph ph-bold ph-check" style="position:absolute;top:5px;right:6px;font-size:12px;color:'+(TIER_COLOR[def.tier]||'#c9a227')+'" ></i>':'';
-    const newBadgeHtml=isNew?'<div style="position:absolute;top:-1px;left:-1px;background:var(--gold);color:#000;font-size:8px;font-weight:700;letter-spacing:.5px;padding:2px 6px;border-bottom-right-radius:6px">'+(window.t?window.t('achievements.new'):'¡NUEVO!')+'</div>':'';
     const tierColor=TIER_COLOR[def.tier]||'#aaa';
     const tierLabel=getTierLabel(def.tier)||'';
     const nameColor=isUnlocked?(isLight?'#1a1a1a':'#fff'):(isLight?'#333':'var(--text-muted)');
     const descColor=isUnlocked?(isLight?'#444':'#aaa'):(isLight?'#666':'var(--text-muted)');
-    card.innerHTML=iconHtml+checkHtml+newBadgeHtml+
+    card.innerHTML=iconHtml+checkHtml+
       '<div style="min-width:0;flex:1">'+ 
       '<div style="font-size:12px;letter-spacing:.8px;color:'+nameColor+';line-height:1.2;font-weight:700">'+achName+'</div>'+
-      '<div style="font-size:9px;color:'+descColor+';line-height:1.4;margin-top:2px">'+achDesc+'</div>'+
+      '<div style="font-size:11px;color:'+descColor+';line-height:1.4;margin-top:2px">'+achDesc+'</div>'+
       '<div style="font-size:9px;color:'+tierColor+';letter-spacing:1px;margin-top:3px">'+tierLabel+'</div>'+
       '</div>';
     grid.appendChild(card);

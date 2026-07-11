@@ -47,7 +47,7 @@ const UPGRADE_DEFS = [
   },
   {
     id: 'chain', icon: '🔗',
-    get name(){ return window.t?window.t('upgrade.chain'):'CONTINUIDAD'; },
+    get name(){ return window.t?window.t('upgrade.chain'):'RUN ENCADENADA'; },
     get desc(){ return window.t?window.t('upgrade.chain_desc'):'JUGADORES QUE CONSERVAS AL EMPEZAR UN NUEVO TORNEO'; },
     baseCost: 5, maxLevel: 5, baseValue: 1,
     tooltip: (lvl) => {

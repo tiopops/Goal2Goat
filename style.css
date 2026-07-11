@@ -990,6 +990,7 @@ body.dark-theme .settings-item:hover{background:var(--row-hover);color:var(--gol
 /* profile-btn, header-ticket-btn y support-btn definidos arriba */
 /* placeholder */
 @keyframes ticketPulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.3);opacity:.7}}
+@keyframes achNewPulse{0%,100%{box-shadow:0 0 0 1px var(--gold)}50%{box-shadow:0 0 0 2px var(--gold),0 0 10px rgba(240,196,25,.5)}}
 
 /* PROFILE STATS */
 .profile-stats-grid{

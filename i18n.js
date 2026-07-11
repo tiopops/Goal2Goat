@@ -154,7 +154,7 @@ window.TRANSLATIONS = {
   'upgrade.scout_desc': {es:'JUGADORES POR EQUIPO AL BARAJAR', en:'PLAYERS PER TEAM WHEN ROLLING', pt:'JOGADORES POR TIME AO SORTEAR', fr:'JOUEURS PAR ÉQUIPE AU TIRAGE', de:'SPIELER PRO TEAM BEIM ZIEHEN', it:'GIOCATORI PER SQUADRA AL SORTEGGIO'},
   'upgrade.recovery': {es:'RECUPERACIÓN', en:'RECOVERY', pt:'RECUPERAÇÃO', fr:'RÉCUPÉRATION', de:'ERHOLUNG', it:'RECUPERO'},
   'upgrade.recovery_desc': {es:'REDUCE LA FATIGA ENTRE PARTIDOS', en:'REDUCES MATCH FATIGUE', pt:'REDUZ A FADIGA ENTRE JOGOS', fr:'RÉDUIT LA FATIGUE ENTRE LES MATCHS', de:'VERRINGERT SPIELERMÜDUNG', it:'RIDUCE LA FATICA TRA LE PARTITE'},
-  'upgrade.chain': {es:'CONTINUIDAD', en:'CONTINUITY', pt:'CONTINUIDADE', fr:'CONTINUITÉ', de:'KONTINUITÄT', it:'CONTINUITÀ'},
+  'upgrade.chain': {es:'RUN ENCADENADA', en:'CHAIN RUN', pt:'RUN ENCADEADA', fr:'RUN ENCHAÎNÉE', de:'KETTEN-RUN', it:'RUN CONCATENATA'},
   'upgrade.chain_desc': {es:'JUGADORES QUE CONSERVAS AL EMPEZAR UN NUEVO TORNEO', en:'PLAYERS YOU KEEP WHEN STARTING A NEW TOURNAMENT', pt:'JOGADORES QUE VOCÊ MANTÉM AO COMEÇAR UM NOVO TORNEIO', fr:'JOUEURS CONSERVÉS AU DÉBUT D\'UN NOUVEAU TOURNOI', de:'SPIELER, DIE DU BEIM START EINES NEUEN TURNIERS BEHÄLTST', it:'GIOCATORI CHE MANTIENI ALL\'INIZIO DI UN NUOVO TORNEO'},
   'upgrade.chain_unit_singular': {es:'jugador conservado', en:'player kept', pt:'jogador mantido', fr:'joueur conservé', de:'Spieler behalten', it:'giocatore mantenuto'},
   'upgrade.chain_unit_plural': {es:'jugadores conservados', en:'players kept', pt:'jogadores mantidos', fr:'joueurs conservés', de:'Spieler behalten', it:'giocatori mantenuti'},
