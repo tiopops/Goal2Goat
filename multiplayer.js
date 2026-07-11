@@ -1268,8 +1268,8 @@ function mpFinishPenaltiesUI(winnerRole, history){
             <span class="match-team-name">${mpEsc(window.myTeamName||myTeamName||'TU EQUIPO')}</span>
           </div>
           <div style="text-align:center;flex:0 0 auto">
-            <div class="match-scoreline" style="font-size:42px;letter-spacing:4px">${st.myGoals||0} – ${st.rivalGoals||0}</div>
-            <div style="font-size:11px;color:var(--gold);margin-top:2px">${(tk('match.penalties')||'PENALTIS')} ${myPenGoals}-${rivalPenGoals}</div>
+            <div class="match-scoreline" style="font-size:42px;letter-spacing:4px">${window._duelIsPenaltiesOnly?`${myPenGoals} – ${rivalPenGoals}`:`${st.myGoals||0} – ${st.rivalGoals||0}`}</div>
+            ${window._duelIsPenaltiesOnly?'':`<div style="font-size:11px;color:var(--gold);margin-top:2px">${(tk('match.penalties')||'PENALTIS')} ${myPenGoals}-${rivalPenGoals}</div>`}
             <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-top:4px">
               <div style="font-size:9px;font-weight:700;background:#555;color:#fff;padding:2px 7px;letter-spacing:1px;text-transform:uppercase">${tk('match.end')||'FIN'}</div>
             </div>
