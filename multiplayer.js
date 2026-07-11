@@ -973,15 +973,14 @@ function mpRenderPenaltyHistory(hist){
   hrow.innerHTML=hist.map(h=>{
     const mine=h.shooterRole===window._duelRole;
     const color=mine?'#4a90d9':'#e74c3c';
-    // El significado de "acierto" se invierte según de quién sea el
-    // turno: si YO tiro (azul), acierto = marqué gol. Si el RIVAL tira
-    // y yo paro (rojo), acierto = NO me marcaron gol (da igual si fue
-    // parada mía o el rival falló solo) — el icono siempre refleja MI
-    // propio resultado en ese lanzamiento, nunca el del rival.
-    const success = mine ? (h.result==='gol') : (h.result!=='gol');
+    // El círculo solo indica si ESE lanzamiento acabó en gol o no — no
+    // dice nada sobre si alguien paró o no. El color (azul/rojo) ya
+    // indica de quién era el turno de tirar; el icono (✓/✗) es siempre
+    // "gol sí" o "gol no", sin invertir nada según el color de la fila.
+    const scored=h.result==='gol';
     return `<div style="width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;
-      background:${success?color:'transparent'};border:2px solid ${color};flex-shrink:0">
-      <i class="ph ph-bold ${success?'ph-check':'ph-x'}" style="font-size:12px;color:${success?'#fff':color}"></i>
+      background:${scored?color:'transparent'};border:2px solid ${color};flex-shrink:0">
+      <i class="ph ph-bold ${scored?'ph-check':'ph-x'}" style="font-size:12px;color:${scored?'#fff':color}"></i>
     </div>`;
   }).join('');
 }
