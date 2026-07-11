@@ -520,7 +520,7 @@ function mpRenderStrategyAndBenchPhase(idx){
       return loadRivalCrestData(rivalUid);
     }).then(()=>{
       const ri=document.getElementById('rivalInfo');
-      if(ri && window._rivalCrestData) ri.innerHTML=`<div style="text-align:center;padding:4px 0 8px">
+      if(ri && (window._rivalCrestData||window._rivalCrestImage)) ri.innerHTML=`<div style="text-align:center;padding:4px 0 8px">
           ${renderRivalCrestThumb(90)}
           <div style="font-family:'Bebas Neue',Impact,sans-serif;font-size:16px;margin-top:4px">${mpEsc(window._duelOpponentUsername||'')}</div>
         </div>`;
@@ -1193,8 +1193,13 @@ function mpPlayPenaltyAnimationForEntry(entry){
   const label=round<=5?`Ronda ${round} de 5`:`Muerte súbita ${round-5}`;
   const lbl=document.getElementById('penKickLabel'); if(lbl) lbl.textContent=label;
   const myName=mpEsc(window.currentUsername||'TÚ');
+  const rivalName=mpEsc(window._duelOpponentUsername||'RIVAL');
   const turnLbl=document.getElementById('penTurnLabel');
-  if(turnLbl) turnLbl.innerHTML=`<span style="color:${iShoot?'#4a90d9':'#e74c3c'}">${myName.toUpperCase()}</span> ${iShoot?'TIRA':'INTENTA PARAR'} EL PENALTI`;
+  if(turnLbl){
+    const shooterName=iShoot?myName:rivalName;
+    const shooterColor=iShoot?'#4a90d9':'#e74c3c';
+    turnLbl.innerHTML=`<span style="color:${shooterColor}">${shooterName.toUpperCase()}</span> TIRA EL PENALTI`;
+  }
   return mpPlayPenaltyAnimation(entry.result, entry.shooterZone, entry.keeperZone, iShoot);
 }
 
@@ -1242,7 +1247,7 @@ function mpPlayPenaltyAnimation(result, shooterZone, keeperZone, iShoot){
   });
 }
 
-function mpFinishPenaltiesUI(winnerRole, history){
+async function mpFinishPenaltiesUI(winnerRole, history){
   const sub=document.getElementById('penSub');
   const iWon=winnerRole===window._duelRole;
   if(sub) sub.textContent=iWon?'¡GANAS LA TANDA DE PENALTIS!':'Pierdes la tanda de penaltis';
@@ -1251,6 +1256,21 @@ function mpFinishPenaltiesUI(winnerRole, history){
   const myPenGoals=history.filter(h=>h.shooterRole===window._duelRole&&h.result==='gol').length;
   const rivalPenGoals=history.filter(h=>h.shooterRole!==window._duelRole&&h.result==='gol').length;
   const st=window._duelLastMatchStats||{};
+  // Recarga explícita del escudo del rival justo antes de construir el
+  // resumen — no depender de que la carga inicial (mucho más temprana,
+  // y en este modo tan rápido que salta directo a la tanda) haya
+  // tenido tiempo de llegar. Si ya estaba cargado no hace daño repetirlo.
+  try{
+    const db=window._fbDb;
+    if(db && window._duelId && !(window._rivalCrestData||window._rivalCrestImage)){
+      const snap=await db.collection('duels').doc(window._duelId).get();
+      const dd=snap.exists?snap.data():null;
+      if(dd){
+        const rivalUid = window._duelRole==='challenger' ? dd.opponentId : dd.challengerId;
+        if(rivalUid) await loadRivalCrestData(rivalUid);
+      }
+    }
+  }catch(e){ console.error('[Penaltis] recarga del escudo del rival falló:', e); }
   setTimeout(()=>{
     const overlay=document.getElementById('matchOverlay');
     if(overlay){
