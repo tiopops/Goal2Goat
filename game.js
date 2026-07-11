@@ -7042,11 +7042,11 @@ async function renderSkillsTab(){
       btn.className='skill-toggle-btn';
       btn.dataset.id=def.id;
       // Mismo tamaño para todos: height fijo con flex column centrado
-      btn.style.cssText=`display:flex;flex-direction:column;align-items:center;justify-content:space-between;gap:0;border:2px solid ${active?'var(--gold)':'var(--line)'};background:${active?'rgba(201,162,39,.12)':'var(--panel)'};color:${active?'var(--gold)':'var(--text)'};cursor:${skillsLocked?'not-allowed':'pointer'};transition:.15s;text-align:center;width:100%;box-sizing:border-box;overflow:hidden;height:160px;opacity:${skillsLocked?.55:1}`;
+      btn.style.cssText=`display:flex;flex-direction:column;align-items:center;justify-content:space-between;gap:0;border:2px solid ${active?'var(--gold)':'var(--line)'};background:${active?'rgba(201,162,39,.12)':'var(--panel)'};color:${active?'var(--gold)':'var(--text)'};cursor:${skillsLocked?'not-allowed':'pointer'};transition:.15s;text-align:center;width:100%;box-sizing:border-box;overflow:hidden;height:172px;opacity:${skillsLocked?.55:1}`;
       const iconPart=`<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;padding:12px 8px 8px;flex:1">
         <span style="color:${active?'var(--gold)':'var(--accent)'}">${def.icon.replace(/width="22"/g,'width="26"').replace(/height="22"/g,'height="26"')}</span>
         <span style="font-family:'Bebas Neue',Impact,sans-serif;font-size:13px;letter-spacing:.8px;color:${active?'var(--gold)':'var(--text)'};line-height:1.1">${def.name}</span>
-        <span style="font-size:10px;color:${active?'var(--accent)':'var(--text-muted)'};line-height:1.4;padding:0 4px">${def.tooltip}</span>
+        <span style="font-size:12px;color:${active?'var(--accent)':'var(--text-muted)'};line-height:1.4;padding:0 4px">${def.tooltip}</span>
       </div>`;
       const footerPart=`<div style="width:100%;padding:6px;background:${active?'rgba(201,162,39,.15)':'rgba(0,0,0,.15)'};border-top:1px solid ${active?'rgba(201,162,39,.3)':'var(--line)'}">
         <span style="font-family:'Bebas Neue',Impact,sans-serif;font-size:12px;color:${active?'var(--gold)':'var(--text-muted)'};letter-spacing:1px">${active?(window.t?window.t('skill.active_footer'):'✓ ACTIVA · PULSA PARA DESACTIVAR'):'★ '+def.cost+' PTS'}</span>
@@ -7236,8 +7236,8 @@ async function renderAchievementsTab(){
     const lockedBg=isLight?'#ede8df':'#1a1e20';
     const unlockedBg=isLight?'#e8f4ec':'rgba(0,0,0,.3)';
     const borderColor=isUnlocked?TIER_COLOR[def.tier]:(isLight?'#d4cec4':'var(--line)');
-    card.style.cssText='display:flex;align-items:center;gap:10px;padding:10px;border:1px solid '+borderColor+';background:'+(isUnlocked?unlockedBg:lockedBg)+';position:relative;overflow:hidden'
-      +(isNew?';animation:achNewPulse 1.6s ease-in-out infinite':'');
+    card.style.cssText='display:flex;align-items:center;gap:10px;padding:'+(isNew?'9px':'10px')+';border:'+(isNew?'2px':'1px')+' solid '+borderColor+';background:'+(isUnlocked?unlockedBg:lockedBg)+';position:relative;overflow:hidden'
+      +(isNew?';animation:achNewBorderPulse 1.6s ease-in-out infinite':'');
     const achName=window.t?window.t('ach.'+def.id)||def.name:def.name;
     const achDesc=window.t?window.t('ach.'+def.id+'.d')||def.desc:def.desc;
     const iconColor=isUnlocked?'#c9a227':(isLight?'#bbb':'var(--text-muted)');
