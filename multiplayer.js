@@ -1050,11 +1050,21 @@ function mpStartPenaltyTimer(cur){
   requestAnimationFrame(()=>{
     requestAnimationFrame(()=>{ if(fill) fill.style.transition='width .1s linear'; });
   });
+  let autoCenterDone=false;
   mpPenTimerHandle=setInterval(()=>{
     const localRemainMs=Math.max(0, PENALTY_KICK_MS-(Date.now()-localStart));
     const remainSec=Math.ceil(localRemainMs/1000);
     if(remainSec!==lastBeepSec){ lastBeepSec=remainSec; checkCountdownBeep(remainSec,'penalty'); }
     if(fill) fill.style.width=(localRemainMs/PENALTY_KICK_MS*100)+'%';
+
+    // En cuanto SE AGOTA MI PROPIA barra (no el plazo compartido de
+    // resolución, que es aparte), si todavía no había elegido, se da
+    // por hecho al instante que pulsé el centro — visualmente, no solo
+    // por detrás cuando se resuelva más tarde.
+    if(localRemainMs<=0 && !autoCenterDone && !mpPenMyChoice){
+      autoCenterDone=true;
+      mpSubmitPenaltyChoice('centro');
+    }
 
     const freshCurEarly=mpPenLatestCur||cur;
     const iAmShooterNow=freshCurEarly.shooterRole===window._duelRole;
