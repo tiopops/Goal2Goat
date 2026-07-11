@@ -1686,8 +1686,10 @@ async function renderPendingDuels(){
       row.className='mp-row';
       row.innerHTML=`
         <span class="mp-row-name">${mpEsc(d.challengerUsername||'???')}</span>
-        <button class="mp-btn-accept" data-id="${doc.id}">${tk('mp.accept')}</button>
-        <button class="mp-btn-reject" data-id="${doc.id}">${tk('mp.reject')}</button>`;
+        <div style="display:flex;gap:6px">
+          <button class="mp-btn-accept" data-id="${doc.id}">${tk('mp.accept')}</button>
+          <button class="mp-btn-reject" data-id="${doc.id}">${tk('mp.reject')}</button>
+        </div>`;
       list.appendChild(row);
     });
     list.querySelectorAll('.mp-btn-accept').forEach(b=>b.addEventListener('click',()=>mpRespondDuel(b.dataset.id,true)));
