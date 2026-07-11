@@ -726,3 +726,41 @@ function crestBindSlider(id, key){
   });
 }
 window.openCrestEditor = openCrestEditor;
+
+/* ===== Ver escudo en grande al hacer clic ===== */
+// Delegación de eventos: funciona con cualquier miniatura de escudo,
+// incluidas las que se crean dinámicamente después (cabecera de
+// partido, panel de rival...), sin tener que enganchar el clic una
+// por una en cada sitio donde aparece un escudo.
+document.addEventListener('click', (e)=>{
+  const thumb = e.target.closest('.crest-thumb-svg, .crest-rival-thumb-svg, .crest-header-icon');
+  if(!thumb) return;
+  const isRival = thumb.classList.contains('crest-rival-thumb-svg');
+  const data = isRival ? (window._rivalCrestImage||window._rivalCrestData) : (window._myCrestImage||window._myCrestData);
+  if(!data) return; // sin escudo propio guardado, no hay nada que ampliar
+  showCrestEnlarged(isRival);
+});
+
+function showCrestEnlarged(isRival){
+  const img = isRival ? window._rivalCrestImage : window._myCrestImage;
+  const data = isRival ? window._rivalCrestData : window._myCrestData;
+  const inner = img
+    ? `<img src="${img}" style="width:100%;height:100%;object-fit:cover;border-radius:8px">`
+    : `<svg viewBox="0 0 200 200" style="width:100%;height:100%">${buildCrestSVGInner(data)}</svg>`;
+  const ov=document.createElement('div');
+  ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:90000;display:flex;align-items:center;justify-content:center;padding:20px';
+  ov.innerHTML=`
+    <div style="position:relative;width:min(80vw,320px);height:min(80vw,320px)">
+      <button id="crestEnlargedClose" style="position:absolute;top:-14px;right:-14px;width:32px;height:32px;border-radius:50%;background:#1a1d1f;border:2px solid var(--gold);color:var(--gold);display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;z-index:1">
+        <i class="ph ph-bold ph-x" style="font-size:16px"></i>
+      </button>
+      <div style="width:100%;height:100%;background:var(--panel);border:1px solid var(--line);border-radius:10px;display:flex;align-items:center;justify-content:center;overflow:hidden;padding:12px;box-sizing:border-box">
+        ${inner}
+      </div>
+    </div>`;
+  document.body.appendChild(ov);
+  const close=()=>ov.remove();
+  ov.addEventListener('click', (e)=>{ if(e.target===ov) close(); });
+  document.getElementById('crestEnlargedClose').addEventListener('click', close);
+}
+

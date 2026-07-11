@@ -1039,6 +1039,7 @@ function pickPlayer(player){
     if(benchCount>=getMaxBench()){
       phase="ready";
       rollBtn.style.display="none";
+      revealShareTeamBtn();
       const tipsBox=document.getElementById("tipsBox");
       const howTo=document.getElementById("howToPlayBox");
       const statsGuide=document.getElementById("statsGuideBox");
@@ -1397,6 +1398,55 @@ function computeTeamOVR(){
   const base=Math.round(usedPlayers.reduce((s,p)=>s+effRating(p),0)/usedPlayers.length);
   return base; // stars give a hidden match bonus, not inflating the displayed OVR
 }
+
+function revealShareTeamBtn(){
+  const btn=document.getElementById('shareTeamBtn');
+  if(btn) btn.style.display='flex';
+}
+
+/* Texto conciso y ameno para compartir el equipo por WhatsApp u otras
+   apps — formación, alineación con posición, banquillo y nota media.
+   Nada de bloques kilométricos: solo lo esencial, con emojis. */
+function buildTeamShareText(){
+  const formName=(FORMATIONS[currentFormation.category]||[]).find(f=>f.code===currentFormation.code);
+  const formLabel=`${currentFormation.code}${formName?' · '+formName.label:''}`;
+  const posOrder=['POR','DFC','LI','LD','MC','EI','ED','DC'];
+  const sortedXI=[...usedPlayers].sort((a,b)=>posOrder.indexOf(a.placedPos)-posOrder.indexOf(b.placedPos));
+  const xiLines=sortedXI.map(p=>{
+    const star=(p.positions&&p.placedPos&&p.positions[0]===p.placedPos)?' ★':'';
+    return `${p.placedPos} — ${p.name}${star} (${effRating(p)})`;
+  }).join('\n');
+  const benchLines=(bench||[]).map(p=>`${p.name} (${effRating(p)})`).join(', ');
+  const ovr=computeTeamOVR();
+  const lines=[
+    `⚽ MI EQUIPO — GOAL2GOAT`,
+    `📋 Formación: ${formLabel}`,
+    `⭐ Nota media: ${ovr}`,
+    ``,
+    `🔵 ONCE INICIAL`,
+    xiLines,
+  ];
+  if(benchLines){ lines.push(``, `🪑 Banquillo: ${benchLines}`); }
+  lines.push(``, `¿Te atreves a superarlo? 👉 goal2goat.com`);
+  return lines.join('\n');
+}
+
+async function shareMyTeam(){
+  const text=buildTeamShareText();
+  if(navigator.share){
+    try{ await navigator.share({text}); }catch(e){ /* cancelado por el usuario, nada que hacer */ }
+  }else{
+    try{
+      await navigator.clipboard.writeText(text);
+      showToast('📋 Copiado al portapapeles', 'toast-pos');
+    }catch(e){
+      alert(text);
+    }
+  }
+}
+const shareTeamBtnEl=document.getElementById('shareTeamBtn');
+if(shareTeamBtnEl) shareTeamBtnEl.addEventListener('click', ()=>{ playSound('select'); shareMyTeam(); });
+
 // Returns a 0..1 bonus factor from star players, used internally in match calc
 function starMatchBonus(){
   const stars=usedPlayers.filter(p=>p.positions&&p.placedPos&&p.positions[0]===p.placedPos).length;
@@ -5249,6 +5299,7 @@ function _executeQuickBuild(){
   baseTeamOVR=computeTeamOVR();
   phase="ready";
   rollBtn.style.display="none";
+  revealShareTeamBtn();
   const tipsBox=document.getElementById("tipsBox");
   const howTo=document.getElementById("howToPlayBox");
   const statsGuide=document.getElementById("statsGuideBox");

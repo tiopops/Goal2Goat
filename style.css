@@ -121,6 +121,7 @@ body.dark-theme .version-tag{color:#555}
   width:100%;display:flex;flex-direction:column;align-items:center;
   flex-shrink:0;
   background:transparent;
+  position:relative;
 }
 #appHeader{
   width:100%;display:flex;align-items:center;justify-content:space-between;
@@ -2163,6 +2164,7 @@ body.light-theme #achievementsList [style*="text-muted"]{
   transition:.15s;
 }
 .mp-btn-challenge:hover{background:var(--gold);color:#000}
+.crest-thumb-svg,.crest-rival-thumb-svg{cursor:pointer}
 .mp-btn-labeled{
   width:auto!important;height:auto!important;border-radius:6px!important;
   flex-direction:row;gap:6px;padding:7px 10px!important;line-height:1;
