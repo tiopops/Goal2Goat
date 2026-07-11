@@ -1419,11 +1419,11 @@ function buildTeamShareText(){
   const benchLines=(bench||[]).map(p=>`${p.name} (${effRating(p)})`).join(', ');
   const ovr=computeTeamOVR();
   const lines=[
-    `⚽ MI EQUIPO — GOAL2GOAT`,
+    `${myTeamName} — GOAL2GOAT`,
     `📋 Formación: ${formLabel}`,
     `⭐ Nota media: ${ovr}`,
     ``,
-    `🔵 ONCE INICIAL`,
+    `ONCE INICIAL`,
     xiLines,
   ];
   if(benchLines){ lines.push(``, `🪑 Banquillo: ${benchLines}`); }
