@@ -2136,6 +2136,16 @@ function mpExitDuelMode(){
   window._rivalCrestData=null;
   if(_duelTimerInterval){ clearInterval(_duelTimerInterval); _duelTimerInterval=null; }
   stopDuelInactivityMonitor();
+  // Volver a mostrar lo que el modo duelo había escondido — si no, una
+  // sesión de duelo atascada/caducada que se detecta y se cierra sola
+  // dejaba SELECCIONAR JUGADOR, EQUIPO RÁPIDO y MULTIJUGADOR ocultos
+  // para siempre, sin ninguna forma de recuperarlos sin recargar a mano.
+  const mpw=document.getElementById("multiplayerWrap");
+  if(mpw) mpw.style.display="";
+  const qbw=document.getElementById("quickBuildWrap");
+  if(qbw) qbw.style.display="";
+  const rb=document.getElementById("rollBtn");
+  if(rb) rb.style.display="";
 }
 
 /* Barra de cuenta atrás del draft — visible en todo momento durante el
