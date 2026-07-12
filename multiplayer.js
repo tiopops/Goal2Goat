@@ -15,7 +15,7 @@
    ════════════════════════════════════════════════════════════ */
 
 /* Listeners en vivo del modal de amigos — se activan al abrir, se desconectan al cerrar */
-let mpUnsubFriends1=null, mpUnsubFriends2=null, mpUnsubRequests=null, mpUnsubDuels=null;
+let mpUnsubFriends1=null, mpUnsubFriends2=null, mpUnsubRequests=null, mpUnsubDuels=null, mpOnlineRefreshInterval=null;
 
 window.openMpOverlay = function(){
   const ov=$id('mpOverlay');
@@ -52,6 +52,13 @@ function startMpLiveListeners(){
   mpUnsubDuels=db.collection('duels')
     .where('opponentId','==',user.uid)
     .onSnapshot(()=>renderPendingDuels(), e=>console.error('mpUnsubDuels error:',e));
+  // Refresco periódico del estado "en línea" — cada 10 segundos
+  // mientras el panel esté abierto, se guarda mi propia actividad y se
+  // vuelve a pintar la lista, para que los puntos de conexión de mis
+  // amigos se mantengan al día sin tener que cerrar y volver a abrir.
+  // Una escritura + una lectura cada 10s solo mientras se está mirando
+  // esta pantalla es un coste muy pequeño.
+  mpOnlineRefreshInterval=setInterval(()=>renderFriendsList(), 10000);
 }
 
 function stopMpLiveListeners(){
@@ -59,6 +66,7 @@ function stopMpLiveListeners(){
   if(mpUnsubFriends2){ mpUnsubFriends2(); mpUnsubFriends2=null; }
   if(mpUnsubRequests){ mpUnsubRequests(); mpUnsubRequests=null; }
   if(mpUnsubDuels){ mpUnsubDuels(); mpUnsubDuels=null; }
+  if(mpOnlineRefreshInterval){ clearInterval(mpOnlineRefreshInterval); mpOnlineRefreshInterval=null; }
 }
 
 /* Añadir amigo por nombre de usuario o email — solo usuarios YA registrados en Firestore */
@@ -1714,26 +1722,27 @@ async function mpChallengeFriendPenaltiesTest(targetUid, targetUsername, btnEl){
   if(!user||!db) return;
   if(btnEl) btnEl.disabled=true;
   try{
-    // Misma protección que el reto a partido normal: si ya hay CUALQUIER
-    // desafío pendiente mío hacia este rival (de partido o de
-    // penaltis), no se crea otro — antes esto no se comprobaba aquí y
-    // se podían acumular decenas de notificaciones repetidas.
+    // Si ya había un desafío pendiente mío hacia este rival (de
+    // partido o de penaltis), el nuevo reto SUSTITUYE al anterior en
+    // vez de bloquearse — el rival solo debe ver siempre el último
+    // reto que le hice, sea del tipo que sea.
     const mine=await db.collection('duels').where('challengerId','==',user.uid).get();
-    const already=mine.docs.some(d=>{const x=d.data();return x.opponentId===targetUid && x.status==='pending';});
-    if(already){
-      showToast((tk('mp.duel_pending_own')||'Ya tienes un desafío pendiente con {0}').replace('{0}',targetUsername||''), 'toast-neg');
-      return;
-    }
+    const existing=mine.docs.find(d=>{const x=d.data();return x.opponentId===targetUid && x.status==='pending';});
     const mySnap=await db.collection('users').doc(user.uid).get();
     const myUsername=(mySnap.exists&&(mySnap.data().username||mySnap.data().email))||user.email||'???';
-    await db.collection('duels').add({
-      challengerId:user.uid, challengerUsername:myUsername,
-      opponentId:targetUid, opponentUsername:targetUsername,
-      status:'pending', createdAt:Date.now(),
-      debugPenaltiesOnly:true
-    }).then(ref=>{
-      try{ sessionStorage.setItem('g2g_pending_challenge_id', ref.id); }catch(e){}
-    });
+    if(existing){
+      await existing.ref.update({debugPenaltiesOnly:true, createdAt:Date.now()});
+      try{ sessionStorage.setItem('g2g_pending_challenge_id', existing.id); }catch(e){}
+    }else{
+      await db.collection('duels').add({
+        challengerId:user.uid, challengerUsername:myUsername,
+        opponentId:targetUid, opponentUsername:targetUsername,
+        status:'pending', createdAt:Date.now(),
+        debugPenaltiesOnly:true
+      }).then(ref=>{
+        try{ sessionStorage.setItem('g2g_pending_challenge_id', ref.id); }catch(e){}
+      });
+    }
     showToast('⚽ Reto de penaltis (prueba) enviado a '+(targetUsername||''), 'toast-pos');
   }catch(e){
     console.error('mpChallengeFriendPenaltiesTest error:',e);
@@ -1750,22 +1759,25 @@ async function mpChallengeFriend(targetUid, targetUsername, btnEl){
   if(!user||!db) return;
   if(btnEl) btnEl.disabled=true;
   try{
-    // Evitar duplicar un desafío ya pendiente con el mismo rival (un solo where, filtro en JS)
+    // Igual que en el reto a penaltis: si ya había un desafío pendiente
+    // mío hacia este rival, este nuevo reto lo sustituye en vez de
+    // bloquearse — siempre debe verse el último reto, sea cual sea.
     const mine=await db.collection('duels').where('challengerId','==',user.uid).get();
-    const already=mine.docs.some(d=>{const x=d.data();return x.opponentId===targetUid && x.status==='pending';});
-    if(already){
-      showToast((tk('mp.duel_pending_own')||'Ya tienes un desafío pendiente con {0}').replace('{0}',targetUsername||''), 'toast-neg');
-      return;
-    }
+    const existing=mine.docs.find(d=>{const x=d.data();return x.opponentId===targetUid && x.status==='pending';});
     const mySnap=await db.collection('users').doc(user.uid).get();
     const myUsername=(mySnap.exists&&(mySnap.data().username||mySnap.data().email))||user.email||'???';
-    await db.collection('duels').add({
-      challengerId:user.uid, challengerUsername:myUsername,
-      opponentId:targetUid, opponentUsername:targetUsername,
-      status:'pending', createdAt:Date.now()
-    }).then(ref=>{
-      try{ sessionStorage.setItem('g2g_pending_challenge_id', ref.id); }catch(e){}
-    });
+    if(existing){
+      await existing.ref.update({debugPenaltiesOnly:firebase.firestore.FieldValue.delete(), createdAt:Date.now()});
+      try{ sessionStorage.setItem('g2g_pending_challenge_id', existing.id); }catch(e){}
+    }else{
+      await db.collection('duels').add({
+        challengerId:user.uid, challengerUsername:myUsername,
+        opponentId:targetUid, opponentUsername:targetUsername,
+        status:'pending', createdAt:Date.now()
+      }).then(ref=>{
+        try{ sessionStorage.setItem('g2g_pending_challenge_id', ref.id); }catch(e){}
+      });
+    }
     showToast((tk('mp.duel_sent')||'Desafío enviado a {0}').replace('{0}',targetUsername||''), 'toast-pos');
   }catch(e){
     console.error('mpChallengeFriend error:',e);
@@ -1806,12 +1818,12 @@ async function renderPendingDuels(){
       row.className='mp-row';
       const isPenalties=!!d.debugPenaltiesOnly;
       const typeLabel=isPenalties
-        ? `<i class="ph ph-bold ph-soccer-ball" style="font-size:11px"></i> ${tk('mp.penalties_short')||'Tanda de penaltis'}`
-        : `<i class="ph ph-bold ph-play" style="font-size:11px"></i> ${tk('mp.challenge')||'Partido'}`;
+        ? `<i class="ph ph-bold ph-soccer-ball" style="font-size:11px"></i> ${tk('mp.type_penalties')||'PENALTIS'}`
+        : `<i class="ph ph-bold ph-play" style="font-size:11px"></i> ${tk('mp.type_match')||'DESAFÍO'}`;
       row.innerHTML=`
         <div>
           <span class="mp-row-name">${mpEsc(d.challengerUsername||'???')}</span>
-          <div style="font-size:10px;color:${isPenalties?'var(--gold)':'var(--text-muted)'};display:flex;align-items:center;gap:4px;margin-top:2px">${typeLabel}</div>
+          <div style="font-size:10px;color:${isPenalties?'var(--gold)':'#7ec3ff'};display:flex;align-items:center;gap:4px;margin-top:2px;font-weight:600;letter-spacing:.3px">${typeLabel}</div>
         </div>
         <div style="display:flex;gap:6px">
           <button class="mp-btn-accept" data-id="${doc.id}">${tk('mp.accept')}</button>

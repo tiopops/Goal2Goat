@@ -635,6 +635,8 @@ window.TRANSLATIONS = {
   'mp.you_trail': {es:'Va ganando', en:'They lead', pt:'Ele lidera', fr:'Il mène', de:'Er führt', it:'È in vantaggio'},
   'mp.play_short': {es:'JUGAR', en:'PLAY', pt:'JOGAR', fr:'JOUER', de:'SPIELEN', it:'GIOCA'},
   'mp.penalties_short': {es:'Tanda de penaltis', en:'Penalty shootout', pt:'Disputa de pênaltis', fr:'Séance de tirs au but', de:'Elfmeterschießen', it:'Rigori'},
+  'mp.type_match': {es:'DESAFÍO', en:'CHALLENGE', pt:'DESAFIO', fr:'DÉFI', de:'HERAUSFORDERUNG', it:'SFIDA'},
+  'mp.type_penalties': {es:'PENALTIS', en:'PENALTIES', pt:'PÊNALTIS', fr:'TIRS AU BUT', de:'ELFMETER', it:'RIGORI'},
   'mp.loading': {es:'Cargando...', en:'Loading...', pt:'Carregando...', fr:'Chargement...', de:'Laden...', it:'Caricamento...'},
   'mp.no_friends': {es:'Todavía no tienes amigos añadidos.', en:'You don\'t have any friends added yet.', pt:'Você ainda não tem amigos adicionados.', fr:'Vous n\'avez pas encore ajouté d\'amis.', de:'Du hast noch keine Freunde hinzugefügt.', it:'Non hai ancora amici aggiunti.'},
   'mp.accept': {es:'ACEPTAR', en:'ACCEPT', pt:'ACEITAR', fr:'ACCEPTER', de:'ANNEHMEN', it:'ACCETTA'},
