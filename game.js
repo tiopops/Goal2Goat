@@ -5394,19 +5394,28 @@ function syncThemeToggleUI(isDark){
 
 // Restore saved preferences on load
 (function restorePrefs(){
-  // Welcome popup: el navegador ya sabe distinguir entre "recargar la
-  // página actual" (F5, botón actualizar, o location.reload() desde
-  // el propio juego al abandonar/terminar un torneo) y "cargar de
-  // cero" (pestaña nueva, URL escrita a mano). Se usa esa señal
-  // directamente en vez de guardar nada — así no depende de que algo
-  // se guarde y recupere bien entre recargas.
+  // Welcome popup: se combinan DOS señales independientes, para que si
+  // una falla en algún entorno concreto (por ejemplo un WebView más
+  // antiguo que no soporte bien la Navigation Timing API), la otra
+  // siga funcionando igualmente. Si CUALQUIERA de las dos dice "esto
+  // ya se enseñó en esta sesión", no se vuelve a mostrar.
   try{
     const o=document.getElementById("welcomeOverlay");
-    const navEntries=performance.getEntriesByType&&performance.getEntriesByType("navigation");
-    const navType=(navEntries&&navEntries[0]&&navEntries[0].type)||"navigate";
-    const isReload=(navType==="reload");
-    if(o && !window._duelId && !isReload){
+    let alreadyShown=false;
+    // Señal 1: sessionStorage — se borra al cerrar pestaña/navegador,
+    // pero NO al recargar la página.
+    try{ alreadyShown = alreadyShown || sessionStorage.getItem('g2g_welcome_shown')==='1'; }catch(e){}
+    // Señal 2: tipo de navegación — el navegador ya sabe si esto es un
+    // "reload" (F5, botón actualizar, location.reload()) o una carga
+    // de cero (pestaña nueva).
+    try{
+      const navEntries=performance.getEntriesByType&&performance.getEntriesByType("navigation");
+      const navType=(navEntries&&navEntries[0]&&navEntries[0].type)||"navigate";
+      alreadyShown = alreadyShown || (navType==="reload");
+    }catch(e){}
+    if(o && !window._duelId && !alreadyShown){
       o.style.display="flex";
+      try{ sessionStorage.setItem('g2g_welcome_shown','1'); }catch(e){}
     }
   }catch(e){}
   syncAudioToggleUI();
@@ -7007,7 +7016,15 @@ async function renderSkillsTab(){
   // lista — si no, el panel salta arriba al desaparecer el botón pulsado.
   const scrollHost = document.getElementById('profileNotesPane');
   const savedScroll = scrollHost ? scrollHost.scrollTop : 0;
-  list.innerHTML=`<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:12px">${window.t?window.t('skill.loading'):'Cargando...'}</div>`;
+  // El aviso de "Cargando..." solo tiene sentido la primera vez que se
+  // abre la pestaña (lista vacía) — al volver a llamar a esta función
+  // tras activar/desactivar una habilidad, la lista ya tiene contenido,
+  // y borrarla para poner "Cargando..." un instante solo provoca un
+  // parpadeo feo sin aportar nada, porque los datos llegan casi al
+  // momento igualmente.
+  if(!list.children.length){
+    list.innerHTML=`<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:12px">${window.t?window.t('skill.loading'):'Cargando...'}</div>`;
+  }
   const user = window._fbAuth&&window._fbAuth.currentUser;
   if(!user){ list.innerHTML=`<div style="text-align:center;padding:20px;color:var(--text-muted)">${window.t?window.t('skill.login'):'Inicia sesión para ver las habilidades.'}</div>`; return; }
   const snap = await window._fbDb.collection('users').doc(user.uid).get();

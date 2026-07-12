@@ -273,8 +273,16 @@ async function renderFriendsList(){
       f.crestImage=fd.customCrestImage||null;
       f.crestData=f.crestImage?null:(fd.customCrest||null);
       f.online=fd.lastSeen && (Date.now()-fd.lastSeen)<ONLINE_THRESHOLD_MS;
+      f.lastSeen=fd.lastSeen||0;
       const h2h=myH2H[f.uid]||{wins:0,losses:0};
       f.h2hWins=h2h.wins; f.h2hLosses=h2h.losses;
+    });
+    // Amigos en línea primero; dentro de cada grupo, el más activo
+    // recientemente antes — así la lista siempre enseña arriba a quien
+    // más probablemente vaya a responder a un reto.
+    friends.sort((a,b)=>{
+      if(a.online!==b.online) return a.online?-1:1;
+      return (b.lastSeen||0)-(a.lastSeen||0);
     });
 
     list.innerHTML='';
@@ -1703,6 +1711,16 @@ async function mpChallengeFriendPenaltiesTest(targetUid, targetUsername, btnEl){
   if(!user||!db) return;
   if(btnEl) btnEl.disabled=true;
   try{
+    // Misma protección que el reto a partido normal: si ya hay CUALQUIER
+    // desafío pendiente mío hacia este rival (de partido o de
+    // penaltis), no se crea otro — antes esto no se comprobaba aquí y
+    // se podían acumular decenas de notificaciones repetidas.
+    const mine=await db.collection('duels').where('challengerId','==',user.uid).get();
+    const already=mine.docs.some(d=>{const x=d.data();return x.opponentId===targetUid && x.status==='pending';});
+    if(already){
+      showToast((tk('mp.duel_pending_own')||'Ya tienes un desafío pendiente con {0}').replace('{0}',targetUsername||''), 'toast-neg');
+      return;
+    }
     const mySnap=await db.collection('users').doc(user.uid).get();
     const myUsername=(mySnap.exists&&(mySnap.data().username||mySnap.data().email))||user.email||'???';
     await db.collection('duels').add({
@@ -1764,7 +1782,18 @@ async function renderPendingDuels(){
   try{
     const snap=await db.collection('duels')
       .where('opponentId','==',user.uid).get();
-    const pendingDocs=snap.docs.filter(d=>d.data().status==='pending');
+    let pendingDocs=snap.docs.filter(d=>d.data().status==='pending');
+    // Si por lo que sea hay varios desafíos pendientes del MISMO
+    // amigo (partido y/o penaltis, de antes de evitarlo en el envío),
+    // solo se muestra el más reciente — nadie quiere ver 100 avisos
+    // idénticos de la misma persona.
+    const latestByChallenger=new Map();
+    pendingDocs.forEach(d=>{
+      const data=d.data();
+      const prev=latestByChallenger.get(data.challengerId);
+      if(!prev || (data.createdAt||0)>(prev.data().createdAt||0)) latestByChallenger.set(data.challengerId, d);
+    });
+    pendingDocs=[...latestByChallenger.values()];
     if(!pendingDocs.length){ section.style.display='none'; return; }
     section.style.display='block';
     list.innerHTML='';
