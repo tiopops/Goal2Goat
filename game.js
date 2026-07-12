@@ -1256,11 +1256,28 @@ function renderPitch(code){
 
 function onSlotClick(slot){
   // Si la casilla ya tiene un jugador colocado y no hay ninguno
-  // pendiente de colocar, el clic solo sirve para localizarlo en la
-  // lista de CONVOCADOS — resaltarlo y llevar el scroll hasta él. No
-  // toca nada del sistema de cambios/swap, es puramente para ubicarse.
+  // pendiente de colocar, el clic equivale a pulsar esa misma fila en
+  // CONVOCADOS — literalmente se llama a la misma función, para
+  // garantizar que seleccionar/deseleccionar se comporte exactamente
+  // igual se pulse desde donde se pulse, sin mantener dos lógicas
+  // paralelas que puedan desincronizarse entre sí.
   if(slot.classList.contains("locked") && !selectedPlayer){
-    highlightConvocadoForPlayer(slot._player);
+    const idx=usedPlayers.indexOf(slot._player);
+    if(idx===-1) return;
+    const isMobile=window.innerWidth<=1050;
+    // En móvil, CONVOCADOS vive en la pestaña EQUIPO, distinta de
+    // CAMPO — hay que cambiar de pestaña o la fila seleccionada
+    // quedaría oculta. switchMobileTab ya hace su propio scroll con
+    // un pequeño retraso (50ms); el nuestro va un poco más tarde para
+    // que gane él y no se pisen los dos scrolls entre sí.
+    if(isMobile && typeof switchMobileTab==='function') switchMobileTab('equipo');
+    const doSelect=()=>{
+      onConvocadoClick(idx);
+      const row=document.querySelector(`#convocadosTable tr[onclick="onConvocadoClick(${idx})"]`);
+      if(row) row.scrollIntoView({behavior:'smooth', block:'center'});
+    };
+    if(isMobile) setTimeout(doSelect, 150);
+    else doSelect();
     return;
   }
   // Any player can go anywhere — penalty if out of position
@@ -1294,51 +1311,6 @@ function onSlotClick(slot){
     playerCardEl.innerHTML="";
   } else {
     rollBtn.disabled=false;
-  }
-}
-
-/* Resalta brevemente la fila de un jugador en la lista de CONVOCADOS y
-   hace scroll hasta ella — se usa al pulsar su círculo en el campo,
-   solo para ubicarlo, sin relación con el sistema de cambios/swap. */
-function highlightConvocadoForPlayer(player){
-  if(!player) return;
-  const idx=usedPlayers.indexOf(player);
-  if(idx===-1) return;
-  pitchHighlightedPlayer=player;
-  // Cualquier selección antigua del sistema de cambios se cancela —
-  // si no, podían quedar dos jugadores "seleccionados" a la vez (uno
-  // por cada sistema), liándose entre sí al pulsar después en la lista.
-  swapSelection=null;
-  // En móvil, CONVOCADOS vive en la pestaña EQUIPO, distinta de CAMPO
-  // — hay que cambiar de pestaña o la fila resaltada quedaría oculta.
-  // switchMobileTab ya hace su propio scroll con un pequeño retraso
-  // (50ms) al cambiar de pestaña; el nuestro va un poco más tarde para
-  // que gane él y no se pisen los dos scrolls entre sí.
-  const isMobile=window.innerWidth<=1050;
-  if(isMobile && typeof switchMobileTab==='function') switchMobileTab('equipo');
-  const doHighlight=()=>{
-    applyPitchHighlightVisuals();
-    const row=document.querySelector(`#convocadosTable tr[onclick="onConvocadoClick(${idx})"]`);
-    if(row) row.scrollIntoView({behavior:'smooth', block:'center'});
-  };
-  if(isMobile) setTimeout(doHighlight, 150);
-  else doHighlight();
-}
-
-/* Aplica el amarillo de "seleccionado" —el mismo que ya usaba el
-   sistema de cambios— tanto al círculo del campo como a la fila de
-   CONVOCADOS, según pitchHighlightedPlayer. Se llama tanto al pulsar
-   el campo como cada vez que se reconstruye la tabla de convocados,
-   para que la selección sobreviva a los repintados. */
-function applyPitchHighlightVisuals(){
-  getPitchSlots().forEach(s=>{
-    s.classList.toggle('slot-conv-selected', !!pitchHighlightedPlayer && s._player===pitchHighlightedPlayer);
-  });
-  document.querySelectorAll('#convocadosTable tr').forEach(r=>r.classList.remove('row-pitch-highlight'));
-  if(pitchHighlightedPlayer){
-    const idx=usedPlayers.indexOf(pitchHighlightedPlayer);
-    const row=document.querySelector(`#convocadosTable tr[onclick="onConvocadoClick(${idx})"]`);
-    if(row) row.classList.add('row-selected');
   }
 }
 
@@ -1507,11 +1479,6 @@ function starMatchBonus(){
   return stars*0.012; // each ★ = +1.2% lambda boost, up to +13.2% with 11 stars
 }
 let swapSelection=null;
-// Jugador resaltado al pulsar su círculo en el campo — separado a
-// propósito de swapSelection (que es del sistema de cambios), para no
-// interferir con él. Se mantiene fijo hasta la siguiente selección,
-// sea desde el campo o directamente desde la lista de CONVOCADOS.
-let pitchHighlightedPlayer=null;
 
 function renderCenterSummary(){
   const el=document.getElementById("centerSummary");
@@ -1628,7 +1595,6 @@ function updateConvocadosTable(){
       swapHint.style.display="none";
     }
   }
-  applyPitchHighlightVisuals();
 }
 function updateBenchTable(){
   const el=document.getElementById("benchTable");
@@ -1654,10 +1620,6 @@ function updateBenchTable(){
 /* ========= PRE-MATCH SWAPS (convocados <-> bench) ========= */
 function onConvocadoClick(i){
   if(phase!=='ready') return;
-  // Seleccionar directamente desde la lista siempre sustituye al
-  // resaltado que hubiera venido de pulsar el campo — solo debe haber
-  // una selección visible a la vez.
-  pitchHighlightedPlayer=null;
 
   // Si hay un jugador del banquillo seleccionado y quedan cambios, hacer swap
   if(swapSelection&&swapSelection.source==='bench'){
@@ -4833,7 +4795,7 @@ function applyPitchWeatherVisual(weatherId){
       layer.appendChild(drop);
       const splash=document.createElement('div');
       splash.className='weather-splash';
-      splash.style.left=left+'%'; splash.style.top='95%';
+      splash.style.left=left+'%'; splash.style.top=(10+Math.random()*82)+'%';
       splash.style.animationDuration=(0.9+Math.random()*0.8)+'s';
       splash.style.animationDelay=(-Math.random()*1.6)+'s';
       layer.appendChild(splash);
