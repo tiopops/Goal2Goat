@@ -5394,46 +5394,32 @@ function syncThemeToggleUI(isDark){
 
 // Restore saved preferences on load
 (function restorePrefs(){
-  // Welcome popup: se combinan TRES señales independientes...
+  // Welcome popup: se combinan tres señales independientes — si
+  // CUALQUIERA de ellas dice "esto ya se enseñó en esta sesión", no se
+  // vuelve a mostrar. La razón real de que reapareciera siempre no era
+  // ninguna de estas señales (que ya funcionaban bien) sino que el
+  // propio HTML tenía la ventana visible por defecto (display:flex) —
+  // ya corregido ahí. Aun así se deja aquí un "else" explícito que la
+  // oculta, por si acaso.
   try{
     const o=document.getElementById("welcomeOverlay");
     let alreadyShown=false;
-    let dbgSession='?', dbgNavType='?', dbgHistState='?';
-    // Señal 1: sessionStorage — se borra al cerrar pestaña/navegador,
-    // pero NO al recargar la página.
-    try{
-      dbgSession = sessionStorage.getItem('g2g_welcome_shown');
-      alreadyShown = alreadyShown || dbgSession==='1';
-    }catch(e){ dbgSession='ERROR:'+e.message; }
-    // Señal 2: tipo de navegación — el navegador ya sabe si esto es un
-    // "reload" (F5, botón actualizar, location.reload()) o una carga
-    // de cero (pestaña nueva).
+    try{ alreadyShown = alreadyShown || sessionStorage.getItem('g2g_welcome_shown')==='1'; }catch(e){}
     try{
       const navEntries=performance.getEntriesByType&&performance.getEntriesByType("navigation");
       const navType=(navEntries&&navEntries[0]&&navEntries[0].type)||"navigate";
-      dbgNavType=navType;
       alreadyShown = alreadyShown || (navType==="reload");
-    }catch(e){ dbgNavType='ERROR:'+e.message; }
-    // Señal 3: el estado del historial de navegación.
+    }catch(e){}
     try{
-      dbgHistState = JSON.stringify(history.state);
       if(history.state && history.state.g2gWelcomeShown) alreadyShown = true;
-    }catch(e){ dbgHistState='ERROR:'+e.message; }
-
-    // DIAGNÓSTICO TEMPORAL — visible en pantalla para poder ver qué
-    // detecta tu navegador de verdad, en vez de seguir adivinando.
-    // Se puede quitar en cuanto quede claro qué señal falla.
-    try{
-      const dbg=document.createElement('div');
-      dbg.style.cssText='position:fixed;top:4px;left:4px;z-index:999999;background:#000;color:#0f0;font-family:monospace;font-size:10px;padding:6px 8px;border:1px solid #0f0;line-height:1.5;max-width:90vw;white-space:pre-wrap';
-      dbg.textContent=`[debug bienvenida]\nsessionStorage: ${dbgSession}\nnavType: ${dbgNavType}\nhistory.state: ${dbgHistState}\nduelId: ${window._duelId||'no'}\nalreadyShown final: ${alreadyShown}\n→ ${(o && !window._duelId && !alreadyShown)?'SE MOSTRARÁ':'NO se mostrará'}`;
-      document.body.appendChild(dbg);
     }catch(e){}
 
     if(o && !window._duelId && !alreadyShown){
       o.style.display="flex";
       try{ sessionStorage.setItem('g2g_welcome_shown','1'); }catch(e){}
       try{ history.replaceState(Object.assign({}, history.state, {g2gWelcomeShown:true}), ''); }catch(e){}
+    }else if(o){
+      o.style.display="none";
     }
   }catch(e){}
   syncAudioToggleUI();
