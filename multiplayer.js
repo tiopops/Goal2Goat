@@ -303,7 +303,10 @@ async function renderFriendsList(){
         h2hText=(tk('mp.you_trail')||'Va ganando')+` <span style="color:#e74c3c;font-weight:bold">${f.h2hLosses}-${f.h2hWins}</span>`;
       }
       row.innerHTML=`
-        <div class="mp-friend-crest" data-crest-img="${f.crestImage?mpEsc(f.crestImage):''}" data-crest-data="${f.crestData?mpEsc(JSON.stringify(f.crestData)):''}">${crestInner}<span class="mp-online-dot${f.online?'':' off'}"></span></div>
+        <div class="mp-friend-crest-wrap" data-crest-img="${f.crestImage?mpEsc(f.crestImage):''}" data-crest-data="${f.crestData?mpEsc(JSON.stringify(f.crestData)):''}">
+          <div class="mp-friend-crest">${crestInner}</div>
+          <span class="mp-online-dot${f.online?'':' off'}"></span>
+        </div>
         <div class="mp-friend-info">
           <div class="mp-friend-name">${mpEsc(f.username||'???')}</div>
           <div class="mp-friend-h2h">${h2hText}</div>
@@ -1801,8 +1804,15 @@ async function renderPendingDuels(){
       const d=doc.data();
       const row=document.createElement('div');
       row.className='mp-row';
+      const isPenalties=!!d.debugPenaltiesOnly;
+      const typeLabel=isPenalties
+        ? `<i class="ph ph-bold ph-soccer-ball" style="font-size:11px"></i> ${tk('mp.penalties_short')||'Tanda de penaltis'}`
+        : `<i class="ph ph-bold ph-play" style="font-size:11px"></i> ${tk('mp.challenge')||'Partido'}`;
       row.innerHTML=`
-        <span class="mp-row-name">${mpEsc(d.challengerUsername||'???')}</span>
+        <div>
+          <span class="mp-row-name">${mpEsc(d.challengerUsername||'???')}</span>
+          <div style="font-size:10px;color:${isPenalties?'var(--gold)':'var(--text-muted)'};display:flex;align-items:center;gap:4px;margin-top:2px">${typeLabel}</div>
+        </div>
         <div style="display:flex;gap:6px">
           <button class="mp-btn-accept" data-id="${doc.id}">${tk('mp.accept')}</button>
           <button class="mp-btn-reject" data-id="${doc.id}">${tk('mp.reject')}</button>

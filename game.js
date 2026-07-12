@@ -5413,9 +5413,18 @@ function syncThemeToggleUI(isDark){
       const navType=(navEntries&&navEntries[0]&&navEntries[0].type)||"navigate";
       alreadyShown = alreadyShown || (navType==="reload");
     }catch(e){}
+    // Señal 3: el estado del historial de navegación — se queda
+    // asociado a esta misma entrada del historial al recargar, pero
+    // una pestaña/URL nueva crea una entrada distinta sin este estado.
+    // No depende de ninguna API de almacenamiento, así que sirve de
+    // red de seguridad si las otras dos fallasen en algún entorno.
+    try{
+      if(history.state && history.state.g2gWelcomeShown) alreadyShown = true;
+    }catch(e){}
     if(o && !window._duelId && !alreadyShown){
       o.style.display="flex";
       try{ sessionStorage.setItem('g2g_welcome_shown','1'); }catch(e){}
+      try{ history.replaceState(Object.assign({}, history.state, {g2gWelcomeShown:true}), ''); }catch(e){}
     }
   }catch(e){}
   syncAudioToggleUI();

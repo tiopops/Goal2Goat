@@ -734,9 +734,9 @@ window.openCrestEditor = openCrestEditor;
 // partido, panel de rival, lista de amigos...), sin tener que
 // enganchar el clic una por una en cada sitio donde aparece un escudo.
 document.addEventListener('click', (e)=>{
-  const thumb = e.target.closest('.crest-thumb-svg, .crest-rival-thumb-svg, .crest-header-icon, .mp-friend-crest');
+  const thumb = e.target.closest('.crest-thumb-svg, .crest-rival-thumb-svg, .crest-header-icon, .mp-friend-crest-wrap');
   if(!thumb) return;
-  if(thumb.classList.contains('mp-friend-crest')){
+  if(thumb.classList.contains('mp-friend-crest-wrap')){
     // Escudo de un amigo cualquiera en la lista de multijugador — los
     // datos van en atributos data-*, puestos al construir la fila,
     // porque no hay una única "imagen del rival" global aquí.

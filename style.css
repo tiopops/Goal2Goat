@@ -2128,14 +2128,15 @@ body.light-theme #achievementsList [style*="text-muted"]{
 }
 .mp-friend-card:last-child{border-bottom:none}
 .mp-friend-card:hover{background:rgba(201,162,39,.06)}
+.mp-friend-crest-wrap{width:38px;height:38px;flex-shrink:0;position:relative;cursor:pointer}
 .mp-friend-crest{
   width:38px;height:38px;border-radius:8px;background:var(--panel);
-  display:flex;align-items:center;justify-content:center;position:relative;flex-shrink:0;
-  overflow:hidden;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  overflow:hidden;
 }
 .mp-online-dot{
   position:absolute;bottom:-2px;right:-2px;width:11px;height:11px;border-radius:50%;
-  background:#2ecc71;border:2px solid var(--card-bg);
+  background:#2ecc71;border:2px solid var(--card-bg);z-index:1;
 }
 .mp-online-dot.off{background:#666}
 .mp-friend-info{flex:1;min-width:0;overflow:hidden}
