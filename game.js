@@ -7048,7 +7048,7 @@ function getMaxSubs(){  return 2 + (window._upgradeCache.subs||0); }
 function getScoutTeams(){ return 2; } // ya no se usa para equipos
 function getPlayersPerTeam(){ return 5 + (window._upgradeCache.scout||0); }
 function getMaxGiroCharges(){ return 1 + (window._upgradeCache.giro||0); }
-function getMaxTacticalAdjustPoints(){ return 5 + (window._upgradeCache.tactical_adjust||0); }
+function getMaxTacticalAdjustPoints(){ return 5 + ((window._upgradeCache&&window._upgradeCache.tactical_adjust)||0); }
 
 /* El catálogo de mejoras (UPGRADE_DEFS, UPGRADE_ICONS) vive ahora en
    upgrades-data.js, cargado justo después de este archivo. */
