@@ -4296,6 +4296,7 @@ function showGroupResultsPopup(){
 
 /* ---------- END SCREENS ---------- */
 function showEliminatedGroupStage(){
+  if(window.innerWidth<=1050 && typeof switchMobileTab==='function') switchMobileTab('campo');
   const sc=computeFinalScore(false);
   if(typeof window.saveMatchStat==="function") window.saveMatchStat(false,false,0,0);
   if(typeof window.saveFinalScore==="function") window.saveFinalScore(sc.total);
@@ -4312,6 +4313,7 @@ function showEliminatedGroupStage(){
   </div>`;
 }
 function showEliminated(){
+  if(window.innerWidth<=1050 && typeof switchMobileTab==='function') switchMobileTab('campo');
   playSound('defeat');
   const round=getRoundName(knockoutRound);
   const sc=computeFinalScore(false);
@@ -4398,6 +4400,7 @@ function computeFinalScore(champion){
   return {total, breakdown:scores, penWins, totalGoals, totalConceded, stars, cleanSheets, stageFactor};
 }
 function showVictory(){
+  if(window.innerWidth<=1050 && typeof switchMobileTab==='function') switchMobileTab('campo');
   unlockAchievement('champion_unbeaten'); // simplificado — ganar el mundial
   // Triple corona: contar mundiales ganados
   const user=window._fbAuth&&window._fbAuth.currentUser;
