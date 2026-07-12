@@ -231,6 +231,10 @@ async function renderFriendsList(){
   const list=$id('mpFriendsList');
   if(!user||!db||!list) return;
   list.innerHTML=`<div class="mp-empty-state">${tk('mp.loading')}</div>`;
+  // "Latido" de presencia — se actualiza cada vez que el jugador entra
+  // a mirar la pestaña de multijugador, para que sus amigos vean si
+  // ha estado activo hace poco.
+  db.collection('users').doc(user.uid).set({lastSeen:Date.now()}, {merge:true}).catch(()=>{});
   try{
     // Mis propias estadísticas de duelo, para la tarjeta de arriba
     const meSnap=await db.collection('users').doc(user.uid).get();
@@ -239,11 +243,10 @@ async function renderFriendsList(){
     if(myStatsCard){
       const played=meData.duelsPlayed||0, won=meData.duelsWon||0, lost=meData.duelsLost||0;
       const winRate=played?Math.round((won/played)*100):0;
-      const vals=myStatsCard.querySelectorAll('.pstat-val');
-      if(vals[0]) vals[0].textContent=played;
-      if(vals[1]) vals[1].textContent=won;
-      if(vals[2]) vals[2].textContent=lost;
-      if(vals[3]) vals[3].textContent=winRate+'%';
+      const pv=document.getElementById('mpStatPlayed'); if(pv) pv.textContent=played;
+      const wv=document.getElementById('mpStatWon'); if(wv) wv.textContent=won;
+      const lv=document.getElementById('mpStatLost'); if(lv) lv.textContent=lost;
+      const rv=document.getElementById('mpStatWinRate'); if(rv) rv.textContent=winRate+'%';
     }
 
     const snap1=await db.collection('friends')
@@ -262,43 +265,70 @@ async function renderFriendsList(){
     const friendDocs=await Promise.all(friends.map(f=>
       db.collection('users').doc(f.uid).get().catch(()=>null)
     ));
+    const myH2H=meData.mpH2H||{};
+    const ONLINE_THRESHOLD_MS=5*60*1000; // 5 minutos
     friends.forEach((f,i)=>{
       const fd=friendDocs[i]&&friendDocs[i].exists?friendDocs[i].data():{};
       f.played=fd.duelsPlayed||0; f.won=fd.duelsWon||0; f.lost=fd.duelsLost||0;
+      f.crestImage=fd.customCrestImage||null;
+      f.crestData=f.crestImage?null:(fd.customCrest||null);
+      f.online=fd.lastSeen && (Date.now()-fd.lastSeen)<ONLINE_THRESHOLD_MS;
+      const h2h=myH2H[f.uid]||{wins:0,losses:0};
+      f.h2hWins=h2h.wins; f.h2hLosses=h2h.losses;
     });
 
     list.innerHTML='';
-    const table=document.createElement('table');
-    table.className='mp-friends-table';
-    table.innerHTML=`<thead><tr>
-        <th data-i18n="mp.col_friend">${tk('mp.col_friend')}</th>
-        <th class="mp-col-stat" title="${tk('mp.stats_played')||'Jugados'}">${tk('mp.col_played')||'J'}</th>
-        <th class="mp-col-stat" title="${tk('mp.stats_won')||'Ganados'}">${tk('mp.col_won')||'G'}</th>
-        <th class="mp-col-stat" title="${tk('mp.stats_lost')||'Perdidos'}">${tk('mp.col_lost')||'P'}</th>
-        <th class="mp-col-action"></th>
-        <th class="mp-col-action"></th>
-      </tr></thead><tbody></tbody>`;
-    const tbody=table.querySelector('tbody');
     friends.forEach(f=>{
-      const row=document.createElement('tr');
-      row.className='mp-friend-row';
+      const row=document.createElement('div');
+      row.className='mp-friend-card';
+      const crestInner=f.crestImage
+        ? `<img src="${f.crestImage}" style="width:100%;height:100%;object-fit:cover;border-radius:8px">`
+        : (f.crestData
+          ? `<svg viewBox="0 0 200 200" style="width:100%;height:100%">${buildCrestSVGInner(f.crestData)}</svg>`
+          : `<i class="ph ph-bold ph-user" style="font-size:20px;color:#7b9cff"></i>`);
+      let h2hText;
+      if(f.h2hWins===0 && f.h2hLosses===0){
+        h2hText=tk('mp.no_matches_yet')||'Sin partidos jugados todavía';
+      }else if(f.h2hWins>=f.h2hLosses){
+        h2hText=(tk('mp.you_lead')||'Le ganas')+` <span style="color:#2ecc71;font-weight:bold">${f.h2hWins}-${f.h2hLosses}</span>`;
+      }else{
+        h2hText=(tk('mp.you_trail')||'Va ganando')+` <span style="color:#e74c3c;font-weight:bold">${f.h2hLosses}-${f.h2hWins}</span>`;
+      }
       row.innerHTML=`
-        <td class="mp-row-name">${mpEsc(f.username||'???')}</td>
-        <td class="mp-col-stat">${f.played}</td>
-        <td class="mp-col-stat" style="color:#4ade80">${f.won}</td>
-        <td class="mp-col-stat" style="color:#ff7e7e">${f.lost}</td>
-        <td class="mp-col-action">
-          <button class="mp-challenge-btn mp-btn-challenge mp-btn-labeled" data-uid="${f.uid}" data-username="${mpEsc(f.username||'')}" title="${tk('mp.challenge')}">
-            <i class="ph ph-bold ph-play"></i><span>Partido</span>
+        <div class="mp-friend-crest">${crestInner}<span class="mp-online-dot${f.online?'':' off'}"></span></div>
+        <div class="mp-friend-info">
+          <div class="mp-friend-name">${mpEsc(f.username||'???')}</div>
+          <div class="mp-friend-h2h">${h2hText}</div>
+        </div>
+        <div class="mp-friend-actions">
+          <button class="mp-challenge-btn mp-btn-primary-play" data-uid="${f.uid}" data-username="${mpEsc(f.username||'')}" title="${tk('mp.challenge')}">
+            <i class="ph ph-bold ph-play"></i><span>${tk('mp.play_short')||'JUGAR'}</span>
           </button>
-          <button class="mp-challenge-btn mp-btn-challenge mp-btn-labeled" style="background:rgba(240,196,25,.12);border-color:var(--gold);color:var(--gold);margin-left:4px" data-uid="${f.uid}" data-username="${mpEsc(f.username||'')}" data-penalties-test="1" title="Reto directo a una tanda de penaltis, sin jugar partidos">
-            <i class="ph ph-bold ph-soccer-ball"></i><span>Penaltis</span>
-          </button>
-        </td>
-        <td class="mp-col-action"><button class="mp-remove-btn mp-btn-remove" data-id="${f.id}" data-username="${mpEsc(f.username||'')}" title="${tk('mp.remove')}"><i class="ph ph-bold ph-trash"></i></button></td>`;
-      tbody.appendChild(row);
+          <button class="mp-friend-menu-btn" data-menu-id="${f.id}" title="Más opciones"><i class="ph ph-bold ph-dots-three-vertical"></i></button>
+          <div class="mp-friend-menu" id="mpFriendMenu_${f.id}" style="display:none">
+            <button class="mp-menu-item mp-challenge-btn" data-uid="${f.uid}" data-username="${mpEsc(f.username||'')}" data-penalties-test="1">
+              <i class="ph ph-bold ph-soccer-ball"></i> ${tk('mp.penalties_short')||'Tanda de penaltis'}
+            </button>
+            <button class="mp-menu-item mp-remove-btn" data-id="${f.id}" data-username="${mpEsc(f.username||'')}" style="color:#ff7e7e">
+              <i class="ph ph-bold ph-trash"></i> ${tk('mp.remove')||'Eliminar amigo'}
+            </button>
+          </div>
+        </div>`;
+      list.appendChild(row);
     });
-    list.appendChild(table);
+    // Cerrar cualquier menú "···" abierto si se pulsa fuera de él
+    document.addEventListener('click', (e)=>{
+      if(!e.target.closest('.mp-friend-actions')){
+        document.querySelectorAll('.mp-friend-menu').forEach(m=>m.style.display='none');
+      }
+    });
+    list.querySelectorAll('.mp-friend-menu-btn').forEach(b=>b.addEventListener('click',(e)=>{
+      e.stopPropagation();
+      const menu=document.getElementById('mpFriendMenu_'+b.dataset.menuId);
+      const wasOpen=menu&&menu.style.display==='block';
+      document.querySelectorAll('.mp-friend-menu').forEach(m=>m.style.display='none');
+      if(menu) menu.style.display=wasOpen?'none':'block';
+    }));
     list.querySelectorAll('.mp-remove-btn').forEach(b=>b.addEventListener('click',()=>{ playSound('select'); mpRemoveFriend(b.dataset.id, b.dataset.username); }));
     list.querySelectorAll('.mp-challenge-btn').forEach(b=>b.addEventListener('click',()=>{
       if(b.dataset.penaltiesTest) mpChallengeFriendPenaltiesTest(b.dataset.uid, b.dataset.username, b);
@@ -1524,7 +1554,10 @@ async function mpCheckDuelAchievements(iWin, rivalUid){
       const counts=data.mpRivalryCounts||{};
       const newCount=(counts[rivalUid]||0)+1;
       if(newCount>=5) unlockAchievement('mp_rivalry_5');
-      await ref.set({mpRivalryCounts:{...counts, [rivalUid]:newCount}}, {merge:true});
+      const h2h=data.mpH2H||{};
+      const prevH2H=h2h[rivalUid]||{wins:0,losses:0};
+      const newH2H={wins:prevH2H.wins+(iWin?1:0), losses:prevH2H.losses+(iWin?0:1)};
+      await ref.set({mpRivalryCounts:{...counts, [rivalUid]:newCount}, mpH2H:{...h2h, [rivalUid]:newH2H}}, {merge:true});
     }
   }catch(e){ console.error('[Logros] comprobación de duelo falló:', e); }
 }

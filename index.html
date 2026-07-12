@@ -419,23 +419,11 @@
     <div class="auth-logo"><i class="ph ph-bold ph-users" style="font-size:22px;color:#7b9cff;vertical-align:middle;margin-right:8px"></i><span data-i18n="mp.title">MULTIJUGADOR</span></div>
 
     <!-- Mis estadísticas de duelo — mismo estilo que la pestaña ESTADÍSTICAS del perfil -->
-    <div id="mpMyStatsCard" class="profile-stats-grid" style="margin-top:10px">
-      <div class="profile-stat-card">
-        <i class="ph ph-bold ph-users-three" style="font-size:20px;color:var(--text-muted)"></i>
-        <div class="pstat-val">—</div><div class="pstat-label">Jugados</div>
-      </div>
-      <div class="profile-stat-card wins">
-        <i class="ph ph-bold ph-trophy" style="font-size:20px;color:var(--gold)"></i>
-        <div class="pstat-val">—</div><div class="pstat-label">Ganados</div>
-      </div>
-      <div class="profile-stat-card losses">
-        <i class="ph ph-bold ph-x-circle" style="font-size:20px;color:#e74c3c"></i>
-        <div class="pstat-val">—</div><div class="pstat-label">Perdidos</div>
-      </div>
-      <div class="profile-stat-card best">
-        <i class="ph ph-bold ph-percent" style="font-size:20px;color:var(--gold)"></i>
-        <div class="pstat-val">—</div><div class="pstat-label">% Victorias</div>
-      </div>
+    <div id="mpMyStatsCard" style="display:flex;justify-content:center;gap:18px;padding:10px 4px;border-bottom:1px solid var(--line);font-size:12px;color:var(--text-muted);flex-wrap:wrap;margin-top:6px">
+      <span data-i18n="mp.stats_played">JUGADOS</span> <b id="mpStatPlayed" style="font-family:'Bebas Neue',Impact,sans-serif;font-size:15px;letter-spacing:.5px;color:var(--text)">—</b>
+      <span data-i18n="mp.stats_won">GANADOS</span> <b id="mpStatWon" style="font-family:'Bebas Neue',Impact,sans-serif;font-size:15px;letter-spacing:.5px;color:var(--gold)">—</b>
+      <span data-i18n="mp.stats_lost">PERDIDOS</span> <b id="mpStatLost" style="font-family:'Bebas Neue',Impact,sans-serif;font-size:15px;letter-spacing:.5px;color:#e74c3c">—</b>
+      <span data-i18n="mp.stats_winrate">% VICT.</span> <b id="mpStatWinRate" style="font-family:'Bebas Neue',Impact,sans-serif;font-size:15px;letter-spacing:.5px;color:var(--gold)">—</b>
     </div>
 
     <!-- Add friend by username or email -->
