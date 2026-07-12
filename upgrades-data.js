@@ -66,7 +66,7 @@ const UPGRADE_DEFS = [
   {
     id: 'tactical_adjust', icon: '⚖️',
     get name(){ return window.t?window.t('upgrade.tactical_adjust'):'AJUSTE TÁCTICO'; },
-    get desc(){ return window.t?window.t('upgrade.tactical_adjust_desc'):'PUNTOS PARA REDISTRIBUIR ESTADÍSTICAS POR TORNEO'; },
+    get desc(){ return window.t?window.t('upgrade.tactical_adjust_desc'):'AJUSTES TÁCTICOS POR TORNEO'; },
     baseCost: 5, maxLevel: 5, baseValue: 5,
     tooltip: (lvl) => `${5+lvl} ${t("upgrade.tactical_adjust_desc")}`
   },
