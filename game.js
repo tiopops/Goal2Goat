@@ -1588,7 +1588,13 @@ function updateConvocadosTable(){
   // Update star bonus display
   const sbEl=document.getElementById("starBonus");
   const sbVal=document.getElementById("starBonusVal");
-  if(sbEl&&sbVal){ sbEl.style.display=stars>0?"block":"none"; sbVal.textContent=stars; }
+  if(sbEl&&sbVal){
+    const showTacticalCounter=(phase==='ready') && getMaxTacticalAdjustPoints()>0;
+    sbEl.style.display=(stars>0||showTacticalCounter)?"flex":"none";
+    sbVal.textContent=stars;
+    const sbGroup=document.getElementById('starBonusGroup');
+    if(sbGroup) sbGroup.style.display=stars>0?'inline':'none';
+  }
   // Update OVR (total already includes +1 per star)
   if(usedPlayers.length){
     const avg=(baseTeamOVR!==null)?baseTeamOVR:computeTeamOVR();
@@ -1654,14 +1660,17 @@ function onConvocadoClick(i){
       updateBenchTable();
       return;
     }
-    // Intercambiar posición EN LA LISTA (no solo en el campo)
+    // Intercambiar posición EN EL CAMPO — performConvConvSwap ya se
+    // encarga de todo (placedPos, la casilla del campo, y su propio
+    // renderizado). Antes también se intercambiaban aquí los índices
+    // en el array usedPlayers, pero eso hacía que performConvConvSwap
+    // leyera el array YA intercambiado, aplicando el cambio dos veces
+    // sin querer — resultaba en que el campo pintaba cada jugador con
+    // la etiqueta de posición equivocada tras el intercambio.
     if(swapsUsedThisMatch<getMaxSubs()){
       const idxA=swapSelection.index, idxB=i;
       swapSelection=null;
       highlightPos([]);
-      // Intercambiar en el array usedPlayers (posición en la lista)
-      [usedPlayers[idxA], usedPlayers[idxB]] = [usedPlayers[idxB], usedPlayers[idxA]];
-      // Y también intercambiar sus posiciones en el campo
       performConvConvSwap(idxA, idxB);
       return;
     } else {
@@ -1743,8 +1752,10 @@ function performConvConvSwap(idxA, idxB){
   // Swap placed positions
   pA.placedPos=labelB; pB.placedPos=labelA;
   slotA._player=pB;    slotB._player=pA;
-  // Re-render both slots
-  [{ slot:slotA, p:pB, label:labelB }, { slot:slotB, p:pA, label:labelA }].forEach(({slot,p,label})=>{
+  // Re-render both slots — cada casilla usa SU PROPIA etiqueta física
+  // (labelA para slotA, labelB para slotB), que no cambia nunca; lo
+  // único que cambia es QUIÉN la ocupa.
+  [{ slot:slotA, p:pB, label:labelA }, { slot:slotB, p:pA, label:labelB }].forEach(({slot,p,label})=>{
     const inPos=p.positions&&p.positions.includes(label);
     const r=inPos?(p.rating||70):Math.round((p.rating||70)*0.85);
     const star=inPos&&p.positions[0]===label?' <span class="star">★</span>':'';
@@ -1798,13 +1809,17 @@ function renderTacticalAdjustUI(){
   const remaining=maxPoints-tacticalPointsUsed;
   const counter=document.getElementById('tacticalAdjustCounter');
   const counterVal=document.getElementById('tacticalAdjustCounterVal');
-  if(counter) counter.style.display=maxPoints>0?'inline-flex':'none';
+  // Solo se puede tocar una vez ha empezado a jugarse el torneo (fase
+  // "ready" — equipo completo, ya se pueden jugar partidos). Durante el
+  // draft/banquillo, ni se ve el contador ni los botones.
+  const matchesStarted=(phase==='ready');
+  if(counter) counter.style.display=(maxPoints>0 && matchesStarted)?'inline-flex':'none';
   if(counterVal) counterVal.textContent=remaining;
-  const locked=remaining<=0;
+  const locked=remaining<=0 || !matchesStarted;
   ["attack","defense","pace","passing","technique"].forEach(k=>{
     const minusBtn=document.querySelector(`.tactadj-minus[data-stat="${k}"]`);
     const plusBtn=document.querySelector(`.tactadj-plus[data-stat="${k}"]`);
-    const hasFeature=maxPoints>0;
+    const hasFeature=maxPoints>0 && matchesStarted;
     if(minusBtn){
       minusBtn.style.display=hasFeature?'flex':'none';
       minusBtn.disabled=locked || (tacticalPendingMinusStat && tacticalPendingMinusStat!==k) || (tacticalAdjustments[k]<=-100);
@@ -1825,6 +1840,7 @@ function renderTacticalAdjustUI(){
    Pulsar "-" otra vez sobre la MISMA estadística pendiente cancela esa
    resta a medias, por si el jugador cambia de idea antes de completarla. */
 function onTacticalAdjustClick(stat, isPlus){
+  if(phase!=='ready') return; // por seguridad, aunque los botones ya deberían estar ocultos antes de esta fase
   const maxPoints=getMaxTacticalAdjustPoints();
   if(tacticalPointsUsed>=maxPoints) return; // todo gastado, bloqueado del todo
   if(!isPlus){

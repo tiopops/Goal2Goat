@@ -1288,6 +1288,7 @@ window.TRANSLATIONS = {
   'draft.team_profile': {es:'PERFIL DEL EQUIPO', en:'TEAM PROFILE', pt:'PERFIL DO TIME', fr:'PROFIL DE L\'ÉQUIPE', de:'TEAM-PROFIL', it:'PROFILO SQUADRA'},
   'draft.avg_rating': {es:'NOTA MEDIA', en:'AVERAGE RATING', pt:'NOTA MÉDIA', fr:'NOTE MOYENNE', de:'DURCHSCHNITTSNOTE', it:'VOTO MEDIO'},
   'draft.star_bonus': {es:'★ Bonus posición +', en:'★ Position bonus +', pt:'★ Bônus posição +', fr:'★ Bonus poste +', de:'★ Positionsbonus +', it:'★ Bonus posizione +'},
+  'draft.tactical_adjust_label': {es:'Ajuste Táctico', en:'Tactical Adjustment', pt:'Ajuste Tático', fr:'Ajustement Tactique', de:'Taktische Anpassung', it:'Regolazione Tattica'},
 
   /* ── TABS MÓVIL ── */
   'mob.campo': {es:'CAMPO', en:'PITCH', pt:'CAMPO', fr:'TERRAIN', de:'FELD', it:'CAMPO'},

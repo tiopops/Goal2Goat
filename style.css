@@ -389,7 +389,7 @@ body.dark-theme .version-tag{color:#555}
 .tactadj-btn:disabled{opacity:.3;cursor:not-allowed}
 .tactadj-btn.pending{background:var(--gold);color:#000;border-color:var(--gold)}
 .stat-bar div{height:100%;background:var(--accent);transition:width .4s ease}
-.star-bonus-row{font-size:11px;color:var(--gold);font-weight:600;margin-top:6px;padding-top:6px;border-top:1px solid var(--line)}
+.star-bonus-row{font-size:11px;color:var(--gold);font-weight:600;margin-top:6px;padding-top:6px;border-top:1px solid var(--line);align-items:center;justify-content:space-between}
 
 /* RIVAL BOX */
 .rival-card{display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center}
