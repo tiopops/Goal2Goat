@@ -208,7 +208,7 @@ body.dark-theme .version-tag{color:#555}
   position:absolute;width:6px;height:6px;border:1px solid rgba(255,255,255,.35);
   border-radius:50%;opacity:0;animation:g2gSplash 1.4s ease-out infinite;
 }
-@keyframes g2gDropFall{ to{ transform:translateY(115%); } }
+@keyframes g2gDropFall{ to{ top:108%; } }
 @keyframes g2gSplash{
   0%{ opacity:0; transform:scale(.2); }
   15%{ opacity:.6; }
@@ -230,9 +230,9 @@ body.dark-theme .version-tag{color:#555}
   text-shadow:0 0 3px rgba(255,255,255,.6);
 }
 @keyframes g2gFlakeFall{
-  0%{ transform:translateY(0) translateX(0) rotate(0deg); }
-  50%{ transform:translateY(57.5%) translateX(8px) rotate(180deg); }
-  100%{ transform:translateY(115%) translateX(-4px) rotate(360deg); }
+  0%{ top:-6%; transform:translateX(0) rotate(0deg); }
+  50%{ top:54%; transform:translateX(8px) rotate(180deg); }
+  100%{ top:108%; transform:translateX(-4px) rotate(360deg); }
 }
 
 /* — Viento fuerte — */
@@ -521,13 +521,8 @@ body.dark-theme .live-match-modal{border-color:#2a7a40}
 .live-info-block li{margin-bottom:2px}
 .live-continue-btn{width:100%;background:var(--accent);color:#fff;border:none;padding:13px;font-size:14px;font-weight:700;cursor:pointer;margin-top:10px;letter-spacing:1px;transition:.15s;animation:slideInEvent .3s ease forwards}
 .live-continue-btn:hover{background:#0c5a30}
+.row-selected{outline:2px solid var(--gold);outline-offset:-2px;position:relative;z-index:1}
 .row-selected td{background:#fff3c4 !important}
-.row-selected td:first-child{box-shadow:-2px 0 0 var(--gold), 0 -2px 0 var(--gold), 0 2px 0 var(--gold)}
-.row-selected td:last-child{box-shadow:2px 0 0 var(--gold), 0 -2px 0 var(--gold), 0 2px 0 var(--gold)}
-.row-selected td:not(:first-child):not(:last-child){box-shadow:0 -2px 0 var(--gold), 0 2px 0 var(--gold)}
-/* Resaltado temporal al pulsar el círculo de un jugador en el campo —
-   distinto del dorado del sistema de cambios, para no confundirlos. */
-.row-pitch-highlight td{background:rgba(74,144,217,.28) !important;transition:background .6s ease}
 #convocadosTable tbody tr:hover td,#benchTable tbody tr:hover td{background:#f0f7f0}
 
 /* HOW TO PLAY GUIDE */
@@ -617,9 +612,6 @@ body.dark-theme .match-summary strong{color:var(--text)}
 body.dark-theme .injury-section{background:#3a2222;border-color:#5a3030}
 body.dark-theme .injury-section p{color:var(--text)}
 body.dark-theme .row-selected td{background:#4a3f1a !important}
-body.dark-theme .row-selected td:first-child{box-shadow:-2px 0 0 var(--gold), 0 -2px 0 var(--gold), 0 2px 0 var(--gold)}
-body.dark-theme .row-selected td:last-child{box-shadow:2px 0 0 var(--gold), 0 -2px 0 var(--gold), 0 2px 0 var(--gold)}
-body.dark-theme .row-selected td:not(:first-child):not(:last-child){box-shadow:0 -2px 0 var(--gold), 0 2px 0 var(--gold)}
 body.dark-theme .swap-hint{background:#1f2f22;color:var(--accent);border-left-color:var(--accent)}
 body.dark-theme .injury-note{color:var(--text-muted)}
 body.dark-theme .slot-reel{background:repeating-linear-gradient(135deg,#1e2326,#1e2326 10px,#262b2e 10px,#262b2e 20px);border-color:var(--gold)}

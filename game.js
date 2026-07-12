@@ -1304,6 +1304,7 @@ function highlightConvocadoForPlayer(player){
   if(!player) return;
   const idx=usedPlayers.indexOf(player);
   if(idx===-1) return;
+  pitchHighlightedPlayer=player;
   // En móvil, CONVOCADOS vive en la pestaña EQUIPO, distinta de CAMPO
   // — hay que cambiar de pestaña o la fila resaltada quedaría oculta.
   // switchMobileTab ya hace su propio scroll con un pequeño retraso
@@ -1312,15 +1313,29 @@ function highlightConvocadoForPlayer(player){
   const isMobile=window.innerWidth<=1050;
   if(isMobile && typeof switchMobileTab==='function') switchMobileTab('equipo');
   const doHighlight=()=>{
+    applyPitchHighlightVisuals();
     const row=document.querySelector(`#convocadosTable tr[onclick="onConvocadoClick(${idx})"]`);
-    if(!row) return;
-    row.scrollIntoView({behavior:'smooth', block:'center'});
-    document.querySelectorAll('#convocadosTable tr.row-pitch-highlight').forEach(r=>r.classList.remove('row-pitch-highlight'));
-    row.classList.add('row-pitch-highlight');
-    setTimeout(()=>row.classList.remove('row-pitch-highlight'), 1800);
+    if(row) row.scrollIntoView({behavior:'smooth', block:'center'});
   };
   if(isMobile) setTimeout(doHighlight, 150);
   else doHighlight();
+}
+
+/* Aplica el amarillo de "seleccionado" —el mismo que ya usaba el
+   sistema de cambios— tanto al círculo del campo como a la fila de
+   CONVOCADOS, según pitchHighlightedPlayer. Se llama tanto al pulsar
+   el campo como cada vez que se reconstruye la tabla de convocados,
+   para que la selección sobreviva a los repintados. */
+function applyPitchHighlightVisuals(){
+  getPitchSlots().forEach(s=>{
+    s.classList.toggle('slot-conv-selected', !!pitchHighlightedPlayer && s._player===pitchHighlightedPlayer);
+  });
+  document.querySelectorAll('#convocadosTable tr').forEach(r=>r.classList.remove('row-pitch-highlight'));
+  if(pitchHighlightedPlayer){
+    const idx=usedPlayers.indexOf(pitchHighlightedPlayer);
+    const row=document.querySelector(`#convocadosTable tr[onclick="onConvocadoClick(${idx})"]`);
+    if(row) row.classList.add('row-selected');
+  }
 }
 
 /* ========= HIGHLIGHTS ========= */
@@ -1488,6 +1503,11 @@ function starMatchBonus(){
   return stars*0.012; // each ★ = +1.2% lambda boost, up to +13.2% with 11 stars
 }
 let swapSelection=null;
+// Jugador resaltado al pulsar su círculo en el campo — separado a
+// propósito de swapSelection (que es del sistema de cambios), para no
+// interferir con él. Se mantiene fijo hasta la siguiente selección,
+// sea desde el campo o directamente desde la lista de CONVOCADOS.
+let pitchHighlightedPlayer=null;
 
 function renderCenterSummary(){
   const el=document.getElementById("centerSummary");
@@ -1604,6 +1624,7 @@ function updateConvocadosTable(){
       swapHint.style.display="none";
     }
   }
+  applyPitchHighlightVisuals();
 }
 function updateBenchTable(){
   const el=document.getElementById("benchTable");
@@ -1629,6 +1650,10 @@ function updateBenchTable(){
 /* ========= PRE-MATCH SWAPS (convocados <-> bench) ========= */
 function onConvocadoClick(i){
   if(phase!=='ready') return;
+  // Seleccionar directamente desde la lista siempre sustituye al
+  // resaltado que hubiera venido de pulsar el campo — solo debe haber
+  // una selección visible a la vez.
+  pitchHighlightedPlayer=null;
 
   // Si hay un jugador del banquillo seleccionado y quedan cambios, hacer swap
   if(swapSelection&&swapSelection.source==='bench'){
