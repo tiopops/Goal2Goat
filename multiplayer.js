@@ -544,6 +544,12 @@ function mpRenderStrategyAndBenchPhase(idx){
   document.getElementById("benchSection").style.display="block";
   document.getElementById("moraleSection").style.display="block";
   document.getElementById("rivalBox").style.display="block";
+  // Mismo clima determinista que verán los dos jugadores durante el
+  // partido — se muestra ya aquí, en la pantalla previa, igual que en
+  // solitario se ve nada más revelarse el rival, no solo durante la
+  // animación en directo.
+  mpRollDeterministicWeather(idx);
+  if(typeof renderWeather==='function') renderWeather();
   const matchHistoryBox=document.getElementById("matchHistoryBox"); if(matchHistoryBox) matchHistoryBox.style.display="none";
   const playBtn=document.getElementById("playMatchBtn"); if(playBtn) playBtn.style.display="none";
   const matchActionWrap1=document.getElementById("matchActionWrap"); if(matchActionWrap1) matchActionWrap1.style.display="none";
@@ -1110,11 +1116,11 @@ function mpStartPenaltyTimer(cur){
     requestAnimationFrame(()=>{ if(fill) fill.style.transition='width .1s linear'; });
   });
   let autoCenterDone=false;
+  let barTotalMs=null; // se fija en el primer tick, una vez se sabe myDeadline
   mpPenTimerHandle=setInterval(()=>{
     const localRemainMs=Math.max(0, PENALTY_KICK_MS-(Date.now()-localStart));
     const remainSec=Math.ceil(localRemainMs/1000);
     if(remainSec!==lastBeepSec){ lastBeepSec=remainSec; checkCountdownBeep(remainSec,'penalty'); }
-    if(fill) fill.style.width=(localRemainMs/PENALTY_KICK_MS*100)+'%';
 
     // En cuanto SE AGOTA MI PROPIA barra (no el plazo compartido de
     // resolución, que es aparte), si todavía no había elegido, se da
@@ -1128,6 +1134,18 @@ function mpStartPenaltyTimer(cur){
     const freshCurEarly=mpPenLatestCur||cur;
     const iAmShooterNow=freshCurEarly.shooterRole===window._duelRole;
     const myDeadline=iAmShooterNow?sharedDeadline:fallbackDeadline;
+
+    // La barra visual se calcula SIEMPRE a partir del mismo plazo real
+    // (myDeadline) que decide cuándo se fuerza la resolución — así,
+    // aunque este dispositivo haya tardado en recibir la actualización
+    // por la red, la barra llega exactamente a 0% justo cuando de
+    // verdad toca resolver, nunca antes. Antes usaba un contador local
+    // aparte de duración fija, que en dispositivos con más retraso de
+    // red podía quedarse a mitad de camino cuando el plazo compartido
+    // llegaba antes de que esa cuenta atrás local hubiera terminado.
+    if(barTotalMs===null) barTotalMs=Math.max(1, myDeadline-localStart);
+    const barRemainMs=Math.max(0, myDeadline-Date.now());
+    if(fill) fill.style.width=(barRemainMs/barTotalMs*100)+'%';
 
     if(Date.now()>=myDeadline){
       clearInterval(mpPenTimerHandle); mpPenTimerHandle=null;

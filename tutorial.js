@@ -38,7 +38,7 @@
         selector: '#teamProfileBox',
         mockPreview: 'teamprofile',
         title: '3 · El perfil de tu equipo',
-        text: 'Aquí verás de un vistazo cómo queda tu equipo: ATAQUE, DEFENSA, RITMO, PASE y TÉCNICA, según los jugadores que vayas fichando. Te mostramos unos valores de ejemplo al azar para que veas cómo se ve.<br><br>Más adelante, durante el torneo, podrás usar el <strong>Ajuste Táctico</strong> para mover puntos entre estas estadísticas y compensar el clima o una mala racha en el draft.'
+        text: 'Aquí verás de un vistazo cómo queda tu equipo: ATAQUE, DEFENSA, RITMO, PASE y TÉCNICA, según los jugadores que vayas convocando. Te mostramos unos valores de ejemplo al azar para que veas cómo se ve.<br><br>Más adelante, durante el torneo, podrás usar el <strong>Ajuste Táctico</strong> para mover puntos entre estas estadísticas y compensar el clima o una mala racha en el draft.'
       },
       {
         selector: '#pitchBox',
@@ -221,6 +221,13 @@
     if(typeof pitchEl === 'undefined' || typeof playersDB === 'undefined' || typeof renderSlotContent !== 'function') return;
     const slots = pitchEl.querySelectorAll('.position');
     if(!slots.length) return;
+
+    // El paso anterior (perfil del equipo) puede haber dejado la
+    // pestaña en EQUIPO — hay que volver a CAMPO para que el campo
+    // sea visible aquí.
+    if(isMobileLayout() && typeof switchMobileTab === 'function'){
+      switchMobileTab('campo');
+    }
 
     activePreviewKind = 'pitch';
     savedPitchSlotsHTML = [];
