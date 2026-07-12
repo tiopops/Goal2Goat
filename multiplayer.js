@@ -238,7 +238,13 @@ async function renderFriendsList(){
   const user=auth&&auth.currentUser;
   const list=$id('mpFriendsList');
   if(!user||!db||!list) return;
-  list.innerHTML=`<div class="mp-empty-state">${tk('mp.loading')}</div>`;
+  // El aviso de "Cargando..." solo tiene sentido la primera vez que se
+  // abre el panel (lista vacía) — en los refrescos automáticos de cada
+  // 10 segundos, borrar la lista para volver a poner "Cargando..." un
+  // instante solo provoca un parpadeo, sin aportar nada.
+  if(!list.children.length){
+    list.innerHTML=`<div class="mp-empty-state">${tk('mp.loading')}</div>`;
+  }
   // "Latido" de presencia — se actualiza cada vez que el jugador entra
   // a mirar la pestaña de multijugador, para que sus amigos vean si
   // ha estado activo hace poco.
