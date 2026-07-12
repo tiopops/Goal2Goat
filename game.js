@@ -1305,6 +1305,10 @@ function highlightConvocadoForPlayer(player){
   const idx=usedPlayers.indexOf(player);
   if(idx===-1) return;
   pitchHighlightedPlayer=player;
+  // Cualquier selección antigua del sistema de cambios se cancela —
+  // si no, podían quedar dos jugadores "seleccionados" a la vez (uno
+  // por cada sistema), liándose entre sí al pulsar después en la lista.
+  swapSelection=null;
   // En móvil, CONVOCADOS vive en la pestaña EQUIPO, distinta de CAMPO
   // — hay que cambiar de pestaña o la fila resaltada quedaría oculta.
   // switchMobileTab ya hace su propio scroll con un pequeño retraso
@@ -4815,17 +4819,23 @@ function applyPitchWeatherVisual(weatherId){
     for(let i=0;i<40;i++){
       const drop=document.createElement('div');
       drop.className='weather-drop';
-      const left=Math.random()*100, duration=0.5+Math.random()*0.4, delay=Math.random()*1.5;
+      const left=Math.random()*100, duration=0.5+Math.random()*0.4;
+      // Retraso NEGATIVO: hace que el navegador trate la animación como
+      // si ya llevara un rato en marcha, así las gotas aparecen ya
+      // repartidas por toda la altura del campo desde el primer
+      // instante, en vez de empezar todas juntas arriba y tardar en
+      // esparcirse.
+      const negDelay=-Math.random()*duration;
       drop.style.left=left+'%';
       drop.style.animationDuration=duration+'s';
-      drop.style.animationDelay=delay+'s';
+      drop.style.animationDelay=negDelay+'s';
       drop.style.opacity=0.4+Math.random()*0.4;
       layer.appendChild(drop);
       const splash=document.createElement('div');
       splash.className='weather-splash';
       splash.style.left=left+'%'; splash.style.top='95%';
-      splash.style.animationDuration=duration+'s';
-      splash.style.animationDelay=delay+'s';
+      splash.style.animationDuration=(0.9+Math.random()*0.8)+'s';
+      splash.style.animationDelay=(-Math.random()*1.6)+'s';
       layer.appendChild(splash);
     }
   }
@@ -4834,12 +4844,13 @@ function applyPitchWeatherVisual(weatherId){
     for(let i=0;i<28;i++){
       const flake=document.createElement('div');
       flake.className='weather-flake';
-      const left=Math.random()*100, duration=3+Math.random()*3, delay=Math.random()*4, size=6+Math.random()*7;
+      const left=Math.random()*100, duration=3+Math.random()*3, size=6+Math.random()*7;
+      const negDelay=-Math.random()*duration; // mismo truco que la lluvia, para que ya salgan repartidos
       flake.textContent='❄';
       flake.style.left=left+'%';
       flake.style.fontSize=size+'px';
       flake.style.animationDuration=duration+'s';
-      flake.style.animationDelay=delay+'s';
+      flake.style.animationDelay=negDelay+'s';
       flake.style.opacity=0.55+Math.random()*0.4;
       layer.appendChild(flake);
     }
