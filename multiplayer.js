@@ -418,6 +418,25 @@ function duelRollInjuries(pitchArr, foulerPool){
   });
   return injured;
 }
+/* Clima determinista para cada partido del duelo — misma técnica que
+   la rueda de prensa (mpSimpleHash con una semilla compartida:
+   duelId+número de partido), así los dos dispositivos calculan
+   exactamente el mismo clima cada uno por su cuenta, sin tener que
+   escribirlo ni leerlo de Firestore. Usa las mismas probabilidades que
+   rollWeather() en solitario, solo que con un número determinista en
+   vez de Math.random(). */
+function mpRollDeterministicWeather(idx){
+  const seed=(window._duelId||'')+':weather:'+idx;
+  const roll=mpSimpleHash(seed)%1000/1000; // 0..1 determinista
+  const w=[2,2,1,1.5,1,0.6]; // mismo orden y pesos que WEATHER_TYPES: sunny,cloudy,rain,wind,hot,snow
+  const total=w.reduce((a,b)=>a+b,0);
+  let r=roll*total;
+  for(let i=0;i<WEATHER_TYPES.length;i++){
+    r-=w[i]; if(r<=0){ currentWeather=WEATHER_TYPES[i]; return; }
+  }
+  currentWeather=WEATHER_TYPES[1]; // fallback nublado
+}
+
 function computeDuelMatchResult(challengerSquad, opponentSquad, challengerStrategy, opponentStrategy){
   const chalPower=duelSquadPower(challengerSquad);
   const oppPower=duelSquadPower(opponentSquad);
@@ -640,7 +659,10 @@ async function mpConfirmStrategyAndSquad(){
     pitch: usedPlayers.map(p=>({name:p.name, rating:p.rating, positions:p.positions, placedPos:p.placedPos, fatigue:(p.fatigue===undefined?100:p.fatigue)})),
     bench: bench.map(p=>({name:p.name, rating:p.rating, positions:p.positions})),
     formation: currentFormation,
-    teamStats:{...teamStats},
+    // El Ajuste Táctico (redistribución de puntos entre estadísticas)
+    // se aplica aquí encima — si no, se ignoraría por completo en
+    // multijugador, ya que teamStats por sí solo no lo incluye.
+    teamStats:{...teamStats, ...myStatProfile()},
     teamMorale: (typeof teamMorale!=='undefined')?teamMorale:0,
     scorerStreaks: usedPlayers.reduce((acc,p)=>{ if(scorerStreaks[p.name]) acc[p.name]=scorerStreaks[p.name]; return acc; },{}),
     skills: window._skillCache?{...window._skillCache}:{}
@@ -678,6 +700,7 @@ function mpWatchForMatchResult(){
       unsub();
       const chalStrategy=d[chalKey]==='__none__'?null:d[chalKey];
       const oppStrategy=d[oppKey]==='__none__'?null:d[oppKey];
+      mpRollDeterministicWeather(idx); // mismo clima que verá el rival, calculado por su cuenta
       const result=computeDuelMatchResult(d.challengerSquad, d.opponentSquad, chalStrategy, oppStrategy);
       try{ await db.collection('duels').doc(window._duelId).update({[resultField]: result}); }
       catch(e){ console.error('mpWatchForMatchResult compute error:',e); }
@@ -724,6 +747,12 @@ ${goalsHTML}`;
 /* Reproduce el partido con la MISMA animación minuto a minuto que el
    modo un jugador, reutilizando showLiveMatch() sin modificarlo. */
 function mpPlayDuelMatchAnimation(result, challengerSquad, opponentSquad){
+  // Mismo clima que calculó el retador para el resultado — cada
+  // dispositivo lo calcula por su cuenta con la misma semilla, así
+  // que ambos ven exactamente la misma lluvia/nieve/etc., sin tener
+  // que mandarlo por Firestore.
+  mpRollDeterministicWeather(window._duelMatchIndex);
+  if(typeof renderWeather==='function') renderWeather();
   const myGoals=window._duelRole==='challenger'?result.challengerGoals:result.opponentGoals;
   const rivalGoals=window._duelRole==='challenger'?result.opponentGoals:result.challengerGoals;
   const mySquad=window._duelRole==='challenger'?challengerSquad:opponentSquad;
@@ -2187,9 +2216,11 @@ async function mpOnDraftComplete(){
     formation: currentFormation,
     teamOVR: typeof baseTeamOVR!=='undefined'?baseTeamOVR:computeTeamOVR(),
     // Foto del perfil táctico real (attack/defense/pace/passing/technique),
-    // ya calculado a partir de las selecciones históricas fichadas + formación.
+    // ya calculado a partir de las selecciones históricas fichadas + formación,
+    // con el Ajuste Táctico ya aplicado encima (si no, se ignoraría en
+    // multijugador, ya que teamStats por sí solo no lo incluye).
     // Se usará tal cual como perfil del rival real en los partidos del duelo.
-    teamStats:{...teamStats},
+    teamStats:{...teamStats, ...myStatProfile()},
     // Foto de moral y racha en el momento de terminar el equipo — se
     // actualizarán partido a partido con las mismas fórmulas que en solitario.
     // La racha es por jugador (scorerStreaks), no un número único de equipo.

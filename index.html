@@ -599,17 +599,38 @@
       <h3 data-i18n="draft.team_profile">PERFIL DEL EQUIPO</h3>
       <div class="ovr-team"><span class="team-stat-title" data-i18n="draft.avg_rating">NOTA MEDIA</span><span id="teamOVR">—</span></div>
       <div class="stat-row"><span data-i18n="info.attack">ATAQUE</span><span id="attackValue">0</span></div>
-      <div class="stat-bar"><div id="attackBar"></div></div>
+      <div class="stat-bar-row">
+        <button class="tactadj-btn tactadj-minus" data-stat="attack" title="Quitar 1 punto">−</button>
+        <div class="stat-bar"><div id="attackBar"></div></div>
+        <button class="tactadj-btn tactadj-plus" data-stat="attack" title="Poner 1 punto">+</button>
+      </div>
       <div class="stat-row"><span data-i18n="info.defense">DEFENSA</span><span id="defenseValue">0</span></div>
-      <div class="stat-bar"><div id="defenseBar"></div></div>
+      <div class="stat-bar-row">
+        <button class="tactadj-btn tactadj-minus" data-stat="defense" title="Quitar 1 punto">−</button>
+        <div class="stat-bar"><div id="defenseBar"></div></div>
+        <button class="tactadj-btn tactadj-plus" data-stat="defense" title="Poner 1 punto">+</button>
+      </div>
       <div class="stat-row"><span data-i18n="info.pace">RITMO</span><span id="paceValue">0</span></div>
-      <div class="stat-bar"><div id="paceBar"></div></div>
+      <div class="stat-bar-row">
+        <button class="tactadj-btn tactadj-minus" data-stat="pace" title="Quitar 1 punto">−</button>
+        <div class="stat-bar"><div id="paceBar"></div></div>
+        <button class="tactadj-btn tactadj-plus" data-stat="pace" title="Poner 1 punto">+</button>
+      </div>
       <div class="stat-row"><span data-i18n="info.passing">PASE</span><span id="passingValue">0</span></div>
-      <div class="stat-bar"><div id="passingBar"></div></div>
+      <div class="stat-bar-row">
+        <button class="tactadj-btn tactadj-minus" data-stat="passing" title="Quitar 1 punto">−</button>
+        <div class="stat-bar"><div id="passingBar"></div></div>
+        <button class="tactadj-btn tactadj-plus" data-stat="passing" title="Poner 1 punto">+</button>
+      </div>
       <div class="stat-row"><span data-i18n="info.technique">TÉCNICA</span><span id="techniqueValue">0</span></div>
-      <div class="stat-bar"><div id="techniqueBar"></div></div>
+      <div class="stat-bar-row">
+        <button class="tactadj-btn tactadj-minus" data-stat="technique" title="Quitar 1 punto">−</button>
+        <div class="stat-bar"><div id="techniqueBar"></div></div>
+        <button class="tactadj-btn tactadj-plus" data-stat="technique" title="Poner 1 punto">+</button>
+      </div>
       <div id="starBonus" class="star-bonus-row" style="display:none">
         <span data-i18n="draft.star_bonus">★ Bonus posición +</span><span id="starBonusVal">0</span>
+        <span id="tacticalAdjustCounter" style="margin-left:auto;font-size:11px;color:var(--gold);display:none" title="Puntos de ajuste táctico que te quedan para todo el torneo">⚖️ <span id="tacticalAdjustCounterVal">0</span></span>
       </div>
     </div>
 

@@ -402,6 +402,16 @@ let draftedCount = 0;
    comprar/vender mejoras y habilidades a mitad de un torneo (anti-trampas). */
 function isTournamentInProgress(){ return phase!=="draft" || draftedCount>0; }
 let baseTeamOVR = null;
+/* Ajuste táctico: puntos que se pueden redistribuir entre las 5
+   estadísticas del equipo durante TODO el torneo (no por partido).
+   Cada "punto" es una pareja quitar-1/poner-1; una vez usados todos
+   los puntos disponibles, se bloquea por completo — no se puede volver
+   a tocar nada. Como el resto del estado de la partida, se reinicia
+   solo al recargar la página (nuevo torneo), sin necesitar ningún
+   reseteo especial aparte. */
+let tacticalAdjustments = {attack:0, defense:0, pace:0, passing:0, technique:0};
+let tacticalPointsUsed = 0;
+let tacticalPendingMinusStat = null; // el "-1" que espera a que se pulse un "+1" en otra estadística para completarse
 let benchCount = 0;
 let nextOpponent = null;
 let swapsUsedThisMatch = 0;
@@ -1117,7 +1127,8 @@ function volverASeleccion(){
 /* ========= POSITION SLOTS ========= */
 function renderSlotContent(slot, player, label, rating, starHTML){
   const statusIcons=getSlotStatusIconsHTML(player);
-  slot.innerHTML=`${statusIcons}<span class="pos-rating">${rating}</span><div class="player-info">${player.name}${starHTML}<div class="player-pos-label">${label}</div></div>`;
+  const outOfPos=player.positions && !player.positions.includes(label);
+  slot.innerHTML=`${statusIcons}<span class="pos-rating">${rating}</span><div class="player-info">${player.name}${starHTML}<div class="player-pos-label${outOfPos?' out-of-position':''}">${label}</div></div>`;
 }
 /* Small status icon row shown ABOVE the pitch circle — injury, card, and
    scorer streak, so the player's situation is visible at a glance without
@@ -1569,8 +1580,9 @@ function updateConvocadosTable(){
     const clickable=` onclick="onConvocadoClick(${realIdx})" style="cursor:pointer"`;
     const realPos=(p.positions||[]).join('/');
     const posLabel=p.placedPos||'?';
+    const outOfPos=p.positions && p.placedPos && !p.positions.includes(p.placedPos);
     const realLabel=(realPos&&realPos!==posLabel)?`<br><span style="font-size:9px;color:var(--text-muted)">${realPos}</span>`:'';
-    rows+=`<tr${sel}${clickable}><td>${i+1}</td><td>${p.name}${cross}${cardBadge}${streak}</td><td>${fatigueBar}</td><td><span style="font-weight:700">${posLabel}</span>${star}${realLabel}</td><td>${r}</td></tr>`;
+    rows+=`<tr${sel}${clickable}><td>${i+1}</td><td>${p.name}${cross}${cardBadge}${streak}</td><td>${fatigueBar}</td><td><span style="font-weight:700${outOfPos?';color:#e74c3c':''}">${posLabel}</span>${star}${realLabel}</td><td>${r}</td></tr>`;
   });
   el.innerHTML=rows?`<table><thead><tr><th>#</th><th>${window.t?window.t('draft.th_player'):'Jugador'}</th><th title="${window.t?window.t('draft.th_stamina'):'Resistencia'}">${window.t?window.t('draft.th_stamina'):'Resistencia'}</th><th>${window.t?window.t('draft.th_pos'):'Pos'}</th><th>★</th></tr></thead><tbody>${rows}</tbody></table>`:"";
   // Update star bonus display
@@ -1761,8 +1773,10 @@ function updateStats(){
   // The NUMBER shown is always the real value (can be negative — e.g. a very
   // defensive formation before any player is drafted). Only the BAR's width
   // is clamped to 0-100%, since a bar can't visually go negative.
+  // El ajuste táctico se suma aquí también, para que lo que se ve en
+  // pantalla sea siempre el valor final que de verdad afecta al partido.
   ["attack","defense","pace","passing","technique"].forEach(k=>{
-    const real=Math.round(teamStats[k]||0);
+    const real=Math.round((teamStats[k]||0) + (tacticalAdjustments[k]||0));
     const barPct=Math.max(0,Math.min(100,real));
     const v=document.getElementById(k+"Value");
     const b=document.getElementById(k+"Bar");
@@ -1772,7 +1786,71 @@ function updateStats(){
     }
     if(b) b.style.width=barPct+"%";
   });
+  renderTacticalAdjustUI();
 }
+
+/* Botones -/+ de ajuste táctico junto a cada barra, y el contador de
+   puntos restantes. Solo aparecen si el jugador tiene la mejora
+   comprada (al menos 1 punto disponible). Cada punto = una pareja
+   quitar-1/poner-1; una vez se han usado todos, se bloquea todo. */
+function renderTacticalAdjustUI(){
+  const maxPoints=getMaxTacticalAdjustPoints();
+  const remaining=maxPoints-tacticalPointsUsed;
+  const counter=document.getElementById('tacticalAdjustCounter');
+  const counterVal=document.getElementById('tacticalAdjustCounterVal');
+  if(counter) counter.style.display=maxPoints>0?'inline-flex':'none';
+  if(counterVal) counterVal.textContent=remaining;
+  const locked=remaining<=0;
+  ["attack","defense","pace","passing","technique"].forEach(k=>{
+    const minusBtn=document.querySelector(`.tactadj-minus[data-stat="${k}"]`);
+    const plusBtn=document.querySelector(`.tactadj-plus[data-stat="${k}"]`);
+    const hasFeature=maxPoints>0;
+    if(minusBtn){
+      minusBtn.style.display=hasFeature?'flex':'none';
+      minusBtn.disabled=locked || (tacticalPendingMinusStat && tacticalPendingMinusStat!==k) || (tacticalAdjustments[k]<=-100);
+      minusBtn.classList.toggle('pending', tacticalPendingMinusStat===k);
+    }
+    if(plusBtn){
+      plusBtn.style.display=hasFeature?'flex':'none';
+      plusBtn.disabled=locked || !tacticalPendingMinusStat || tacticalPendingMinusStat===k;
+    }
+  });
+}
+
+/* Clic en "-" o "+" de una estadística concreta. Funciona en dos pasos:
+   1) Se pulsa "-" en una estadística → se resta 1 al momento, y queda
+      "pendiente" hasta que...
+   2) ...se pulsa "+" en OTRA estadística distinta → se suma 1 ahí, se
+      consume 1 punto del total disponible, y la pareja queda fijada.
+   Pulsar "-" otra vez sobre la MISMA estadística pendiente cancela esa
+   resta a medias, por si el jugador cambia de idea antes de completarla. */
+function onTacticalAdjustClick(stat, isPlus){
+  const maxPoints=getMaxTacticalAdjustPoints();
+  if(tacticalPointsUsed>=maxPoints) return; // todo gastado, bloqueado del todo
+  if(!isPlus){
+    if(tacticalPendingMinusStat===stat){
+      // Cancelar la resta pendiente
+      tacticalAdjustments[stat]+=1;
+      tacticalPendingMinusStat=null;
+    }else if(!tacticalPendingMinusStat){
+      tacticalAdjustments[stat]-=1;
+      tacticalPendingMinusStat=stat;
+    }
+  }else{
+    if(tacticalPendingMinusStat && tacticalPendingMinusStat!==stat){
+      tacticalAdjustments[stat]+=1;
+      tacticalPendingMinusStat=null;
+      tacticalPointsUsed++;
+    }
+  }
+  playSound('select');
+  updateStats();
+}
+document.addEventListener('click', (e)=>{
+  const btn=e.target.closest('.tactadj-minus, .tactadj-plus');
+  if(!btn || btn.disabled) return;
+  onTacticalAdjustClick(btn.dataset.stat, btn.classList.contains('tactadj-plus'));
+});
 
 /* ========= FORMATIONS ========= */
 function renderFormationList(cat){
@@ -2183,7 +2261,8 @@ function myStatProfile(){
   // teamStats already holds absolute 0-100 values (clamped)
   const out={};
   ["attack","defense","pace","passing","technique"].forEach(k=>{
-    out[k]=Math.max(0,Math.min(100,teamStats[k]||0));
+    const base=(teamStats[k]||0) + (tacticalAdjustments[k]||0);
+    out[k]=Math.max(0,Math.min(100,base));
   });
   return out;
 }
@@ -2212,16 +2291,26 @@ function computeOppPower(team){
   return avg + bonusBoost - fatiguePenalty;
 }
 /* Tactical matchup: returns a small lambda modifier for each side based on
-   attack-vs-defense and supporting stats. Capped so it nudges, not dominates. */
+   attack-vs-defense and supporting stats. Capped so it nudges, not dominates.
+   PESOS: ataque/defensa (0.35 cada uno) siguen siendo lo que más pesa —
+   marcar y evitar goles es, con razón, lo más determinante de un partido.
+   Pase+técnica+ritmo (0.30 en conjunto, ~0.10 cada una) representan el
+   juego de apoyo que hace posible que el ataque funcione: no deciden el
+   partido por sí solas, pero ya no son casi irrelevantes como antes
+   (0.15 en total, ~0.05 cada una — una diferencia de 7 veces frente a
+   ataque/defensa, que dejaba sin efecto real a media plantilla de
+   formaciones centradas en pase/técnica/ritmo). Con este ajuste la
+   diferencia baja a poco más de 3 veces, conservando la jerarquía
+   realista sin borrarla del todo. */
 function tacticalModifier(myStats,oppStats){
   // Positive = favors "me" scoring more / conceding less
   const atkVsDef=(myStats.attack - oppStats.defense)/100;       // my attack vs their defense
   const theirAtkVsMyDef=(oppStats.attack - myStats.defense)/100; // their attack vs my defense
   const supportMine=(myStats.passing+myStats.technique+myStats.pace - (oppStats.passing+oppStats.technique+oppStats.pace))/300;
   // My scoring boost: my attack beating their defense, plus a bit of support
-  const myScoreMod = atkVsDef*0.35 + supportMine*0.15;
+  const myScoreMod = atkVsDef*0.35 + supportMine*0.30;
   // Their scoring boost: their attack beating my defense, minus my support edge
-  const oppScoreMod = theirAtkVsMyDef*0.35 - supportMine*0.15;
+  const oppScoreMod = theirAtkVsMyDef*0.35 - supportMine*0.30;
   return {
     myScoreMod: Math.max(-0.4, Math.min(0.4, myScoreMod)),
     oppScoreMod: Math.max(-0.4, Math.min(0.4, oppScoreMod)),
@@ -6959,6 +7048,7 @@ function getMaxSubs(){  return 2 + (window._upgradeCache.subs||0); }
 function getScoutTeams(){ return 2; } // ya no se usa para equipos
 function getPlayersPerTeam(){ return 5 + (window._upgradeCache.scout||0); }
 function getMaxGiroCharges(){ return 1 + (window._upgradeCache.giro||0); }
+function getMaxTacticalAdjustPoints(){ return 5 + (window._upgradeCache.tactical_adjust||0); }
 
 /* El catálogo de mejoras (UPGRADE_DEFS, UPGRADE_ICONS) vive ahora en
    upgrades-data.js, cargado justo después de este archivo. */

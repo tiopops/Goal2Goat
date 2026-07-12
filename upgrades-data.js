@@ -63,6 +63,13 @@ const UPGRADE_DEFS = [
     baseCost: 5, maxLevel: 5, baseValue: 1,
     tooltip: (lvl) => `${1+lvl} ${t("upgrade.giro_desc")}`
   },
+  {
+    id: 'tactical_adjust', icon: '⚖️',
+    get name(){ return window.t?window.t('upgrade.tactical_adjust'):'AJUSTE TÁCTICO'; },
+    get desc(){ return window.t?window.t('upgrade.tactical_adjust_desc'):'PUNTOS PARA REDISTRIBUIR ESTADÍSTICAS POR TORNEO'; },
+    baseCost: 5, maxLevel: 5, baseValue: 5,
+    tooltip: (lvl) => `${5+lvl} ${t("upgrade.tactical_adjust_desc")}`
+  },
 ];
 
 // Coste acumulado para subir al nivel N (0-indexed: coste para ir de N-1 a N)
@@ -96,4 +103,5 @@ const UPGRADE_ICONS = {
   recovery: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>',
   chain:    '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="2" y="8" width="8" height="8" rx="4"/><rect x="14" y="8" width="8" height="8" rx="4"/><line x1="9" y1="12" x2="15" y2="12"/></svg>',
   giro:     '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/><path d="M3 21v-5h5"/></svg>',
+  tactical_adjust: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 3v18"/><path d="M5 7l-3 6a3 3 0 0 0 6 0l-3-6z"/><path d="M19 7l-3 6a3 3 0 0 0 6 0l-3-6z"/><path d="M5 7h14"/></svg>',
 };
