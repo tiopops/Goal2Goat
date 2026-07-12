@@ -425,6 +425,7 @@ const WEATHER_TYPES = [
   { id:'rain',   get label(){ return window.t?window.t('weather.rain.label')  :'🌧 Lluvia'; },         get desc(){ return window.t?window.t('weather.rain.desc')  :'Campo pesado · RITMO -20%, TÉCNICA -10%'; },    effect:{pace:-0.15,technique:-0.08} },
   { id:'wind',   get label(){ return window.t?window.t('weather.wind.label')  :'💨 Viento fuerte'; },  get desc(){ return window.t?window.t('weather.wind.desc')  :'Juego directo · PASE -15%'; },                  effect:{passing:-0.12} },
   { id:'hot',    get label(){ return window.t?window.t('weather.hot.label')   :'🌡 Calor extremo'; },  get desc(){ return window.t?window.t('weather.hot.desc')   :'Fatiga máxima · RITMO -25%, DEFENSA -10%'; },  effect:{pace:-0.20,defense:-0.08} },
+  { id:'snow',   get label(){ return window.t?window.t('weather.snow.label')  :'❄ Nieve'; },           get desc(){ return window.t?window.t('weather.snow.desc')  :'Campo resbaladizo · RITMO -18%, PASE -10%'; }, effect:{pace:-0.14,passing:-0.08} },
 ];
 /* Predictive pre-match press questions: shown when the rival is revealed,
    BEFORE the match is played. Each answer is a prediction (positive/neutral/
@@ -1254,6 +1255,14 @@ function renderPitch(code){
 }
 
 function onSlotClick(slot){
+  // Si la casilla ya tiene un jugador colocado y no hay ninguno
+  // pendiente de colocar, el clic solo sirve para localizarlo en la
+  // lista de CONVOCADOS — resaltarlo y llevar el scroll hasta él. No
+  // toca nada del sistema de cambios/swap, es puramente para ubicarse.
+  if(slot.classList.contains("locked") && !selectedPlayer){
+    highlightConvocadoForPlayer(slot._player);
+    return;
+  }
   // Any player can go anywhere — penalty if out of position
   if(!selectedPlayer) return;
   if(slot.classList.contains("locked")) return;
@@ -1286,6 +1295,32 @@ function onSlotClick(slot){
   } else {
     rollBtn.disabled=false;
   }
+}
+
+/* Resalta brevemente la fila de un jugador en la lista de CONVOCADOS y
+   hace scroll hasta ella — se usa al pulsar su círculo en el campo,
+   solo para ubicarlo, sin relación con el sistema de cambios/swap. */
+function highlightConvocadoForPlayer(player){
+  if(!player) return;
+  const idx=usedPlayers.indexOf(player);
+  if(idx===-1) return;
+  // En móvil, CONVOCADOS vive en la pestaña EQUIPO, distinta de CAMPO
+  // — hay que cambiar de pestaña o la fila resaltada quedaría oculta.
+  // switchMobileTab ya hace su propio scroll con un pequeño retraso
+  // (50ms) al cambiar de pestaña; el nuestro va un poco más tarde para
+  // que gane él y no se pisen los dos scrolls entre sí.
+  const isMobile=window.innerWidth<=1050;
+  if(isMobile && typeof switchMobileTab==='function') switchMobileTab('equipo');
+  const doHighlight=()=>{
+    const row=document.querySelector(`#convocadosTable tr[onclick="onConvocadoClick(${idx})"]`);
+    if(!row) return;
+    row.scrollIntoView({behavior:'smooth', block:'center'});
+    document.querySelectorAll('#convocadosTable tr.row-pitch-highlight').forEach(r=>r.classList.remove('row-pitch-highlight'));
+    row.classList.add('row-pitch-highlight');
+    setTimeout(()=>row.classList.remove('row-pitch-highlight'), 1800);
+  };
+  if(isMobile) setTimeout(doHighlight, 150);
+  else doHighlight();
 }
 
 /* ========= HIGHLIGHTS ========= */
@@ -4708,7 +4743,7 @@ function rollWeather(){
   // Cloudy is more common (neutral), others less so
   const weights=[1.5, 4, 2, 1.5, 1]; // hot,cloudy,rain,wind,hot_extreme
   // Actually use WEATHER_TYPES indices
-  const w=[2,2,1,1.5,1]; // probabilities matching WEATHER_TYPES order
+  const w=[2,2,1,1.5,1,0.6]; // probabilidades en el mismo orden que WEATHER_TYPES: sunny,cloudy,rain,wind,hot,snow — la nieve es la más rara de todas
   const total=w.reduce((a,b)=>a+b,0);
   let r=Math.random()*total;
   for(let i=0;i<WEATHER_TYPES.length;i++){
@@ -4726,6 +4761,73 @@ function renderWeather(){
       <span>${currentWeather.label.slice(currentWeather.label.indexOf(' ')+1)}</span>
       <span class="weather-desc">${currentWeather.desc}</span>
     </div>`;
+  applyPitchWeatherVisual(currentWeather.id);
+}
+
+/* Efecto visual del clima sobre el propio campo — puramente estético,
+   no toca ninguna estadística (eso ya lo hace weatherStatModifier). La
+   clase "weather-fx-X" se pone en #pitch (no en la capa), porque el
+   filtro de brillo/saturación necesita afectar también al SVG del
+   césped, no solo a la capa que va por encima. */
+function applyPitchWeatherVisual(weatherId){
+  const pitch=document.getElementById('pitch');
+  const layer=document.getElementById('pitchWeatherLayer');
+  if(!pitch||!layer) return;
+  // Limpiar cualquier clima anterior
+  pitch.className = pitch.className.replace(/\bweather-fx-\S+/g, '').trim();
+  layer.innerHTML='';
+  if(!weatherId || weatherId==='cloudy') return; // nublado = sin efecto extra, tal como ya era neutro en las estadísticas
+
+  pitch.classList.add('weather-fx-'+weatherId);
+
+  if(weatherId==='rain' || weatherId==='hot' || weatherId==='sunny'){
+    const sheen=document.createElement('div');
+    sheen.className='weather-sheen';
+    layer.appendChild(sheen);
+  }
+
+  if(weatherId==='rain'){
+    for(let i=0;i<40;i++){
+      const drop=document.createElement('div');
+      drop.className='weather-drop';
+      const left=Math.random()*100, duration=0.5+Math.random()*0.4, delay=Math.random()*1.5;
+      drop.style.left=left+'%';
+      drop.style.animationDuration=duration+'s';
+      drop.style.animationDelay=delay+'s';
+      drop.style.opacity=0.4+Math.random()*0.4;
+      layer.appendChild(drop);
+      const splash=document.createElement('div');
+      splash.className='weather-splash';
+      splash.style.left=left+'%'; splash.style.top='95%';
+      splash.style.animationDuration=duration+'s';
+      splash.style.animationDelay=delay+'s';
+      layer.appendChild(splash);
+    }
+  }
+
+  if(weatherId==='snow'){
+    for(let i=0;i<28;i++){
+      const flake=document.createElement('div');
+      flake.className='weather-flake';
+      const left=Math.random()*100, duration=3+Math.random()*3, delay=Math.random()*4, size=6+Math.random()*7;
+      flake.textContent='❄';
+      flake.style.left=left+'%';
+      flake.style.fontSize=size+'px';
+      flake.style.animationDuration=duration+'s';
+      flake.style.animationDelay=delay+'s';
+      flake.style.opacity=0.55+Math.random()*0.4;
+      layer.appendChild(flake);
+    }
+  }
+
+  if(weatherId==='wind'){
+    for(let i=0;i<3;i++){
+      const gust=document.createElement('div');
+      gust.className='weather-gust';
+      gust.style.animationDelay=(i*1.1)+'s';
+      layer.appendChild(gust);
+    }
+  }
 }
 function weatherStatModifier(){
   // Returns a delta to apply to myStatProfile and oppStatProfile

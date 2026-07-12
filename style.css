@@ -180,6 +180,91 @@ body.dark-theme .version-tag{color:#555}
   aspect-ratio:3/4;
   margin:0 auto;
 }
+
+/* ═══ EFECTOS VISUALES DE CLIMA SOBRE EL CAMPO ═══
+   Una única capa (#pitchWeatherLayer) que vive por encima del SVG del
+   campo, dentro de #pitch (que ya tiene position:relative;overflow:
+   hidden, así que no hace falta tocar nada más). Cada clima añade una
+   clase distinta a esa capa; las partículas (gotas, copos) se generan
+   por JS dentro de ella. */
+#pitchWeatherLayer{
+  position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:2;
+}
+
+/* — Lluvia — */
+.weather-fx-rain .weather-sheen{
+  position:absolute;inset:0;
+  background:linear-gradient(115deg, transparent 40%, rgba(255,255,255,.06) 50%, transparent 60%);
+  background-size:250% 250%;
+  animation:g2gWeatherSheen 6s ease-in-out infinite;
+}
+.weather-fx-rain{ filter:brightness(0.85) saturate(0.88); }
+.weather-drop{
+  position:absolute;top:-8%;width:1.5px;height:14px;
+  background:linear-gradient(to bottom, transparent, rgba(210,225,255,.55));
+  animation:g2gDropFall linear infinite;
+}
+.weather-splash{
+  position:absolute;width:6px;height:6px;border:1px solid rgba(255,255,255,.35);
+  border-radius:50%;opacity:0;animation:g2gSplash 1.4s ease-out infinite;
+}
+@keyframes g2gDropFall{ to{ transform:translateY(115%); } }
+@keyframes g2gSplash{
+  0%{ opacity:0; transform:scale(.2); }
+  15%{ opacity:.6; }
+  100%{ opacity:0; transform:scale(1.6); }
+}
+@keyframes g2gWeatherSheen{
+  0%,100%{ background-position:0% 0%; }
+  50%{ background-position:100% 100%; }
+}
+
+/* — Nieve — */
+.weather-fx-snow{ filter:brightness(1.04) saturate(0.75); }
+.weather-fx-snow .weather-sheen{
+  position:absolute;inset:0;background:rgba(230,240,255,.05);
+}
+.weather-flake{
+  position:absolute;top:-6%;color:#fff;opacity:.85;
+  animation:g2gFlakeFall linear infinite;
+  text-shadow:0 0 3px rgba(255,255,255,.6);
+}
+@keyframes g2gFlakeFall{
+  0%{ transform:translateY(0) translateX(0) rotate(0deg); }
+  50%{ transform:translateY(57.5%) translateX(8px) rotate(180deg); }
+  100%{ transform:translateY(115%) translateX(-4px) rotate(360deg); }
+}
+
+/* — Viento fuerte — */
+.weather-fx-wind .weather-gust{
+  position:absolute;top:0;bottom:0;width:26%;
+  background:linear-gradient(90deg, transparent, rgba(255,255,255,.05), transparent);
+  animation:g2gGust 3.2s linear infinite;
+}
+@keyframes g2gGust{
+  0%{ left:-30%; }
+  100%{ left:110%; }
+}
+
+/* — Calor extremo — */
+.weather-fx-hot{ filter:saturate(0.8) sepia(0.12); }
+.weather-fx-hot .weather-sheen{
+  position:absolute;inset:0;
+  background:linear-gradient(180deg, rgba(255,200,120,.10), transparent 40%);
+  animation:g2gHeatWobble 2.4s ease-in-out infinite;
+}
+@keyframes g2gHeatWobble{
+  0%,100%{ transform:scaleY(1) translateY(0); opacity:.7; }
+  50%{ transform:scaleY(1.02) translateY(-2%); opacity:1; }
+}
+
+/* — Soleado — */
+.weather-fx-sunny .weather-sheen{
+  position:absolute;inset:0;
+  background:radial-gradient(ellipse at 30% 15%, rgba(255,235,180,.16), transparent 55%);
+}
+.weather-fx-sunny{ filter:brightness(1.05) saturate(1.05); }
+
 @media(orientation:landscape) and (max-height:500px){
   #pitch{ max-width:min(300px, 55vh); }
 }
@@ -440,6 +525,9 @@ body.dark-theme .live-match-modal{border-color:#2a7a40}
 .row-selected td:first-child{box-shadow:-2px 0 0 var(--gold), 0 -2px 0 var(--gold), 0 2px 0 var(--gold)}
 .row-selected td:last-child{box-shadow:2px 0 0 var(--gold), 0 -2px 0 var(--gold), 0 2px 0 var(--gold)}
 .row-selected td:not(:first-child):not(:last-child){box-shadow:0 -2px 0 var(--gold), 0 2px 0 var(--gold)}
+/* Resaltado temporal al pulsar el círculo de un jugador en el campo —
+   distinto del dorado del sistema de cambios, para no confundirlos. */
+.row-pitch-highlight td{background:rgba(74,144,217,.28) !important;transition:background .6s ease}
 #convocadosTable tbody tr:hover td,#benchTable tbody tr:hover td{background:#f0f7f0}
 
 /* HOW TO PLAY GUIDE */

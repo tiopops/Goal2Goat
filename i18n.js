@@ -699,6 +699,8 @@ window.TRANSLATIONS = {
   'weather.wind.desc': {es:'Juego directo · PASE -15%', en:'Direct play · PASSING -15%', pt:'Jogo direto · PASSE -15%', fr:'Jeu direct · PASSE -15%', de:'Direktes Spiel · PASS -15%', it:'Gioco diretto · PASSAGGIO -15%'},
   'weather.hot.label': {es:'🌡 Calor extremo', en:'🌡 Extreme heat', pt:'🌡 Calor extremo', fr:'🌡 Chaleur extrême', de:'🌡 Extreme Hitze', it:'🌡 Calore estremo'},
   'weather.hot.desc': {es:'Fatiga máxima · RITMO -25%, DEFENSA -10%', en:'Maximum fatigue · PACE -25%, DEFENCE -10%', pt:'Fadiga máxima · RITMO -25%, DEFESA -10%', fr:'Fatigue maximale · VITESSE -25%, DÉFENSE -10%', de:'Maximale Ermüdung · TEMPO -25%, VERTEIDIGUNG -10%', it:'Fatica massima · RITMO -25%, DIFESA -10%'},
+  'weather.snow.label': {es:'❄ Nieve', en:'❄ Snow', pt:'❄ Neve', fr:'❄ Neige', de:'❄ Schnee', it:'❄ Neve'},
+  'weather.snow.desc': {es:'Campo resbaladizo · RITMO -18%, PASE -10%', en:'Slippery pitch · PACE -18%, PASSING -10%', pt:'Campo escorregadio · RITMO -18%, PASSE -10%', fr:'Terrain glissant · VITESSE -18%, PASSE -10%', de:'Rutschiger Platz · TEMPO -18%, PASSSPIEL -10%', it:'Campo scivoloso · RITMO -18%, PASSAGGIO -10%'},
 
   /* ── ESTRATEGIA ── */
   'strategy.title': {es:'ESTRATEGIA', en:'STRATEGY', pt:'ESTRATÉGIA', fr:'STRATÉGIE', de:'STRATEGIE', it:'STRATEGIA'},
