@@ -731,20 +731,29 @@ window.openCrestEditor = openCrestEditor;
 /* ===== Ver escudo en grande al hacer clic ===== */
 // Delegación de eventos: funciona con cualquier miniatura de escudo,
 // incluidas las que se crean dinámicamente después (cabecera de
-// partido, panel de rival...), sin tener que enganchar el clic una
-// por una en cada sitio donde aparece un escudo.
+// partido, panel de rival, lista de amigos...), sin tener que
+// enganchar el clic una por una en cada sitio donde aparece un escudo.
 document.addEventListener('click', (e)=>{
-  const thumb = e.target.closest('.crest-thumb-svg, .crest-rival-thumb-svg, .crest-header-icon');
+  const thumb = e.target.closest('.crest-thumb-svg, .crest-rival-thumb-svg, .crest-header-icon, .mp-friend-crest');
   if(!thumb) return;
+  if(thumb.classList.contains('mp-friend-crest')){
+    // Escudo de un amigo cualquiera en la lista de multijugador — los
+    // datos van en atributos data-*, puestos al construir la fila,
+    // porque no hay una única "imagen del rival" global aquí.
+    const img=thumb.dataset.crestImg||null;
+    const data=thumb.dataset.crestData?JSON.parse(thumb.dataset.crestData):null;
+    if(!img && !data) return;
+    showCrestEnlarged(img, data);
+    return;
+  }
   const isRival = thumb.classList.contains('crest-rival-thumb-svg');
-  const data = isRival ? (window._rivalCrestImage||window._rivalCrestData) : (window._myCrestImage||window._myCrestData);
-  if(!data) return; // sin escudo propio guardado, no hay nada que ampliar
-  showCrestEnlarged(isRival);
-});
-
-function showCrestEnlarged(isRival){
   const img = isRival ? window._rivalCrestImage : window._myCrestImage;
   const data = isRival ? window._rivalCrestData : window._myCrestData;
+  if(!img && !data) return; // sin escudo propio guardado, no hay nada que ampliar
+  showCrestEnlarged(img, data);
+});
+
+function showCrestEnlarged(img, data){
   const inner = img
     ? `<img src="${img}" style="width:100%;height:100%;object-fit:cover;border-radius:8px">`
     : `<svg viewBox="0 0 200 200" style="width:100%;height:100%">${buildCrestSVGInner(data)}</svg>`;

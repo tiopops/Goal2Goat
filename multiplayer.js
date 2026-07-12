@@ -295,7 +295,7 @@ async function renderFriendsList(){
         h2hText=(tk('mp.you_trail')||'Va ganando')+` <span style="color:#e74c3c;font-weight:bold">${f.h2hLosses}-${f.h2hWins}</span>`;
       }
       row.innerHTML=`
-        <div class="mp-friend-crest">${crestInner}<span class="mp-online-dot${f.online?'':' off'}"></span></div>
+        <div class="mp-friend-crest" data-crest-img="${f.crestImage?mpEsc(f.crestImage):''}" data-crest-data="${f.crestData?mpEsc(JSON.stringify(f.crestData)):''}">${crestInner}<span class="mp-online-dot${f.online?'':' off'}"></span></div>
         <div class="mp-friend-info">
           <div class="mp-friend-name">${mpEsc(f.username||'???')}</div>
           <div class="mp-friend-h2h">${h2hText}</div>
@@ -304,31 +304,13 @@ async function renderFriendsList(){
           <button class="mp-challenge-btn mp-btn-primary-play" data-uid="${f.uid}" data-username="${mpEsc(f.username||'')}" title="${tk('mp.challenge')}">
             <i class="ph ph-bold ph-play"></i><span>${tk('mp.play_short')||'JUGAR'}</span>
           </button>
-          <button class="mp-friend-menu-btn" data-menu-id="${f.id}" title="Más opciones"><i class="ph ph-bold ph-dots-three-vertical"></i></button>
-          <div class="mp-friend-menu" id="mpFriendMenu_${f.id}" style="display:none">
-            <button class="mp-menu-item mp-challenge-btn" data-uid="${f.uid}" data-username="${mpEsc(f.username||'')}" data-penalties-test="1">
-              <i class="ph ph-bold ph-soccer-ball"></i> ${tk('mp.penalties_short')||'Tanda de penaltis'}
-            </button>
-            <button class="mp-menu-item mp-remove-btn" data-id="${f.id}" data-username="${mpEsc(f.username||'')}" style="color:#ff7e7e">
-              <i class="ph ph-bold ph-trash"></i> ${tk('mp.remove')||'Eliminar amigo'}
-            </button>
-          </div>
+          <button class="mp-challenge-btn mp-btn-primary-play" data-uid="${f.uid}" data-username="${mpEsc(f.username||'')}" data-penalties-test="1" title="Reto directo a una tanda de penaltis, sin jugar partidos">
+            <i class="ph ph-bold ph-soccer-ball"></i><span>${tk('mp.penalties_short')||'Tanda de penaltis'}</span>
+          </button>
+          <button class="mp-remove-btn mp-btn-remove" data-id="${f.id}" data-username="${mpEsc(f.username||'')}" title="${tk('mp.remove')||'Eliminar amigo'}"><i class="ph ph-bold ph-trash"></i></button>
         </div>`;
       list.appendChild(row);
     });
-    // Cerrar cualquier menú "···" abierto si se pulsa fuera de él
-    document.addEventListener('click', (e)=>{
-      if(!e.target.closest('.mp-friend-actions')){
-        document.querySelectorAll('.mp-friend-menu').forEach(m=>m.style.display='none');
-      }
-    });
-    list.querySelectorAll('.mp-friend-menu-btn').forEach(b=>b.addEventListener('click',(e)=>{
-      e.stopPropagation();
-      const menu=document.getElementById('mpFriendMenu_'+b.dataset.menuId);
-      const wasOpen=menu&&menu.style.display==='block';
-      document.querySelectorAll('.mp-friend-menu').forEach(m=>m.style.display='none');
-      if(menu) menu.style.display=wasOpen?'none':'block';
-    }));
     list.querySelectorAll('.mp-remove-btn').forEach(b=>b.addEventListener('click',()=>{ playSound('select'); mpRemoveFriend(b.dataset.id, b.dataset.username); }));
     list.querySelectorAll('.mp-challenge-btn').forEach(b=>b.addEventListener('click',()=>{
       if(b.dataset.penaltiesTest) mpChallengeFriendPenaltiesTest(b.dataset.uid, b.dataset.username, b);

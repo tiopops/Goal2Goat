@@ -2131,7 +2131,7 @@ body.light-theme #achievementsList [style*="text-muted"]{
 .mp-friend-crest{
   width:38px;height:38px;border-radius:8px;background:var(--panel);
   display:flex;align-items:center;justify-content:center;position:relative;flex-shrink:0;
-  overflow:hidden;
+  overflow:hidden;cursor:pointer;
 }
 .mp-online-dot{
   position:absolute;bottom:-2px;right:-2px;width:11px;height:11px;border-radius:50%;
@@ -2144,28 +2144,13 @@ body.light-theme #achievementsList [style*="text-muted"]{
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
 }
 .mp-friend-h2h{font-size:11px;color:var(--text-muted);margin-top:1px}
-.mp-friend-actions{display:flex;align-items:center;gap:6px;flex-shrink:0;position:relative}
+.mp-friend-actions{display:flex;align-items:center;gap:6px;flex-shrink:0}
 .mp-btn-primary-play{
-  background:var(--gold);color:#000;border:none;border-radius:5px;padding:7px 12px;
-  font-family:'Bebas Neue',Impact,sans-serif;font-size:12px;letter-spacing:.5px;
-  display:flex;align-items:center;gap:5px;cursor:pointer;transition:.15s;
+  background:var(--gold);color:#000;border:none;border-radius:5px;padding:7px 10px;
+  font-family:'Bebas Neue',Impact,sans-serif;font-size:11px;letter-spacing:.3px;
+  display:flex;align-items:center;gap:5px;cursor:pointer;transition:.15s;white-space:nowrap;
 }
 .mp-btn-primary-play:hover{opacity:.85}
-.mp-friend-menu-btn{
-  width:30px;height:30px;border-radius:5px;background:none;border:1px solid var(--line);
-  color:var(--text-muted);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;
-}
-.mp-friend-menu-btn:hover{border-color:var(--gold);color:var(--gold)}
-.mp-friend-menu{
-  position:absolute;top:36px;right:0;background:var(--card-bg);border:1px solid var(--line);
-  border-radius:6px;overflow:hidden;z-index:20;min-width:170px;box-shadow:0 6px 18px rgba(0,0,0,.4);
-}
-.mp-menu-item{
-  display:flex;align-items:center;gap:8px;width:100%;padding:9px 12px;background:none;border:none;
-  color:var(--text);font-size:12px;font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:.3px;
-  cursor:pointer;text-align:left;
-}
-.mp-menu-item:hover{background:rgba(255,255,255,.06)}
 .mp-stat-row{padding:5px 0;border-bottom:1px solid rgba(255,255,255,.06);display:flex;justify-content:space-between;gap:8px;color:var(--text-muted);font-size:12px}
 .mp-stat-row span:first-child{color:var(--text)}
 .mp-stat-row:last-child{border-bottom:none}
