@@ -5394,16 +5394,19 @@ function syncThemeToggleUI(isDark){
 
 // Restore saved preferences on load
 (function restorePrefs(){
-  // Welcome popup: solo una vez por sesión del navegador — se guarda en
-  // sessionStorage, que se borra al cerrar la pestaña/navegador, pero
-  // NO al simplemente recargar la página. Así no molesta en cada
-  // actualización durante una misma visita.
+  // Welcome popup: el navegador ya sabe distinguir entre "recargar la
+  // página actual" (F5, botón actualizar, o location.reload() desde
+  // el propio juego al abandonar/terminar un torneo) y "cargar de
+  // cero" (pestaña nueva, URL escrita a mano). Se usa esa señal
+  // directamente en vez de guardar nada — así no depende de que algo
+  // se guarde y recupere bien entre recargas.
   try{
     const o=document.getElementById("welcomeOverlay");
-    const alreadyShown=sessionStorage.getItem('g2g_welcome_shown')==='1';
-    if(o && !window._duelId && !alreadyShown){
+    const navEntries=performance.getEntriesByType&&performance.getEntriesByType("navigation");
+    const navType=(navEntries&&navEntries[0]&&navEntries[0].type)||"navigate";
+    const isReload=(navType==="reload");
+    if(o && !window._duelId && !isReload){
       o.style.display="flex";
-      sessionStorage.setItem('g2g_welcome_shown','1');
     }
   }catch(e){}
   syncAudioToggleUI();
