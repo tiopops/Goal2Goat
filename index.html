@@ -93,7 +93,7 @@
       title="Volver al inicio"
       onerror="this.style.display='none';document.getElementById('logoFallback').style.display='block'">
     <span id="logoFallback" style="display:none;font-family:'Bebas Neue',Impact,sans-serif;font-size:26px;letter-spacing:3px;color:#c9a227;cursor:pointer;line-height:1" onclick="location.reload()">GOAL2GOAT</span>
-    <div class="version-tag">v0.51</div>
+    <div class="version-tag">v0.55</div>
   </div>
   <div class="app-header-actions">
     <a href="https://ko-fi.com/goal2goat" target="_blank" class="support-btn" style="text-decoration:none;display:inline-flex;align-items:center;justify-content:center" data-i18n="app.support">APOYA A GOAL2GOAT</a>
@@ -273,7 +273,7 @@
         </div>
 
         <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;align-items:center">
-          <button onclick="window.showPatchNotes()" style="background:none;border:none;cursor:pointer;font-family:'Bebas Neue',Impact,sans-serif;font-size:13px;letter-spacing:1px;color:var(--gold);padding:0;text-decoration:underline" data-i18n="settings.patch_notes">NOTAS v0.51</button>
+          <button onclick="window.showPatchNotes()" style="background:none;border:none;cursor:pointer;font-family:'Bebas Neue',Impact,sans-serif;font-size:13px;letter-spacing:1px;color:var(--gold);padding:0;text-decoration:underline" data-i18n="settings.patch_notes">NOTAS v0.55</button>
         </div>
 
         <!-- CHEATS: solo visible para tiopops -->
@@ -345,6 +345,19 @@
     <button onclick="document.getElementById('patchNotesOverlay').style.display='none'" class="auth-close" style="position:absolute;top:12px;right:14px">✕</button>
     <div class="auth-logo" style="font-size:16px" data-i18n="patch.title">📋 NOTAS DE LA VERSIÓN</div>
     <div class="version-notes-scroll">
+      <h4 data-i18n="patch.v055_title">v0.55 — Clima interactivo y Ajuste Táctico</h4>
+      <ul>
+        <li data-i18n="patch.v055_1">El CLIMA ahora se ve de verdad sobre el campo — lluvia, nieve, viento, sol y calor extremo, cada uno con su propio efecto visual. Nuevo clima añadido: NIEVE.</li>
+        <li data-i18n="patch.v055_2">Nueva mejora AJUSTE TÁCTICO: redistribuye puntos entre ATAQUE, DEFENSA, RITMO, PASE y TÉCNICA durante todo el torneo, para compensar el clima o una mala racha en el draft.</li>
+        <li data-i18n="patch.v055_3">Rebalanceado el peso de PASE, TÉCNICA y RITMO en el resultado del partido — las formaciones centradas en juego de apoyo ahora importan de verdad.</li>
+        <li data-i18n="patch.v055_4">La lista de multijugador renovada de arriba a abajo: escudo de cada amigo, punto de conexión en tiempo real, cara a cara con cada uno, y botones reorganizados.</li>
+        <li data-i18n="patch.v055_5">El clima y el Ajuste Táctico ya también afectan a los duelos multijugador, con el mismo clima visible para los dos jugadores a la vez.</li>
+        <li data-i18n="patch.v055_6">Nuevo botón para ver el escudo en grande tocándolo, en cualquier sitio donde aparezca — incluida la lista de amigos.</li>
+        <li data-i18n="patch.v055_7">Los jugadores fuera de su posición natural ahora se marcan en rojo, tanto en el campo como en la lista de convocados.</li>
+        <li data-i18n="patch.v055_8">Pulsar el círculo de un jugador en el campo ahora lo selecciona también en CONVOCADOS, y viceversa — funcionan como un único sistema.</li>
+        <li data-i18n="patch.v055_9">El juego ya se puede instalar como aplicación desde el navegador, sin pasar por la tienda de aplicaciones.</li>
+        <li data-i18n="patch.v055_10">Corregidos varios fallos: el aviso de bienvenida ya no reaparece en cada recarga, los retos duplicados en multijugador, y un intercambio de jugadores que a veces pintaba mal las posiciones en el campo.</li>
+      </ul>
       <h4 data-i18n="patch.v051_title">v0.51 — Compartir equipo y nuevos logros</h4>
       <ul>
         <li data-i18n="patch.v051_1">Nuevo botón para COMPARTIR TU EQUIPO desde el campo — formación, alineación, banquillo y nota media, listo para mandar a un amigo por WhatsApp.</li>

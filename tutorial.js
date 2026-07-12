@@ -35,20 +35,26 @@
         text: '<strong>SELECCIONAR JUGADOR</strong> te permite elegir a tus jugadores de uno en uno de manera aleatoria entre varias selecciones al azar hasta completar tu equipo.<br><br><strong>EQUIPO RÁPIDO</strong> generará por ti una selección completamente al azar para empezar a jugar inmediatamente.'
       },
       {
+        selector: '#teamProfileBox',
+        mockPreview: 'teamprofile',
+        title: '3 · El perfil de tu equipo',
+        text: 'Aquí verás de un vistazo cómo queda tu equipo: ATAQUE, DEFENSA, RITMO, PASE y TÉCNICA, según los jugadores que vayas fichando. Te mostramos unos valores de ejemplo al azar para que veas cómo se ve.<br><br>Más adelante, durante el torneo, podrás usar el <strong>Ajuste Táctico</strong> para mover puntos entre estas estadísticas y compensar el clima o una mala racha en el draft.'
+      },
+      {
         selector: '#pitchBox',
         mockPreview: 'pitch',
-        title: '3 · La posición ★ importa',
+        title: '4 · La posición ★ importa',
         text: 'Coloca a cada jugador en su posición natural y aparecerá marcado con una ★, rindiendo al máximo. Fuera de sitio, rendirá peor.<br><br>Entre partido y partido puedes hacer cambios para rotar a quien necesite descanso, evitar sanciones o recuperarse de una lesión.'
       },
       {
         selector: null,
         mockPreview: 'strategy',
-        title: '4 · Elige estrategia antes de cada partido',
+        title: '5 · Elige estrategia antes de cada partido',
         text: 'Antes de cada partido del torneo podrás elegir una estrategia para contrarrestar el juego del rival. Lee detenidamente el estilo de juego del contrincante, pues una estrategia correcta te dará una ventaja real en el resultado. Para que veas cómo es, hemos cargado un rival al azar a modo de ejemplo.'
       },
       {
         selector: () => isMobileLayout() ? '#mobileTabBar' : '.app',
-        title: '5 · Tu centro de mando',
+        title: '6 · Tu centro de mando',
         text: () => (isMobileLayout()
           ? 'En el móvil, estas pestañas de abajo cambian entre el campo, tu equipo, el rival y el historial — todo está siempre a un toque.'
           : 'En escritorio tienes tu plantilla, el campo y la información del rival visibles los tres a la vez, sin necesidad de cambiar de pantalla.')
@@ -64,18 +70,21 @@
 
   // ───────── Vistas previas seguras (leen datos reales, nunca dejan
   // nada a medias) ─────────
-  let activePreviewKind = null; // null | 'strategy' | 'pitch'
+  let activePreviewKind = null; // null | 'strategy' | 'pitch' | 'teamprofile'
   let savedMobileTab, savedRivalHTML, savedHintHTML, savedStrategyHTML, savedRivalBoxDisplay;
+  let savedTeamProfileHTML, savedTeamProfileDisplay;
   let savedPitchSlotsHTML = [];
 
   function setupRealPreview(kind){
     if(kind === 'pitch'){ setupPitchPreview(); return; }
     if(kind === 'strategy'){ setupStrategyPreview(); return; }
+    if(kind === 'teamprofile'){ setupTeamProfilePreview(); return; }
   }
 
   function restoreRealPreview(){
     if(activePreviewKind === 'strategy') restoreStrategyPreview();
     else if(activePreviewKind === 'pitch') restorePitchPreview();
+    else if(activePreviewKind === 'teamprofile') restoreTeamProfilePreview();
     activePreviewKind = null;
   }
 
@@ -141,6 +150,67 @@
     if(rivalHintEl) rivalHintEl.textContent = savedHintHTML;
     if(strategyEl){ strategyEl.innerHTML = savedStrategyHTML; strategyEl.style.pointerEvents = ''; }
 
+    if(savedMobileTab && isMobileLayout() && typeof switchMobileTab === 'function'){
+      switchMobileTab(savedMobileTab);
+    }
+    savedMobileTab = null;
+  }
+
+  function setupTeamProfilePreview(){
+    const box = document.getElementById('teamProfileBox');
+    if(!box) return;
+
+    activePreviewKind = 'teamprofile';
+    savedTeamProfileDisplay = box.style.display;
+    savedTeamProfileHTML = box.innerHTML;
+
+    box.style.display = 'block';
+
+    // Estadísticas de ejemplo, al azar, solo para que se vea cómo
+    // queda lleno — no son datos reales de ningún equipo.
+    const rand = (min,max) => Math.floor(min + Math.random()*(max-min));
+    const stats = {
+      attack: rand(60,88), defense: rand(60,88), pace: rand(60,88),
+      passing: rand(60,88), technique: rand(60,88)
+    };
+    const ovr = Math.round((stats.attack+stats.defense+stats.pace+stats.passing+stats.technique)/5);
+    const statRow = (key,label) => `
+      <div class="stat-row"><span>${label}</span><span>${stats[key]}</span></div>
+      <div class="stat-bar-row">
+        <button class="tactadj-btn tactadj-minus" disabled>−</button>
+        <div class="stat-bar"><div style="width:${stats[key]}%"></div></div>
+        <button class="tactadj-btn tactadj-plus" disabled>+</button>
+      </div>`;
+    box.innerHTML = `
+      <h3>PERFIL DEL EQUIPO</h3>
+      <div class="ovr-team"><span class="team-stat-title">NOTA MEDIA</span><span>${ovr}</span></div>
+      ${statRow('attack','ATAQUE')}
+      ${statRow('defense','DEFENSA')}
+      ${statRow('pace','RITMO')}
+      ${statRow('passing','PASE')}
+      ${statRow('technique','TÉCNICA')}
+      <div class="star-bonus-row" style="display:flex">
+        <span style="visibility:hidden">·</span>
+        <span style="margin-left:auto;display:inline-flex;align-items:center;gap:4px">
+          <i class="ph ph-bold ph-scales" style="font-size:13px;color:var(--gold)"></i> Ajuste Táctico: <b>5</b>
+        </span>
+      </div>`;
+    box.style.pointerEvents = 'none';
+
+    if(isMobileLayout() && typeof switchMobileTab === 'function'){
+      const activeTab = document.querySelector('.mob-tab.active');
+      savedMobileTab = activeTab ? activeTab.dataset.tab : 'campo';
+      switchMobileTab('equipo');
+    }
+  }
+
+  function restoreTeamProfilePreview(){
+    const box = document.getElementById('teamProfileBox');
+    if(box){
+      box.innerHTML = savedTeamProfileHTML;
+      box.style.display = savedTeamProfileDisplay;
+      box.style.pointerEvents = '';
+    }
     if(savedMobileTab && isMobileLayout() && typeof switchMobileTab === 'function'){
       switchMobileTab(savedMobileTab);
     }
