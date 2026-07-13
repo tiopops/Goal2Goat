@@ -7275,7 +7275,7 @@ async function renderSkillsTab(){
       btn.className='skill-toggle-btn';
       btn.dataset.id=def.id;
       // Mismo tamaño para todos: height fijo con flex column centrado
-      btn.style.cssText=`display:flex;flex-direction:column;align-items:center;justify-content:space-between;gap:0;border:2px solid ${active?'var(--gold)':'var(--line)'};background:${active?'rgba(201,162,39,.12)':'var(--panel)'};color:${active?'var(--gold)':'var(--text)'};cursor:${skillsLocked?'not-allowed':'pointer'};transition:.15s;text-align:center;width:100%;box-sizing:border-box;overflow:hidden;height:172px;opacity:${skillsLocked?.55:1}`;
+      btn.style.cssText=`display:flex;flex-direction:column;align-items:center;justify-content:space-between;gap:0;border:2px solid ${active?'var(--gold)':'var(--line)'};background:${active?'rgba(201,162,39,.12)':'var(--panel)'};color:${active?'var(--gold)':'var(--text)'};cursor:${skillsLocked?'not-allowed':'pointer'};transition:.15s;text-align:center;width:100%;box-sizing:border-box;overflow:hidden;height:200px;opacity:${skillsLocked?.55:1}`;
       const iconPart=`<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;padding:12px 8px 8px;flex:1">
         <span style="color:${active?'var(--gold)':'var(--accent)'}">${def.icon.replace(/width="22"/g,'width="26"').replace(/height="22"/g,'height="26"')}</span>
         <span style="font-family:'Bebas Neue',Impact,sans-serif;font-size:13px;letter-spacing:.8px;color:${active?'var(--gold)':'var(--text)'};line-height:1.1">${def.name}</span>
