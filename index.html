@@ -83,7 +83,7 @@
   document.write('<link rel="stylesheet" href="style.css?v=' + Date.now() + '">');
 </script>
 </head>
-<body class="dark-theme">
+<body class="dark-theme menu-screen">
 
 <!-- FULL-WIDTH APP HEADER -->
 <header id="appHeader">
@@ -560,6 +560,54 @@
 </div>
 </header>
 
+<!-- ============================================================
+     MAIN MENU — selector de modo (Copa Leyendas / Liga Manager)
+     Módulo independiente: HTML aquí, estilos en style.css bajo
+     "MAIN MENU", lógica en main-menu.js. No depende de game.js
+     para renderizarse; solo lo usa opcionalmente (showToast) si
+     ya está disponible.
+     ============================================================ -->
+<div id="mainMenuScreen">
+  <div class="menu-bg"></div>
+  <div class="menu-content">
+    <img class="menu-title-img" src="assets/images/goal2goat_tittle.png" alt="Goal2Goat">
+    <p class="menu-tagline" data-i18n="menu.tagline">CONSTRUYE TU LEYENDA. GANA LA GLORIA.</p>
+
+    <div class="menu-modes">
+
+      <!-- COPA LEYENDAS — modo activo (juego actual) -->
+      <div class="mode-card mode-card-copa" id="modeCardCopa" role="button" tabindex="0" aria-label="Copa Leyendas">
+        <div class="mode-card-image" style="background-image:url('assets/images/copa_leyendas.png')"></div>
+        <div class="mode-card-body">
+          <span class="mode-card-tag mode-card-tag-gold" data-i18n="menu.mode_label">MODO</span>
+          <h2 class="mode-card-title mode-card-title-gold" data-i18n="menu.copa_title">COPA LEYENDAS</h2>
+          <div class="mode-card-stars mode-card-stars-gold">★★★★★</div>
+          <p class="mode-card-desc" data-i18n="menu.copa_desc">Torneo de eliminación. Forma tu selección de leyendas históricas y conquista la copa. Juega solo o en Multijugador.</p>
+          <button class="mode-card-btn mode-card-btn-gold" id="modeCardCopaBtn" type="button">
+            <span data-i18n="menu.copa_play">JUGAR AHORA</span> <i class="ph ph-bold ph-arrow-right"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- LIGA MANAGER — modo por implementar, deshabilitado -->
+      <div class="mode-card mode-card-liga mode-card-disabled" id="modeCardLiga" aria-disabled="true" aria-label="Liga Manager">
+        <span class="mode-card-badge" data-i18n="menu.liga_badge">PRÓXIMAMENTE</span>
+        <div class="mode-card-image" style="background-image:url('assets/images/liga_Manager.png')"></div>
+        <div class="mode-card-body">
+          <span class="mode-card-tag mode-card-tag-blue" data-i18n="menu.mode_label">MODO</span>
+          <h2 class="mode-card-title mode-card-title-blue" data-i18n="menu.liga_title">LIGA MANAGER</h2>
+          <div class="mode-card-stars mode-card-stars-blue">★★★★★</div>
+          <p class="mode-card-desc" data-i18n="menu.liga_desc">Gestiona tu club. Fichajes, táctica, entrenamiento y mucho más. Una carrera de fondo hacia la gloria.</p>
+          <button class="mode-card-btn mode-card-btn-disabled" id="modeCardLigaBtn" type="button" aria-disabled="true">
+            <span data-i18n="menu.liga_badge">PRÓXIMAMENTE</span>
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
 <div class="app">
 
   <!-- LEFT PANEL -->
@@ -923,6 +971,7 @@
 <script>
   // Cache-busting: force fresh game.js on every page load/refresh
   document.write('<script src="game.js?v=' + Date.now() + '"><\/script>');
+  document.write('<script src="main-menu.js?v=' + Date.now() + '"><\/script>');
   document.write('<script src="upgrades-data.js?v=' + Date.now() + '"><\/script>');
   document.write('<script src="skills-data.js?v=' + Date.now() + '"><\/script>');
   document.write('<script src="achievements-data.js?v=' + Date.now() + '"><\/script>');

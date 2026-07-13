@@ -8,6 +8,17 @@ window.LANG = 'es';
 
 window.TRANSLATIONS = {
 
+  /* ── MAIN MENU (selector de modo) ── */
+  'menu.tagline': {es:'CONSTRUYE TU LEYENDA. GANA LA GLORIA.', en:'BUILD YOUR LEGEND. WIN THE GLORY.', pt:'CONSTRUA SUA LENDA. CONQUISTE A GLÓRIA.', fr:'CONSTRUIS TA LÉGENDE. REMPORTE LA GLOIRE.', de:'BAUE DEINE LEGENDE. HOL DIR DEN RUHM.', it:'COSTRUISCI LA TUA LEGGENDA. CONQUISTA LA GLORIA.'},
+  'menu.mode_label': {es:'MODO', en:'MODE', pt:'MODO', fr:'MODE', de:'MODUS', it:'MODALITÀ'},
+  'menu.copa_title': {es:'COPA LEYENDAS', en:'LEGENDS CUP', pt:'COPA LENDAS', fr:'COUPE DES LÉGENDES', de:'LEGENDEN-POKAL', it:'COPPA LEGGENDE'},
+  'menu.copa_desc': {es:'Torneo de eliminación. Forma tu selección de leyendas históricas y conquista la copa. Juega solo o en Multijugador.', en:'Knockout tournament. Build your squad of historic legends and conquer the cup. Play solo or in Multiplayer.', pt:'Torneio eliminatório. Monte sua seleção de lendas históricas e conquiste a taça. Jogue sozinho ou em Multijogador.', fr:'Tournoi à élimination directe. Constitue ta sélection de légendes historiques et conquiers la coupe. Joue en solo ou en multijoueur.', de:'K.-o.-Turnier. Stelle dein Team aus historischen Legenden zusammen und hol dir den Pokal. Spiele allein oder im Mehrspielermodus.', it:'Torneo a eliminazione diretta. Crea la tua selezione di leggende storiche e conquista la coppa. Gioca da solo o in Multiplayer.'},
+  'menu.copa_play': {es:'JUGAR AHORA', en:'PLAY NOW', pt:'JOGAR AGORA', fr:'JOUER MAINTENANT', de:'JETZT SPIELEN', it:'GIOCA ORA'},
+  'menu.liga_title': {es:'LIGA MANAGER', en:'LEAGUE MANAGER', pt:'LIGA MANAGER', fr:'LIGUE MANAGER', de:'LIGA MANAGER', it:'LIGA MANAGER'},
+  'menu.liga_desc': {es:'Gestiona tu club. Fichajes, táctica, entrenamiento y mucho más. Una carrera de fondo hacia la gloria.', en:'Manage your club. Transfers, tactics, training and much more. A long road to glory.', pt:'Gerencie seu clube. Contratações, tática, treinos e muito mais. Uma corrida de fundo rumo à glória.', fr:'Gère ton club. Transferts, tactique, entraînement et bien plus encore. Une course de fond vers la gloire.', de:'Verwalte deinen Verein. Transfers, Taktik, Training und vieles mehr. Ein langer Weg zum Ruhm.', it:'Gestisci il tuo club. Trattative, tattica, allenamento e molto altro. Una corsa di fondo verso la gloria.'},
+  'menu.liga_badge': {es:'PRÓXIMAMENTE', en:'COMING SOON', pt:'EM BREVE', fr:'BIENTÔT', de:'DEMNÄCHST', it:'PROSSIMAMENTE'},
+  'menu.liga_soon': {es:'Disponible muy pronto', en:'Available very soon', pt:'Disponível muito em breve', fr:'Disponible très bientôt', de:'Bald verfügbar', it:'Disponibile molto presto'},
+
   /* ── UI GENERAL ── */
   'app.support': {es:'APOYA A GOAL2GOAT', en:'SUPPORT GOAL2GOAT', pt:'APOIE O GOAL2GOAT', fr:'SOUTENEZ GOAL2GOAT', de:'GOAL2GOAT UNTERSTÜTZEN', it:'SUPPORTA GOAL2GOAT'},
 

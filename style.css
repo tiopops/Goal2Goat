@@ -2299,3 +2299,142 @@ body.light-theme .mp-search-input{background:#f5f1e8;border-color:#d4cec4;color:
 @media(max-width:1050px){
   #welcomeApkBanner{display:block!important}
 }
+
+/* ================================================================
+   MAIN MENU — selector de modo (Copa Leyendas / Liga Manager)
+   ------------------------------------------------------------
+   Sección autocontenida y añadida al final a propósito: no toca
+   ninguna regla existente. Todo el show/hide entre el menú y el
+   juego (.app / #mobileTabBar) se resuelve por especificidad CSS
+   a partir de la clase body.menu-screen, para ganar siempre a las
+   reglas responsive existentes (que usan !important) sin tener
+   que reordenarlas ni tocarlas.
+   ================================================================ */
+
+#mainMenuScreen{
+  display:none;
+  flex:1;min-height:0;
+  position:relative;
+  overflow-y:auto;
+  background:#0d0d0d;
+}
+body.menu-screen #mainMenuScreen{display:flex!important}
+body.menu-screen .app{display:none!important}
+body.menu-screen #mobileTabBar{display:none!important}
+
+.menu-bg{
+  position:absolute;inset:0;z-index:0;
+  background:url('assets/images/wallaper_main_menu.png') center/cover no-repeat;
+}
+.menu-bg::after{
+  content:"";position:absolute;inset:0;
+  background:radial-gradient(ellipse at 50% 30%,rgba(0,0,0,.1) 0%,rgba(0,0,0,.6) 100%);
+}
+
+.menu-content{
+  position:relative;z-index:1;
+  width:100%;margin:auto;
+  display:flex;flex-direction:column;align-items:center;
+  padding:56px 20px 60px;
+}
+
+.menu-title-img{width:100%;max-width:520px;height:auto;display:block;margin:0 auto 6px;filter:drop-shadow(0 6px 18px rgba(0,0,0,.5))}
+
+.menu-tagline{
+  font-family:'Bebas Neue',Impact,sans-serif;
+  letter-spacing:3px;font-size:15px;
+  color:#e7c766;text-align:center;
+  margin-bottom:40px;
+}
+
+.menu-modes{
+  display:flex;gap:32px;justify-content:center;align-items:stretch;
+  flex-wrap:wrap;width:100%;max-width:1000px;margin:0 auto;
+}
+
+.mode-card{
+  position:relative;
+  width:440px;max-width:100%;
+  background:rgba(10,12,13,.85);
+  border-radius:14px;
+  border:2px solid var(--line);
+  overflow:hidden;
+  display:flex;flex-direction:column;
+  transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease;
+  cursor:pointer;
+}
+.mode-card:hover{transform:translateY(-4px)}
+
+.mode-card-copa{
+  border-color:var(--gold);
+  box-shadow:0 0 0 1px rgba(201,162,39,.25),0 20px 50px rgba(201,162,39,.08);
+}
+.mode-card-copa:hover{box-shadow:0 0 0 1px rgba(201,162,39,.55),0 24px 60px rgba(201,162,39,.2)}
+
+.mode-card-liga{
+  border-color:#3a4048;
+  cursor:not-allowed;
+}
+.mode-card-liga:hover{transform:translateY(-2px);border-color:#4a5560}
+
+.mode-card-badge{
+  position:absolute;top:14px;right:14px;z-index:3;
+  background:rgba(20,24,28,.88);border:1px solid #5a6470;color:#a7b0b9;
+  font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:1.5px;font-size:11px;
+  padding:5px 11px;border-radius:20px;
+}
+
+.mode-card-image{
+  width:100%;height:230px;
+  background-size:cover;background-position:center;
+}
+.mode-card-liga .mode-card-image{filter:grayscale(.6) brightness(.75)}
+
+.mode-card-body{
+  padding:22px 26px 26px;
+  display:flex;flex-direction:column;align-items:center;text-align:center;
+  flex:1;
+}
+
+.mode-card-tag{
+  font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:2px;font-size:12px;
+  padding:3px 14px;border-radius:3px;margin-bottom:10px;
+}
+.mode-card-tag-gold{background:var(--gold);color:#1a1400}
+.mode-card-tag-blue{background:#3a4048;color:#c3cad1}
+
+.mode-card-title{font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:1px;font-size:32px;margin-bottom:6px}
+.mode-card-title-gold{color:var(--gold)}
+.mode-card-title-blue{color:#8a95a0}
+
+.mode-card-stars{font-size:15px;letter-spacing:3px;margin-bottom:14px}
+.mode-card-stars-gold{color:var(--gold)}
+.mode-card-stars-blue{color:#4a5560}
+
+.mode-card-desc{font-size:13px;line-height:1.6;color:#c9c9c9;margin-bottom:22px;max-width:340px}
+.mode-card-liga .mode-card-desc{color:#8b929a}
+
+.mode-card-btn{
+  width:100%;padding:14px;border-radius:6px;border:none;
+  font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:1px;font-size:17px;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  cursor:pointer;margin-top:auto;transition:background .15s;
+}
+.mode-card-btn-gold{background:var(--gold);color:#1a1400}
+.mode-card-btn-gold:hover{background:#e0b82a}
+
+.mode-card-btn-disabled{background:#2c3238;color:#6d7680;cursor:not-allowed}
+.mode-card-btn-disabled:hover{background:#333a41}
+
+@media(max-width:1050px){
+  .menu-modes{flex-direction:column;align-items:center;gap:24px}
+  .mode-card{width:100%;max-width:460px}
+  .menu-content{padding:36px 16px 50px}
+  .menu-title-img{max-width:380px}
+  .menu-tagline{margin-bottom:28px}
+}
+@media(max-width:640px){
+  .mode-card-image{height:180px}
+  .mode-card-title{font-size:26px}
+  .menu-tagline{font-size:12px;letter-spacing:2px}
+}
