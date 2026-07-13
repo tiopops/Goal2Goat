@@ -591,7 +591,6 @@ function mpRenderStrategyAndBenchPhase(idx){
   }
   const rivalHint=document.getElementById('rivalHint');
   if(rivalHint) rivalHint.innerHTML=`<div class="style-label">${(tk('mp.duel_match_of')||'PARTIDO {0} DE 5').replace('{0}', String(idx+1))}</div>`;
-  const weatherDisplay=document.getElementById('weatherDisplay'); if(weatherDisplay) weatherDisplay.style.display='none';
 
   renderStrategySelector();
 
@@ -1111,12 +1110,25 @@ function mpStartPenaltyTimer(cur){
   // en el momento del plazo, evitando que los dos escriban casi a la
   // vez y se descuadre el historial entre ellos.
   const fallbackDeadline = sharedDeadline + 2500;
-  if(fill){ fill.style.transition='none'; fill.style.width='100%'; }
-  requestAnimationFrame(()=>{
-    requestAnimationFrame(()=>{ if(fill) fill.style.transition='width .1s linear'; });
-  });
+  // La barra es una transición CSS pura, de exactamente PENALTY_KICK_MS
+  // de duración — así el navegador la anima con su propio motor,
+  // garantizando que SIEMPRE tarda justo eso en vaciarse, sin depender
+  // para nada del temporizador de JS ni de cuándo llega a resolverse
+  // el lanzamiento (que puede tardar algo más por el margen extra del
+  // portero). Antes se recalculaba el ancho a mano en cada tick a
+  // partir del plazo de resolución, lo que hacía que la barra pudiera
+  // durar más o menos de 5 segundos según ese margen.
+  if(fill){
+    fill.style.transition='none';
+    fill.style.width='100%';
+    requestAnimationFrame(()=>{
+      requestAnimationFrame(()=>{
+        fill.style.transition=`width ${PENALTY_KICK_MS/1000}s linear`;
+        fill.style.width='0%';
+      });
+    });
+  }
   let autoCenterDone=false;
-  let barTotalMs=null; // se fija en el primer tick, una vez se sabe myDeadline
   mpPenTimerHandle=setInterval(()=>{
     const localRemainMs=Math.max(0, PENALTY_KICK_MS-(Date.now()-localStart));
     const remainSec=Math.ceil(localRemainMs/1000);
@@ -1134,18 +1146,6 @@ function mpStartPenaltyTimer(cur){
     const freshCurEarly=mpPenLatestCur||cur;
     const iAmShooterNow=freshCurEarly.shooterRole===window._duelRole;
     const myDeadline=iAmShooterNow?sharedDeadline:fallbackDeadline;
-
-    // La barra visual se calcula SIEMPRE a partir del mismo plazo real
-    // (myDeadline) que decide cuándo se fuerza la resolución — así,
-    // aunque este dispositivo haya tardado en recibir la actualización
-    // por la red, la barra llega exactamente a 0% justo cuando de
-    // verdad toca resolver, nunca antes. Antes usaba un contador local
-    // aparte de duración fija, que en dispositivos con más retraso de
-    // red podía quedarse a mitad de camino cuando el plazo compartido
-    // llegaba antes de que esa cuenta atrás local hubiera terminado.
-    if(barTotalMs===null) barTotalMs=Math.max(1, myDeadline-localStart);
-    const barRemainMs=Math.max(0, myDeadline-Date.now());
-    if(fill) fill.style.width=(barRemainMs/barTotalMs*100)+'%';
 
     if(Date.now()>=myDeadline){
       clearInterval(mpPenTimerHandle); mpPenTimerHandle=null;
