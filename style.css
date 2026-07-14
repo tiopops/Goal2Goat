@@ -2445,3 +2445,16 @@ body.menu-screen #profileTabAchievements{
 body.menu-screen #profileOverlay .auth-tabs{
   grid-template-columns:1fr;
 }
+
+/* El tema oscuro/claro es el único disponible por ahora: no tiene sentido
+   ofrecer el cambio antes de elegir un modo de juego. Se oculta tanto en
+   el desplegable del icono de ajustes del header como en la pestaña
+   AJUSTES del perfil (la única visible en el menú principal). */
+body.menu-screen #themeToggleHeader,
+body.menu-screen #themeToggle{
+  display:none!important;
+}
+body.menu-screen #audioToggleHeader,
+body.menu-screen #audioToggle{
+  border-bottom:none!important;
+}

@@ -71,6 +71,10 @@
     });
   }
 
+  function playClickSound(){
+    if(typeof window.playSound === 'function') window.playSound('select');
+  }
+
   function enterCopaLeyendas(){
     if(!document.body.classList.contains('menu-screen')) return; // ya dentro del juego
     document.body.classList.remove('menu-screen');
@@ -107,14 +111,19 @@
     if(copaBtn){
       copaBtn.addEventListener('click', function(e){
         e.stopPropagation();
+        playClickSound();
         enterCopaLeyendas();
       });
     }
     if(copaCard){
-      copaCard.addEventListener('click', enterCopaLeyendas);
+      copaCard.addEventListener('click', function(){
+        playClickSound();
+        enterCopaLeyendas();
+      });
       copaCard.addEventListener('keydown', function(e){
         if(e.key === 'Enter' || e.key === ' '){
           e.preventDefault();
+          playClickSound();
           enterCopaLeyendas();
         }
       });
@@ -126,6 +135,7 @@
       if(!el) return;
       el.addEventListener('click', function(e){
         e.stopPropagation();
+        playClickSound();
         notifyLigaManagerSoon();
       });
     });
