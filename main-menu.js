@@ -7,12 +7,18 @@
    game.js — solo usa window.showToast si ya existe (opcional).
 
    Mecanismo: se alterna la clase "menu-screen" en <body>.
-   Toda la visibilidad (mostrar/ocultar menú, .app, mobileTabBar)
-   se resuelve en CSS a partir de esa única clase (ver style.css,
-   sección "MAIN MENU"), así no hay que tocar estilos inline ni
-   duplicar lógica de layout responsive ya existente.
+   Toda la visibilidad (mostrar/ocultar menú, .app, mobileTabBar,
+   pestañas del perfil exclusivas de un modo) se resuelve en CSS
+   a partir de esa única clase (ver style.css, sección "MAIN
+   MENU"), así no hay que tocar estilos inline ni duplicar lógica
+   de layout responsive ya existente.
    ============================================================ */
 (function(){
+
+  // El navegador no debe "recordar" el scroll de la carga anterior:
+  // queremos decidir nosotros mismos dónde aparece el scroll en cada
+  // caso (ver resetGameScroll más abajo).
+  try{ if('scrollRestoration' in history) history.scrollRestoration = 'manual'; }catch(e){}
 
   /* ------------------------------------------------------------
      Volver directamente a Copa Leyendas tras una recarga interna
@@ -40,6 +46,7 @@
     if(sessionStorage.getItem(RETURN_FLAG) === '1'){
       sessionStorage.removeItem(RETURN_FLAG);
       document.body.classList.remove('menu-screen');
+      resetGameScroll();
     }
   }catch(e){ /* sessionStorage no disponible (privado/bloqueado): se ve el menú, sin más */ }
 
@@ -51,9 +58,23 @@
     location.reload();
   };
 
+  // Tanto al entrar en Copa Leyendas desde el menú como al volver tras una
+  // recarga interna, la página debe aparecer con el scroll arriba del todo
+  // (documento y cualquier panel con scroll propio), nunca a mitad de página.
+  function resetGameScroll(){
+    window.scrollTo(0,0);
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+    ['.left-panel','.center-panel','.right-panel'].forEach(function(sel){
+      const el = document.querySelector(sel);
+      if(el) el.scrollTop = 0;
+    });
+  }
+
   function enterCopaLeyendas(){
     if(!document.body.classList.contains('menu-screen')) return; // ya dentro del juego
     document.body.classList.remove('menu-screen');
+    resetGameScroll();
     // Por si algún componente (gráficos, canvas, etc.) necesita recalcular
     // tamaños ahora que .app pasa a ser visible y ocupa espacio real.
     window.dispatchEvent(new Event('resize'));
@@ -66,43 +87,17 @@
     }
   }
 
-  // Pestañas del perfil exclusivas de un modo de juego (aún no implementadas
-  // para Liga Manager): mientras estemos en el menú principal, bloquean el
-  // clic y avisan, en vez de abrir contenido de un modo que no se ha elegido.
-  var RESTRICTED_PROFILE_TABS = ['profileTabStats','profileTabUpgrades','profileTabNotes','profileTabAchievements'];
-
-  function notifyProfileTabLocked(){
-    const msg = (window.t) ? window.t('menu.profile_locked') : 'Elige un modo de juego para ver esto';
-    if(typeof window.showToast === 'function'){
-      window.showToast(msg, 'toast-neutral');
-    }
-  }
-
-  function guardProfileTabs(){
-    RESTRICTED_PROFILE_TABS.forEach(function(id){
-      const btn = document.getElementById(id);
-      if(!btn) return;
-      // Fase de captura: se ejecuta antes que el listener de game.js (fase de
-      // burbuja), así podemos frenar el cambio de pestaña sin tocar game.js.
-      btn.addEventListener('click', function(e){
-        if(document.body.classList.contains('menu-screen')){
-          e.stopImmediatePropagation();
-          e.preventDefault();
-          notifyProfileTabLocked();
-        }
-      }, true);
-    });
-
-    // Si el perfil se abre desde el menú principal, que siempre aterrice en
-    // AJUSTES (la única pestaña disponible sin haber elegido modo todavía).
+  // Si el perfil se abre desde el menú principal, que siempre aterrice en
+  // AJUSTES: las otras pestañas (Estadísticas, Mejoras, Habilidades, Logros)
+  // son de Copa Leyendas y se ocultan por CSS mientras no se elija un modo.
+  function wireProfileDefaultTab(){
     const profileBtn = document.getElementById('profileBtn');
-    if(profileBtn){
-      profileBtn.addEventListener('click', function(){
-        if(document.body.classList.contains('menu-screen') && typeof window.switchProfileTab === 'function'){
-          window.switchProfileTab('user');
-        }
-      });
-    }
+    if(!profileBtn) return;
+    profileBtn.addEventListener('click', function(){
+      if(document.body.classList.contains('menu-screen') && typeof window.switchProfileTab === 'function'){
+        window.switchProfileTab('user');
+      }
+    });
   }
 
   function wireMenu(){
@@ -135,7 +130,7 @@
       });
     });
 
-    guardProfileTabs();
+    wireProfileDefaultTab();
   }
 
   if(document.readyState === 'loading'){
