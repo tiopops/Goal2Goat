@@ -699,7 +699,7 @@ function mpWatchForMatchResult(){
   const unsub=db.collection('duels').doc(window._duelId).onSnapshot(async snap=>{
     const d=snap.data();
     if(!d) return;
-    if(d.status==='cancelled'){ unsub(); mpExitDuelMode(); location.reload(); return; }
+    if(d.status==='cancelled'){ unsub(); mpExitDuelMode(); window.G2G_reloadToGame(); return; }
     if(d[resultField]){ unsub(); mpPlayDuelMatchAnimation(d[resultField], d.challengerSquad, d.opponentSquad); return; }
     if(window._duelRole==='challenger' && d[chalKey]!==undefined && d[oppKey]!==undefined){
       unsub();
@@ -919,7 +919,7 @@ function mpPenaltyAttachListener(){
   mpPenListenerUnsub=db.collection('duels').doc(window._duelId).onSnapshot(snap=>{
     const d=snap.data();
     if(!d) return;
-    if(d.status==='cancelled'){ mpPenaltyDetachListener(); mpExitDuelMode(); location.reload(); return; }
+    if(d.status==='cancelled'){ mpPenaltyDetachListener(); mpExitDuelMode(); window.G2G_reloadToGame(); return; }
     const hist=d[`m${idx}_penHistory`]||[];
     const cur=d[`m${idx}_penCurrent`];
     const winner=d[`m${idx}_penWinner`];
@@ -1399,7 +1399,7 @@ async function mpFinishPenaltiesUI(winnerRole, history){
         db.collection('duels').doc(window._duelId).update({status:'finished'}).catch(e=>console.error(e));
       }
       const backBtn=document.getElementById('mpPenaltiesOnlyBackBtn');
-      if(backBtn) backBtn.addEventListener('click', ()=>{ playSound('select'); mpExitDuelMode(); location.reload(); });
+      if(backBtn) backBtn.addEventListener('click', ()=>{ playSound('select'); mpExitDuelMode(); window.G2G_reloadToGame(); });
       return;
     }
     mpAdvanceAfterMatch();
@@ -1567,7 +1567,7 @@ function mpWatchForBothContinued(idx){
   const unsub=db.collection('duels').doc(window._duelId).onSnapshot(snap=>{
     const d=snap.data();
     if(!d) return;
-    if(d.status==='cancelled'){ unsub(); mpExitDuelMode(); location.reload(); return; }
+    if(d.status==='cancelled'){ unsub(); mpExitDuelMode(); window.G2G_reloadToGame(); return; }
     if(d[chalField] && d[oppField]){
       unsub();
       if(idx>=4){ mpShowDuelFinalSummary(); }
@@ -1751,7 +1751,7 @@ async function mpShowDuelFinalSummary(){
   if(exitBtn) exitBtn.addEventListener('click', async()=>{
     try{ await db.collection('duels').doc(window._duelId).update({status:'finished'}); }catch(e){}
     mpExitDuelMode();
-    location.reload();
+    window.G2G_reloadToGame();
   });
 }
 
@@ -1960,7 +1960,7 @@ function mpEnterDuelMode(duelId, duelData, myUid){
     draftStartAt: duelData.draftStartAt||Date.now()
   };
   try{ sessionStorage.setItem('g2g_duel_active', JSON.stringify(info)); }catch(e){}
-  location.reload();
+  window.G2G_reloadToGame();
 }
 
 /* Vigila (para el retador) si el rival ha aceptado su desafío saliente,
@@ -2288,7 +2288,7 @@ function mpShowDuelWaitingScreen(){
       // El rival ha salido del duelo — liberar y volver al juego normal
       unsub();
       mpExitDuelMode();
-      location.reload();
+      window.G2G_reloadToGame();
       return;
     }
     if(d.challengerReady && d.opponentReady){
@@ -2326,7 +2326,7 @@ async function mpAbandonDuelConfirmed(){
     catch(e){ console.error('mpAbandonDuel error:',e); }
   }
   mpExitDuelMode();
-  location.reload();
+  window.G2G_reloadToGame();
 }
 
 // Wiring directo (sin depender de DOMContentLoaded, que ya puede haberse disparado

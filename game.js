@@ -589,7 +589,7 @@ if(abandonTournamentBtnEl){
   abandonTournamentBtnEl.addEventListener("click", ()=>{
     showConfirmPopup(
       '¿Abandonar el torneo? Se perderá todo el progreso conseguido.',
-      ()=>location.reload()
+      ()=>window.G2G_reloadToGame()
     );
   });
 }
@@ -4440,7 +4440,7 @@ function showEliminatedGroupStage(){
       <div class="victory-score-label">${t('result.score')||'PUNTUACIÓN'}</div>
       <div class="victory-score-num" style="font-size:48px">${sc.total}</div>
     </div>
-    <button class="modal-btn danger" onclick="location.reload()">${t('match.new_game')||'NUEVA PARTIDA'}</button>
+    <button class="modal-btn danger" onclick="window.G2G_reloadToGame()">${t('match.new_game')||'NUEVA PARTIDA'}</button>
   </div>`;
 }
 function showEliminated(){
@@ -4469,7 +4469,7 @@ function showEliminated(){
     ${slots>0?`<p style="font-size:12px;color:var(--gold);margin-bottom:8px">${(t('result.chain_info')||'🔗 Run Encadenada: conserva {0} jugador{1} para el siguiente intento').replace('{0}',slots).replace('{1}',slots>1?'es':'')}</p>`:""}
     <div style="display:flex;gap:8px;flex-wrap:wrap">
       ${chainBtn}
-      <button class="modal-btn danger" onclick="location.reload()">${t('match.new_game')||'NUEVA PARTIDA'}</button>
+      <button class="modal-btn danger" onclick="window.G2G_reloadToGame()">${t('match.new_game')||'NUEVA PARTIDA'}</button>
     </div>
   </div>`;
 }
@@ -4799,7 +4799,7 @@ function showGoldenTicket(){
     }
     const w=$id('goldenTicketWrap'); if(w) w.remove();
     // Recargar para nueva partida
-    setTimeout(()=>location.reload(), 400);
+    setTimeout(()=>window.G2G_reloadToGame(), 400);
   };
 }
 
@@ -5116,7 +5116,7 @@ function getChainSlots(){
 }
 function showChainRunModal(){
   const slots=getChainSlots();
-  if(slots<=0){ location.reload(); return; }
+  if(slots<=0){ window.G2G_reloadToGame(); return; }
   const allPlayers=[...usedPlayers,...bench];
   document.getElementById("matchOverlay").innerHTML=`
   <div class="chain-modal">
@@ -5132,7 +5132,7 @@ function showChainRunModal(){
     </div>
     <div class="chain-actions">
       <button class="modal-btn" id="chainConfirmBtn" disabled onclick="confirmChainRun()">CONTINUAR CON ${slots} JUGADOR${slots>1?"ES":""}</button>
-      <button class="modal-btn danger" onclick="location.reload()">NUEVA PARTIDA</button>
+      <button class="modal-btn danger" onclick="window.G2G_reloadToGame()">NUEVA PARTIDA</button>
     </div>
   </div>`;
   window._chainSelected=[];
@@ -5166,7 +5166,7 @@ window.confirmChainRun=function(){
     sessionStorage.setItem('g2g_inherited', JSON.stringify(selected));
     sessionStorage.setItem('g2g_inherited_formation', JSON.stringify(currentFormation));
   }catch(e){}
-  location.reload();
+  window.G2G_reloadToGame();
 };
 function restoreInheritedFormation(){
   // Restore the formation used in the previous run, if this is a chain
