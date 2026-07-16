@@ -421,6 +421,10 @@ let swapsUsedThisMatch = 0;
 let teamMorale = 0;
 window.CHEATS_ACTIVE = false;
 const CHEAT_USERS = ['jesuslor85@gmail.com', 'silviaenfoque@gmail.com'];
+// Liga Manager está en construcción: acceso restringido solo a tiopops
+// mientras se define/desarrolla. Lista separada de CHEAT_USERS a propósito
+// (aquí NO se incluye silviaenfoque).
+const LIGA_MANAGER_BETA_USERS = ['jesuslor85@gmail.com'];
 // Scorer streaks: map playerName -> consecutive matches scored
 let scorerStreaks = {};
 // Current match weather
@@ -2469,8 +2473,48 @@ function playMatch(){
     else won=myGoals>oppGoals;
     scoreLabel=`${myGoals}-${oppGoals}`;
   } else {
-    // Knockout: a draw must be resolved via penalties.
+    // Knockout: a draw se resuelve con PRÓRROGA real (30 min extra con el
+    // mismo ritmo de gol que el partido, escalado 30/90) y, si sigue
+    // empatado, penaltis.
     won=myGoals>oppGoals;
+    let wentToExtraTime=false;
+    if(myGoals===oppGoals){
+      wentToExtraTime=true;
+      const etMyLambda=myLambda*(30/90);
+      const etOppLambda=oppLambda*(30/90);
+      const myETGoals=poissonSample(etMyLambda);
+      const oppETGoals=poissonSample(etOppLambda);
+      if(myETGoals>0||oppETGoals>0){
+        const etMyMinutes=[],etOppMinutes=[];
+        for(let i=0;i<myETGoals;i++) etMyMinutes.push(Math.floor(91+Math.random()*29));
+        for(let i=0;i<oppETGoals;i++) etOppMinutes.push(Math.floor(91+Math.random()*29));
+        etMyMinutes.sort((a,b)=>a-b); etOppMinutes.sort((a,b)=>a-b);
+        const etAttackers=usedPlayers.filter(p=>p.placedPos&&["DC","EI","ED","MC"].includes(p.placedPos));
+        const etOppAttackers=nextOpponent.players.filter(p=>p.positions&&p.positions.some(pos=>["DC","EI","ED","MC"].includes(pos)));
+        const etOppPool=etOppAttackers.length?etOppAttackers:nextOpponent.players;
+        const etMyGoalLines=etMyMinutes.map(min=>{
+          const scorer=etAttackers[Math.floor(Math.random()*etAttackers.length)]||usedPlayers[0];
+          return `<li>⚽ ${scorer?scorer.name:'Gol'} <span class="goal-min">(${min}')</span></li>`;
+        });
+        const etOppGoalLines=etOppMinutes.map(min=>{
+          const scorer=etOppPool[Math.floor(Math.random()*etOppPool.length)];
+          return `<li>⚽ ${scorer?scorer.name:getTeamName(nextOpponent.name)} <span class="goal-min">(${min}')</span></li>`;
+        });
+        summary+=`<br><br><strong>⚽ PRÓRROGA: ${myTeamName} ${myETGoals} – ${oppETGoals} ${getTeamName(nextOpponent.name)}</strong>
+        <div class="goals-columns et-goals-columns">
+          <div class="goals-col">
+            <div class="goals-col-header">${(window._myCrestData||window._myCrestImage)?renderCrestThumb(20):'<i class="ph ph-bold ph-user" style="font-size:16px;color:#4a90d9;vertical-align:middle"></i>'} ${myTeamName}</div>
+            <ul class="goals-list">${etMyGoalLines.length?etMyGoalLines.join(''):'<li class="no-goal">Sin goles</li>'}</ul>
+          </div>
+          <div class="goals-col">
+            <div class="goals-col-header">${flagEmoji(nextOpponent.name,20)} ${getTeamName(nextOpponent.name)}</div>
+            <ul class="goals-list">${etOppGoalLines.length?etOppGoalLines.join(''):'<li class="no-goal">Sin goles</li>'}</ul>
+          </div>
+        </div>`;
+        myGoals+=myETGoals; oppGoals+=oppETGoals;
+        won=myGoals>oppGoals;
+      }
+    }
     if(myGoals===oppGoals){
       penaltyInfo=simulatePenalties(myPower,oppPower);
       won=penaltyInfo.myWon;
@@ -2488,7 +2532,8 @@ function playMatch(){
         </div>
       </div>`;
     }
-    scoreLabel = penaltyInfo ? `${myGoals}-${oppGoals} (pen. ${penaltyInfo.myScore}-${penaltyInfo.oppScore})` : `${myGoals}-${oppGoals}`;
+    scoreLabel = penaltyInfo ? `${myGoals}-${oppGoals} (pen. ${penaltyInfo.myScore}-${penaltyInfo.oppScore})` : (wentToExtraTime ? `${myGoals}-${oppGoals} (pr.)` : `${myGoals}-${oppGoals}`);
+    window._wentToExtraTime=wentToExtraTime;
   }
 
   if(stage==="group"){
@@ -2945,6 +2990,28 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
         text:`<strong>${txt.replace(/⚽/,'').replace(/\(\d+'\)/,'').trim()}</strong> <span style="color:var(--red);font-size:10px">(${oppName})</span>`});
     });
   }
+  // Goles de la PRÓRROGA (91-120') — bloque propio y aparte de los goles de
+  // tiempo reglamentario (arriba) y de la tanda de penaltis (si la hay),
+  // que también usan la clase genérica .goals-col — por eso se localiza
+  // por su clase distintiva .et-goals-columns en vez de por posición.
+  const etGoalsBlock=tempDiv.querySelector('.et-goals-columns');
+  if(etGoalsBlock){
+    const etCols=etGoalsBlock.querySelectorAll('.goals-col');
+    if(etCols.length>=2){
+      etCols[0].querySelectorAll('li').forEach(li=>{
+        const txt=li.textContent;
+        const m=txt.match(/(\d+)'\)/);
+        if(m) allEvents.push({minute:parseInt(m[1]),type:'mygoal',icon:'⚽',
+          text:`<strong>${txt.replace(/⚽/,'').replace(/\(\d+'\)/,'').trim()}</strong> <span style="font-size:10px;color:#a07a00">(prórroga)</span>`});
+      });
+      etCols[1].querySelectorAll('li').forEach(li=>{
+        const txt=li.textContent;
+        const m=txt.match(/(\d+)'\)/);
+        if(m) allEvents.push({minute:parseInt(m[1]),type:'oppgoal',icon:'⚽',
+          text:`<strong>${txt.replace(/⚽/,'').replace(/\(\d+'\)/,'').trim()}</strong> <span style="color:var(--red);font-size:10px">(${oppName}, prórroga)</span>`});
+      });
+    }
+  }
   // Tarjetas e lesiones con minutos realistas (pueden caer en descuento)
   const CICONS={yellow:'🟨',yellow2:'🟨🟨',double_yellow:'🟨🟥',red:'🟥'};
   if(newCards&&newCards.length){
@@ -3169,6 +3236,10 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
     // se simuló al principio del partido — hay que comprobar otra vez si
     // ahora hace falta la tanda de penaltis (o si ya no hace falta),
     // porque "penaltyInfo" se calculó ANTES de jugar el partido.
+    // NOTA: si Giro Táctico crea un empate nuevo justo aquí, este caso
+    // (raro) va directo a penaltis sin simular goles de prórroga — la
+    // prórroga real con goles se simula en playMatch() para el caso
+    // normal (ver window._wentToExtraTime más abajo).
     if(stage==='knockout' && !window._duelId){
       if(myGoals===oppGoals && !penaltyInfo){
         penaltyInfo=simulatePenalties(myPower, oppPower);
@@ -3191,7 +3262,7 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
         won=myGoals>oppGoals; draw=false;
       }
     }
-    if(penaltyInfo) setTimeout(startExtraTime,900);
+    if(window._wentToExtraTime || penaltyInfo) setTimeout(startExtraTime,900);
     else {
       playSound(won||draw?'victory':'defeat');
       if(window._duelId){
@@ -3984,11 +4055,32 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
         if(!etHt){ etHt=true; clockEl.textContent="105'"; halfEl.textContent=t("match.halftime"); halfEl.style.background='#a07a00'; addSep(t('match.et_ht_sep')||"Descanso prórroga — 105'"); playSound('whistle'); }
         requestAnimationFrame(tickET); return;
       }
-      if(frac<ET_S){ clockEl.textContent=`${91+Math.floor((frac/ET_S)*14)}'`; halfEl.textContent=t('match.et_first')||'PRÓRROGA 1ª'; halfEl.style.background='#7a3a0a'; }
-      else { const f2=(frac-ET_E)/(1-ET_E); clockEl.textContent=`${106+Math.floor(f2*14)}'`; halfEl.textContent=t('match.et_second')||'PRÓRROGA 2ª'; halfEl.style.background='#7a3a0a'; }
+      let minute;
+      if(frac<ET_S){ minute=91+Math.floor((frac/ET_S)*14); clockEl.textContent=`${minute}'`; halfEl.textContent=t('match.et_first')||'PRÓRROGA 1ª'; halfEl.style.background='#7a3a0a'; }
+      else { const f2=(frac-ET_E)/(1-ET_E); minute=106+Math.floor(f2*14); clockEl.textContent=`${minute}'`; halfEl.textContent=t('match.et_second')||'PRÓRROGA 2ª'; halfEl.style.background='#7a3a0a'; }
+      // Reproducir los goles de la prórroga en su minuto real — mismo
+      // patrón que tickReg usa para el tiempo reglamentario, continuando
+      // desde el mismo eventIdx compartido (los goles de tiempo
+      // reglamentario ya se consumieron todos antes de llegar aquí).
+      while(eventIdx<allEvents.length && allEvents[eventIdx].minute<=minute){
+        const ev=allEvents[eventIdx++];
+        addEvt(ev.icon, ev.text, `${ev.minute}'`, ev.type);
+        if(ev.type==='mygoal'){ curMy++; scoreEl.textContent=`${curMy} – ${curOpp}`; flashScore(); playSound('goal'); }
+        else if(ev.type==='oppgoal'){ curOpp++; scoreEl.textContent=`${curMy} – ${curOpp}`; flashScore(); playSound('goal'); }
+      }
       if(frac<1){ requestAnimationFrame(tickET); return; }
       clockEl.textContent="120'"; halfEl.textContent=t("match.extratime")+" "+(t('match.end')||'FIN'); halfEl.style.background='#555';
-      playSound('whistle'); setTimeout(startPenalties,900);
+      playSound('whistle');
+      // penaltyInfo/won/draw ya vienen decididos de playMatch (incluyendo
+      // los goles de prórroga que se acaban de reproducir) — si no hacen
+      // falta penaltis, el partido se cierra aquí mismo, sin más rondas.
+      if(penaltyInfo){ setTimeout(startPenalties,900); }
+      else {
+        setTimeout(()=>{
+          playSound(won||draw?'victory':'defeat');
+          setTimeout(showPostMatch,800);
+        },900);
+      }
     }
     requestAnimationFrame(tickET);
   }
@@ -5866,6 +5958,14 @@ function initFirebaseAuth(){
       const pun=$id("profileUsername"); if(pun) pun.textContent=username;
       window.currentUsername=username;
       const data=snap.exists?snap.data():{};
+      // Liga Manager en construcción: solo tiopops tiene acceso por ahora.
+      // Se hace aquí, lo primero tras tener "data", y con try/catch propio,
+      // para que ningún fallo posterior en este callback (crest, idioma,
+      // etc.) pueda dejar esto a medias.
+      try{
+        window.LIGA_MANAGER_UNLOCKED = LIGA_MANAGER_BETA_USERS.includes((data.email||user.email||'').toLowerCase().trim());
+        if(window.G2G_applyLigaManagerAccess) window.G2G_applyLigaManagerAccess(window.LIGA_MANAGER_UNLOCKED);
+      }catch(e){ console.error('Liga Manager access check failed:', e); }
       window.preferredTeamName=data.preferredTeamName||"";
       if(data.customCrestImage){
         window._myCrestImage=data.customCrestImage; window._myCrestData=null;
@@ -5881,7 +5981,7 @@ function initFirebaseAuth(){
       // Si el draft ya llegó a 11/11 antes de que esto resolviera, repintar
       // el título para que muestre el nombre de equipo en vez del genérico.
       if(typeof updateDraftCounter==='function') updateDraftCounter();
-      // Cargar idioma guardado
+      // Idioma guardado
       if(data.lang && (data.lang==='es'||data.lang==='en')){
         window.LANG=data.lang;
         try{localStorage.setItem('g2g_lang',data.lang);}catch(e){}
@@ -5912,6 +6012,9 @@ function initFirebaseAuth(){
       window.currentUsername=null;
       window.preferredTeamName="";
       window.useFixedTeamName=false;
+      // Liga Manager en construcción: sin sesión, sin acceso
+      window.LIGA_MANAGER_UNLOCKED = false;
+      if(window.G2G_applyLigaManagerAccess) window.G2G_applyLigaManagerAccess(false);
       // Sin sesión: mensaje diferenciado en el welcome overlay
       const wt=$id('welcomeText');
       const wrb=$id('welcomeRegisterBtn');
@@ -5987,6 +6090,12 @@ function initFirebaseAuth(){
       // Cheats: solo visible y funcional para tiopops (jesuslor85@gmail.com)
       const cheatsSection=$id("cheatsSection");
       const isCheatUser=CHEAT_USERS.includes((data.email||'').toLowerCase());
+      // Re-sincronización de seguridad del acceso a Liga Manager: por si el
+      // chequeo de onAuthStateChanged no llegó a aplicarse (p.ej. el menú
+      // aún no había cargado en ese momento), lo repetimos aquí, que es un
+      // punto donde "data.email" ya se ha demostrado fiable (ver CHEAT_USERS).
+      window.LIGA_MANAGER_UNLOCKED = LIGA_MANAGER_BETA_USERS.includes((data.email||user.email||'').toLowerCase().trim());
+      if(window.G2G_applyLigaManagerAccess) window.G2G_applyLigaManagerAccess(window.LIGA_MANAGER_UNLOCKED);
       if(cheatsSection) cheatsSection.style.display=isCheatUser?"block":"none";
       if(isCheatUser){
         // Clonar para eliminar listeners previos acumulados
