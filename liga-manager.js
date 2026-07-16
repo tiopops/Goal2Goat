@@ -27,29 +27,34 @@
 
   const SAVE_KEY = 'g2g_liga_manager_v01';
 
-  /* ---------- 1. Equipos (nombres ficticios — ver aviso legal ya
-     anotado en el diseño sobre nombres reales de Primera) ---------- */
+  /* ---------- 1. Equipos — La Liga 2026-27 real, 20 clubes confirmados ----------
+     Tu club es Málaga CF (ascendido vía playoff tras ganar la final a la UD
+     Almería) — encaja con el "recién ascendido, plantilla modesta" ya
+     definido, sin necesitar un 21º equipo ficticio. Aviso legal ya anotado
+     en el diseño: esto es solo para uso interno/beta con acceso restringido,
+     no para publicación — usar nombres/escudos reales de clubes activos con
+     fines comerciales es un tema aparte a revisar si esto llega a publicarse. */
   const LM_TEAMS = [
-    {id:'lm_0',  name:'Tu Club CF',        attack:52, defense:50, pace:54, passing:50, technique:50}, // recién ascendido, plantilla modesta
-    {id:'lm_1',  name:'Real Atlántico',    attack:78, defense:75, pace:72, passing:80, technique:79},
-    {id:'lm_2',  name:'Deportivo Manchego',attack:64, defense:62, pace:60, passing:63, technique:61},
-    {id:'lm_3',  name:'Unión Levante',     attack:70, defense:68, pace:66, passing:69, technique:67},
-    {id:'lm_4',  name:'CD Sierra Nevada',  attack:58, defense:60, pace:57, passing:56, technique:55},
-    {id:'lm_5',  name:'Atlético Ribera',   attack:66, defense:64, pace:70, passing:62, technique:63},
-    {id:'lm_6',  name:'Real Cantábrico',   attack:74, defense:76, pace:68, passing:72, technique:71},
-    {id:'lm_7',  name:'CD Meseta',         attack:55, defense:57, pace:54, passing:53, technique:52},
-    {id:'lm_8',  name:'Unión Bética',      attack:69, defense:65, pace:67, passing:70, technique:68},
-    {id:'lm_9',  name:'Real Litoral',      attack:61, defense:63, pace:59, passing:60, technique:58},
-    {id:'lm_10', name:'Deportivo Segoviano',attack:57, defense:55, pace:56, passing:54, technique:53},
-    {id:'lm_11', name:'CF Vallenorte',     attack:65, defense:66, pace:63, passing:64, technique:62},
-    {id:'lm_12', name:'Atlético Duero',    attack:60, defense:59, pace:61, passing:58, technique:57},
-    {id:'lm_13', name:'Real Costa Azul',   attack:80, defense:77, pace:75, passing:81, technique:82},
-    {id:'lm_14', name:'CD Extremeño',      attack:56, defense:58, pace:55, passing:55, technique:54},
-    {id:'lm_15', name:'Unión Ebro',        attack:63, defense:61, pace:62, passing:63, technique:60},
-    {id:'lm_16', name:'Real Pirineo',      attack:68, defense:70, pace:64, passing:66, technique:65},
-    {id:'lm_17', name:'Deportivo Tajo',    attack:59, defense:60, pace:58, passing:57, technique:56},
-    {id:'lm_18', name:'CF Guadiana',       attack:62, defense:64, pace:60, passing:61, technique:59},
-    {id:'lm_19', name:'Atlético Sur',      attack:67, defense:63, pace:69, passing:65, technique:64}
+    {id:'lm_0',  name:'Málaga CF',            attack:52, defense:54, pace:56, passing:50, technique:50}, // TU CLUB — recién ascendido vía playoff
+    {id:'lm_1',  name:'Real Madrid',          attack:88, defense:85, pace:82, passing:88, technique:89},
+    {id:'lm_2',  name:'FC Barcelona',         attack:87, defense:83, pace:84, passing:89, technique:90},
+    {id:'lm_3',  name:'Atlético de Madrid',   attack:84, defense:86, pace:80, passing:82, technique:81},
+    {id:'lm_4',  name:'Athletic Club',        attack:78, defense:77, pace:76, passing:78, technique:77},
+    {id:'lm_5',  name:'Villarreal CF',        attack:79, defense:76, pace:75, passing:80, technique:79},
+    {id:'lm_6',  name:'Real Betis',           attack:77, defense:74, pace:74, passing:78, technique:77},
+    {id:'lm_7',  name:'Real Sociedad',        attack:76, defense:75, pace:74, passing:77, technique:76},
+    {id:'lm_8',  name:'Sevilla FC',           attack:74, defense:73, pace:72, passing:75, technique:74},
+    {id:'lm_9',  name:'RC Celta',             attack:72, defense:70, pace:73, passing:74, technique:73},
+    {id:'lm_10', name:'Valencia CF',          attack:71, defense:72, pace:70, passing:71, technique:71},
+    {id:'lm_11', name:'Rayo Vallecano',       attack:69, defense:70, pace:68, passing:68, technique:67},
+    {id:'lm_12', name:'CA Osasuna',           attack:68, defense:71, pace:67, passing:66, technique:65},
+    {id:'lm_13', name:'Getafe CF',            attack:66, defense:72, pace:65, passing:62, technique:61},
+    {id:'lm_14', name:'RCD Espanyol',         attack:65, defense:66, pace:66, passing:64, technique:64},
+    {id:'lm_15', name:'Elche CF',             attack:62, defense:63, pace:61, passing:61, technique:60},
+    {id:'lm_16', name:'Levante UD',           attack:61, defense:62, pace:60, passing:60, technique:59},
+    {id:'lm_17', name:'Deportivo Alavés',     attack:64, defense:68, pace:63, passing:62, technique:61},
+    {id:'lm_18', name:'Racing de Santander',  attack:60, defense:61, pace:60, passing:59, technique:58}, // recién ascendido
+    {id:'lm_19', name:'RC Deportivo',         attack:61, defense:60, pace:61, passing:60, technique:60}  // recién ascendido
   ];
 
   /* ---------- 2. Mini-plantilla de ejemplo (para el Médico) ----------
@@ -213,7 +218,7 @@
       <div class="lm-wrap">
         <div class="lm-header">
           <div>
-            <div class="lm-title">TU CLUB CF</div>
+            <div class="lm-title">${LM_TEAMS[0].name.toUpperCase()}</div>
             <div class="lm-sub">${state.jornadaActual<=38 ? 'Jornada '+state.jornadaActual+' de 38' : 'Temporada finalizada'}</div>
           </div>
           ${miPartido ? `<div class="lm-nextmatch">Próximo: ${miPartido.home.name} vs ${miPartido.away.name}</div>` : ''}
