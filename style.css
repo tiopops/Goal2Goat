@@ -2437,6 +2437,85 @@ body.menu-screen #mobileTabBar{display:none!important}
   .mode-card-title{font-size:26px}
 }
 
+/* ================================================================
+   LIGA MANAGER — pantalla provisional (acceso restringido)
+   ================================================================ */
+#ligaManagerScreen{
+  display:none;
+  flex:1;min-height:0;
+  overflow-y:auto;
+  position:relative;
+  background:#0d0d0d;
+}
+body.liga-manager-screen #ligaManagerScreen{display:flex!important}
+body.liga-manager-screen #mainMenuScreen{display:none!important}
+body.liga-manager-screen .app{display:none!important}
+body.liga-manager-screen #mobileTabBar{display:none!important}
+
+.lm-wrap{width:100%;max-width:820px;margin:0 auto;padding:28px 20px 60px;color:#ccc}
+
+.lm-header{
+  display:flex;align-items:center;flex-wrap:wrap;gap:14px;
+  background:#15181a;border:1px solid #22282b;border-radius:10px;
+  padding:16px 20px;margin-bottom:20px;
+}
+.lm-title{font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:1px;font-size:20px;color:#eee}
+.lm-sub{font-size:12px;color:#888}
+.lm-nextmatch{font-size:12px;color:#aaa;margin-left:auto}
+
+.lm-staffrow{
+  display:flex;gap:12px;background:#15181a;border:1px solid #22282b;
+  border-radius:10px;padding:14px;margin-bottom:20px;
+}
+.lm-staff-slot{
+  position:relative;width:88px;text-align:center;cursor:pointer;
+  border:1px solid #2f3539;border-radius:8px;padding:10px 6px;
+  transition:border-color .15s ease;
+}
+.lm-staff-slot:hover,.lm-staff-slot.has-notif{border-color:#c9a227}
+.lm-staff-photo{
+  width:40px;height:40px;border-radius:50%;background:#2f3539;margin:0 auto 6px;
+  display:flex;align-items:center;justify-content:center;
+}
+.lm-staff-slot:not(.has-notif) .lm-staff-photo{filter:grayscale(1)}
+.lm-staff-photo i{font-size:18px;color:#c9a227}
+.lm-staff-name{font-size:10px;color:#ddd}
+.lm-staff-badge{
+  position:absolute;top:-6px;right:6px;background:#e24b4a;color:#fff;
+  font-size:10px;min-width:16px;height:16px;border-radius:8px;
+  display:flex;align-items:center;justify-content:center;
+}
+
+.lm-table-wrap{background:#15181a;border:1px solid #22282b;border-radius:10px;padding:8px;overflow-x:auto}
+.lm-table{width:100%;border-collapse:collapse;font-size:12px}
+.lm-table th{color:#888;text-align:left;padding:8px 10px;font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:.5px;border-bottom:1px solid #2f3539}
+.lm-table td{padding:7px 10px;border-bottom:1px solid #1e2326;color:#ccc}
+.lm-table tr.lm-myteam td{color:#c9a227;font-weight:700}
+
+#lmMedicoOverlay{
+  position:absolute;inset:0;background:rgba(0,0,0,.6);
+  display:flex;align-items:center;justify-content:center;z-index:10;
+}
+.lm-dilemma-card{
+  background:#1e2326;border:1px solid #c9a227;border-radius:10px;
+  padding:22px 26px;max-width:340px;text-align:center;
+}
+.lm-dilemma-title{font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:1px;color:#eee;font-size:15px;margin:10px 0 8px}
+.lm-dilemma-text{font-size:12px;color:#bbb;margin-bottom:16px;line-height:1.5}
+
+/* Tarjeta de Liga Manager cuando el acceso está desbloqueado (solo admin
+   autorizado mientras el modo está en construcción): mismo tratamiento
+   visual que Copa Leyendas, sin gris ni "próximamente". */
+.mode-card-liga.mode-card-liga-unlocked{
+  cursor:pointer;
+  border-color:var(--gold);
+}
+.mode-card-liga-unlocked .mode-card-bgimg{filter:none}
+.mode-card-liga-unlocked .mode-card-desc{color:#c9c9c9}
+.mode-card-liga-unlocked .mode-card-badge{
+  background:rgba(201,162,39,.15);border-color:var(--gold);color:var(--gold);
+}
+
 /* Pestañas del perfil exclusivas de un modo de juego (Estadísticas, Mejoras,
    Habilidades, Logros/Trofeos): en el menú principal aún no se ha elegido
    modo, así que se muestran deshabilitadas. AJUSTES queda siempre disponible. */

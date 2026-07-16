@@ -91,6 +91,48 @@
     }
   }
 
+  /* ------------------------------------------------------------
+     Liga Manager — acceso restringido mientras está en construcción
+     ------------------------------------------------------------
+     window.LIGA_MANAGER_UNLOCKED lo fija game.js (dentro de
+     onAuthStateChanged) en cuanto sabe si el usuario logueado es
+     la cuenta autorizada. Aquí solo reaccionamos a ese valor: no
+     tomamos ninguna decisión de "quién puede entrar", eso vive
+     exclusivamente en game.js — este módulo solo pinta el resultado.
+     ------------------------------------------------------------ */
+  function enterLigaManager(){
+    if(!window.LIGA_MANAGER_UNLOCKED) return; // por si acaso, nunca debería llamarse sin acceso
+    document.body.classList.remove('menu-screen');
+    document.body.classList.add('liga-manager-screen');
+    resetGameScroll();
+    if(window.G2G_LigaManager && typeof window.G2G_LigaManager.init==='function'){
+      window.G2G_LigaManager.init();
+    }
+  }
+
+  function applyLigaManagerAccess(unlocked){
+    const card  = document.getElementById('modeCardLiga');
+    const btn   = document.getElementById('modeCardLigaBtn');
+    const badge = card ? card.querySelector('.mode-card-badge') : null;
+    if(!card || !btn) return;
+
+    card.classList.toggle('mode-card-liga-unlocked', !!unlocked);
+
+    if(unlocked){
+      btn.classList.remove('mode-card-btn-disabled');
+      btn.classList.add('mode-card-btn-gold');
+      btn.innerHTML = '<span data-i18n="menu.liga_play_beta">ENTRAR (BETA)</span>';
+      if(badge) badge.setAttribute('data-i18n','menu.liga_badge_beta');
+    }else{
+      btn.classList.add('mode-card-btn-disabled');
+      btn.classList.remove('mode-card-btn-gold');
+      btn.innerHTML = '<span data-i18n="menu.liga_badge">PRÓXIMAMENTE</span>';
+      if(badge) badge.setAttribute('data-i18n','menu.liga_badge');
+    }
+    if(typeof window.applyTranslations === 'function') window.applyTranslations();
+  }
+  window.G2G_applyLigaManagerAccess = applyLigaManagerAccess;
+
   // Si el perfil se abre desde el menú principal, que siempre aterrice en
   // AJUSTES: las otras pestañas (Estadísticas, Mejoras, Habilidades, Logros)
   // son de Copa Leyendas y se ocultan por CSS mientras no se elija un modo.
@@ -136,9 +178,19 @@
       el.addEventListener('click', function(e){
         e.stopPropagation();
         playClickSound();
-        notifyLigaManagerSoon();
+        if(window.LIGA_MANAGER_UNLOCKED){
+          enterLigaManager();
+        }else{
+          notifyLigaManagerSoon();
+        }
       });
     });
+
+    // Por si el acceso ya se resolvió (game.js) antes de que este script
+    // terminara de wirear el menú, aplicamos el estado actual ya conocido.
+    if(typeof window.LIGA_MANAGER_UNLOCKED === 'boolean'){
+      applyLigaManagerAccess(window.LIGA_MANAGER_UNLOCKED);
+    }
 
     wireProfileDefaultTab();
   }

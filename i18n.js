@@ -16,6 +16,8 @@ window.TRANSLATIONS = {
   'menu.liga_title': {es:'LIGA MANAGER', en:'LEAGUE MANAGER', pt:'LIGA MANAGER', fr:'LIGUE MANAGER', de:'LIGA MANAGER', it:'LIGA MANAGER'},
   'menu.liga_desc': {es:'Gestiona tu club. Controla los fichajes, perfecciona tu táctica, entrena a tus jugadores y lleva a tu equipo hasta la gloria.', en:'Manage your club. Control transfers, perfect your tactics, train your players and lead your team to glory.', pt:'Gerencie seu clube. Controle as contratações, aperfeiçoe sua tática, treine seus jogadores e leve seu time até a glória.', fr:'Gère ton club. Contrôle les transferts, peaufine ta tactique, entraîne tes joueurs et mène ton équipe jusqu\'à la gloire.', de:'Verwalte deinen Verein. Steuere die Transfers, verfeinere deine Taktik, trainiere deine Spieler und führe dein Team zum Ruhm.', it:'Gestisci il tuo club. Controlla le trattative, perfeziona la tua tattica, allena i tuoi giocatori e porta la tua squadra fino alla gloria.'},
   'menu.liga_badge': {es:'PRÓXIMAMENTE', en:'COMING SOON', pt:'EM BREVE', fr:'BIENTÔT', de:'DEMNÄCHST', it:'PROSSIMAMENTE'},
+  'menu.liga_badge_beta': {es:'BETA · ADMIN', en:'BETA · ADMIN', pt:'BETA · ADMIN', fr:'BÊTA · ADMIN', de:'BETA · ADMIN', it:'BETA · ADMIN'},
+  'menu.liga_play_beta': {es:'ENTRAR (BETA)', en:'ENTER (BETA)', pt:'ENTRAR (BETA)', fr:'ENTRER (BÊTA)', de:'BETRETEN (BETA)', it:'ENTRA (BETA)'},
   'menu.liga_soon': {es:'Disponible muy pronto', en:'Available very soon', pt:'Disponível muito em breve', fr:'Disponible très bientôt', de:'Bald verfügbar', it:'Disponibile molto presto'},
 
   /* ── UI GENERAL ── */

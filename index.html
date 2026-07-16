@@ -607,6 +607,15 @@
   </div>
 </div>
 
+<!-- ============================================================
+     LIGA MANAGER — pantalla provisional (acceso restringido)
+     Solo se muestra a la cuenta autorizada mientras el modo está
+     en construcción. Estructura mínima a propósito: cuando el
+     hub real esté definido, se sustituye el contenido de aquí
+     dentro sin tocar el mecanismo de mostrar/ocultar.
+     ============================================================ -->
+<div id="ligaManagerScreen"></div>
+
 <div class="app">
 
   <!-- LEFT PANEL -->
@@ -971,6 +980,7 @@
   // Cache-busting: force fresh game.js on every page load/refresh
   document.write('<script src="game.js?v=' + Date.now() + '"><\/script>');
   document.write('<script src="main-menu.js?v=' + Date.now() + '"><\/script>');
+  document.write('<script src="liga-manager.js?v=' + Date.now() + '"><\/script>');
   document.write('<script src="upgrades-data.js?v=' + Date.now() + '"><\/script>');
   document.write('<script src="skills-data.js?v=' + Date.now() + '"><\/script>');
   document.write('<script src="achievements-data.js?v=' + Date.now() + '"><\/script>');
