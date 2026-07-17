@@ -1,38 +1,38 @@
 /* ============================================================
-   GOAL2GOAT — Liga Manager: dados 3D con físicas reales
+   GOAL2GOAT — Liga Manager: dados 3D con físicas propias
    ------------------------------------------------------------
-   Módulo aparte y autocontenido. Carga Three.js + Cannon-es (JS
-   puro, sin WASM, según lo ya decidido) SOLO la primera vez que
-   se necesita un dado — así el resto del juego no paga ese peso
-   si nunca se usa Liga Manager.
+   v2: se elimina la dependencia de Cannon-es. Los dos intentos
+   anteriores con Cannon-es fallaron en el navegador real (se
+   distribuye como módulo ES puro, sin build de script clásico
+   fiable) — en vez de seguir dependiendo de dos librerías
+   externas con dos estrategias de carga distintas, esto usa
+   SOLO Three.js (carga estándar, un único script clásico) y una
+   integración física propia y sencilla (gravedad, rebote,
+   fricción, rotación angular) — suficiente para un dado, sin
+   necesitar un motor de físicas de propósito general.
    ============================================================ */
 (function(){
 
-  var scriptsLoaded = null; // promesa compartida, para no cargar dos veces
+  var threeLoaded = null;
 
   function loadScript(src){
     return new Promise(function(resolve, reject){
       var s = document.createElement('script');
       s.src = src;
       s.onload = resolve;
-      s.onerror = reject;
+      s.onerror = function(){ reject(new Error('No se pudo cargar '+src)); };
       document.head.appendChild(s);
     });
   }
 
-  function ensureLibs(){
-    if(scriptsLoaded) return scriptsLoaded;
-    scriptsLoaded = Promise.resolve()
-      .then(function(){
-        if(!window.THREE) return loadScript('https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js');
-      })
-      .then(function(){
-        if(!window.CANNON) return loadScript('https://unpkg.com/cannon-es@0.20.0/dist/cannon-es.js');
-      });
-    return scriptsLoaded;
+  function ensureThree(){
+    if(threeLoaded) return threeLoaded;
+    threeLoaded = window.THREE
+      ? Promise.resolve()
+      : loadScript('https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js');
+    return threeLoaded;
   }
 
-  // Texturas de las 6 caras (pips dibujados en canvas)
   function faceTexture(n){
     var c = document.createElement('canvas');
     c.width = c.height = 256;
@@ -54,47 +54,45 @@
     return new window.THREE.CanvasTexture(c);
   }
 
-  // Definición de caras: eje local -> valor de la cara (opuestas suman 7).
-  // Se construye dentro de rollDice3D una vez que THREE está cargado.
-
   /**
-   * Lanza N dados con físicas reales dentro de "container" (un div vacío).
-   * Llama a onComplete(valores[]) cuando terminan de asentarse.
+   * Lanza N dados con una integración física propia (gravedad + rebote +
+   * fricción + rotación angular) dentro de "container". Llama a
+   * onComplete(valores[]) cuando terminan de asentarse.
    */
   function rollDice3D(container, count, onComplete){
-    ensureLibs().then(function(){
-      var THREE = window.THREE, CANNON = window.CANNON;
+    ensureThree().then(function(){
+      var THREE = window.THREE;
+      var W = container.clientWidth || 280, H = container.clientHeight || 200;
 
-      var W = container.clientWidth || 320, H = container.clientHeight || 220;
       var scene = new THREE.Scene();
       var camera = new THREE.PerspectiveCamera(40, W/H, 0.1, 100);
-      camera.position.set(0, 6.5, 7);
-      camera.lookAt(0,0,0);
+      camera.position.set(0, 6.2, 6.6);
+      camera.lookAt(0, 0.3, 0);
       var renderer = new THREE.WebGLRenderer({antialias:true, alpha:true});
       renderer.setSize(W,H);
       renderer.setPixelRatio(window.devicePixelRatio||1);
       container.innerHTML='';
       container.appendChild(renderer.domElement);
 
-      scene.add(new THREE.AmbientLight(0xffffff, 0.6));
-      var dl = new THREE.DirectionalLight(0xffffff, 0.8);
+      scene.add(new THREE.AmbientLight(0xffffff, 0.65));
+      var dl = new THREE.DirectionalLight(0xffffff, 0.75);
       dl.position.set(4,8,5);
       scene.add(dl);
 
-      // Suelo visual (semi-transparente, solo para orientar)
-      var groundGeo = new THREE.PlaneGeometry(10,10);
-      var groundMat = new THREE.MeshStandardMaterial({color:0x15181a, transparent:true, opacity:0.4});
-      var groundMesh = new THREE.Mesh(groundGeo, groundMat);
-      groundMesh.rotation.x = -Math.PI/2;
-      scene.add(groundMesh);
+      var ground = new THREE.Mesh(
+        new THREE.PlaneGeometry(10,10),
+        new THREE.MeshStandardMaterial({color:0x15181a, transparent:true, opacity:0.35})
+      );
+      ground.rotation.x = -Math.PI/2;
+      scene.add(ground);
 
       var materials = [
-        new THREE.MeshStandardMaterial({map:faceTexture(2)}),
-        new THREE.MeshStandardMaterial({map:faceTexture(5)}),
-        new THREE.MeshStandardMaterial({map:faceTexture(1)}),
-        new THREE.MeshStandardMaterial({map:faceTexture(6)}),
-        new THREE.MeshStandardMaterial({map:faceTexture(3)}),
-        new THREE.MeshStandardMaterial({map:faceTexture(4)})
+        new THREE.MeshStandardMaterial({map:faceTexture(2)}), // +X
+        new THREE.MeshStandardMaterial({map:faceTexture(5)}), // -X
+        new THREE.MeshStandardMaterial({map:faceTexture(1)}), // +Y
+        new THREE.MeshStandardMaterial({map:faceTexture(6)}), // -Y
+        new THREE.MeshStandardMaterial({map:faceTexture(3)}), // +Z
+        new THREE.MeshStandardMaterial({map:faceTexture(4)})  // -Z
       ];
       var FACES = [
         {axis:new THREE.Vector3(1,0,0), value:2},
@@ -105,67 +103,109 @@
         {axis:new THREE.Vector3(0,0,-1), value:4}
       ];
 
-      // ---- Mundo físico ----
-      var world = new CANNON.World();
-      world.gravity.set(0,-18,0);
-      world.broadphase = new CANNON.NaiveBroadphase();
-      var groundBody = new CANNON.Body({mass:0, shape:new CANNON.Plane()});
-      groundBody.quaternion.setFromEuler(-Math.PI/2,0,0);
-      world.addBody(groundBody);
+      var SIZE = 0.9, HALF = SIZE/2;
+      var GRAVITY = -14, RESTITUTION = 0.42, FRICTION = 0.78, ANG_DAMPING = 0.9;
 
-      var dieSize = 0.9;
       var dice = [];
       for(var i=0;i<count;i++){
-        var mesh = new THREE.Mesh(new THREE.BoxGeometry(dieSize,dieSize,dieSize), materials);
+        var mesh = new THREE.Mesh(new THREE.BoxGeometry(SIZE,SIZE,SIZE), materials);
+        mesh.position.set((Math.random()-0.5)*2.4, 3.2+i*1.1, (Math.random()-0.5)*2.4);
+        mesh.rotation.set(Math.random()*Math.PI*2, Math.random()*Math.PI*2, Math.random()*Math.PI*2);
         scene.add(mesh);
-        var body = new CANNON.Body({
-          mass:1,
-          shape:new CANNON.Box(new CANNON.Vec3(dieSize/2,dieSize/2,dieSize/2)),
-          position:new CANNON.Vec3((Math.random()-0.5)*2.2, 3+i*1.3, (Math.random()-0.5)*2.2)
+        dice.push({
+          mesh: mesh,
+          vel: new THREE.Vector3((Math.random()-0.5)*2.5, 0, (Math.random()-0.5)*2.5),
+          angVel: new THREE.Vector3((Math.random()-0.5)*12, (Math.random()-0.5)*12, (Math.random()-0.5)*12),
+          bounces: 0,
+          settled: false
         });
-        body.angularVelocity.set((Math.random()-0.5)*14,(Math.random()-0.5)*14,(Math.random()-0.5)*14);
-        body.velocity.set((Math.random()-0.5)*3,0,(Math.random()-0.5)*3);
-        body.linearDamping = 0.35;
-        body.angularDamping = 0.35;
-        world.addBody(body);
-        dice.push({mesh:mesh, body:body});
       }
 
       var start = performance.now();
-      var DURATION = 2600;
-      function animate(now){
-        var elapsed = now-start;
-        world.step(1/60);
-        dice.forEach(function(d){
-          d.mesh.position.copy(d.body.position);
-          d.mesh.quaternion.copy(d.body.quaternion);
+      var last = start;
+      var MAX_DURATION = 3400;
+      var SETTLE_BOUNCES = 3;
+
+      function integrarRotacion(mesh, angVel, dt){
+        // Rotación por velocidad angular usando un quaternion incremental —
+        // evita el gimbal lock de sumar euler ángulos directamente.
+        var angle = angVel.length()*dt;
+        if(angle < 1e-6) return;
+        var axis = angVel.clone().normalize();
+        var dq = new THREE.Quaternion().setFromAxisAngle(axis, angle);
+        mesh.quaternion.premultiply(dq);
+      }
+
+      function snapCaraArriba(mesh){
+        // Al terminar, se ajusta la orientación para que una cara quede
+        // perfectamente plana hacia arriba (la física real nunca deja el
+        // cubo matemáticamente perfecto, así que se "encaja" al final,
+        // igual que hacen la mayoría de juegos con dados 3D).
+        var best=null, bestDot=-Infinity;
+        FACES.forEach(function(f){
+          var v = f.axis.clone().applyQuaternion(mesh.quaternion);
+          var d = v.dot(new THREE.Vector3(0,1,0));
+          if(d>bestDot){ bestDot=d; best=f; }
         });
-        renderer.render(scene,camera);
-        if(elapsed < DURATION){
-          requestAnimationFrame(animate);
+        // Rotar el quaternion actual para que "best.axis" apunte exactamente a +Y
+        var current = best.axis.clone().applyQuaternion(mesh.quaternion).normalize();
+        var target = new THREE.Vector3(0,1,0);
+        var correction = new THREE.Quaternion().setFromUnitVectors(current, target);
+        mesh.quaternion.premultiply(correction);
+        return best.value;
+      }
+
+      function tick(now){
+        var dt = Math.min((now-last)/1000, 1/30);
+        last = now;
+        var elapsed = now-start;
+        var todosAsentados = true;
+
+        dice.forEach(function(d){
+          if(d.settled){ return; }
+          todosAsentados = false;
+
+          d.vel.y += GRAVITY*dt;
+          d.mesh.position.x += d.vel.x*dt;
+          d.mesh.position.y += d.vel.y*dt;
+          d.mesh.position.z += d.vel.z*dt;
+          integrarRotacion(d.mesh, d.angVel, dt);
+
+          if(d.mesh.position.y <= HALF){
+            d.mesh.position.y = HALF;
+            d.vel.y = -d.vel.y*RESTITUTION;
+            d.vel.x *= FRICTION;
+            d.vel.z *= FRICTION;
+            d.angVel.multiplyScalar(ANG_DAMPING);
+            d.bounces++;
+            if(Math.abs(d.vel.y) < 0.4 && d.bounces>=SETTLE_BOUNCES){
+              d.vel.set(0,0,0);
+              d.angVel.set(0,0,0);
+              d.settled = true;
+              d.value = snapCaraArriba(d.mesh);
+            }
+          }
+        });
+
+        renderer.render(scene, camera);
+
+        if((!todosAsentados) && elapsed < MAX_DURATION){
+          requestAnimationFrame(tick);
         } else {
-          // Leer valor de cada dado: la cara cuyo eje local, tras rotar
-          // por el quaternion final, apunta más hacia +Y (arriba) es la
-          // que ha quedado boca arriba.
+          // Si se agota el tiempo máximo sin asentar del todo (raro), se
+          // fuerza el encaje final de los que sigan en el aire.
           var resultados = dice.map(function(d){
-            var q = new THREE.Quaternion(d.body.quaternion.x,d.body.quaternion.y,d.body.quaternion.z,d.body.quaternion.w);
-            var best=null, bestDot=-Infinity;
-            FACES.forEach(function(f){
-              var v = f.axis.clone().applyQuaternion(q);
-              var dot = v.dot(new THREE.Vector3(0,1,0));
-              if(dot>bestDot){ bestDot=dot; best=f.value; }
-            });
-            return best;
+            if(d.value===undefined) d.value = snapCaraArriba(d.mesh);
+            return d.value;
           });
+          renderer.render(scene, camera);
           onComplete(resultados);
         }
       }
-      requestAnimationFrame(animate);
+      requestAnimationFrame(tick);
+
     }).catch(function(err){
-      console.error('No se pudieron cargar las librerías de físicas 3D:', err);
-      // Fallback: si falla la carga (p.ej. sin conexión), resolvemos con
-      // tiradas normales de Math.random() para que el juego nunca se
-      // quede bloqueado esperando algo que no va a llegar.
+      console.error('No se pudo cargar Three.js para el dado 3D:', err);
       var resultados = [];
       for(var i=0;i<count;i++) resultados.push(1+Math.floor(Math.random()*6));
       onComplete(resultados);

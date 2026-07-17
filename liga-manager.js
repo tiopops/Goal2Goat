@@ -361,14 +361,27 @@
   }
 
   /* ---------- 8. Jugar la jornada actual ---------- */
+  function generarEventosPartido(resultado){
+    const eventos=[];
+    for(let i=0;i<resultado.golesA;i++) eventos.push({minute:5+Math.floor(Math.random()*85), team:'home'});
+    for(let i=0;i<resultado.golesB;i++) eventos.push({minute:5+Math.floor(Math.random()*85), team:'away'});
+    eventos.sort((a,b)=>a.minute-b.minute);
+    return eventos;
+  }
+
   function jugarJornada(){
-    if(state.jornadaActual>38) return;
+    if(state.jornadaActual>38) return null;
     const j=state.jornadaActual-1;
     const jornada=state.calendario[j];
+    let miPartidoInfo=null;
     jornada.forEach(partido=>{
       const key=j+'-'+partido.home.id+'-'+partido.away.id;
       if(state.resultados[key]) return;
-      state.resultados[key]=simularPartido(partido.home, partido.away);
+      const resultado=simularPartido(partido.home, partido.away);
+      state.resultados[key]=resultado;
+      if(partido.home.id==='lm_0' || partido.away.id==='lm_0'){
+        miPartidoInfo={ home:partido.home, away:partido.away, resultado, eventos:generarEventosPartido(resultado) };
+      }
     });
 
     // Fondo de dados: se resetea cada jornada — los que no se usaron en
@@ -398,6 +411,68 @@
 
     state.jornadaActual++;
     guardarEstado();
+    return miPartidoInfo;
+  }
+
+  /* ---------- 8b. Partido en vivo (marcador + minutero + goles en su
+     minuto real), igual que se ve en Copa Leyendas, en vez de resolver
+     la jornada al instante. Solo se anima TU partido — el resto de la
+     jornada (9 partidos más) ya se ha resuelto de golpe por detrás. ---------- */
+  function mostrarPartidoEnVivo(info, onFinish){
+    const miEsLocal = info.home.id==='lm_0';
+    const overlay=document.createElement('div');
+    overlay.id='lmLiveMatchOverlay';
+    overlay.innerHTML=`
+      <div class="lm-live-card">
+        <div class="lm-live-teams">
+          <div class="lm-live-team">${crestHTML(miEsLocal?state.escudo:null,32)}<div>${info.home.name}</div></div>
+          <div class="lm-live-score" id="lmLiveScore">0 – 0</div>
+          <div class="lm-live-team">${crestHTML(!miEsLocal?state.escudo:null,32)}<div>${info.away.name}</div></div>
+        </div>
+        <div class="lm-live-clock" id="lmLiveClock">0'</div>
+        <div class="lm-live-events" id="lmLiveEvents"></div>
+        <button id="lmLiveContinuar" class="mode-card-btn mode-card-btn-gold" style="display:none;width:auto;padding:10px 26px;margin-top:14px">CONTINUAR</button>
+      </div>`;
+    document.getElementById('ligaManagerScreen').appendChild(overlay);
+
+    const DURATION=7000; // 7s reales ≈ 90 minutos de partido
+    const start=performance.now();
+    let curHome=0, curOpp=0, idx=0;
+    const clockEl=document.getElementById('lmLiveClock');
+    const scoreEl=document.getElementById('lmLiveScore');
+    const eventsEl=document.getElementById('lmLiveEvents');
+    if(typeof window.playSound==='function') window.playSound('whistle');
+
+    function tick(now){
+      const frac=Math.min((now-start)/DURATION,1);
+      const minute=Math.floor(frac*90);
+      clockEl.textContent=minute+"'";
+      while(idx<info.eventos.length && info.eventos[idx].minute<=minute){
+        const ev=info.eventos[idx++];
+        if(ev.team==='home') curHome++; else curOpp++;
+        scoreEl.textContent=curHome+' – '+curOpp;
+        const equipoGol = ev.team==='home' ? info.home.name : info.away.name;
+        const li=document.createElement('div');
+        li.className='lm-live-event';
+        li.textContent='⚽ '+ev.minute+"' "+equipoGol;
+        eventsEl.appendChild(li);
+        eventsEl.scrollTop=eventsEl.scrollHeight;
+        if(typeof window.playSound==='function') window.playSound('goal');
+      }
+      if(frac<1){ requestAnimationFrame(tick); }
+      else{
+        clockEl.textContent='FIN';
+        if(typeof window.playSound==='function') window.playSound('whistle');
+        document.getElementById('lmLiveContinuar').style.display='inline-block';
+      }
+    }
+    requestAnimationFrame(tick);
+
+    document.getElementById('lmLiveContinuar').addEventListener('click', ()=>{
+      if(typeof window.playSound==='function') window.playSound('select');
+      overlay.remove();
+      onFinish();
+    });
   }
 
   /* ---------- 9. Resolver el dilema del médico con N dados (se SUMAN) ---------- */
@@ -674,8 +749,12 @@
     const jugarBtn=document.getElementById('lmJugarBtn');
     if(jugarBtn) jugarBtn.addEventListener('click', ()=>{
       if(typeof window.playSound==='function') window.playSound('select');
-      jugarJornada();
-      render();
+      const info=jugarJornada();
+      if(info){
+        mostrarPartidoEnVivo(info, render);
+      } else {
+        render();
+      }
     });
     const backBtn=document.getElementById('ligaManagerBackBtn');
     if(backBtn) backBtn.addEventListener('click', ()=>{
