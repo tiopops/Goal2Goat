@@ -128,6 +128,7 @@
       plantilla.push({
         id:'p'+i, name:nombre, position:POSICIONES[i], overall,
         attack:variar(), defense:variar(), pace:variar(), passing:variar(), technique:variar(),
+        racha:0,
         injured:false, injuryWeeks:0, injurySeverity:null
       });
     }
@@ -361,10 +362,56 @@
   }
 
   /* ---------- 8. Jugar la jornada actual ---------- */
+  /* ---------- 8. Generar eventos del partido: goles con GOLEADOR real
+     (de tu alineación, con sesgo hacia posiciones ofensivas) + posible
+     lesión durante el propio partido — todo con minuto real, igual que
+     hace Copa Leyendas, en vez de un aviso aparte tras la jornada. ---------- */
+  function elegirGoleador(){
+    const idsAlineados=Object.values(state.alineacion||{}).filter(Boolean);
+    const titulares=idsAlineados.map(id=>state.plantilla.find(p=>p.id===id)).filter(p=>p && !p.injured);
+    if(!titulares.length) return null;
+    const ofensivos=titulares.filter(p=>['DC','EI','ED','MC'].includes(p.position));
+    const pool = ofensivos.length ? ofensivos : titulares;
+    return pool[Math.floor(Math.random()*pool.length)];
+  }
+
   function generarEventosPartido(resultado){
     const eventos=[];
-    for(let i=0;i<resultado.golesA;i++) eventos.push({minute:5+Math.floor(Math.random()*85), team:'home'});
-    for(let i=0;i<resultado.golesB;i++) eventos.push({minute:5+Math.floor(Math.random()*85), team:'away'});
+    for(let i=0;i<resultado.golesA;i++){
+      const goleador=elegirGoleador();
+      eventos.push({minute:5+Math.floor(Math.random()*85), team:'home', type:'goal', jugador:goleador});
+    }
+    for(let i=0;i<resultado.golesB;i++){
+      eventos.push({minute:5+Math.floor(Math.random()*85), team:'away', type:'goal'});
+    }
+    // Lesión: puede pasar DURANTE tu propio partido, no como aviso aparte
+    // después de la jornada — mismo espíritu que Copa Leyendas.
+    if(!state.medicoNotificacion && Math.random()<0.18){
+      const idsAlineados=Object.values(state.alineacion||{}).filter(Boolean);
+      const titularesSanos=idsAlineados.map(id=>state.plantilla.find(p=>p.id===id)).filter(p=>p && !p.injured);
+      const pool = titularesSanos.length ? titularesSanos : state.plantilla.filter(p=>!p.injured);
+      if(pool.length){
+        const jugador=pool[Math.floor(Math.random()*pool.length)];
+        const severidades=[
+          {label:'leve', weeks:1, dificultad:7},
+          {label:'moderada', weeks:2, dificultad:10},
+          {label:'grave', weeks:4, dificultad:13}
+        ];
+        const sev=severidades[Math.floor(Math.random()*severidades.length)];
+        eventos.push({minute:20+Math.floor(Math.random()*65), team:'home', type:'injury', jugador, sev});
+      }
+    }
+    // Actualizar rachas de gol: quien marca suma, el resto de titulares que
+    // NO marcaron este partido pierden la racha (mismo concepto que el
+    // "streak" de goleador ya usado en Copa Leyendas).
+    const marcadoresIds=new Set(eventos.filter(e=>e.type==='goal'&&e.jugador).map(e=>e.jugador.id));
+    const idsAlineados=Object.values(state.alineacion||{}).filter(Boolean);
+    idsAlineados.forEach(id=>{
+      const p=state.plantilla.find(x=>x.id===id);
+      if(!p) return;
+      if(marcadoresIds.has(id)) p.racha=(p.racha||0)+1;
+      else p.racha=0;
+    });
     eventos.sort((a,b)=>a.minute-b.minute);
     return eventos;
   }
@@ -380,7 +427,16 @@
       const resultado=simularPartido(partido.home, partido.away);
       state.resultados[key]=resultado;
       if(partido.home.id==='lm_0' || partido.away.id==='lm_0'){
-        miPartidoInfo={ home:partido.home, away:partido.away, resultado, eventos:generarEventosPartido(resultado) };
+        const eventos=generarEventosPartido(resultado);
+        // Aplicar la lesión generada (si la hay) al estado real del jugador
+        const evInjury=eventos.find(e=>e.type==='injury');
+        if(evInjury){
+          evInjury.jugador.injured=true;
+          evInjury.jugador.injuryWeeks=evInjury.sev.weeks;
+          evInjury.jugador.injurySeverity=evInjury.sev.label;
+          state.medicoNotificacion={jugadorId:evInjury.jugador.id, dificultad:evInjury.sev.dificultad, severidad:evInjury.sev.label};
+        }
+        miPartidoInfo={ home:partido.home, away:partido.away, resultado, eventos };
       }
     });
 
@@ -388,20 +444,6 @@
     // la jornada anterior se pierden (use-it-or-lose-it, ya definido).
     state.diceAvailable = DICE_POOL_PER_MATCH;
 
-    if(!state.medicoNotificacion && Math.random()<0.12){
-      const sanos=state.plantilla.filter(p=>!p.injured);
-      if(sanos.length){
-        const jugador=sanos[Math.floor(Math.random()*sanos.length)];
-        const severidades=[
-          {label:'leve', weeks:1, dificultad:7},
-          {label:'moderada', weeks:2, dificultad:10},
-          {label:'grave', weeks:4, dificultad:13}
-        ];
-        const sev=severidades[Math.floor(Math.random()*severidades.length)];
-        jugador.injured=true; jugador.injuryWeeks=sev.weeks; jugador.injurySeverity=sev.label;
-        state.medicoNotificacion={jugadorId:jugador.id, dificultad:sev.dificultad, severidad:sev.label};
-      }
-    }
     state.plantilla.forEach(p=>{
       if(p.injured && p.injuryWeeks>0){
         p.injuryWeeks--;
@@ -414,56 +456,135 @@
     return miPartidoInfo;
   }
 
-  /* ---------- 8b. Partido en vivo (marcador + minutero + goles en su
-     minuto real), igual que se ve en Copa Leyendas, en vez de resolver
-     la jornada al instante. Solo se anima TU partido — el resto de la
-     jornada (9 partidos más) ya se ha resuelto de golpe por detrás. ---------- */
+  /* ---------- 8b. Partido en vivo — CALCO exacto de Copa Leyendas: mismas
+     clases CSS (.match-modal/.match-header/.match-side/.match-team-name/
+     .match-scoreline), dos tiempos claramente separados con descanso,
+     goles con goleador real, lesiones durante el propio partido, y
+     badge de racha (🔥) si el goleador lleva varios partidos marcando. ---------- */
   function mostrarPartidoEnVivo(info, onFinish){
     const miEsLocal = info.home.id==='lm_0';
     const overlay=document.createElement('div');
-    overlay.id='lmLiveMatchOverlay';
+    overlay.id='lmMatchOverlay';
     overlay.innerHTML=`
-      <div class="lm-live-card">
-        <div class="lm-live-teams">
-          <div class="lm-live-team">${crestHTML(miEsLocal?state.escudo:null,32)}<div>${info.home.name}</div></div>
-          <div class="lm-live-score" id="lmLiveScore">0 – 0</div>
-          <div class="lm-live-team">${crestHTML(!miEsLocal?state.escudo:null,32)}<div>${info.away.name}</div></div>
+      <div class="match-modal" style="overflow:hidden;display:flex;flex-direction:column;max-height:85vh">
+        <div class="match-header">
+          <div class="match-side">
+            ${crestHTML(miEsLocal?state.escudo:null,48)}
+            <span class="match-team-name">${info.home.name}</span>
+          </div>
+          <div style="text-align:center;flex:0 0 auto">
+            <div class="match-scoreline" id="lmLiveScore" style="font-size:42px;letter-spacing:4px">0 – 0</div>
+            <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-top:4px">
+              <div style="font-family:'Bebas Neue',Impact,sans-serif;font-size:20px;color:var(--gold)" id="lmLiveClock">0'</div>
+              <div style="font-size:9px;font-weight:700;background:var(--accent);color:#fff;padding:2px 7px;letter-spacing:1px;text-transform:uppercase" id="lmLiveHalf">1ª PARTE</div>
+            </div>
+            <div style="height:4px;background:#eee;border-radius:2px;margin-top:6px;overflow:hidden">
+              <div id="lmLiveFill" style="height:100%;background:var(--accent);border-radius:2px;width:0%;transition:width .15s linear"></div>
+            </div>
+          </div>
+          <div class="match-side">
+            ${crestHTML(!miEsLocal?state.escudo:null,48)}
+            <span class="match-team-name">${info.away.name}</span>
+          </div>
         </div>
-        <div class="lm-live-clock" id="lmLiveClock">0'</div>
-        <div class="lm-live-events" id="lmLiveEvents"></div>
-        <button id="lmLiveContinuar" class="mode-card-btn mode-card-btn-gold" style="display:none;width:auto;padding:10px 26px;margin-top:14px">CONTINUAR</button>
+        <div id="lmLiveEvents" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;align-items:stretch;gap:2px;padding:4px 0;min-height:80px;max-height:260px"></div>
+        <button id="lmLiveContinuar" class="mode-card-btn mode-card-btn-gold" style="display:none;width:100%;padding:11px;margin-top:10px">CONTINUAR</button>
       </div>`;
     document.getElementById('ligaManagerScreen').appendChild(overlay);
 
-    const DURATION=7000; // 7s reales ≈ 90 minutos de partido
-    const start=performance.now();
-    let curHome=0, curOpp=0, idx=0;
-    const clockEl=document.getElementById('lmLiveClock');
-    const scoreEl=document.getElementById('lmLiveScore');
     const eventsEl=document.getElementById('lmLiveEvents');
+    const clockEl=document.getElementById('lmLiveClock');
+    const halfEl=document.getElementById('lmLiveHalf');
+    const fillEl=document.getElementById('lmLiveFill');
+    const scoreEl=document.getElementById('lmLiveScore');
+    let curHome=0, curOpp=0, idx=0;
+
+    function flashScore(){ scoreEl.classList.remove('goal-flash'); void scoreEl.offsetWidth; scoreEl.classList.add('goal-flash'); }
+
+    function addSep(text){
+      const sep=document.createElement('div');
+      sep.style.cssText='text-align:center;font-size:10px;font-weight:700;color:var(--accent);letter-spacing:2px;padding:4px 0;border-top:1px solid #eee;border-bottom:1px solid #eee;margin:2px 0;text-transform:uppercase';
+      sep.textContent=text;
+      eventsEl.appendChild(sep);
+      eventsEl.scrollTop=eventsEl.scrollHeight;
+    }
+
+    function addEvt(icon,text,minLabel,esLocal){
+      const item=document.createElement('div');
+      item.style.cssText='display:grid;grid-template-columns:1fr 44px 1fr;align-items:center;width:100%;font-size:12px;animation:slideInEvent .3s ease;opacity:0;animation-fill-mode:forwards;padding:3px 0;border-bottom:1px solid rgba(0,0,0,.05)';
+      const center=`<span style="font-family:'Bebas Neue',Impact,sans-serif;font-size:15px;color:#aaa;text-align:center;display:block;letter-spacing:.5px">${minLabel}</span>`;
+      if(esLocal){
+        item.innerHTML=`<span style="text-align:right;padding-right:6px;color:var(--accent);line-height:1.3">${text} <span style="font-size:14px">${icon}</span></span>${center}<span></span>`;
+      }else{
+        item.innerHTML=`<span></span>${center}<span style="text-align:left;padding-left:6px;color:var(--red);line-height:1.3"><span style="font-size:14px">${icon}</span> ${text}</span>`;
+      }
+      eventsEl.appendChild(item);
+      eventsEl.scrollTop=eventsEl.scrollHeight;
+    }
+
     if(typeof window.playSound==='function') window.playSound('whistle');
+
+    // Dos tiempos claramente diferenciados, igual que Copa Leyendas:
+    // 1ª PARTE (0-47%) → DESCANSO (47-53%) → 2ª PARTE (53-100%).
+    const DURATION=8000;
+    const HT_S=0.47, HT_E=0.53;
+    const start=performance.now();
+    let htShown=false;
 
     function tick(now){
       const frac=Math.min((now-start)/DURATION,1);
-      const minute=Math.floor(frac*90);
+
+      if(frac>=HT_S && frac<HT_E){
+        if(!htShown){
+          htShown=true;
+          clockEl.textContent="45'";
+          halfEl.textContent='DESCANSO';
+          halfEl.style.background='#a07a00';
+          fillEl.style.width='50%';
+          addSep("Descanso — 45'");
+          if(typeof window.playSound==='function') window.playSound('whistle');
+        }
+        requestAnimationFrame(tick);
+        return;
+      }
+
+      let minute;
+      if(frac<HT_S){
+        minute=Math.floor((frac/HT_S)*45);
+        halfEl.textContent='1ª PARTE'; halfEl.style.background='var(--accent)';
+      }else{
+        const f2=(frac-HT_E)/(1-HT_E);
+        minute=45+Math.floor(f2*45);
+        halfEl.textContent='2ª PARTE'; halfEl.style.background='var(--accent)';
+      }
       clockEl.textContent=minute+"'";
+      fillEl.style.width=(frac*100)+'%';
+
       while(idx<info.eventos.length && info.eventos[idx].minute<=minute){
         const ev=info.eventos[idx++];
-        if(ev.team==='home') curHome++; else curOpp++;
-        scoreEl.textContent=curHome+' – '+curOpp;
-        const equipoGol = ev.team==='home' ? info.home.name : info.away.name;
-        const li=document.createElement('div');
-        li.className='lm-live-event';
-        li.textContent='⚽ '+ev.minute+"' "+equipoGol;
-        eventsEl.appendChild(li);
-        eventsEl.scrollTop=eventsEl.scrollHeight;
-        if(typeof window.playSound==='function') window.playSound('goal');
+        const esLocal = ev.team==='home';
+        if(ev.type==='goal'){
+          if(esLocal) curHome++; else curOpp++;
+          scoreEl.textContent=curHome+' – '+curOpp;
+          flashScore();
+          const equipoGol = esLocal ? info.home.name : info.away.name;
+          const racha = ev.jugador && ev.jugador.racha>=2 ? ` <span title="Racha de gol">🔥${ev.jugador.racha}</span>` : '';
+          const nombre = ev.jugador ? ev.jugador.name : equipoGol;
+          addEvt('⚽', `<strong>${nombre}</strong>${racha}`, ev.minute+"'", esLocal);
+          if(typeof window.playSound==='function') window.playSound('goal');
+        } else if(ev.type==='injury'){
+          addEvt('✚', `<strong>${ev.jugador.name}</strong> <span style="font-size:10px;color:#e74c3c">(lesión ${ev.sev.label})</span>`, ev.minute+"'", true);
+        }
       }
+
       if(frac<1){ requestAnimationFrame(tick); }
       else{
         clockEl.textContent='FIN';
+        halfEl.textContent='FINAL';
+        halfEl.style.background='#555';
+        fillEl.style.width='100%';
         if(typeof window.playSound==='function') window.playSound('whistle');
-        document.getElementById('lmLiveContinuar').style.display='inline-block';
+        document.getElementById('lmLiveContinuar').style.display='block';
       }
     }
     requestAnimationFrame(tick);
@@ -845,8 +966,9 @@
         ? `<span style="color:#e24b4a">Lesionado (${p.injuryWeeks}j)</span>`
         : `<span style="color:#5dcaa5">Disponible</span>`;
       const titular = titularIds.has(p.id) ? '<span style="color:#c9a227" title="Titular">★</span> ' : '';
+      const racha = p.racha>=2 ? ` <span title="Racha de gol">🔥${p.racha}</span>` : '';
       return `<tr>
-        <td>${titular}${p.name}</td>
+        <td>${titular}${p.name}${racha}</td>
         <td>${p.position}</td>
         <td><strong>${p.overall}</strong></td>
         <td>${estado}</td>
