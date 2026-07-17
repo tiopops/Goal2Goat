@@ -32,26 +32,27 @@
   const DICE_POOL_PER_MATCH = 3;
 
   /* ---------- 1. Equipos rivales — La Liga 2026-27 real, 19 clubes ---------- */
+  const ESCUDOS_DIR='assets/escudos_liga_española/';
   const LM_RIVALS = [
-    {id:'lm_1',  name:'Real Madrid',          attack:88, defense:85, pace:82, passing:88, technique:89},
-    {id:'lm_2',  name:'FC Barcelona',         attack:87, defense:83, pace:84, passing:89, technique:90},
-    {id:'lm_3',  name:'Atlético de Madrid',   attack:84, defense:86, pace:80, passing:82, technique:81},
-    {id:'lm_4',  name:'Athletic Club',        attack:78, defense:77, pace:76, passing:78, technique:77},
-    {id:'lm_5',  name:'Villarreal CF',        attack:79, defense:76, pace:75, passing:80, technique:79},
-    {id:'lm_6',  name:'Real Betis',           attack:77, defense:74, pace:74, passing:78, technique:77},
-    {id:'lm_7',  name:'Real Sociedad',        attack:76, defense:75, pace:74, passing:77, technique:76},
-    {id:'lm_8',  name:'Sevilla FC',           attack:74, defense:73, pace:72, passing:75, technique:74},
-    {id:'lm_9',  name:'RC Celta',             attack:72, defense:70, pace:73, passing:74, technique:73},
-    {id:'lm_10', name:'Valencia CF',          attack:71, defense:72, pace:70, passing:71, technique:71},
-    {id:'lm_11', name:'Rayo Vallecano',       attack:69, defense:70, pace:68, passing:68, technique:67},
-    {id:'lm_12', name:'CA Osasuna',           attack:68, defense:71, pace:67, passing:66, technique:65},
-    {id:'lm_13', name:'Getafe CF',            attack:66, defense:72, pace:65, passing:62, technique:61},
-    {id:'lm_14', name:'RCD Espanyol',         attack:65, defense:66, pace:66, passing:64, technique:64},
-    {id:'lm_15', name:'Elche CF',             attack:62, defense:63, pace:61, passing:61, technique:60},
-    {id:'lm_16', name:'Levante UD',           attack:61, defense:62, pace:60, passing:60, technique:59},
-    {id:'lm_17', name:'Deportivo Alavés',     attack:64, defense:68, pace:63, passing:62, technique:61},
-    {id:'lm_18', name:'Racing de Santander',  attack:60, defense:61, pace:60, passing:59, technique:58},
-    {id:'lm_19', name:'RC Deportivo',         attack:61, defense:60, pace:61, passing:60, technique:60}
+    {id:'lm_1',  name:'Real Madrid',          attack:88, defense:85, pace:82, passing:88, technique:89, crestImg:ESCUDOS_DIR+'realmadrid.png'},
+    {id:'lm_2',  name:'FC Barcelona',         attack:87, defense:83, pace:84, passing:89, technique:90, crestImg:ESCUDOS_DIR+'barcelona.png'},
+    {id:'lm_3',  name:'Atlético de Madrid',   attack:84, defense:86, pace:80, passing:82, technique:81, crestImg:ESCUDOS_DIR+'atlmadrid.png'},
+    {id:'lm_4',  name:'Athletic Club',        attack:78, defense:77, pace:76, passing:78, technique:77, crestImg:ESCUDOS_DIR+'athletic.png'},
+    {id:'lm_5',  name:'Villarreal CF',        attack:79, defense:76, pace:75, passing:80, technique:79, crestImg:ESCUDOS_DIR+'villarreal.png'},
+    {id:'lm_6',  name:'Real Betis',           attack:77, defense:74, pace:74, passing:78, technique:77, crestImg:ESCUDOS_DIR+'betis.png'},
+    {id:'lm_7',  name:'Real Sociedad',        attack:76, defense:75, pace:74, passing:77, technique:76, crestImg:ESCUDOS_DIR+'realsociedad.png'},
+    {id:'lm_8',  name:'Sevilla FC',           attack:74, defense:73, pace:72, passing:75, technique:74, crestImg:ESCUDOS_DIR+'sevilla.png'},
+    {id:'lm_9',  name:'RC Celta',             attack:72, defense:70, pace:73, passing:74, technique:73, crestImg:ESCUDOS_DIR+'celta.png'},
+    {id:'lm_10', name:'Valencia CF',          attack:71, defense:72, pace:70, passing:71, technique:71, crestImg:ESCUDOS_DIR+'valencia.png'},
+    {id:'lm_11', name:'Rayo Vallecano',       attack:69, defense:70, pace:68, passing:68, technique:67, crestImg:ESCUDOS_DIR+'rayovallecano.png'},
+    {id:'lm_12', name:'CA Osasuna',           attack:68, defense:71, pace:67, passing:66, technique:65, crestImg:ESCUDOS_DIR+'osasuna.png'},
+    {id:'lm_13', name:'Getafe CF',            attack:66, defense:72, pace:65, passing:62, technique:61, crestImg:ESCUDOS_DIR+'getafe.png'},
+    {id:'lm_14', name:'RCD Espanyol',         attack:65, defense:66, pace:66, passing:64, technique:64, crestImg:ESCUDOS_DIR+'espanyol.png'},
+    {id:'lm_15', name:'Elche CF',             attack:62, defense:63, pace:61, passing:61, technique:60, crestImg:ESCUDOS_DIR+'elche.png'},
+    {id:'lm_16', name:'Levante UD',           attack:61, defense:62, pace:60, passing:60, technique:59, crestImg:ESCUDOS_DIR+'levante.png'},
+    {id:'lm_17', name:'Deportivo Alavés',     attack:64, defense:68, pace:63, passing:62, technique:61, crestImg:ESCUDOS_DIR+'alaves.png'},
+    {id:'lm_18', name:'Racing de Santander',  attack:60, defense:61, pace:60, passing:59, technique:58, crestImg:ESCUDOS_DIR+'racingsantander.png'},
+    {id:'lm_19', name:'RC Deportivo',         attack:61, defense:60, pace:61, passing:60, technique:60, crestImg:ESCUDOS_DIR+'deportivocoruna.png'}
   ];
 
   const MONEDAS = {
@@ -155,29 +156,57 @@
   /* ---------- 3b. Formaciones seleccionables — a diferencia de Copa
      Leyendas (fija al empezar), aquí se puede elegir antes de cada
      partido. Coordenadas en % sobre el mismo campo (480×640). ---------- */
-  const FORMACIONES = {
-    '433': {label:'4-3-3', slots:[
-      {slot:'POR', x:50,   y:90.6},
-      {slot:'DFC1',x:29.2, y:75},{slot:'DFC2',x:70.8, y:75},
-      {slot:'LI',  x:12.5, y:71.9},{slot:'LD',  x:87.5, y:71.9},
-      {slot:'MC1', x:33.3, y:53.1},{slot:'MC2', x:50, y:48.4},{slot:'MC3', x:66.7, y:53.1},
-      {slot:'EI',  x:16.7, y:28.1},{slot:'DC', x:50, y:21.9},{slot:'ED', x:83.3, y:28.1}
-    ]},
-    '442': {label:'4-4-2', slots:[
-      {slot:'POR', x:50,   y:90.6},
-      {slot:'DFC1',x:29.2, y:75},{slot:'DFC2',x:70.8, y:75},
-      {slot:'LI',  x:12.5, y:71.9},{slot:'LD',  x:87.5, y:71.9},
-      {slot:'MI',  x:14,   y:46},{slot:'MC1', x:38, y:50},{slot:'MC2', x:62, y:50},{slot:'MD', x:86, y:46},
-      {slot:'DC1', x:36,   y:20},{slot:'DC2', x:64, y:20}
-    ]},
-    '352': {label:'3-5-2', slots:[
-      {slot:'POR', x:50,   y:90.6},
-      {slot:'DFC1',x:24,   y:74},{slot:'DFC2',x:50, y:78},{slot:'DFC3',x:76, y:74},
-      {slot:'LI',  x:10,   y:50},{slot:'MC1', x:31,y:53},{slot:'MC2', x:50, y:48},{slot:'MC3', x:69,y:53},{slot:'LD', x:90, y:50},
-      {slot:'DC1', x:36,   y:20},{slot:'DC2', x:64, y:20}
-    ]}
+  /* ---------- 3b. Formaciones — MISMAS que en Copa Leyendas (3 categorías
+     × 7 códigos cada una = 21 en total). Las coordenadas de cada posición
+     se generan automáticamente a partir del código (ej. "4-2-3-1"), en
+     vez de definir las 21 a mano — un generador genérico reparte cada
+     línea de jugadores en el campo (480×640, igual que Copa Leyendas). ---------- */
+  const FORMATION_CODES = {
+    ofensiva:   ['3-4-3','3-4-1-2','4-2-4','4-3-3','4-2-3-1','3-5-2','2-3-5'],
+    equilibrada:['4-4-2','4-3-3','4-1-4-1','4-2-3-1','4-3-1-2','3-5-2','4-5-1'],
+    defensiva:  ['5-4-1','5-3-2','4-5-1','4-1-4-1','3-6-1','5-2-2-1','6-3-1']
   };
-  function formacionActual(){ return FORMACIONES[state.formacion||'433']; }
+  const CAT_LABELS = {ofensiva:'OFENSIVA', equilibrada:'EQUILIBRADA', defensiva:'DEFENSIVA'};
+
+  // Posición genérica de una línea: primera línea tras el portero =
+  // defensa (LI/LD en los extremos si hay 2+), última línea = ataque
+  // (EI/ED en los extremos si hay 3+), líneas intermedias = mediocampo
+  // (EI/ED en los extremos si la línea es ancha, 4+).
+  function posParaFila(rowIdx, nFilas, i, count){
+    if(rowIdx===0){
+      if(count>=2 && i===0) return 'LI';
+      if(count>=2 && i===count-1) return 'LD';
+      return 'DFC';
+    }
+    if(rowIdx===nFilas-1){
+      if(count>=3 && i===0) return 'EI';
+      if(count>=3 && i===count-1) return 'ED';
+      return 'DC';
+    }
+    if(count>=4 && i===0) return 'EI';
+    if(count>=4 && i===count-1) return 'ED';
+    return 'MC';
+  }
+  function generarSlotsFormacion(code){
+    const filas=code.split('-').map(n=>parseInt(n,10));
+    const slots=[{slot:'POR', x:50, y:90.6}];
+    const nFilas=filas.length;
+    const contador={};
+    filas.forEach((count,rowIdx)=>{
+      const y = 75 - (nFilas<=1?0:(rowIdx/(nFilas-1))*55);
+      for(let i=0;i<count;i++){
+        const x = count===1?50:10+(i/(count-1))*80;
+        const base=posParaFila(rowIdx,nFilas,i,count);
+        contador[base]=(contador[base]||0)+1;
+        slots.push({slot:base+contador[base], x, y});
+      }
+    });
+    return slots;
+  }
+  function formacionActual(){
+    const code=(state.formacionCode)||'4-3-3';
+    return {code, slots:generarSlotsFormacion(code)};
+  }
 
   // Media de las 5 categorías de los titulares asignados (si no hay
   // ninguno asignado todavía, usa la media de toda la plantilla como
@@ -228,6 +257,9 @@
   /* ---------- 5. Estado persistente (localStorage, prototipo) ---------- */
   let state=null;
   let setupStep=1;
+  let formacionCategoriaVista=null; // categoría que se está viendo en el selector (no siempre coincide con la activa)
+  let seleccionJugador=null; // id del jugador seleccionado en la plantilla/banquillo/campo, a la espera del segundo clic
+  let clasifColapsada=true; // la clasificación empieza contraída, igual que el glosario de Copa Leyendas
   let setupData={liga:'es', moneda:null, nombre:'', escudo:null};
 
   function nuevoEstadoSinEmpezar(){ return { setupComplete:false }; }
@@ -266,8 +298,9 @@
       calendario:generarCalendario(teams),
       resultados:{},
       plantilla,
-      formacion:'433',
-      alineacion:alineacionAutomatica(plantilla, FORMACIONES['433'].slots),
+      formacionCategoria:'equilibrada',
+      formacionCode:'4-3-3',
+      alineacion:alineacionAutomatica(plantilla, generarSlotsFormacion('4-3-3')),
       medicoNotificacion:null,
       diceAvailable:DICE_POOL_PER_MATCH,
       medicoCartas:[],
@@ -320,8 +353,9 @@
     }
     return `<i class="ph ph-bold ph-shield" style="font-size:${sizePx*0.6}px;color:#888"></i>`;
   }
-  function rivalCrestHTML(sizePx){
+  function rivalCrestHTML(sizePx, crestImg){
     sizePx=sizePx||28;
+    if(crestImg) return `<img src="${crestImg}" alt="" style="width:${sizePx}px;height:${sizePx}px;object-fit:contain;vertical-align:middle">`;
     return `<i class="ph ph-bold ph-shield" style="font-size:${sizePx*0.6}px;color:#8a95a0"></i>`;
   }
 
@@ -386,7 +420,7 @@
   function calcularClasificacion(){
     const teams=[{id:'lm_0',name:state.nombreEquipo}, ...LM_RIVALS];
     const tabla={};
-    teams.forEach(t=>{ tabla[t.id]={id:t.id,name:t.name,pj:0,pg:0,pe:0,pp:0,gf:0,gc:0,pts:0}; });
+    teams.forEach(t=>{ tabla[t.id]={id:t.id,name:t.name,crestImg:t.crestImg,pj:0,pg:0,pe:0,pp:0,gf:0,gc:0,pts:0}; });
     for(let j=0;j<state.jornadaActual-1;j++){
       state.calendario[j].forEach(partido=>{
         const key=j+'-'+partido.home.id+'-'+partido.away.id;
@@ -541,7 +575,7 @@
       <div class="match-modal" style="overflow:hidden;display:flex;flex-direction:column;max-height:85vh">
         <div class="match-header">
           <div class="match-side">
-            ${crestHTML(miEsLocal?state.escudo:null,48)}
+            ${miEsLocal?crestHTML(state.escudo,48):rivalCrestHTML(48, info.home.crestImg)}
             <span class="match-team-name">${info.home.name}</span>
           </div>
           <div style="text-align:center;flex:0 0 auto">
@@ -555,10 +589,11 @@
             </div>
           </div>
           <div class="match-side">
-            ${crestHTML(!miEsLocal?state.escudo:null,48)}
+            ${!miEsLocal?crestHTML(state.escudo,48):rivalCrestHTML(48, info.away.crestImg)}
             <span class="match-team-name">${info.away.name}</span>
           </div>
         </div>
+        <div id="lmPostMatchInfo"></div>
         <div id="lmLiveEvents" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;align-items:stretch;gap:2px;padding:4px 0;min-height:80px;max-height:260px"></div>
         <button id="lmLiveContinuar" class="mode-card-btn mode-card-btn-gold" style="display:none;width:100%;padding:11px;margin-top:10px">CONTINUAR</button>
       </div>`;
@@ -660,6 +695,25 @@
         halfEl.style.background='#555';
         fillEl.style.width='100%';
         if(typeof window.playSound==='function') window.playSound('whistle');
+
+        // Resultado final desde tu perspectiva — mismo banner que Copa
+        // Leyendas (.match-result-tag + .res-win-tag/.res-draw-tag/.res-lose-tag).
+        const miGoles = miEsLocal?curHome:curOpp;
+        const suGoles = miEsLocal?curOpp:curHome;
+        let resultClass, resultText;
+        if(miGoles===suGoles){ resultClass='res-draw-tag'; resultText='EMPATE'; }
+        else if(miGoles>suGoles){ resultClass='res-win-tag'; resultText='¡VICTORIA!'; }
+        else { resultClass='res-lose-tag'; resultText='DERROTA'; }
+        const golesA=info.eventos.filter(e=>e.type==='goal').length;
+        const tarjetasA=info.eventos.filter(e=>e.type==='card').length;
+        const lesionA=info.eventos.find(e=>e.type==='injury');
+        document.getElementById('lmPostMatchInfo').innerHTML=`
+          <div class="match-result-tag ${resultClass}">${resultText}</div>
+          <div class="match-summary">
+            <strong>${state.nombreEquipo}</strong> ${curHome} – ${curOpp} <strong>${info.home.id==='lm_0'?info.away.name:info.home.name}</strong><br>
+            ${golesA} gol${golesA===1?'':'es'} en total · ${tarjetasA} tarjeta${tarjetasA===1?'':'s'}${lesionA?` · 1 lesión (${lesionA.jugador.name})`:''}
+          </div>`;
+
         document.getElementById('lmLiveContinuar').style.display='block';
       }
     }
@@ -830,13 +884,18 @@
 
   /* ---------- 10. Abandonar la liga ---------- */
   function abandonarLiga(){
-    const ok=confirm('¿Seguro que quieres abandonar la liga? Se perderá todo el progreso de esta temporada y empezarás una partida nueva.');
-    if(!ok) return;
-    borrarEstado();
-    state=nuevoEstadoSinEmpezar();
-    setupStep=1;
-    setupData={liga:'es', moneda:null, nombre:'', escudo:null};
-    render();
+    function proceder(){
+      borrarEstado();
+      state=nuevoEstadoSinEmpezar();
+      setupStep=1;
+      setupData={liga:'es', moneda:null, nombre:'', escudo:null};
+      render();
+    }
+    if(typeof window.showConfirmPopup==='function'){
+      window.showConfirmPopup('¿Abandonar la liga? Se perderá todo el progreso de esta temporada y empezarás una partida nueva.', proceder, 'ABANDONAR');
+    } else if(confirm('¿Seguro que quieres abandonar la liga? Se perderá todo el progreso de esta temporada y empezarás una partida nueva.')){
+      proceder();
+    }
   }
 
   /* ---------- 11. Render: flujo de entrada (liga → moneda → nombre → escudo) ---------- */
@@ -875,7 +934,7 @@
         <div class="lm-setup-title" style="font-size:16px;margin:6px 0 22px">${setupData.nombre}</div>
         <button id="lmSetupConfirm" class="mode-card-btn mode-card-btn-gold" style="width:auto;padding:10px 26px;">EMPEZAR TEMPORADA</button>
         <div style="margin-top:12px">
-          <button id="lmSetupCambiar" class="mode-card-btn mode-card-btn-disabled" style="width:auto;padding:8px 18px;font-size:13px">CAMBIAR NOMBRE/ESCUDO</button>
+          <button id="lmSetupCambiar" class="mode-card-btn mode-card-btn-secondary" style="width:auto;padding:8px 18px;font-size:13px">CAMBIAR NOMBRE/ESCUDO</button>
         </div>
       `;
     } else if(setupStep===3){
@@ -1013,7 +1072,8 @@
       const cross=p.injured?` <span class="cross" title="Lesionado">✚</span>`:'';
       const racha=p.racha>=2?` <span title="Racha de gol">🔥${p.racha}</span>`:'';
       const star=titularIds.has(p.id)?'<span class="star" title="Titular">★</span>':'';
-      return `<tr data-pid="${p.id}">
+      const claseFila=[p.id===seleccionJugador?'lm-row-selected':'', p.injured?'lm-row-injured':''].filter(Boolean).join(' ');
+      return `<tr data-pid="${p.id}" class="${claseFila}">
         <td>${p.name}${cross}${racha}</td>
         <td>${fatigueBarHTML(p)}</td>
         <td>${p.position}${star}</td>
@@ -1051,24 +1111,43 @@
               <tbody>${filasBanquillo}</tbody>
             </table>
           </div>
+
+          <div class="bench-title"><span>FORMACIÓN</span><span>${state.formacionCode}</span></div>
+          <div class="formation-tabs">
+            ${Object.keys(FORMATION_CODES).map(cat=>`<div class="formation-tab ${(formacionCategoriaVista||state.formacionCategoria)===cat?'active':''}" data-categoria="${cat}">${CAT_LABELS[cat]}</div>`).join('')}
+          </div>
+          <div id="formationList">
+            ${FORMATION_CODES[formacionCategoriaVista||state.formacionCategoria].map(code=>`
+              <div class="formation-option ${state.formacionCode===code?'selected':''}" data-formacion-codigo="${code}">
+                <span class="f-code">${code}</span>
+                <span class="f-badge">${code.split('-').length} líneas</span>
+              </div>`).join('')}
+          </div>
         </div>
 
         <div class="lm-center-panel">
-          <div class="formation-tabs">
-            ${Object.keys(FORMACIONES).map(k=>`<div class="formation-tab ${state.formacion===k?'active':''}" data-formacion="${k}">${FORMACIONES[k].label}</div>`).join('')}
-          </div>
           <div id="lmPitchBox">${PITCH_SVG}${formacionActual().slots.map(def=>{
             const pid=state.alineacion&&state.alineacion[def.slot];
             const jugador=pid?state.plantilla.find(p=>p.id===pid):null;
             const vacio=!jugador;
             const lesionado=jugador&&jugador.injured;
             const iniciales=jugador?jugador.name.split(' ').map(w=>w[0]).join(''):basePos(def.slot);
-            return `<div class="lm-pos-slot ${vacio?'empty-slot':''} ${lesionado?'lm-pos-injured':''}" data-slot="${def.slot}" style="left:${def.x}%;top:${def.y}%" title="${jugador?jugador.name+' ('+jugador.overall+')':'Vacío'}">
+            const seleccionado=jugador && jugador.id===seleccionJugador;
+            return `<div class="lm-pos-slot ${vacio?'empty-slot':''} ${lesionado?'lm-pos-injured':''} ${seleccionado?'lm-pos-selected':''}" data-slot="${def.slot}" style="left:${def.x}%;top:${def.y}%" title="${jugador?jugador.name+' ('+jugador.overall+')':'Vacío'}">
               <span class="lm-pos-code">${iniciales}</span>
               ${jugador?`<span class="lm-pos-rating">${jugador.overall}</span>`:''}
+              ${lesionado?'<span class="lm-pos-cross">✚</span>':''}
             </div>`;
           }).join('')}</div>
           <p class="lm-pitch-caption">Toca una posición para asignar o cambiar jugador. Puedes cambiar de formación antes de cada partido.</p>
+
+          <div class="lm-match-actions">
+            <button id="lmJugarBtn" class="lm-btn-jugar" ${state.jornadaActual>38?'disabled':''}>
+              ${state.jornadaActual>38?'TEMPORADA COMPLETA':'JUGAR JORNADA'}
+            </button>
+            <button id="lmAbandonarBtn" class="lm-btn-abandonar">ABANDONAR LIGA</button>
+            <button id="ligaManagerBackBtn" class="lm-btn-volver">VOLVER AL MENÚ</button>
+          </div>
         </div>
 
         <div class="lm-panel lm-right-panel">
@@ -1076,22 +1155,17 @@
             ${rival ? `
               <div class="lm-vs-label" style="text-align:center;margin-bottom:6px">${esLocal?'JUEGAS EN CASA':'JUEGAS FUERA'}</div>
               <div class="lm-header-team-rival" style="justify-content:center;gap:10px">
-                ${rivalCrestHTML(30)}<span class="lm-title" style="font-size:15px">${rival.name}</span>
+                ${rivalCrestHTML(30, rival.crestImg)}<span class="lm-title" style="font-size:15px">${rival.name}</span>
               </div>` : `<div class="lm-vs-label" style="text-align:center">Temporada finalizada</div>`}
           </div>
-          <div class="lm-actionsrow" style="flex-direction:column">
-            <button id="lmJugarBtn" class="mode-card-btn mode-card-btn-gold" ${state.jornadaActual>38?'disabled':''} style="width:100%;padding:10px 22px;">
-              ${state.jornadaActual>38?'TEMPORADA COMPLETA':'JUGAR JORNADA'}
-            </button>
-            <button id="lmAbandonarBtn" class="mode-card-btn mode-card-btn-disabled" style="width:100%;padding:9px 16px;">ABANDONAR LIGA</button>
-            <button id="ligaManagerBackBtn" class="mode-card-btn mode-card-btn-disabled" style="width:100%;padding:9px 16px;">VOLVER AL MENÚ</button>
-          </div>
+          <h3 class="lm-clasif-header" id="lmClasifHeader"><span style="color:var(--gold)">CLASIFICACIÓN</span> <span class="lm-clasif-arrow ${clasifColapsada?'':'lm-clasif-arrow-open'}">▾</span></h3>
+          <div id="lmClasifBody" style="${clasifColapsada?'display:none':''}">
           <div class="lm-table-wrap">
             <table class="lm-table">
               <thead><tr><th></th><th>#</th><th>Equipo</th><th>PJ</th><th>Pts</th></tr></thead>
               <tbody>
                 ${clasif.map((t,i)=>`<tr class="${t.id==='lm_0'?'lm-myteam':''} lm-zona-${zonaClasificacion(i+1)}">
-                  <td>${t.id==='lm_0'?crestHTML(state.escudo,18):rivalCrestHTML(18)}</td>
+                  <td>${t.id==='lm_0'?crestHTML(state.escudo,18):rivalCrestHTML(18, t.crestImg)}</td>
                   <td>${i+1}</td><td>${t.name}</td><td>${t.pj}</td><td><strong>${t.pts}</strong></td>
                 </tr>`).join('')}
               </tbody>
@@ -1102,6 +1176,7 @@
             <span><i class="lm-legend-dot lm-zona-europa"></i>Europa Lg.</span>
             <span><i class="lm-legend-dot lm-zona-conference"></i>Conference</span>
             <span><i class="lm-legend-dot lm-zona-descenso"></i>Descenso</span>
+          </div>
           </div>
         </div>
       </div>
@@ -1115,13 +1190,21 @@
       </div>
     `;
 
-    root.querySelectorAll('[data-formacion]').forEach(el=>{
+    root.querySelectorAll('[data-categoria]').forEach(el=>{
       el.addEventListener('click', ()=>{
-        const key=el.getAttribute('data-formacion');
-        if(key===state.formacion) return;
         if(typeof window.playSound==='function') window.playSound('select');
-        state.formacion=key;
-        state.alineacion=alineacionAutomatica(state.plantilla, FORMACIONES[key].slots);
+        formacionCategoriaVista=el.getAttribute('data-categoria');
+        render();
+      });
+    });
+    root.querySelectorAll('[data-formacion-codigo]').forEach(el=>{
+      el.addEventListener('click', ()=>{
+        const code=el.getAttribute('data-formacion-codigo');
+        if(code===state.formacionCode) return;
+        if(typeof window.playSound==='function') window.playSound('select');
+        state.formacionCode=code;
+        state.formacionCategoria=formacionCategoriaVista||state.formacionCategoria;
+        state.alineacion=alineacionAutomatica(state.plantilla, generarSlotsFormacion(code));
         guardarEstado();
         render();
       });
@@ -1148,6 +1231,12 @@
       if(typeof window.playSound==='function') window.playSound('select');
       abandonarLiga();
     });
+    const clasifHeader=document.getElementById('lmClasifHeader');
+    if(clasifHeader) clasifHeader.addEventListener('click', ()=>{
+      if(typeof window.playSound==='function') window.playSound('select');
+      clasifColapsada=!clasifColapsada;
+      render();
+    });
     const medicoBtn=document.getElementById('lmMedicoBtn');
     if(medicoBtn) medicoBtn.addEventListener('click', ()=>{
       if(typeof window.playSound==='function') window.playSound('select');
@@ -1156,58 +1245,74 @@
     root.querySelectorAll('.lm-pos-slot').forEach(el=>{
       el.addEventListener('click', ()=>{
         if(typeof window.playSound==='function') window.playSound('select');
-        abrirSelectorSlot(el.getAttribute('data-slot'));
+        manejarClicSlot(el.getAttribute('data-slot'));
+      });
+    });
+    root.querySelectorAll('.roster-table tr[data-pid]').forEach(el=>{
+      el.addEventListener('click', ()=>{
+        if(typeof window.playSound==='function') window.playSound('select');
+        manejarClicJugador(el.getAttribute('data-pid'));
       });
     });
   }
 
-  /* ---------- 12a. Selector de jugador para una posición del campo ---------- */
-  function abrirSelectorSlot(slot){
-    const asignadoActualId = state.alineacion[slot];
-    const idsUsados = new Set(Object.entries(state.alineacion).filter(([s])=>s!==slot).map(([,id])=>id));
-    const disponibles = state.plantilla.filter(p=>!idsUsados.has(p.id));
+  /* ---------- 12a. Selección unificada campo ↔ plantilla/banquillo,
+     igual que Copa Leyendas: un clic selecciona, el siguiente clic (en
+     otro jugador o en una posición) coloca/intercambia. Un jugador
+     lesionado no se puede seleccionar para jugar. ---------- */
+  function slotDeJugador(playerId){
+    return Object.keys(state.alineacion||{}).find(s=>state.alineacion[s]===playerId) || null;
+  }
 
-    const overlay=document.createElement('div');
-    overlay.id='lmSlotOverlay';
-    overlay.innerHTML=`
-      <div class="lm-dilemma-card" style="max-width:360px;text-align:left">
-        <div class="lm-dilemma-title" style="text-align:center">POSICIÓN: ${slot.replace(/[0-9]/g,'')}</div>
-        <div class="lm-slot-list">
-          ${disponibles.map(p=>`
-            <div class="lm-slot-option ${p.id===asignadoActualId?'selected':''} ${p.injured?'lm-slot-disabled':''}" data-pid="${p.id}">
-              <span>${p.name} <span style="color:#888">(${p.position})</span>${p.injured?' <span style="color:#e24b4a">— lesionado</span>':''}</span>
-              <strong>${p.overall}</strong>
-            </div>`).join('')}
-        </div>
-        ${asignadoActualId?'<button id="lmSlotQuitar" class="mode-card-btn mode-card-btn-disabled" style="width:100%;margin-top:12px;padding:9px;">QUITAR DEL CAMPO</button>':''}
-        <button id="lmSlotCerrar" class="mode-card-btn mode-card-btn-gold" style="width:100%;margin-top:8px;padding:9px;">CERRAR</button>
-      </div>`;
-    document.getElementById('ligaManagerScreen').appendChild(overlay);
-
-    overlay.querySelectorAll('[data-pid]').forEach(el=>{
-      el.addEventListener('click', ()=>{
-        const pid=el.getAttribute('data-pid');
-        const jugador=state.plantilla.find(p=>p.id===pid);
-        if(jugador.injured) return; // no se puede alinear a un lesionado
-        if(typeof window.playSound==='function') window.playSound('select');
-        state.alineacion[slot]=pid;
-        guardarEstado();
-        overlay.remove();
-        render();
-      });
-    });
-    const quitarBtn=document.getElementById('lmSlotQuitar');
-    if(quitarBtn) quitarBtn.addEventListener('click', ()=>{
-      if(typeof window.playSound==='function') window.playSound('select');
-      delete state.alineacion[slot];
-      guardarEstado();
-      overlay.remove();
+  function manejarClicJugador(playerId){
+    const jugador=state.plantilla.find(p=>p.id===playerId);
+    if(jugador && jugador.injured && !seleccionJugador) return; // no se puede seleccionar a un lesionado para jugar
+    if(seleccionJugador===playerId){ seleccionJugador=null; render(); return; }
+    if(seleccionJugador){
+      intercambiarJugadores(seleccionJugador, playerId);
+      seleccionJugador=null;
       render();
-    });
-    document.getElementById('lmSlotCerrar').addEventListener('click', ()=>{
-      if(typeof window.playSound==='function') window.playSound('select');
-      overlay.remove();
-    });
+      return;
+    }
+    seleccionJugador=playerId;
+    render();
+  }
+
+  function manejarClicSlot(slot){
+    const ocupanteId=state.alineacion[slot];
+    if(seleccionJugador){
+      asignarJugadorASlot(seleccionJugador, slot);
+      seleccionJugador=null;
+      render();
+      return;
+    }
+    if(ocupanteId){
+      seleccionJugador=ocupanteId;
+      render();
+      return;
+    }
+    // Slot vacío sin selección previa: no hace nada — el jugador primero
+    // selecciona a alguien de la plantilla/banquillo y luego toca aquí.
+  }
+
+  function asignarJugadorASlot(playerId, slot){
+    const slotAnterior=slotDeJugador(playerId);
+    const ocupanteActual=state.alineacion[slot];
+    if(slotAnterior===slot) return;
+    if(slotAnterior){
+      if(ocupanteActual) state.alineacion[slotAnterior]=ocupanteActual;
+      else delete state.alineacion[slotAnterior];
+    }
+    state.alineacion[slot]=playerId;
+    guardarEstado();
+  }
+
+  function intercambiarJugadores(idA, idB){
+    const slotA=slotDeJugador(idA), slotB=slotDeJugador(idB);
+    if(slotA && slotB){ state.alineacion[slotA]=idB; state.alineacion[slotB]=idA; }
+    else if(slotA && !slotB){ state.alineacion[slotA]=idB; }
+    else if(!slotA && slotB){ state.alineacion[slotB]=idA; }
+    guardarEstado();
   }
 
   function abrirMedico(){
@@ -1227,7 +1332,10 @@
       const cartasHTML=state.medicoCartas.map((instancia,idx)=>{
         const def=cartaDef(instancia.cartaId);
         const candidatos=jugadoresLesionadosPara(def);
-        const bloqueada = def.requiereLesion && candidatos.length===0;
+        const sinLesionNecesaria = def.requiereLesion && candidatos.length===0;
+        const maxPosible = state.diceAvailable*6;
+        const imposiblePorDados = def.tipo==='directa' && maxPosible < def.dificultad;
+        const bloqueada = sinLesionNecesaria || imposiblePorDados;
         const cambioDisponible=!state.medicoCambioUsado;
         let cuerpo;
         if(def.tipo==='acumulacion'){
@@ -1246,7 +1354,7 @@
           <div class="med-card-divider"></div>
           <div class="med-card-desc">${def.desc}</div>
           ${cuerpo}
-          ${bloqueada?'<div class="med-card-bloqueada-label">Necesitas una lesión activa</div>':`<button class="mode-card-btn mode-card-btn-gold med-card-btn" data-usar="${idx}" style="padding:7px;font-size:11px">USAR</button>`}
+          ${bloqueada?`<div class="med-card-bloqueada-label">${sinLesionNecesaria?'Necesitas una lesión activa':'Imposible con los dados que quedan'}</div>`:`<button class="mode-card-btn mode-card-btn-gold med-card-btn" data-usar="${idx}" style="padding:7px;font-size:11px">USAR</button>`}
         </div>`;
       }).join('');
 
@@ -1261,7 +1369,7 @@
           <div class="lm-setup-desc" style="text-align:center;margin-bottom:8px">dados disponibles este partido: ${state.diceAvailable} · puedes cambiar 1 carta por partido</div>
           <div class="med-card-grid">${cartasHTML}</div>
           <div style="text-align:center;margin-top:14px">
-            <button id="lmMedicoCerrar" class="mode-card-btn mode-card-btn-disabled" style="width:auto;padding:9px 22px;">CERRAR</button>
+            <button id="lmMedicoCerrar" class="mode-card-btn mode-card-btn-secondary" style="width:auto;padding:9px 22px;">CERRAR</button>
           </div>
         </div>`;
 
@@ -1330,13 +1438,21 @@
               <button id="lmDicePlus" class="lm-dice-stepper">+</button>
             </div>
             <div class="lm-setup-desc">dados disponibles: ${state.diceAvailable}</div>
-            <button id="lmTirarBtn" class="mode-card-btn mode-card-btn-gold" style="width:auto;padding:10px 24px;margin-top:10px" ${state.diceAvailable<1?'disabled':''}>TIRAR ${dadosElegidos} DADO${dadosElegidos>1?'S':''}</button>
+            <div style="display:flex;gap:8px;justify-content:center;margin-top:10px">
+              <button id="lmCancelarCartaBtn" class="lm-btn-cancelar">CANCELAR</button>
+              <button id="lmTirarBtn" class="mode-card-btn mode-card-btn-gold" style="width:auto;padding:10px 24px" ${state.diceAvailable<1?'disabled':''}>TIRAR ${dadosElegidos} DADO${dadosElegidos>1?'S':''}</button>
+            </div>
           </div>`;
         const minus=document.getElementById('lmDiceMinus');
         const plus=document.getElementById('lmDicePlus');
         const tirarBtn=document.getElementById('lmTirarBtn');
+        const cancelarBtn=document.getElementById('lmCancelarCartaBtn');
         if(minus) minus.addEventListener('click', ()=>{ if(dadosElegidos>1){ dadosElegidos--; pintar(); } });
         if(plus) plus.addEventListener('click', ()=>{ if(dadosElegidos<state.diceAvailable){ dadosElegidos++; pintar(); } });
+        if(cancelarBtn) cancelarBtn.addEventListener('click', ()=>{
+          if(typeof window.playSound==='function') window.playSound('select');
+          renderHub();
+        });
         if(tirarBtn) tirarBtn.addEventListener('click', ()=>{
           if(typeof window.playSound==='function') window.playSound('select');
           renderRolloCarta(idx, dadosElegidos, jugadorObjetivoId);
@@ -1459,6 +1575,8 @@
   function init(){
     state=cargarEstado();
     setupStep=1;
+    formacionCategoriaVista=null;
+    seleccionJugador=null;
     render();
   }
 

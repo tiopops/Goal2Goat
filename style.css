@@ -2426,6 +2426,11 @@ body.menu-screen #mobileTabBar{display:none!important}
 
 .mode-card-btn-disabled{background:#2c3238;color:#6d7680;cursor:not-allowed}
 .mode-card-btn-disabled:hover{background:#333a41}
+/* Variante "secundaria": mismo aspecto apagado, pero SÍ es clicable —
+   la clase -disabled de arriba fuerza cursor:not-allowed, lo cual
+   confundía al ratón en botones que en realidad funcionan bien. */
+.mode-card-btn-secondary{background:#2c3238;color:#ccc;cursor:pointer}
+.mode-card-btn-secondary:hover{background:#333a41}
 
 @media(max-width:1050px){
   .menu-modes{flex-direction:column;align-items:center;gap:24px}
@@ -2569,9 +2574,52 @@ body.liga-manager-screen #mobileTabBar{display:none!important}
 .lm-legend .lm-zona-conference{background:#5dcaa5}
 .lm-legend .lm-zona-descenso{background:#e24b4a}
 
+/* Botones de acción del partido — debajo del campo, cantos rectos
+   (sin border-radius), igual que .main-action-btn de Copa Leyendas.
+   JUGAR JORNADA en dorado, ABANDONAR LIGA en rojo, VOLVER AL MENÚ
+   oscuro con borde/texto dorado. */
+.lm-match-actions{display:flex;flex-direction:column;gap:8px;width:100%;max-width:420px;margin:14px auto 0}
+.lm-match-actions button{
+  font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:1.5px;font-size:16px;
+  padding:11px;border-radius:0;cursor:pointer;transition:transform .12s,background .15s;
+}
+.lm-match-actions button:hover:not(:disabled){transform:scale(1.02)}
+.lm-match-actions button:disabled{opacity:.45;cursor:not-allowed;transform:none}
+.lm-btn-jugar{background:var(--gold);color:#1a1400;border:none}
+.lm-btn-jugar:hover:not(:disabled){background:#e0b82a}
+.lm-btn-abandonar{background:#c0392b;color:#fff;border:none}
+.lm-btn-abandonar:hover{background:#a93226}
+.lm-btn-volver{background:#15181a;color:var(--gold);border:1px solid var(--gold)}
+.lm-btn-volver:hover{background:#1e2326}
+
+/* Clasificación colapsable — idéntico patrón al glosario/tutorial de
+   Copa Leyendas (.collapsible-header/.collapse-arrow), con su propio
+   nombre de clase para no interferir con el original. */
+.lm-clasif-header{
+  display:flex;align-items:center;justify-content:space-between;cursor:pointer;
+  font-family:'Bebas Neue',Impact,sans-serif;font-size:14px;letter-spacing:1px;
+  padding:8px 0;margin:0;user-select:none;
+}
+.lm-clasif-arrow{display:inline-block;color:var(--gold);transition:transform .2s ease;transform:rotate(-90deg)}
+.lm-clasif-arrow.lm-clasif-arrow-open{transform:rotate(0deg)}
+
+/* Cruz de lesión sobre el campo (además de en la lista) */
+.lm-pos-cross{position:absolute;top:-4px;right:-4px;color:var(--red);font-size:12px;font-weight:900;background:#15181a;border-radius:50%;width:16px;height:16px;display:flex;align-items:center;justify-content:center}
+
+/* Fila seleccionada / lesionada en las tablas de plantilla — mismo
+   lenguaje que Copa Leyendas usa para resaltar filas */
+.roster-table tr[data-pid]{cursor:pointer}
+.roster-table tr.lm-row-selected td{background:#2a2410}
+.roster-table tr.lm-row-injured td{opacity:.7}
+.lm-pos-slot.lm-pos-selected{border-color:#ffd700;box-shadow:0 0 10px rgba(255,215,0,.6)}
+
+/* Cantos rectos en los recuadros principales de Liga Manager, tal como
+   se pidió (nada de border-radius en paneles/campo/tarjetas grandes) */
+.lm-panel,.lm-nextmatch-box,#lmPitchBox,.lm-table-wrap,.roster-table,.lm-setup-card,.lm-dilemma-card{border-radius:0}
+
 /* Campo (mismo SVG que Copa Leyendas), mismo tamaño/posición que #pitch */
 #lmPitchBox{
-  width:100%;max-width:min(420px, 65vh);aspect-ratio:3/4;border-radius:10px;overflow:hidden;
+  width:100%;max-width:min(420px, 65vh);aspect-ratio:3/4;border-radius:0;overflow:hidden;
   border:1px solid #22282b;margin:0 auto;
   position:relative;
 }
@@ -2608,7 +2656,12 @@ body.liga-manager-screen #mobileTabBar{display:none!important}
    cartas de Giro Táctico de Copa Leyendas (.g-card-face: fondo oscuro
    con gradiente, marco interior, icono/título/divisor), pero en tonos
    verdes para el Médico en vez de dorados. */
-.med-card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-top:6px}
+.med-card-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:6px}
+.lm-btn-cancelar{
+  background:#c0392b;color:#fff;border:none;border-radius:6px;padding:10px 20px;
+  font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:1px;font-size:15px;cursor:pointer;
+}
+.lm-btn-cancelar:hover{background:#a93226}
 .med-card{
   position:relative;border-radius:12px;
   background:radial-gradient(120% 100% at 50% -10%, rgba(46,204,113,.12), transparent 55%),
@@ -2681,7 +2734,7 @@ body.liga-manager-screen #mobileTabBar{display:none!important}
 /* ---------- Flujo de entrada (elegir liga / moneda / nombre / escudo) ---------- */
 .lm-setup-card{
   max-width:460px;margin:40px auto;background:#15181a;border:1px solid #22282b;
-  border-radius:10px;padding:26px 28px;text-align:center;
+  border-radius:0;padding:26px 28px;text-align:center;
 }
 .lm-setup-header{font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:1px;font-size:12px;color:#777;margin-bottom:18px}
 .lm-setup-title{font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:1px;font-size:18px;color:#eee;margin-bottom:16px}
@@ -2709,7 +2762,7 @@ body.liga-manager-screen #mobileTabBar{display:none!important}
   display:flex;align-items:center;justify-content:center;z-index:10;
 }
 .lm-dilemma-card{
-  background:#1e2326;border:1px solid #c9a227;border-radius:10px;
+  background:#1e2326;border:1px solid #c9a227;border-radius:0;
   padding:22px 26px;max-width:340px;text-align:center;
 }
 .lm-dilemma-title{font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:1px;color:#eee;font-size:15px;margin:10px 0 8px}
