@@ -1,37 +1,33 @@
 /* ============================================================
-   GOAL2GOAT — LIGA MANAGER (v0.2)
+   GOAL2GOAT — LIGA MANAGER (v0.4)
    ------------------------------------------------------------
-   AÑADIDO EN ESTA VERSIÓN respecto a v0.1:
-   - Flujo de entrada real: elegir liga (solo España activa) →
-     elegir moneda → nombre de tu equipo → empieza la temporada.
-     Los otros 19 equipos son los reales de La Liga 2026-27; el
-     tuyo lo nombras tú (sustituye al placeholder "Málaga CF").
-   - Botón ABANDONAR LIGA: termina la run actual y vuelve a lanzar
-     el flujo de entrada desde cero (mismo patrón que descenso).
-   - Cuerpo técnico ahora en modo "sticky" (fijo) en la parte de
-     abajo de la pantalla en escritorio, para que no se pierda al
-     hacer scroll por la clasificación.
+   AÑADIDO EN ESTA VERSIÓN respecto a v0.3:
+   - Dado del médico ahora en 3D DE VERDAD, con físicas reales
+     (Cannon-es + Three.js, cargados solo cuando hace falta — ver
+     liga-manager-dice3d.js, módulo aparte y autocontenido).
+   - Fondo de dados por partido: 3 (cambiado desde el 2 que
+     teníamos anotado en el diseño — Jesús lo confirmó explícitamente
+     en esta sesión). Antes de tirar, se puede elegir cuántos de los
+     dados disponibles se quieren invertir en el intento.
+   - La ventana del dilema ya NO se cierra sola a los pocos segundos:
+     ahora hay un botón "CONTINUAR" que hay que pulsar.
+   - Campo (pitch) reutilizado tal cual de Copa Leyendas (mismo SVG),
+     de momento decorativo/estructural — Liga Manager aún no tiene
+     alineación ni posiciones de jugadores implementadas.
+   - Tabla de clasificación con las zonas de descenso/Champions/
+     Europa League/Conference resaltadas.
 
-   SIGUE FUERA DE ALCANCE (deliberado, para no fingir a medias):
-   editor de escudo real (de momento solo nombre + icono genérico),
-   presupuesto/salarios/sobres de fichajes, resto del cuerpo técnico
-   (Director Deportivo/General/Preparador Físico), afinidad,
-   potencial de entrenamiento, misiones de acumulación, físicas 3D
-   del dado. Persistencia sigue en localStorage (prototipo) — el
-   guardado por hitos en Firestore se conecta cuando el resto de
-   sistemas estén implementados.
+   SIGUE FUERA DE ALCANCE: editor de escudo por capas real,
+   presupuesto/salarios/sobres, resto del cuerpo técnico, afinidad,
+   potencial de entrenamiento, misiones de acumulación, alineación
+   real sobre el campo. Persistencia sigue en localStorage.
    ============================================================ */
 (function(){
 
-  const SAVE_KEY = 'g2g_liga_manager_v02';
+  const SAVE_KEY = 'g2g_liga_manager_v04';
+  const DICE_POOL_PER_MATCH = 3;
 
-  /* ---------- 1. Equipos rivales — La Liga 2026-27 real, 19 clubes
-     confirmados (el 20º slot, lm_0, es tu equipo, con el nombre que
-     elijas en el flujo de entrada). Aviso ya anotado en el diseño:
-     esto es solo para uso interno/beta con acceso restringido, no
-     para publicación — usar nombres/escudos reales de clubes activos
-     con fines comerciales es un tema aparte a revisar si esto llega
-     a publicarse. ---------- */
+  /* ---------- 1. Equipos rivales — La Liga 2026-27 real, 19 clubes ---------- */
   const LM_RIVALS = [
     {id:'lm_1',  name:'Real Madrid',          attack:88, defense:85, pace:82, passing:88, technique:89},
     {id:'lm_2',  name:'FC Barcelona',         attack:87, defense:83, pace:84, passing:89, technique:90},
@@ -61,12 +57,59 @@
   };
 
   const LIGAS_DISPONIBLES = [
-    {id:'es', nombre:'España — La Liga', flag:'🇪🇸', activa:true},
-    {id:'en', nombre:'Inglaterra — Premier League', flag:'🏴', activa:false},
-    {id:'it', nombre:'Italia — Serie A', flag:'🇮🇹', activa:false},
-    {id:'de', nombre:'Alemania — Bundesliga', flag:'🇩🇪', activa:false},
-    {id:'fr', nombre:'Francia — Ligue 1', flag:'🇫🇷', activa:false}
+    {id:'es', nombre:'España — La Liga', flagImg:'assets/flags/1f1ea-1f1f8.png', activa:true},
+    {id:'en', nombre:'Inglaterra — Premier League', flagImg:'assets/flags/1f1ec-1f1e7.png', activa:false},
+    {id:'it', nombre:'Italia — Serie A', flagImg:'assets/flags/1f1ee-1f1f9.png', activa:false},
+    {id:'de', nombre:'Alemania — Bundesliga', flagImg:'assets/flags/1f1e9-1f1ea.png', activa:false},
+    {id:'fr', nombre:'Francia — Ligue 1', flagImg:'assets/flags/1f1eb-1f1f7.png', activa:false}
   ];
+
+  const ESCUDO_ICONOS = ['ph-shield-star','ph-shield-check','ph-crown-simple','ph-fire','ph-lightning','ph-mountains','ph-paw-print','ph-star'];
+  const ESCUDO_COLORES = ['#c9a227','#4a90d9','#e24b4a','#5dcaa5','#a05fd9','#e0862a','#8a95a0','#d94f8c'];
+
+  // Zonas de la clasificación (posiciones 1-indexadas, 20 equipos, criterio
+  // habitual de La Liga: 1-4 Champions, 5 Europa League, 6 Conference,
+  // 18-20 descenso). Simplificado — la asignación real varía cada
+  // temporada según plazas extra de coeficiente UEFA.
+  function zonaClasificacion(pos){
+    if(pos<=4) return 'champions';
+    if(pos===5) return 'europa';
+    if(pos===6) return 'conference';
+    if(pos>=18) return 'descenso';
+    return '';
+  }
+
+  const PITCH_SVG = `      <svg class="pitch-svg" viewBox="0 0 480 640" xmlns="http://www.w3.org/2000/svg">
+        <rect width="480" height="640" fill="#2f7c42"/>
+        <rect y="38" width="480" height="38" fill="#246f38"/>
+        <rect y="114" width="480" height="38" fill="#246f38"/>
+        <rect y="190" width="480" height="38" fill="#246f38"/>
+        <rect y="266" width="480" height="38" fill="#246f38"/>
+        <rect y="342" width="480" height="38" fill="#246f38"/>
+        <rect y="418" width="480" height="38" fill="#246f38"/>
+        <rect y="494" width="480" height="38" fill="#246f38"/>
+        <rect y="570" width="480" height="38" fill="#246f38"/>
+        <!-- halfway -->
+        <line x1="0" y1="320" x2="480" y2="320" stroke="rgba(255,255,255,.5)" stroke-width="2"/>
+        <circle cx="240" cy="320" r="73" fill="none" stroke="rgba(255,255,255,.45)" stroke-width="2.5"/>
+        <circle cx="240" cy="320" r="4" fill="rgba(255,255,255,.55)"/>
+        <!-- top penalty area -->
+        <rect x="100" y="0" width="280" height="105" fill="none" stroke="rgba(255,255,255,.45)" stroke-width="2.5"/>
+        <rect x="180" y="0" width="120" height="45" fill="none" stroke="rgba(255,255,255,.45)" stroke-width="2.5"/>
+        <circle cx="240" cy="65" r="4" fill="rgba(255,255,255,.55)"/>
+        <path d="M210 105 A30 30 0 0 0 270 105" fill="none" stroke="rgba(255,255,255,.45)" stroke-width="2.5"/>
+        <!-- bottom penalty area -->
+        <rect x="100" y="535" width="280" height="105" fill="none" stroke="rgba(255,255,255,.45)" stroke-width="2.5"/>
+        <rect x="180" y="595" width="120" height="45" fill="none" stroke="rgba(255,255,255,.45)" stroke-width="2.5"/>
+        <circle cx="240" cy="575" r="4" fill="rgba(255,255,255,.55)"/>
+        <path d="M210 535 A30 30 0 0 1 270 535" fill="none" stroke="rgba(255,255,255,.45)" stroke-width="2.5"/>
+        <!-- corner flags - sharp corners, no border -->
+        <line x1="0" y1="0" x2="480" y2="0" stroke="rgba(255,255,255,.3)" stroke-width="2"/>
+        <line x1="0" y1="640" x2="480" y2="640" stroke="rgba(255,255,255,.3)" stroke-width="2"/>
+        <line x1="0" y1="0" x2="0" y2="640" stroke="rgba(255,255,255,.3)" stroke-width="2"/>
+        <line x1="480" y1="0" x2="480" y2="640" stroke="rgba(255,255,255,.3)" stroke-width="2"/>
+      </svg>
+`;
 
   /* ---------- 2. Mini-plantilla de ejemplo (para el Médico) ---------- */
   function generarMiniPlantilla(){
@@ -117,23 +160,22 @@
   /* ---------- 5. Estado persistente (localStorage, prototipo) ---------- */
   let state=null;
   let setupStep=1;
-  let setupData={liga:'es', moneda:null, nombre:''};
+  let setupData={liga:'es', moneda:null, nombre:'', escudo:null};
 
-  function nuevoEstadoSinEmpezar(){
-    return { setupComplete:false };
-  }
+  function nuevoEstadoSinEmpezar(){ return { setupComplete:false }; }
 
-  function empezarTemporada(nombreEquipo, moneda, liga){
+  function empezarTemporada(nombreEquipo, moneda, liga, escudo){
     const miEquipo={id:'lm_0', name:nombreEquipo, attack:52, defense:54, pace:56, passing:50, technique:50};
     const teams=[miEquipo, ...LM_RIVALS];
     state={
       setupComplete:true,
-      liga, moneda, nombreEquipo,
+      liga, moneda, nombreEquipo, escudo,
       jornadaActual:1,
       calendario:generarCalendario(teams),
       resultados:{},
       plantilla:generarMiniPlantilla(),
-      medicoNotificacion:null
+      medicoNotificacion:null,
+      diceAvailable:DICE_POOL_PER_MATCH
     };
     guardarEstado();
   }
@@ -145,14 +187,21 @@
     }catch(e){}
     return nuevoEstadoSinEmpezar();
   }
-  function guardarEstado(){
-    try{ localStorage.setItem(SAVE_KEY, JSON.stringify(state)); }catch(e){}
+  function guardarEstado(){ try{ localStorage.setItem(SAVE_KEY, JSON.stringify(state)); }catch(e){} }
+  function borrarEstado(){ try{ localStorage.removeItem(SAVE_KEY); }catch(e){} }
+
+  /* ---------- 6. Escudo — helper de render (icono + color, propio y simple) ---------- */
+  function crestHTML(escudo, sizePx){
+    sizePx=sizePx||28;
+    if(!escudo) return `<i class="ph ph-bold ph-shield" style="font-size:${sizePx*0.6}px;color:#888"></i>`;
+    return `<i class="ph ph-bold ${escudo.icon}" style="font-size:${sizePx*0.6}px;color:${escudo.color}"></i>`;
   }
-  function borrarEstado(){
-    try{ localStorage.removeItem(SAVE_KEY); }catch(e){}
+  function rivalCrestHTML(sizePx){
+    sizePx=sizePx||28;
+    return `<i class="ph ph-bold ph-shield" style="font-size:${sizePx*0.6}px;color:#8a95a0"></i>`;
   }
 
-  /* ---------- 6. Clasificación calculada a partir de resultados ---------- */
+  /* ---------- 7. Clasificación calculada a partir de resultados ---------- */
   function calcularClasificacion(){
     const teams=[{id:'lm_0',name:state.nombreEquipo}, ...LM_RIVALS];
     const tabla={};
@@ -174,7 +223,7 @@
     return Object.values(tabla).sort((a,b)=> b.pts-a.pts || (b.gf-b.gc)-(a.gf-a.gc) || b.gf-a.gf);
   }
 
-  /* ---------- 7. Jugar la jornada actual ---------- */
+  /* ---------- 8. Jugar la jornada actual ---------- */
   function jugarJornada(){
     if(state.jornadaActual>38) return;
     const j=state.jornadaActual-1;
@@ -185,14 +234,18 @@
       state.resultados[key]=simularPartido(partido.home, partido.away);
     });
 
+    // Fondo de dados: se resetea cada jornada — los que no se usaron en
+    // la jornada anterior se pierden (use-it-or-lose-it, ya definido).
+    state.diceAvailable = DICE_POOL_PER_MATCH;
+
     if(!state.medicoNotificacion && Math.random()<0.12){
       const sanos=state.plantilla.filter(p=>!p.injured);
       if(sanos.length){
         const jugador=sanos[Math.floor(Math.random()*sanos.length)];
         const severidades=[
-          {label:'leve', weeks:1, dificultad:4},
-          {label:'moderada', weeks:2, dificultad:5},
-          {label:'grave', weeks:4, dificultad:6}
+          {label:'leve', weeks:1, dificultad:7},
+          {label:'moderada', weeks:2, dificultad:10},
+          {label:'grave', weeks:4, dificultad:13}
         ];
         const sev=severidades[Math.floor(Math.random()*severidades.length)];
         jugador.injured=true; jugador.injuryWeeks=sev.weeks; jugador.injurySeverity=sev.label;
@@ -210,33 +263,34 @@
     guardarEstado();
   }
 
-  /* ---------- 8. Dilema del médico: tirada simple (sin físicas aún) ---------- */
-  function resolverDilemaMedico(){
+  /* ---------- 9. Resolver el dilema del médico con N dados (se SUMAN) ---------- */
+  function resolverDilemaMedico(numDados, tiradas){
     if(!state.medicoNotificacion) return null;
-    const tirada=1+Math.floor(Math.random()*6);
-    const exito=tirada>=state.medicoNotificacion.dificultad;
+    const suma = tiradas.reduce((a,b)=>a+b,0);
+    const exito = suma >= state.medicoNotificacion.dificultad;
     if(exito){
       const jugador=state.plantilla.find(p=>p.id===state.medicoNotificacion.jugadorId);
       if(jugador){ jugador.injuryWeeks=Math.max(0, jugador.injuryWeeks-1); if(jugador.injuryWeeks<=0){ jugador.injured=false; jugador.injurySeverity=null; } }
     }
-    const resultado={tirada, dificultad:state.medicoNotificacion.dificultad, exito};
+    state.diceAvailable = Math.max(0, state.diceAvailable - numDados);
+    const resultado={tiradas, suma, dificultad:state.medicoNotificacion.dificultad, exito};
     state.medicoNotificacion=null;
     guardarEstado();
     return resultado;
   }
 
-  /* ---------- 9. Abandonar la liga ---------- */
+  /* ---------- 10. Abandonar la liga ---------- */
   function abandonarLiga(){
     const ok=confirm('¿Seguro que quieres abandonar la liga? Se perderá todo el progreso de esta temporada y empezarás una partida nueva.');
     if(!ok) return;
     borrarEstado();
     state=nuevoEstadoSinEmpezar();
     setupStep=1;
-    setupData={liga:'es', moneda:null, nombre:''};
+    setupData={liga:'es', moneda:null, nombre:'', escudo:null};
     render();
   }
 
-  /* ---------- 10. Render: flujo de entrada (liga → moneda → nombre) ---------- */
+  /* ---------- 11. Render: flujo de entrada (liga → moneda → nombre → escudo) ---------- */
   function renderSetup(){
     const root=document.getElementById('ligaManagerScreen');
     let inner='';
@@ -247,7 +301,7 @@
         <div class="lm-setup-list">
           ${LIGAS_DISPONIBLES.map(l=>`
             <div class="lm-setup-option ${l.activa?'active selected':'disabled'}" data-liga="${l.id}">
-              <span style="font-size:20px;margin-right:10px">${l.flag}</span>${l.nombre}
+              <img src="${l.flagImg}" alt="" style="width:22px;height:16px;object-fit:cover;border-radius:2px;vertical-align:middle;margin-right:10px">${l.nombre}
               ${!l.activa?'<span class="lm-setup-soon">PRÓXIMAMENTE</span>':''}
             </div>`).join('')}
         </div>
@@ -267,16 +321,33 @@
     } else if(setupStep===3){
       inner=`
         <div class="lm-setup-title">NOMBRE DE TU EQUIPO</div>
-        <p class="lm-setup-desc">Este será tu club, recién ascendido a Primera. El resto de la liga son los 19 equipos reales de La Liga. (El editor de escudo por capas/imagen llegará más adelante — de momento un icono genérico.)</p>
+        <p class="lm-setup-desc">Este será tu club, recién ascendido a Primera. El resto de la liga son los 19 equipos reales de La Liga.</p>
         <input id="lmSetupNombre" type="text" maxlength="24" placeholder="Ej: CF Ejemplo" class="lm-setup-input" value="${setupData.nombre||''}">
-        <button id="lmSetupConfirm" class="mode-card-btn mode-card-btn-gold" style="width:auto;padding:10px 26px;margin-top:20px;" ${setupData.nombre&&setupData.nombre.trim()?'':'disabled'}>EMPEZAR TEMPORADA</button>
+        <button id="lmSetupNext" class="mode-card-btn mode-card-btn-gold" style="width:auto;padding:10px 26px;margin-top:20px;" ${setupData.nombre&&setupData.nombre.trim()?'':'disabled'}>SIGUIENTE</button>
+      `;
+    } else if(setupStep===4){
+      const escudo=setupData.escudo||{icon:ESCUDO_ICONOS[0], color:ESCUDO_COLORES[0]};
+      setupData.escudo=escudo;
+      inner=`
+        <div class="lm-setup-title">CREA TU ESCUDO</div>
+        <p class="lm-setup-desc">Un escudo sencillo por ahora (icono + color) — el editor completo por capas/imagen llegará más adelante.</p>
+        <div class="lm-crest-preview">${crestHTML(escudo, 64)}</div>
+        <div class="lm-setup-desc" style="margin-bottom:6px">Icono</div>
+        <div class="lm-icon-grid">
+          ${ESCUDO_ICONOS.map(ic=>`<div class="lm-icon-option ${escudo.icon===ic?'selected':''}" data-icon="${ic}"><i class="ph ph-bold ${ic}"></i></div>`).join('')}
+        </div>
+        <div class="lm-setup-desc" style="margin:14px 0 6px">Color</div>
+        <div class="lm-color-grid">
+          ${ESCUDO_COLORES.map(c=>`<div class="lm-color-option ${escudo.color===c?'selected':''}" data-color="${c}" style="background:${c}"></div>`).join('')}
+        </div>
+        <button id="lmSetupConfirm" class="mode-card-btn mode-card-btn-gold" style="width:auto;padding:10px 26px;margin-top:22px;">EMPEZAR TEMPORADA</button>
       `;
     }
 
     root.innerHTML = `
       <div class="lm-wrap">
         <div class="lm-setup-card">
-          <div class="lm-setup-header">LIGA MANAGER — NUEVA PARTIDA (paso ${setupStep} de 3)</div>
+          <div class="lm-setup-header">LIGA MANAGER — NUEVA PARTIDA (paso ${setupStep} de 4)</div>
           ${inner}
         </div>
       </div>`;
@@ -303,21 +374,41 @@
       if(next) next.addEventListener('click', ()=>{ if(!setupData.moneda) return; if(typeof window.playSound==='function') window.playSound('select'); setupStep=3; renderSetup(); });
     } else if(setupStep===3){
       const input=document.getElementById('lmSetupNombre');
-      const confirmBtn=document.getElementById('lmSetupConfirm');
+      const next=document.getElementById('lmSetupNext');
       if(input) input.addEventListener('input', ()=>{
         setupData.nombre=input.value;
-        if(confirmBtn) confirmBtn.disabled = !input.value.trim();
+        if(next) next.disabled = !input.value.trim();
       });
-      if(confirmBtn) confirmBtn.addEventListener('click', ()=>{
+      if(next) next.addEventListener('click', ()=>{
         if(!setupData.nombre || !setupData.nombre.trim()) return;
         if(typeof window.playSound==='function') window.playSound('select');
-        empezarTemporada(setupData.nombre.trim(), setupData.moneda, setupData.liga);
+        setupStep=4; renderSetup();
+      });
+    } else if(setupStep===4){
+      root.querySelectorAll('[data-icon]').forEach(el=>{
+        el.addEventListener('click', ()=>{
+          setupData.escudo.icon=el.getAttribute('data-icon');
+          if(typeof window.playSound==='function') window.playSound('select');
+          renderSetup();
+        });
+      });
+      root.querySelectorAll('[data-color]').forEach(el=>{
+        el.addEventListener('click', ()=>{
+          setupData.escudo.color=el.getAttribute('data-color');
+          if(typeof window.playSound==='function') window.playSound('select');
+          renderSetup();
+        });
+      });
+      const confirmBtn=document.getElementById('lmSetupConfirm');
+      if(confirmBtn) confirmBtn.addEventListener('click', ()=>{
+        if(typeof window.playSound==='function') window.playSound('select');
+        empezarTemporada(setupData.nombre.trim(), setupData.moneda, setupData.liga, setupData.escudo);
         render();
       });
     }
   }
 
-  /* ---------- 11. Render: hub principal (una vez empezada la temporada) ---------- */
+  /* ---------- 12. Render: hub principal (una vez empezada la temporada) ---------- */
   function render(){
     const root=document.getElementById('ligaManagerScreen');
     if(!root) return;
@@ -331,17 +422,35 @@
     const j=state.jornadaActual-1;
     const proximaJornada= j<38 ? state.calendario[j] : null;
     const miPartido= proximaJornada ? proximaJornada.find(p=>p.home.id==='lm_0'||p.away.id==='lm_0') : null;
+    const rival= miPartido ? (miPartido.home.id==='lm_0' ? miPartido.away : miPartido.home) : null;
+    const esLocal= miPartido ? miPartido.home.id==='lm_0' : null;
     const notif=state.medicoNotificacion;
     const monedaInfo=MONEDAS[state.moneda]||MONEDAS.EUR;
 
     root.innerHTML = `
       <div class="lm-wrap">
         <div class="lm-header">
-          <div>
-            <div class="lm-title">${state.nombreEquipo.toUpperCase()}</div>
-            <div class="lm-sub">${state.jornadaActual<=38 ? 'Jornada '+state.jornadaActual+' de 38' : 'Temporada finalizada'} · Moneda: ${monedaInfo.symbol}</div>
+          <div class="lm-header-team">
+            ${crestHTML(state.escudo, 36)}
+            <div>
+              <div class="lm-title">${state.nombreEquipo.toUpperCase()}</div>
+              <div class="lm-sub">Jornada ${Math.min(state.jornadaActual,38)} de 38 · ${monedaInfo.symbol}</div>
+            </div>
           </div>
-          ${miPartido ? `<div class="lm-nextmatch">Próximo: ${miPartido.home.name} vs ${miPartido.away.name}</div>` : ''}
+          ${rival ? `
+          <div class="lm-header-vs">
+            <span class="lm-vs-label">${esLocal?'LOCAL vs':'FUERA en'}</span>
+          </div>
+          <div class="lm-header-team lm-header-team-rival">
+            <div style="text-align:right">
+              <div class="lm-title" style="font-size:16px">${rival.name.toUpperCase()}</div>
+              <div class="lm-sub">Próximo rival</div>
+            </div>
+            ${rivalCrestHTML(36)}
+          </div>` : `<div class="lm-header-vs"><span class="lm-vs-label">Temporada finalizada</span></div>`}
+        </div>
+
+        <div class="lm-actionsrow">
           <button id="lmJugarBtn" class="mode-card-btn mode-card-btn-gold" ${state.jornadaActual>38?'disabled':''} style="width:auto;padding:10px 22px;">
             ${state.jornadaActual>38?'TEMPORADA COMPLETA':'JUGAR JORNADA'}
           </button>
@@ -349,16 +458,31 @@
           <button id="ligaManagerBackBtn" class="mode-card-btn mode-card-btn-disabled" style="width:auto;padding:10px 16px;">VOLVER AL MENÚ</button>
         </div>
 
-        <div class="lm-table-wrap">
-          <table class="lm-table">
-            <thead><tr><th>#</th><th>Equipo</th><th>PJ</th><th>PG</th><th>PE</th><th>PP</th><th>GF</th><th>GC</th><th>DG</th><th>Pts</th></tr></thead>
-            <tbody>
-              ${clasif.map((t,i)=>`<tr class="${t.id==='lm_0'?'lm-myteam':''}">
-                <td>${i+1}</td><td>${t.name}</td><td>${t.pj}</td><td>${t.pg}</td><td>${t.pe}</td><td>${t.pp}</td>
-                <td>${t.gf}</td><td>${t.gc}</td><td>${t.gf-t.gc}</td><td><strong>${t.pts}</strong></td>
-              </tr>`).join('')}
-            </tbody>
-          </table>
+        <div class="lm-maingrid">
+          <div class="lm-pitch-col">
+            <div id="lmPitchBox">${PITCH_SVG}</div>
+            <p class="lm-pitch-caption">La alineación llegará cuando se implemente la plantilla</p>
+          </div>
+          <div class="lm-table-col">
+            <div class="lm-table-wrap">
+              <table class="lm-table">
+                <thead><tr><th></th><th>#</th><th>Equipo</th><th>PJ</th><th>PG</th><th>PE</th><th>PP</th><th>GF</th><th>GC</th><th>DG</th><th>Pts</th></tr></thead>
+                <tbody>
+                  ${clasif.map((t,i)=>`<tr class="${t.id==='lm_0'?'lm-myteam':''} lm-zona-${zonaClasificacion(i+1)}">
+                    <td>${t.id==='lm_0'?crestHTML(state.escudo,20):rivalCrestHTML(20)}</td>
+                    <td>${i+1}</td><td>${t.name}</td><td>${t.pj}</td><td>${t.pg}</td><td>${t.pe}</td><td>${t.pp}</td>
+                    <td>${t.gf}</td><td>${t.gc}</td><td>${t.gf-t.gc}</td><td><strong>${t.pts}</strong></td>
+                  </tr>`).join('')}
+                </tbody>
+              </table>
+            </div>
+            <div class="lm-legend">
+              <span><i class="lm-legend-dot lm-zona-champions"></i>Champions League</span>
+              <span><i class="lm-legend-dot lm-zona-europa"></i>Europa League</span>
+              <span><i class="lm-legend-dot lm-zona-conference"></i>Conference League</span>
+              <span><i class="lm-legend-dot lm-zona-descenso"></i>Descenso</span>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -395,6 +519,7 @@
     });
   }
 
+  /* ---------- 13. Dilema del médico: selector de dados → tirada 3D → resultado ---------- */
   function abrirDilemaMedico(){
     if(!state.medicoNotificacion){
       if(typeof window.showToast==='function') window.showToast('Sin novedades del médico', 'toast-neutral');
@@ -402,27 +527,78 @@
     }
     const jugador=state.plantilla.find(p=>p.id===state.medicoNotificacion.jugadorId);
     const dificultad=state.medicoNotificacion.dificultad;
+    let dadosElegidos=Math.min(1, state.diceAvailable);
+
     const overlay=document.createElement('div');
     overlay.id='lmMedicoOverlay';
-    overlay.innerHTML=`
-      <div class="lm-dilemma-card">
-        <i class="ph ph-bold ph-first-aid-kit" style="font-size:26px;color:#c9a227"></i>
-        <div class="lm-dilemma-title">EL MÉDICO TE CONSULTA</div>
-        <div class="lm-dilemma-text">${jugador?jugador.name:'Un jugador'} tiene una lesión ${state.medicoNotificacion.severidad}. Necesitas sacar ${dificultad}+ para acelerar su recuperación.</div>
-        <button id="lmTirarBtn" class="mode-card-btn mode-card-btn-gold" style="width:auto;padding:10px 24px;">TIRAR DADO (1d6)</button>
-        <div id="lmTiradaResultado" style="margin-top:10px;font-family:'Bebas Neue';font-size:16px;"></div>
-      </div>`;
     document.getElementById('ligaManagerScreen').appendChild(overlay);
-    document.getElementById('lmTirarBtn').addEventListener('click', function(){
-      const r=resolverDilemaMedico();
-      const resEl=document.getElementById('lmTiradaResultado');
-      resEl.innerHTML = `Sacaste <strong>${r.tirada}</strong> (necesitabas ${r.dificultad}+) — <span style="color:${r.exito?'#5dcaa5':'#e24b4a'}">${r.exito?'✔ ÉXITO, recuperación acelerada':'✘ FALLO, sigue el tiempo previsto'}</span>`;
-      this.disabled=true;
-      setTimeout(()=>{ overlay.remove(); render(); }, 1800);
-    });
+
+    function renderSelector(){
+      overlay.innerHTML=`
+        <div class="lm-dilemma-card">
+          <i class="ph ph-bold ph-first-aid-kit" style="font-size:26px;color:#c9a227"></i>
+          <div class="lm-dilemma-title">EL MÉDICO TE CONSULTA</div>
+          <div class="lm-dilemma-text">${jugador?jugador.name:'Un jugador'} tiene una lesión ${state.medicoNotificacion.severidad}. Necesitas sumar ${dificultad}+ (dados de 6) para acelerar su recuperación.</div>
+          <div class="lm-dice-selector">
+            <button id="lmDiceMinus" class="lm-dice-stepper">−</button>
+            <span id="lmDiceCount">${dadosElegidos}</span>
+            <button id="lmDicePlus" class="lm-dice-stepper">+</button>
+          </div>
+          <div class="lm-setup-desc">dados disponibles: ${state.diceAvailable}</div>
+          <button id="lmTirarBtn" class="mode-card-btn mode-card-btn-gold" style="width:auto;padding:10px 24px;margin-top:10px" ${state.diceAvailable<1?'disabled':''}>TIRAR ${dadosElegidos} DADO${dadosElegidos>1?'S':''}</button>
+        </div>`;
+      const minus=document.getElementById('lmDiceMinus');
+      const plus=document.getElementById('lmDicePlus');
+      const tirarBtn=document.getElementById('lmTirarBtn');
+      if(minus) minus.addEventListener('click', ()=>{ if(dadosElegidos>1){ dadosElegidos--; renderSelector(); } });
+      if(plus) plus.addEventListener('click', ()=>{ if(dadosElegidos<state.diceAvailable){ dadosElegidos++; renderSelector(); } });
+      if(tirarBtn) tirarBtn.addEventListener('click', ()=>{
+        if(typeof window.playSound==='function') window.playSound('select');
+        renderRolling(dadosElegidos);
+      });
+    }
+
+    function renderRolling(numDados){
+      overlay.innerHTML=`
+        <div class="lm-dilemma-card">
+          <div class="lm-dilemma-title">TIRANDO ${numDados} DADO${numDados>1?'S':''}...</div>
+          <div id="lmDice3DBox" class="lm-dice3d-box"></div>
+        </div>`;
+      const box=document.getElementById('lmDice3DBox');
+      if(typeof window.G2G_rollDice3D === 'function'){
+        window.G2G_rollDice3D(box, numDados, function(tiradas){
+          renderResultado(numDados, tiradas);
+        });
+      } else {
+        // Fallback si el módulo 3D no cargó por lo que sea
+        const tiradas=[]; for(let i=0;i<numDados;i++) tiradas.push(1+Math.floor(Math.random()*6));
+        setTimeout(()=>renderResultado(numDados, tiradas), 800);
+      }
+    }
+
+    function renderResultado(numDados, tiradas){
+      const r=resolverDilemaMedico(numDados, tiradas);
+      overlay.innerHTML=`
+        <div class="lm-dilemma-card">
+          <div class="lm-dilemma-title">RESULTADO</div>
+          <div class="lm-dice-result-row">${tiradas.map(v=>`<span class="lm-dice-pill">${v}</span>`).join('')}</div>
+          <div style="font-family:'Bebas Neue';font-size:16px;margin-top:10px">
+            Suma <strong>${r.suma}</strong> (necesitabas ${r.dificultad}+) —
+            <span style="color:${r.exito?'#5dcaa5':'#e24b4a'}">${r.exito?'✔ ÉXITO, recuperación acelerada':'✘ FALLO, sigue el tiempo previsto'}</span>
+          </div>
+          <button id="lmContinuarBtn" class="mode-card-btn mode-card-btn-gold" style="width:auto;padding:10px 26px;margin-top:16px">CONTINUAR</button>
+        </div>`;
+      document.getElementById('lmContinuarBtn').addEventListener('click', ()=>{
+        if(typeof window.playSound==='function') window.playSound('select');
+        overlay.remove();
+        render();
+      });
+    }
+
+    renderSelector();
   }
 
-  /* ---------- 12. Inicialización ---------- */
+  /* ---------- 14. Inicialización ---------- */
   function init(){
     state=cargarEstado();
     setupStep=1;
