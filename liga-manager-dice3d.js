@@ -42,7 +42,7 @@
     ctx.moveTo(24,0); ctx.arcTo(256,0,256,256,24); ctx.arcTo(256,256,0,256,24);
     ctx.arcTo(0,256,0,0,24); ctx.arcTo(0,0,256,0,24); ctx.closePath(); ctx.fill();
     ctx.strokeStyle = '#e8e8e8'; ctx.lineWidth = 3; ctx.stroke();
-    ctx.fillStyle = '#c9a227';
+    ctx.fillStyle = '#1a1a1a';
     var pos = {
       1: [[128,128]],
       2: [[80,80],[176,176]],
@@ -89,7 +89,7 @@
       // Línea sutil de borde para dar sensación de "tapete" delimitado
       var feltEdge = new THREE.Mesh(
         new THREE.RingGeometry(2.55, 2.65, 48),
-        new THREE.MeshBasicMaterial({color:0xc9a227, transparent:true, opacity:0.4, side:THREE.DoubleSide})
+        new THREE.MeshBasicMaterial({color:0xffffff, transparent:true, opacity:0.4, side:THREE.DoubleSide})
       );
       feltEdge.rotation.x = -Math.PI/2;
       feltEdge.position.y = 0.001;

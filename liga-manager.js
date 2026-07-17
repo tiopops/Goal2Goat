@@ -128,7 +128,7 @@
       plantilla.push({
         id:'p'+i, name:nombre, position:POSICIONES[i], overall,
         attack:variar(), defense:variar(), pace:variar(), passing:variar(), technique:variar(),
-        racha:0,
+        fatigue:100, racha:0,
         injured:false, injuryWeeks:0, injurySeverity:null
       });
     }
@@ -961,27 +961,41 @@
     const overlay=document.createElement('div');
     overlay.id='lmPlantillaOverlay';
     const titularIds=new Set(Object.values(state.alineacion||{}).filter(Boolean));
+
+    function fatigueColor(f){ if(f>=75) return 'green'; if(f>=40) return 'yellow'; return 'red'; }
+    function fatigueBarHTML(p){
+      const f=(p.fatigue===undefined)?100:p.fatigue;
+      return `<div class="fatigue-bar-wrap" title="Resistencia: ${f}%"><div class="fatigue-bar fatigue-${fatigueColor(f)}" style="width:${f}%"></div></div>`;
+    }
+
     const filas=state.plantilla.map(p=>{
-      const estado = p.injured
-        ? `<span style="color:#e24b4a">Lesionado (${p.injuryWeeks}j)</span>`
-        : `<span style="color:#5dcaa5">Disponible</span>`;
-      const titular = titularIds.has(p.id) ? '<span style="color:#c9a227" title="Titular">★</span> ' : '';
-      const racha = p.racha>=2 ? ` <span title="Racha de gol">🔥${p.racha}</span>` : '';
+      const esTitular=titularIds.has(p.id);
+      const star=esTitular?'<span class="star" title="Titular">★</span>':'';
+      const cross=p.injured?` <span class="cross" title="Lesionado">✚(-${p.injuryWeeks})</span>`:'';
+      const racha=p.racha>=2?` <span title="Racha de gol">🔥${p.racha}</span>`:'';
       return `<tr>
-        <td>${titular}${p.name}${racha}</td>
-        <td>${p.position}</td>
+        <td>${p.name}${cross}${racha}</td>
+        <td>${fatigueBarHTML(p)}</td>
+        <td><span style="font-weight:700">${p.position}</span>${star}</td>
+        <td>${p.attack}</td>
+        <td>${p.defense}</td>
+        <td>${p.pace}</td>
+        <td>${p.passing}</td>
+        <td>${p.technique}</td>
         <td><strong>${p.overall}</strong></td>
-        <td>${estado}</td>
       </tr>`;
     }).join('');
+
     overlay.innerHTML=`
-      <div class="lm-dilemma-card" style="max-width:420px;text-align:left">
+      <div class="lm-dilemma-card" style="max-width:560px;text-align:left">
         <div class="lm-dilemma-title" style="text-align:center">PLANTILLA — ${state.nombreEquipo.toUpperCase()}</div>
         <p class="lm-setup-desc" style="text-align:center">★ = titular en el campo ahora mismo. Cámbialos tocando una posición en el campo.</p>
-        <table class="lm-table" style="margin-top:10px">
-          <thead><tr><th>Jugador</th><th>Pos</th><th>Rating</th><th>Estado</th></tr></thead>
+        <div style="overflow-x:auto">
+        <table class="roster-table" style="margin-top:6px">
+          <thead><tr><th>Jugador</th><th>Resistencia</th><th>Pos</th><th>ATA</th><th>DEF</th><th>RIT</th><th>PAS</th><th>TEC</th><th>Rating</th></tr></thead>
           <tbody>${filas}</tbody>
         </table>
+        </div>
         <div style="text-align:center;margin-top:16px">
           <button id="lmPlantillaCerrar" class="mode-card-btn mode-card-btn-gold" style="width:auto;padding:10px 26px;">CERRAR</button>
         </div>
