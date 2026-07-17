@@ -1034,33 +1034,38 @@
     function renderRolling(numDados){
       overlay.innerHTML=`
         <div class="lm-dilemma-card">
-          <div class="lm-dilemma-title">TIRANDO ${numDados} DADO${numDados>1?'S':''}...</div>
+          <div class="lm-dilemma-title" id="lmDiceTitle">TIRANDO ${numDados} DADO${numDados>1?'S':''}...</div>
           <div id="lmDice3DBox" class="lm-dice3d-box"></div>
+          <div id="lmDiceResultZone"></div>
         </div>`;
       const box=document.getElementById('lmDice3DBox');
       if(typeof window.G2G_rollDice3D === 'function'){
         window.G2G_rollDice3D(box, numDados, function(tiradas){
-          renderResultado(numDados, tiradas);
+          mostrarResultado(numDados, tiradas);
         });
       } else {
         // Fallback si el módulo 3D no cargó por lo que sea
         const tiradas=[]; for(let i=0;i<numDados;i++) tiradas.push(1+Math.floor(Math.random()*6));
-        setTimeout(()=>renderResultado(numDados, tiradas), 800);
+        setTimeout(()=>mostrarResultado(numDados, tiradas), 800);
       }
     }
 
-    function renderResultado(numDados, tiradas){
+    // El dado 3D (#lmDice3DBox) se queda en pantalla, quieto, mostrando el
+    // resultado ya asentado — solo se añade el texto del resultado debajo,
+    // nunca se sustituye la tarjeta entera (eso era lo que lo hacía
+    // desaparecer). Sigue visible hasta que se pulsa CONTINUAR.
+    function mostrarResultado(numDados, tiradas){
       const r=resolverDilemaMedico(numDados, tiradas);
-      overlay.innerHTML=`
-        <div class="lm-dilemma-card">
-          <div class="lm-dilemma-title">RESULTADO</div>
-          <div class="lm-dice-result-row">${tiradas.map(v=>`<span class="lm-dice-pill">${v}</span>`).join('')}</div>
-          <div style="font-family:'Bebas Neue';font-size:16px;margin-top:10px">
-            Suma <strong>${r.suma}</strong> (necesitabas ${r.dificultad}+) —
-            <span style="color:${r.exito?'#5dcaa5':'#e24b4a'}">${r.exito?'✔ ÉXITO, recuperación acelerada':'✘ FALLO, sigue el tiempo previsto'}</span>
-          </div>
-          <button id="lmContinuarBtn" class="mode-card-btn mode-card-btn-gold" style="width:auto;padding:10px 26px;margin-top:16px">CONTINUAR</button>
-        </div>`;
+      const tituloEl=document.getElementById('lmDiceTitle');
+      if(tituloEl) tituloEl.textContent='RESULTADO';
+      const zona=document.getElementById('lmDiceResultZone');
+      zona.innerHTML=`
+        <div class="lm-dice-result-row">${tiradas.map(v=>`<span class="lm-dice-pill">${v}</span>`).join('')}</div>
+        <div style="font-family:'Bebas Neue';font-size:16px;margin-top:10px">
+          Suma <strong>${r.suma}</strong> (necesitabas ${r.dificultad}+) —
+          <span style="color:${r.exito?'#5dcaa5':'#e24b4a'}">${r.exito?'✔ ÉXITO, recuperación acelerada':'✘ FALLO, sigue el tiempo previsto'}</span>
+        </div>
+        <button id="lmContinuarBtn" class="mode-card-btn mode-card-btn-gold" style="width:auto;padding:10px 26px;margin-top:16px">CONTINUAR</button>`;
       document.getElementById('lmContinuarBtn').addEventListener('click', ()=>{
         if(typeof window.playSound==='function') window.playSound('select');
         overlay.remove();

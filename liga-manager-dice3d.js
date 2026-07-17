@@ -37,11 +37,12 @@
     var c = document.createElement('canvas');
     c.width = c.height = 256;
     var ctx = c.getContext('2d');
-    ctx.fillStyle = '#f2ede4';
+    ctx.fillStyle = '#ffffff';
     ctx.beginPath();
     ctx.moveTo(24,0); ctx.arcTo(256,0,256,256,24); ctx.arcTo(256,256,0,256,24);
     ctx.arcTo(0,256,0,0,24); ctx.arcTo(0,0,256,0,24); ctx.closePath(); ctx.fill();
-    ctx.fillStyle = '#1a1a1a';
+    ctx.strokeStyle = '#e8e8e8'; ctx.lineWidth = 3; ctx.stroke();
+    ctx.fillStyle = '#c9a227';
     var pos = {
       1: [[128,128]],
       2: [[80,80],[176,176]],
@@ -81,10 +82,18 @@
 
       var ground = new THREE.Mesh(
         new THREE.PlaneGeometry(10,10),
-        new THREE.MeshStandardMaterial({color:0x15181a, transparent:true, opacity:0.35})
+        new THREE.MeshStandardMaterial({color:0x1e6b34, roughness:1})
       );
       ground.rotation.x = -Math.PI/2;
       scene.add(ground);
+      // Línea sutil de borde para dar sensación de "tapete" delimitado
+      var feltEdge = new THREE.Mesh(
+        new THREE.RingGeometry(2.55, 2.65, 48),
+        new THREE.MeshBasicMaterial({color:0xc9a227, transparent:true, opacity:0.4, side:THREE.DoubleSide})
+      );
+      feltEdge.rotation.x = -Math.PI/2;
+      feltEdge.position.y = 0.001;
+      scene.add(feltEdge);
 
       var materials = [
         new THREE.MeshStandardMaterial({map:faceTexture(2)}), // +X
@@ -104,7 +113,7 @@
       ];
 
       var SIZE = 0.9, HALF = SIZE/2;
-      var GRAVITY = -14, RESTITUTION = 0.42, FRICTION = 0.78, ANG_DAMPING = 0.9;
+      var GRAVITY = -32, RESTITUTION = 0.36, FRICTION = 0.74, ANG_DAMPING = 0.82;
 
       var dice = [];
       for(var i=0;i<count;i++){
@@ -123,7 +132,7 @@
 
       var start = performance.now();
       var last = start;
-      var MAX_DURATION = 3400;
+      var MAX_DURATION = 2200;
       var SETTLE_BOUNCES = 3;
 
       function integrarRotacion(mesh, angVel, dt){
@@ -178,7 +187,7 @@
             d.vel.z *= FRICTION;
             d.angVel.multiplyScalar(ANG_DAMPING);
             d.bounces++;
-            if(Math.abs(d.vel.y) < 0.4 && d.bounces>=SETTLE_BOUNCES){
+            if(Math.abs(d.vel.y) < 1.0 && d.bounces>=SETTLE_BOUNCES){
               d.vel.set(0,0,0);
               d.angVel.set(0,0,0);
               d.settled = true;
