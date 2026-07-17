@@ -24,7 +24,11 @@
    ============================================================ */
 (function(){
 
-  const SAVE_KEY = 'g2g_liga_manager_v04';
+  const SAVE_KEY = 'g2g_liga_manager_v05';
+  // Identidad del club (nombre + escudo) — PERSISTE entre partidas, no se
+  // pierde al abandonar/descender. Si ya existe, el flujo de entrada no
+  // vuelve a pedir nombre ni escudo (solo liga y moneda cada vez).
+  const IDENTITY_KEY = 'g2g_liga_manager_identity';
   const DICE_POOL_PER_MATCH = 3;
 
   /* ---------- 1. Equipos rivales — La Liga 2026-27 real, 19 clubes ---------- */
@@ -63,9 +67,6 @@
     {id:'de', nombre:'Alemania — Bundesliga', flagImg:'assets/flags/1f1e9-1f1ea.png', activa:false},
     {id:'fr', nombre:'Francia — Ligue 1', flagImg:'assets/flags/1f1eb-1f1f7.png', activa:false}
   ];
-
-  const ESCUDO_ICONOS = ['ph-shield-star','ph-shield-check','ph-crown-simple','ph-fire','ph-lightning','ph-mountains','ph-paw-print','ph-star'];
-  const ESCUDO_COLORES = ['#c9a227','#4a90d9','#e24b4a','#5dcaa5','#a05fd9','#e0862a','#8a95a0','#d94f8c'];
 
   // Zonas de la clasificación (posiciones 1-indexadas, 20 equipos, criterio
   // habitual de La Liga: 1-4 Champions, 5 Europa League, 6 Conference,
@@ -113,18 +114,57 @@
 
   /* ---------- 2. Mini-plantilla de ejemplo (para el Médico) ---------- */
   function generarMiniPlantilla(){
-    const NOMBRES=["Álvaro","Adrián","Hugo","Mario","Pablo","Marcos","Diego","Sergio"];
-    const APELLIDOS=["García","Fernández","López","Martínez","Sánchez","Pérez","Gómez","Ruiz"];
+    const NOMBRES=["Álvaro","Adrián","Hugo","Mario","Pablo","Marcos","Diego","Sergio","Iker","Nacho","Bruno","Izan"];
+    const APELLIDOS=["García","Fernández","López","Martínez","Sánchez","Pérez","Gómez","Ruiz","Díaz","Moreno","Torres","Ramos"];
+    const POSICIONES=["POR","DFC","DFC","LI","LD","MC","MC","EI","ED","DC","DC","MC"];
     const usados=new Set();
     const plantilla=[];
-    for(let i=0;i<8;i++){
+    for(let i=0;i<12;i++){
       let nombre;
       do{ nombre=NOMBRES[Math.floor(Math.random()*NOMBRES.length)]+' '+APELLIDOS[Math.floor(Math.random()*APELLIDOS.length)]; }while(usados.has(nombre));
       usados.add(nombre);
-      plantilla.push({id:'p'+i, name:nombre, injured:false, injuryWeeks:0, injurySeverity:null});
+      const overall=48+Math.floor(Math.random()*18); // 48-65, coherente con "plantilla modesta, recién ascendido"
+      const variar=()=>Math.max(30,Math.min(80, overall+Math.floor(Math.random()*11)-5));
+      plantilla.push({
+        id:'p'+i, name:nombre, position:POSICIONES[i], overall,
+        attack:variar(), defense:variar(), pace:variar(), passing:variar(), technique:variar(),
+        injured:false, injuryWeeks:0, injurySeverity:null
+      });
     }
     return plantilla;
   }
+
+  /* ---------- 3b. Formación fija 4-3-3 — coordenadas en % sobre el mismo
+     campo (480×640) que Copa Leyendas, para poder posicionar los slots
+     con position:absolute dentro de #lmPitchBox. ---------- */
+  const FORMACION_433 = [
+    {slot:'POR', x:50,   y:90.6},
+    {slot:'DFC1',x:29.2, y:75},
+    {slot:'DFC2',x:70.8, y:75},
+    {slot:'LI',  x:12.5, y:71.9},
+    {slot:'LD',  x:87.5, y:71.9},
+    {slot:'MC1', x:33.3, y:53.1},
+    {slot:'MC2', x:50,   y:48.4},
+    {slot:'MC3', x:66.7, y:53.1},
+    {slot:'EI',  x:16.7, y:28.1},
+    {slot:'DC',  x:50,   y:21.9},
+    {slot:'ED',  x:83.3, y:28.1}
+  ];
+
+  // Media de las 5 categorías de los titulares asignados (si no hay
+  // ninguno asignado todavía, usa la media de toda la plantilla como
+  // valor por defecto, para que la simulación nunca se quede sin datos).
+  function calcularStatsEquipo(){
+    const ids=Object.values(state.alineacion||{}).filter(Boolean);
+    const titulares = ids.map(id=>state.plantilla.find(p=>p.id===id)).filter(p=>p && !p.injured);
+    const base = titulares.length ? titulares : state.plantilla.filter(p=>!p.injured);
+    const baseFinal = base.length ? base : state.plantilla; // último recurso: si toda la plantilla está lesionada
+    const suma = {attack:0,defense:0,pace:0,passing:0,technique:0};
+    baseFinal.forEach(p=>{ suma.attack+=p.attack; suma.defense+=p.defense; suma.pace+=p.pace; suma.passing+=p.passing; suma.technique+=p.technique; });
+    const n=baseFinal.length||1;
+    return {attack:suma.attack/n, defense:suma.defense/n, pace:suma.pace/n, passing:suma.passing/n, technique:suma.technique/n};
+  }
+
 
   /* ---------- 3. Calendario ida/vuelta (método del círculo) ---------- */
   function generarCalendario(teams){
@@ -147,8 +187,8 @@
 
   /* ---------- 4. Simulación de un partido (motor genérico reutilizado) ---------- */
   function simularPartido(teamA, teamB){
-    const statsA={attack:teamA.attack,defense:teamA.defense,pace:teamA.pace,passing:teamA.passing,technique:teamA.technique};
-    const statsB={attack:teamB.attack,defense:teamB.defense,pace:teamB.pace,passing:teamB.passing,technique:teamB.technique};
+    const statsA = teamA.id==='lm_0' ? calcularStatsEquipo() : {attack:teamA.attack,defense:teamA.defense,pace:teamA.pace,passing:teamA.passing,technique:teamA.technique};
+    const statsB = teamB.id==='lm_0' ? calcularStatsEquipo() : {attack:teamB.attack,defense:teamB.defense,pace:teamB.pace,passing:teamB.passing,technique:teamB.technique};
     const mod=window.tacticalModifier(statsA,statsB);
     const lambdaA=Math.max(0.25, 1.15+mod.myScoreMod);
     const lambdaB=Math.max(0.25, 1.15+mod.oppScoreMod);
@@ -164,16 +204,32 @@
 
   function nuevoEstadoSinEmpezar(){ return { setupComplete:false }; }
 
+  // Alineación automática de partida: coloca a cada jugador generado en
+  // el primer hueco de su posición natural — así el equipo no arranca
+  // con el campo vacío, aunque luego se pueda cambiar a mano.
+  function alineacionAutomatica(plantilla){
+    const mapaPos={POR:['POR'],DFC1:['DFC'],DFC2:['DFC'],LI:['LI'],LD:['LD'],MC1:['MC'],MC2:['MC'],MC3:['MC'],EI:['EI'],ED:['ED'],DC:['DC']};
+    const usados=new Set();
+    const alineacion={};
+    FORMACION_433.forEach(def=>{
+      const candidato=plantilla.find(p=>!usados.has(p.id) && mapaPos[def.slot].includes(p.position));
+      if(candidato){ alineacion[def.slot]=candidato.id; usados.add(candidato.id); }
+    });
+    return alineacion;
+  }
+
   function empezarTemporada(nombreEquipo, moneda, liga, escudo){
-    const miEquipo={id:'lm_0', name:nombreEquipo, attack:52, defense:54, pace:56, passing:50, technique:50};
+    const miEquipo={id:'lm_0', name:nombreEquipo};
     const teams=[miEquipo, ...LM_RIVALS];
+    const plantilla=generarMiniPlantilla();
     state={
       setupComplete:true,
       liga, moneda, nombreEquipo, escudo,
       jornadaActual:1,
       calendario:generarCalendario(teams),
       resultados:{},
-      plantilla:generarMiniPlantilla(),
+      plantilla,
+      alineacion:alineacionAutomatica(plantilla),
       medicoNotificacion:null,
       diceAvailable:DICE_POOL_PER_MATCH
     };
@@ -190,15 +246,96 @@
   function guardarEstado(){ try{ localStorage.setItem(SAVE_KEY, JSON.stringify(state)); }catch(e){} }
   function borrarEstado(){ try{ localStorage.removeItem(SAVE_KEY); }catch(e){} }
 
-  /* ---------- 6. Escudo — helper de render (icono + color, propio y simple) ---------- */
-  function crestHTML(escudo, sizePx){
+  /* ---------- 6. Identidad persistente (nombre+escudo) — separada del
+     progreso de la run (SAVE_KEY). Se guarda cuando se confirma en el
+     flujo de entrada, y se reutiliza automáticamente en la siguiente
+     partida sin volver a preguntar, tal como pidió Jesús. ---------- */
+  function cargarIdentidad(){
+    try{
+      const raw=localStorage.getItem(IDENTITY_KEY);
+      if(raw) return JSON.parse(raw);
+    }catch(e){}
+    return null;
+  }
+  function guardarIdentidad(nombre, crest){
+    try{ localStorage.setItem(IDENTITY_KEY, JSON.stringify({nombre, crest})); }catch(e){}
+  }
+
+  // Escudo — reutiliza DE VERDAD el motor de dibujo de crest-editor.js
+  // (buildCrestSVGInner vía renderCrestThumb), tanto para el escudo por
+  // capas como para una imagen subida. Nunca toca window._myCrestData
+  // (eso es de Copa Leyendas) — aquí solo se LEE con datos propios.
+  function crestHTML(crest, sizePx){
     sizePx=sizePx||28;
-    if(!escudo) return `<i class="ph ph-bold ph-shield" style="font-size:${sizePx*0.6}px;color:#888"></i>`;
-    return `<i class="ph ph-bold ${escudo.icon}" style="font-size:${sizePx*0.6}px;color:${escudo.color}"></i>`;
+    if(!crest) return `<i class="ph ph-bold ph-shield" style="font-size:${sizePx*0.6}px;color:#888"></i>`;
+    if(crest.type==='image'){
+      return `<img src="${crest.data}" style="width:${sizePx}px;height:${sizePx}px;object-fit:cover;border-radius:4px;vertical-align:middle">`;
+    }
+    if(crest.type==='layers' && typeof window.renderCrestThumb==='function'){
+      return window.renderCrestThumb(sizePx, crest.data);
+    }
+    return `<i class="ph ph-bold ph-shield" style="font-size:${sizePx*0.6}px;color:#888"></i>`;
   }
   function rivalCrestHTML(sizePx){
     sizePx=sizePx||28;
     return `<i class="ph ph-bold ph-shield" style="font-size:${sizePx*0.6}px;color:#8a95a0"></i>`;
+  }
+
+  /* Abre el editor de escudos REAL de Copa Leyendas (crest-editor.js), sin
+     modificarlo ni un carácter: se intercambia temporalmente el estado
+     global que usa (window._myCrestData / _myCrestImage) y se sustituyen
+     sus funciones de guardado por unas propias que escriben en la
+     identidad de Liga Manager en vez de en Firestore/Copa Leyendas. Al
+     cerrar el editor (detectado por sondeo, ya que no expone un evento
+     de cierre), se restaura todo tal como estaba. */
+  function openLigaManagerCrestEditor(nombreActual, crestActual, onDone){
+    if(typeof window.openCrestEditor !== 'function'){
+      if(typeof window.showToast==='function') window.showToast('El editor de escudos no está disponible', 'toast-neutral');
+      return;
+    }
+    const prevData = window._myCrestData;
+    const prevImage = window._myCrestImage;
+    const prevSaveData = window.saveMyCrestData;
+    const prevSaveImage = window.saveMyCrestImage;
+    const nameInput = document.getElementById('preferredTeamNameInput');
+    const prevNameVal = nameInput ? nameInput.value : null;
+
+    window._myCrestData = (crestActual && crestActual.type==='layers') ? crestActual.data : null;
+    window._myCrestImage = (crestActual && crestActual.type==='image') ? crestActual.data : null;
+    if(nameInput) nameInput.value = nombreActual || '';
+
+    let guardado = null;
+    window.saveMyCrestData = async function(data){
+      window._myCrestData = data; window._myCrestImage = null;
+      guardado = {type:'layers', data};
+      if(typeof window.refreshAllCrestThumbs==='function') window.refreshAllCrestThumbs();
+    };
+    window.saveMyCrestImage = async function(dataUrl){
+      window._myCrestImage = dataUrl; window._myCrestData = null;
+      guardado = {type:'image', data:dataUrl};
+      if(typeof window.refreshAllCrestThumbs==='function') window.refreshAllCrestThumbs();
+    };
+
+    function restaurar(){
+      window._myCrestData = prevData;
+      window._myCrestImage = prevImage;
+      window.saveMyCrestData = prevSaveData;
+      window.saveMyCrestImage = prevSaveImage;
+      if(nameInput) nameInput.value = prevNameVal;
+      if(typeof window.refreshAllCrestThumbs==='function') window.refreshAllCrestThumbs();
+    }
+
+    window.openCrestEditor();
+
+    // El editor no expone un callback/evento de cierre — se sondea la
+    // presencia de su overlay para saber cuándo el jugador ha terminado.
+    const poll=setInterval(function(){
+      if(!document.getElementById('crestEditorOverlay')){
+        clearInterval(poll);
+        restaurar();
+        onDone(guardado || crestActual);
+      }
+    }, 250);
   }
 
   /* ---------- 7. Clasificación calculada a partir de resultados ---------- */
@@ -318,6 +455,17 @@
         </div>
         <button id="lmSetupNext" class="mode-card-btn mode-card-btn-gold" style="width:auto;padding:10px 26px;margin-top:20px;" ${setupData.moneda?'':'disabled'}>SIGUIENTE</button>
       `;
+    } else if(setupStep===3.5){
+      inner=`
+        <div class="lm-setup-title">TU CLUB YA ESTÁ CREADO</div>
+        <p class="lm-setup-desc">Encontramos un equipo guardado de una partida anterior. Puedes usarlo tal cual o cambiar nombre/escudo.</p>
+        <div class="lm-crest-preview">${crestHTML(setupData.escudo, 64)}</div>
+        <div class="lm-setup-title" style="font-size:16px;margin:6px 0 22px">${setupData.nombre}</div>
+        <button id="lmSetupConfirm" class="mode-card-btn mode-card-btn-gold" style="width:auto;padding:10px 26px;">EMPEZAR TEMPORADA</button>
+        <div style="margin-top:12px">
+          <button id="lmSetupCambiar" class="mode-card-btn mode-card-btn-disabled" style="width:auto;padding:8px 18px;font-size:13px">CAMBIAR NOMBRE/ESCUDO</button>
+        </div>
+      `;
     } else if(setupStep===3){
       inner=`
         <div class="lm-setup-title">NOMBRE DE TU EQUIPO</div>
@@ -326,28 +474,21 @@
         <button id="lmSetupNext" class="mode-card-btn mode-card-btn-gold" style="width:auto;padding:10px 26px;margin-top:20px;" ${setupData.nombre&&setupData.nombre.trim()?'':'disabled'}>SIGUIENTE</button>
       `;
     } else if(setupStep===4){
-      const escudo=setupData.escudo||{icon:ESCUDO_ICONOS[0], color:ESCUDO_COLORES[0]};
-      setupData.escudo=escudo;
       inner=`
         <div class="lm-setup-title">CREA TU ESCUDO</div>
-        <p class="lm-setup-desc">Un escudo sencillo por ahora (icono + color) — el editor completo por capas/imagen llegará más adelante.</p>
-        <div class="lm-crest-preview">${crestHTML(escudo, 64)}</div>
-        <div class="lm-setup-desc" style="margin-bottom:6px">Icono</div>
-        <div class="lm-icon-grid">
-          ${ESCUDO_ICONOS.map(ic=>`<div class="lm-icon-option ${escudo.icon===ic?'selected':''}" data-icon="${ic}"><i class="ph ph-bold ${ic}"></i></div>`).join('')}
+        <p class="lm-setup-desc">Se abre el mismo editor de escudos de Copa Leyendas (por capas o subiendo una imagen) — solo que esto se guarda aparte, como identidad de Liga Manager.</p>
+        <div class="lm-crest-preview">${crestHTML(setupData.escudo, 64)}</div>
+        <button id="lmAbrirEditorBtn" class="mode-card-btn mode-card-btn-gold" style="width:auto;padding:10px 24px;">ABRIR EDITOR DE ESCUDOS</button>
+        <div style="margin-top:16px">
+          <button id="lmSetupConfirm" class="mode-card-btn mode-card-btn-gold" style="width:auto;padding:10px 26px;" ${setupData.escudo?'':'disabled'}>EMPEZAR TEMPORADA</button>
         </div>
-        <div class="lm-setup-desc" style="margin:14px 0 6px">Color</div>
-        <div class="lm-color-grid">
-          ${ESCUDO_COLORES.map(c=>`<div class="lm-color-option ${escudo.color===c?'selected':''}" data-color="${c}" style="background:${c}"></div>`).join('')}
-        </div>
-        <button id="lmSetupConfirm" class="mode-card-btn mode-card-btn-gold" style="width:auto;padding:10px 26px;margin-top:22px;">EMPEZAR TEMPORADA</button>
       `;
     }
 
     root.innerHTML = `
       <div class="lm-wrap">
         <div class="lm-setup-card">
-          <div class="lm-setup-header">LIGA MANAGER — NUEVA PARTIDA (paso ${setupStep} de 4)</div>
+          <div class="lm-setup-header">LIGA MANAGER — NUEVA PARTIDA</div>
           ${inner}
         </div>
       </div>`;
@@ -371,7 +512,35 @@
         });
       });
       const next=document.getElementById('lmSetupNext');
-      if(next) next.addEventListener('click', ()=>{ if(!setupData.moneda) return; if(typeof window.playSound==='function') window.playSound('select'); setupStep=3; renderSetup(); });
+      if(next) next.addEventListener('click', ()=>{
+        if(!setupData.moneda) return;
+        if(typeof window.playSound==='function') window.playSound('select');
+        // Si ya hay una identidad (nombre+escudo) guardada de antes, no se
+        // vuelve a pedir — se salta directo a la pantalla de confirmación.
+        const identidad=cargarIdentidad();
+        if(identidad && identidad.nombre && identidad.crest){
+          setupData.nombre=identidad.nombre;
+          setupData.escudo=identidad.crest;
+          setupStep=3.5;
+        }else{
+          setupStep=3;
+        }
+        renderSetup();
+      });
+    } else if(setupStep===3.5){
+      const confirmBtn=document.getElementById('lmSetupConfirm');
+      if(confirmBtn) confirmBtn.addEventListener('click', ()=>{
+        if(typeof window.playSound==='function') window.playSound('select');
+        guardarIdentidad(setupData.nombre, setupData.escudo);
+        empezarTemporada(setupData.nombre, setupData.moneda, setupData.liga, setupData.escudo);
+        render();
+      });
+      const cambiarBtn=document.getElementById('lmSetupCambiar');
+      if(cambiarBtn) cambiarBtn.addEventListener('click', ()=>{
+        if(typeof window.playSound==='function') window.playSound('select');
+        setupData.nombre=''; setupData.escudo=null;
+        setupStep=3; renderSetup();
+      });
     } else if(setupStep===3){
       const input=document.getElementById('lmSetupNombre');
       const next=document.getElementById('lmSetupNext');
@@ -385,23 +554,19 @@
         setupStep=4; renderSetup();
       });
     } else if(setupStep===4){
-      root.querySelectorAll('[data-icon]').forEach(el=>{
-        el.addEventListener('click', ()=>{
-          setupData.escudo.icon=el.getAttribute('data-icon');
-          if(typeof window.playSound==='function') window.playSound('select');
-          renderSetup();
-        });
-      });
-      root.querySelectorAll('[data-color]').forEach(el=>{
-        el.addEventListener('click', ()=>{
-          setupData.escudo.color=el.getAttribute('data-color');
-          if(typeof window.playSound==='function') window.playSound('select');
+      const abrirBtn=document.getElementById('lmAbrirEditorBtn');
+      if(abrirBtn) abrirBtn.addEventListener('click', ()=>{
+        if(typeof window.playSound==='function') window.playSound('select');
+        openLigaManagerCrestEditor(setupData.nombre, setupData.escudo, function(crest){
+          setupData.escudo=crest;
           renderSetup();
         });
       });
       const confirmBtn=document.getElementById('lmSetupConfirm');
       if(confirmBtn) confirmBtn.addEventListener('click', ()=>{
+        if(!setupData.escudo) return;
         if(typeof window.playSound==='function') window.playSound('select');
+        guardarIdentidad(setupData.nombre.trim(), setupData.escudo);
         empezarTemporada(setupData.nombre.trim(), setupData.moneda, setupData.liga, setupData.escudo);
         render();
       });
@@ -454,14 +619,25 @@
           <button id="lmJugarBtn" class="mode-card-btn mode-card-btn-gold" ${state.jornadaActual>38?'disabled':''} style="width:auto;padding:10px 22px;">
             ${state.jornadaActual>38?'TEMPORADA COMPLETA':'JUGAR JORNADA'}
           </button>
+          <button id="lmPlantillaBtn" class="mode-card-btn mode-card-btn-disabled" style="width:auto;padding:10px 16px;">PLANTILLA</button>
           <button id="lmAbandonarBtn" class="mode-card-btn mode-card-btn-disabled" style="width:auto;padding:10px 16px;">ABANDONAR LIGA</button>
           <button id="ligaManagerBackBtn" class="mode-card-btn mode-card-btn-disabled" style="width:auto;padding:10px 16px;">VOLVER AL MENÚ</button>
         </div>
 
         <div class="lm-maingrid">
           <div class="lm-pitch-col">
-            <div id="lmPitchBox">${PITCH_SVG}</div>
-            <p class="lm-pitch-caption">La alineación llegará cuando se implemente la plantilla</p>
+            <div id="lmPitchBox">${PITCH_SVG}${FORMACION_433.map(def=>{
+              const pid=state.alineacion&&state.alineacion[def.slot];
+              const jugador=pid?state.plantilla.find(p=>p.id===pid):null;
+              const vacio=!jugador;
+              const lesionado=jugador&&jugador.injured;
+              const iniciales=jugador?jugador.name.split(' ').map(w=>w[0]).join(''):def.slot.replace(/[0-9]/g,'');
+              return `<div class="lm-pos-slot ${vacio?'empty-slot':''} ${lesionado?'lm-pos-injured':''}" data-slot="${def.slot}" style="left:${def.x}%;top:${def.y}%" title="${jugador?jugador.name+' ('+jugador.overall+')':'Vacío'}">
+                <span class="lm-pos-code">${iniciales}</span>
+                ${jugador?`<span class="lm-pos-rating">${jugador.overall}</span>`:''}
+              </div>`;
+            }).join('')}</div>
+            <p class="lm-pitch-caption">Toca una posición para asignar o cambiar jugador</p>
           </div>
           <div class="lm-table-col">
             <div class="lm-table-wrap">
@@ -512,14 +688,110 @@
       if(typeof window.playSound==='function') window.playSound('select');
       abandonarLiga();
     });
+    const plantillaBtn=document.getElementById('lmPlantillaBtn');
+    if(plantillaBtn) plantillaBtn.addEventListener('click', ()=>{
+      if(typeof window.playSound==='function') window.playSound('select');
+      abrirPlantilla();
+    });
     const medicoBtn=document.getElementById('lmMedicoBtn');
     if(medicoBtn) medicoBtn.addEventListener('click', ()=>{
       if(typeof window.playSound==='function') window.playSound('select');
       abrirDilemaMedico();
     });
+    root.querySelectorAll('.lm-pos-slot').forEach(el=>{
+      el.addEventListener('click', ()=>{
+        if(typeof window.playSound==='function') window.playSound('select');
+        abrirSelectorSlot(el.getAttribute('data-slot'));
+      });
+    });
   }
 
-  /* ---------- 13. Dilema del médico: selector de dados → tirada 3D → resultado ---------- */
+  /* ---------- 12a. Selector de jugador para una posición del campo ---------- */
+  function abrirSelectorSlot(slot){
+    const asignadoActualId = state.alineacion[slot];
+    const idsUsados = new Set(Object.entries(state.alineacion).filter(([s])=>s!==slot).map(([,id])=>id));
+    const disponibles = state.plantilla.filter(p=>!idsUsados.has(p.id));
+
+    const overlay=document.createElement('div');
+    overlay.id='lmSlotOverlay';
+    overlay.innerHTML=`
+      <div class="lm-dilemma-card" style="max-width:360px;text-align:left">
+        <div class="lm-dilemma-title" style="text-align:center">POSICIÓN: ${slot.replace(/[0-9]/g,'')}</div>
+        <div class="lm-slot-list">
+          ${disponibles.map(p=>`
+            <div class="lm-slot-option ${p.id===asignadoActualId?'selected':''} ${p.injured?'lm-slot-disabled':''}" data-pid="${p.id}">
+              <span>${p.name} <span style="color:#888">(${p.position})</span>${p.injured?' <span style="color:#e24b4a">— lesionado</span>':''}</span>
+              <strong>${p.overall}</strong>
+            </div>`).join('')}
+        </div>
+        ${asignadoActualId?'<button id="lmSlotQuitar" class="mode-card-btn mode-card-btn-disabled" style="width:100%;margin-top:12px;padding:9px;">QUITAR DEL CAMPO</button>':''}
+        <button id="lmSlotCerrar" class="mode-card-btn mode-card-btn-gold" style="width:100%;margin-top:8px;padding:9px;">CERRAR</button>
+      </div>`;
+    document.getElementById('ligaManagerScreen').appendChild(overlay);
+
+    overlay.querySelectorAll('[data-pid]').forEach(el=>{
+      el.addEventListener('click', ()=>{
+        const pid=el.getAttribute('data-pid');
+        const jugador=state.plantilla.find(p=>p.id===pid);
+        if(jugador.injured) return; // no se puede alinear a un lesionado
+        if(typeof window.playSound==='function') window.playSound('select');
+        state.alineacion[slot]=pid;
+        guardarEstado();
+        overlay.remove();
+        render();
+      });
+    });
+    const quitarBtn=document.getElementById('lmSlotQuitar');
+    if(quitarBtn) quitarBtn.addEventListener('click', ()=>{
+      if(typeof window.playSound==='function') window.playSound('select');
+      delete state.alineacion[slot];
+      guardarEstado();
+      overlay.remove();
+      render();
+    });
+    document.getElementById('lmSlotCerrar').addEventListener('click', ()=>{
+      if(typeof window.playSound==='function') window.playSound('select');
+      overlay.remove();
+    });
+  }
+
+  /* ---------- 12b. Vista de plantilla (estilo Copa Leyendas: tabla con
+     nombre, posición, rating y estado de lesión) ---------- */
+  function abrirPlantilla(){
+    const overlay=document.createElement('div');
+    overlay.id='lmPlantillaOverlay';
+    const titularIds=new Set(Object.values(state.alineacion||{}).filter(Boolean));
+    const filas=state.plantilla.map(p=>{
+      const estado = p.injured
+        ? `<span style="color:#e24b4a">Lesionado (${p.injuryWeeks}j)</span>`
+        : `<span style="color:#5dcaa5">Disponible</span>`;
+      const titular = titularIds.has(p.id) ? '<span style="color:#c9a227" title="Titular">★</span> ' : '';
+      return `<tr>
+        <td>${titular}${p.name}</td>
+        <td>${p.position}</td>
+        <td><strong>${p.overall}</strong></td>
+        <td>${estado}</td>
+      </tr>`;
+    }).join('');
+    overlay.innerHTML=`
+      <div class="lm-dilemma-card" style="max-width:420px;text-align:left">
+        <div class="lm-dilemma-title" style="text-align:center">PLANTILLA — ${state.nombreEquipo.toUpperCase()}</div>
+        <p class="lm-setup-desc" style="text-align:center">★ = titular en el campo ahora mismo. Cámbialos tocando una posición en el campo.</p>
+        <table class="lm-table" style="margin-top:10px">
+          <thead><tr><th>Jugador</th><th>Pos</th><th>Rating</th><th>Estado</th></tr></thead>
+          <tbody>${filas}</tbody>
+        </table>
+        <div style="text-align:center;margin-top:16px">
+          <button id="lmPlantillaCerrar" class="mode-card-btn mode-card-btn-gold" style="width:auto;padding:10px 26px;">CERRAR</button>
+        </div>
+      </div>`;
+    document.getElementById('ligaManagerScreen').appendChild(overlay);
+    document.getElementById('lmPlantillaCerrar').addEventListener('click', ()=>{
+      if(typeof window.playSound==='function') window.playSound('select');
+      overlay.remove();
+    });
+  }
+
   function abrirDilemaMedico(){
     if(!state.medicoNotificacion){
       if(typeof window.showToast==='function') window.showToast('Sin novedades del médico', 'toast-neutral');
