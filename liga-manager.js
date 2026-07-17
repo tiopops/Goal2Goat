@@ -24,7 +24,7 @@
    ============================================================ */
 (function(){
 
-  const SAVE_KEY = 'g2g_liga_manager_v05';
+  const SAVE_KEY = 'g2g_liga_manager_v06';
   // Identidad del club (nombre + escudo) — PERSISTE entre partidas, no se
   // pierde al abandonar/descender. Si ya existe, el flujo de entrada no
   // vuelve a pedir nombre ni escudo (solo liga y moneda cada vez).
@@ -114,43 +114,70 @@
 
   /* ---------- 2. Mini-plantilla de ejemplo (para el Médico) ---------- */
   function generarMiniPlantilla(){
-    const NOMBRES=["Álvaro","Adrián","Hugo","Mario","Pablo","Marcos","Diego","Sergio","Iker","Nacho","Bruno","Izan"];
-    const APELLIDOS=["García","Fernández","López","Martínez","Sánchez","Pérez","Gómez","Ruiz","Díaz","Moreno","Torres","Ramos"];
-    const POSICIONES=["POR","DFC","DFC","LI","LD","MC","MC","EI","ED","DC","DC","MC"];
+    const NOMBRES=["Álvaro","Adrián","Hugo","Mario","Pablo","Marcos","Diego","Sergio","Iker","Nacho","Bruno","Izan","Rubén","Guillermo","Álex","Raúl"];
+    const APELLIDOS=["García","Fernández","López","Martínez","Sánchez","Pérez","Gómez","Ruiz","Díaz","Moreno","Torres","Ramos","Molina","Ortega","Vázquez","Serrano"];
     const usados=new Set();
-    const plantilla=[];
-    for(let i=0;i<12;i++){
+    function nombreUnico(){
       let nombre;
       do{ nombre=NOMBRES[Math.floor(Math.random()*NOMBRES.length)]+' '+APELLIDOS[Math.floor(Math.random()*APELLIDOS.length)]; }while(usados.has(nombre));
       usados.add(nombre);
+      return nombre;
+    }
+    function nuevoJugador(id, position, esSuplente){
       const overall=48+Math.floor(Math.random()*18); // 48-65, coherente con "plantilla modesta, recién ascendido"
       const variar=()=>Math.max(30,Math.min(80, overall+Math.floor(Math.random()*11)-5));
-      plantilla.push({
-        id:'p'+i, name:nombre, position:POSICIONES[i], overall,
+      return {
+        id, name:nombreUnico(), position, overall,
         attack:variar(), defense:variar(), pace:variar(), passing:variar(), technique:variar(),
-        fatigue:100, racha:0,
+        fatigue:100, racha:0, esSuplente:!!esSuplente,
         injured:false, injuryWeeks:0, injurySeverity:null
-      });
+      };
     }
+
+    // 11 jugadores de plantilla principal (posiciones base del 4-3-3)
+    const POSICIONES_TITULARES=["POR","DFC","DFC","LI","LD","MC","MC","MC","EI","ED","DC"];
+    const plantilla=POSICIONES_TITULARES.map((pos,i)=>nuevoJugador('p'+i, pos, false));
+
+    // Banquillo: 5 jugadores con posiciones al azar que NO se repiten
+    // entre ellos (aunque sí puedan coincidir con alguna de los 11 de
+    // arriba). Ampliable más adelante mediante mejoras.
+    const TODAS_POSICIONES=["POR","DFC","LI","LD","MC","EI","ED","DC"];
+    const posiciones=TODAS_POSICIONES.slice();
+    for(let i=posiciones.length-1;i>0;i--){
+      const j=Math.floor(Math.random()*(i+1));
+      const tmp=posiciones[i]; posiciones[i]=posiciones[j]; posiciones[j]=tmp;
+    }
+    posiciones.slice(0,5).forEach((pos,i)=>{ plantilla.push(nuevoJugador('b'+i, pos, true)); });
+
     return plantilla;
   }
 
-  /* ---------- 3b. Formación fija 4-3-3 — coordenadas en % sobre el mismo
-     campo (480×640) que Copa Leyendas, para poder posicionar los slots
-     con position:absolute dentro de #lmPitchBox. ---------- */
-  const FORMACION_433 = [
-    {slot:'POR', x:50,   y:90.6},
-    {slot:'DFC1',x:29.2, y:75},
-    {slot:'DFC2',x:70.8, y:75},
-    {slot:'LI',  x:12.5, y:71.9},
-    {slot:'LD',  x:87.5, y:71.9},
-    {slot:'MC1', x:33.3, y:53.1},
-    {slot:'MC2', x:50,   y:48.4},
-    {slot:'MC3', x:66.7, y:53.1},
-    {slot:'EI',  x:16.7, y:28.1},
-    {slot:'DC',  x:50,   y:21.9},
-    {slot:'ED',  x:83.3, y:28.1}
-  ];
+  /* ---------- 3b. Formaciones seleccionables — a diferencia de Copa
+     Leyendas (fija al empezar), aquí se puede elegir antes de cada
+     partido. Coordenadas en % sobre el mismo campo (480×640). ---------- */
+  const FORMACIONES = {
+    '433': {label:'4-3-3', slots:[
+      {slot:'POR', x:50,   y:90.6},
+      {slot:'DFC1',x:29.2, y:75},{slot:'DFC2',x:70.8, y:75},
+      {slot:'LI',  x:12.5, y:71.9},{slot:'LD',  x:87.5, y:71.9},
+      {slot:'MC1', x:33.3, y:53.1},{slot:'MC2', x:50, y:48.4},{slot:'MC3', x:66.7, y:53.1},
+      {slot:'EI',  x:16.7, y:28.1},{slot:'DC', x:50, y:21.9},{slot:'ED', x:83.3, y:28.1}
+    ]},
+    '442': {label:'4-4-2', slots:[
+      {slot:'POR', x:50,   y:90.6},
+      {slot:'DFC1',x:29.2, y:75},{slot:'DFC2',x:70.8, y:75},
+      {slot:'LI',  x:12.5, y:71.9},{slot:'LD',  x:87.5, y:71.9},
+      {slot:'MI',  x:14,   y:46},{slot:'MC1', x:38, y:50},{slot:'MC2', x:62, y:50},{slot:'MD', x:86, y:46},
+      {slot:'DC1', x:36,   y:20},{slot:'DC2', x:64, y:20}
+    ]},
+    '352': {label:'3-5-2', slots:[
+      {slot:'POR', x:50,   y:90.6},
+      {slot:'DFC1',x:24,   y:74},{slot:'DFC2',x:50, y:78},{slot:'DFC3',x:76, y:74},
+      {slot:'LI',  x:10,   y:50},{slot:'MC1', x:31,y:53},{slot:'MC2', x:50, y:48},{slot:'MC3', x:69,y:53},{slot:'LD', x:90, y:50},
+      {slot:'DC1', x:36,   y:20},{slot:'DC2', x:64, y:20}
+    ]}
+  };
+  function formacionActual(){ return FORMACIONES[state.formacion||'433']; }
 
   // Media de las 5 categorías de los titulares asignados (si no hay
   // ninguno asignado todavía, usa la media de toda la plantilla como
@@ -205,15 +232,24 @@
 
   function nuevoEstadoSinEmpezar(){ return { setupComplete:false }; }
 
+  // Deriva la posición "genérica" de un slot de formación (quita el
+  // número final y aplica algún alias) para poder casarlo con la
+  // posición natural de un jugador, sea cual sea la formación elegida.
+  function basePos(slotCode){
+    const sinNumero=slotCode.replace(/[0-9]/g,'');
+    const alias={MI:'EI', MD:'ED'};
+    return alias[sinNumero]||sinNumero;
+  }
+
   // Alineación automática de partida: coloca a cada jugador generado en
   // el primer hueco de su posición natural — así el equipo no arranca
   // con el campo vacío, aunque luego se pueda cambiar a mano.
-  function alineacionAutomatica(plantilla){
-    const mapaPos={POR:['POR'],DFC1:['DFC'],DFC2:['DFC'],LI:['LI'],LD:['LD'],MC1:['MC'],MC2:['MC'],MC3:['MC'],EI:['EI'],ED:['ED'],DC:['DC']};
+  function alineacionAutomatica(plantilla, slots){
     const usados=new Set();
     const alineacion={};
-    FORMACION_433.forEach(def=>{
-      const candidato=plantilla.find(p=>!usados.has(p.id) && mapaPos[def.slot].includes(p.position));
+    slots.forEach(def=>{
+      const posGenerica=basePos(def.slot);
+      const candidato=plantilla.find(p=>!usados.has(p.id) && p.position===posGenerica);
       if(candidato){ alineacion[def.slot]=candidato.id; usados.add(candidato.id); }
     });
     return alineacion;
@@ -230,12 +266,19 @@
       calendario:generarCalendario(teams),
       resultados:{},
       plantilla,
-      alineacion:alineacionAutomatica(plantilla),
+      formacion:'433',
+      alineacion:alineacionAutomatica(plantilla, FORMACIONES['433'].slots),
       medicoNotificacion:null,
-      diceAvailable:DICE_POOL_PER_MATCH
+      diceAvailable:DICE_POOL_PER_MATCH,
+      medicoCartas:[],
+      medicoCambioUsado:false,
+      medicoCartasAgotadas:[],
+      medicoBonos:{}
     };
+    state.medicoCartas = inicializarCartasMedico();
     guardarEstado();
   }
+
 
   function cargarEstado(){
     try{
@@ -375,6 +418,14 @@
     return pool[Math.floor(Math.random()*pool.length)];
   }
 
+  function elegirJugadorAlineado(excluirIds){
+    excluirIds = excluirIds || new Set();
+    const idsAlineados=Object.values(state.alineacion||{}).filter(Boolean).filter(id=>!excluirIds.has(id));
+    const titulares=idsAlineados.map(id=>state.plantilla.find(p=>p.id===id)).filter(p=>p && !p.injured);
+    if(!titulares.length) return null;
+    return titulares[Math.floor(Math.random()*titulares.length)];
+  }
+
   function generarEventosPartido(resultado){
     const eventos=[];
     for(let i=0;i<resultado.golesA;i++){
@@ -384,9 +435,27 @@
     for(let i=0;i<resultado.golesB;i++){
       eventos.push({minute:5+Math.floor(Math.random()*85), team:'away', type:'goal'});
     }
+    // Tarjetas amarillas/rojas — de momento solo informativas (sin
+    // sanción de partidos todavía), con nombre real si es tu jugador.
+    if(Math.random()<0.35){
+      const jugador=elegirJugadorAlineado();
+      eventos.push({minute:10+Math.floor(Math.random()*78), team:'home', type:'card', tarjeta:'amarilla', jugador: jugador||{name:state.nombreEquipo}});
+    }
+    if(Math.random()<0.35){
+      eventos.push({minute:10+Math.floor(Math.random()*78), team:'away', type:'card', tarjeta:'amarilla', jugador:{name:'Rival'}});
+    }
+    if(Math.random()<0.06){
+      const jugador=elegirJugadorAlineado();
+      eventos.push({minute:20+Math.floor(Math.random()*68), team:'home', type:'card', tarjeta:'roja', jugador: jugador||{name:state.nombreEquipo}});
+    }
     // Lesión: puede pasar DURANTE tu propio partido, no como aviso aparte
-    // después de la jornada — mismo espíritu que Copa Leyendas.
-    if(!state.medicoNotificacion && Math.random()<0.18){
+    // después de la jornada — mismo espíritu que Copa Leyendas. El riesgo
+    // base se ve reducido por los bonos acumulados del médico (cartas de
+    // acumulación completadas + el efecto puntual de "Prevención Táctica").
+    const bonos=state.medicoBonos||{};
+    const riesgoBase=0.18*(bonos.riesgoLesionMultiplier||1)*(bonos.riesgoLesionSiguiente||1);
+    if(bonos.riesgoLesionSiguiente){ state.medicoBonos.riesgoLesionSiguiente=1; } // se consume tras un partido
+    if(!state.medicoNotificacion && Math.random()<riesgoBase){
       const idsAlineados=Object.values(state.alineacion||{}).filter(Boolean);
       const titularesSanos=idsAlineados.map(id=>state.plantilla.find(p=>p.id===id)).filter(p=>p && !p.injured);
       const pool = titularesSanos.length ? titularesSanos : state.plantilla.filter(p=>!p.injured);
@@ -398,7 +467,9 @@
           {label:'grave', weeks:4, dificultad:13}
         ];
         const sev=severidades[Math.floor(Math.random()*severidades.length)];
-        eventos.push({minute:20+Math.floor(Math.random()*65), team:'home', type:'injury', jugador, sev});
+        let weeks=Math.max(1, sev.weeks-(bonos.recuperacionExtra||0));
+        if(sev.label==='grave' && bonos.graveMultiplier) weeks=Math.max(1, Math.round(weeks*bonos.graveMultiplier));
+        eventos.push({minute:20+Math.floor(Math.random()*65), team:'home', type:'injury', jugador, sev:{...sev, weeks}});
       }
     }
     // Actualizar rachas de gol: quien marca suma, el resto de titulares que
@@ -443,6 +514,7 @@
     // Fondo de dados: se resetea cada jornada — los que no se usaron en
     // la jornada anterior se pierden (use-it-or-lose-it, ya definido).
     state.diceAvailable = DICE_POOL_PER_MATCH;
+    state.medicoCambioUsado = false;
 
     state.plantilla.forEach(p=>{
       if(p.injured && p.injuryWeeks>0){
@@ -509,14 +581,15 @@
       eventsEl.scrollTop=eventsEl.scrollHeight;
     }
 
-    function addEvt(icon,text,minLabel,esLocal){
+    function addEvt(icon,text,minLabel,esLocal,colorOverride){
       const item=document.createElement('div');
       item.style.cssText='display:grid;grid-template-columns:1fr 44px 1fr;align-items:center;width:100%;font-size:12px;animation:slideInEvent .3s ease;opacity:0;animation-fill-mode:forwards;padding:3px 0;border-bottom:1px solid rgba(0,0,0,.05)';
       const center=`<span style="font-family:'Bebas Neue',Impact,sans-serif;font-size:15px;color:#aaa;text-align:center;display:block;letter-spacing:.5px">${minLabel}</span>`;
+      const color = colorOverride || (esLocal ? 'var(--accent)' : 'var(--red)');
       if(esLocal){
-        item.innerHTML=`<span style="text-align:right;padding-right:6px;color:var(--accent);line-height:1.3">${text} <span style="font-size:14px">${icon}</span></span>${center}<span></span>`;
+        item.innerHTML=`<span style="text-align:right;padding-right:6px;color:${color};line-height:1.3">${text} <span style="font-size:14px">${icon}</span></span>${center}<span></span>`;
       }else{
-        item.innerHTML=`<span></span>${center}<span style="text-align:left;padding-left:6px;color:var(--red);line-height:1.3"><span style="font-size:14px">${icon}</span> ${text}</span>`;
+        item.innerHTML=`<span></span>${center}<span style="text-align:left;padding-left:6px;color:${color};line-height:1.3"><span style="font-size:14px">${icon}</span> ${text}</span>`;
       }
       eventsEl.appendChild(item);
       eventsEl.scrollTop=eventsEl.scrollHeight;
@@ -573,7 +646,10 @@
           addEvt('⚽', `<strong>${nombre}</strong>${racha}`, ev.minute+"'", esLocal);
           if(typeof window.playSound==='function') window.playSound('goal');
         } else if(ev.type==='injury'){
-          addEvt('✚', `<strong>${ev.jugador.name}</strong> <span style="font-size:10px;color:#e74c3c">(lesión ${ev.sev.label})</span>`, ev.minute+"'", true);
+          addEvt('✚', `<strong>${ev.jugador.name}</strong> <span style="font-size:10px;color:var(--red)">(lesión ${ev.sev.label})</span>`, ev.minute+"'", true, 'var(--red)');
+        } else if(ev.type==='card'){
+          const icon = ev.tarjeta==='roja' ? '🟥' : '🟨';
+          addEvt(icon, `<strong>${ev.jugador.name}</strong>`, ev.minute+"'", ev.team==='home');
         }
       }
 
@@ -608,6 +684,146 @@
     state.diceAvailable = Math.max(0, state.diceAvailable - numDados);
     const resultado={tiradas, suma, dificultad:state.medicoNotificacion.dificultad, exito};
     state.medicoNotificacion=null;
+    guardarEstado();
+    return resultado;
+  }
+
+  /* ---------- 9b. CARTAS DE MISIÓN DEL CUERPO TÉCNICO (Médico) ----------
+     10 cartas base. Dos tipos:
+     - "directa": se resuelve al momento (dados sumados vs dificultad).
+       Si falla, la carta se queda tal cual, se puede reintentar cuando
+       se pueda. Si tiene éxito, se aplica el efecto y se cambia por una
+       carta nueva al azar automáticamente.
+     - "acumulacion": los dados invertidos SIEMPRE suman puntos a un
+       proyecto (no hay fallo posible en la tirada en sí); tiene varios
+       niveles con umbral creciente — completar por etapas sale más
+       barato en total que si solo existiera un umbral alto directo.
+       Al completar el último nivel, la carta queda agotada para
+       siempre (no puede volver a salir) y se sustituye por una nueva.
+     Puedes cambiar 1 carta (de las 3 en mano) por partido: se descarta
+     y se reemplaza por otra al azar del resto del catálogo. ---------- */
+  const MEDICO_CARTAS_BASE = [
+    {id:'urgente',      tipo:'directa',     nombre:'Recuperación Exprés',      icon:'ph-first-aid-kit',    dificultad:8,  requiereLesion:true,  desc:'Reduce a la mitad el tiempo de recuperación de un jugador lesionado'},
+    {id:'milagro',      tipo:'directa',     nombre:'Milagro de Vestuario',     icon:'ph-sparkle',          dificultad:15, requiereLesion:true,  desc:'Cura al instante cualquier lesión, sea cual sea su gravedad'},
+    {id:'consulta',     tipo:'directa',     nombre:'Consulta Rápida',          icon:'ph-stethoscope',      dificultad:5,  requiereLesion:true,  desc:'Reduce en 1 semana el tiempo de recuperación'},
+    {id:'cirugia',      tipo:'directa',     nombre:'Cirugía de Precisión',     icon:'ph-scissors',         dificultad:12, requiereLesion:'grave',desc:'Convierte una lesión grave en moderada'},
+    {id:'prevencion_t', tipo:'directa',     nombre:'Prevención Táctica',       icon:'ph-shield-check',     dificultad:7,  requiereLesion:false, desc:'Reduce el riesgo de lesión en el próximo partido'},
+    {id:'chequeo',      tipo:'directa',     nombre:'Chequeo de Plantilla',     icon:'ph-clipboard-text',   dificultad:6,  requiereLesion:false, desc:'Mejora la resistencia de toda la plantilla este partido'},
+    {id:'sala_fisio',   tipo:'acumulacion', nombre:'Sala de Fisioterapia',     icon:'ph-buildings',        niveles:[8,12,16], desc:'Cada nivel reduce el tiempo base de recuperación de futuras lesiones'},
+    {id:'prevencion_p', tipo:'acumulacion', nombre:'Programa de Prevención',   icon:'ph-heartbeat',        niveles:[10,14],   desc:'Cada nivel reduce el riesgo base de lesión de la plantilla'},
+    {id:'especialista', tipo:'acumulacion', nombre:'Especialista en Readaptación', icon:'ph-user-focus',   niveles:[20],      desc:'Reduce a la mitad el tiempo de las lesiones graves para siempre'},
+    {id:'equipo_fisios',tipo:'acumulacion', nombre:'Equipo de Fisios',         icon:'ph-users-three',      niveles:[6,10,14], desc:'Cada nivel acelera la recuperación general de toda la plantilla'}
+  ];
+
+  function cartaDef(id){ return MEDICO_CARTAS_BASE.find(c=>c.id===id); }
+
+  function generarCartaAleatoria(excluirIds){
+    excluirIds = excluirIds || [];
+    const agotadas = state.medicoCartasAgotadas||[];
+    const disponibles = MEDICO_CARTAS_BASE.filter(c=>!excluirIds.includes(c.id) && !agotadas.includes(c.id));
+    const pool = disponibles.length ? disponibles : MEDICO_CARTAS_BASE.filter(c=>!agotadas.includes(c.id));
+    if(!pool.length) return null;
+    const def=pool[Math.floor(Math.random()*pool.length)];
+    return {cartaId:def.id, progreso:0, nivelActual:1};
+  }
+
+  function inicializarCartasMedico(){
+    const cartas=[];
+    for(let i=0;i<3;i++){
+      const nueva=generarCartaAleatoria(cartas.map(c=>c.cartaId));
+      if(nueva) cartas.push(nueva);
+    }
+    return cartas;
+  }
+
+  function cambiarCartaMedico(idx){
+    if(state.medicoCambioUsado) return false;
+    const otras=state.medicoCartas.filter((c,i)=>i!==idx).map(c=>c.cartaId);
+    const nueva=generarCartaAleatoria(otras);
+    if(!nueva) return false;
+    state.medicoCartas[idx]=nueva;
+    state.medicoCambioUsado=true;
+    guardarEstado();
+    return true;
+  }
+
+  // Aplica el efecto de una carta DIRECTA al tener éxito. Devuelve un
+  // texto corto describiendo lo ocurrido, para mostrarlo en el resultado.
+  function aplicarEfectoDirecta(def, jugadorObjetivo){
+    switch(def.id){
+      case 'urgente':
+        if(jugadorObjetivo){ jugadorObjetivo.injuryWeeks=Math.max(0,Math.ceil(jugadorObjetivo.injuryWeeks/2)); if(jugadorObjetivo.injuryWeeks<=0){ jugadorObjetivo.injured=false; jugadorObjetivo.injurySeverity=null; } }
+        return jugadorObjetivo?`${jugadorObjetivo.name} recorta a la mitad su tiempo de baja`:'Aplicado';
+      case 'milagro':
+        if(jugadorObjetivo){ jugadorObjetivo.injured=false; jugadorObjetivo.injuryWeeks=0; jugadorObjetivo.injurySeverity=null; }
+        return jugadorObjetivo?`${jugadorObjetivo.name} recupera la disponibilidad al instante`:'Aplicado';
+      case 'consulta':
+        if(jugadorObjetivo){ jugadorObjetivo.injuryWeeks=Math.max(0,jugadorObjetivo.injuryWeeks-1); if(jugadorObjetivo.injuryWeeks<=0){ jugadorObjetivo.injured=false; jugadorObjetivo.injurySeverity=null; } }
+        return jugadorObjetivo?`${jugadorObjetivo.name} se recupera 1 semana antes`:'Aplicado';
+      case 'cirugia':
+        if(jugadorObjetivo){ jugadorObjetivo.injurySeverity='moderada'; jugadorObjetivo.injuryWeeks=Math.min(jugadorObjetivo.injuryWeeks,2); }
+        return jugadorObjetivo?`La lesión de ${jugadorObjetivo.name} pasa a moderada`:'Aplicado';
+      case 'prevencion_t':
+        state.medicoBonos.riesgoLesionSiguiente = (state.medicoBonos.riesgoLesionSiguiente||1)*0.5;
+        return 'Riesgo de lesión reducido para el próximo partido';
+      case 'chequeo':
+        state.plantilla.forEach(p=>{ p.fatigue=Math.min(100,(p.fatigue===undefined?100:p.fatigue)+15); });
+        return 'La plantilla llega más fresca a este partido';
+      default: return 'Aplicado';
+    }
+  }
+
+  // Aplica el efecto PERMANENTE de una carta de ACUMULACIÓN al completar
+  // un nivel (se acumula con niveles anteriores de la misma carta).
+  function aplicarNivelAcumulacion(def, nivel){
+    switch(def.id){
+      case 'sala_fisio': state.medicoBonos.recuperacionExtra=(state.medicoBonos.recuperacionExtra||0)+1; break;
+      case 'prevencion_p': state.medicoBonos.riesgoLesionMultiplier=(state.medicoBonos.riesgoLesionMultiplier||1)*0.85; break;
+      case 'especialista': state.medicoBonos.graveMultiplier=(state.medicoBonos.graveMultiplier||1)*0.5; break;
+      case 'equipo_fisios': state.medicoBonos.recuperacionExtra=(state.medicoBonos.recuperacionExtra||0)+1; break;
+    }
+  }
+
+  // Resuelve una tirada ya hecha (tiradas[] de dados de 6) sobre la carta
+  // en la posición idx de la mano. Devuelve info para pintar el resultado.
+  function resolverCartaMedico(idx, tiradas, jugadorObjetivoId){
+    const instancia=state.medicoCartas[idx];
+    const def=cartaDef(instancia.cartaId);
+    const suma=tiradas.reduce((a,b)=>a+b,0);
+    let resultado;
+
+    if(def.tipo==='directa'){
+      const exito = suma>=def.dificultad;
+      const jugadorObjetivo = jugadorObjetivoId ? state.plantilla.find(p=>p.id===jugadorObjetivoId) : null;
+      if(exito){
+        const texto=aplicarEfectoDirecta(def, jugadorObjetivo);
+        state.medicoCartas[idx]=generarCartaAleatoria(state.medicoCartas.map(c=>c.cartaId)) || instancia;
+        resultado={tipo:'directa', exito:true, suma, dificultad:def.dificultad, texto};
+      } else {
+        resultado={tipo:'directa', exito:false, suma, dificultad:def.dificultad, texto:'La carta se queda en tu mano — puedes reintentarlo más adelante'};
+      }
+    } else {
+      // Acumulación: SIEMPRE suma, nunca "falla" la tirada en sí.
+      instancia.progreso += suma;
+      const umbral=def.niveles[instancia.nivelActual-1];
+      let subioNivel=false, completada=false;
+      while(instancia.progreso>=umbral && !completada){
+        aplicarNivelAcumulacion(def, instancia.nivelActual);
+        subioNivel=true;
+        if(instancia.nivelActual>=def.niveles.length){
+          completada=true;
+        } else {
+          instancia.progreso -= umbral;
+          instancia.nivelActual++;
+        }
+      }
+      if(completada){
+        state.medicoCartasAgotadas = state.medicoCartasAgotadas||[];
+        state.medicoCartasAgotadas.push(def.id);
+        state.medicoCartas[idx]=generarCartaAleatoria(state.medicoCartas.map(c=>c.cartaId)) || instancia;
+      }
+      resultado={tipo:'acumulacion', suma, subioNivel, completada, nivelActual:instancia.nivelActual, umbral:def.niveles[Math.min(instancia.nivelActual,def.niveles.length)-1], progreso:instancia.progreso};
+    }
     guardarEstado();
     return resultado;
   }
@@ -788,9 +1004,32 @@
     const notif=state.medicoNotificacion;
     const monedaInfo=MONEDAS[state.moneda]||MONEDAS.EUR;
 
+    function fatigueColor(f){ if(f>=75) return 'green'; if(f>=40) return 'yellow'; return 'red'; }
+    function fatigueBarHTML(p){
+      const f=(p.fatigue===undefined)?100:p.fatigue;
+      return `<div class="fatigue-bar-wrap" title="Resistencia: ${f}%"><div class="fatigue-bar fatigue-${fatigueColor(f)}" style="width:${f}%"></div></div>`;
+    }
+    function filaJugador(p){
+      const cross=p.injured?` <span class="cross" title="Lesionado">✚</span>`:'';
+      const racha=p.racha>=2?` <span title="Racha de gol">🔥${p.racha}</span>`:'';
+      const star=titularIds.has(p.id)?'<span class="star" title="Titular">★</span>':'';
+      return `<tr data-pid="${p.id}">
+        <td>${p.name}${cross}${racha}</td>
+        <td>${fatigueBarHTML(p)}</td>
+        <td>${p.position}${star}</td>
+        <td>${p.attack}</td><td>${p.defense}</td><td>${p.pace}</td><td>${p.passing}</td><td>${p.technique}</td>
+        <td><strong>${p.overall}</strong></td>
+      </tr>`;
+    }
+    const titularIds=new Set(Object.values(state.alineacion||{}).filter(Boolean));
+    const plantillaPrincipal=state.plantilla.filter(p=>!p.esSuplente);
+    const banquillo=state.plantilla.filter(p=>p.esSuplente);
+    const filasPlantilla=plantillaPrincipal.map(filaJugador).join('');
+    const filasBanquillo=banquillo.map(filaJugador).join('');
+
     root.innerHTML = `
-      <div class="lm-wrap">
-        <div class="lm-header">
+      <div class="lm-app-grid">
+        <div class="lm-panel lm-left-panel">
           <div class="lm-header-team">
             ${crestHTML(state.escudo, 36)}
             <div>
@@ -798,62 +1037,71 @@
               <div class="lm-sub">Jornada ${Math.min(state.jornadaActual,38)} de 38 · ${monedaInfo.symbol}</div>
             </div>
           </div>
-          ${rival ? `
-          <div class="lm-header-vs">
-            <span class="lm-vs-label">${esLocal?'LOCAL vs':'FUERA en'}</span>
+          <div class="bench-title"><span>PLANTILLA</span><span>${plantillaPrincipal.length}</span></div>
+          <div style="overflow-x:auto">
+            <table class="roster-table">
+              <thead><tr><th>Jugador</th><th>Resist.</th><th>Pos</th><th>ATA</th><th>DEF</th><th>RIT</th><th>PAS</th><th>TEC</th><th>Rat.</th></tr></thead>
+              <tbody>${filasPlantilla}</tbody>
+            </table>
           </div>
-          <div class="lm-header-team lm-header-team-rival">
-            <div style="text-align:right">
-              <div class="lm-title" style="font-size:16px">${rival.name.toUpperCase()}</div>
-              <div class="lm-sub">Próximo rival</div>
-            </div>
-            ${rivalCrestHTML(36)}
-          </div>` : `<div class="lm-header-vs"><span class="lm-vs-label">Temporada finalizada</span></div>`}
+          <div class="bench-title"><span>BANQUILLO</span><span>${banquillo.length}</span></div>
+          <div style="overflow-x:auto">
+            <table class="roster-table">
+              <thead><tr><th>Jugador</th><th>Resist.</th><th>Pos</th><th>ATA</th><th>DEF</th><th>RIT</th><th>PAS</th><th>TEC</th><th>Rat.</th></tr></thead>
+              <tbody>${filasBanquillo}</tbody>
+            </table>
+          </div>
         </div>
 
-        <div class="lm-actionsrow">
-          <button id="lmJugarBtn" class="mode-card-btn mode-card-btn-gold" ${state.jornadaActual>38?'disabled':''} style="width:auto;padding:10px 22px;">
-            ${state.jornadaActual>38?'TEMPORADA COMPLETA':'JUGAR JORNADA'}
-          </button>
-          <button id="lmPlantillaBtn" class="mode-card-btn mode-card-btn-disabled" style="width:auto;padding:10px 16px;">PLANTILLA</button>
-          <button id="lmAbandonarBtn" class="mode-card-btn mode-card-btn-disabled" style="width:auto;padding:10px 16px;">ABANDONAR LIGA</button>
-          <button id="ligaManagerBackBtn" class="mode-card-btn mode-card-btn-disabled" style="width:auto;padding:10px 16px;">VOLVER AL MENÚ</button>
+        <div class="lm-center-panel">
+          <div class="formation-tabs">
+            ${Object.keys(FORMACIONES).map(k=>`<div class="formation-tab ${state.formacion===k?'active':''}" data-formacion="${k}">${FORMACIONES[k].label}</div>`).join('')}
+          </div>
+          <div id="lmPitchBox">${PITCH_SVG}${formacionActual().slots.map(def=>{
+            const pid=state.alineacion&&state.alineacion[def.slot];
+            const jugador=pid?state.plantilla.find(p=>p.id===pid):null;
+            const vacio=!jugador;
+            const lesionado=jugador&&jugador.injured;
+            const iniciales=jugador?jugador.name.split(' ').map(w=>w[0]).join(''):basePos(def.slot);
+            return `<div class="lm-pos-slot ${vacio?'empty-slot':''} ${lesionado?'lm-pos-injured':''}" data-slot="${def.slot}" style="left:${def.x}%;top:${def.y}%" title="${jugador?jugador.name+' ('+jugador.overall+')':'Vacío'}">
+              <span class="lm-pos-code">${iniciales}</span>
+              ${jugador?`<span class="lm-pos-rating">${jugador.overall}</span>`:''}
+            </div>`;
+          }).join('')}</div>
+          <p class="lm-pitch-caption">Toca una posición para asignar o cambiar jugador. Puedes cambiar de formación antes de cada partido.</p>
         </div>
 
-        <div class="lm-maingrid">
-          <div class="lm-pitch-col">
-            <div id="lmPitchBox">${PITCH_SVG}${FORMACION_433.map(def=>{
-              const pid=state.alineacion&&state.alineacion[def.slot];
-              const jugador=pid?state.plantilla.find(p=>p.id===pid):null;
-              const vacio=!jugador;
-              const lesionado=jugador&&jugador.injured;
-              const iniciales=jugador?jugador.name.split(' ').map(w=>w[0]).join(''):def.slot.replace(/[0-9]/g,'');
-              return `<div class="lm-pos-slot ${vacio?'empty-slot':''} ${lesionado?'lm-pos-injured':''}" data-slot="${def.slot}" style="left:${def.x}%;top:${def.y}%" title="${jugador?jugador.name+' ('+jugador.overall+')':'Vacío'}">
-                <span class="lm-pos-code">${iniciales}</span>
-                ${jugador?`<span class="lm-pos-rating">${jugador.overall}</span>`:''}
-              </div>`;
-            }).join('')}</div>
-            <p class="lm-pitch-caption">Toca una posición para asignar o cambiar jugador</p>
+        <div class="lm-panel lm-right-panel">
+          <div class="lm-nextmatch-box">
+            ${rival ? `
+              <div class="lm-vs-label" style="text-align:center;margin-bottom:6px">${esLocal?'JUEGAS EN CASA':'JUEGAS FUERA'}</div>
+              <div class="lm-header-team-rival" style="justify-content:center;gap:10px">
+                ${rivalCrestHTML(30)}<span class="lm-title" style="font-size:15px">${rival.name}</span>
+              </div>` : `<div class="lm-vs-label" style="text-align:center">Temporada finalizada</div>`}
           </div>
-          <div class="lm-table-col">
-            <div class="lm-table-wrap">
-              <table class="lm-table">
-                <thead><tr><th></th><th>#</th><th>Equipo</th><th>PJ</th><th>PG</th><th>PE</th><th>PP</th><th>GF</th><th>GC</th><th>DG</th><th>Pts</th></tr></thead>
-                <tbody>
-                  ${clasif.map((t,i)=>`<tr class="${t.id==='lm_0'?'lm-myteam':''} lm-zona-${zonaClasificacion(i+1)}">
-                    <td>${t.id==='lm_0'?crestHTML(state.escudo,20):rivalCrestHTML(20)}</td>
-                    <td>${i+1}</td><td>${t.name}</td><td>${t.pj}</td><td>${t.pg}</td><td>${t.pe}</td><td>${t.pp}</td>
-                    <td>${t.gf}</td><td>${t.gc}</td><td>${t.gf-t.gc}</td><td><strong>${t.pts}</strong></td>
-                  </tr>`).join('')}
-                </tbody>
-              </table>
-            </div>
-            <div class="lm-legend">
-              <span><i class="lm-legend-dot lm-zona-champions"></i>Champions League</span>
-              <span><i class="lm-legend-dot lm-zona-europa"></i>Europa League</span>
-              <span><i class="lm-legend-dot lm-zona-conference"></i>Conference League</span>
-              <span><i class="lm-legend-dot lm-zona-descenso"></i>Descenso</span>
-            </div>
+          <div class="lm-actionsrow" style="flex-direction:column">
+            <button id="lmJugarBtn" class="mode-card-btn mode-card-btn-gold" ${state.jornadaActual>38?'disabled':''} style="width:100%;padding:10px 22px;">
+              ${state.jornadaActual>38?'TEMPORADA COMPLETA':'JUGAR JORNADA'}
+            </button>
+            <button id="lmAbandonarBtn" class="mode-card-btn mode-card-btn-disabled" style="width:100%;padding:9px 16px;">ABANDONAR LIGA</button>
+            <button id="ligaManagerBackBtn" class="mode-card-btn mode-card-btn-disabled" style="width:100%;padding:9px 16px;">VOLVER AL MENÚ</button>
+          </div>
+          <div class="lm-table-wrap">
+            <table class="lm-table">
+              <thead><tr><th></th><th>#</th><th>Equipo</th><th>PJ</th><th>Pts</th></tr></thead>
+              <tbody>
+                ${clasif.map((t,i)=>`<tr class="${t.id==='lm_0'?'lm-myteam':''} lm-zona-${zonaClasificacion(i+1)}">
+                  <td>${t.id==='lm_0'?crestHTML(state.escudo,18):rivalCrestHTML(18)}</td>
+                  <td>${i+1}</td><td>${t.name}</td><td>${t.pj}</td><td><strong>${t.pts}</strong></td>
+                </tr>`).join('')}
+              </tbody>
+            </table>
+          </div>
+          <div class="lm-legend">
+            <span><i class="lm-legend-dot lm-zona-champions"></i>Champions</span>
+            <span><i class="lm-legend-dot lm-zona-europa"></i>Europa Lg.</span>
+            <span><i class="lm-legend-dot lm-zona-conference"></i>Conference</span>
+            <span><i class="lm-legend-dot lm-zona-descenso"></i>Descenso</span>
           </div>
         </div>
       </div>
@@ -866,6 +1114,18 @@
         </div>
       </div>
     `;
+
+    root.querySelectorAll('[data-formacion]').forEach(el=>{
+      el.addEventListener('click', ()=>{
+        const key=el.getAttribute('data-formacion');
+        if(key===state.formacion) return;
+        if(typeof window.playSound==='function') window.playSound('select');
+        state.formacion=key;
+        state.alineacion=alineacionAutomatica(state.plantilla, FORMACIONES[key].slots);
+        guardarEstado();
+        render();
+      });
+    });
 
     const jugarBtn=document.getElementById('lmJugarBtn');
     if(jugarBtn) jugarBtn.addEventListener('click', ()=>{
@@ -888,15 +1148,10 @@
       if(typeof window.playSound==='function') window.playSound('select');
       abandonarLiga();
     });
-    const plantillaBtn=document.getElementById('lmPlantillaBtn');
-    if(plantillaBtn) plantillaBtn.addEventListener('click', ()=>{
-      if(typeof window.playSound==='function') window.playSound('select');
-      abrirPlantilla();
-    });
     const medicoBtn=document.getElementById('lmMedicoBtn');
     if(medicoBtn) medicoBtn.addEventListener('click', ()=>{
       if(typeof window.playSound==='function') window.playSound('select');
-      abrirDilemaMedico();
+      abrirMedico();
     });
     root.querySelectorAll('.lm-pos-slot').forEach(el=>{
       el.addEventListener('click', ()=>{
@@ -955,97 +1210,142 @@
     });
   }
 
-  /* ---------- 12b. Vista de plantilla (estilo Copa Leyendas: tabla con
-     nombre, posición, rating y estado de lesión) ---------- */
-  function abrirPlantilla(){
-    const overlay=document.createElement('div');
-    overlay.id='lmPlantillaOverlay';
-    const titularIds=new Set(Object.values(state.alineacion||{}).filter(Boolean));
-
-    function fatigueColor(f){ if(f>=75) return 'green'; if(f>=40) return 'yellow'; return 'red'; }
-    function fatigueBarHTML(p){
-      const f=(p.fatigue===undefined)?100:p.fatigue;
-      return `<div class="fatigue-bar-wrap" title="Resistencia: ${f}%"><div class="fatigue-bar fatigue-${fatigueColor(f)}" style="width:${f}%"></div></div>`;
-    }
-
-    const filas=state.plantilla.map(p=>{
-      const esTitular=titularIds.has(p.id);
-      const star=esTitular?'<span class="star" title="Titular">★</span>':'';
-      const cross=p.injured?` <span class="cross" title="Lesionado">✚(-${p.injuryWeeks})</span>`:'';
-      const racha=p.racha>=2?` <span title="Racha de gol">🔥${p.racha}</span>`:'';
-      return `<tr>
-        <td>${p.name}${cross}${racha}</td>
-        <td>${fatigueBarHTML(p)}</td>
-        <td><span style="font-weight:700">${p.position}</span>${star}</td>
-        <td>${p.attack}</td>
-        <td>${p.defense}</td>
-        <td>${p.pace}</td>
-        <td>${p.passing}</td>
-        <td>${p.technique}</td>
-        <td><strong>${p.overall}</strong></td>
-      </tr>`;
-    }).join('');
-
-    overlay.innerHTML=`
-      <div class="lm-dilemma-card" style="max-width:560px;text-align:left">
-        <div class="lm-dilemma-title" style="text-align:center">PLANTILLA — ${state.nombreEquipo.toUpperCase()}</div>
-        <p class="lm-setup-desc" style="text-align:center">★ = titular en el campo ahora mismo. Cámbialos tocando una posición en el campo.</p>
-        <div style="overflow-x:auto">
-        <table class="roster-table" style="margin-top:6px">
-          <thead><tr><th>Jugador</th><th>Resistencia</th><th>Pos</th><th>ATA</th><th>DEF</th><th>RIT</th><th>PAS</th><th>TEC</th><th>Rating</th></tr></thead>
-          <tbody>${filas}</tbody>
-        </table>
-        </div>
-        <div style="text-align:center;margin-top:16px">
-          <button id="lmPlantillaCerrar" class="mode-card-btn mode-card-btn-gold" style="width:auto;padding:10px 26px;">CERRAR</button>
-        </div>
-      </div>`;
-    document.getElementById('ligaManagerScreen').appendChild(overlay);
-    document.getElementById('lmPlantillaCerrar').addEventListener('click', ()=>{
-      if(typeof window.playSound==='function') window.playSound('select');
-      overlay.remove();
-    });
-  }
-
-  function abrirDilemaMedico(){
-    if(!state.medicoNotificacion){
-      if(typeof window.showToast==='function') window.showToast('Sin novedades del médico', 'toast-neutral');
-      return;
-    }
-    const jugador=state.plantilla.find(p=>p.id===state.medicoNotificacion.jugadorId);
-    const dificultad=state.medicoNotificacion.dificultad;
-    let dadosElegidos=Math.min(1, state.diceAvailable);
-
+  function abrirMedico(){
     const overlay=document.createElement('div');
     overlay.id='lmMedicoOverlay';
     document.getElementById('ligaManagerScreen').appendChild(overlay);
 
-    function renderSelector(){
-      overlay.innerHTML=`
-        <div class="lm-dilemma-card">
-          <i class="ph ph-bold ph-first-aid-kit" style="font-size:26px;color:#c9a227"></i>
-          <div class="lm-dilemma-title">EL MÉDICO TE CONSULTA</div>
-          <div class="lm-dilemma-text">${jugador?jugador.name:'Un jugador'} tiene una lesión ${state.medicoNotificacion.severidad}. Necesitas sumar ${dificultad}+ (dados de 6) para acelerar su recuperación.</div>
-          <div class="lm-dice-selector">
-            <button id="lmDiceMinus" class="lm-dice-stepper">−</button>
-            <span id="lmDiceCount">${dadosElegidos}</span>
-            <button id="lmDicePlus" class="lm-dice-stepper">+</button>
-          </div>
-          <div class="lm-setup-desc">dados disponibles: ${state.diceAvailable}</div>
-          <button id="lmTirarBtn" class="mode-card-btn mode-card-btn-gold" style="width:auto;padding:10px 24px;margin-top:10px" ${state.diceAvailable<1?'disabled':''}>TIRAR ${dadosElegidos} DADO${dadosElegidos>1?'S':''}</button>
+    function jugadoresLesionadosPara(def){
+      if(!def.requiereLesion) return [];
+      return state.plantilla.filter(p=>p.injured && (def.requiereLesion==='grave' ? p.injurySeverity==='grave' : true));
+    }
+
+    function renderHub(){
+      const notif=state.medicoNotificacion;
+      const jugadorUrgente=notif?state.plantilla.find(p=>p.id===notif.jugadorId):null;
+
+      const cartasHTML=state.medicoCartas.map((instancia,idx)=>{
+        const def=cartaDef(instancia.cartaId);
+        const candidatos=jugadoresLesionadosPara(def);
+        const bloqueada = def.requiereLesion && candidatos.length===0;
+        const cambioDisponible=!state.medicoCambioUsado;
+        let cuerpo;
+        if(def.tipo==='acumulacion'){
+          const umbral=def.niveles[instancia.nivelActual-1];
+          cuerpo=`<div class="med-card-progress"><div class="med-card-progress-fill" style="width:${Math.min(100,100*instancia.progreso/umbral)}%"></div></div>
+                  <div class="med-card-progress-label">Nivel ${instancia.nivelActual}/${def.niveles.length} — ${instancia.progreso}/${umbral}</div>`;
+        } else {
+          cuerpo=`<div class="med-card-dificultad">Dificultad ${def.dificultad}+</div>`;
+        }
+        return `
+        <div class="med-card ${bloqueada?'med-card-bloqueada':''}" data-idx="${idx}">
+          <button class="med-card-swap" data-swap="${idx}" title="Cambiar carta" ${cambioDisponible?'':'disabled'}><i class="ph ph-bold ph-arrows-clockwise"></i></button>
+          <div class="med-card-tag">${def.tipo==='acumulacion'?'PROYECTO':'MISIÓN'}</div>
+          <i class="ph ph-bold ${def.icon} med-card-icon"></i>
+          <div class="med-card-title">${def.nombre}</div>
+          <div class="med-card-divider"></div>
+          <div class="med-card-desc">${def.desc}</div>
+          ${cuerpo}
+          ${bloqueada?'<div class="med-card-bloqueada-label">Necesitas una lesión activa</div>':`<button class="mode-card-btn mode-card-btn-gold med-card-btn" data-usar="${idx}" style="padding:7px;font-size:11px">USAR</button>`}
         </div>`;
-      const minus=document.getElementById('lmDiceMinus');
-      const plus=document.getElementById('lmDicePlus');
-      const tirarBtn=document.getElementById('lmTirarBtn');
-      if(minus) minus.addEventListener('click', ()=>{ if(dadosElegidos>1){ dadosElegidos--; renderSelector(); } });
-      if(plus) plus.addEventListener('click', ()=>{ if(dadosElegidos<state.diceAvailable){ dadosElegidos++; renderSelector(); } });
-      if(tirarBtn) tirarBtn.addEventListener('click', ()=>{
+      }).join('');
+
+      overlay.innerHTML=`
+        <div class="lm-dilemma-card" style="max-width:640px">
+          <div class="lm-dilemma-title"><i class="ph ph-bold ph-first-aid-kit"></i> EQUIPO MÉDICO</div>
+          ${notif?`
+          <div class="lm-dilemma-text" style="background:#2a1e1e;border:1px solid #e24b4a;border-radius:8px;padding:10px;margin-bottom:14px">
+            <strong style="color:#e24b4a">URGENTE:</strong> ${jugadorUrgente?jugadorUrgente.name:'Un jugador'} tiene una lesión ${notif.severidad}.
+            <button id="lmAtenderUrgente" class="mode-card-btn mode-card-btn-gold" style="width:auto;padding:7px 16px;margin-top:8px;display:block">ATENDER (sumar ${notif.dificultad}+)</button>
+          </div>` : ''}
+          <div class="lm-setup-desc" style="text-align:center;margin-bottom:8px">dados disponibles este partido: ${state.diceAvailable} · puedes cambiar 1 carta por partido</div>
+          <div class="med-card-grid">${cartasHTML}</div>
+          <div style="text-align:center;margin-top:14px">
+            <button id="lmMedicoCerrar" class="mode-card-btn mode-card-btn-disabled" style="width:auto;padding:9px 22px;">CERRAR</button>
+          </div>
+        </div>`;
+
+      const cerrarBtn=document.getElementById('lmMedicoCerrar');
+      if(cerrarBtn) cerrarBtn.addEventListener('click', ()=>{
         if(typeof window.playSound==='function') window.playSound('select');
-        renderRolling(dadosElegidos);
+        overlay.remove();
+        render();
+      });
+
+      const atenderBtn=document.getElementById('lmAtenderUrgente');
+      if(atenderBtn) atenderBtn.addEventListener('click', ()=>{
+        if(typeof window.playSound==='function') window.playSound('select');
+        renderSelectorUrgente();
+      });
+      overlay.querySelectorAll('[data-swap]').forEach(btn=>{
+        btn.addEventListener('click', ()=>{
+          const idx=parseInt(btn.getAttribute('data-swap'),10);
+          if(typeof window.playSound==='function') window.playSound('select');
+          if(cambiarCartaMedico(idx)) renderHub();
+        });
+      });
+      overlay.querySelectorAll('[data-usar]').forEach(btn=>{
+        btn.addEventListener('click', ()=>{
+          const idx=parseInt(btn.getAttribute('data-usar'),10);
+          if(typeof window.playSound==='function') window.playSound('select');
+          const def=cartaDef(state.medicoCartas[idx].cartaId);
+          const candidatos=jugadoresLesionadosPara(def);
+          if(def.requiereLesion && candidatos.length>1){
+            renderSelectorJugador(idx, candidatos);
+          } else {
+            renderSelectorCarta(idx, candidatos[0]?candidatos[0].id:null);
+          }
+        });
       });
     }
 
-    function renderRolling(numDados){
+    function renderSelectorJugador(idx, candidatos){
+      overlay.innerHTML=`
+        <div class="lm-dilemma-card">
+          <div class="lm-dilemma-title">¿SOBRE QUIÉN?</div>
+          <div class="lm-slot-list">
+            ${candidatos.map(p=>`<div class="lm-slot-option" data-pid="${p.id}"><span>${p.name}</span><span style="color:#e24b4a">${p.injurySeverity}</span></div>`).join('')}
+          </div>
+        </div>`;
+      overlay.querySelectorAll('[data-pid]').forEach(el=>{
+        el.addEventListener('click', ()=>{
+          if(typeof window.playSound==='function') window.playSound('select');
+          renderSelectorCarta(idx, el.getAttribute('data-pid'));
+        });
+      });
+    }
+
+    function renderSelectorCarta(idx, jugadorObjetivoId){
+      const def=cartaDef(state.medicoCartas[idx].cartaId);
+      let dadosElegidos=Math.min(1, state.diceAvailable);
+      function pintar(){
+        overlay.innerHTML=`
+          <div class="lm-dilemma-card">
+            <i class="ph ph-bold ${def.icon}" style="font-size:26px;color:#5dcaa5"></i>
+            <div class="lm-dilemma-title">${def.nombre.toUpperCase()}</div>
+            <div class="lm-dilemma-text">${def.desc}${def.tipo==='directa'?` — necesitas sumar ${def.dificultad}+`:' — los dados invertidos siempre suman al proyecto'}</div>
+            <div class="lm-dice-selector">
+              <button id="lmDiceMinus" class="lm-dice-stepper">−</button>
+              <span id="lmDiceCount">${dadosElegidos}</span>
+              <button id="lmDicePlus" class="lm-dice-stepper">+</button>
+            </div>
+            <div class="lm-setup-desc">dados disponibles: ${state.diceAvailable}</div>
+            <button id="lmTirarBtn" class="mode-card-btn mode-card-btn-gold" style="width:auto;padding:10px 24px;margin-top:10px" ${state.diceAvailable<1?'disabled':''}>TIRAR ${dadosElegidos} DADO${dadosElegidos>1?'S':''}</button>
+          </div>`;
+        const minus=document.getElementById('lmDiceMinus');
+        const plus=document.getElementById('lmDicePlus');
+        const tirarBtn=document.getElementById('lmTirarBtn');
+        if(minus) minus.addEventListener('click', ()=>{ if(dadosElegidos>1){ dadosElegidos--; pintar(); } });
+        if(plus) plus.addEventListener('click', ()=>{ if(dadosElegidos<state.diceAvailable){ dadosElegidos++; pintar(); } });
+        if(tirarBtn) tirarBtn.addEventListener('click', ()=>{
+          if(typeof window.playSound==='function') window.playSound('select');
+          renderRolloCarta(idx, dadosElegidos, jugadorObjetivoId);
+        });
+      }
+      pintar();
+    }
+
+    function renderRolloCarta(idx, numDados, jugadorObjetivoId){
       overlay.innerHTML=`
         <div class="lm-dilemma-card">
           <div class="lm-dilemma-title" id="lmDiceTitle">TIRANDO ${numDados} DADO${numDados>1?'S':''}...</div>
@@ -1053,41 +1353,106 @@
           <div id="lmDiceResultZone"></div>
         </div>`;
       const box=document.getElementById('lmDice3DBox');
-      if(typeof window.G2G_rollDice3D === 'function'){
-        window.G2G_rollDice3D(box, numDados, function(tiradas){
-          mostrarResultado(numDados, tiradas);
+      function conResultado(tiradas){
+        state.diceAvailable=Math.max(0, state.diceAvailable-numDados);
+        const r=resolverCartaMedico(idx, tiradas, jugadorObjetivoId);
+        const tituloEl=document.getElementById('lmDiceTitle');
+        if(tituloEl) tituloEl.textContent='RESULTADO';
+        const zona=document.getElementById('lmDiceResultZone');
+        let textoResultado;
+        if(r.tipo==='directa'){
+          textoResultado=`Suma <strong>${r.suma}</strong> (necesitabas ${r.dificultad}+) — <span style="color:${r.exito?'#5dcaa5':'#e24b4a'}">${r.exito?'✔ ÉXITO — '+r.texto:'✘ FALLO — '+r.texto}</span>`;
+        } else {
+          textoResultado = r.completada
+            ? `+${r.suma} puntos — <span style="color:#5dcaa5">✔ PROYECTO COMPLETADO</span>`
+            : (r.subioNivel
+              ? `+${r.suma} puntos — <span style="color:#5dcaa5">¡Nivel superado!</span> Ahora nivel ${r.nivelActual} (${r.progreso}/${r.umbral})`
+              : `+${r.suma} puntos — progreso ${r.progreso}/${r.umbral}`);
+        }
+        zona.innerHTML=`
+          <div class="lm-dice-result-row">${tiradas.map(v=>`<span class="lm-dice-pill">${v}</span>`).join('')}</div>
+          <div style="font-family:'Bebas Neue';font-size:15px;margin-top:10px;line-height:1.4">${textoResultado}</div>
+          <button id="lmContinuarBtn" class="mode-card-btn mode-card-btn-gold" style="width:auto;padding:10px 26px;margin-top:16px">CONTINUAR</button>`;
+        document.getElementById('lmContinuarBtn').addEventListener('click', ()=>{
+          if(typeof window.playSound==='function') window.playSound('select');
+          renderHub();
         });
+      }
+      if(typeof window.G2G_rollDice3D === 'function'){
+        window.G2G_rollDice3D(box, numDados, conResultado);
       } else {
-        // Fallback si el módulo 3D no cargó por lo que sea
         const tiradas=[]; for(let i=0;i<numDados;i++) tiradas.push(1+Math.floor(Math.random()*6));
-        setTimeout(()=>mostrarResultado(numDados, tiradas), 800);
+        setTimeout(()=>conResultado(tiradas), 800);
       }
     }
 
-    // El dado 3D (#lmDice3DBox) se queda en pantalla, quieto, mostrando el
-    // resultado ya asentado — solo se añade el texto del resultado debajo,
-    // nunca se sustituye la tarjeta entera (eso era lo que lo hacía
-    // desaparecer). Sigue visible hasta que se pulsa CONTINUAR.
-    function mostrarResultado(numDados, tiradas){
-      const r=resolverDilemaMedico(numDados, tiradas);
-      const tituloEl=document.getElementById('lmDiceTitle');
-      if(tituloEl) tituloEl.textContent='RESULTADO';
-      const zona=document.getElementById('lmDiceResultZone');
-      zona.innerHTML=`
-        <div class="lm-dice-result-row">${tiradas.map(v=>`<span class="lm-dice-pill">${v}</span>`).join('')}</div>
-        <div style="font-family:'Bebas Neue';font-size:16px;margin-top:10px">
-          Suma <strong>${r.suma}</strong> (necesitabas ${r.dificultad}+) —
-          <span style="color:${r.exito?'#5dcaa5':'#e24b4a'}">${r.exito?'✔ ÉXITO, recuperación acelerada':'✘ FALLO, sigue el tiempo previsto'}</span>
-        </div>
-        <button id="lmContinuarBtn" class="mode-card-btn mode-card-btn-gold" style="width:auto;padding:10px 26px;margin-top:16px">CONTINUAR</button>`;
-      document.getElementById('lmContinuarBtn').addEventListener('click', ()=>{
-        if(typeof window.playSound==='function') window.playSound('select');
-        overlay.remove();
-        render();
-      });
+    // ---- Flujo de la notificación urgente (lesión recién ocurrida) ----
+    function renderSelectorUrgente(){
+      const jugador=state.plantilla.find(p=>p.id===state.medicoNotificacion.jugadorId);
+      const dificultad=state.medicoNotificacion.dificultad;
+      let dadosElegidos=Math.min(1, state.diceAvailable);
+      function pintar(){
+        overlay.innerHTML=`
+          <div class="lm-dilemma-card">
+            <i class="ph ph-bold ph-first-aid-kit" style="font-size:26px;color:#e24b4a"></i>
+            <div class="lm-dilemma-title">EL MÉDICO TE CONSULTA</div>
+            <div class="lm-dilemma-text">${jugador?jugador.name:'Un jugador'} tiene una lesión ${state.medicoNotificacion.severidad}. Necesitas sumar ${dificultad}+ para acelerar su recuperación.</div>
+            <div class="lm-dice-selector">
+              <button id="lmDiceMinus" class="lm-dice-stepper">−</button>
+              <span id="lmDiceCount">${dadosElegidos}</span>
+              <button id="lmDicePlus" class="lm-dice-stepper">+</button>
+            </div>
+            <div class="lm-setup-desc">dados disponibles: ${state.diceAvailable}</div>
+            <button id="lmTirarBtn" class="mode-card-btn mode-card-btn-gold" style="width:auto;padding:10px 24px;margin-top:10px" ${state.diceAvailable<1?'disabled':''}>TIRAR ${dadosElegidos} DADO${dadosElegidos>1?'S':''}</button>
+          </div>`;
+        const minus=document.getElementById('lmDiceMinus');
+        const plus=document.getElementById('lmDicePlus');
+        const tirarBtn=document.getElementById('lmTirarBtn');
+        if(minus) minus.addEventListener('click', ()=>{ if(dadosElegidos>1){ dadosElegidos--; pintar(); } });
+        if(plus) plus.addEventListener('click', ()=>{ if(dadosElegidos<state.diceAvailable){ dadosElegidos++; pintar(); } });
+        if(tirarBtn) tirarBtn.addEventListener('click', ()=>{
+          if(typeof window.playSound==='function') window.playSound('select');
+          renderRolloUrgente(dadosElegidos);
+        });
+      }
+      pintar();
     }
 
-    renderSelector();
+    function renderRolloUrgente(numDados){
+      overlay.innerHTML=`
+        <div class="lm-dilemma-card">
+          <div class="lm-dilemma-title" id="lmDiceTitle">TIRANDO ${numDados} DADO${numDados>1?'S':''}...</div>
+          <div id="lmDice3DBox" class="lm-dice3d-box"></div>
+          <div id="lmDiceResultZone"></div>
+        </div>`;
+      const box=document.getElementById('lmDice3DBox');
+      function conResultado(tiradas){
+        const r=resolverDilemaMedico(numDados, tiradas);
+        const tituloEl=document.getElementById('lmDiceTitle');
+        if(tituloEl) tituloEl.textContent='RESULTADO';
+        const zona=document.getElementById('lmDiceResultZone');
+        zona.innerHTML=`
+          <div class="lm-dice-result-row">${tiradas.map(v=>`<span class="lm-dice-pill">${v}</span>`).join('')}</div>
+          <div style="font-family:'Bebas Neue';font-size:16px;margin-top:10px">
+            Suma <strong>${r.suma}</strong> (necesitabas ${r.dificultad}+) —
+            <span style="color:${r.exito?'#5dcaa5':'#e24b4a'}">${r.exito?'✔ ÉXITO, recuperación acelerada':'✘ FALLO, sigue el tiempo previsto'}</span>
+          </div>
+          <button id="lmContinuarBtn" class="mode-card-btn mode-card-btn-gold" style="width:auto;padding:10px 26px;margin-top:16px">CONTINUAR</button>`;
+        document.getElementById('lmContinuarBtn').addEventListener('click', ()=>{
+          if(typeof window.playSound==='function') window.playSound('select');
+          renderHub();
+          render();
+        });
+      }
+      if(typeof window.G2G_rollDice3D === 'function'){
+        window.G2G_rollDice3D(box, numDados, conResultado);
+      } else {
+        const tiradas=[]; for(let i=0;i<numDados;i++) tiradas.push(1+Math.floor(Math.random()*6));
+        setTimeout(()=>conResultado(tiradas), 800);
+      }
+    }
+
+    renderHub();
   }
 
   /* ---------- 14. Inicialización ---------- */

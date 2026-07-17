@@ -2453,25 +2453,54 @@ body.liga-manager-screen #mainMenuScreen{display:none!important}
 body.liga-manager-screen .app{display:none!important}
 body.liga-manager-screen #mobileTabBar{display:none!important}
 
+/* Usado solo por las pantallas del flujo de entrada (liga/moneda/nombre/
+   escudo) — el hub principal ya usa .lm-app-grid en su lugar. */
 .lm-wrap{width:100%;max-width:820px;margin:0 auto;padding:28px 20px 90px;color:#ccc}
 
-.lm-header{
-  display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px;
-  background:#15181a;border:1px solid #22282b;border-radius:10px;
-  padding:16px 20px;margin-bottom:12px;
+/* Layout general — MISMA rejilla de 3 columnas que .app en Copa Leyendas
+   (mismos anchos mín/máx), para que la anchura total y la posición de
+   cada bloque coincidan exactamente. */
+.lm-app-grid{
+  display:grid;
+  grid-template-columns:minmax(380px,440px) minmax(320px,420px) minmax(380px,440px);
+  justify-content:center;
+  width:100%;
 }
+.lm-panel{
+  background:#15181a;border-right:1px solid #22282b;
+  overflow-y:auto;overflow-x:hidden;padding:12px;
+  display:flex;flex-direction:column;gap:10px;
+}
+.lm-right-panel{border-right:none;border-left:1px solid #22282b}
+.lm-left-panel .roster-table{font-size:11px}
+
+/* Centro: mismo comportamiento que .center-panel/#pitchBox de Copa
+   Leyendas (fondo oscuro, campo centrado, mismo ancho máximo/aspect-ratio). */
+.lm-center-panel{
+  display:flex;flex-direction:column;align-items:center;justify-content:flex-start;
+  background:#0d0d0d;padding:14px 14px 0;overflow-y:auto;overflow-x:hidden;
+}
+.lm-nextmatch-box{
+  background:#1e2326;border:1px solid #2f3539;border-radius:8px;
+  padding:10px;margin-bottom:6px;
+}
+
 .lm-header-team{display:flex;align-items:center;gap:10px}
 .lm-header-team-rival{flex-direction:row-reverse}
-.lm-header-vs{flex:0 0 auto;text-align:center}
 .lm-vs-label{font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:1px;font-size:11px;color:#666}
 .lm-title{font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:1px;font-size:20px;color:#eee}
 .lm-sub{font-size:12px;color:#888}
 
-.lm-actionsrow{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px}
+.lm-actionsrow{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:4px}
+
+@media(max-width:1050px){
+  .lm-app-grid{grid-template-columns:1fr;justify-content:stretch}
+  .lm-panel,.lm-right-panel{border:none;border-bottom:1px solid #22282b}
+}
 
 /* Cuerpo técnico FIJO (sticky) abajo del todo en escritorio, para que
-   no se pierda al hacer scroll por la clasificación. Vive fuera de
-   .lm-wrap (a ancho completo), con un contenedor interno centrado que
+   no se pierda al hacer scroll por la clasificación. Vive fuera del
+   grid (a ancho completo), con un contenedor interno centrado que
    comparte el mismo ancho máximo que el resto del contenido. */
 .lm-staffrow{
   position:sticky;bottom:0;z-index:5;
@@ -2540,17 +2569,14 @@ body.liga-manager-screen #mobileTabBar{display:none!important}
 .lm-legend .lm-zona-conference{background:#5dcaa5}
 .lm-legend .lm-zona-descenso{background:#e24b4a}
 
-/* Campo (mismo SVG que Copa Leyendas) + tabla, dos columnas en escritorio */
-.lm-maingrid{display:flex;gap:16px;align-items:flex-start}
-.lm-pitch-col{flex:0 0 240px}
-.lm-table-col{flex:1;min-width:0}
+/* Campo (mismo SVG que Copa Leyendas), mismo tamaño/posición que #pitch */
 #lmPitchBox{
-  width:100%;aspect-ratio:480/640;border-radius:10px;overflow:hidden;
-  border:1px solid #22282b;
+  width:100%;max-width:min(420px, 65vh);aspect-ratio:3/4;border-radius:10px;overflow:hidden;
+  border:1px solid #22282b;margin:0 auto;
   position:relative;
 }
 #lmPitchBox svg{width:100%;height:100%;display:block}
-.lm-pitch-caption{font-size:10px;color:#666;text-align:center;margin-top:8px;line-height:1.4}
+.lm-pitch-caption{font-size:10px;color:#666;text-align:center;margin-top:8px;line-height:1.4;max-width:420px}
 
 /* Slots de posición sobre el campo — mismo lenguaje visual que .position
    de Copa Leyendas (círculo punteado), adaptado a Liga Manager. */
@@ -2578,6 +2604,47 @@ body.liga-manager-screen #mobileTabBar{display:none!important}
 .lm-slot-option.selected{border-color:#c9a227;background:#262b1e}
 .lm-slot-option.lm-slot-disabled{opacity:.4;cursor:not-allowed}
 
+/* Cartas de misión del cuerpo técnico — MISMO lenguaje visual que las
+   cartas de Giro Táctico de Copa Leyendas (.g-card-face: fondo oscuro
+   con gradiente, marco interior, icono/título/divisor), pero en tonos
+   verdes para el Médico en vez de dorados. */
+.med-card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-top:6px}
+.med-card{
+  position:relative;border-radius:12px;
+  background:radial-gradient(120% 100% at 50% -10%, rgba(46,204,113,.12), transparent 55%),
+             linear-gradient(160deg,#1c1c1c,#161616);
+  border:1px solid #2a2a2a;
+  box-shadow:0 8px 20px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.03);
+  display:flex;flex-direction:column;align-items:center;padding:12px 10px 10px;
+  text-align:center;
+}
+.med-card::before{
+  content:"";position:absolute;inset:5px;border:1px solid rgba(46,204,113,.35);
+  border-radius:8px;pointer-events:none;
+}
+.med-card.med-card-bloqueada{opacity:.5}
+.med-card-swap{
+  position:absolute;top:6px;right:6px;width:22px;height:22px;border-radius:50%;
+  background:#222;border:1px solid #444;color:#aaa;font-size:11px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;z-index:2;
+}
+.med-card-swap:hover:not(:disabled){border-color:#2ecc71;color:#2ecc71}
+.med-card-swap:disabled{opacity:.3;cursor:not-allowed}
+.med-card-tag{
+  font-family:'Bebas Neue',Impact,sans-serif;font-size:8px;letter-spacing:1.5px;
+  color:#3a8a5c;margin-bottom:6px;text-transform:uppercase;
+}
+.med-card-icon{font-size:22px;color:#2ecc71;margin-bottom:6px;filter:drop-shadow(0 0 6px rgba(46,204,113,.3))}
+.med-card-title{font-family:'Bebas Neue',Impact,sans-serif;font-size:12px;letter-spacing:.4px;color:#fff;margin-bottom:6px;line-height:1.15;min-height:28px}
+.med-card-divider{width:26px;height:2px;background:#3a8a5c;margin-bottom:6px;border-radius:2px}
+.med-card-desc{font-size:10px;color:#999;line-height:1.4;margin-bottom:8px;min-height:44px}
+.med-card-dificultad{font-family:'Bebas Neue',Impact,sans-serif;font-size:12px;color:#2ecc71;margin-bottom:8px}
+.med-card-progress{width:100%;height:6px;background:#2a2a2a;border-radius:3px;overflow:hidden;margin-bottom:4px}
+.med-card-progress-fill{height:100%;background:#2ecc71;border-radius:3px;transition:width .2s ease}
+.med-card-progress-label{font-size:9px;color:#888;margin-bottom:8px}
+.med-card-bloqueada-label{font-size:9px;color:#e24b4a;font-style:italic}
+.med-card-btn{width:100%}
+
 /* Partido en vivo — el CONTENIDO reutiliza literalmente las clases de
    Copa Leyendas (.match-modal/.match-header/.match-side/...), aquí solo
    se define el contenedor que lo centra dentro de #ligaManagerScreen. */
@@ -2589,10 +2656,6 @@ body.liga-manager-screen #mobileTabBar{display:none!important}
    porque el marcador solo lleva la clase .match-scoreline — se añade
    aquí la combinación correcta (beneficia también a Copa Leyendas). */
 .match-scoreline.goal-flash{animation:goalFlash .5s ease}
-@media(max-width:640px){
-  .lm-maingrid{flex-direction:column}
-  .lm-pitch-col{flex:0 0 auto;width:160px;margin:0 auto}
-}
 
 .lm-dilemma-title{font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:1px;color:#eee;font-size:15px;margin:10px 0 8px}
 .lm-dilemma-text{font-size:12px;color:#bbb;margin-bottom:16px;line-height:1.5}
