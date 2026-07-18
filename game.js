@@ -322,6 +322,11 @@ function playSound(name, data){
       [300,240,180,120].forEach((f,i)=>tone(ctx, f, i*0.07, 0.15, 'sawtooth', 0.12, 0.0001));
       tone(ctx, 80, 0.28, 0.4, 'sine', 0.18, 0.0001);
       break;
+    case 'dice': // lanzamiento de dados (Liga Manager) — varios golpes secos
+      // que se acompasan, simulando el traqueteo de los dados cayendo.
+      [0,1,2,3,4].forEach((i)=>tone(ctx, 180+Math.random()*90, i*0.085, 0.05, 'square', 0.10, 0.0001));
+      tone(ctx, 140, 0.46, 0.09, 'triangle', 0.13, 0.0001);
+      break;
   }
 }
 

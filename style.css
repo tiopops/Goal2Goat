@@ -2477,7 +2477,11 @@ body.liga-manager-screen #mobileTabBar{display:none!important}
   display:flex;flex-direction:column;gap:10px;
 }
 .lm-right-panel{border-right:none;border-left:1px solid #22282b}
-.lm-left-panel .roster-table{font-size:11px}
+/* Mismas proporciones y tamaño de letra que la tabla de CONVOCADOS/
+   BANQUILLO de Copa Leyendas (#convocadosTable/#benchTable td a 13px,
+   padding 6px 6px) — antes se forzaba a 11px y quedaba más pequeña. */
+.lm-left-panel .roster-table th{font-size:11px;padding:5px 6px}
+.lm-left-panel .roster-table td{font-size:13px;padding:6px 6px}
 
 /* Centro: mismo comportamiento que .center-panel/#pitchBox de Copa
    Leyendas (fondo oscuro, campo centrado, mismo ancho máximo/aspect-ratio). */
@@ -2503,45 +2507,54 @@ body.liga-manager-screen #mobileTabBar{display:none!important}
   .lm-panel,.lm-right-panel{border:none;border-bottom:1px solid #22282b}
 }
 
-/* Cuerpo técnico FIJO (sticky) abajo del todo en escritorio, para que
-   no se pierda al hacer scroll por la clasificación. Vive fuera del
-   grid (a ancho completo), con un contenedor interno centrado que
-   comparte el mismo ancho máximo que el resto del contenido. */
+/* Cuerpo técnico — antes era una barra sticky a todo lo ancho con una
+   tarjeta grande (foto a tamaño completo), que comía mucha interfaz
+   permanentemente. Ahora es un chip flotante compacto en la esquina
+   (mismo patrón que un botón de chat/soporte flotante): no ocupa hueco
+   en el flujo del documento, solo la foto en circular + badge, con el
+   nombre/descripción como tooltip nativo al pasar el ratón — el resto
+   de tamaños (badge, burbuja "i") se mantienen igual que antes. */
 .lm-staffrow{
-  position:sticky;bottom:0;z-index:5;
-  display:flex;justify-content:center;gap:14px;flex-wrap:wrap;
-  background:#15181a;border-top:1px solid #2f3539;
-  padding:14px 20px;width:100%;
-  box-shadow:0 -6px 16px rgba(0,0,0,.45);
+  position:fixed;bottom:18px;right:18px;z-index:8;
+  display:flex;flex-direction:column;align-items:flex-end;gap:10px;
 }
 
-/* Tarjeta de un miembro del cuerpo técnico — foto + nombre + rol breve,
-   tamaño razonable estilo PC Fútbol 7, no un simple icono redondo. */
+/* Chip circular de un miembro del cuerpo técnico — antes era una tarjeta
+   de 150px de ancho con la foto a toda anchura; ahora solo el círculo. */
 .lm-staff-card{
-  position:relative;width:150px;text-align:center;cursor:pointer;
-  border:1px solid #2f3539;background:#1a1d1f;
-  padding:8px 8px 10px;
+  position:relative;width:60px;height:60px;border-radius:50%;cursor:pointer;
+  border:2px solid #2f3539;background:#1a1d1f;overflow:visible;
+  box-shadow:0 4px 14px rgba(0,0,0,.5);
   transition:border-color .15s ease,transform .15s ease;
 }
-.lm-staff-card:hover{transform:translateY(-2px)}
+.lm-staff-card:hover{transform:translateY(-2px) scale(1.05)}
 .lm-staff-card:hover,.lm-staff-card.has-notif{border-color:#c9a227}
-.lm-staff-photo-wrap{width:100%;aspect-ratio:1;background:#2f3539;overflow:hidden;margin-bottom:8px}
+.lm-staff-photo-wrap{width:100%;height:100%;border-radius:50%;background:#2f3539;overflow:hidden}
 .lm-staff-photo-img{width:100%;height:100%;object-fit:cover;display:block}
 .lm-staff-card:not(.has-notif) .lm-staff-photo-img{filter:grayscale(.6)}
 .lm-staff-card:hover .lm-staff-photo-img{filter:grayscale(0)}
-.lm-staff-photo-fallback{width:100%;height:100%;display:flex;align-items:center;justify-content:center}
-.lm-staff-photo-fallback i{font-size:34px;color:#c9a227}
-.lm-staff-card-name{font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:1px;font-size:15px;color:var(--gold)}
-.lm-staff-card-desc{font-size:10px;color:#999;line-height:1.35;margin-top:4px}
+.lm-staff-photo-fallback{width:100%;height:100%;border-radius:50%;display:flex;align-items:center;justify-content:center}
+.lm-staff-photo-fallback i{font-size:26px;color:#c9a227}
+/* Nombre/rol: ya no van fijos en la tarjeta — aparecen como una
+   pequeña etiqueta flotante a la izquierda del chip solo al pasar el
+   ratón, para no ocupar espacio permanente. */
+.lm-staff-card-name{
+  position:absolute;top:50%;right:calc(100% + 10px);transform:translateY(-50%);
+  background:#1a1d1f;border:1px solid #2f3539;padding:5px 10px;white-space:nowrap;
+  font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:1px;font-size:13px;color:var(--gold);
+  opacity:0;pointer-events:none;transition:opacity .15s ease;
+}
+.lm-staff-card:hover .lm-staff-card-name{opacity:1}
+.lm-staff-card-desc{display:none}
 .lm-staff-info-bubble{
-  position:absolute;top:6px;left:6px;width:20px;height:20px;border-radius:50%;
-  background:rgba(0,0,0,.55);border:1px solid #c9a227;color:#c9a227;
+  position:absolute;top:0;left:0;transform:translate(-50%,-50%);width:20px;height:20px;border-radius:50%;
+  background:rgba(0,0,0,.85);border:1px solid #c9a227;color:#fff;
   font-family:Georgia,serif;font-style:italic;font-size:12px;font-weight:700;
   display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:2;
 }
 .lm-staff-info-bubble:hover{background:#c9a227;color:#1a1400}
 .lm-staff-badge{
-  position:absolute;top:-6px;right:6px;background:#e24b4a;color:#fff;
+  position:absolute;top:-6px;right:-6px;background:#e24b4a;color:#fff;
   font-size:10px;min-width:16px;height:16px;border-radius:8px;
   display:flex;align-items:center;justify-content:center;z-index:2;
 }
@@ -2627,15 +2640,15 @@ body.liga-manager-screen #mobileTabBar{display:none!important}
 .lm-clasif-arrow{display:inline-block;color:var(--gold);transition:transform .2s ease;transform:rotate(-90deg)}
 .lm-clasif-arrow.lm-clasif-arrow-open{transform:rotate(0deg)}
 
-/* Cruz de lesión sobre el campo (además de en la lista) */
-.lm-pos-cross{position:absolute;top:-4px;right:-4px;color:var(--red);font-size:12px;font-weight:900;background:#15181a;border-radius:50%;width:16px;height:16px;display:flex;align-items:center;justify-content:center}
-
 /* Fila seleccionada / lesionada en las tablas de plantilla — mismo
    lenguaje que Copa Leyendas usa para resaltar filas */
 .roster-table tr[data-pid]{cursor:pointer}
-.roster-table tr.lm-row-selected td{background:#2a2410}
+/* Mismo "recuadro amarillo" que .row-selected usa en Copa Leyendas
+   (outline dorado + fondo templado), en vez del simple cambio de fondo
+   que había antes. */
+.roster-table tr.lm-row-selected{outline:2px solid var(--gold);outline-offset:-2px;position:relative;z-index:1}
+.roster-table tr.lm-row-selected td{background:#4a3f1a}
 .roster-table tr.lm-row-injured td{opacity:.7}
-.lm-pos-slot.lm-pos-selected{border-color:#ffd700;box-shadow:0 0 10px rgba(255,215,0,.6)}
 
 /* Cantos rectos en los recuadros principales de Liga Manager, tal como
    se pidió (nada de border-radius en paneles/campo/tarjetas grandes) */
@@ -2650,21 +2663,13 @@ body.liga-manager-screen #mobileTabBar{display:none!important}
 #lmPitchBox svg{width:100%;height:100%;display:block}
 .lm-pitch-caption{font-size:10px;color:#666;text-align:center;margin-top:8px;line-height:1.4;max-width:420px}
 
-/* Slots de posición sobre el campo — mismo lenguaje visual que .position
-   de Copa Leyendas (círculo punteado), adaptado a Liga Manager. */
-.lm-pos-slot{
-  position:absolute;transform:translate(-50%,-50%);
-  width:15%;aspect-ratio:1;max-width:44px;
-  border-radius:50%;border:2px dashed rgba(255,255,255,.7);
-  background:rgba(0,80,30,.75);color:#fff;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-  cursor:pointer;z-index:5;font-size:10px;font-weight:700;
-  transition:transform .15s ease,border-color .15s ease;
-}
-.lm-pos-slot:hover{transform:translate(-50%,-50%) scale(1.12);border-color:#ffd700}
-.lm-pos-slot.empty-slot{background:rgba(200,30,30,.35);border-color:#ff6666}
-.lm-pos-slot.lm-pos-injured{border-color:#e24b4a;box-shadow:0 0 8px rgba(226,75,74,.6)}
-.lm-pos-rating{font-size:8px;color:#ffd700}
+/* Slots de posición sobre el campo — CALCO exacto de Copa Leyendas: el
+   propio campo reutiliza las clases globales .position/.player-info/
+   .pos-rating/.player-pos-label/.star/.locked/.empty-slot/.highlight-pos
+   (ver #lmPitchBox .position más abajo), así que no hace falta redefinir
+   aquí el círculo — solo el estado adicional de "lesionado" propio de
+   Liga Manager. */
+#lmPitchBox .position.lm-pos-injured{border-color:#e24b4a;box-shadow:0 0 10px rgba(226,75,74,.6)}
 
 .lm-slot-list{display:flex;flex-direction:column;gap:6px;max-height:280px;overflow-y:auto;margin-top:6px}
 .lm-slot-option{
@@ -2681,6 +2686,16 @@ body.liga-manager-screen #mobileTabBar{display:none!important}
    con gradiente, marco interior, icono/título/divisor), pero en tonos
    verdes para el Médico en vez de dorados. */
 .med-card-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:6px}
+/* Fila de botones de acción de cualquier ventana/popup de Liga Manager:
+   reparten el ancho disponible del popup a partes iguales. Si solo hay
+   un botón, ocupa el máximo posible por defecto — salvo que se marque
+   como .lm-popup-actions-compact (popups anchos donde un botón suelto a
+   todo lo ancho quedaría absurdo, ej. CERRAR en el equipo médico), en
+   cuyo caso queda compacto y alineado a la derecha. */
+.lm-popup-actions{display:flex;gap:10px;width:100%;margin-top:14px}
+.lm-popup-actions button{flex:1;min-width:0}
+.lm-popup-actions.lm-popup-actions-compact{justify-content:flex-end}
+.lm-popup-actions.lm-popup-actions-compact button{flex:0 0 auto;width:auto;padding:9px 22px}
 .lm-btn-cancelar{
   background:#c0392b;color:#fff;border:none;border-radius:6px;padding:10px 20px;
   font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:1px;font-size:15px;cursor:pointer;
@@ -2748,6 +2763,11 @@ body.liga-manager-screen #mobileTabBar{display:none!important}
 
 /* Caja del dado 3D (Three.js + Cannon-es pintan aquí dentro) */
 .lm-dice3d-box{width:280px;height:200px;margin:10px auto 0}
+/* Espacio reservado desde el principio (mientras el dado todavía está
+   tirándose) para el resultado que aparecerá debajo — así la tarjeta no
+   cambia de altura al revelarse y, al estar centrada verticalmente en el
+   overlay, no se desplaza hacia arriba en ese momento (efecto confuso). */
+#lmDiceResultZone{min-height:118px}
 
 /* Resultado de la tirada: una píldora por dado usado */
 .lm-dice-result-row{display:flex;gap:8px;justify-content:center;margin-top:8px}

@@ -461,27 +461,35 @@
     return titulares[Math.floor(Math.random()*titulares.length)];
   }
 
-  function generarEventosPartido(resultado){
+  function generarEventosPartido(resultado, miEsLocal){
+    // "home"/"away" se refiere SIEMPRE al equipo local/visitante real del
+    // partido — mi equipo puede ser cualquiera de los dos según el
+    // calendario. Antes se asumía que "home" era siempre yo, así que
+    // cuando jugaba fuera mis propios goleadores/tarjetas/lesiones
+    // aparecían del lado del rival.
+    const misLado = miEsLocal ? 'home' : 'away';
+    const rivalLado = miEsLocal ? 'away' : 'home';
     const eventos=[];
     for(let i=0;i<resultado.golesA;i++){
-      const goleador=elegirGoleador();
+      const goleador = miEsLocal ? elegirGoleador() : null;
       eventos.push({minute:5+Math.floor(Math.random()*85), team:'home', type:'goal', jugador:goleador});
     }
     for(let i=0;i<resultado.golesB;i++){
-      eventos.push({minute:5+Math.floor(Math.random()*85), team:'away', type:'goal'});
+      const goleador = miEsLocal ? null : elegirGoleador();
+      eventos.push({minute:5+Math.floor(Math.random()*85), team:'away', type:'goal', jugador:goleador});
     }
     // Tarjetas amarillas/rojas — de momento solo informativas (sin
     // sanción de partidos todavía), con nombre real si es tu jugador.
     if(Math.random()<0.35){
       const jugador=elegirJugadorAlineado();
-      eventos.push({minute:10+Math.floor(Math.random()*78), team:'home', type:'card', tarjeta:'amarilla', jugador: jugador||{name:state.nombreEquipo}});
+      eventos.push({minute:10+Math.floor(Math.random()*78), team:misLado, type:'card', tarjeta:'amarilla', jugador: jugador||{name:state.nombreEquipo}});
     }
     if(Math.random()<0.35){
-      eventos.push({minute:10+Math.floor(Math.random()*78), team:'away', type:'card', tarjeta:'amarilla', jugador:{name:'Rival'}});
+      eventos.push({minute:10+Math.floor(Math.random()*78), team:rivalLado, type:'card', tarjeta:'amarilla', jugador:{name:'Rival'}});
     }
     if(Math.random()<0.06){
       const jugador=elegirJugadorAlineado();
-      eventos.push({minute:20+Math.floor(Math.random()*68), team:'home', type:'card', tarjeta:'roja', jugador: jugador||{name:state.nombreEquipo}});
+      eventos.push({minute:20+Math.floor(Math.random()*68), team:misLado, type:'card', tarjeta:'roja', jugador: jugador||{name:state.nombreEquipo}});
     }
     // Lesión: puede pasar DURANTE tu propio partido, no como aviso aparte
     // después de la jornada — mismo espíritu que Copa Leyendas. El riesgo
@@ -510,7 +518,7 @@
         let weeks=Math.max(1, sev.weeks-(bonos.recuperacionExtra||0));
         if(sev.label==='grave' && bonos.graveMultiplier) weeks=Math.max(1, Math.round(weeks*bonos.graveMultiplier));
         const tipoLesion=TIPOS_LESION[sev.label][Math.floor(Math.random()*TIPOS_LESION[sev.label].length)];
-        eventos.push({minute:20+Math.floor(Math.random()*65), team:'home', type:'injury', jugador, sev:{...sev, weeks}, tipoLesion});
+        eventos.push({minute:20+Math.floor(Math.random()*65), team:misLado, type:'injury', jugador, sev:{...sev, weeks}, tipoLesion});
       }
     }
     // Actualizar rachas de gol: quien marca suma, el resto de titulares que
@@ -539,7 +547,7 @@
       const resultado=simularPartido(partido.home, partido.away);
       state.resultados[key]=resultado;
       if(partido.home.id==='lm_0' || partido.away.id==='lm_0'){
-        const eventos=generarEventosPartido(resultado);
+        const eventos=generarEventosPartido(resultado, partido.home.id==='lm_0');
         // Aplicar la lesión generada (si la hay) al estado real del jugador
         const evInjury=eventos.find(e=>e.type==='injury');
         if(evInjury){
@@ -587,7 +595,7 @@
       <div class="match-modal" style="overflow:hidden;display:flex;flex-direction:column;max-height:85vh">
         <div class="match-header">
           <div class="match-side">
-            ${miEsLocal?crestHTML(state.escudo,48):rivalCrestHTML(48, info.home.crestImg)}
+            ${miEsLocal?crestHTML(state.escudo,60):rivalCrestHTML(60, info.home.crestImg)}
             <span class="match-team-name">${info.home.name}</span>
           </div>
           <div style="text-align:center;flex:0 0 auto">
@@ -601,12 +609,12 @@
             </div>
           </div>
           <div class="match-side">
-            ${!miEsLocal?crestHTML(state.escudo,48):rivalCrestHTML(48, info.away.crestImg)}
+            ${!miEsLocal?crestHTML(state.escudo,60):rivalCrestHTML(60, info.away.crestImg)}
             <span class="match-team-name">${info.away.name}</span>
           </div>
         </div>
-        <div id="lmPostMatchInfo"></div>
         <div id="lmLiveEvents" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;align-items:stretch;gap:2px;padding:4px 0;min-height:80px;max-height:260px"></div>
+        <div id="lmPostMatchInfo"></div>
         <button id="lmLiveContinuar" class="mode-card-btn mode-card-btn-gold" style="display:none;width:100%;padding:11px;margin-top:10px">CONTINUAR</button>
       </div>`;
     document.getElementById('ligaManagerScreen').appendChild(overlay);
@@ -693,7 +701,7 @@
           addEvt('⚽', `<strong>${nombre}</strong>${racha}`, ev.minute+"'", esLocal);
           if(typeof window.playSound==='function') window.playSound('goal');
         } else if(ev.type==='injury'){
-          addEvt('✚', `<strong>${ev.jugador.name}</strong> <span style="font-size:10px;color:var(--red)">(lesión ${ev.sev.label})</span>`, ev.minute+"'", true, 'var(--red)');
+          addEvt('✚', `<strong>${ev.jugador.name}</strong> <span style="font-size:10px;color:var(--red)">(lesión ${ev.sev.label})</span>`, ev.minute+"'", esLocal, 'var(--red)');
         } else if(ev.type==='card'){
           const icon = ev.tarjeta==='roja' ? '🟥' : '🟨';
           addEvt(icon, `<strong>${ev.jugador.name}</strong>`, ev.minute+"'", ev.team==='home');
@@ -722,7 +730,7 @@
         document.getElementById('lmPostMatchInfo').innerHTML=`
           <div class="match-result-tag ${resultClass}">${resultText}</div>
           <div class="match-summary">
-            <strong>${state.nombreEquipo}</strong> ${curHome} – ${curOpp} <strong>${info.home.id==='lm_0'?info.away.name:info.home.name}</strong><br>
+            <strong>${state.nombreEquipo}</strong> ${miGoles} – ${suGoles} <strong>${info.home.id==='lm_0'?info.away.name:info.home.name}</strong><br>
             ${golesA} gol${golesA===1?'':'es'} en total · ${tarjetasA} tarjeta${tarjetasA===1?'':'s'}${lesionA?` · 1 lesión (${lesionA.jugador.name})`:''}
           </div>`;
 
@@ -966,7 +974,7 @@
               ${!l.activa?'<span class="lm-setup-soon">PRÓXIMAMENTE</span>':''}
             </div>`).join('')}
         </div>
-        <button id="lmSetupNext" class="mode-card-btn mode-card-btn-gold" style="width:auto;padding:10px 26px;margin-top:20px;">SIGUIENTE</button>
+        <div class="lm-popup-actions"><button id="lmSetupNext" class="mode-card-btn mode-card-btn-gold">SIGUIENTE</button></div>
       `;
     } else if(setupStep===2){
       inner=`
@@ -977,7 +985,7 @@
               <span style="font-size:22px">${MONEDAS[k].symbol}</span><br>${MONEDAS[k].label}
             </div>`).join('')}
         </div>
-        <button id="lmSetupNext" class="mode-card-btn mode-card-btn-gold" style="width:auto;padding:10px 26px;margin-top:20px;" ${setupData.moneda?'':'disabled'}>SIGUIENTE</button>
+        <div class="lm-popup-actions"><button id="lmSetupNext" class="mode-card-btn mode-card-btn-gold" ${setupData.moneda?'':'disabled'}>SIGUIENTE</button></div>
       `;
     } else if(setupStep===3.5){
       inner=`
@@ -985,9 +993,9 @@
         <p class="lm-setup-desc">Encontramos un equipo guardado de una partida anterior. Puedes usarlo tal cual o cambiar nombre/escudo.</p>
         <div class="lm-crest-preview">${crestHTML(setupData.escudo, 64)}</div>
         <div class="lm-setup-title" style="font-size:16px;margin:6px 0 22px">${setupData.nombre}</div>
-        <button id="lmSetupConfirm" class="mode-card-btn mode-card-btn-gold" style="width:auto;padding:10px 26px;">EMPEZAR TEMPORADA</button>
-        <div style="margin-top:12px">
-          <button id="lmSetupCambiar" class="mode-card-btn mode-card-btn-secondary" style="width:auto;padding:8px 18px;font-size:13px">CAMBIAR NOMBRE/ESCUDO</button>
+        <div class="lm-popup-actions">
+          <button id="lmSetupConfirm" class="mode-card-btn mode-card-btn-gold">EMPEZAR TEMPORADA</button>
+          <button id="lmSetupCambiar" class="mode-card-btn mode-card-btn-secondary">CAMBIAR NOMBRE/ESCUDO</button>
         </div>
       `;
     } else if(setupStep===3){
@@ -995,16 +1003,16 @@
         <div class="lm-setup-title">NOMBRE DE TU EQUIPO</div>
         <p class="lm-setup-desc">Este será tu club, recién ascendido a Primera. El resto de la liga son los 19 equipos reales de La Liga.</p>
         <input id="lmSetupNombre" type="text" maxlength="24" placeholder="Ej: CF Ejemplo" class="lm-setup-input" value="${setupData.nombre||''}">
-        <button id="lmSetupNext" class="mode-card-btn mode-card-btn-gold" style="width:auto;padding:10px 26px;margin-top:20px;" ${setupData.nombre&&setupData.nombre.trim()?'':'disabled'}>SIGUIENTE</button>
+        <div class="lm-popup-actions"><button id="lmSetupNext" class="mode-card-btn mode-card-btn-gold" ${setupData.nombre&&setupData.nombre.trim()?'':'disabled'}>SIGUIENTE</button></div>
       `;
     } else if(setupStep===4){
       inner=`
         <div class="lm-setup-title">CREA TU ESCUDO</div>
         <p class="lm-setup-desc">Se abre el mismo editor de escudos de Copa Leyendas (por capas o subiendo una imagen) — solo que esto se guarda aparte, como identidad de Liga Manager.</p>
         <div class="lm-crest-preview">${crestHTML(setupData.escudo, 64)}</div>
-        <button id="lmAbrirEditorBtn" class="mode-card-btn mode-card-btn-gold" style="width:auto;padding:10px 24px;">ABRIR EDITOR DE ESCUDOS</button>
-        <div style="margin-top:16px">
-          <button id="lmSetupConfirm" class="mode-card-btn mode-card-btn-gold" style="width:auto;padding:10px 26px;" ${setupData.escudo?'':'disabled'}>EMPEZAR TEMPORADA</button>
+        <div class="lm-popup-actions"><button id="lmAbrirEditorBtn" class="mode-card-btn mode-card-btn-gold">ABRIR EDITOR DE ESCUDOS</button></div>
+        <div class="lm-popup-actions">
+          <button id="lmSetupConfirm" class="mode-card-btn mode-card-btn-gold" ${setupData.escudo?'':'disabled'}>EMPEZAR TEMPORADA</button>
         </div>
       `;
     }
@@ -1154,7 +1162,7 @@
       <div class="lm-app-grid">
         <div class="lm-panel lm-left-panel">
           <div class="lm-header-team">
-            ${crestHTML(state.escudo, 36)}
+            ${crestHTML(state.escudo, 60)}
             <div>
               <div class="lm-title">${state.nombreEquipo.toUpperCase()}</div>
               <div class="lm-sub">Jornada ${Math.min(state.jornadaActual,38)} de 38 · ${monedaInfo.symbol}</div>
@@ -1194,13 +1202,24 @@
             const jugador=pid?state.plantilla.find(p=>p.id===pid):null;
             const vacio=!jugador;
             const lesionado=jugador&&jugador.injured;
-            const iniciales=jugador?jugador.name.split(' ').map(w=>w[0]).join(''):basePos(def.slot);
             const seleccionado=jugador && jugador.id===seleccionJugador;
-            return `<div class="lm-pos-slot ${vacio?'empty-slot':''} ${lesionado?'lm-pos-injured':''} ${seleccionado?'lm-pos-selected':''}" data-slot="${def.slot}" style="left:${def.x}%;top:${def.y}%" title="${jugador?jugador.name+' ('+jugador.overall+')':'Vacío'}">
-              <span class="lm-pos-code">${iniciales}</span>
-              ${jugador?`<span class="lm-pos-rating">${jugador.overall}</span>`:''}
-              ${lesionado?'<span class="lm-pos-cross">✚</span>':''}
-            </div>`;
+            const label=basePos(def.slot);
+            // Calco exacto de renderSlotContent() de Copa Leyendas: círculo
+            // con el rating dentro, nombre + estrella + etiqueta de posición
+            // DEBAJO del círculo (.player-info), reutilizando las mismas
+            // clases globales (.position/.locked/.player-info/.pos-rating/
+            // .player-pos-label/.star) en vez de un sistema aparte.
+            let inner;
+            if(vacio){
+              inner=`<span class="pos-label-inside">${label}</span>`;
+            }else{
+              const inPos=jugador.position===label;
+              const star=inPos?' <span class="star">★</span>':'';
+              const statusIcons=lesionado?'<div class="pitch-status-row"><span class="pitch-status-icon pitch-status-injury" title="Lesionado">✚</span></div>':'';
+              inner=`${statusIcons}<span class="pos-rating">${jugador.overall}</span><div class="player-info">${jugador.name}${star}<div class="player-pos-label${inPos?'':' out-of-position'}">${label}</div></div>`;
+            }
+            const clases=['position', vacio?'empty-slot':'locked', lesionado?'lm-pos-injured':'', seleccionado?'highlight-pos':''].filter(Boolean).join(' ');
+            return `<div class="${clases}" data-slot="${def.slot}" style="left:${def.x}%;top:${def.y}%" title="${jugador?jugador.name+' ('+jugador.overall+')':'Vacío'}">${inner}</div>`;
           }).join('')}</div>
           <p class="lm-pitch-caption">Toca una posición para asignar o cambiar jugador. Puedes cambiar de formación antes de cada partido.</p>
 
@@ -1218,7 +1237,7 @@
             ${rival ? `
               <div class="lm-vs-label" style="text-align:center;margin-bottom:6px">${esLocal?'JUEGAS EN CASA':'JUEGAS FUERA'}</div>
               <div class="lm-header-team-rival" style="justify-content:center;gap:10px">
-                ${rivalCrestHTML(30, rival.crestImg)}<span class="lm-title" style="font-size:15px">${rival.name}</span>
+                ${rivalCrestHTML(52, rival.crestImg)}<span class="lm-title" style="font-size:15px">${rival.name}</span>
               </div>` : `<div class="lm-vs-label" style="text-align:center">Temporada finalizada</div>`}
           </div>
           <h3 class="lm-clasif-header" id="lmClasifHeader"><span style="color:var(--gold)">CLASIFICACIÓN</span> <span class="lm-clasif-arrow ${clasifColapsada?'':'lm-clasif-arrow-open'}">▾</span></h3>
@@ -1245,15 +1264,14 @@
       </div>
 
       <div class="lm-staffrow">
-        <div class="lm-staff-card ${notif?'has-notif':''}" id="lmMedicoBtn">
+        <div class="lm-staff-card ${notif?'has-notif':''}" id="lmMedicoBtn" title="Es el encargado de prevenir, diagnosticar y tratar lesiones de tus jugadores">
           ${notif?'<span class="lm-staff-badge">1</span>':''}
           <button class="lm-staff-info-bubble" id="lmMedicoInfoBtn" title="Historial médico">i</button>
           <div class="lm-staff-photo-wrap">
             <img src="assets/equipo_tecnico/medico/novato.png" alt="Médico" class="lm-staff-photo-img" onerror="this.onerror=null;this.style.display='none';this.nextElementSibling.style.display='flex';">
             <div class="lm-staff-photo-fallback" style="display:none"><i class="ph ph-bold ph-first-aid-kit"></i></div>
           </div>
-          <div class="lm-staff-card-name">MÉDICO</div>
-          <div class="lm-staff-card-desc">Es el encargado de prevenir, diagnosticar y tratar lesiones de tus jugadores</div>
+          <span class="lm-staff-card-name">MÉDICO</span>
         </div>
       </div>
     `;
@@ -1317,7 +1335,7 @@
       if(typeof window.playSound==='function') window.playSound('select');
       abrirMedico();
     });
-    root.querySelectorAll('.lm-pos-slot').forEach(el=>{
+    root.querySelectorAll('#lmPitchBox .position').forEach(el=>{
       el.addEventListener('click', ()=>{
         if(typeof window.playSound==='function') window.playSound('select');
         manejarClicSlot(el.getAttribute('data-slot'));
@@ -1344,6 +1362,17 @@
     if(jugador && jugador.injured && !seleccionJugador) return; // no se puede seleccionar a un lesionado para jugar
     if(seleccionJugador===playerId){ seleccionJugador=null; render(); return; }
     if(seleccionJugador){
+      // Si NINGUNO de los dos ocupa una posición en el campo no hay nada
+      // que intercambiar sobre el campo (igual que en Copa Leyendas, dos
+      // suplentes seguidos no producen swap) — mover la selección al
+      // nuevo jugador en vez de deseleccionar sin más, que es lo que
+      // pasaba antes y parecía que el intercambio "no hacía nada".
+      const slotA=slotDeJugador(seleccionJugador), slotB=slotDeJugador(playerId);
+      if(!slotA && !slotB){
+        seleccionJugador=playerId;
+        render();
+        return;
+      }
       intercambiarJugadores(seleccionJugador, playerId);
       seleccionJugador=null;
       render();
@@ -1427,8 +1456,8 @@
         <div class="lm-hist-list">
           ${historial.length?filas:'<p class="lm-setup-desc" style="text-align:center">Todavía no hay nada que contar — de momento tu plantilla está sana.</p>'}
         </div>
-        <div style="text-align:center;margin-top:14px">
-          <button id="lmHistorialCerrar" class="mode-card-btn mode-card-btn-gold" style="width:auto;padding:9px 22px;">CERRAR</button>
+        <div class="lm-popup-actions lm-popup-actions-compact">
+          <button id="lmHistorialCerrar" class="mode-card-btn mode-card-btn-gold">CERRAR</button>
         </div>
       </div>`;
     document.getElementById('ligaManagerScreen').appendChild(overlay);
@@ -1491,8 +1520,8 @@
           </div>` : ''}
           <div class="lm-setup-desc" style="text-align:center;margin-bottom:8px">dados disponibles este partido: ${state.diceAvailable} · puedes cambiar 1 carta por partido</div>
           <div class="med-card-grid">${cartasHTML}</div>
-          <div style="text-align:center;margin-top:14px">
-            <button id="lmMedicoCerrar" class="mode-card-btn mode-card-btn-secondary" style="width:auto;padding:9px 22px;">CERRAR</button>
+          <div class="lm-popup-actions lm-popup-actions-compact">
+            <button id="lmMedicoCerrar" class="mode-card-btn mode-card-btn-secondary">CERRAR</button>
           </div>
         </div>`;
 
@@ -1561,9 +1590,9 @@
               <button id="lmDicePlus" class="lm-dice-stepper">+</button>
             </div>
             <div class="lm-setup-desc">dados disponibles: ${state.diceAvailable}</div>
-            <div style="display:flex;gap:8px;justify-content:center;margin-top:10px">
+            <div class="lm-popup-actions">
+              <button id="lmTirarBtn" class="mode-card-btn mode-card-btn-gold" ${state.diceAvailable<1?'disabled':''}>TIRAR ${dadosElegidos} DADO${dadosElegidos>1?'S':''}</button>
               <button id="lmCancelarCartaBtn" class="lm-btn-cancelar">CANCELAR</button>
-              <button id="lmTirarBtn" class="mode-card-btn mode-card-btn-gold" style="width:auto;padding:10px 24px" ${state.diceAvailable<1?'disabled':''}>TIRAR ${dadosElegidos} DADO${dadosElegidos>1?'S':''}</button>
             </div>
           </div>`;
         const minus=document.getElementById('lmDiceMinus');
@@ -1591,6 +1620,7 @@
           <div id="lmDice3DBox" class="lm-dice3d-box"></div>
           <div id="lmDiceResultZone"></div>
         </div>`;
+      if(typeof window.playSound==='function') window.playSound('dice');
       const box=document.getElementById('lmDice3DBox');
       function conResultado(tiradas){
         state.diceAvailable=Math.max(0, state.diceAvailable-numDados);
@@ -1611,7 +1641,7 @@
         zona.innerHTML=`
           <div class="lm-dice-result-row">${tiradas.map(v=>`<span class="lm-dice-pill">${v}</span>`).join('')}</div>
           <div style="font-family:'Bebas Neue';font-size:15px;margin-top:10px;line-height:1.4">${textoResultado}</div>
-          <button id="lmContinuarBtn" class="mode-card-btn mode-card-btn-gold" style="width:auto;padding:10px 26px;margin-top:16px">CONTINUAR</button>`;
+          <div class="lm-popup-actions"><button id="lmContinuarBtn" class="mode-card-btn mode-card-btn-gold">CONTINUAR</button></div>`;
         document.getElementById('lmContinuarBtn').addEventListener('click', ()=>{
           if(typeof window.playSound==='function') window.playSound('select');
           renderHub();
@@ -1642,7 +1672,9 @@
               <button id="lmDicePlus" class="lm-dice-stepper">+</button>
             </div>
             <div class="lm-setup-desc">dados disponibles: ${state.diceAvailable}</div>
-            <button id="lmTirarBtn" class="mode-card-btn mode-card-btn-gold" style="width:auto;padding:10px 24px;margin-top:10px" ${state.diceAvailable<1?'disabled':''}>TIRAR ${dadosElegidos} DADO${dadosElegidos>1?'S':''}</button>
+            <div class="lm-popup-actions">
+              <button id="lmTirarBtn" class="mode-card-btn mode-card-btn-gold" ${state.diceAvailable<1?'disabled':''}>TIRAR ${dadosElegidos} DADO${dadosElegidos>1?'S':''}</button>
+            </div>
           </div>`;
         const minus=document.getElementById('lmDiceMinus');
         const plus=document.getElementById('lmDicePlus');
@@ -1664,6 +1696,7 @@
           <div id="lmDice3DBox" class="lm-dice3d-box"></div>
           <div id="lmDiceResultZone"></div>
         </div>`;
+      if(typeof window.playSound==='function') window.playSound('dice');
       const box=document.getElementById('lmDice3DBox');
       function conResultado(tiradas){
         const r=resolverDilemaMedico(numDados, tiradas);
@@ -1676,7 +1709,7 @@
             Suma <strong>${r.suma}</strong> (necesitabas ${r.dificultad}+) —
             <span style="color:${r.exito?'#5dcaa5':'#e24b4a'}">${r.exito?'✔ ÉXITO, recuperación acelerada':'✘ FALLO, sigue el tiempo previsto'}</span>
           </div>
-          <button id="lmContinuarBtn" class="mode-card-btn mode-card-btn-gold" style="width:auto;padding:10px 26px;margin-top:16px">CONTINUAR</button>`;
+          <div class="lm-popup-actions"><button id="lmContinuarBtn" class="mode-card-btn mode-card-btn-gold">CONTINUAR</button></div>`;
         document.getElementById('lmContinuarBtn').addEventListener('click', ()=>{
           if(typeof window.playSound==='function') window.playSound('select');
           renderHub();
