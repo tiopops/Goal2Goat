@@ -24,7 +24,7 @@
    ============================================================ */
 (function(){
 
-  const SAVE_KEY = 'g2g_liga_manager_v07';
+  const SAVE_KEY = 'g2g_liga_manager_v11';
   // Identidad del club (nombre + escudo) — PERSISTE entre partidas, no se
   // pierde al abandonar/descender. Si ya existe, el flujo de entrada no
   // vuelve a pedir nombre ni escudo (solo liga y moneda cada vez).
@@ -60,6 +60,17 @@
     GBP:{symbol:'£', label:'Libra'},
     USD:{symbol:'$', label:'Dólar'}
   };
+
+  // Estado del campo de cada rival — no se simula partido a partido (los
+  // rivales no tienen su propio departamento de mantenimiento gestionable),
+  // se estima a partir de su nivel medio: los clubes con más presupuesto
+  // suelen cuidar mejor sus instalaciones. Sirve tanto para mostrarlo en
+  // la ficha del rival como para el efecto de clima+campo cuando jugamos
+  // en su estadio.
+  function campoRivalEstimado(rival){
+    const media=(rival.attack+rival.defense+rival.pace+rival.passing+rival.technique)/5;
+    return Math.max(30, Math.min(95, Math.round((media-58)*1.8+35)));
+  }
 
   const LIGAS_DISPONIBLES = [
     {id:'es', nombre:'España — La Liga', flagImg:'assets/flags/1f1ea-1f1f8.png', activa:true},
@@ -114,16 +125,36 @@
 `;
 
   /* ---------- 2. Mini-plantilla de ejemplo (para el Médico) ---------- */
+  // Nombres reutilizados tanto para la plantilla inicial como para los
+  // jugadores que salen de los sobres de fichajes del Director Deportivo.
+  const NOMBRES_JUGADOR=["Álvaro","Adrián","Hugo","Mario","Pablo","Marcos","Diego","Sergio","Iker","Nacho","Bruno","Izan","Rubén","Guillermo","Álex","Raúl","Daniel","Carlos","Javier","Óscar"];
+  const APELLIDOS_JUGADOR=["García","Fernández","López","Martínez","Sánchez","Pérez","Gómez","Ruiz","Díaz","Moreno","Torres","Ramos","Molina","Ortega","Vázquez","Serrano","Castro","Romero","Navarro","Iglesias"];
+  // Nombres femeninos — el cuerpo técnico (médico, mantenimiento y los
+  // dos directores) puede ser hombre o mujer; los jugadores de la
+  // plantilla siguen siendo siempre hombres (mismos apellidos para
+  // ambos géneros, solo cambia el nombre de pila).
+  const NOMBRES_MUJER=["Ana","Laura","Marta","Sara","Elena","Lucía","Paula","Andrea","Carmen","Irene","Claudia","Sofía","Alba","Nuria","Cristina","Beatriz","Silvia","Patricia","Rocío","Julia"];
+  function nombreTrabajadorAleatorio(){
+    const genero = Math.random()<0.5 ? 'hombre' : 'mujer';
+    const nombres = genero==='mujer' ? NOMBRES_MUJER : NOMBRES_JUGADOR;
+    const nombre = nombres[Math.floor(Math.random()*nombres.length)]+' '+APELLIDOS_JUGADOR[Math.floor(Math.random()*APELLIDOS_JUGADOR.length)];
+    return {nombre, genero};
+  }
+  function nombreJugadorAleatorio(usados){
+    let nombre;
+    do{ nombre=NOMBRES_JUGADOR[Math.floor(Math.random()*NOMBRES_JUGADOR.length)]+' '+APELLIDOS_JUGADOR[Math.floor(Math.random()*APELLIDOS_JUGADOR.length)]; }while(usados && usados.has(nombre));
+    if(usados) usados.add(nombre);
+    return nombre;
+  }
+  // Salario mensual a partir del overall — escala pensada para que una
+  // plantilla modesta (48-65) cueste en torno a 150.000-200.000€/mes en
+  // total, coherente con el capital inicial y el aforo modestos.
+  function calcularSalario(overall){
+    return Math.round(Math.max(1200, (overall-40)*260));
+  }
   function generarMiniPlantilla(){
-    const NOMBRES=["Álvaro","Adrián","Hugo","Mario","Pablo","Marcos","Diego","Sergio","Iker","Nacho","Bruno","Izan","Rubén","Guillermo","Álex","Raúl"];
-    const APELLIDOS=["García","Fernández","López","Martínez","Sánchez","Pérez","Gómez","Ruiz","Díaz","Moreno","Torres","Ramos","Molina","Ortega","Vázquez","Serrano"];
     const usados=new Set();
-    function nombreUnico(){
-      let nombre;
-      do{ nombre=NOMBRES[Math.floor(Math.random()*NOMBRES.length)]+' '+APELLIDOS[Math.floor(Math.random()*APELLIDOS.length)]; }while(usados.has(nombre));
-      usados.add(nombre);
-      return nombre;
-    }
+    function nombreUnico(){ return nombreJugadorAleatorio(usados); }
     function nuevoJugador(id, position, esSuplente){
       const overall=48+Math.floor(Math.random()*18); // 48-65, coherente con "plantilla modesta, recién ascendido"
       const variar=()=>Math.max(30,Math.min(80, overall+Math.floor(Math.random()*11)-5));
@@ -131,7 +162,8 @@
         id, name:nombreUnico(), position, overall,
         attack:variar(), defense:variar(), pace:variar(), passing:variar(), technique:variar(),
         fatigue:100, racha:0, esSuplente:!!esSuplente,
-        injured:false, injuryWeeks:0, injurySeverity:null
+        injured:false, injuryWeeks:0, injurySeverity:null,
+        salario:calcularSalario(overall)
       };
     }
 
@@ -262,12 +294,38 @@
   }
 
   /* ---------- 4. Simulación de un partido (motor genérico reutilizado) ---------- */
-  function simularPartido(teamA, teamB){
+  // Efecto de clima+campo sobre el resultado — un campo bien cuidado
+  // mitiga buena parte del impacto del mal tiempo para el equipo QUE
+  // JUEGA EN SU CASA (lo conoce, entrena en él); el visitante sufre el
+  // impacto completo del clima, algo agravado si además el campo del
+  // anfitrión está descuidado (peor agarre, terreno irregular).
+  function factorClimaCampo(weatherId, campoAnfitrion, esAnfitrion){
+    if(!weatherId || weatherId==='cloudy' || campoAnfitrion===undefined) return 1;
+    const impacto={sunny:0.02, rain:0.07, wind:0.035, hot:0.055, snow:0.06}[weatherId] || 0;
+    if(esAnfitrion){
+      const mitigacion=(campoAnfitrion/100)*0.75; // un campo perfecto mitiga hasta el 75% del impacto del clima
+      return 1-(impacto*(1-mitigacion));
+    }
+    const agravante=1+(100-campoAnfitrion)/100*0.4; // hasta un 40% más de impacto si el campo rival está muy descuidado
+    return 1-(impacto*agravante);
+  }
+  function simularPartido(teamA, teamB, contexto){
     const statsA = teamA.id==='lm_0' ? calcularStatsEquipo() : {attack:teamA.attack,defense:teamA.defense,pace:teamA.pace,passing:teamA.passing,technique:teamA.technique};
     const statsB = teamB.id==='lm_0' ? calcularStatsEquipo() : {attack:teamB.attack,defense:teamB.defense,pace:teamB.pace,passing:teamB.passing,technique:teamB.technique};
     const mod=window.tacticalModifier(statsA,statsB);
-    const lambdaA=Math.max(0.25, 1.15+mod.myScoreMod);
-    const lambdaB=Math.max(0.25, 1.15+mod.oppScoreMod);
+    let lambdaA=Math.max(0.25, 1.15+mod.myScoreMod);
+    let lambdaB=Math.max(0.25, 1.15+mod.oppScoreMod);
+    if(contexto && contexto.climaId){
+      lambdaA=Math.max(0.15, lambdaA*factorClimaCampo(contexto.climaId, contexto.campoAnfitrion, contexto.anfitrionA));
+      lambdaB=Math.max(0.15, lambdaB*factorClimaCampo(contexto.climaId, contexto.campoAnfitrion, !contexto.anfitrionA));
+    }
+    if(contexto && contexto.moralBonus){
+      // Mismo espíritu que moraleLambdaBonus() en Copa Leyendas, pero más
+      // moderado (±0.08 frente a ±0.15) al ya sumarse al efecto de
+      // clima+campo — solo afecta a MI equipo, nunca al rival.
+      if(contexto.esMiEquipoA) lambdaA=Math.max(0.15, lambdaA+contexto.moralBonus);
+      else lambdaB=Math.max(0.15, lambdaB+contexto.moralBonus);
+    }
     const golesA=window.poissonSample(lambdaA);
     const golesB=window.poissonSample(lambdaB);
     return {golesA,golesB};
@@ -303,12 +361,63 @@
   function alineacionAutomatica(plantilla, slots){
     const usados=new Set();
     const alineacion={};
+    // 1ª pasada: casar por posición natural exacta.
     slots.forEach(def=>{
       const posGenerica=basePos(def.slot);
       const candidato=plantilla.find(p=>!usados.has(p.id) && p.position===posGenerica);
       if(candidato){ alineacion[def.slot]=candidato.id; usados.add(candidato.id); }
     });
+    // 2ª pasada: si una formación pide más jugadores de una posición de
+    // los que hay en la plantilla con esa posición EXACTA (ej. una
+    // formación con 2 DC cuando solo se generó 1 DC natural), el hueco
+    // se rellena con cualquier jugador que quede libre — igual que en
+    // Copa Leyendas nunca queda una posición vacía en el campo: se
+    // acepta la penalización de jugar fuera de posición antes que dejar
+    // un hueco sin nadie (y sin nombre) como pasaba antes.
+    slots.forEach(def=>{
+      if(alineacion[def.slot]) return;
+      const candidato=plantilla.find(p=>!usados.has(p.id));
+      if(candidato){ alineacion[def.slot]=candidato.id; usados.add(candidato.id); }
+    });
     return alineacion;
+  }
+
+  // Rating efectivo — CALCO de effRating() de Copa Leyendas: penaliza un
+  // 15% si el jugador juega fuera de su posición natural, un 40% extra
+  // si está lesionado, y aplica el mismo factor de fatiga por resistencia
+  // (sin penalización por encima de 75, hasta -30% con la barra a 0).
+  function getFatigueFactorLM(p){
+    const f=(p.fatigue===undefined)?100:p.fatigue;
+    if(f>=75) return 1;
+    return Math.max(0.70, Math.min(1, 0.70+(f/75)*0.30));
+  }
+  function efectivoOverall(p){
+    const base=p.overall||70;
+    const slot=slotDeJugador(p.id);
+    const inPos=!slot || basePos(slot)===p.position;
+    const positionFactor=inPos?1:0.85;
+    const injuryFactor=p.injured?0.6:1;
+    const fatigueFactor=getFatigueFactorLM(p);
+    return Math.round(base*positionFactor*injuryFactor*fatigueFactor);
+  }
+
+  // Estadísticas de equipo — misma interfaz visual de "PERFIL DEL EQUIPO"
+  // que Copa Leyendas (ATAQUE/DEFENSA/RITMO/PASE/TÉCNICA + nota media),
+  // pero calculada como la media de TODA la plantilla (16 jugadores), no
+  // solo de los 11 titulares — así refleja el fondo de armario real.
+  function calcularStatsEquipoLM(){
+    const lista=state.plantilla||[];
+    if(!lista.length) return {attack:0,defense:0,pace:0,passing:0,technique:0,overall:0};
+    const n=lista.length;
+    const sum=lista.reduce((acc,p)=>{
+      acc.attack+=p.attack; acc.defense+=p.defense; acc.pace+=p.pace;
+      acc.passing+=p.passing; acc.technique+=p.technique; acc.overall+=p.overall;
+      return acc;
+    }, {attack:0,defense:0,pace:0,passing:0,technique:0,overall:0});
+    return {
+      attack:Math.round(sum.attack/n), defense:Math.round(sum.defense/n), pace:Math.round(sum.pace/n),
+      passing:Math.round(sum.passing/n), technique:Math.round(sum.technique/n), overall:Math.round(sum.overall/n)
+    };
   }
 
   function empezarTemporada(nombreEquipo, moneda, liga, escudo){
@@ -331,9 +440,52 @@
       medicoCambioUsado:false,
       medicoCartasAgotadas:[],
       medicoBonos:{},
-      medicoHistorial:[]
+      medicoHistorial:[],
+      medicoNiveles:{curacionMuscular:0, curacionOsea:0, prevencionMuscular:0, prevencionOsea:0},
+      // Aforo inicial deliberadamente modesto — un club recién ascendido a
+      // Primera no suele tener un estadio grande (referencia real: Eibar
+      // ~8.000, Huesca ~7.600, Leganés ~12.500). Se podrá ampliar más
+      // adelante con mejoras del cuerpo técnico, todavía no implementado.
+      estadio:{campo:90, satisfaccion:10, aforoTotal:12000, ultimaAsistencia:null},
+      moral:0,
+      rachaResultados:0,
+      mantenimientoCartas:[],
+      mantenimientoCambioUsado:false,
+      mantenimientoCartasAgotadas:[],
+      mantenimientoHistorial:[],
+      mantenimientoNiveles:{prevencionDesgaste:0, recuperacionCesped:0, boostSatisfaccion:0, proteccionSatisfaccion:0},
+      dadoRerollsDisponibles:1,
+      // ---- Economía ----
+      // Capital inicial modesto, coherente con un recién ascendido: dos o
+      // tres meses de margen antes de que la nómina apriete de verdad.
+      capital:400000,
+      precioEntrada:15,
+      mesesPagados:0,
+      finanzasHistorial:[],
+      directorGeneralCartas:[],
+      directorGeneralCambioUsado:false,
+      directorGeneralCartasAgotadas:[],
+      directorGeneralHistorial:[],
+      directorGeneralNiveles:{aforoExtra:0, ingresoPatrocinio:0, ingresoMerchandising:0, toleranciaPrecio:0},
+      directorDeportivoCartas:[],
+      directorDeportivoCambioUsado:false,
+      directorDeportivoCartasAgotadas:[],
+      directorDeportivoHistorial:[],
+      directorDeportivoNiveles:{calidadOjeo:0, ahorroSalarial:0, sobresFichajes:0, costeSobres:0},
+      // ---- Trabajadores del cuerpo técnico ----
+      trabajadores:{
+        medico:{id:'t0', ...nombreTrabajadorAleatorio(), nivel:1, sueldo:4400},
+        mantenimiento:{id:'t1', ...nombreTrabajadorAleatorio(), nivel:1, sueldo:4400},
+        directorGeneral:{id:'t2', ...nombreTrabajadorAleatorio(), nivel:1, sueldo:5500},
+        directorDeportivo:{id:'t3', ...nombreTrabajadorAleatorio(), nivel:1, sueldo:5500}
+      },
+      candidatosTrabajo:[],
+      mesTrabajadoresGenerado:0
     };
     state.medicoCartas = inicializarCartasMedico();
+    state.mantenimientoCartas = inicializarCartasMantenimiento();
+    state.directorGeneralCartas = inicializarCartasDG();
+    state.directorDeportivoCartas = inicializarCartasDD();
     guardarEstado();
   }
 
@@ -362,6 +514,22 @@
   function guardarIdentidad(nombre, crest){
     try{ localStorage.setItem(IDENTITY_KEY, JSON.stringify({nombre, crest})); }catch(e){}
   }
+  // Si todavía no hay identidad propia de Liga Manager guardada (primera
+  // vez que se entra), se reutiliza la preferencia global ya definida en
+  // Ajustes de Copa Leyendas (checkbox "usar siempre como nombre de
+  // equipo" + el escudo guardado) — así no se pregunta dos veces lo
+  // mismo si el jugador ya lo dejó configurado ahí.
+  function identidadPorDefecto(){
+    const propia=cargarIdentidad();
+    if(propia && propia.nombre && propia.crest) return propia;
+    if(window.useFixedTeamName && window.preferredTeamName){
+      const crestGlobal = window._myCrestImage
+        ? {type:'image', data:window._myCrestImage}
+        : (window._myCrestData ? {type:'layers', data:window._myCrestData} : null);
+      if(crestGlobal) return {nombre:window.preferredTeamName, crest:crestGlobal};
+    }
+    return null;
+  }
 
   // Escudo — reutiliza DE VERDAD el motor de dibujo de crest-editor.js
   // (buildCrestSVGInner vía renderCrestThumb), tanto para el escudo por
@@ -382,6 +550,96 @@
     sizePx=sizePx||28;
     if(crestImg) return `<img src="${crestImg}" alt="" style="width:${sizePx}px;height:${sizePx}px;object-fit:contain;vertical-align:middle">`;
     return `<i class="ph ph-bold ph-shield" style="font-size:${sizePx*0.6}px;color:#8a95a0"></i>`;
+  }
+
+  // Clima del próximo partido — reutiliza LITERALMENTE el catálogo
+  // WEATHER_TYPES de Copa Leyendas (mismas probabilidades, mismos
+  // textos/iconos) en vez de duplicarlo, ya que game.js se carga antes
+  // que este archivo y queda accesible como global. Se sortea una vez
+  // por jornada (no en cada render) y se guarda en el estado.
+  function climaDelPartido(){
+    if(typeof WEATHER_TYPES==='undefined') return null;
+    if(state.climaJornada!==state.jornadaActual || !state.climaId){
+      const pesos=[2,2,1,1.5,1,0.6]; // mismo orden/pesos que rollWeather(): sunny,cloudy,rain,wind,hot,snow
+      const total=pesos.reduce((a,b)=>a+b,0);
+      let r=Math.random()*total, idx=1;
+      for(let i=0;i<pesos.length;i++){ r-=pesos[i]; if(r<=0){ idx=i; break; } }
+      state.climaJornada=state.jornadaActual;
+      state.climaId=(WEATHER_TYPES[idx]||WEATHER_TYPES[1]).id;
+      guardarEstado();
+    }
+    return WEATHER_TYPES.find(w=>w.id===state.climaId) || WEATHER_TYPES[1];
+  }
+  function weatherDisplayHTML(clima){
+    if(!clima) return '';
+    return `<div class="weather-display" style="display:flex">
+      <span class="weather-icon">${clima.label.split(' ')[0]}</span>
+      <div class="weather-block">
+        <span>${clima.label.slice(clima.label.indexOf(' ')+1)}</span>
+        <span class="weather-desc">${clima.desc}</span>
+      </div>
+    </div>`;
+  }
+  // Efecto visual del clima sobre el campo de Liga Manager — CALCO exacto
+  // de applyPitchWeatherVisual() de Copa Leyendas (mismas clases CSS:
+  // weather-fx-X/weather-sheen/weather-drop/weather-splash/weather-flake/
+  // weather-gust, todas genéricas y no atadas al #pitch de Copa Leyendas),
+  // aplicado sobre #lmPitchBox/#lmWeatherLayer en vez de #pitch.
+  function aplicarClimaVisualLM(weatherId){
+    const pitch=document.getElementById('lmPitchBox');
+    const layer=document.getElementById('lmWeatherLayer');
+    if(!pitch||!layer) return;
+    pitch.className = pitch.className.replace(/\bweather-fx-\S+/g, '').trim();
+    layer.innerHTML='';
+    if(!weatherId || weatherId==='cloudy') return;
+    pitch.classList.add('weather-fx-'+weatherId);
+    if(weatherId==='rain' || weatherId==='hot' || weatherId==='sunny'){
+      const sheen=document.createElement('div');
+      sheen.className='weather-sheen';
+      layer.appendChild(sheen);
+    }
+    if(weatherId==='rain'){
+      for(let i=0;i<40;i++){
+        const drop=document.createElement('div');
+        drop.className='weather-drop';
+        const left=Math.random()*100, duration=0.5+Math.random()*0.4;
+        const negDelay=-Math.random()*duration;
+        drop.style.left=left+'%';
+        drop.style.animationDuration=duration+'s';
+        drop.style.animationDelay=negDelay+'s';
+        drop.style.opacity=0.4+Math.random()*0.4;
+        layer.appendChild(drop);
+        const splash=document.createElement('div');
+        splash.className='weather-splash';
+        splash.style.left=left+'%'; splash.style.top=(10+Math.random()*82)+'%';
+        splash.style.animationDuration=(0.9+Math.random()*0.8)+'s';
+        splash.style.animationDelay=(-Math.random()*1.6)+'s';
+        layer.appendChild(splash);
+      }
+    }
+    if(weatherId==='snow'){
+      for(let i=0;i<28;i++){
+        const flake=document.createElement('div');
+        flake.className='weather-flake';
+        const left=Math.random()*100, duration=3+Math.random()*3, size=6+Math.random()*7;
+        const negDelay=-Math.random()*duration;
+        flake.textContent='❄';
+        flake.style.left=left+'%';
+        flake.style.fontSize=size+'px';
+        flake.style.animationDuration=duration+'s';
+        flake.style.animationDelay=negDelay+'s';
+        flake.style.opacity=0.55+Math.random()*0.4;
+        layer.appendChild(flake);
+      }
+    }
+    if(weatherId==='wind'){
+      for(let i=0;i<3;i++){
+        const gust=document.createElement('div');
+        gust.className='weather-gust';
+        gust.style.animationDelay=(i*1.1)+'s';
+        layer.appendChild(gust);
+      }
+    }
   }
 
   /* Abre el editor de escudos REAL de Copa Leyendas (crest-editor.js), sin
@@ -485,7 +743,7 @@
     return titulares[Math.floor(Math.random()*titulares.length)];
   }
 
-  function generarEventosPartido(resultado, miEsLocal){
+  function generarEventosPartido(resultado, miEsLocal, campoRelevante){
     // "home"/"away" se refiere SIEMPRE al equipo local/visitante real del
     // partido — mi equipo puede ser cualquiera de los dos según el
     // calendario. Antes se asumía que "home" era siempre yo, así que
@@ -516,22 +774,39 @@
       eventos.push({minute:20+Math.floor(Math.random()*68), team:misLado, type:'card', tarjeta:'roja', jugador: jugador||{name:state.nombreEquipo}});
     }
     // Lesión: puede pasar DURANTE tu propio partido, no como aviso aparte
-    // después de la jornada — mismo espíritu que Copa Leyendas. El riesgo
-    // base se ve reducido por los bonos acumulados del médico (cartas de
-    // acumulación completadas + el efecto puntual de "Prevención Táctica").
+    // después de la jornada — mismo espíritu que Copa Leyendas. Existen dos
+    // FAMILIAS de lesión independientes (muscular: musculares, esguinces y
+    // ligamentos / ósea: fisuras, fracturas y menisco), cada una con su
+    // propio riesgo de aparición y velocidad de curación, moduladas por los
+    // niveles de equipo médico correspondientes (state.medicoNiveles).
+    const nivelesMed=state.medicoNiveles||{};
     const bonos=state.medicoBonos||{};
-    const riesgoBase=0.18*(bonos.riesgoLesionMultiplier||1)*(bonos.riesgoLesionSiguiente||1);
+    // Un césped descuidado aumenta el riesgo de lesión — se usa el estado
+    // del campo relevante para este partido (el propio si juegas en casa,
+    // el del rival si juegas fuera), hasta un +40% con el campo a 0.
+    const factorCampo = (campoRelevante===undefined||campoRelevante===null) ? 1 : (1+Math.max(0,(100-campoRelevante))*0.004);
+    const riesgoBase=0.18*(bonos.riesgoLesionSiguiente||1)*factorCampo;
     if(bonos.riesgoLesionSiguiente){ state.medicoBonos.riesgoLesionSiguiente=1; } // se consume tras un partido
-    if(!state.medicoNotificacion && Math.random()<riesgoBase){
+    const riesgoMuscular=riesgoBase*0.55*Math.pow(0.85, nivelesMed.prevencionMuscular||0);
+    const riesgoOsea=riesgoBase*0.45*Math.pow(0.85, nivelesMed.prevencionOsea||0);
+    if(!state.medicoNotificacion && Math.random()<(riesgoMuscular+riesgoOsea)){
       const idsAlineados=Object.values(state.alineacion||{}).filter(Boolean);
       const titularesSanos=idsAlineados.map(id=>state.plantilla.find(p=>p.id===id)).filter(p=>p && !p.injured);
       const pool = titularesSanos.length ? titularesSanos : state.plantilla.filter(p=>!p.injured);
       if(pool.length){
         const jugador=pool[Math.floor(Math.random()*pool.length)];
-        const TIPOS_LESION={
-          leve:['Sobrecarga muscular','Golpe en el tobillo','Molestias en el isquiotibial'],
-          moderada:['Esguince de tobillo','Distensión muscular','Golpe en la rodilla'],
-          grave:['Rotura de ligamentos','Rotura fibrilar','Lesión de menisco']
+        const familia = Math.random()<(riesgoMuscular/(riesgoMuscular+riesgoOsea)) ? 'muscular' : 'osea';
+        const TIPOS_LESION_POR_FAMILIA={
+          muscular:{
+            leve:['Sobrecarga muscular','Molestias en el isquiotibial','Contractura en el gemelo'],
+            moderada:['Distensión muscular','Esguince de tobillo','Elongación en el aductor'],
+            grave:['Rotura fibrilar','Rotura de ligamentos','Rotura del ligamento cruzado']
+          },
+          osea:{
+            leve:['Contusión ósea en la tibia','Molestias en el pubis','Golpe óseo en el tobillo'],
+            moderada:['Fisura costal','Inflamación del menisco','Golpe óseo en la rodilla'],
+            grave:['Fractura de peroné','Rotura de menisco','Fisura en el metatarso']
+          }
         };
         const severidades=[
           {label:'leve', weeks:1, dificultad:7},
@@ -539,10 +814,10 @@
           {label:'grave', weeks:4, dificultad:13}
         ];
         const sev=severidades[Math.floor(Math.random()*severidades.length)];
-        let weeks=Math.max(1, sev.weeks-(bonos.recuperacionExtra||0));
-        if(sev.label==='grave' && bonos.graveMultiplier) weeks=Math.max(1, Math.round(weeks*bonos.graveMultiplier));
-        const tipoLesion=TIPOS_LESION[sev.label][Math.floor(Math.random()*TIPOS_LESION[sev.label].length)];
-        eventos.push({minute:20+Math.floor(Math.random()*65), team:misLado, type:'injury', jugador, sev:{...sev, weeks}, tipoLesion});
+        const nivelCuracion = familia==='muscular' ? (nivelesMed.curacionMuscular||0) : (nivelesMed.curacionOsea||0);
+        let weeks=Math.max(1, sev.weeks-nivelCuracion);
+        const tipoLesion=TIPOS_LESION_POR_FAMILIA[familia][sev.label][Math.floor(Math.random()*TIPOS_LESION_POR_FAMILIA[familia][sev.label].length)];
+        eventos.push({minute:20+Math.floor(Math.random()*65), team:misLado, type:'injury', jugador, sev:{...sev, weeks}, tipoLesion, familia});
       }
     }
     // Actualizar rachas de gol: quien marca suma, el resto de titulares que
@@ -560,36 +835,161 @@
     return eventos;
   }
 
+  // Actualiza el estado del estadio (césped + satisfacción) tras jugar mi
+  // partido de la jornada. El césped solo se desgasta si jugué en casa
+  // (es mi terreno el que se pisa); la recuperación natural del
+  // mantenimiento habitual se aplica siempre. La satisfacción sube con
+  // las victorias y baja con las derrotas, agravada si el césped está
+  // descuidado — tal y como se pidió: "un campo mal cuidado aumenta...
+  // el descontento de la afición".
+  // Asistencia al estadio — depende de la satisfacción de la afición, la
+  // moral del equipo y el clima del día. Todavía solo simbólico (no
+  // genera ingresos), pero deja ver de un vistazo cómo responde la
+  // afición a cómo va la temporada.
+  function calcularAsistencia(weatherId){
+    const est=state.estadio||{};
+    const aforo=est.aforoTotal||12000;
+    const baseSatisfaccion=0.35+((est.satisfaccion||0)+100)/200*0.55; // 35% a 90% según satisfacción
+    const bonusMoral=(state.moral||0)/50*0.08; // hasta ±8% según moral del equipo
+    const penalizacionClima = weatherId ? ({sunny:0, cloudy:0, rain:0.12, wind:0.05, hot:0.08, snow:0.15}[weatherId]||0) : 0;
+    // Precio de la entrada: por encima de un precio de referencia (10€)
+    // cada euro de más resta asistencia — mitigado por el nivel de
+    // Relaciones con la Afición del Director General (el "caché" del
+    // club: cuanto más grande eres, mejor toleras subir el precio).
+    const precio=state.precioEntrada===undefined?15:state.precioEntrada;
+    const tolerancia=nivelDeDG('toleranciaPrecio');
+    const penalizacionPrecio=Math.max(0,(precio-10))*0.012*(1-tolerancia*0.22);
+    let pct=baseSatisfaccion+bonusMoral-penalizacionClima-penalizacionPrecio;
+    if(state.directorGeneralBonos && state.directorGeneralBonos.boostAsistencia){ pct+=state.directorGeneralBonos.boostAsistencia; }
+    pct=Math.max(0.15, Math.min(0.99, pct));
+    return {asistentes:Math.round(aforo*pct), aforo, pct};
+  }
+  // Moral del equipo (-50..50) — CALCO del rango y espíritu del sistema
+  // de moral de Copa Leyendas (teamMorale), pero propio de Liga Manager:
+  // sube con las victorias y baja con las derrotas, amplificado si se
+  // encadenan varios resultados seguidos del mismo signo (una racha
+  // pesa más que un resultado suelto).
+  function actualizarMoralTrasPartido(miGoles, suGoles){
+    let delta=0;
+    if(miGoles>suGoles){ delta=6; state.rachaResultados=Math.max(1,(state.rachaResultados||0)+1); }
+    else if(miGoles===suGoles){ delta=0; state.rachaResultados=0; }
+    else { delta=-7; state.rachaResultados=Math.min(-1,(state.rachaResultados||0)-1); }
+    const rachaAbs=Math.abs(state.rachaResultados||0);
+    if(rachaAbs>=2){
+      const extra=(rachaAbs-1)*1.5;
+      delta += delta>0 ? extra : (delta<0 ? -extra : 0);
+    }
+    state.moral=Math.max(-50, Math.min(50, Math.round((state.moral||0)+delta)));
+  }
+
+  function actualizarEstadioTrasPartido(miEsLocal, resultado, clima){
+    if(!state.estadio) state.estadio={campo:90, satisfaccion:10, aforoTotal:12000, ultimaAsistencia:null};
+    const est=state.estadio;
+    // La asistencia se calcula ANTES de actualizar satisfacción/moral con
+    // el resultado de hoy — refleja quién decidió venir sabiendo cómo
+    // estaban las cosas hasta el partido anterior, no el resultado que
+    // aún no se conocía.
+    if(miEsLocal){
+      const asistenciaInfo=calcularAsistencia(clima?clima.id:null);
+      est.ultimaAsistencia={...asistenciaInfo, jornada:state.jornadaActual};
+      if(state.directorGeneralBonos && state.directorGeneralBonos.boostAsistencia){ state.directorGeneralBonos.boostAsistencia=0; }
+      const precio=state.precioEntrada===undefined?15:state.precioEntrada;
+      const ingresoEntradas=asistenciaInfo.asistentes*precio;
+      const ingresoMerch=Math.round(asistenciaInfo.asistentes*(2+nivelDeDG('ingresoMerchandising')*1.5));
+      state.capital=Math.round((state.capital||0)+ingresoEntradas+ingresoMerch);
+      registrarMovimientoFinanciero('Entradas', ingresoEntradas, state.jornadaActual);
+      registrarMovimientoFinanciero('Merchandising', ingresoMerch, state.jornadaActual);
+    }
+    if(miEsLocal && clima){
+      const desgasteBase={sunny:3, cloudy:2, rain:8, wind:4, hot:6, snow:7}[clima.id] || 2;
+      const reduccion=nivelDeM('prevencionDesgaste')*1.4;
+      const desgaste=Math.max(0, desgasteBase-reduccion);
+      est.campo=Math.max(0, est.campo-desgaste);
+    }
+    const recuperacion=2+nivelDeM('recuperacionCesped')*2;
+    est.campo=Math.min(100, Math.round(est.campo+recuperacion));
+
+    const miGoles = miEsLocal ? resultado.golesA : resultado.golesB;
+    const suGoles = miEsLocal ? resultado.golesB : resultado.golesA;
+    const boostVictoria=1+nivelDeM('boostSatisfaccion')*0.25;
+    const proteccion=1-nivelDeM('proteccionSatisfaccion')*0.2;
+    let delta=0;
+    if(miGoles>suGoles) delta=8*boostVictoria;
+    else if(miGoles===suGoles) delta=1;
+    else delta=-10*proteccion;
+    if(est.campo<40) delta-=(40-est.campo)*0.15*proteccion;
+    if(delta<0 && state.mantenimientoBonos && state.mantenimientoBonos.amortiguarPerdida){
+      delta*=0.5;
+      state.mantenimientoBonos.amortiguarPerdida=false;
+    }
+    est.satisfaccion=Math.max(-100, Math.min(100, Math.round(est.satisfaccion+delta)));
+    actualizarMoralTrasPartido(miGoles, suGoles);
+  }
+
   function jugarJornada(){
     if(state.jornadaActual>38) return null;
     const j=state.jornadaActual-1;
     const jornada=state.calendario[j];
     let miPartidoInfo=null;
+    const clima=climaDelPartido();
     jornada.forEach(partido=>{
       const key=j+'-'+partido.home.id+'-'+partido.away.id;
       if(state.resultados[key]) return;
-      const resultado=simularPartido(partido.home, partido.away);
+      const esMiPartido = partido.home.id==='lm_0' || partido.away.id==='lm_0';
+      let contexto=null, campoRelevante=null, miEsLocalDeEste=null;
+      if(esMiPartido){
+        miEsLocalDeEste = partido.home.id==='lm_0';
+        campoRelevante = miEsLocalDeEste ? (state.estadio?state.estadio.campo:100) : campoRivalEstimado(miEsLocalDeEste?partido.away:partido.home);
+        contexto = {
+          climaId: clima ? clima.id : null,
+          campoAnfitrion: campoRelevante,
+          anfitrionA: miEsLocalDeEste,
+          esMiEquipoA: miEsLocalDeEste,
+          moralBonus: ((state.moral||0)/50)*0.08
+        };
+      }
+      const resultado=simularPartido(partido.home, partido.away, contexto);
       state.resultados[key]=resultado;
-      if(partido.home.id==='lm_0' || partido.away.id==='lm_0'){
-        const eventos=generarEventosPartido(resultado, partido.home.id==='lm_0');
+      if(esMiPartido){
+        const eventos=generarEventosPartido(resultado, miEsLocalDeEste, campoRelevante);
         // Aplicar la lesión generada (si la hay) al estado real del jugador
         const evInjury=eventos.find(e=>e.type==='injury');
         if(evInjury){
           evInjury.jugador.injured=true;
           evInjury.jugador.injuryWeeks=evInjury.sev.weeks;
           evInjury.jugador.injurySeverity=evInjury.sev.label;
+          evInjury.jugador.injuryFamilia=evInjury.familia;
           state.medicoNotificacion={jugadorId:evInjury.jugador.id, dificultad:evInjury.sev.dificultad, severidad:evInjury.sev.label};
           const rivalDeEsta = partido.home.id==='lm_0' ? partido.away.name : partido.home.name;
-          evInjury.jugador.lesionLogId=registrarLesionHistorial(evInjury.jugador, evInjury.sev, evInjury.tipoLesion, rivalDeEsta);
+          evInjury.jugador.lesionLogId=registrarLesionHistorial(evInjury.jugador, evInjury.sev, evInjury.tipoLesion, rivalDeEsta, evInjury.familia);
         }
         miPartidoInfo={ home:partido.home, away:partido.away, resultado, eventos };
+        actualizarEstadioTrasPartido(miEsLocalDeEste, resultado, clima);
       }
     });
 
     // Fondo de dados: se resetea cada jornada — los que no se usaron en
     // la jornada anterior se pierden (use-it-or-lose-it, ya definido).
+    // Médico y Mantenimiento COMPARTEN este mismo fondo de dados: hay que
+    // repartir entre las dos plantillas de cartas cada partido.
     state.diceAvailable = DICE_POOL_PER_MATCH;
     state.medicoCambioUsado = false;
+    state.mantenimientoCambioUsado = false;
+    state.directorGeneralCambioUsado = false;
+    state.directorDeportivoCambioUsado = false;
+    state.dadoRerollsDisponibles = 1;
+
+    // Nómina mensual — se cobra una vez al entrar en cada mes (cada 4
+    // jornadas: J1, J5, J9...), jugadores + los 4 departamentos técnicos.
+    const mesDeEstaJornada=Math.floor((state.jornadaActual-1)/4)+1;
+    if(mesDeEstaJornada>(state.mesesPagados||0)){
+      aplicarNominaMensual();
+      state.mesesPagados=mesDeEstaJornada;
+    }
+    if(mesDeEstaJornada>(state.mesTrabajadoresGenerado||0)){
+      regenerarCandidatosTrabajo();
+      state.mesTrabajadoresGenerado=mesDeEstaJornada;
+    }
 
     state.plantilla.forEach(p=>{
       if(p.injured && p.injuryWeeks>0){
@@ -600,6 +1000,23 @@
         }
       }
     });
+
+    // Fatiga real — CALCO del concepto de applyMatchFatigue() de Copa
+    // Leyendas: quien ha jugado esta jornada (los 11 del campo) pierde
+    // resistencia (el portero apenas se cansa, los centrales son los que
+    // menos corren), y quien se queda en el banquillo recupera del todo.
+    // Antes el campo "fatigue" existía pero nunca bajaba jugando.
+    if(miPartidoInfo){
+      const titularIdsJornada=new Set(Object.values(state.alineacion||{}).filter(Boolean));
+      state.plantilla.forEach(p=>{
+        const actual=(p.fatigue===undefined)?100:p.fatigue;
+        if(!titularIdsJornada.has(p.id)){ p.fatigue=100; return; }
+        if(p.position==='POR'){ p.fatigue=Math.max(0, Math.round(actual-(2+Math.random()*4))); return; }
+        let loss=8+Math.random()*6;
+        if(p.position==='DFC') loss*=0.65;
+        p.fatigue=Math.max(0, Math.round(actual-loss));
+      });
+    }
 
     state.jornadaActual++;
     guardarEstado();
@@ -619,7 +1036,7 @@
       <div class="match-modal" style="overflow:hidden;display:flex;flex-direction:column;max-height:85vh">
         <div class="match-header">
           <div class="match-side">
-            ${miEsLocal?crestHTML(state.escudo,60):rivalCrestHTML(60, info.home.crestImg)}
+            ${miEsLocal?crestHTML(state.escudo,72):rivalCrestHTML(72, info.home.crestImg)}
             <span class="match-team-name">${info.home.name}</span>
           </div>
           <div style="text-align:center;flex:0 0 auto">
@@ -633,7 +1050,7 @@
             </div>
           </div>
           <div class="match-side">
-            ${!miEsLocal?crestHTML(state.escudo,60):rivalCrestHTML(60, info.away.crestImg)}
+            ${!miEsLocal?crestHTML(state.escudo,72):rivalCrestHTML(72, info.away.crestImg)}
             <span class="match-team-name">${info.away.name}</span>
           </div>
         </div>
@@ -775,13 +1192,13 @@
      contra quién, tipo) y cómo se resolvió (tiempo natural, dado urgente
      o una carta concreta), más el progreso de las cartas de acumulación.
      Se muestra ordenado de más reciente a más antiguo. ---------- */
-  function registrarLesionHistorial(jugador, sev, tipoLesion, rival){
+  function registrarLesionHistorial(jugador, sev, tipoLesion, rival, familia){
     state.medicoHistorial = state.medicoHistorial||[];
     const id = 'h'+Date.now()+Math.floor(Math.random()*1000);
     state.medicoHistorial.push({
       id, tipo:'lesion',
       jugador: jugador.name, jornadaInicio: state.jornadaActual, rival,
-      severidad: sev.label, tipoLesion, semanasPrevistas: sev.weeks,
+      severidad: sev.label, tipoLesion, familia, semanasPrevistas: sev.weeks,
       resuelta:false, resueltoPor:null, jornadasReales:null
     });
     return id;
@@ -795,6 +1212,7 @@
       entry.jornadasReales=Math.max(1, state.jornadaActual-entry.jornadaInicio+1);
     }
     jugador.lesionLogId=null;
+    jugador.injuryFamilia=null;
   }
   function registrarProgresoHistorial(texto){
     state.medicoHistorial = state.medicoHistorial||[];
@@ -820,17 +1238,25 @@
   }
 
   /* ---------- 9b. CARTAS DE MISIÓN DEL CUERPO TÉCNICO (Médico) ----------
-     10 cartas base. Dos tipos:
+     10 cartas base. Tres tipos:
      - "directa": se resuelve al momento (dados sumados vs dificultad).
        Si falla, la carta se queda tal cual, se puede reintentar cuando
        se pueda. Si tiene éxito, se aplica el efecto y se cambia por una
        carta nueva al azar automáticamente.
+     - "nivel": mejora permanente de una de las 4 especialidades del
+       equipo médico (curación muscular, curación ósea, prevención
+       muscular, prevención ósea). Se resuelve al momento igual que una
+       carta directa (dados vs dificultad, sin fallo posible en la
+       tirada en sí más allá de no alcanzar la dificultad) — si tiene
+       éxito, sube un nivel esa especialidad y la carta se sustituye por
+       otra al azar; si esa misma carta vuelve a salir más adelante, un
+       nuevo éxito la sube otro nivel (dificultad más alta cada vez).
+       Al alcanzar el nivel máximo (3) la carta queda agotada para
+       siempre y ya no puede volver a salir.
      - "acumulacion": los dados invertidos SIEMPRE suman puntos a un
        proyecto (no hay fallo posible en la tirada en sí); tiene varios
        niveles con umbral creciente — completar por etapas sale más
        barato en total que si solo existiera un umbral alto directo.
-       Al completar el último nivel, la carta queda agotada para
-       siempre (no puede volver a salir) y se sustituye por una nueva.
      Puedes cambiar 1 carta (de las 3 en mano) por partido: se descarta
      y se reemplaza por otra al azar del resto del catálogo. ---------- */
   const MEDICO_CARTAS_BASE = [
@@ -840,11 +1266,41 @@
     {id:'cirugia',      tipo:'directa',     nombre:'Cirugía de Precisión',     icon:'ph-scissors',         dificultad:12, requiereLesion:'grave',desc:'Convierte una lesión grave en moderada'},
     {id:'prevencion_t', tipo:'directa',     nombre:'Prevención Táctica',       icon:'ph-shield-check',     dificultad:7,  requiereLesion:false, desc:'Reduce el riesgo de lesión en el próximo partido'},
     {id:'chequeo',      tipo:'directa',     nombre:'Chequeo de Plantilla',     icon:'ph-clipboard-text',   dificultad:6,  requiereLesion:false, desc:'Mejora la resistencia de toda la plantilla este partido'},
-    {id:'sala_fisio',   tipo:'acumulacion', nombre:'Sala de Fisioterapia',     icon:'ph-buildings',        niveles:[8,12,16], desc:'Cada nivel reduce el tiempo base de recuperación de futuras lesiones'},
-    {id:'prevencion_p', tipo:'acumulacion', nombre:'Programa de Prevención',   icon:'ph-heartbeat',        niveles:[10,14],   desc:'Cada nivel reduce el riesgo base de lesión de la plantilla'},
-    {id:'especialista', tipo:'acumulacion', nombre:'Especialista en Readaptación', icon:'ph-user-focus',   niveles:[20],      desc:'Reduce a la mitad el tiempo de las lesiones graves para siempre'},
-    {id:'equipo_fisios',tipo:'acumulacion', nombre:'Equipo de Fisios',         icon:'ph-users-three',      niveles:[6,10,14], desc:'Cada nivel acelera la recuperación general de toda la plantilla'}
+    {id:'fisio_muscular',    tipo:'nivel', track:'curacionMuscular',   nombre:'Unidad de Fisioterapia',        icon:'ph-person-simple-run', dificultadBase:8, dificultadPaso:4, desc:'Acelera la recuperación de lesiones musculares, esguinces y de ligamentos'},
+    {id:'fisio_osea',        tipo:'nivel', track:'curacionOsea',       nombre:'Unidad de Traumatología',       icon:'ph-bandaids',          dificultadBase:9, dificultadPaso:4, desc:'Acelera la recuperación de fisuras, fracturas y lesiones de menisco'},
+    {id:'prevencion_muscular',tipo:'nivel', track:'prevencionMuscular', nombre:'Programa de Prevención Muscular', icon:'ph-heartbeat',        dificultadBase:8, dificultadPaso:4, desc:'Reduce el riesgo de sufrir lesiones musculares, esguinces y de ligamentos'},
+    {id:'prevencion_osea',   tipo:'nivel', track:'prevencionOsea',     nombre:'Protocolo de Protección Ósea',  icon:'ph-shield-plus',       dificultadBase:9, dificultadPaso:4, desc:'Reduce el riesgo de sufrir fisuras, fracturas y lesiones de menisco'}
   ];
+
+  const NIVEL_MAXIMO_EQUIPO=3;
+  function nivelDe(track){ return (state.medicoNiveles && state.medicoNiveles[track]) || 0; }
+  function dificultadActualNivel(def){ return def.dificultadBase + nivelDe(def.track)*def.dificultadPaso; }
+
+  // Resumen del equipo médico por especialidad — CONDENSADO a propósito:
+  // una fila por especialidad con su nivel actual en estrellas, nunca un
+  // listado de cada mejora conseguida. Se reutiliza tanto en la propia
+  // ficha del equipo médico como en la pestaña INSTALACIONES del
+  // historial.
+  const NIVELES_EQUIPO_INFO=[
+    {track:'curacionMuscular',   label:'Fisioterapia',          icon:'ph-person-simple-run', desc:'Recuperación de lesiones musculares'},
+    {track:'curacionOsea',       label:'Traumatología',         icon:'ph-bandaids',          desc:'Recuperación de lesiones óseas'},
+    {track:'prevencionMuscular', label:'Prevención muscular',   icon:'ph-heartbeat',         desc:'Riesgo de sufrir una lesión muscular'},
+    {track:'prevencionOsea',     label:'Protección ósea',       icon:'ph-shield-plus',       desc:'Riesgo de sufrir una lesión ósea'}
+  ];
+  function estrellasNivel(n){ return '★'.repeat(n) + '☆'.repeat(NIVEL_MAXIMO_EQUIPO-n); }
+  function renderNivelesEquipoHTML(){
+    return `<div class="med-niveles-grid">${NIVELES_EQUIPO_INFO.map(info=>{
+      const n=nivelDe(info.track);
+      return `<div class="med-nivel-row">
+        <i class="ph ph-bold ${info.icon}"></i>
+        <div class="med-nivel-info">
+          <div class="med-nivel-label">${info.label}</div>
+          <div class="med-nivel-desc">${info.desc}</div>
+        </div>
+        <div class="med-nivel-stars" title="Nivel ${n}/${NIVEL_MAXIMO_EQUIPO}">${estrellasNivel(n)}</div>
+      </div>`;
+    }).join('')}</div>`;
+  }
 
   function cartaDef(id){ return MEDICO_CARTAS_BASE.find(c=>c.id===id); }
 
@@ -880,26 +1336,34 @@
 
   // Aplica el efecto de una carta DIRECTA al tener éxito. Devuelve un
   // texto corto describiendo lo ocurrido, para mostrarlo en el resultado.
+  function textoReduccion(antes, despues){
+    if(antes===null||antes===undefined) return '';
+    const reduccion=antes-Math.max(0,despues);
+    if(reduccion<=0) return '';
+    if(despues<=0) return ` — vuelve a estar disponible (${reduccion} jornada${reduccion===1?'':'s'} menos)`;
+    return ` — pasa de ${antes} a ${despues} jornada${despues===1?'':'s'} de baja (-${reduccion})`;
+  }
   function aplicarEfectoDirecta(def, jugadorObjetivo){
+    const antes = jugadorObjetivo ? jugadorObjetivo.injuryWeeks : null;
     switch(def.id){
       case 'urgente':
         if(jugadorObjetivo){
           jugadorObjetivo.injuryWeeks=Math.max(0,Math.ceil(jugadorObjetivo.injuryWeeks/2));
           if(jugadorObjetivo.injuryWeeks<=0){ jugadorObjetivo.injured=false; jugadorObjetivo.injurySeverity=null; cerrarLesionHistorial(jugadorObjetivo, 'Carta: '+def.nombre); }
         }
-        return jugadorObjetivo?`${jugadorObjetivo.name} recorta a la mitad su tiempo de baja`:'Aplicado';
+        return jugadorObjetivo?`${jugadorObjetivo.name} recorta a la mitad su tiempo de baja${textoReduccion(antes,jugadorObjetivo.injuryWeeks)}`:'Aplicado';
       case 'milagro':
         if(jugadorObjetivo){ jugadorObjetivo.injured=false; jugadorObjetivo.injuryWeeks=0; jugadorObjetivo.injurySeverity=null; cerrarLesionHistorial(jugadorObjetivo, 'Carta: '+def.nombre); }
-        return jugadorObjetivo?`${jugadorObjetivo.name} recupera la disponibilidad al instante`:'Aplicado';
+        return jugadorObjetivo?`${jugadorObjetivo.name} recupera la disponibilidad al instante${textoReduccion(antes,0)}`:'Aplicado';
       case 'consulta':
         if(jugadorObjetivo){
           jugadorObjetivo.injuryWeeks=Math.max(0,jugadorObjetivo.injuryWeeks-1);
           if(jugadorObjetivo.injuryWeeks<=0){ jugadorObjetivo.injured=false; jugadorObjetivo.injurySeverity=null; cerrarLesionHistorial(jugadorObjetivo, 'Carta: '+def.nombre); }
         }
-        return jugadorObjetivo?`${jugadorObjetivo.name} se recupera 1 semana antes`:'Aplicado';
+        return jugadorObjetivo?`${jugadorObjetivo.name} se recupera 1 semana antes${textoReduccion(antes,jugadorObjetivo.injuryWeeks)}`:'Aplicado';
       case 'cirugia':
         if(jugadorObjetivo){ jugadorObjetivo.injurySeverity='moderada'; jugadorObjetivo.injuryWeeks=Math.min(jugadorObjetivo.injuryWeeks,2); }
-        return jugadorObjetivo?`La lesión de ${jugadorObjetivo.name} pasa a moderada`:'Aplicado';
+        return jugadorObjetivo?`La lesión de ${jugadorObjetivo.name} pasa a moderada${textoReduccion(antes,jugadorObjetivo.injuryWeeks)}`:'Aplicado';
       case 'prevencion_t':
         state.medicoBonos.riesgoLesionSiguiente = (state.medicoBonos.riesgoLesionSiguiente||1)*0.5;
         return 'Riesgo de lesión reducido para el próximo partido';
@@ -923,6 +1387,22 @@
     registrarProgresoHistorial(`${def.nombre} actualizado a nivel ${nivel} — ${def.desc}`);
   }
 
+  // Aplica el efecto PERMANENTE de una carta de NIVEL al tener éxito: sube
+  // un nivel la especialidad correspondiente (curación/prevención ×
+  // muscular/ósea), hasta un máximo de 3. Al llegar al máximo, la carta
+  // queda agotada para siempre (no puede volver a salir en la mano).
+  function aplicarNivelMejora(def){
+    if(!state.medicoNiveles) state.medicoNiveles={curacionMuscular:0, curacionOsea:0, prevencionMuscular:0, prevencionOsea:0};
+    const nivelNuevo=Math.min(NIVEL_MAXIMO_EQUIPO, nivelDe(def.track)+1);
+    state.medicoNiveles[def.track]=nivelNuevo;
+    const maxAlcanzado=nivelNuevo>=NIVEL_MAXIMO_EQUIPO;
+    if(maxAlcanzado){
+      state.medicoCartasAgotadas = state.medicoCartasAgotadas||[];
+      state.medicoCartasAgotadas.push(def.id);
+    }
+    return {nivelNuevo, maxAlcanzado};
+  }
+
   // Resuelve una tirada ya hecha (tiradas[] de dados de 6) sobre la carta
   // en la posición idx de la mano. Devuelve info para pintar el resultado.
   function resolverCartaMedico(idx, tiradas, jugadorObjetivoId){
@@ -940,6 +1420,16 @@
         resultado={tipo:'directa', exito:true, suma, dificultad:def.dificultad, texto};
       } else {
         resultado={tipo:'directa', exito:false, suma, dificultad:def.dificultad, texto:'La carta se queda en tu mano — puedes reintentarlo más adelante'};
+      }
+    } else if(def.tipo==='nivel'){
+      const dificultadActual=dificultadActualNivel(def);
+      const exito = suma>=dificultadActual;
+      if(exito){
+        const {nivelNuevo, maxAlcanzado}=aplicarNivelMejora(def);
+        state.medicoCartas[idx]=generarCartaAleatoria(state.medicoCartas.map(c=>c.cartaId)) || instancia;
+        resultado={tipo:'nivel', exito:true, suma, dificultad:dificultadActual, nivelNuevo, maxAlcanzado, nombre:def.nombre};
+      } else {
+        resultado={tipo:'nivel', exito:false, suma, dificultad:dificultadActual, nombre:def.nombre, texto:'La carta se queda en tu mano — puedes reintentarlo más adelante'};
       }
     } else {
       // Acumulación: SIEMPRE suma, nunca "falla" la tirada en sí.
@@ -962,6 +1452,611 @@
         state.medicoCartas[idx]=generarCartaAleatoria(state.medicoCartas.map(c=>c.cartaId)) || instancia;
       }
       resultado={tipo:'acumulacion', suma, subioNivel, completada, nivelActual:instancia.nivelActual, umbral:def.niveles[Math.min(instancia.nivelActual,def.niveles.length)-1], progreso:instancia.progreso};
+    }
+    guardarEstado();
+    return resultado;
+  }
+
+  /* ---------- 9c. CARTAS DE MISIÓN DEL EQUIPO DE MANTENIMIENTO Y SEGURIDAD ----------
+     Mismo sistema que el Médico (10 cartas: 6 directa + 4 nivel, comparte
+     el mismo fondo de dados por partido y su propio cambio de carta), pero
+     aplicado al estadio en vez de a la plantilla. Dos frentes:
+     - CÉSPED: estado 0-100, se desgasta con el mal tiempo cuando juegas en
+       casa, se recupera un poco cada semana con el mantenimiento normal.
+     - AFICIÓN: satisfacción -100..100, sube con las victorias y baja con
+       las derrotas y con un césped descuidado. ---------- */
+  const MANTENIMIENTO_CARTAS_BASE = [
+    {id:'riego_emergencia',  tipo:'directa', nombre:'Riego de Emergencia',           icon:'ph-drop',              dificultad:6,  desc:'Recupera 20 puntos del estado del césped al instante'},
+    {id:'renovacion_cesped', tipo:'directa', nombre:'Renovación Total del Césped',   icon:'ph-sparkle',           dificultad:15, desc:'Deja el césped en condiciones perfectas al instante'},
+    {id:'revision_terreno',  tipo:'directa', nombre:'Revisión del Terreno de Juego', icon:'ph-magnifying-glass',  dificultad:5,  desc:'Recupera 10 puntos del estado del césped'},
+    {id:'evento_aficion',    tipo:'directa', nombre:'Jornada de Puertas Abiertas',   icon:'ph-confetti',          dificultad:7,  desc:'Sube al instante la satisfacción de la afición'},
+    {id:'gestion_crisis',    tipo:'directa', nombre:'Gestión de Crisis con Peñas',   icon:'ph-megaphone',         dificultad:12, requiereCrisis:true, desc:'Calma a una afición muy descontenta y estabiliza la satisfacción'},
+    {id:'plan_comunicacion', tipo:'directa', nombre:'Plan de Comunicación',         icon:'ph-shield-check',      dificultad:7,  desc:'Amortigua la pérdida de satisfacción si el resultado no acompaña en el próximo partido'},
+    {id:'sistema_riego',     tipo:'nivel', track:'prevencionDesgaste',    nombre:'Sistema de Riego Automático',  icon:'ph-drop-half-bottom', dificultadBase:8, dificultadPaso:4, desc:'Reduce el desgaste del césped por las inclemencias del tiempo'},
+    {id:'greenkeeping',      tipo:'nivel', track:'recuperacionCesped',    nombre:'Servicio de Greenkeeping',     icon:'ph-plant',            dificultadBase:8, dificultadPaso:4, desc:'Acelera la recuperación natural del césped entre partidos'},
+    {id:'experiencia_socio', tipo:'nivel', track:'boostSatisfaccion',     nombre:'Experiencia del Aficionado',   icon:'ph-ticket',           dificultadBase:8, dificultadPaso:4, desc:'Aumenta la satisfacción que genera cada victoria'},
+    {id:'seguridad_grada',   tipo:'nivel', track:'proteccionSatisfaccion',nombre:'Seguridad y Grada Organizada', icon:'ph-shield-star',      dificultadBase:9, dificultadPaso:4, desc:'Reduce el descontento que genera una derrota o un césped descuidado'}
+  ];
+  function cartaDefM(id){ return MANTENIMIENTO_CARTAS_BASE.find(c=>c.id===id); }
+  function nivelDeM(track){ return (state.mantenimientoNiveles && state.mantenimientoNiveles[track]) || 0; }
+  function dificultadActualNivelM(def){ return def.dificultadBase + nivelDeM(def.track)*def.dificultadPaso; }
+
+  const NIVELES_MANTENIMIENTO_INFO=[
+    {track:'prevencionDesgaste',     label:'Riego automático',      icon:'ph-drop-half-bottom', desc:'Desgaste del césped por el mal tiempo'},
+    {track:'recuperacionCesped',     label:'Greenkeeping',          icon:'ph-plant',            desc:'Recuperación natural del césped'},
+    {track:'boostSatisfaccion',      label:'Experiencia del socio', icon:'ph-ticket',           desc:'Satisfacción ganada al vencer'},
+    {track:'proteccionSatisfaccion', label:'Seguridad y grada',     icon:'ph-shield-star',      desc:'Descontento por derrota o césped descuidado'}
+  ];
+  function renderNivelesMantenimientoHTML(){
+    return `<div class="med-niveles-grid">${NIVELES_MANTENIMIENTO_INFO.map(info=>{
+      const n=nivelDeM(info.track);
+      return `<div class="med-nivel-row">
+        <i class="ph ph-bold ${info.icon}"></i>
+        <div class="med-nivel-info">
+          <div class="med-nivel-label">${info.label}</div>
+          <div class="med-nivel-desc">${info.desc}</div>
+        </div>
+        <div class="med-nivel-stars" title="Nivel ${n}/${NIVEL_MAXIMO_EQUIPO}">${estrellasNivel(n)}</div>
+      </div>`;
+    }).join('')}</div>`;
+  }
+
+  function generarCartaAleatoriaMantenimiento(excluirIds){
+    excluirIds = excluirIds || [];
+    const agotadas = state.mantenimientoCartasAgotadas||[];
+    const disponibles = MANTENIMIENTO_CARTAS_BASE.filter(c=>!excluirIds.includes(c.id) && !agotadas.includes(c.id));
+    const pool = disponibles.length ? disponibles : MANTENIMIENTO_CARTAS_BASE.filter(c=>!agotadas.includes(c.id));
+    if(!pool.length) return null;
+    const def=pool[Math.floor(Math.random()*pool.length)];
+    return {cartaId:def.id, progreso:0, nivelActual:1};
+  }
+  function inicializarCartasMantenimiento(){
+    const cartas=[];
+    for(let i=0;i<3;i++){
+      const nueva=generarCartaAleatoriaMantenimiento(cartas.map(c=>c.cartaId));
+      if(nueva) cartas.push(nueva);
+    }
+    return cartas;
+  }
+  function cambiarCartaMantenimiento(idx){
+    if(state.mantenimientoCambioUsado) return false;
+    const otras=state.mantenimientoCartas.filter((c,i)=>i!==idx).map(c=>c.cartaId);
+    const nueva=generarCartaAleatoriaMantenimiento(otras);
+    if(!nueva) return false;
+    state.mantenimientoCartas[idx]=nueva;
+    state.mantenimientoCambioUsado=true;
+    guardarEstado();
+    return true;
+  }
+
+  function mantenimientoBloqueadaPorEstado(def){
+    if(def.id==='gestion_crisis') return !(state.estadio && state.estadio.satisfaccion<=-50);
+    return false;
+  }
+
+  function textoCambioValor(label, antes, despues){
+    const delta=despues-antes;
+    if(delta===0) return '';
+    return ` — ${label} ${antes} → ${despues} (${delta>0?'+':''}${delta})`;
+  }
+  function aplicarEfectoDirectaMantenimiento(def){
+    const est=state.estadio;
+    switch(def.id){
+      case 'riego_emergencia': {
+        const antes=est.campo; est.campo=Math.min(100, est.campo+20);
+        return `El césped mejora su estado${textoCambioValor('campo',antes,est.campo)}`;
+      }
+      case 'renovacion_cesped': {
+        const antes=est.campo; est.campo=100;
+        return `El césped queda en condiciones perfectas${textoCambioValor('campo',antes,est.campo)}`;
+      }
+      case 'revision_terreno': {
+        const antes=est.campo; est.campo=Math.min(100, est.campo+10);
+        return `Pequeñas mejoras en el terreno de juego${textoCambioValor('campo',antes,est.campo)}`;
+      }
+      case 'evento_aficion': {
+        const antes=est.satisfaccion; est.satisfaccion=Math.max(-100,Math.min(100, est.satisfaccion+15));
+        return `La afición responde bien al evento${textoCambioValor('satisfacción',antes,est.satisfaccion)}`;
+      }
+      case 'gestion_crisis': {
+        const antes=est.satisfaccion; est.satisfaccion=Math.max(est.satisfaccion, -30);
+        return `Se calma el ambiente con las peñas${textoCambioValor('satisfacción',antes,est.satisfaccion)}`;
+      }
+      case 'plan_comunicacion':
+        state.mantenimientoBonos = state.mantenimientoBonos||{};
+        state.mantenimientoBonos.amortiguarPerdida = true;
+        return 'La pérdida de satisfacción por un mal resultado quedará amortiguada en el próximo partido';
+      default: return 'Aplicado';
+    }
+  }
+  function aplicarNivelMejoraMantenimiento(def){
+    if(!state.mantenimientoNiveles) state.mantenimientoNiveles={prevencionDesgaste:0, recuperacionCesped:0, boostSatisfaccion:0, proteccionSatisfaccion:0};
+    const nivelNuevo=Math.min(NIVEL_MAXIMO_EQUIPO, nivelDeM(def.track)+1);
+    state.mantenimientoNiveles[def.track]=nivelNuevo;
+    const maxAlcanzado=nivelNuevo>=NIVEL_MAXIMO_EQUIPO;
+    if(maxAlcanzado){
+      state.mantenimientoCartasAgotadas = state.mantenimientoCartasAgotadas||[];
+      state.mantenimientoCartasAgotadas.push(def.id);
+    }
+    return {nivelNuevo, maxAlcanzado};
+  }
+
+  function resolverCartaMantenimiento(idx, tiradas){
+    const instancia=state.mantenimientoCartas[idx];
+    const def=cartaDefM(instancia.cartaId);
+    const suma=tiradas.reduce((a,b)=>a+b,0);
+    let resultado;
+    if(def.tipo==='directa'){
+      const exito = suma>=def.dificultad;
+      if(exito){
+        const texto=aplicarEfectoDirectaMantenimiento(def);
+        state.mantenimientoCartas[idx]=generarCartaAleatoriaMantenimiento(state.mantenimientoCartas.map(c=>c.cartaId)) || instancia;
+        resultado={tipo:'directa', exito:true, suma, dificultad:def.dificultad, texto};
+      } else {
+        resultado={tipo:'directa', exito:false, suma, dificultad:def.dificultad, texto:'La carta se queda en tu mano — puedes reintentarlo más adelante'};
+      }
+    } else {
+      const dificultadActual=dificultadActualNivelM(def);
+      const exito = suma>=dificultadActual;
+      if(exito){
+        const {nivelNuevo, maxAlcanzado}=aplicarNivelMejoraMantenimiento(def);
+        state.mantenimientoCartas[idx]=generarCartaAleatoriaMantenimiento(state.mantenimientoCartas.map(c=>c.cartaId)) || instancia;
+        resultado={tipo:'nivel', exito:true, suma, dificultad:dificultadActual, nivelNuevo, maxAlcanzado, nombre:def.nombre};
+      } else {
+        resultado={tipo:'nivel', exito:false, suma, dificultad:dificultadActual, nombre:def.nombre, texto:'La carta se queda en tu mano — puedes reintentarlo más adelante'};
+      }
+    }
+    guardarEstado();
+    return resultado;
+  }
+
+  function colorCampo(valor){ if(valor>=70) return 'green'; if(valor>=40) return 'yellow'; return 'red'; }
+  // Foto de un puesto del cuerpo técnico — si está vacante (despedido o
+  // todavía sin cubrir), se usa la variante en blanco y negro cuyo
+  // nombre de archivo termina en "_escenario" en vez de la foto normal.
+  // Foto de un puesto del cuerpo técnico — nombres de archivo reales del
+  // proyecto: {carpeta}/{archivo}_hombre.png o _mujer.png según quién lo
+  // ocupe, y {archivo}_escenario.png (sin género) en blanco y negro
+  // cuando el puesto está vacante (despedido o sin cubrir todavía).
+  function staffFotoHTML(carpeta, archivoBase, alt, iconoFallback, genero, vacante){
+    const ruta = vacante
+      ? `assets/equipo_tecnico/${carpeta}/${archivoBase}_escenario.png`
+      : `assets/equipo_tecnico/${carpeta}/${archivoBase}_${genero==='mujer'?'mujer':'hombre'}.png`;
+    const estiloGris = vacante ? ' style="filter:grayscale(1)"' : '';
+    return `<img src="${ruta}" alt="${alt}"${vacante?' title="Puesto vacante"':''} class="lm-staff-photo-img"${estiloGris} onerror="this.onerror=null;this.style.display='none';this.nextElementSibling.style.display='flex';">
+      <div class="lm-staff-photo-fallback${vacante?' lm-staff-photo-vacante':''}" style="display:none"><i class="ph ph-bold ${iconoFallback}"></i></div>`;
+  }
+  // Cuánto se "seca" visualmente el campo — nada sutil a propósito: con
+  // el césped perfecto (100) no hay overlay, y va ganando marrón de forma
+  // lineal y notoria a medida que baja, hasta quedar claramente reseco
+  // cerca de 0. Coexiste con el clima porque es una capa aparte dentro de
+  // #lmPitchBox (igual que la capa de lluvia/nieve): el filtro de clima
+  // se sigue aplicando sobre #lmPitchBox entero, por encima de esto.
+  function campoOpacidadDesgaste(campo){
+    const c=Math.max(0,Math.min(100, campo===undefined?100:campo));
+    return Math.max(0, (100-c)/100*0.85).toFixed(2);
+  }
+  function campoBarraHTML(valor, mini){
+    const wrap = mini ? 'lm-campo-bar-wrap-mini' : 'lm-campo-bar-wrap';
+    return `<div class="${wrap}"><div class="fatigue-bar fatigue-${colorCampo(valor)}" style="width:${Math.max(0,Math.min(100,valor))}%"></div></div>`;
+  }
+  // Barra bidireccional — CALCO exacto de la barra de MORAL de Copa
+  // Leyendas (.morale-track/.morale-fill), reutilizada tanto para la
+  // satisfacción de la afición (-100..100) como para la moral del propio
+  // equipo (-50..50). "claseExtra" permite un acento de color distinto
+  // para cada una (oro para afición, verde/rojo de siempre para moral),
+  // así las tres barras del estadio quedan bien diferenciadas entre sí.
+  function bidireccionalBarraHTML(valor, rango, claseExtra){
+    const pct=Math.min(50, Math.abs(valor)/rango*50);
+    const positivo=valor>=0;
+    const left = positivo ? '50%' : (50-pct)+'%';
+    return `<div class="morale-track">
+      <div class="morale-neg-zone"></div>
+      <div class="morale-pos-zone"></div>
+      <div class="morale-center"></div>
+      <div class="morale-fill ${claseExtra||''} ${positivo?'positive':'negative'}" style="width:${pct}%;left:${left}"></div>
+      <div class="morale-zero-marker"></div>
+    </div>`;
+  }
+  function satisfaccionBarraHTML(valor){ return bidireccionalBarraHTML(valor, 100, 'lm-sat-fill'); }
+  function moralBarraHTML(valor){ return bidireccionalBarraHTML(valor, 50, ''); }
+
+  function formatoDinero(v){ return Math.round(v||0).toLocaleString('es-ES')+'€'; }
+  function registrarMovimientoFinanciero(concepto, monto, jornada){
+    state.finanzasHistorial = state.finanzasHistorial||[];
+    state.finanzasHistorial.push({concepto, monto:Math.round(monto), jornada, mes:Math.floor((jornada-1)/4)+1});
+    if(state.finanzasHistorial.length>250) state.finanzasHistorial=state.finanzasHistorial.slice(-250);
+  }
+  function nivelTotalDe(niveles){ return Object.values(niveles||{}).reduce((a,b)=>a+b,0); }
+  // Nómina mensual — jugadores + los 4 departamentos técnicos. Cuanto más
+  // nivel tenga un departamento, más cuesta mantenerlo (igual que un
+  // jugador de sobre mejor es más caro). Se cobra una vez al entrar en
+  // cada mes (cada 4 jornadas).
+  function calcularNominaMensual(){
+    const nominaJugadores=(state.plantilla||[]).reduce((s,p)=>s+(p.salario||0),0);
+    const trab=state.trabajadores||{};
+    const nominaMedico=(trab.medico?trab.medico.sueldo:0)+nivelTotalDe(state.medicoNiveles)*1200;
+    const nominaMantenimiento=(trab.mantenimiento?trab.mantenimiento.sueldo:0)+nivelTotalDe(state.mantenimientoNiveles)*1200;
+    const nominaDG=(trab.directorGeneral?trab.directorGeneral.sueldo:0)+nivelTotalDe(state.directorGeneralNiveles)*1500;
+    const nominaDD=(trab.directorDeportivo?trab.directorDeportivo.sueldo:0)+nivelTotalDe(state.directorDeportivoNiveles)*1500;
+    const nominaStaff=nominaMedico+nominaMantenimiento+nominaDG+nominaDD;
+    const ingresoPatrocinio=nivelDeDG('ingresoPatrocinio')*15000;
+    return {nominaJugadores, nominaStaff, ingresoPatrocinio, total:nominaJugadores+nominaStaff};
+  }
+  function aplicarNominaMensual(){
+    const n=calcularNominaMensual();
+    let nominaJugadores=n.nominaJugadores;
+    if(state.directorDeportivoBonos && state.directorDeportivoBonos.descuentoNomina){
+      nominaJugadores=Math.round(nominaJugadores*(1-state.directorDeportivoBonos.descuentoNomina));
+      state.directorDeportivoBonos.descuentoNomina=0;
+    }
+    let nominaStaff=n.nominaStaff;
+    if(state.directorGeneralBonos && state.directorGeneralBonos.descuentoNomina){
+      nominaStaff=Math.round(nominaStaff*(1-state.directorGeneralBonos.descuentoNomina));
+      state.directorGeneralBonos.descuentoNomina=0;
+    }
+    state.capital=Math.round((state.capital||0)-nominaJugadores-nominaStaff+n.ingresoPatrocinio);
+    registrarMovimientoFinanciero('Nómina de jugadores', -nominaJugadores, state.jornadaActual);
+    registrarMovimientoFinanciero('Nómina del cuerpo técnico', -nominaStaff, state.jornadaActual);
+    if(n.ingresoPatrocinio>0) registrarMovimientoFinanciero('Patrocinio mensual', n.ingresoPatrocinio, state.jornadaActual);
+  }
+
+  /* ---------- 9c-bis. TRABAJADORES del cuerpo técnico — cada uno de los
+     4 puestos (médico, mantenimiento, director general, director
+     deportivo) lo ocupa una persona con su propio nivel (1-5★) y sueldo.
+     Cada mes aparece un puñado de candidatos nuevos para poder comparar
+     si compensa cambiar; despedir deja el puesto vacante (sin sueldo,
+     pero también sin nadie al mando) hasta contratar a otra persona. ---------- */
+  const ROLES_TRABAJO=['medico','mantenimiento','directorGeneral','directorDeportivo'];
+  const SUELDO_BASE_ROL={medico:4000, mantenimiento:4000, directorGeneral:5000, directorDeportivo:5000};
+  const NOMBRE_ROL={medico:'Equipo Médico', mantenimiento:'Mantenimiento y Seguridad', directorGeneral:'Director General', directorDeportivo:'Director Deportivo'};
+  function nivelAleatorioTrabajador(){
+    // 1★ es lo más común, 5★ muy raro — igual de espíritu que la rareza
+    // de un sobre de fichajes.
+    const pesos=[40,28,18,10,4]; // nivel 1..5
+    const total=pesos.reduce((a,b)=>a+b,0);
+    let r=Math.random()*total;
+    for(let i=0;i<pesos.length;i++){ r-=pesos[i]; if(r<=0) return i+1; }
+    return 1;
+  }
+  function generarCandidatoTrabajo(rol){
+    const nivel=nivelAleatorioTrabajador();
+    const sueldo=Math.round(SUELDO_BASE_ROL[rol]*(0.55+nivel*0.55)*(0.9+Math.random()*0.2));
+    return {id:'cand'+Date.now()+Math.floor(Math.random()*100000), rol, ...nombreTrabajadorAleatorio(), nivel, sueldo};
+  }
+  function regenerarCandidatosTrabajo(){
+    const candidatos=[];
+    ROLES_TRABAJO.forEach(rol=>{
+      candidatos.push(generarCandidatoTrabajo(rol));
+      candidatos.push(generarCandidatoTrabajo(rol));
+    });
+    state.candidatosTrabajo=candidatos;
+  }
+  function contratarTrabajador(rol, candidatoId){
+    const candidato=(state.candidatosTrabajo||[]).find(c=>c.id===candidatoId && c.rol===rol);
+    if(!candidato) return false;
+    if(!state.trabajadores) state.trabajadores={};
+    state.trabajadores[rol]={id:'t'+Date.now(), nombre:candidato.nombre, genero:candidato.genero, nivel:candidato.nivel, sueldo:candidato.sueldo};
+    state.candidatosTrabajo=state.candidatosTrabajo.filter(c=>c.id!==candidatoId);
+    guardarEstado();
+    return true;
+  }
+  function despedirTrabajador(rol){
+    if(!state.trabajadores) return;
+    state.trabajadores[rol]=null;
+    guardarEstado();
+  }
+
+  /* ---------- 9d. CARTAS DEL DIRECTOR GENERAL (dorado) — economía y
+     marca del club: patrocinios, merchandising, aforo y precio de
+     entrada. Mismo sistema de 10 cartas que médico/mantenimiento. ---------- */
+  const DIRECTOR_GENERAL_CARTAS_BASE = [
+    {id:'patrocinio_puntual',    tipo:'directa', nombre:'Acuerdo de Patrocinio Puntual', icon:'ph-handshake',      dificultad:6, desc:'Ingreso instantáneo de capital por un acuerdo puntual'},
+    {id:'venta_especial',        tipo:'directa', nombre:'Venta Especial de Merchandising', icon:'ph-t-shirt',      dificultad:5, desc:'Ingreso instantáneo por una campaña de camisetas'},
+    {id:'renegociacion_gastos',  tipo:'directa', nombre:'Renegociación de Contratos',    icon:'ph-file-text',      dificultad:8, desc:'La nómina del próximo mes será más barata'},
+    {id:'evento_corporativo',    tipo:'directa', nombre:'Evento Corporativo',            icon:'ph-confetti',       dificultad:7, desc:'Ingreso instantáneo de capital y un pequeño impulso a la satisfacción'},
+    {id:'auditoria_financiera',  tipo:'directa', nombre:'Auditoría Financiera',          icon:'ph-chart-line-up',  dificultad:9, desc:'Ingreso instantáneo de capital, mayor que el habitual'},
+    {id:'campana_socios',        tipo:'directa', nombre:'Campaña de Socios',             icon:'ph-megaphone',      dificultad:6, desc:'Impulsa la asistencia prevista del próximo partido en casa'},
+    {id:'ampliacion_grada',      tipo:'nivel', track:'aforoExtra',         nombre:'Ampliación de Grada',          icon:'ph-stairs',       dificultadBase:9, dificultadPaso:5, desc:'Amplía permanentemente el aforo del estadio'},
+    {id:'cartera_patrocinadores',tipo:'nivel', track:'ingresoPatrocinio',  nombre:'Cartera de Patrocinadores',    icon:'ph-handshake',    dificultadBase:8, dificultadPaso:4, desc:'Aumenta el ingreso fijo por patrocinio cada mes'},
+    {id:'tienda_merchandising',  tipo:'nivel', track:'ingresoMerchandising',nombre:'Tienda y Merchandising',      icon:'ph-t-shirt',      dificultadBase:8, dificultadPaso:4, desc:'Aumenta lo recaudado en merchandising por cada asistente'},
+    {id:'relaciones_aficion',    tipo:'nivel', track:'toleranciaPrecio',   nombre:'Relaciones con la Afición',    icon:'ph-users-three',  dificultadBase:8, dificultadPaso:4, desc:'Permite subir el precio de la entrada con menos enfado de la afición'}
+  ];
+  function cartaDefDG(id){ return DIRECTOR_GENERAL_CARTAS_BASE.find(c=>c.id===id); }
+  function nivelDeDG(track){ return (state.directorGeneralNiveles && state.directorGeneralNiveles[track]) || 0; }
+  function dificultadActualNivelDG(def){ return def.dificultadBase + nivelDeDG(def.track)*def.dificultadPaso; }
+  function generarCartaAleatoriaDG(excluirIds){
+    excluirIds=excluirIds||[];
+    const agotadas=state.directorGeneralCartasAgotadas||[];
+    const disponibles=DIRECTOR_GENERAL_CARTAS_BASE.filter(c=>!excluirIds.includes(c.id) && !agotadas.includes(c.id));
+    const pool=disponibles.length?disponibles:DIRECTOR_GENERAL_CARTAS_BASE.filter(c=>!agotadas.includes(c.id));
+    if(!pool.length) return null;
+    const def=pool[Math.floor(Math.random()*pool.length)];
+    return {cartaId:def.id, progreso:0, nivelActual:1};
+  }
+  function inicializarCartasDG(){
+    const cartas=[];
+    for(let i=0;i<3;i++){ const nueva=generarCartaAleatoriaDG(cartas.map(c=>c.cartaId)); if(nueva) cartas.push(nueva); }
+    return cartas;
+  }
+  function cambiarCartaDG(idx){
+    if(state.directorGeneralCambioUsado) return false;
+    const otras=state.directorGeneralCartas.filter((c,i)=>i!==idx).map(c=>c.cartaId);
+    const nueva=generarCartaAleatoriaDG(otras);
+    if(!nueva) return false;
+    state.directorGeneralCartas[idx]=nueva;
+    state.directorGeneralCambioUsado=true;
+    guardarEstado();
+    return true;
+  }
+  function aplicarEfectoDirectaDG(def){
+    switch(def.id){
+      case 'patrocinio_puntual': {
+        const monto=18000+Math.round(Math.random()*7000);
+        state.capital=(state.capital||0)+monto;
+        registrarMovimientoFinanciero('Patrocinio puntual', monto, state.jornadaActual);
+        return `Ingreso de ${formatoDinero(monto)}`;
+      }
+      case 'venta_especial': {
+        const monto=9000+Math.round(Math.random()*4000);
+        state.capital=(state.capital||0)+monto;
+        registrarMovimientoFinanciero('Venta especial de merchandising', monto, state.jornadaActual);
+        return `Ingreso de ${formatoDinero(monto)}`;
+      }
+      case 'renegociacion_gastos':
+        state.directorGeneralBonos=state.directorGeneralBonos||{};
+        state.directorGeneralBonos.descuentoNomina=0.15;
+        return 'La nómina del cuerpo técnico del próximo mes será un 15% más barata';
+      case 'evento_corporativo': {
+        const monto=12000+Math.round(Math.random()*5000);
+        state.capital=(state.capital||0)+monto;
+        state.estadio.satisfaccion=Math.max(-100,Math.min(100, state.estadio.satisfaccion+4));
+        registrarMovimientoFinanciero('Evento corporativo', monto, state.jornadaActual);
+        return `Ingreso de ${formatoDinero(monto)} y la afición lo agradece`;
+      }
+      case 'auditoria_financiera': {
+        const monto=25000+Math.round(Math.random()*10000);
+        state.capital=(state.capital||0)+monto;
+        registrarMovimientoFinanciero('Auditoría financiera', monto, state.jornadaActual);
+        return `Ingreso de ${formatoDinero(monto)}`;
+      }
+      case 'campana_socios':
+        state.directorGeneralBonos=state.directorGeneralBonos||{};
+        state.directorGeneralBonos.boostAsistencia=0.10;
+        return 'La asistencia del próximo partido en casa subirá algo más de lo habitual';
+      default: return 'Aplicado';
+    }
+  }
+  function aplicarNivelMejoraDG(def){
+    if(!state.directorGeneralNiveles) state.directorGeneralNiveles={aforoExtra:0, ingresoPatrocinio:0, ingresoMerchandising:0, toleranciaPrecio:0};
+    const nivelNuevo=Math.min(NIVEL_MAXIMO_EQUIPO, nivelDeDG(def.track)+1);
+    state.directorGeneralNiveles[def.track]=nivelNuevo;
+    if(def.track==='aforoExtra'){
+      state.estadio.aforoTotal=(state.estadio.aforoTotal||12000)+1500;
+    }
+    const maxAlcanzado=nivelNuevo>=NIVEL_MAXIMO_EQUIPO;
+    if(maxAlcanzado){
+      state.directorGeneralCartasAgotadas=state.directorGeneralCartasAgotadas||[];
+      state.directorGeneralCartasAgotadas.push(def.id);
+    }
+    return {nivelNuevo, maxAlcanzado};
+  }
+  function resolverCartaDG(idx, tiradas){
+    const instancia=state.directorGeneralCartas[idx];
+    const def=cartaDefDG(instancia.cartaId);
+    const suma=tiradas.reduce((a,b)=>a+b,0);
+    let resultado;
+    if(def.tipo==='directa'){
+      const exito=suma>=def.dificultad;
+      if(exito){
+        const texto=aplicarEfectoDirectaDG(def);
+        state.directorGeneralCartas[idx]=generarCartaAleatoriaDG(state.directorGeneralCartas.map(c=>c.cartaId)) || instancia;
+        resultado={tipo:'directa', exito:true, suma, dificultad:def.dificultad, texto};
+      } else {
+        resultado={tipo:'directa', exito:false, suma, dificultad:def.dificultad, texto:'La carta se queda en tu mano — puedes reintentarlo más adelante'};
+      }
+    } else {
+      const dificultadActual=dificultadActualNivelDG(def);
+      const exito=suma>=dificultadActual;
+      if(exito){
+        const {nivelNuevo, maxAlcanzado}=aplicarNivelMejoraDG(def);
+        state.directorGeneralCartas[idx]=generarCartaAleatoriaDG(state.directorGeneralCartas.map(c=>c.cartaId)) || instancia;
+        resultado={tipo:'nivel', exito:true, suma, dificultad:dificultadActual, nivelNuevo, maxAlcanzado, nombre:def.nombre};
+      } else {
+        resultado={tipo:'nivel', exito:false, suma, dificultad:dificultadActual, nombre:def.nombre, texto:'La carta se queda en tu mano — puedes reintentarlo más adelante'};
+      }
+    }
+    guardarEstado();
+    return resultado;
+  }
+
+  /* ---------- 9e. CARTAS DEL DIRECTOR DEPORTIVO (plata) — fichajes.
+     La pieza especial es "Sobres de Fichajes" (tipo 'sobre'): sube de
+     nivel con dados igual que una carta de nivel normal, pero además
+     lleva un botón propio de "ABRIR SOBRE" siempre visible una vez
+     alcanzado un nivel — se puede abrir cuando se quiera (pagando un
+     coste de capital), sin depender de la tirada. Al completar el nivel
+     3 se abre automáticamente un sobre de máxima calidad gratis, como
+     recompensa. ---------- */
+  const DIRECTOR_DEPORTIVO_CARTAS_BASE = [
+    {id:'ojeo_urgente',            tipo:'directa', nombre:'Ojeo Urgente',            icon:'ph-binoculars',   dificultad:8, desc:'Trae gratis un sobre de fichajes al nivel actual de tus Sobres'},
+    {id:'venta_jugador',           tipo:'directa', nombre:'Venta de Jugador',        icon:'ph-hand-coins',   dificultad:6, desc:'Vende a tu peor suplente por un ingreso de capital'},
+    {id:'prestamo_breve',          tipo:'directa', nombre:'Préstamo Breve',          icon:'ph-bank',         dificultad:6, desc:'Ingreso instantáneo de capital'},
+    {id:'negociacion_salarial',    tipo:'directa', nombre:'Negociación Salarial',    icon:'ph-file-text',    dificultad:9, desc:'La nómina de jugadores del próximo mes será más barata'},
+    {id:'revision_medica_fichajes',tipo:'directa', nombre:'Revisión Médica de Fichajes', icon:'ph-heartbeat', dificultad:7, desc:'Reduce el riesgo de lesión de la plantilla en el próximo partido'},
+    {id:'gira_promocional',        tipo:'directa', nombre:'Gira Promocional',        icon:'ph-airplane-tilt',dificultad:6, desc:'Ingreso instantáneo de capital y un pequeño impulso a la moral'},
+    {id:'sobres_fichajes',   tipo:'sobre', track:'sobresFichajes', nombre:'Sobres de Fichajes',      icon:'ph-envelope-open', dificultadBase:9, dificultadPaso:5, desc:'Sube el nivel de tus sobres — ábrelos cuando quieras para ver qué jugadores traen'},
+    {id:'red_ojeadores',     tipo:'nivel', track:'calidadOjeo',    nombre:'Red de Ojeadores',        icon:'ph-binoculars',    dificultadBase:8, dificultadPaso:4, desc:'Mejora la calidad de los jugadores que salen en los sobres'},
+    {id:'negociacion_contratos',tipo:'nivel', track:'ahorroSalarial', nombre:'Negociación de Contratos', icon:'ph-handshake', dificultadBase:8, dificultadPaso:4, desc:'Reduce el salario de los jugadores fichados por sobre'},
+    {id:'formacion_cantera', tipo:'nivel', track:'costeSobres',    nombre:'Formación de Cantera',    icon:'ph-graduation-cap',dificultadBase:8, dificultadPaso:4, desc:'Reduce la dificultad para subir de nivel los Sobres de Fichajes'}
+  ];
+  function cartaDefDD(id){ return DIRECTOR_DEPORTIVO_CARTAS_BASE.find(c=>c.id===id); }
+  function nivelDeDD(track){ return (state.directorDeportivoNiveles && state.directorDeportivoNiveles[track]) || 0; }
+  function dificultadActualNivelDD(def){
+    let d=def.dificultadBase + nivelDeDD(def.track)*def.dificultadPaso;
+    if(def.track==='sobresFichajes') d-=nivelDeDD('costeSobres')*2;
+    return Math.max(4, d);
+  }
+  function generarCartaAleatoriaDD(excluirIds){
+    excluirIds=excluirIds||[];
+    const agotadas=state.directorDeportivoCartasAgotadas||[];
+    const disponibles=DIRECTOR_DEPORTIVO_CARTAS_BASE.filter(c=>!excluirIds.includes(c.id) && !agotadas.includes(c.id));
+    const pool=disponibles.length?disponibles:DIRECTOR_DEPORTIVO_CARTAS_BASE.filter(c=>!agotadas.includes(c.id));
+    if(!pool.length) return null;
+    const def=pool[Math.floor(Math.random()*pool.length)];
+    return {cartaId:def.id, progreso:0, nivelActual:1};
+  }
+  function inicializarCartasDD(){
+    const cartas=[];
+    for(let i=0;i<3;i++){ const nueva=generarCartaAleatoriaDD(cartas.map(c=>c.cartaId)); if(nueva) cartas.push(nueva); }
+    return cartas;
+  }
+  function cambiarCartaDD(idx){
+    if(state.directorDeportivoCambioUsado) return false;
+    const otras=state.directorDeportivoCartas.filter((c,i)=>i!==idx).map(c=>c.cartaId);
+    const nueva=generarCartaAleatoriaDD(otras);
+    if(!nueva) return false;
+    state.directorDeportivoCartas[idx]=nueva;
+    state.directorDeportivoCambioUsado=true;
+    guardarEstado();
+    return true;
+  }
+  const SOBRE_COSTES={1:5000, 2:12000, 3:25000};
+  // Genera un jugador de sobre: cuanto mayor el nivel del sobre y la Red
+  // de Ojeadores, mejor (y más caro de mantener) — tal como se pidió.
+  function generarJugadorSobre(nivelSobre){
+    const calidad=nivelDeDD('calidadOjeo');
+    const overall=Math.max(45, Math.min(94, 50+nivelSobre*10+calidad*4+Math.floor(Math.random()*8)));
+    const posiciones=['POR','DFC','LI','LD','MC','EI','ED','DC'];
+    const position=posiciones[Math.floor(Math.random()*posiciones.length)];
+    const variar=()=>Math.max(30,Math.min(96, overall+Math.floor(Math.random()*13)-6));
+    const ahorro=nivelDeDD('ahorroSalarial')*0.12;
+    const salario=Math.round(calcularSalario(overall)*(1-ahorro));
+    return {
+      id:'s'+Date.now()+Math.floor(Math.random()*100000), name:nombreJugadorAleatorio(), position, overall,
+      attack:variar(), defense:variar(), pace:variar(), passing:variar(), technique:variar(),
+      fatigue:100, racha:0, esSuplente:true,
+      injured:false, injuryWeeks:0, injurySeverity:null,
+      salario, nivelSobre
+    };
+  }
+  function abrirSobreEnNivel(nivelSobre){
+    const coste=SOBRE_COSTES[nivelSobre]||SOBRE_COSTES[1];
+    if((state.capital||0)<coste) return null;
+    state.capital-=coste;
+    registrarMovimientoFinanciero('Sobre de fichajes (nivel '+nivelSobre+')', -coste, state.jornadaActual);
+    const jugadores=[1,2,3].map(()=>generarJugadorSobre(nivelSobre));
+    guardarEstado();
+    return jugadores;
+  }
+  function ficharJugadorSobre(jugador){
+    state.plantilla.push({...jugador, esSuplente:true});
+    guardarEstado();
+  }
+  // Venta manual de jugadores desde la burbuja del Director Deportivo —
+  // blindada para no dejar nunca la plantilla sin gente para jugar:
+  // nunca por debajo de 11 en total, y siempre al menos 11 SANOS
+  // disponibles después de la venta (contando lesionados aparte).
+  function puedeVenderJugador(jugadorId){
+    const plantilla=state.plantilla||[];
+    if(plantilla.length<=11) return {ok:false, motivo:'No puedes bajar de 11 jugadores en la plantilla'};
+    const sanosSinEste=plantilla.filter(p=>p.id!==jugadorId && !p.injured).length;
+    if(sanosSinEste<11) return {ok:false, motivo:'Necesitas al menos 11 jugadores sanos disponibles después de la venta'};
+    return {ok:true};
+  }
+  function venderJugadorManual(jugadorId){
+    const jugador=(state.plantilla||[]).find(p=>p.id===jugadorId);
+    if(!jugador) return {ok:false, motivo:'Ese jugador ya no está en la plantilla'};
+    const chequeo=puedeVenderJugador(jugadorId);
+    if(!chequeo.ok) return chequeo;
+    const monto=Math.max(3000, Math.round(jugador.overall*400));
+    state.plantilla=state.plantilla.filter(p=>p.id!==jugadorId);
+    if(state.alineacion){ Object.keys(state.alineacion).forEach(k=>{ if(state.alineacion[k]===jugadorId) delete state.alineacion[k]; }); }
+    state.capital=(state.capital||0)+monto;
+    registrarMovimientoFinanciero('Venta de '+jugador.name, monto, state.jornadaActual);
+    guardarEstado();
+    return {ok:true, monto, jugador};
+  }
+  function aplicarEfectoDirectaDD(def){
+    switch(def.id){
+      case 'ojeo_urgente': {
+        const nivelSobre=Math.max(1, nivelDeDD('sobresFichajes'));
+        const jugadores=[1,2,3].map(()=>generarJugadorSobre(nivelSobre));
+        return {texto:`Tu ojeador de urgencia trae un sobre de nivel ${nivelSobre} gratis`, sobreAbierto:jugadores};
+      }
+      case 'venta_jugador': {
+        const peor=state.plantilla.length?[...state.plantilla].sort((a,b)=>a.overall-b.overall)[0]:null;
+        if(!peor) return {texto:'No queda ningún jugador que vender'};
+        const monto=Math.max(3000, Math.round(peor.overall*400));
+        state.plantilla=state.plantilla.filter(p=>p.id!==peor.id);
+        if(state.alineacion){ Object.keys(state.alineacion).forEach(k=>{ if(state.alineacion[k]===peor.id) delete state.alineacion[k]; }); }
+        state.capital=(state.capital||0)+monto;
+        registrarMovimientoFinanciero('Venta de '+peor.name, monto, state.jornadaActual);
+        return {texto:`${peor.name} sale del club por ${formatoDinero(monto)}`};
+      }
+      case 'prestamo_breve': {
+        const monto=15000+Math.round(Math.random()*6000);
+        state.capital=(state.capital||0)+monto;
+        registrarMovimientoFinanciero('Préstamo breve', monto, state.jornadaActual);
+        return {texto:`Ingreso de ${formatoDinero(monto)}`};
+      }
+      case 'negociacion_salarial':
+        state.directorDeportivoBonos=state.directorDeportivoBonos||{};
+        state.directorDeportivoBonos.descuentoNomina=0.15;
+        return {texto:'La nómina de jugadores del próximo mes será un 15% más barata'};
+      case 'revision_medica_fichajes':
+        state.medicoBonos=state.medicoBonos||{};
+        state.medicoBonos.riesgoLesionSiguiente=(state.medicoBonos.riesgoLesionSiguiente||1)*0.6;
+        return {texto:'Riesgo de lesión reducido en el próximo partido'};
+      case 'gira_promocional': {
+        const monto=10000+Math.round(Math.random()*4000);
+        state.capital=(state.capital||0)+monto;
+        state.moral=Math.max(-50,Math.min(50,(state.moral||0)+3));
+        registrarMovimientoFinanciero('Gira promocional', monto, state.jornadaActual);
+        return {texto:`Ingreso de ${formatoDinero(monto)} y un empujón a la moral`};
+      }
+      default: return {texto:'Aplicado'};
+    }
+  }
+  function aplicarNivelMejoraDD(def){
+    if(!state.directorDeportivoNiveles) state.directorDeportivoNiveles={calidadOjeo:0, ahorroSalarial:0, sobresFichajes:0, costeSobres:0};
+    const nivelNuevo=Math.min(NIVEL_MAXIMO_EQUIPO, nivelDeDD(def.track)+1);
+    state.directorDeportivoNiveles[def.track]=nivelNuevo;
+    const maxAlcanzado=nivelNuevo>=NIVEL_MAXIMO_EQUIPO;
+    if(maxAlcanzado){
+      state.directorDeportivoCartasAgotadas=state.directorDeportivoCartasAgotadas||[];
+      state.directorDeportivoCartasAgotadas.push(def.id);
+    }
+    let sobreAutomatico=null;
+    if(def.track==='sobresFichajes' && maxAlcanzado){
+      sobreAutomatico=[1,2,3].map(()=>generarJugadorSobre(3));
+    }
+    return {nivelNuevo, maxAlcanzado, sobreAutomatico};
+  }
+  function resolverCartaDD(idx, tiradas){
+    const instancia=state.directorDeportivoCartas[idx];
+    const def=cartaDefDD(instancia.cartaId);
+    const suma=tiradas.reduce((a,b)=>a+b,0);
+    let resultado;
+    if(def.tipo==='directa'){
+      const exito=suma>=def.dificultad;
+      if(exito){
+        const efecto=aplicarEfectoDirectaDD(def);
+        state.directorDeportivoCartas[idx]=generarCartaAleatoriaDD(state.directorDeportivoCartas.map(c=>c.cartaId)) || instancia;
+        resultado={tipo:'directa', exito:true, suma, dificultad:def.dificultad, texto:efecto.texto, sobreAbierto:efecto.sobreAbierto||null};
+      } else {
+        resultado={tipo:'directa', exito:false, suma, dificultad:def.dificultad, texto:'La carta se queda en tu mano — puedes reintentarlo más adelante'};
+      }
+    } else {
+      const dificultadActual=dificultadActualNivelDD(def);
+      const exito=suma>=dificultadActual;
+      if(exito){
+        const {nivelNuevo, maxAlcanzado, sobreAutomatico}=aplicarNivelMejoraDD(def);
+        state.directorDeportivoCartas[idx]=generarCartaAleatoriaDD(state.directorDeportivoCartas.map(c=>c.cartaId)) || instancia;
+        resultado={tipo:'nivel', exito:true, suma, dificultad:dificultadActual, nivelNuevo, maxAlcanzado, nombre:def.nombre, sobreAbierto:sobreAutomatico};
+      } else {
+        resultado={tipo:'nivel', exito:false, suma, dificultad:dificultadActual, nombre:def.nombre, texto:'La carta se queda en tu mano — puedes reintentarlo más adelante'};
+      }
     }
     guardarEstado();
     return resultado;
@@ -1071,9 +2166,10 @@
       if(next) next.addEventListener('click', ()=>{
         if(!setupData.moneda) return;
         if(typeof window.playSound==='function') window.playSound('select');
-        // Si ya hay una identidad (nombre+escudo) guardada de antes, no se
-        // vuelve a pedir — se salta directo a la pantalla de confirmación.
-        const identidad=cargarIdentidad();
+        // Si ya hay una identidad (nombre+escudo) guardada de antes —
+        // propia de Liga Manager o, si es la primera vez, la preferencia
+        // fija de Copa Leyendas — no se vuelve a pedir.
+        const identidad=identidadPorDefecto();
         if(identidad && identidad.nombre && identidad.crest){
           setupData.nombre=identidad.nombre;
           setupData.escudo=identidad.crest;
@@ -1148,6 +2244,48 @@
     if(!state.medicoBonos) state.medicoBonos={};
     if(!state.medicoCartasAgotadas) state.medicoCartasAgotadas=[];
     if(!state.medicoHistorial) state.medicoHistorial=[];
+    if(!state.medicoNiveles) state.medicoNiveles={curacionMuscular:0, curacionOsea:0, prevencionMuscular:0, prevencionOsea:0};
+    if(!state.estadio) state.estadio={campo:90, satisfaccion:10, aforoTotal:12000, ultimaAsistencia:null};
+    if(state.estadio.aforoTotal===undefined) state.estadio.aforoTotal=12000;
+    if(state.estadio.ultimaAsistencia===undefined) state.estadio.ultimaAsistencia=null;
+    if(state.moral===undefined) state.moral=0;
+    if(state.rachaResultados===undefined) state.rachaResultados=0;
+    if(state.capital===undefined) state.capital=400000;
+    if(state.precioEntrada===undefined) state.precioEntrada=15;
+    if(state.mesesPagados===undefined) state.mesesPagados=0;
+    if(!state.finanzasHistorial) state.finanzasHistorial=[];
+    if(!state.directorGeneralCartas || !state.directorGeneralCartas.length) state.directorGeneralCartas=inicializarCartasDG();
+    if(!state.directorGeneralCartasAgotadas) state.directorGeneralCartasAgotadas=[];
+    if(!state.directorGeneralHistorial) state.directorGeneralHistorial=[];
+    if(!state.directorGeneralNiveles) state.directorGeneralNiveles={aforoExtra:0, ingresoPatrocinio:0, ingresoMerchandising:0, toleranciaPrecio:0};
+    if(!state.directorGeneralBonos) state.directorGeneralBonos={};
+    if(!state.directorDeportivoCartas || !state.directorDeportivoCartas.length) state.directorDeportivoCartas=inicializarCartasDD();
+    if(!state.directorDeportivoCartasAgotadas) state.directorDeportivoCartasAgotadas=[];
+    if(!state.directorDeportivoHistorial) state.directorDeportivoHistorial=[];
+    if(!state.directorDeportivoNiveles) state.directorDeportivoNiveles={calidadOjeo:0, ahorroSalarial:0, sobresFichajes:0, costeSobres:0};
+    if(!state.directorDeportivoBonos) state.directorDeportivoBonos={};
+    if(!state.trabajadores){
+      state.trabajadores={
+        medico:{id:'t0', ...nombreTrabajadorAleatorio(), nivel:1, sueldo:4400},
+        mantenimiento:{id:'t1', ...nombreTrabajadorAleatorio(), nivel:1, sueldo:4400},
+        directorGeneral:{id:'t2', ...nombreTrabajadorAleatorio(), nivel:1, sueldo:5500},
+        directorDeportivo:{id:'t3', ...nombreTrabajadorAleatorio(), nivel:1, sueldo:5500}
+      };
+    }
+    // Partidas guardadas de antes de tener género: se les asigna uno al
+    // azar la primera vez que se cargan, para no romper el render.
+    Object.keys(state.trabajadores||{}).forEach(rol=>{
+      const t=state.trabajadores[rol];
+      if(t && !t.genero) t.genero = Math.random()<0.5 ? 'hombre' : 'mujer';
+    });
+    if(!state.candidatosTrabajo || !state.candidatosTrabajo.length) regenerarCandidatosTrabajo();
+    if(state.mesTrabajadoresGenerado===undefined) state.mesTrabajadoresGenerado=Math.floor((state.jornadaActual-1)/4)+1;
+    if(!state.mantenimientoCartas || !state.mantenimientoCartas.length) state.mantenimientoCartas=inicializarCartasMantenimiento();
+    if(!state.mantenimientoCartasAgotadas) state.mantenimientoCartasAgotadas=[];
+    if(!state.mantenimientoHistorial) state.mantenimientoHistorial=[];
+    if(!state.mantenimientoNiveles) state.mantenimientoNiveles={prevencionDesgaste:0, recuperacionCesped:0, boostSatisfaccion:0, proteccionSatisfaccion:0};
+    if(!state.mantenimientoBonos) state.mantenimientoBonos={};
+    if(state.dadoRerollsDisponibles===undefined) state.dadoRerollsDisponibles=1;
 
     const clasif=calcularClasificacion();
     const j=state.jornadaActual-1;
@@ -1155,7 +2293,11 @@
     const miPartido= proximaJornada ? proximaJornada.find(p=>p.home.id==='lm_0'||p.away.id==='lm_0') : null;
     const rival= miPartido ? (miPartido.home.id==='lm_0' ? miPartido.away : miPartido.home) : null;
     const esLocal= miPartido ? miPartido.home.id==='lm_0' : null;
+    const clima= rival ? climaDelPartido() : null;
     const notif=state.medicoNotificacion;
+    const notifMant = !!(state.estadio && (state.estadio.satisfaccion<=-50 || state.estadio.campo<=20));
+    const notifDG = (state.capital||0)<0;
+    const notifDD = nivelDeDD('sobresFichajes')>=1;
     const monedaInfo=MONEDAS[state.moneda]||MONEDAS.EUR;
 
     function fatigueColor(f){ if(f>=75) return 'green'; if(f>=40) return 'yellow'; return 'red'; }
@@ -1181,10 +2323,11 @@
         <td>${fatigueBarHTML(p)}</td>
         <td>${posCell}</td>
         <td>${p.attack}</td><td>${p.defense}</td><td>${p.pace}</td><td>${p.passing}</td><td>${p.technique}</td>
-        <td><strong>${p.overall}</strong></td>
+        <td><strong>${efectivoOverall(p)}</strong></td>
       </tr>`;
     }
     const titularIds=new Set(Object.values(state.alineacion||{}).filter(Boolean));
+    const statsEquipo=calcularStatsEquipoLM();
     // PLANTILLA = quienes están AHORA MISMO en el campo, BANQUILLO = el
     // resto — igual que CONVOCADOS/BANQUILLO en Copa Leyendas, donde un
     // cambio mueve de verdad al jugador de una lista a la otra. Antes se
@@ -1203,7 +2346,7 @@
           return (ai===-1?99:ai)-(bi===-1?99:bi);
         });
       }
-      if(lmSortMode==='rating') return [...lista].sort((a,b)=>b.overall-a.overall);
+      if(lmSortMode==='rating') return [...lista].sort((a,b)=>efectivoOverall(b)-efectivoOverall(a));
       return lista; // 'arrival' = orden de llegada = orden del array tal cual
     }
     const plantillaPrincipal=ordenarPlantilla(state.plantilla.filter(p=>titularIds.has(p.id)));
@@ -1212,17 +2355,26 @@
     const filasBanquillo=banquillo.map(filaJugador).join('');
 
     root.innerHTML = `
+      <div class="lm-staff-bar">
+        <div class="lm-staff-bar-title"><i class="ph ph-bold ph-users-three"></i> CUERPO TÉCNICO</div>
+        <div class="lm-staff-bar-row">
+          ${staffTileHTML('directorGeneral', {btnId:'lmDirectorGeneralBtn', infoId:'lmDirectorGeneralInfoBtn', infoTitle:'Finanzas del club', notif:notifDG, badgeTexto:'!', carpeta:'director_general', archivo:'director_general', alt:'Director General', icono:'ph-briefcase', rolLabel:'DIRECTOR GENERAL', acento:'lm-staff-tile-dg'})}
+          ${staffTileHTML('directorDeportivo', {btnId:'lmDirectorDeportivoBtn', infoId:'lmDirectorDeportivoInfoBtn', infoTitle:'Salarios de la plantilla', notif:notifDD, badgeTexto:'!', carpeta:'director_deportivo', archivo:'director_deportivo', alt:'Director Deportivo', icono:'ph-binoculars', rolLabel:'DIRECTOR DEPORTIVO', acento:'lm-staff-tile-dd'})}
+          ${staffTileHTML('medico', {btnId:'lmMedicoBtn', infoId:'lmMedicoInfoBtn', infoTitle:'Historial médico', notif:notif, badgeTexto:'1', carpeta:'medico', archivo:'medico', alt:'Equipo médico', icono:'ph-first-aid-kit', rolLabel:'EQUIPO MÉDICO'})}
+          ${staffTileHTML('mantenimiento', {btnId:'lmMantenimientoBtn', infoId:'lmMantenimientoInfoBtn', infoTitle:'Estado del estadio', notif:notifMant, badgeTexto:'!', carpeta:'mantenimiento', archivo:'mantenimiento', alt:'Mantenimiento y seguridad', icono:'ph-flag-pennant', rolLabel:'MANTENIMIENTO'})}
+        </div>
+      </div>
       <div class="lm-app-grid">
         <div class="lm-panel lm-left-panel">
           <div class="lm-header-team">
-            ${crestHTML(state.escudo, 60)}
+            ${crestHTML(state.escudo, 76)}
             <div>
               <div class="lm-title">${state.nombreEquipo.toUpperCase()}</div>
               <div class="lm-sub">Jornada ${Math.min(state.jornadaActual,38)} de 38 · ${monedaInfo.symbol}</div>
             </div>
           </div>
           <div class="bench-title">
-            <span>PLANTILLA</span>
+            <span>ONCE TITULAR</span>
             <span style="display:flex;align-items:center;gap:8px">
               <button id="lmSortBtn" class="lm-sort-btn" title="Cambiar orden" aria-label="Cambiar orden">
                 <span id="lmSortLabel">${LM_SORT_LABELS[lmSortMode]}</span>
@@ -1256,10 +2408,20 @@
                 <span class="f-badge">${code.split('-').length} líneas</span>
               </div>`).join('')}
           </div>
+
+          <div class="team-profile box" style="margin-top:14px">
+            <h3>PERFIL DEL EQUIPO</h3>
+            <div class="ovr-team"><span class="team-stat-title">NOTA MEDIA</span><span>${statsEquipo.overall}</span></div>
+            ${[['attack','ATAQUE'],['defense','DEFENSA'],['pace','RITMO'],['passing','PASE'],['technique','TÉCNICA']].map(([k,label])=>`
+              <div class="stat-row"><span>${label}</span><span>${statsEquipo[k]}</span></div>
+              <div class="stat-bar-row"><div class="stat-bar"><div style="width:${Math.max(0,Math.min(100,statsEquipo[k]))}%"></div></div></div>
+            `).join('')}
+            <p class="lm-setup-desc" style="text-align:left;margin-top:6px">Media de los ${state.plantilla.length} jugadores de la plantilla.</p>
+          </div>
         </div>
 
         <div class="lm-center-panel">
-          <div id="lmPitchBox">${PITCH_SVG}${formacionActual().slots.map(def=>{
+          <div id="lmPitchBox">${PITCH_SVG}<div id="lmCampoLayer" style="opacity:${campoOpacidadDesgaste(state.estadio?state.estadio.campo:100)}"></div><div id="lmWeatherLayer"></div>${formacionActual().slots.map(def=>{
             const pid=state.alineacion&&state.alineacion[def.slot];
             const jugador=pid?state.plantilla.find(p=>p.id===pid):null;
             const vacio=!jugador;
@@ -1278,10 +2440,10 @@
               const inPos=jugador.position===label;
               const star=inPos?' <span class="star">★</span>':'';
               const statusIcons=lesionado?'<div class="pitch-status-row"><span class="pitch-status-icon pitch-status-injury" title="Lesionado">✚</span></div>':'';
-              inner=`${statusIcons}<span class="pos-rating">${jugador.overall}</span><div class="player-info">${jugador.name}${star}<div class="player-pos-label${inPos?'':' out-of-position'}">${label}</div></div>`;
+              inner=`${statusIcons}<span class="pos-rating">${efectivoOverall(jugador)}</span><div class="player-info">${jugador.name}${star}<div class="player-pos-label${inPos?'':' out-of-position'}">${label}</div></div>`;
             }
             const clases=['position', vacio?'empty-slot':'locked', lesionado?'lm-pos-injured':'', seleccionado?'highlight-pos':''].filter(Boolean).join(' ');
-            return `<div class="${clases}" data-slot="${def.slot}" style="left:${def.x}%;top:${def.y}%" title="${jugador?jugador.name+' ('+jugador.overall+')':'Vacío'}">${inner}</div>`;
+            return `<div class="${clases}" data-slot="${def.slot}" style="left:${def.x}%;top:${def.y}%" title="${jugador?jugador.name+' ('+efectivoOverall(jugador)+')':'Vacío'}">${inner}</div>`;
           }).join('')}</div>
           <p class="lm-pitch-caption">Toca una posición para asignar o cambiar jugador. Puedes cambiar de formación antes de cada partido.</p>
 
@@ -1289,6 +2451,7 @@
             <button id="lmJugarBtn" class="lm-btn-jugar" ${state.jornadaActual>38?'disabled':''}>
               ${state.jornadaActual>38?'TEMPORADA COMPLETA':'JUGAR JORNADA'}
             </button>
+            <button id="lmTrabajadoresBtn" class="lm-btn-trabajadores">TRABAJADORES</button>
             <button id="lmAbandonarBtn" class="lm-btn-abandonar">ABANDONAR LIGA</button>
             <button id="ligaManagerBackBtn" class="lm-btn-volver">VOLVER AL MENÚ</button>
           </div>
@@ -1299,7 +2462,32 @@
             ${rival ? `
               <div class="lm-vs-label" style="text-align:center;margin-bottom:6px">${esLocal?'JUEGAS EN CASA':'JUEGAS FUERA'}</div>
               <div class="lm-header-team-rival" style="justify-content:center;gap:10px">
-                ${rivalCrestHTML(52, rival.crestImg)}<span class="lm-title" style="font-size:15px">${rival.name}</span>
+                ${rivalCrestHTML(64, rival.crestImg)}<span class="lm-title" style="font-size:15px">${rival.name}</span>
+              </div>
+              ${(()=>{
+                const fila=calcularClasificacion();
+                const idx=fila.findIndex(t=>t.id===rival.id);
+                const datos=fila[idx]||{pj:0,pts:0,gf:0,gc:0};
+                const dg=datos.gf-datos.gc;
+                return `<div class="lm-rival-stats-row">
+                  <span><i class="ph ph-bold ph-ranking"></i> ${idx+1}º</span>
+                  <span><i class="ph ph-bold ph-trophy"></i> ${datos.pts} pts</span>
+                  <span><i class="ph ph-bold ph-soccer-ball"></i> ${dg>=0?'+':''}${dg}</span>
+                </div>`;
+              })()}
+              ${(()=>{
+                const campoRival=campoRivalEstimado(rival);
+                return `<div style="margin-top:6px">
+                  <div class="lm-estadio-bar-label" style="font-size:10px"><i class="ph ph-bold ph-plant" style="font-size:12px"></i><span>ESTADO DE SU CAMPO${esLocal?'':' (hoy juegas aquí)'}</span><span>${campoRival}/100</span></div>
+                  ${campoBarraHTML(campoRival, true)}
+                </div>`;
+              })()}
+              ${weatherDisplayHTML(clima)}
+              <div class="lm-rival-profile">
+                ${[['ATAQUE','attack'],['DEFENSA','defense'],['RITMO','pace'],['PASE','passing'],['TÉCNICA','technique']].map(([label,k])=>`
+                  <div class="stat-row"><span>${label}</span><span>${rival[k]}</span></div>
+                  <div class="stat-bar-row"><div class="stat-bar"><div style="width:${Math.max(0,Math.min(100,rival[k]))}%"></div></div></div>
+                `).join('')}
               </div>` : `<div class="lm-vs-label" style="text-align:center">Temporada finalizada</div>`}
           </div>
           <h3 class="lm-clasif-header" id="lmClasifHeader"><span style="color:var(--gold)">CLASIFICACIÓN</span> <span class="lm-clasif-arrow ${clasifColapsada?'':'lm-clasif-arrow-open'}">▾</span></h3>
@@ -1324,20 +2512,9 @@
           </div>
         </div>
       </div>
-
-      <div class="lm-staffrow">
-        <div class="lm-staff-card ${notif?'has-notif':''}" id="lmMedicoBtn">
-          ${notif?'<span class="lm-staff-badge">1</span>':''}
-          <button class="lm-staff-info-bubble" id="lmMedicoInfoBtn" title="Historial médico">i</button>
-          <div class="lm-staff-photo-wrap">
-            <img src="assets/equipo_tecnico/medico/novato.png" alt="Equipo médico" class="lm-staff-photo-img" onerror="this.onerror=null;this.style.display='none';this.nextElementSibling.style.display='flex';">
-            <div class="lm-staff-photo-fallback" style="display:none"><i class="ph ph-bold ph-first-aid-kit"></i></div>
-          </div>
-          <div class="lm-staff-card-name">EQUIPO MÉDICO</div>
-          <div class="lm-staff-card-desc">Previene, diagnostica y trata las lesiones de tus jugadores</div>
-        </div>
-      </div>
     `;
+
+    if(clima) aplicarClimaVisualLM(clima.id);
 
     const medicoInfoBtn=document.getElementById('lmMedicoInfoBtn');
     if(medicoInfoBtn) medicoInfoBtn.addEventListener('click', (e)=>{
@@ -1387,6 +2564,11 @@
       if(typeof window.playSound==='function') window.playSound('select');
       abandonarLiga();
     });
+    const trabajadoresBtn=document.getElementById('lmTrabajadoresBtn');
+    if(trabajadoresBtn) trabajadoresBtn.addEventListener('click', ()=>{
+      if(typeof window.playSound==='function') window.playSound('select');
+      abrirTrabajadores();
+    });
     const clasifHeader=document.getElementById('lmClasifHeader');
     if(clasifHeader) clasifHeader.addEventListener('click', ()=>{
       if(typeof window.playSound==='function') window.playSound('select');
@@ -1403,6 +2585,39 @@
     if(medicoBtn) medicoBtn.addEventListener('click', ()=>{
       if(typeof window.playSound==='function') window.playSound('select');
       abrirMedico();
+    });
+    const mantenimientoBtn=document.getElementById('lmMantenimientoBtn');
+    if(mantenimientoBtn) mantenimientoBtn.addEventListener('click', ()=>{
+      if(typeof window.playSound==='function') window.playSound('select');
+      abrirMantenimiento();
+    });
+    const mantenimientoInfoBtn=document.getElementById('lmMantenimientoInfoBtn');
+    if(mantenimientoInfoBtn) mantenimientoInfoBtn.addEventListener('click', (e)=>{
+      e.stopPropagation();
+      if(typeof window.playSound==='function') window.playSound('select');
+      abrirEstadoEstadio();
+    });
+    const dgBtn=document.getElementById('lmDirectorGeneralBtn');
+    if(dgBtn) dgBtn.addEventListener('click', ()=>{
+      if(typeof window.playSound==='function') window.playSound('select');
+      abrirDirectorGeneral();
+    });
+    const dgInfoBtn=document.getElementById('lmDirectorGeneralInfoBtn');
+    if(dgInfoBtn) dgInfoBtn.addEventListener('click', (e)=>{
+      e.stopPropagation();
+      if(typeof window.playSound==='function') window.playSound('select');
+      abrirFinanzasDG();
+    });
+    const ddBtn=document.getElementById('lmDirectorDeportivoBtn');
+    if(ddBtn) ddBtn.addEventListener('click', ()=>{
+      if(typeof window.playSound==='function') window.playSound('select');
+      abrirDirectorDeportivo();
+    });
+    const ddInfoBtn=document.getElementById('lmDirectorDeportivoInfoBtn');
+    if(ddInfoBtn) ddInfoBtn.addEventListener('click', (e)=>{
+      e.stopPropagation();
+      if(typeof window.playSound==='function') window.playSound('select');
+      abrirSalariosDD();
     });
     root.querySelectorAll('#lmPitchBox .position').forEach(el=>{
       el.addEventListener('click', ()=>{
@@ -1491,49 +2706,183 @@
   /* ---------- 9c. Historial médico — modal con el listado de lesiones
      tratadas (jornada, rival, tipo, cómo se resolvió) y el progreso de
      las cartas de acumulación, más reciente primero. ---------- */
+  let histTab='tratamientos';
   function abrirHistorialMedico(){
     const overlay=document.createElement('div');
     overlay.id='lmHistorialOverlay';
     const historial=(state.medicoHistorial||[]).slice().reverse(); // más reciente primero
+    const tratamientos=historial.filter(h=>h.tipo!=='progreso');
+    const totalEstrellas=NIVELES_EQUIPO_INFO.reduce((s,info)=>s+nivelDe(info.track),0);
 
-    const filas=historial.map(h=>{
-      if(h.tipo==='progreso'){
-        return `<div class="lm-hist-item lm-hist-progreso">
-          <i class="ph ph-bold ph-trend-up"></i>
+    function pintar(){
+      const filas = tratamientos.map(h=>{
+        const estado = h.resuelta
+          ? `Se recuperó gracias a <strong>${h.resueltoPor}</strong> — estuvo ${h.jornadasReales} jornada${h.jornadasReales===1?'':'s'} sin jugar`
+          : `<span style="color:#e24b4a">Todavía de baja</span> (previsto ${h.semanasPrevistas} jornada${h.semanasPrevistas===1?'':'s'})`;
+        return `<div class="lm-hist-item">
+          <i class="ph ph-bold ph-first-aid-kit" style="color:${h.resuelta?'#5dcaa5':'#e24b4a'}"></i>
           <div>
-            <div class="lm-hist-title">${h.texto}</div>
-            <div class="lm-hist-meta">Jornada ${h.jornada}</div>
+            <div class="lm-hist-title">${h.jugador} — ${h.tipoLesion} <span class="lm-hist-tag">${h.severidad}</span> ${h.familia?`<span class="lm-hist-tag lm-hist-tag-familia">${h.familia==='muscular'?'muscular':'ósea'}</span>`:''}</div>
+            <div class="lm-hist-meta">Jornada ${h.jornadaInicio} contra ${h.rival}</div>
+            <div class="lm-hist-desc">${estado}</div>
           </div>
         </div>`;
-      }
-      const estado = h.resuelta
-        ? `Se recuperó gracias a <strong>${h.resueltoPor}</strong> — estuvo ${h.jornadasReales} jornada${h.jornadasReales===1?'':'s'} sin jugar`
-        : `<span style="color:#e24b4a">Todavía de baja</span> (previsto ${h.semanasPrevistas} jornada${h.semanasPrevistas===1?'':'s'})`;
-      return `<div class="lm-hist-item">
-        <i class="ph ph-bold ph-first-aid-kit" style="color:${h.resuelta?'#5dcaa5':'#e24b4a'}"></i>
-        <div>
-          <div class="lm-hist-title">${h.jugador} — ${h.tipoLesion} <span class="lm-hist-tag">${h.severidad}</span></div>
-          <div class="lm-hist-meta">Jornada ${h.jornadaInicio} contra ${h.rival}</div>
-          <div class="lm-hist-desc">${estado}</div>
-        </div>
-      </div>`;
-    }).join('');
+      }).join('');
 
-    overlay.innerHTML=`
-      <div class="lm-dilemma-card" style="max-width:480px;text-align:left">
-        <div class="lm-dilemma-title" style="text-align:center"><i class="ph ph-bold ph-clock-counter-clockwise"></i> HISTORIAL MÉDICO</div>
-        <div class="lm-hist-list">
-          ${historial.length?filas:'<p class="lm-setup-desc" style="text-align:center">Todavía no hay nada que contar — de momento tu plantilla está sana.</p>'}
-        </div>
-        <div class="lm-popup-actions lm-popup-actions-compact">
-          <button id="lmHistorialCerrar" class="mode-card-btn mode-card-btn-gold">CERRAR</button>
-        </div>
-      </div>`;
+      overlay.innerHTML=`
+        <div class="lm-dilemma-card" style="max-width:480px;text-align:left">
+          <div class="lm-dilemma-title" style="text-align:center"><i class="ph ph-bold ph-clock-counter-clockwise"></i> HISTORIAL MÉDICO</div>
+          <div class="formation-tabs">
+            <div class="formation-tab ${histTab==='tratamientos'?'active':''}" data-histtab="tratamientos">TRATAMIENTOS <span class="counter-badge">${tratamientos.length}</span></div>
+            <div class="formation-tab ${histTab==='mejoras'?'active':''}" data-histtab="mejoras">INSTALACIONES <span class="counter-badge">${totalEstrellas}/${NIVELES_EQUIPO_INFO.length*NIVEL_MAXIMO_EQUIPO}</span></div>
+          </div>
+          ${histTab==='tratamientos' ? `
+          <div class="lm-hist-list">
+            ${tratamientos.length?filas:'<p class="lm-setup-desc" style="text-align:center">Todavía no hay nada que contar — de momento tu plantilla está sana.</p>'}
+          </div>` : `
+          <p class="lm-setup-desc" style="text-align:left;margin:8px 0 4px">Nivel actual de cada especialidad del cuerpo médico.</p>
+          ${renderNivelesEquipoHTML()}
+          `}
+          <div class="lm-popup-actions lm-popup-actions-compact">
+            <button id="lmHistorialCerrar" class="mode-card-btn mode-card-btn-gold">CERRAR</button>
+          </div>
+        </div>`;
+      overlay.querySelectorAll('[data-histtab]').forEach(el=>{
+        el.addEventListener('click', ()=>{
+          if(typeof window.playSound==='function') window.playSound('select');
+          histTab=el.getAttribute('data-histtab');
+          pintar();
+        });
+      });
+      document.getElementById('lmHistorialCerrar').addEventListener('click', ()=>{
+        if(typeof window.playSound==='function') window.playSound('select');
+        overlay.remove();
+      });
+    }
     document.getElementById('ligaManagerScreen').appendChild(overlay);
-    document.getElementById('lmHistorialCerrar').addEventListener('click', ()=>{
-      if(typeof window.playSound==='function') window.playSound('select');
-      overlay.remove();
-    });
+    pintar();
+  }
+
+  // Barajado 2D de las caras del dado — CALCO del slot-machine de
+  // selección de equipos del draft de Copa Leyendas (showTeamChoice):
+  // reutiliza las mismas clases .slot-reel/.slot-strip y los mismos
+  // sonidos spin/reveal, cambiando de cara a cara al azar durante un
+  // momento antes de fijar el resultado real. Compartida por el equipo
+  // médico y el de mantenimiento (comparten el mismo fondo de dados).
+  function iniciarBarajadoDados(container, numDados, onDone){
+    const tiradasFinal=[]; for(let i=0;i<numDados;i++) tiradasFinal.push(1+Math.floor(Math.random()*6));
+    container.innerHTML = Array.from({length:numDados}).map((_,i)=>
+      `<div class="slot-reel lm-dice2d-reel"><div class="slot-strip lm-dice2d-face" id="lmDiceFace${i}">${1+Math.floor(Math.random()*6)}</div></div>`
+    ).join('');
+    let ticks=0;
+    const totalTicks=11+Math.floor(Math.random()*4); // ~950-1275ms de barajado
+    const spin=setInterval(()=>{
+      for(let i=0;i<numDados;i++){
+        const faceEl=document.getElementById('lmDiceFace'+i);
+        if(faceEl) faceEl.textContent=1+Math.floor(Math.random()*6);
+      }
+      if(typeof window.playSound==='function') window.playSound('spin');
+      ticks++;
+      if(ticks>=totalTicks){
+        clearInterval(spin);
+        for(let i=0;i<numDados;i++){
+          const faceEl=document.getElementById('lmDiceFace'+i);
+          if(faceEl){ faceEl.textContent=tiradasFinal[i]; faceEl.classList.remove('lm-dice2d-face'); faceEl.classList.add('lm-dice2d-face-final'); }
+        }
+        if(typeof window.playSound==='function') window.playSound('reveal');
+        onDone(tiradasFinal);
+      }
+    },85);
+  }
+
+  // Pantalla de revisión tras el barajado, antes de resolver la carta:
+  // deja repetir UN dado por jornada (compartido entre médico y
+  // mantenimiento) si todavía queda disponible — se pulsa directamente
+  // sobre la píldora del dado que se quiere repetir. Al confirmar, se
+  // pasa la tirada definitiva a onConfirmar (ahí es cuando se aplican
+  // los efectos de verdad).
+  function mostrarRevisionTirada(tiradas, onConfirmar){
+    const tituloEl=document.getElementById('lmDiceTitle');
+    if(tituloEl) tituloEl.textContent='REVISA TU TIRADA';
+    const zona=document.getElementById('lmDiceResultZone');
+    function pintar(){
+      const rerolls=state.dadoRerollsDisponibles||0;
+      const suma=tiradas.reduce((a,b)=>a+b,0);
+      zona.innerHTML=`
+        <div class="lm-dice-result-row">${tiradas.map((v,i)=>`<span class="lm-dice-pill${rerolls>0?' lm-dice-pill-reroll':''}" data-reroll-i="${i}" ${rerolls>0?'title="Repetir este dado"':''}>${v}</span>`).join('')}</div>
+        <div class="lm-setup-desc" style="margin-top:8px">Suma actual: <strong>${suma}</strong></div>
+        <div class="lm-setup-desc">rerolls de dado hoy: <strong>${rerolls}/1</strong>${rerolls>0?' — toca un dado para repetirlo':''}</div>
+        <div class="lm-popup-actions"><button id="lmConfirmarTiradaBtn" class="mode-card-btn mode-card-btn-gold">CONFIRMAR TIRADA</button></div>`;
+      if(rerolls>0){
+        zona.querySelectorAll('.lm-dice-pill-reroll').forEach(el=>{
+          el.addEventListener('click', ()=>{
+            if((state.dadoRerollsDisponibles||0)<=0) return;
+            const i=parseInt(el.getAttribute('data-reroll-i'),10);
+            state.dadoRerollsDisponibles--;
+            tiradas[i]=1+Math.floor(Math.random()*6);
+            if(typeof window.playSound==='function') window.playSound('dice');
+            guardarEstado();
+            pintar();
+          });
+        });
+      }
+      document.getElementById('lmConfirmarTiradaBtn').addEventListener('click', ()=>{
+        if(typeof window.playSound==='function') window.playSound('select');
+        onConfirmar(tiradas);
+      });
+    }
+    pintar();
+  }
+
+  // Animación de "rerroll" sobre la propia tarjeta al cambiarla — mismo
+  // espíritu que el slot-machine de selección de equipos de Copa
+  // Leyendas: icono y nombre van cambiando al azar un instante (mismos
+  // sonidos spin/reveal) antes de fijarse en la carta nueva de verdad.
+  function animarRerollCarta(overlay, idx, catalogo, onDone){
+    const cardEl = overlay.querySelector(`.med-card[data-idx="${idx}"]`);
+    if(!cardEl){ onDone(); return; }
+    const iconEl = cardEl.querySelector('.med-card-icon');
+    const titleEl = cardEl.querySelector('.med-card-title');
+    const swapBtn = cardEl.querySelector('.med-card-swap');
+    if(!iconEl || !titleEl){ onDone(); return; }
+    if(swapBtn) swapBtn.disabled=true;
+    cardEl.classList.add('med-card-spinning');
+    let ticks=0;
+    const totalTicks=9+Math.floor(Math.random()*3); // ~810-1080ms de barajado
+    const spin=setInterval(()=>{
+      const rnd=catalogo[Math.floor(Math.random()*catalogo.length)];
+      iconEl.className=`ph ph-bold ${rnd.icon} med-card-icon`;
+      titleEl.textContent=rnd.nombre;
+      if(typeof window.playSound==='function') window.playSound('spin');
+      ticks++;
+      if(ticks>=totalTicks){
+        clearInterval(spin);
+        cardEl.classList.remove('med-card-spinning');
+        if(typeof window.playSound==='function') window.playSound('reveal');
+        onDone();
+      }
+    },90);
+  }
+
+  // Ficha horizontal de un puesto del cuerpo técnico, para la barra
+  // superior "CUERPO TÉCNICO" — foto (con el género correcto o la
+  // variante en blanco y negro si está vacante), rol, nombre de quien lo
+  // ocupa y su nivel en estrellas, con badge de aviso y burbuja de info.
+  function staffTileHTML(rol, o){
+    const trab=state.trabajadores[rol];
+    return `
+    <div class="lm-staff-tile ${o.acento||''} ${trab?'':'lm-staff-tile-vacante'}" id="${o.btnId}">
+      ${o.notif?`<span class="lm-staff-tile-badge">${o.badgeTexto}</span>`:''}
+      <div class="lm-staff-tile-photo">
+        ${staffFotoHTML(o.carpeta, o.archivo, o.alt, o.icono, trab?trab.genero:'hombre', !trab)}
+      </div>
+      <div class="lm-staff-tile-info">
+        <div class="lm-staff-tile-rol">${o.rolLabel}</div>
+        <div class="lm-staff-tile-nombre">${trab?trab.nombre:'Vacante'}</div>
+        ${trab?`<div class="lm-staff-tile-estrellas">${estrellasNivel(trab.nivel)}</div>`:'<div class="lm-staff-tile-vacante-txt">Contratar en TRABAJADORES</div>'}
+      </div>
+      <button class="lm-staff-tile-info-btn" id="${o.infoId}" title="${o.infoTitle}"><i class="ph ph-bold ph-info"></i></button>
+    </div>`;
   }
 
   function abrirMedico(){
@@ -1554,12 +2903,18 @@
         const def=cartaDef(instancia.cartaId);
         const candidatos=jugadoresLesionadosPara(def);
         const sinLesionNecesaria = def.requiereLesion && candidatos.length===0;
+        const dificultadEfectiva = def.tipo==='nivel' ? dificultadActualNivel(def) : def.dificultad;
         const maxPosible = state.diceAvailable*6;
-        const imposiblePorDados = def.tipo==='directa' && maxPosible < def.dificultad;
-        const bloqueada = sinLesionNecesaria || imposiblePorDados;
+        const imposiblePorDados = (def.tipo==='directa'||def.tipo==='nivel') && maxPosible < dificultadEfectiva;
+        const nivelMaximoYa = def.tipo==='nivel' && nivelDe(def.track)>=NIVEL_MAXIMO_EQUIPO;
+        const bloqueada = sinLesionNecesaria || imposiblePorDados || nivelMaximoYa;
         const cambioDisponible=!state.medicoCambioUsado;
         let cuerpo;
-        if(def.tipo==='acumulacion'){
+        if(def.tipo==='nivel'){
+          const n=nivelDe(def.track);
+          cuerpo=`<div class="med-card-progress-label" style="text-align:center;letter-spacing:2px;color:var(--gold)">${estrellasNivel(n)}</div>
+                  <div class="med-card-dificultad">Dificultad ${dificultadEfectiva}+ para subir a nivel ${n+1}/${NIVEL_MAXIMO_EQUIPO}</div>`;
+        } else if(def.tipo==='acumulacion'){
           const umbral=def.niveles[instancia.nivelActual-1];
           cuerpo=`<div class="med-card-progress"><div class="med-card-progress-fill" style="width:${Math.min(100,100*instancia.progreso/umbral)}%"></div></div>
                   <div class="med-card-progress-label">Nivel ${instancia.nivelActual}/${def.niveles.length} — ${instancia.progreso}/${umbral}</div>`;
@@ -1567,15 +2922,15 @@
           cuerpo=`<div class="med-card-dificultad">Dificultad ${def.dificultad}+</div>`;
         }
         return `
-        <div class="med-card ${bloqueada?'med-card-bloqueada':''}" data-idx="${idx}">
+        <div class="med-card med-card-medico ${bloqueada?'med-card-bloqueada':''}" data-idx="${idx}">
           <button class="med-card-swap" data-swap="${idx}" title="Cambiar carta" ${cambioDisponible?'':'disabled'}><i class="ph ph-bold ph-arrows-clockwise"></i></button>
-          <div class="med-card-tag">${def.tipo==='acumulacion'?'PROYECTO':'MISIÓN'}</div>
+          <div class="med-card-tag">${def.tipo==='nivel'?'MEJORA':(def.tipo==='acumulacion'?'PROYECTO':'MISIÓN')}</div>
           <i class="ph ph-bold ${def.icon} med-card-icon"></i>
           <div class="med-card-title">${def.nombre}</div>
           <div class="med-card-divider"></div>
           <div class="med-card-desc">${def.desc}</div>
           ${cuerpo}
-          ${bloqueada?`<div class="med-card-bloqueada-label">${sinLesionNecesaria?'Necesitas una lesión activa':'Imposible con los dados que quedan'}</div>`:`<button class="mode-card-btn mode-card-btn-gold med-card-btn" data-usar="${idx}" style="padding:7px;font-size:11px">USAR</button>`}
+          ${bloqueada?`<div class="med-card-bloqueada-label">${sinLesionNecesaria?'Necesitas una lesión activa':(nivelMaximoYa?'Especialidad al máximo nivel':'Imposible con los dados que quedan')}</div>`:`<button class="mode-card-btn mode-card-btn-gold med-card-btn" data-usar="${idx}" style="padding:7px;font-size:11px">USAR</button>`}
         </div>`;
       }).join('');
 
@@ -1587,7 +2942,8 @@
             <strong style="color:#e24b4a">URGENTE:</strong> ${jugadorUrgente?jugadorUrgente.name:'Un jugador'} tiene una lesión ${notif.severidad}.
             <button id="lmAtenderUrgente" class="mode-card-btn mode-card-btn-gold" style="width:auto;padding:7px 16px;margin-top:8px;display:block">ATENDER (sumar ${notif.dificultad}+)</button>
           </div>` : ''}
-          <div class="lm-setup-desc" style="text-align:center;margin-bottom:8px">dados disponibles este partido: ${state.diceAvailable} · puedes cambiar 1 carta por partido</div>
+          ${renderNivelesEquipoHTML()}
+          <div class="lm-setup-desc" style="text-align:center;margin:10px 0 8px">dados disponibles este partido: <strong>${state.diceAvailable}</strong> (compartidos con el resto del cuerpo técnico) · cambios de carta: <strong>${state.medicoCambioUsado?0:1}/1</strong> · rerolls de dado hoy: <strong>${state.dadoRerollsDisponibles||0}/1</strong></div>
           <div class="med-card-grid">${cartasHTML}</div>
           <div class="lm-popup-actions lm-popup-actions-compact">
             <button id="lmMedicoCerrar" class="mode-card-btn mode-card-btn-secondary">CERRAR</button>
@@ -1609,8 +2965,12 @@
       overlay.querySelectorAll('[data-swap]').forEach(btn=>{
         btn.addEventListener('click', ()=>{
           const idx=parseInt(btn.getAttribute('data-swap'),10);
+          if(state.medicoCambioUsado) return;
           if(typeof window.playSound==='function') window.playSound('select');
-          if(cambiarCartaMedico(idx)) renderHub();
+          animarRerollCarta(overlay, idx, MEDICO_CARTAS_BASE, ()=>{
+            cambiarCartaMedico(idx);
+            renderHub();
+          });
         });
       });
       overlay.querySelectorAll('[data-usar]').forEach(btn=>{
@@ -1633,7 +2993,7 @@
         <div class="lm-dilemma-card">
           <div class="lm-dilemma-title">¿SOBRE QUIÉN?</div>
           <div class="lm-slot-list">
-            ${candidatos.map(p=>`<div class="lm-slot-option" data-pid="${p.id}"><span>${p.name}</span><span style="color:#e24b4a">${p.injurySeverity}</span></div>`).join('')}
+            ${candidatos.map(p=>`<div class="lm-slot-option" data-pid="${p.id}"><span>${p.name}</span><span style="color:#e24b4a">${p.injurySeverity} · ${p.injuryWeeks} jornada${p.injuryWeeks===1?'':'s'} restante${p.injuryWeeks===1?'':'s'}</span></div>`).join('')}
           </div>
         </div>`;
       overlay.querySelectorAll('[data-pid]').forEach(el=>{
@@ -1646,13 +3006,15 @@
 
     function renderSelectorCarta(idx, jugadorObjetivoId){
       const def=cartaDef(state.medicoCartas[idx].cartaId);
+      const jugadorObjetivo = jugadorObjetivoId ? state.plantilla.find(p=>p.id===jugadorObjetivoId) : null;
       let dadosElegidos=Math.min(1, state.diceAvailable);
       function pintar(){
         overlay.innerHTML=`
           <div class="lm-dilemma-card">
             <i class="ph ph-bold ${def.icon}" style="font-size:26px;color:#5dcaa5"></i>
             <div class="lm-dilemma-title">${def.nombre.toUpperCase()}</div>
-            <div class="lm-dilemma-text">${def.desc}${def.tipo==='directa'?` — necesitas sumar ${def.dificultad}+`:' — los dados invertidos siempre suman al proyecto'}</div>
+            <div class="lm-dilemma-text">${def.desc}${def.tipo==='directa'?` — necesitas sumar ${def.dificultad}+`:(def.tipo==='nivel'?` — necesitas sumar ${dificultadActualNivel(def)}+ para subir a nivel ${nivelDe(def.track)+1}/${NIVEL_MAXIMO_EQUIPO}`:' — los dados invertidos siempre suman al proyecto')}</div>
+            ${jugadorObjetivo?`<div class="lm-setup-desc" style="margin-top:-4px">Sobre <strong>${jugadorObjetivo.name}</strong> — ${jugadorObjetivo.injurySeverity} · ${jugadorObjetivo.injuryWeeks} jornada${jugadorObjetivo.injuryWeeks===1?'':'s'} restante${jugadorObjetivo.injuryWeeks===1?'':'s'}</div>`:''}
             <div class="lm-dice-selector">
               <button id="lmDiceMinus" class="lm-dice-stepper">−</button>
               <span id="lmDiceCount">${dadosElegidos}</span>
@@ -1682,15 +3044,15 @@
       pintar();
     }
 
+    // Barajado 2D de las caras del dado — CALCO del slot-machine que ya se
     function renderRolloCarta(idx, numDados, jugadorObjetivoId){
       overlay.innerHTML=`
         <div class="lm-dilemma-card">
           <div class="lm-dilemma-title" id="lmDiceTitle">TIRANDO ${numDados} DADO${numDados>1?'S':''}...</div>
-          <div id="lmDice3DBox" class="lm-dice3d-box"></div>
+          <div id="lmDice2DRow" class="lm-dice2d-row"></div>
           <div id="lmDiceResultZone"></div>
         </div>`;
-      if(typeof window.playSound==='function') window.playSound('dice');
-      const box=document.getElementById('lmDice3DBox');
+      const box=document.getElementById('lmDice2DRow');
       function conResultado(tiradas){
         state.diceAvailable=Math.max(0, state.diceAvailable-numDados);
         const r=resolverCartaMedico(idx, tiradas, jugadorObjetivoId);
@@ -1700,6 +3062,10 @@
         let textoResultado;
         if(r.tipo==='directa'){
           textoResultado=`Suma <strong>${r.suma}</strong> (necesitabas ${r.dificultad}+) — <span style="color:${r.exito?'#5dcaa5':'#e24b4a'}">${r.exito?'✔ ÉXITO — '+r.texto:'✘ FALLO — '+r.texto}</span>`;
+        } else if(r.tipo==='nivel'){
+          textoResultado = r.exito
+            ? `Suma <strong>${r.suma}</strong> (necesitabas ${r.dificultad}+) — <span style="color:#5dcaa5">✔ ÉXITO</span> — ${r.nombre} sube a nivel ${r.nivelNuevo}/${NIVEL_MAXIMO_EQUIPO}${r.maxAlcanzado?' — <strong>nivel máximo alcanzado</strong>':''}`
+            : `Suma <strong>${r.suma}</strong> (necesitabas ${r.dificultad}+) — <span style="color:#e24b4a">✘ FALLO</span> — ${r.texto}`;
         } else {
           textoResultado = r.completada
             ? `+${r.suma} puntos — <span style="color:#5dcaa5">✔ PROYECTO COMPLETADO</span>`
@@ -1716,12 +3082,7 @@
           renderHub();
         });
       }
-      if(typeof window.G2G_rollDice3D === 'function'){
-        window.G2G_rollDice3D(box, numDados, conResultado);
-      } else {
-        const tiradas=[]; for(let i=0;i<numDados;i++) tiradas.push(1+Math.floor(Math.random()*6));
-        setTimeout(()=>conResultado(tiradas), 800);
-      }
+      iniciarBarajadoDados(box, numDados, (tiradas)=>mostrarRevisionTirada(tiradas, conResultado));
     }
 
     // ---- Flujo de la notificación urgente (lesión recién ocurrida) ----
@@ -1762,11 +3123,10 @@
       overlay.innerHTML=`
         <div class="lm-dilemma-card">
           <div class="lm-dilemma-title" id="lmDiceTitle">TIRANDO ${numDados} DADO${numDados>1?'S':''}...</div>
-          <div id="lmDice3DBox" class="lm-dice3d-box"></div>
+          <div id="lmDice2DRow" class="lm-dice2d-row"></div>
           <div id="lmDiceResultZone"></div>
         </div>`;
-      if(typeof window.playSound==='function') window.playSound('dice');
-      const box=document.getElementById('lmDice3DBox');
+      const box=document.getElementById('lmDice2DRow');
       function conResultado(tiradas){
         const r=resolverDilemaMedico(numDados, tiradas);
         const tituloEl=document.getElementById('lmDiceTitle');
@@ -1785,15 +3145,827 @@
           render();
         });
       }
-      if(typeof window.G2G_rollDice3D === 'function'){
-        window.G2G_rollDice3D(box, numDados, conResultado);
-      } else {
-        const tiradas=[]; for(let i=0;i<numDados;i++) tiradas.push(1+Math.floor(Math.random()*6));
-        setTimeout(()=>conResultado(tiradas), 800);
-      }
+      iniciarBarajadoDados(box, numDados, (tiradas)=>mostrarRevisionTirada(tiradas, conResultado));
     }
 
     renderHub();
+  }
+
+  /* ---------- 13b. Interfaz de Mantenimiento y Seguridad — mismo patrón que el
+     equipo médico (misma mano de 3 cartas, mismo fondo de dados
+     compartido, mismo barajado 2D), pero sin selección de jugador ya
+     que las cartas actúan directamente sobre el estadio. ---------- */
+  function abrirMantenimiento(){
+    const overlay=document.createElement('div');
+    overlay.id='lmMantenimientoOverlay';
+    document.getElementById('ligaManagerScreen').appendChild(overlay);
+
+    function renderHub(){
+      const est=state.estadio||{campo:90,satisfaccion:0};
+      const cartasHTML=state.mantenimientoCartas.map((instancia,idx)=>{
+        const def=cartaDefM(instancia.cartaId);
+        const bloqueadaPorEstado=mantenimientoBloqueadaPorEstado(def);
+        const dificultadEfectiva = def.tipo==='nivel' ? dificultadActualNivelM(def) : def.dificultad;
+        const maxPosible = state.diceAvailable*6;
+        const imposiblePorDados = maxPosible < dificultadEfectiva;
+        const nivelMaximoYa = def.tipo==='nivel' && nivelDeM(def.track)>=NIVEL_MAXIMO_EQUIPO;
+        const bloqueada = bloqueadaPorEstado || imposiblePorDados || nivelMaximoYa;
+        const cambioDisponible=!state.mantenimientoCambioUsado;
+        let cuerpo;
+        if(def.tipo==='nivel'){
+          const n=nivelDeM(def.track);
+          cuerpo=`<div class="med-card-progress-label" style="text-align:center;letter-spacing:2px;color:var(--gold)">${estrellasNivel(n)}</div>
+                  <div class="med-card-dificultad">Dificultad ${dificultadEfectiva}+ para subir a nivel ${n+1}/${NIVEL_MAXIMO_EQUIPO}</div>`;
+        } else {
+          cuerpo=`<div class="med-card-dificultad">Dificultad ${def.dificultad}+</div>`;
+        }
+        return `
+        <div class="med-card med-card-mantenimiento ${bloqueada?'med-card-bloqueada':''}" data-idx="${idx}">
+          <button class="med-card-swap" data-swap="${idx}" title="Cambiar carta" ${cambioDisponible?'':'disabled'}><i class="ph ph-bold ph-arrows-clockwise"></i></button>
+          <div class="med-card-tag">${def.tipo==='nivel'?'MEJORA':'MISIÓN'}</div>
+          <i class="ph ph-bold ${def.icon} med-card-icon"></i>
+          <div class="med-card-title">${def.nombre}</div>
+          <div class="med-card-divider"></div>
+          <div class="med-card-desc">${def.desc}</div>
+          ${cuerpo}
+          ${bloqueada?`<div class="med-card-bloqueada-label">${bloqueadaPorEstado?'Necesitas una afición muy descontenta (≤ −50)':(nivelMaximoYa?'Especialidad al máximo nivel':'Imposible con los dados que quedan')}</div>`:`<button class="mode-card-btn mode-card-btn-gold med-card-btn" data-usar="${idx}" style="padding:7px;font-size:11px">USAR</button>`}
+        </div>`;
+      }).join('');
+
+      overlay.innerHTML=`
+        <div class="lm-dilemma-card" style="max-width:640px">
+          <div class="lm-dilemma-title"><i class="ph ph-bold ph-flag-pennant"></i> MANTENIMIENTO Y SEGURIDAD</div>
+          ${renderNivelesMantenimientoHTML()}
+          <div class="lm-setup-desc" style="text-align:center;margin:10px 0 8px">dados disponibles este partido: <strong>${state.diceAvailable}</strong> (compartidos con el resto del cuerpo técnico) · cambios de carta: <strong>${state.mantenimientoCambioUsado?0:1}/1</strong> · rerolls de dado hoy: <strong>${state.dadoRerollsDisponibles||0}/1</strong></div>
+          <div class="med-card-grid">${cartasHTML}</div>
+          <div class="lm-popup-actions lm-popup-actions-compact">
+            <button id="lmMantenimientoCerrar" class="mode-card-btn mode-card-btn-secondary">CERRAR</button>
+          </div>
+        </div>`;
+
+      const cerrarBtn=document.getElementById('lmMantenimientoCerrar');
+      if(cerrarBtn) cerrarBtn.addEventListener('click', ()=>{
+        if(typeof window.playSound==='function') window.playSound('select');
+        overlay.remove();
+        render();
+      });
+      overlay.querySelectorAll('[data-swap]').forEach(btn=>{
+        btn.addEventListener('click', ()=>{
+          const idx=parseInt(btn.getAttribute('data-swap'),10);
+          if(state.mantenimientoCambioUsado) return;
+          if(typeof window.playSound==='function') window.playSound('select');
+          animarRerollCarta(overlay, idx, MANTENIMIENTO_CARTAS_BASE, ()=>{
+            cambiarCartaMantenimiento(idx);
+            renderHub();
+          });
+        });
+      });
+      overlay.querySelectorAll('[data-usar]').forEach(btn=>{
+        btn.addEventListener('click', ()=>{
+          const idx=parseInt(btn.getAttribute('data-usar'),10);
+          if(typeof window.playSound==='function') window.playSound('select');
+          renderSelectorCarta(idx);
+        });
+      });
+    }
+
+    function renderSelectorCarta(idx){
+      const def=cartaDefM(state.mantenimientoCartas[idx].cartaId);
+      let dadosElegidos=Math.min(1, state.diceAvailable);
+      function pintar(){
+        overlay.innerHTML=`
+          <div class="lm-dilemma-card">
+            <i class="ph ph-bold ${def.icon}" style="font-size:26px;color:#5dcaa5"></i>
+            <div class="lm-dilemma-title">${def.nombre.toUpperCase()}</div>
+            <div class="lm-dilemma-text">${def.desc}${def.tipo==='directa'?` — necesitas sumar ${def.dificultad}+`:` — necesitas sumar ${dificultadActualNivelM(def)}+ para subir a nivel ${nivelDeM(def.track)+1}/${NIVEL_MAXIMO_EQUIPO}`}</div>
+            <div class="lm-dice-selector">
+              <button id="lmDiceMinus" class="lm-dice-stepper">−</button>
+              <span id="lmDiceCount">${dadosElegidos}</span>
+              <button id="lmDicePlus" class="lm-dice-stepper">+</button>
+            </div>
+            <div class="lm-setup-desc">dados disponibles: ${state.diceAvailable}</div>
+            <div class="lm-popup-actions">
+              <button id="lmTirarBtn" class="mode-card-btn mode-card-btn-gold" ${state.diceAvailable<1?'disabled':''}>TIRAR ${dadosElegidos} DADO${dadosElegidos>1?'S':''}</button>
+              <button id="lmCancelarCartaBtn" class="lm-btn-cancelar">CANCELAR</button>
+            </div>
+          </div>`;
+        const minus=document.getElementById('lmDiceMinus');
+        const plus=document.getElementById('lmDicePlus');
+        const tirarBtn=document.getElementById('lmTirarBtn');
+        const cancelarBtn=document.getElementById('lmCancelarCartaBtn');
+        if(minus) minus.addEventListener('click', ()=>{ if(dadosElegidos>1){ dadosElegidos--; pintar(); } });
+        if(plus) plus.addEventListener('click', ()=>{ if(dadosElegidos<state.diceAvailable){ dadosElegidos++; pintar(); } });
+        if(cancelarBtn) cancelarBtn.addEventListener('click', ()=>{
+          if(typeof window.playSound==='function') window.playSound('select');
+          renderHub();
+        });
+        if(tirarBtn) tirarBtn.addEventListener('click', ()=>{
+          if(typeof window.playSound==='function') window.playSound('select');
+          renderRolloCarta(idx, dadosElegidos);
+        });
+      }
+      pintar();
+    }
+
+    function renderRolloCarta(idx, numDados){
+      overlay.innerHTML=`
+        <div class="lm-dilemma-card">
+          <div class="lm-dilemma-title" id="lmDiceTitle">TIRANDO ${numDados} DADO${numDados>1?'S':''}...</div>
+          <div id="lmDice2DRow" class="lm-dice2d-row"></div>
+          <div id="lmDiceResultZone"></div>
+        </div>`;
+      const box=document.getElementById('lmDice2DRow');
+      function conResultado(tiradas){
+        state.diceAvailable=Math.max(0, state.diceAvailable-numDados);
+        const r=resolverCartaMantenimiento(idx, tiradas);
+        const tituloEl=document.getElementById('lmDiceTitle');
+        if(tituloEl) tituloEl.textContent='RESULTADO';
+        const zona=document.getElementById('lmDiceResultZone');
+        let textoResultado;
+        if(r.tipo==='directa'){
+          textoResultado=`Suma <strong>${r.suma}</strong> (necesitabas ${r.dificultad}+) — <span style="color:${r.exito?'#5dcaa5':'#e24b4a'}">${r.exito?'✔ ÉXITO — '+r.texto:'✘ FALLO — '+r.texto}</span>`;
+        } else {
+          textoResultado = r.exito
+            ? `Suma <strong>${r.suma}</strong> (necesitabas ${r.dificultad}+) — <span style="color:#5dcaa5">✔ ÉXITO</span> — ${r.nombre} sube a nivel ${r.nivelNuevo}/${NIVEL_MAXIMO_EQUIPO}${r.maxAlcanzado?' — <strong>nivel máximo alcanzado</strong>':''}`
+            : `Suma <strong>${r.suma}</strong> (necesitabas ${r.dificultad}+) — <span style="color:#e24b4a">✘ FALLO</span> — ${r.texto}`;
+        }
+        zona.innerHTML=`
+          <div class="lm-dice-result-row">${tiradas.map(v=>`<span class="lm-dice-pill">${v}</span>`).join('')}</div>
+          <div style="font-family:'Bebas Neue';font-size:15px;margin-top:10px;line-height:1.4">${textoResultado}</div>
+          <div class="lm-popup-actions"><button id="lmContinuarBtn" class="mode-card-btn mode-card-btn-gold">CONTINUAR</button></div>`;
+        document.getElementById('lmContinuarBtn').addEventListener('click', ()=>{
+          if(typeof window.playSound==='function') window.playSound('select');
+          renderHub();
+        });
+      }
+      iniciarBarajadoDados(box, numDados, (tiradas)=>mostrarRevisionTirada(tiradas, conResultado));
+    }
+
+    renderHub();
+  }
+
+  /* ---------- 13c. Estado del estadio — burbuja "i" de Mantenimiento y
+     Seguridad: las 3 barras (césped/satisfacción/moral) y el panel de
+     aforo, que antes vivían en el hub de cartas y ahora quedan aparte
+     como consulta rápida, igual que el historial médico. ---------- */
+  function abrirEstadoEstadio(){
+    const overlay=document.createElement('div');
+    overlay.id='lmEstadoEstadioOverlay';
+    const est=state.estadio||{campo:90, satisfaccion:0, aforoTotal:12000, ultimaAsistencia:null};
+    const climaActual=climaDelPartido();
+    const prevista=calcularAsistencia(climaActual?climaActual.id:null);
+    const ultima=est.ultimaAsistencia;
+    overlay.innerHTML=`
+      <div class="lm-dilemma-card" style="max-width:480px;text-align:left">
+        <div class="lm-dilemma-title" style="text-align:center"><i class="ph ph-bold ph-stadium"></i> ESTADO DEL ESTADIO</div>
+        <div class="lm-estadio-bars">
+          <div>
+            <div class="lm-estadio-bar-label"><i class="ph ph-bold ph-plant"></i><span>ESTADO DEL CÉSPED</span><span>${Math.round(est.campo)}/100</span></div>
+            ${campoBarraHTML(est.campo)}
+          </div>
+          <div>
+            <div class="lm-estadio-bar-label"><i class="ph ph-bold ph-users-three"></i><span>SATISFACCIÓN DE LA AFICIÓN</span><span>${est.satisfaccion>0?'+':''}${est.satisfaccion}</span></div>
+            ${satisfaccionBarraHTML(est.satisfaccion)}
+          </div>
+          <div>
+            <div class="lm-estadio-bar-label"><i class="ph ph-bold ph-trend-up"></i><span>MORAL DEL EQUIPO</span><span>${(state.moral||0)>0?'+':''}${state.moral||0}</span></div>
+            ${moralBarraHTML(state.moral||0)}
+          </div>
+        </div>
+        <div class="lm-aforo-box">
+          <i class="ph ph-bold ph-ticket lm-aforo-icon"></i>
+          <div class="lm-aforo-info">
+            <div class="lm-aforo-title"><span>AFORO DEL ESTADIO</span><strong>${est.aforoTotal.toLocaleString('es-ES')} asientos</strong></div>
+            <div class="lm-aforo-bar-wrap"><div class="lm-aforo-bar-fill" style="width:${Math.round(prevista.pct*100)}%"></div></div>
+            <div class="lm-aforo-nota">
+              Previsión próximo partido en casa: <strong>${prevista.asistentes.toLocaleString('es-ES')}</strong> asientos (${Math.round(prevista.pct*100)}%)
+              ${ultima?` · Último partido en casa (J${ultima.jornada}): <strong>${ultima.asistentes.toLocaleString('es-ES')}</strong> (${Math.round(ultima.pct*100)}%)`:''}
+            </div>
+          </div>
+        </div>
+        <div class="lm-popup-actions lm-popup-actions-compact">
+          <button id="lmEstadoEstadioCerrar" class="mode-card-btn mode-card-btn-gold">CERRAR</button>
+        </div>
+      </div>`;
+    document.getElementById('ligaManagerScreen').appendChild(overlay);
+    document.getElementById('lmEstadoEstadioCerrar').addEventListener('click', ()=>{
+      if(typeof window.playSound==='function') window.playSound('select');
+      overlay.remove();
+    });
+  }
+
+  /* ---------- 13d. Interfaz del Director General — capital, precio de
+     entrada (control manual) y sus 10 cartas, mismo patrón que médico y
+     mantenimiento. ---------- */
+  function abrirDirectorGeneral(){
+    const overlay=document.createElement('div');
+    overlay.id='lmDirectorGeneralOverlay';
+    document.getElementById('ligaManagerScreen').appendChild(overlay);
+
+    function renderHub(){
+      const cartasHTML=state.directorGeneralCartas.map((instancia,idx)=>{
+        const def=cartaDefDG(instancia.cartaId);
+        const dificultadEfectiva = def.tipo==='nivel' ? dificultadActualNivelDG(def) : def.dificultad;
+        const maxPosible = state.diceAvailable*6;
+        const imposiblePorDados = maxPosible < dificultadEfectiva;
+        const nivelMaximoYa = def.tipo==='nivel' && nivelDeDG(def.track)>=NIVEL_MAXIMO_EQUIPO;
+        const bloqueada = imposiblePorDados || nivelMaximoYa;
+        const cambioDisponible=!state.directorGeneralCambioUsado;
+        let cuerpo;
+        if(def.tipo==='nivel'){
+          const n=nivelDeDG(def.track);
+          cuerpo=`<div class="med-card-progress-label" style="text-align:center;letter-spacing:2px;color:var(--gold)">${estrellasNivel(n)}</div>
+                  <div class="med-card-dificultad">Dificultad ${dificultadEfectiva}+ para subir a nivel ${n+1}/${NIVEL_MAXIMO_EQUIPO}</div>`;
+        } else {
+          cuerpo=`<div class="med-card-dificultad">Dificultad ${def.dificultad}+</div>`;
+        }
+        return `
+        <div class="med-card med-card-dg ${bloqueada?'med-card-bloqueada':''}" data-idx="${idx}">
+          <button class="med-card-swap" data-swap="${idx}" title="Cambiar carta" ${cambioDisponible?'':'disabled'}><i class="ph ph-bold ph-arrows-clockwise"></i></button>
+          <div class="med-card-tag">${def.tipo==='nivel'?'MEJORA':'MISIÓN'}</div>
+          <i class="ph ph-bold ${def.icon} med-card-icon"></i>
+          <div class="med-card-title">${def.nombre}</div>
+          <div class="med-card-divider"></div>
+          <div class="med-card-desc">${def.desc}</div>
+          ${cuerpo}
+          ${bloqueada?`<div class="med-card-bloqueada-label">${nivelMaximoYa?'Especialidad al máximo nivel':'Imposible con los dados que quedan'}</div>`:`<button class="mode-card-btn mode-card-btn-gold med-card-btn" data-usar="${idx}" style="padding:7px;font-size:11px">USAR</button>`}
+        </div>`;
+      }).join('');
+
+      overlay.innerHTML=`
+        <div class="lm-dilemma-card" style="max-width:640px">
+          <div class="lm-dilemma-title"><i class="ph ph-bold ph-briefcase"></i> DIRECTOR GENERAL</div>
+          <div class="lm-capital-box">
+            <i class="ph ph-bold ph-coins lm-capital-icon"></i>
+            <div class="lm-capital-info">
+              <div class="lm-capital-title"><span>CAPITAL DEL CLUB</span><strong class="${(state.capital||0)<0?'lm-capital-neg':''}">${formatoDinero(state.capital)}</strong></div>
+              <div class="lm-aforo-nota">Próxima nómina en la jornada ${Math.max(1,(state.mesesPagados||0)*4+1)}</div>
+            </div>
+          </div>
+          <div class="lm-precio-box">
+            <div class="lm-estadio-bar-label"><i class="ph ph-bold ph-ticket"></i><span>PRECIO DE LA ENTRADA</span><span>${formatoDinero(state.precioEntrada)}</span></div>
+            <input type="range" id="lmPrecioEntradaSlider" min="5" max="60" step="1" value="${state.precioEntrada}" class="lm-precio-slider">
+            <div class="lm-aforo-nota">Más caro = más ingreso por entrada, pero menos afición vendrá a verte (se nota menos cuanto más nivel tengas en Relaciones con la Afición).</div>
+          </div>
+          ${renderNivelesDGHTML()}
+          <div class="lm-setup-desc" style="text-align:center;margin:10px 0 8px">dados disponibles este partido: <strong>${state.diceAvailable}</strong> (compartidos con el resto del cuerpo técnico) · cambios de carta: <strong>${state.directorGeneralCambioUsado?0:1}/1</strong> · rerolls de dado hoy: <strong>${state.dadoRerollsDisponibles||0}/1</strong></div>
+          <div class="med-card-grid">${cartasHTML}</div>
+          <div class="lm-popup-actions lm-popup-actions-compact">
+            <button id="lmDirectorGeneralCerrar" class="mode-card-btn mode-card-btn-secondary">CERRAR</button>
+          </div>
+        </div>`;
+
+      const slider=document.getElementById('lmPrecioEntradaSlider');
+      if(slider) slider.addEventListener('change', ()=>{
+        state.precioEntrada=parseInt(slider.value,10);
+        if(typeof window.playSound==='function') window.playSound('select');
+        guardarEstado();
+        renderHub();
+      });
+      const cerrarBtn=document.getElementById('lmDirectorGeneralCerrar');
+      if(cerrarBtn) cerrarBtn.addEventListener('click', ()=>{
+        if(typeof window.playSound==='function') window.playSound('select');
+        overlay.remove();
+        render();
+      });
+      overlay.querySelectorAll('[data-swap]').forEach(btn=>{
+        btn.addEventListener('click', ()=>{
+          const idx=parseInt(btn.getAttribute('data-swap'),10);
+          if(state.directorGeneralCambioUsado) return;
+          if(typeof window.playSound==='function') window.playSound('select');
+          animarRerollCarta(overlay, idx, DIRECTOR_GENERAL_CARTAS_BASE, ()=>{
+            cambiarCartaDG(idx);
+            renderHub();
+          });
+        });
+      });
+      overlay.querySelectorAll('[data-usar]').forEach(btn=>{
+        btn.addEventListener('click', ()=>{
+          const idx=parseInt(btn.getAttribute('data-usar'),10);
+          if(typeof window.playSound==='function') window.playSound('select');
+          renderSelectorCarta(idx);
+        });
+      });
+    }
+
+    function renderSelectorCarta(idx){
+      const def=cartaDefDG(state.directorGeneralCartas[idx].cartaId);
+      let dadosElegidos=Math.min(1, state.diceAvailable);
+      function pintar(){
+        overlay.innerHTML=`
+          <div class="lm-dilemma-card">
+            <i class="ph ph-bold ${def.icon}" style="font-size:26px;color:#e6c94a"></i>
+            <div class="lm-dilemma-title">${def.nombre.toUpperCase()}</div>
+            <div class="lm-dilemma-text">${def.desc}${def.tipo==='directa'?` — necesitas sumar ${def.dificultad}+`:` — necesitas sumar ${dificultadActualNivelDG(def)}+ para subir a nivel ${nivelDeDG(def.track)+1}/${NIVEL_MAXIMO_EQUIPO}`}</div>
+            <div class="lm-dice-selector">
+              <button id="lmDiceMinus" class="lm-dice-stepper">−</button>
+              <span id="lmDiceCount">${dadosElegidos}</span>
+              <button id="lmDicePlus" class="lm-dice-stepper">+</button>
+            </div>
+            <div class="lm-setup-desc">dados disponibles: ${state.diceAvailable}</div>
+            <div class="lm-popup-actions">
+              <button id="lmTirarBtn" class="mode-card-btn mode-card-btn-gold" ${state.diceAvailable<1?'disabled':''}>TIRAR ${dadosElegidos} DADO${dadosElegidos>1?'S':''}</button>
+              <button id="lmCancelarCartaBtn" class="lm-btn-cancelar">CANCELAR</button>
+            </div>
+          </div>`;
+        const minus=document.getElementById('lmDiceMinus');
+        const plus=document.getElementById('lmDicePlus');
+        const tirarBtn=document.getElementById('lmTirarBtn');
+        const cancelarBtn=document.getElementById('lmCancelarCartaBtn');
+        if(minus) minus.addEventListener('click', ()=>{ if(dadosElegidos>1){ dadosElegidos--; pintar(); } });
+        if(plus) plus.addEventListener('click', ()=>{ if(dadosElegidos<state.diceAvailable){ dadosElegidos++; pintar(); } });
+        if(cancelarBtn) cancelarBtn.addEventListener('click', ()=>{
+          if(typeof window.playSound==='function') window.playSound('select');
+          renderHub();
+        });
+        if(tirarBtn) tirarBtn.addEventListener('click', ()=>{
+          if(typeof window.playSound==='function') window.playSound('select');
+          renderRolloCarta(idx, dadosElegidos);
+        });
+      }
+      pintar();
+    }
+
+    function renderRolloCarta(idx, numDados){
+      overlay.innerHTML=`
+        <div class="lm-dilemma-card">
+          <div class="lm-dilemma-title" id="lmDiceTitle">TIRANDO ${numDados} DADO${numDados>1?'S':''}...</div>
+          <div id="lmDice2DRow" class="lm-dice2d-row"></div>
+          <div id="lmDiceResultZone"></div>
+        </div>`;
+      const box=document.getElementById('lmDice2DRow');
+      function conResultado(tiradas){
+        state.diceAvailable=Math.max(0, state.diceAvailable-numDados);
+        const r=resolverCartaDG(idx, tiradas);
+        const tituloEl=document.getElementById('lmDiceTitle');
+        if(tituloEl) tituloEl.textContent='RESULTADO';
+        const zona=document.getElementById('lmDiceResultZone');
+        let textoResultado;
+        if(r.tipo==='directa'){
+          textoResultado=`Suma <strong>${r.suma}</strong> (necesitabas ${r.dificultad}+) — <span style="color:${r.exito?'#5dcaa5':'#e24b4a'}">${r.exito?'✔ ÉXITO — '+r.texto:'✘ FALLO — '+r.texto}</span>`;
+        } else {
+          textoResultado = r.exito
+            ? `Suma <strong>${r.suma}</strong> (necesitabas ${r.dificultad}+) — <span style="color:#5dcaa5">✔ ÉXITO</span> — ${r.nombre} sube a nivel ${r.nivelNuevo}/${NIVEL_MAXIMO_EQUIPO}${r.maxAlcanzado?' — <strong>nivel máximo alcanzado</strong>':''}`
+            : `Suma <strong>${r.suma}</strong> (necesitabas ${r.dificultad}+) — <span style="color:#e24b4a">✘ FALLO</span> — ${r.texto}`;
+        }
+        zona.innerHTML=`
+          <div class="lm-dice-result-row">${tiradas.map(v=>`<span class="lm-dice-pill">${v}</span>`).join('')}</div>
+          <div style="font-family:'Bebas Neue';font-size:15px;margin-top:10px;line-height:1.4">${textoResultado}</div>
+          <div class="lm-popup-actions"><button id="lmContinuarBtn" class="mode-card-btn mode-card-btn-gold">CONTINUAR</button></div>`;
+        document.getElementById('lmContinuarBtn').addEventListener('click', ()=>{
+          if(typeof window.playSound==='function') window.playSound('select');
+          renderHub();
+        });
+      }
+      iniciarBarajadoDados(box, numDados, (tiradas)=>mostrarRevisionTirada(tiradas, conResultado));
+    }
+
+    renderHub();
+  }
+
+  const NIVELES_DG_INFO=[
+    {track:'aforoExtra',          label:'Ampliación de grada',   icon:'ph-stairs',       desc:'Aforo permanente del estadio'},
+    {track:'ingresoPatrocinio',   label:'Patrocinadores',        icon:'ph-handshake',    desc:'Ingreso fijo mensual'},
+    {track:'ingresoMerchandising',label:'Tienda y merchandising',icon:'ph-t-shirt',      desc:'Ingreso por cada asistente'},
+    {track:'toleranciaPrecio',    label:'Relaciones con la afición',icon:'ph-users-three',desc:'Margen para subir el precio de entrada'}
+  ];
+  function renderNivelesDGHTML(){
+    return `<div class="med-niveles-grid">${NIVELES_DG_INFO.map(info=>{
+      const n=nivelDeDG(info.track);
+      return `<div class="med-nivel-row">
+        <i class="ph ph-bold ${info.icon}"></i>
+        <div class="med-nivel-info">
+          <div class="med-nivel-label">${info.label}</div>
+          <div class="med-nivel-desc">${info.desc}</div>
+        </div>
+        <div class="med-nivel-stars" title="Nivel ${n}/${NIVEL_MAXIMO_EQUIPO}">${estrellasNivel(n)}</div>
+      </div>`;
+    }).join('')}</div>`;
+  }
+
+  /* ---------- 13e. Finanzas del Director General — burbuja "i": tabla
+     mensual de ingresos/gastos con mini barras, agrupada por mes. ---------- */
+  function abrirFinanzasDG(){
+    const overlay=document.createElement('div');
+    overlay.id='lmFinanzasOverlay';
+    const historial=state.finanzasHistorial||[];
+    const meses={};
+    historial.forEach(h=>{
+      if(!meses[h.mes]) meses[h.mes]={ingresos:0, gastos:0, movimientos:[]};
+      if(h.monto>=0) meses[h.mes].ingresos+=h.monto; else meses[h.mes].gastos+=Math.abs(h.monto);
+      meses[h.mes].movimientos.push(h);
+    });
+    const mesesOrdenados=Object.keys(meses).map(Number).sort((a,b)=>b-a);
+    const maxValor=Math.max(1, ...mesesOrdenados.map(m=>Math.max(meses[m].ingresos, meses[m].gastos)));
+    const filas=mesesOrdenados.map(m=>{
+      const d=meses[m];
+      const neto=d.ingresos-d.gastos;
+      return `<div class="lm-fin-mes">
+        <div class="lm-fin-mes-title"><span>MES ${m}</span><span style="color:${neto>=0?'#5dcaa5':'#e24b4a'}">${neto>=0?'+':''}${formatoDinero(neto)}</span></div>
+        <div class="lm-fin-bar-row"><span class="lm-fin-bar-label">Ingresos</span><div class="lm-fin-bar-wrap"><div class="lm-fin-bar-fill lm-fin-bar-ingreso" style="width:${Math.round(d.ingresos/maxValor*100)}%"></div></div><span class="lm-fin-bar-valor">${formatoDinero(d.ingresos)}</span></div>
+        <div class="lm-fin-bar-row"><span class="lm-fin-bar-label">Gastos</span><div class="lm-fin-bar-wrap"><div class="lm-fin-bar-fill lm-fin-bar-gasto" style="width:${Math.round(d.gastos/maxValor*100)}%"></div></div><span class="lm-fin-bar-valor">${formatoDinero(d.gastos)}</span></div>
+      </div>`;
+    }).join('');
+    overlay.innerHTML=`
+      <div class="lm-dilemma-card" style="max-width:480px;text-align:left">
+        <div class="lm-dilemma-title" style="text-align:center"><i class="ph ph-bold ph-chart-line-up"></i> FINANZAS DEL CLUB</div>
+        <div class="lm-capital-box" style="margin-bottom:12px">
+          <i class="ph ph-bold ph-coins lm-capital-icon"></i>
+          <div class="lm-capital-info">
+            <div class="lm-capital-title"><span>CAPITAL ACTUAL</span><strong class="${(state.capital||0)<0?'lm-capital-neg':''}">${formatoDinero(state.capital)}</strong></div>
+          </div>
+        </div>
+        <div class="lm-hist-list">
+          ${mesesOrdenados.length?filas:'<p class="lm-setup-desc" style="text-align:center">Todavía no hay movimientos que mostrar.</p>'}
+        </div>
+        <div class="lm-popup-actions lm-popup-actions-compact">
+          <button id="lmFinanzasCerrar" class="mode-card-btn mode-card-btn-gold">CERRAR</button>
+        </div>
+      </div>`;
+    document.getElementById('ligaManagerScreen').appendChild(overlay);
+    document.getElementById('lmFinanzasCerrar').addEventListener('click', ()=>{
+      if(typeof window.playSound==='function') window.playSound('select');
+      overlay.remove();
+    });
+  }
+
+  /* ---------- 13f. Interfaz del Director Deportivo — sus 10 cartas
+     (incluida la especial "Sobres de Fichajes", con botón propio de abrir
+     sobre siempre visible a partir de nivel 1) y la revelación de
+     jugadores al abrir un sobre, con el mismo barajado 2D que los dados. ---------- */
+  function abrirDirectorDeportivo(){
+    const overlay=document.createElement('div');
+    overlay.id='lmDirectorDeportivoOverlay';
+    document.getElementById('ligaManagerScreen').appendChild(overlay);
+
+    function renderHub(){
+      const nivelSobre=nivelDeDD('sobresFichajes');
+      const cartasHTML=state.directorDeportivoCartas.map((instancia,idx)=>{
+        const def=cartaDefDD(instancia.cartaId);
+        const esSobre=def.tipo==='sobre';
+        const dificultadEfectiva = (def.tipo==='nivel'||esSobre) ? dificultadActualNivelDD(def) : def.dificultad;
+        const maxPosible = state.diceAvailable*6;
+        const imposiblePorDados = maxPosible < dificultadEfectiva;
+        const nivelActualTrack = (def.tipo==='nivel'||esSobre) ? nivelDeDD(def.track) : 0;
+        const nivelMaximoYa = (def.tipo==='nivel'||esSobre) && nivelActualTrack>=NIVEL_MAXIMO_EQUIPO;
+        const bloqueada = imposiblePorDados || nivelMaximoYa;
+        const cambioDisponible=!state.directorDeportivoCambioUsado;
+        let cuerpo;
+        if(def.tipo==='nivel'||esSobre){
+          cuerpo=`<div class="med-card-progress-label" style="text-align:center;letter-spacing:2px;color:var(--gold)">${estrellasNivel(nivelActualTrack)}</div>
+                  <div class="med-card-dificultad">${nivelMaximoYa?'Nivel máximo alcanzado':`Dificultad ${dificultadEfectiva}+ para subir a nivel ${nivelActualTrack+1}/${NIVEL_MAXIMO_EQUIPO}`}</div>`;
+        } else {
+          cuerpo=`<div class="med-card-dificultad">Dificultad ${def.dificultad}+</div>`;
+        }
+        const botonAccion = bloqueada
+          ? (nivelMaximoYa ? '' : `<div class="med-card-bloqueada-label">Imposible con los dados que quedan</div>`)
+          : `<button class="mode-card-btn mode-card-btn-gold med-card-btn" data-usar="${idx}" style="padding:7px;font-size:11px">USAR</button>`;
+        const botonSobre = (esSobre && nivelActualTrack>=1)
+          ? `<button class="mode-card-btn mode-card-btn-secondary med-card-btn" data-abrirsobre="${nivelActualTrack}" style="padding:7px;font-size:11px;margin-top:6px;border:1px solid var(--gold);color:var(--gold)" ${((state.capital||0)<(SOBRE_COSTES[nivelActualTrack]||0))?'disabled':''}>ABRIR SOBRE (${formatoDinero(SOBRE_COSTES[nivelActualTrack]||0)})</button>`
+          : '';
+        return `
+        <div class="med-card med-card-dd ${bloqueada&&!nivelMaximoYa?'med-card-bloqueada':''}" data-idx="${idx}">
+          <button class="med-card-swap" data-swap="${idx}" title="Cambiar carta" ${cambioDisponible?'':'disabled'}><i class="ph ph-bold ph-arrows-clockwise"></i></button>
+          <div class="med-card-tag">${esSobre?'PROYECTO ESPECIAL':(def.tipo==='nivel'?'MEJORA':'MISIÓN')}</div>
+          <i class="ph ph-bold ${def.icon} med-card-icon"></i>
+          <div class="med-card-title">${def.nombre}</div>
+          <div class="med-card-divider"></div>
+          <div class="med-card-desc">${def.desc}</div>
+          ${cuerpo}
+          ${botonAccion}
+          ${botonSobre}
+        </div>`;
+      }).join('');
+
+      overlay.innerHTML=`
+        <div class="lm-dilemma-card" style="max-width:640px">
+          <div class="lm-dilemma-title"><i class="ph ph-bold ph-binoculars"></i> DIRECTOR DEPORTIVO</div>
+          <div class="lm-capital-box">
+            <i class="ph ph-bold ph-coins lm-capital-icon"></i>
+            <div class="lm-capital-info">
+              <div class="lm-capital-title"><span>CAPITAL DEL CLUB</span><strong class="${(state.capital||0)<0?'lm-capital-neg':''}">${formatoDinero(state.capital)}</strong></div>
+              <div class="lm-aforo-nota">${nivelSobre>=1?`Sobres de Fichajes a nivel ${nivelSobre}/${NIVEL_MAXIMO_EQUIPO} — puedes abrirlos cuando quieras desde su tarjeta`:'Sube el proyecto "Sobres de Fichajes" para empezar a fichar'}</div>
+            </div>
+          </div>
+          <div class="lm-setup-desc" style="text-align:center;margin:10px 0 8px">dados disponibles este partido: <strong>${state.diceAvailable}</strong> (compartidos con el resto del cuerpo técnico) · cambios de carta: <strong>${state.directorDeportivoCambioUsado?0:1}/1</strong> · rerolls de dado hoy: <strong>${state.dadoRerollsDisponibles||0}/1</strong></div>
+          <div class="med-card-grid">${cartasHTML}</div>
+          <div class="lm-popup-actions lm-popup-actions-compact">
+            <button id="lmDirectorDeportivoCerrar" class="mode-card-btn mode-card-btn-secondary">CERRAR</button>
+          </div>
+        </div>`;
+
+      const cerrarBtn=document.getElementById('lmDirectorDeportivoCerrar');
+      if(cerrarBtn) cerrarBtn.addEventListener('click', ()=>{
+        if(typeof window.playSound==='function') window.playSound('select');
+        overlay.remove();
+        render();
+      });
+      overlay.querySelectorAll('[data-swap]').forEach(btn=>{
+        btn.addEventListener('click', ()=>{
+          const idx=parseInt(btn.getAttribute('data-swap'),10);
+          if(state.directorDeportivoCambioUsado) return;
+          if(typeof window.playSound==='function') window.playSound('select');
+          animarRerollCarta(overlay, idx, DIRECTOR_DEPORTIVO_CARTAS_BASE, ()=>{
+            cambiarCartaDD(idx);
+            renderHub();
+          });
+        });
+      });
+      overlay.querySelectorAll('[data-usar]').forEach(btn=>{
+        btn.addEventListener('click', ()=>{
+          const idx=parseInt(btn.getAttribute('data-usar'),10);
+          if(typeof window.playSound==='function') window.playSound('select');
+          renderSelectorCarta(idx);
+        });
+      });
+      overlay.querySelectorAll('[data-abrirsobre]').forEach(btn=>{
+        btn.addEventListener('click', ()=>{
+          const nivel=parseInt(btn.getAttribute('data-abrirsobre'),10);
+          if(typeof window.playSound==='function') window.playSound('select');
+          const jugadores=abrirSobreEnNivel(nivel);
+          if(!jugadores){ renderHub(); return; }
+          mostrarRevelacionSobre(jugadores, renderHub);
+        });
+      });
+    }
+
+    function renderSelectorCarta(idx){
+      const def=cartaDefDD(state.directorDeportivoCartas[idx].cartaId);
+      const esSobre=def.tipo==='sobre';
+      let dadosElegidos=Math.min(1, state.diceAvailable);
+      function pintar(){
+        overlay.innerHTML=`
+          <div class="lm-dilemma-card">
+            <i class="ph ph-bold ${def.icon}" style="font-size:26px;color:#c9c9c9"></i>
+            <div class="lm-dilemma-title">${def.nombre.toUpperCase()}</div>
+            <div class="lm-dilemma-text">${def.desc}${def.tipo==='directa'?` — necesitas sumar ${def.dificultad}+`:` — necesitas sumar ${dificultadActualNivelDD(def)}+ para subir a nivel ${nivelDeDD(def.track)+1}/${NIVEL_MAXIMO_EQUIPO}`}</div>
+            <div class="lm-dice-selector">
+              <button id="lmDiceMinus" class="lm-dice-stepper">−</button>
+              <span id="lmDiceCount">${dadosElegidos}</span>
+              <button id="lmDicePlus" class="lm-dice-stepper">+</button>
+            </div>
+            <div class="lm-setup-desc">dados disponibles: ${state.diceAvailable}</div>
+            <div class="lm-popup-actions">
+              <button id="lmTirarBtn" class="mode-card-btn mode-card-btn-gold" ${state.diceAvailable<1?'disabled':''}>TIRAR ${dadosElegidos} DADO${dadosElegidos>1?'S':''}</button>
+              <button id="lmCancelarCartaBtn" class="lm-btn-cancelar">CANCELAR</button>
+            </div>
+          </div>`;
+        const minus=document.getElementById('lmDiceMinus');
+        const plus=document.getElementById('lmDicePlus');
+        const tirarBtn=document.getElementById('lmTirarBtn');
+        const cancelarBtn=document.getElementById('lmCancelarCartaBtn');
+        if(minus) minus.addEventListener('click', ()=>{ if(dadosElegidos>1){ dadosElegidos--; pintar(); } });
+        if(plus) plus.addEventListener('click', ()=>{ if(dadosElegidos<state.diceAvailable){ dadosElegidos++; pintar(); } });
+        if(cancelarBtn) cancelarBtn.addEventListener('click', ()=>{
+          if(typeof window.playSound==='function') window.playSound('select');
+          renderHub();
+        });
+        if(tirarBtn) tirarBtn.addEventListener('click', ()=>{
+          if(typeof window.playSound==='function') window.playSound('select');
+          renderRolloCarta(idx, dadosElegidos, esSobre);
+        });
+      }
+      pintar();
+    }
+
+    function renderRolloCarta(idx, numDados, esSobre){
+      overlay.innerHTML=`
+        <div class="lm-dilemma-card">
+          <div class="lm-dilemma-title" id="lmDiceTitle">TIRANDO ${numDados} DADO${numDados>1?'S':''}...</div>
+          <div id="lmDice2DRow" class="lm-dice2d-row"></div>
+          <div id="lmDiceResultZone"></div>
+        </div>`;
+      const box=document.getElementById('lmDice2DRow');
+      function conResultado(tiradas){
+        state.diceAvailable=Math.max(0, state.diceAvailable-numDados);
+        const r=resolverCartaDD(idx, tiradas);
+        const tituloEl=document.getElementById('lmDiceTitle');
+        if(tituloEl) tituloEl.textContent='RESULTADO';
+        const zona=document.getElementById('lmDiceResultZone');
+        let textoResultado;
+        if(r.tipo==='directa'){
+          textoResultado=`Suma <strong>${r.suma}</strong> (necesitabas ${r.dificultad}+) — <span style="color:${r.exito?'#5dcaa5':'#e24b4a'}">${r.exito?'✔ ÉXITO — '+r.texto:'✘ FALLO — '+r.texto}</span>`;
+        } else {
+          textoResultado = r.exito
+            ? `Suma <strong>${r.suma}</strong> (necesitabas ${r.dificultad}+) — <span style="color:#5dcaa5">✔ ÉXITO</span> — ${r.nombre} sube a nivel ${r.nivelNuevo}/${NIVEL_MAXIMO_EQUIPO}${r.maxAlcanzado?' — <strong>nivel máximo alcanzado, sobre gratis incluido</strong>':''}`
+            : `Suma <strong>${r.suma}</strong> (necesitabas ${r.dificultad}+) — <span style="color:#e24b4a">✘ FALLO</span> — ${r.texto}`;
+        }
+        zona.innerHTML=`
+          <div class="lm-dice-result-row">${tiradas.map(v=>`<span class="lm-dice-pill">${v}</span>`).join('')}</div>
+          <div style="font-family:'Bebas Neue';font-size:15px;margin-top:10px;line-height:1.4">${textoResultado}</div>
+          <div class="lm-popup-actions"><button id="lmContinuarBtn" class="mode-card-btn mode-card-btn-gold">CONTINUAR</button></div>`;
+        document.getElementById('lmContinuarBtn').addEventListener('click', ()=>{
+          if(typeof window.playSound==='function') window.playSound('select');
+          if(r.sobreAbierto && r.sobreAbierto.length){
+            mostrarRevelacionSobre(r.sobreAbierto, renderHub);
+          } else {
+            renderHub();
+          }
+        });
+      }
+      iniciarBarajadoDados(box, numDados, (tiradas)=>mostrarRevisionTirada(tiradas, conResultado));
+    }
+
+    // Revelación de los 3 jugadores de un sobre — mismo barajado 2D que
+    // los dados/las cartas de rerroll, mostrando la posición en grande
+    // (todavía sin imagen) y permitiendo fichar al momento.
+    function mostrarRevelacionSobre(jugadores, onCerrar){
+      overlay.innerHTML=`
+        <div class="lm-dilemma-card" style="max-width:560px">
+          <div class="lm-dilemma-title"><i class="ph ph-bold ph-envelope-open"></i> SOBRE DE FICHAJES</div>
+          <div id="lmSobreReveloZone" class="lm-sobre-grid">
+            ${jugadores.map((j,i)=>`<div class="slot-reel lm-sobre-reel" id="lmSobreReel${i}"><div class="slot-strip lm-sobre-face">?</div></div>`).join('')}
+          </div>
+          <div id="lmSobreResultado"></div>
+        </div>`;
+      let ticks=0;
+      const totalTicks=11+Math.floor(Math.random()*4);
+      const posiciones=['POR','DFC','LI','LD','MC','EI','ED','DC'];
+      const spin=setInterval(()=>{
+        jugadores.forEach((j,i)=>{
+          const el=document.getElementById('lmSobreReel'+i);
+          if(el) el.querySelector('.lm-sobre-face').textContent=posiciones[Math.floor(Math.random()*posiciones.length)];
+        });
+        if(typeof window.playSound==='function') window.playSound('spin');
+        ticks++;
+        if(ticks>=totalTicks){
+          clearInterval(spin);
+          if(typeof window.playSound==='function') window.playSound('reveal');
+          const zona=document.getElementById('lmSobreResultado');
+          zona.innerHTML=`<div class="lm-sobre-cards">${jugadores.map((j,i)=>`
+            <div class="lm-sobre-card" data-jugador="${i}">
+              <div class="lm-sobre-pos">${j.position}</div>
+              <div class="lm-sobre-nombre">${j.name}</div>
+              <div class="lm-sobre-overall">${j.overall} <span>overall</span></div>
+              <div class="lm-sobre-stats">ATA ${j.attack} · DEF ${j.defense} · RIT ${j.pace} · PAS ${j.passing} · TEC ${j.technique}</div>
+              <div class="lm-sobre-salario">${formatoDinero(j.salario)}/mes</div>
+              <button class="mode-card-btn mode-card-btn-gold lm-sobre-fichar" data-fichar="${i}" style="padding:6px;font-size:10px;margin-top:6px">FICHAR</button>
+            </div>`).join('')}</div>
+            <div class="lm-popup-actions" style="margin-top:12px"><button id="lmSobreCerrar" class="mode-card-btn mode-card-btn-secondary">CERRAR SOBRE</button></div>`;
+          zona.querySelectorAll('[data-fichar]').forEach(btn=>{
+            btn.addEventListener('click', ()=>{
+              const i=parseInt(btn.getAttribute('data-fichar'),10);
+              if(typeof window.playSound==='function') window.playSound('select');
+              ficharJugadorSobre(jugadores[i]);
+              btn.textContent='FICHADO ✔';
+              btn.disabled=true;
+              btn.closest('.lm-sobre-card').classList.add('lm-sobre-card-fichado');
+            });
+          });
+          document.getElementById('lmSobreCerrar').addEventListener('click', ()=>{
+            if(typeof window.playSound==='function') window.playSound('select');
+            onCerrar();
+          });
+        }
+      },85);
+    }
+
+    renderHub();
+  }
+
+  /* ---------- 13g. Salarios de la plantilla — burbuja "i" del Director
+     Deportivo: lista completa de jugadores con su salario mensual. ---------- */
+  function abrirSalariosDD(){
+    const overlay=document.createElement('div');
+    overlay.id='lmSalariosOverlay';
+    function pintar(){
+      const jugadores=[...(state.plantilla||[])].sort((a,b)=>(b.salario||0)-(a.salario||0));
+      const totalNomina=jugadores.reduce((s,p)=>s+(p.salario||0),0);
+      const filas=jugadores.map(p=>{
+        const chequeo=puedeVenderJugador(p.id);
+        return `
+      <div class="lm-hist-item">
+        <i class="ph ph-bold ph-user" style="color:#c9c9c9"></i>
+        <div style="flex:1">
+          <div class="lm-hist-title">${p.name} <span class="lm-hist-tag">${p.position}</span>${p.injured?' <span class="cross" title="Lesionado">✚</span>':''}</div>
+          <div class="lm-hist-meta">Overall ${p.overall}</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-family:'Bebas Neue';font-size:14px;color:var(--gold);white-space:nowrap">${formatoDinero(p.salario||0)}/mes</div>
+          <button class="mode-card-btn mode-card-btn-secondary lm-vender-btn" data-vender="${p.id}" title="${chequeo.ok?'':chequeo.motivo}" ${chequeo.ok?'':'disabled'} style="padding:4px 8px;font-size:9px;margin-top:3px">VENDER</button>
+        </div>
+      </div>`;
+      }).join('');
+      overlay.innerHTML=`
+        <div class="lm-dilemma-card" style="max-width:480px;text-align:left">
+          <div class="lm-dilemma-title" style="text-align:center"><i class="ph ph-bold ph-file-text"></i> SALARIOS DE LA PLANTILLA</div>
+          <div class="lm-setup-desc" style="text-align:center;margin-bottom:8px">Nómina total de jugadores: <strong>${formatoDinero(totalNomina)}/mes</strong> · plantilla: <strong>${jugadores.length}</strong></div>
+          <p class="lm-setup-desc" style="text-align:center;margin-bottom:8px">No puedes vender si te dejaría por debajo de 11 jugadores sanos disponibles.</p>
+          <div class="lm-hist-list">${filas||'<p class="lm-setup-desc" style="text-align:center">No hay jugadores en la plantilla.</p>'}</div>
+          <div class="lm-popup-actions lm-popup-actions-compact">
+            <button id="lmSalariosCerrar" class="mode-card-btn mode-card-btn-gold">CERRAR</button>
+          </div>
+        </div>`;
+      document.getElementById('lmSalariosCerrar').addEventListener('click', ()=>{
+        if(typeof window.playSound==='function') window.playSound('select');
+        overlay.remove();
+      });
+      overlay.querySelectorAll('[data-vender]').forEach(btn=>{
+        btn.addEventListener('click', ()=>{
+          const jugadorId=btn.getAttribute('data-vender');
+          const jugador=(state.plantilla||[]).find(p=>p.id===jugadorId);
+          if(!jugador) return;
+          const proceder=()=>{
+            const r=venderJugadorManual(jugadorId);
+            if(typeof window.playSound==='function') window.playSound('select');
+            if(!r.ok && r.motivo) alert(r.motivo);
+            pintar();
+          };
+          const monto=Math.max(3000, Math.round(jugador.overall*400));
+          if(typeof window.showConfirmPopup==='function'){
+            window.showConfirmPopup(`¿Vender a ${jugador.name} por ${formatoDinero(monto)}? Esta acción no se puede deshacer.`, proceder, 'VENDER');
+          } else if(confirm(`¿Vender a ${jugador.name} por ${formatoDinero(monto)}?`)){
+            proceder();
+          }
+        });
+      });
+    }
+    document.getElementById('ligaManagerScreen').appendChild(overlay);
+    pintar();
+  }
+
+  /* ---------- 13h. TRABAJADORES — contratar y despedir al cuerpo
+     técnico. Cada mes se renuevan 2 candidatos por puesto (mismo momento
+     que la nómina), con nivel y sueldo acordes; despedir deja el puesto
+     vacante (sin sueldo) hasta contratar a alguien. ---------- */
+  function abrirTrabajadores(){
+    const overlay=document.createElement('div');
+    overlay.id='lmTrabajadoresOverlay';
+    document.getElementById('ligaManagerScreen').appendChild(overlay);
+
+    function fichaTrabajadorHTML(rol){
+      const actual=state.trabajadores[rol];
+      const candidatos=(state.candidatosTrabajo||[]).filter(c=>c.rol===rol);
+      return `
+      <div class="lm-trab-rol">
+        <div class="lm-trab-rol-titulo">${NOMBRE_ROL[rol]}</div>
+        ${actual ? `
+          <div class="lm-trab-card lm-trab-card-actual">
+            <div class="lm-trab-card-top">
+              <span class="lm-trab-nombre">${actual.nombre}</span>
+              <span class="lm-trab-estrellas">${estrellasNivel(actual.nivel)}</span>
+            </div>
+            <div class="lm-trab-sueldo">${formatoDinero(actual.sueldo)}/mes</div>
+            <button class="mode-card-btn mode-card-btn-secondary lm-trab-despedir" data-despedir="${rol}" style="padding:6px;font-size:10px;margin-top:6px">DESPEDIR</button>
+          </div>` : `
+          <div class="lm-trab-card lm-trab-card-vacante">
+            <i class="ph ph-bold ph-user-circle-minus"></i>
+            <span>Puesto vacante</span>
+          </div>`}
+        <div class="lm-trab-candidatos">
+          ${candidatos.map(c=>`
+            <div class="lm-trab-card">
+              <div class="lm-trab-card-top">
+                <span class="lm-trab-nombre">${c.nombre}</span>
+                <span class="lm-trab-estrellas">${estrellasNivel(c.nivel)}</span>
+              </div>
+              <div class="lm-trab-sueldo">${formatoDinero(c.sueldo)}/mes</div>
+              <button class="mode-card-btn mode-card-btn-gold lm-trab-contratar" data-contratar="${c.id}" data-rol="${rol}" style="padding:6px;font-size:10px;margin-top:6px">CONTRATAR</button>
+            </div>`).join('') || '<p class="lm-setup-desc" style="text-align:center">Sin candidatos este mes</p>'}
+        </div>
+      </div>`;
+    }
+
+    function pintar(){
+      overlay.innerHTML=`
+        <div class="lm-dilemma-card" style="max-width:680px;text-align:left">
+          <div class="lm-dilemma-title" style="text-align:center"><i class="ph ph-bold ph-users-three"></i> TRABAJADORES</div>
+          <p class="lm-setup-desc" style="text-align:center;margin-bottom:10px">Cada mes aparecen nuevos candidatos por puesto — compara nivel y sueldo antes de decidir si te compensa un cambio.</p>
+          <div class="lm-trab-grid">
+            ${ROLES_TRABAJO.map(fichaTrabajadorHTML).join('')}
+          </div>
+          <div class="lm-popup-actions lm-popup-actions-compact">
+            <button id="lmTrabajadoresCerrar" class="mode-card-btn mode-card-btn-gold">CERRAR</button>
+          </div>
+        </div>`;
+      document.getElementById('lmTrabajadoresCerrar').addEventListener('click', ()=>{
+        if(typeof window.playSound==='function') window.playSound('select');
+        overlay.remove();
+        render();
+      });
+      overlay.querySelectorAll('[data-despedir]').forEach(btn=>{
+        btn.addEventListener('click', ()=>{
+          const rol=btn.getAttribute('data-despedir');
+          const actual=state.trabajadores[rol];
+          const proceder=()=>{ despedirTrabajador(rol); pintar(); };
+          if(typeof window.showConfirmPopup==='function'){
+            window.showConfirmPopup(`¿Despedir a ${actual.nombre} (${NOMBRE_ROL[rol]})? El puesto quedará vacante hasta que contrates a otra persona.`, proceder, 'DESPEDIR');
+          } else if(confirm(`¿Despedir a ${actual.nombre}?`)){
+            proceder();
+          }
+        });
+      });
+      overlay.querySelectorAll('[data-contratar]').forEach(btn=>{
+        btn.addEventListener('click', ()=>{
+          const candidatoId=btn.getAttribute('data-contratar');
+          const rol=btn.getAttribute('data-rol');
+          if(typeof window.playSound==='function') window.playSound('select');
+          contratarTrabajador(rol, candidatoId);
+          pintar();
+        });
+      });
+    }
+    pintar();
   }
 
   /* ---------- 14. Inicialización ---------- */
