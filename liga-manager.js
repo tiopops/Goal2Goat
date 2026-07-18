@@ -168,10 +168,10 @@
   };
   const CAT_LABELS = {ofensiva:'OFENSIVA', equilibrada:'EQUILIBRADA', defensiva:'DEFENSIVA'};
 
-  // Posición genérica de una línea: primera línea tras el portero =
-  // defensa (LI/LD en los extremos si hay 2+), última línea = ataque
-  // (EI/ED en los extremos si hay 3+), líneas intermedias = mediocampo
-  // (EI/ED en los extremos si la línea es ancha, 4+).
+  // Posición genérica de una línea — SOLO se usa como red de seguridad si
+  // algún código de formación no estuviera en el FORMATION_LAYOUTS real de
+  // Copa Leyendas (no debería pasar: los 21 códigos de FORMATION_CODES
+  // están todos ahí), para no dejar nunca el campo sin generar.
   function posParaFila(rowIdx, nFilas, i, count){
     if(rowIdx===0){
       if(count>=2 && i===0) return 'LI';
@@ -187,7 +187,7 @@
     if(count>=4 && i===count-1) return 'ED';
     return 'MC';
   }
-  function generarSlotsFormacion(code){
+  function generarSlotsFormacionFallback(code){
     const filas=code.split('-').map(n=>parseInt(n,10));
     const slots=[{slot:'POR', x:50, y:90.6}];
     const nFilas=filas.length;
@@ -202,6 +202,25 @@
       }
     });
     return slots;
+  }
+  // Generación REAL de las posiciones: CALCO exacto de Copa Leyendas — se
+  // reutiliza literalmente su buildFormationSlots()/FORMATION_LAYOUTS (líneas
+  // arqueadas, no rectas, y coordenadas idénticas a las del campo de Copa
+  // Leyendas), disponibles como globales porque game.js se carga antes que
+  // este archivo. Solo se añade un sufijo numérico a cada etiqueta repetida
+  // para tener una clave única por posición (Liga Manager necesita guardar
+  // la alineación como diccionario serializable, a diferencia de Copa
+  // Leyendas que la guarda en el propio DOM).
+  function generarSlotsFormacion(code){
+    if(typeof buildFormationSlots!=='function' || !FORMATION_LAYOUTS[code]){
+      return generarSlotsFormacionFallback(code);
+    }
+    const layout=buildFormationSlots(code);
+    const contador={};
+    return layout.map(s=>{
+      contador[s.label]=(contador[s.label]||0)+1;
+      return {slot:s.label+contador[s.label], x:s.left, y:s.top};
+    });
   }
   function formacionActual(){
     const code=(state.formacionCode)||'4-3-3';
@@ -259,6 +278,11 @@
   let setupStep=1;
   let formacionCategoriaVista=null; // categoría que se está viendo en el selector (no siempre coincide con la activa)
   let seleccionJugador=null; // id del jugador seleccionado en la plantilla/banquillo/campo, a la espera del segundo clic
+  // Ordenación de la tabla PLANTILLA — mismo sistema de 3 modos que
+  // CONVOCADOS en Copa Leyendas (LLEGADA/POSICIÓN/PUNTOS, un botón cíclico).
+  let lmSortMode='position';
+  const LM_SORT_LABELS={arrival:'LLEGADA', position:'POSICIÓN', rating:'PUNTOS'};
+  const LM_SORT_NEXT={arrival:'position', position:'rating', rating:'arrival'};
   let clasifColapsada=true; // la clasificación empieza contraída, igual que el glosario de Copa Leyendas
   let setupData={liga:'es', moneda:null, nombre:'', escudo:null};
 
@@ -1144,17 +1168,46 @@
       const racha=p.racha>=2?` <span title="Racha de gol">🔥${p.racha}</span>`:'';
       const star=titularIds.has(p.id)?'<span class="star" title="Titular">★</span>':'';
       const claseFila=[p.id===seleccionJugador?'lm-row-selected':'', p.injured?'lm-row-injured':''].filter(Boolean).join(' ');
+      // Posición JUGADA (la del slot del campo si está alineado) frente a
+      // su posición natural — mismo tratamiento que Copa Leyendas en
+      // CONVOCADOS: si difieren, la jugada se marca en rojo y la natural
+      // aparece debajo en gris pequeño.
+      const slotAsignado=slotDeJugador(p.id);
+      const posJugada=slotAsignado?basePos(slotAsignado):p.position;
+      const fueraDePos=slotAsignado && posJugada!==p.position;
+      const posCell=`<span style="font-weight:700${fueraDePos?';color:#e24b4a':''}">${posJugada}</span>${star}${fueraDePos?`<br><span style="font-size:9px;color:#888">${p.position}</span>`:''}`;
       return `<tr data-pid="${p.id}" class="${claseFila}">
         <td>${p.name}${cross}${racha}</td>
         <td>${fatigueBarHTML(p)}</td>
-        <td>${p.position}${star}</td>
+        <td>${posCell}</td>
         <td>${p.attack}</td><td>${p.defense}</td><td>${p.pace}</td><td>${p.passing}</td><td>${p.technique}</td>
         <td><strong>${p.overall}</strong></td>
       </tr>`;
     }
     const titularIds=new Set(Object.values(state.alineacion||{}).filter(Boolean));
-    const plantillaPrincipal=state.plantilla.filter(p=>!p.esSuplente);
-    const banquillo=state.plantilla.filter(p=>p.esSuplente);
+    // PLANTILLA = quienes están AHORA MISMO en el campo, BANQUILLO = el
+    // resto — igual que CONVOCADOS/BANQUILLO en Copa Leyendas, donde un
+    // cambio mueve de verdad al jugador de una lista a la otra. Antes se
+    // usaba la etiqueta fija "esSuplente" de la generación inicial, que
+    // no se actualizaba al hacer cambios y dejaba las tablas
+    // desincronizadas del campo real.
+    const posOrderLM=['POR','DFC','LI','LD','MC','EI','ED','DC'];
+    function posicionEfectiva(p){
+      const slot=slotDeJugador(p.id);
+      return slot?basePos(slot):p.position;
+    }
+    function ordenarPlantilla(lista){
+      if(lmSortMode==='position'){
+        return [...lista].sort((a,b)=>{
+          const ai=posOrderLM.indexOf(posicionEfectiva(a)), bi=posOrderLM.indexOf(posicionEfectiva(b));
+          return (ai===-1?99:ai)-(bi===-1?99:bi);
+        });
+      }
+      if(lmSortMode==='rating') return [...lista].sort((a,b)=>b.overall-a.overall);
+      return lista; // 'arrival' = orden de llegada = orden del array tal cual
+    }
+    const plantillaPrincipal=ordenarPlantilla(state.plantilla.filter(p=>titularIds.has(p.id)));
+    const banquillo=state.plantilla.filter(p=>!titularIds.has(p.id));
     const filasPlantilla=plantillaPrincipal.map(filaJugador).join('');
     const filasBanquillo=banquillo.map(filaJugador).join('');
 
@@ -1168,7 +1221,16 @@
               <div class="lm-sub">Jornada ${Math.min(state.jornadaActual,38)} de 38 · ${monedaInfo.symbol}</div>
             </div>
           </div>
-          <div class="bench-title"><span>PLANTILLA</span><span>${plantillaPrincipal.length}</span></div>
+          <div class="bench-title">
+            <span>PLANTILLA</span>
+            <span style="display:flex;align-items:center;gap:8px">
+              <button id="lmSortBtn" class="lm-sort-btn" title="Cambiar orden" aria-label="Cambiar orden">
+                <span id="lmSortLabel">${LM_SORT_LABELS[lmSortMode]}</span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M7 12h10M11 18h2"/></svg>
+              </button>
+              <span>${plantillaPrincipal.length}</span>
+            </span>
+          </div>
           <div style="overflow-x:auto">
             <table class="roster-table">
               <thead><tr><th>Jugador</th><th>Resist.</th><th>Pos</th><th>ATA</th><th>DEF</th><th>RIT</th><th>PAS</th><th>TEC</th><th>Rat.</th></tr></thead>
@@ -1264,14 +1326,15 @@
       </div>
 
       <div class="lm-staffrow">
-        <div class="lm-staff-card ${notif?'has-notif':''}" id="lmMedicoBtn" title="Es el encargado de prevenir, diagnosticar y tratar lesiones de tus jugadores">
+        <div class="lm-staff-card ${notif?'has-notif':''}" id="lmMedicoBtn">
           ${notif?'<span class="lm-staff-badge">1</span>':''}
           <button class="lm-staff-info-bubble" id="lmMedicoInfoBtn" title="Historial médico">i</button>
           <div class="lm-staff-photo-wrap">
-            <img src="assets/equipo_tecnico/medico/novato.png" alt="Médico" class="lm-staff-photo-img" onerror="this.onerror=null;this.style.display='none';this.nextElementSibling.style.display='flex';">
+            <img src="assets/equipo_tecnico/medico/novato.png" alt="Equipo médico" class="lm-staff-photo-img" onerror="this.onerror=null;this.style.display='none';this.nextElementSibling.style.display='flex';">
             <div class="lm-staff-photo-fallback" style="display:none"><i class="ph ph-bold ph-first-aid-kit"></i></div>
           </div>
-          <span class="lm-staff-card-name">MÉDICO</span>
+          <div class="lm-staff-card-name">EQUIPO MÉDICO</div>
+          <div class="lm-staff-card-desc">Previene, diagnostica y trata las lesiones de tus jugadores</div>
         </div>
       </div>
     `;
@@ -1328,6 +1391,12 @@
     if(clasifHeader) clasifHeader.addEventListener('click', ()=>{
       if(typeof window.playSound==='function') window.playSound('select');
       clasifColapsada=!clasifColapsada;
+      render();
+    });
+    const sortBtn=document.getElementById('lmSortBtn');
+    if(sortBtn) sortBtn.addEventListener('click', ()=>{
+      if(typeof window.playSound==='function') window.playSound('select');
+      lmSortMode=LM_SORT_NEXT[lmSortMode];
       render();
     });
     const medicoBtn=document.getElementById('lmMedicoBtn');

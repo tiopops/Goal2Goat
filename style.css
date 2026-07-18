@@ -2482,6 +2482,14 @@ body.liga-manager-screen #mobileTabBar{display:none!important}
    padding 6px 6px) — antes se forzaba a 11px y quedaba más pequeña. */
 .lm-left-panel .roster-table th{font-size:11px;padding:5px 6px}
 .lm-left-panel .roster-table td{font-size:13px;padding:6px 6px}
+/* Botón de ordenación cíclica de PLANTILLA — mismo aspecto/tamaño que
+   #convSortBtn en CONVOCADOS de Copa Leyendas. */
+.lm-sort-btn{
+  background:none;border:none;cursor:pointer;padding:4px;color:#888;
+  display:flex;align-items:center;gap:4px;flex-shrink:0;
+}
+.lm-sort-btn:hover{color:#c9a227}
+.lm-sort-btn span{font-family:'Bebas Neue',Impact,sans-serif;font-size:11px;letter-spacing:1px;color:inherit}
 
 /* Centro: mismo comportamiento que .center-panel/#pitchBox de Copa
    Leyendas (fondo oscuro, campo centrado, mismo ancho máximo/aspect-ratio). */
@@ -2507,45 +2515,35 @@ body.liga-manager-screen #mobileTabBar{display:none!important}
   .lm-panel,.lm-right-panel{border:none;border-bottom:1px solid #22282b}
 }
 
-/* Cuerpo técnico — antes era una barra sticky a todo lo ancho con una
-   tarjeta grande (foto a tamaño completo), que comía mucha interfaz
-   permanentemente. Ahora es un chip flotante compacto en la esquina
-   (mismo patrón que un botón de chat/soporte flotante): no ocupa hueco
-   en el flujo del documento, solo la foto en circular + badge, con el
-   nombre/descripción como tooltip nativo al pasar el ratón — el resto
-   de tamaños (badge, burbuja "i") se mantienen igual que antes. */
+/* Cuerpo técnico — ficha flotante (no ocupa hueco en el documento, así
+   que no come interfaz aunque se quede siempre a la vista), pero con el
+   mismo contenido de una ficha real: foto, nombre y descripción — nunca
+   un simple icono circular. */
 .lm-staffrow{
   position:fixed;bottom:18px;right:18px;z-index:8;
   display:flex;flex-direction:column;align-items:flex-end;gap:10px;
 }
 
-/* Chip circular de un miembro del cuerpo técnico — antes era una tarjeta
-   de 150px de ancho con la foto a toda anchura; ahora solo el círculo. */
+/* Ficha de un miembro del cuerpo técnico — foto + nombre + rol breve,
+   estilo PC Fútbol 7, ahora flotando sobre el hub en vez de clavada
+   como barra sticky a todo lo ancho. */
 .lm-staff-card{
-  position:relative;width:60px;height:60px;border-radius:50%;cursor:pointer;
-  border:2px solid #2f3539;background:#1a1d1f;overflow:visible;
-  box-shadow:0 4px 14px rgba(0,0,0,.5);
-  transition:border-color .15s ease,transform .15s ease;
+  position:relative;width:168px;text-align:center;cursor:pointer;
+  border:1px solid #2f3539;border-radius:12px;background:#1a1d1f;
+  padding:10px 10px 12px;overflow:visible;
+  box-shadow:0 10px 26px rgba(0,0,0,.55);
+  transition:border-color .15s ease,transform .15s ease,box-shadow .15s ease;
 }
-.lm-staff-card:hover{transform:translateY(-2px) scale(1.05)}
+.lm-staff-card:hover{transform:translateY(-3px);box-shadow:0 14px 30px rgba(0,0,0,.6)}
 .lm-staff-card:hover,.lm-staff-card.has-notif{border-color:#c9a227}
-.lm-staff-photo-wrap{width:100%;height:100%;border-radius:50%;background:#2f3539;overflow:hidden}
+.lm-staff-photo-wrap{width:100%;aspect-ratio:1;border-radius:8px;background:#2f3539;overflow:hidden;margin-bottom:8px}
 .lm-staff-photo-img{width:100%;height:100%;object-fit:cover;display:block}
 .lm-staff-card:not(.has-notif) .lm-staff-photo-img{filter:grayscale(.6)}
 .lm-staff-card:hover .lm-staff-photo-img{filter:grayscale(0)}
-.lm-staff-photo-fallback{width:100%;height:100%;border-radius:50%;display:flex;align-items:center;justify-content:center}
-.lm-staff-photo-fallback i{font-size:26px;color:#c9a227}
-/* Nombre/rol: ya no van fijos en la tarjeta — aparecen como una
-   pequeña etiqueta flotante a la izquierda del chip solo al pasar el
-   ratón, para no ocupar espacio permanente. */
-.lm-staff-card-name{
-  position:absolute;top:50%;right:calc(100% + 10px);transform:translateY(-50%);
-  background:#1a1d1f;border:1px solid #2f3539;padding:5px 10px;white-space:nowrap;
-  font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:1px;font-size:13px;color:var(--gold);
-  opacity:0;pointer-events:none;transition:opacity .15s ease;
-}
-.lm-staff-card:hover .lm-staff-card-name{opacity:1}
-.lm-staff-card-desc{display:none}
+.lm-staff-photo-fallback{width:100%;height:100%;display:flex;align-items:center;justify-content:center}
+.lm-staff-photo-fallback i{font-size:34px;color:#c9a227}
+.lm-staff-card-name{font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:1px;font-size:15px;color:var(--gold)}
+.lm-staff-card-desc{font-size:10px;color:#999;line-height:1.35;margin-top:4px}
 .lm-staff-info-bubble{
   position:absolute;top:0;left:0;transform:translate(-50%,-50%);width:20px;height:20px;border-radius:50%;
   background:rgba(0,0,0,.85);border:1px solid #c9a227;color:#fff;
