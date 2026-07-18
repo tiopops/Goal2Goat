@@ -24,7 +24,7 @@
    ============================================================ */
 (function(){
 
-  const SAVE_KEY = 'g2g_liga_manager_v06';
+  const SAVE_KEY = 'g2g_liga_manager_v07';
   // Identidad del club (nombre + escudo) — PERSISTE entre partidas, no se
   // pierde al abandonar/descender. Si ya existe, el flujo de entrada no
   // vuelve a pedir nombre ni escudo (solo liga y moneda cada vez).
@@ -306,7 +306,8 @@
       medicoCartas:[],
       medicoCambioUsado:false,
       medicoCartasAgotadas:[],
-      medicoBonos:{}
+      medicoBonos:{},
+      medicoHistorial:[]
     };
     state.medicoCartas = inicializarCartasMedico();
     guardarEstado();
@@ -495,6 +496,11 @@
       const pool = titularesSanos.length ? titularesSanos : state.plantilla.filter(p=>!p.injured);
       if(pool.length){
         const jugador=pool[Math.floor(Math.random()*pool.length)];
+        const TIPOS_LESION={
+          leve:['Sobrecarga muscular','Golpe en el tobillo','Molestias en el isquiotibial'],
+          moderada:['Esguince de tobillo','Distensión muscular','Golpe en la rodilla'],
+          grave:['Rotura de ligamentos','Rotura fibrilar','Lesión de menisco']
+        };
         const severidades=[
           {label:'leve', weeks:1, dificultad:7},
           {label:'moderada', weeks:2, dificultad:10},
@@ -503,7 +509,8 @@
         const sev=severidades[Math.floor(Math.random()*severidades.length)];
         let weeks=Math.max(1, sev.weeks-(bonos.recuperacionExtra||0));
         if(sev.label==='grave' && bonos.graveMultiplier) weeks=Math.max(1, Math.round(weeks*bonos.graveMultiplier));
-        eventos.push({minute:20+Math.floor(Math.random()*65), team:'home', type:'injury', jugador, sev:{...sev, weeks}});
+        const tipoLesion=TIPOS_LESION[sev.label][Math.floor(Math.random()*TIPOS_LESION[sev.label].length)];
+        eventos.push({minute:20+Math.floor(Math.random()*65), team:'home', type:'injury', jugador, sev:{...sev, weeks}, tipoLesion});
       }
     }
     // Actualizar rachas de gol: quien marca suma, el resto de titulares que
@@ -540,6 +547,8 @@
           evInjury.jugador.injuryWeeks=evInjury.sev.weeks;
           evInjury.jugador.injurySeverity=evInjury.sev.label;
           state.medicoNotificacion={jugadorId:evInjury.jugador.id, dificultad:evInjury.sev.dificultad, severidad:evInjury.sev.label};
+          const rivalDeEsta = partido.home.id==='lm_0' ? partido.away.name : partido.home.name;
+          evInjury.jugador.lesionLogId=registrarLesionHistorial(evInjury.jugador, evInjury.sev, evInjury.tipoLesion, rivalDeEsta);
         }
         miPartidoInfo={ home:partido.home, away:partido.away, resultado, eventos };
       }
@@ -553,7 +562,10 @@
     state.plantilla.forEach(p=>{
       if(p.injured && p.injuryWeeks>0){
         p.injuryWeeks--;
-        if(p.injuryWeeks<=0){ p.injured=false; p.injurySeverity=null; }
+        if(p.injuryWeeks<=0){
+          p.injured=false; p.injurySeverity=null;
+          cerrarLesionHistorial(p, 'Tiempo natural');
+        }
       }
     });
 
@@ -727,13 +739,46 @@
   }
 
   /* ---------- 9. Resolver el dilema del médico con N dados (se SUMAN) ---------- */
+  /* ---------- 9a. Historial del médico — registra cada lesión (cuándo,
+     contra quién, tipo) y cómo se resolvió (tiempo natural, dado urgente
+     o una carta concreta), más el progreso de las cartas de acumulación.
+     Se muestra ordenado de más reciente a más antiguo. ---------- */
+  function registrarLesionHistorial(jugador, sev, tipoLesion, rival){
+    state.medicoHistorial = state.medicoHistorial||[];
+    const id = 'h'+Date.now()+Math.floor(Math.random()*1000);
+    state.medicoHistorial.push({
+      id, tipo:'lesion',
+      jugador: jugador.name, jornadaInicio: state.jornadaActual, rival,
+      severidad: sev.label, tipoLesion, semanasPrevistas: sev.weeks,
+      resuelta:false, resueltoPor:null, jornadasReales:null
+    });
+    return id;
+  }
+  function cerrarLesionHistorial(jugador, resueltoPor){
+    if(!jugador.lesionLogId || !state.medicoHistorial) return;
+    const entry=state.medicoHistorial.find(h=>h.id===jugador.lesionLogId);
+    if(entry && !entry.resuelta){
+      entry.resuelta=true;
+      entry.resueltoPor=resueltoPor;
+      entry.jornadasReales=Math.max(1, state.jornadaActual-entry.jornadaInicio+1);
+    }
+    jugador.lesionLogId=null;
+  }
+  function registrarProgresoHistorial(texto){
+    state.medicoHistorial = state.medicoHistorial||[];
+    state.medicoHistorial.push({id:'h'+Date.now()+Math.floor(Math.random()*1000), tipo:'progreso', jornada:state.jornadaActual, texto});
+  }
+
   function resolverDilemaMedico(numDados, tiradas){
     if(!state.medicoNotificacion) return null;
     const suma = tiradas.reduce((a,b)=>a+b,0);
     const exito = suma >= state.medicoNotificacion.dificultad;
     if(exito){
       const jugador=state.plantilla.find(p=>p.id===state.medicoNotificacion.jugadorId);
-      if(jugador){ jugador.injuryWeeks=Math.max(0, jugador.injuryWeeks-1); if(jugador.injuryWeeks<=0){ jugador.injured=false; jugador.injurySeverity=null; } }
+      if(jugador){
+        jugador.injuryWeeks=Math.max(0, jugador.injuryWeeks-1);
+        if(jugador.injuryWeeks<=0){ jugador.injured=false; jugador.injurySeverity=null; cerrarLesionHistorial(jugador, 'Dado urgente'); }
+      }
     }
     state.diceAvailable = Math.max(0, state.diceAvailable - numDados);
     const resultado={tiradas, suma, dificultad:state.medicoNotificacion.dificultad, exito};
@@ -806,13 +851,19 @@
   function aplicarEfectoDirecta(def, jugadorObjetivo){
     switch(def.id){
       case 'urgente':
-        if(jugadorObjetivo){ jugadorObjetivo.injuryWeeks=Math.max(0,Math.ceil(jugadorObjetivo.injuryWeeks/2)); if(jugadorObjetivo.injuryWeeks<=0){ jugadorObjetivo.injured=false; jugadorObjetivo.injurySeverity=null; } }
+        if(jugadorObjetivo){
+          jugadorObjetivo.injuryWeeks=Math.max(0,Math.ceil(jugadorObjetivo.injuryWeeks/2));
+          if(jugadorObjetivo.injuryWeeks<=0){ jugadorObjetivo.injured=false; jugadorObjetivo.injurySeverity=null; cerrarLesionHistorial(jugadorObjetivo, 'Carta: '+def.nombre); }
+        }
         return jugadorObjetivo?`${jugadorObjetivo.name} recorta a la mitad su tiempo de baja`:'Aplicado';
       case 'milagro':
-        if(jugadorObjetivo){ jugadorObjetivo.injured=false; jugadorObjetivo.injuryWeeks=0; jugadorObjetivo.injurySeverity=null; }
+        if(jugadorObjetivo){ jugadorObjetivo.injured=false; jugadorObjetivo.injuryWeeks=0; jugadorObjetivo.injurySeverity=null; cerrarLesionHistorial(jugadorObjetivo, 'Carta: '+def.nombre); }
         return jugadorObjetivo?`${jugadorObjetivo.name} recupera la disponibilidad al instante`:'Aplicado';
       case 'consulta':
-        if(jugadorObjetivo){ jugadorObjetivo.injuryWeeks=Math.max(0,jugadorObjetivo.injuryWeeks-1); if(jugadorObjetivo.injuryWeeks<=0){ jugadorObjetivo.injured=false; jugadorObjetivo.injurySeverity=null; } }
+        if(jugadorObjetivo){
+          jugadorObjetivo.injuryWeeks=Math.max(0,jugadorObjetivo.injuryWeeks-1);
+          if(jugadorObjetivo.injuryWeeks<=0){ jugadorObjetivo.injured=false; jugadorObjetivo.injurySeverity=null; cerrarLesionHistorial(jugadorObjetivo, 'Carta: '+def.nombre); }
+        }
         return jugadorObjetivo?`${jugadorObjetivo.name} se recupera 1 semana antes`:'Aplicado';
       case 'cirugia':
         if(jugadorObjetivo){ jugadorObjetivo.injurySeverity='moderada'; jugadorObjetivo.injuryWeeks=Math.min(jugadorObjetivo.injuryWeeks,2); }
@@ -828,7 +879,8 @@
   }
 
   // Aplica el efecto PERMANENTE de una carta de ACUMULACIÓN al completar
-  // un nivel (se acumula con niveles anteriores de la misma carta).
+  // un nivel (se acumula con niveles anteriores de la misma carta), y lo
+  // deja anotado en el historial del médico.
   function aplicarNivelAcumulacion(def, nivel){
     switch(def.id){
       case 'sala_fisio': state.medicoBonos.recuperacionExtra=(state.medicoBonos.recuperacionExtra||0)+1; break;
@@ -836,6 +888,7 @@
       case 'especialista': state.medicoBonos.graveMultiplier=(state.medicoBonos.graveMultiplier||1)*0.5; break;
       case 'equipo_fisios': state.medicoBonos.recuperacionExtra=(state.medicoBonos.recuperacionExtra||0)+1; break;
     }
+    registrarProgresoHistorial(`${def.nombre} actualizado a nivel ${nivel} — ${def.desc}`);
   }
 
   // Resuelve una tirada ya hecha (tiradas[] de dados de 6) sobre la carta
@@ -1053,6 +1106,16 @@
       renderSetup();
       return;
     }
+    // Red de seguridad: si el estado guardado viene de una versión anterior
+    // y le faltan campos nuevos, se rellenan con valores por defecto en vez
+    // de dejar que el render entero se rompa (pantalla en negro).
+    if(!state.formacionCategoria || !FORMATION_CODES[state.formacionCategoria]) state.formacionCategoria='equilibrada';
+    if(!state.formacionCode) state.formacionCode='4-3-3';
+    if(!state.alineacion) state.alineacion={};
+    if(!state.medicoCartas || !state.medicoCartas.length) state.medicoCartas=inicializarCartasMedico();
+    if(!state.medicoBonos) state.medicoBonos={};
+    if(!state.medicoCartasAgotadas) state.medicoCartasAgotadas=[];
+    if(!state.medicoHistorial) state.medicoHistorial=[];
 
     const clasif=calcularClasificacion();
     const j=state.jornadaActual-1;
@@ -1182,13 +1245,25 @@
       </div>
 
       <div class="lm-staffrow">
-        <div class="lm-staff-slot ${notif?'has-notif':''}" id="lmMedicoBtn">
+        <div class="lm-staff-card ${notif?'has-notif':''}" id="lmMedicoBtn">
           ${notif?'<span class="lm-staff-badge">1</span>':''}
-          <div class="lm-staff-photo"><i class="ph ph-bold ph-first-aid-kit"></i></div>
-          <div class="lm-staff-name">Médico</div>
+          <button class="lm-staff-info-bubble" id="lmMedicoInfoBtn" title="Historial médico">i</button>
+          <div class="lm-staff-photo-wrap">
+            <img src="assets/equipo_tecnico/medico/novato.png" alt="Médico" class="lm-staff-photo-img" onerror="this.onerror=null;this.style.display='none';this.nextElementSibling.style.display='flex';">
+            <div class="lm-staff-photo-fallback" style="display:none"><i class="ph ph-bold ph-first-aid-kit"></i></div>
+          </div>
+          <div class="lm-staff-card-name">MÉDICO</div>
+          <div class="lm-staff-card-desc">Es el encargado de prevenir, diagnosticar y tratar lesiones de tus jugadores</div>
         </div>
       </div>
     `;
+
+    const medicoInfoBtn=document.getElementById('lmMedicoInfoBtn');
+    if(medicoInfoBtn) medicoInfoBtn.addEventListener('click', (e)=>{
+      e.stopPropagation();
+      if(typeof window.playSound==='function') window.playSound('select');
+      abrirHistorialMedico();
+    });
 
     root.querySelectorAll('[data-categoria]').forEach(el=>{
       el.addEventListener('click', ()=>{
@@ -1313,6 +1388,54 @@
     else if(slotA && !slotB){ state.alineacion[slotA]=idB; }
     else if(!slotA && slotB){ state.alineacion[slotB]=idA; }
     guardarEstado();
+  }
+
+  /* ---------- 9c. Historial médico — modal con el listado de lesiones
+     tratadas (jornada, rival, tipo, cómo se resolvió) y el progreso de
+     las cartas de acumulación, más reciente primero. ---------- */
+  function abrirHistorialMedico(){
+    const overlay=document.createElement('div');
+    overlay.id='lmHistorialOverlay';
+    const historial=(state.medicoHistorial||[]).slice().reverse(); // más reciente primero
+
+    const filas=historial.map(h=>{
+      if(h.tipo==='progreso'){
+        return `<div class="lm-hist-item lm-hist-progreso">
+          <i class="ph ph-bold ph-trend-up"></i>
+          <div>
+            <div class="lm-hist-title">${h.texto}</div>
+            <div class="lm-hist-meta">Jornada ${h.jornada}</div>
+          </div>
+        </div>`;
+      }
+      const estado = h.resuelta
+        ? `Se recuperó gracias a <strong>${h.resueltoPor}</strong> — estuvo ${h.jornadasReales} jornada${h.jornadasReales===1?'':'s'} sin jugar`
+        : `<span style="color:#e24b4a">Todavía de baja</span> (previsto ${h.semanasPrevistas} jornada${h.semanasPrevistas===1?'':'s'})`;
+      return `<div class="lm-hist-item">
+        <i class="ph ph-bold ph-first-aid-kit" style="color:${h.resuelta?'#5dcaa5':'#e24b4a'}"></i>
+        <div>
+          <div class="lm-hist-title">${h.jugador} — ${h.tipoLesion} <span class="lm-hist-tag">${h.severidad}</span></div>
+          <div class="lm-hist-meta">Jornada ${h.jornadaInicio} contra ${h.rival}</div>
+          <div class="lm-hist-desc">${estado}</div>
+        </div>
+      </div>`;
+    }).join('');
+
+    overlay.innerHTML=`
+      <div class="lm-dilemma-card" style="max-width:480px;text-align:left">
+        <div class="lm-dilemma-title" style="text-align:center"><i class="ph ph-bold ph-clock-counter-clockwise"></i> HISTORIAL MÉDICO</div>
+        <div class="lm-hist-list">
+          ${historial.length?filas:'<p class="lm-setup-desc" style="text-align:center">Todavía no hay nada que contar — de momento tu plantilla está sana.</p>'}
+        </div>
+        <div style="text-align:center;margin-top:14px">
+          <button id="lmHistorialCerrar" class="mode-card-btn mode-card-btn-gold" style="width:auto;padding:9px 22px;">CERRAR</button>
+        </div>
+      </div>`;
+    document.getElementById('ligaManagerScreen').appendChild(overlay);
+    document.getElementById('lmHistorialCerrar').addEventListener('click', ()=>{
+      if(typeof window.playSound==='function') window.playSound('select');
+      overlay.remove();
+    });
   }
 
   function abrirMedico(){
