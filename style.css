@@ -93,21 +93,22 @@ body.dark-theme .version-tag{color:#555}
 .bench-title{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#888;margin:10px 0 6px;display:flex;justify-content:space-between;width:100%}
 
 /* ===================== ESTRATEGIA / FORMATIONS ===================== */
-.formation-tabs{display:flex;gap:4px;margin-bottom:8px;width:100%;max-width:420px}
+.formation-tabs{display:flex;gap:4px;margin-bottom:8px;width:100%;max-width:100%}
 .formation-tab{flex:1;padding:6px 2px;font-size:11px;font-weight:600;border:1px solid #ccc;background:#fff;cursor:pointer;transition:.15s}
 .formation-tab.active{background:var(--accent);color:#fff;border-color:var(--accent)}
 .formation-tab:hover:not(.active){border-color:var(--accent);color:var(--accent)}
-#formationList{display:flex;flex-direction:column;gap:4px;min-height:238px;width:100%;max-width:420px}
+#formationList{display:flex;flex-direction:column;gap:4px;min-height:238px;width:100%;max-width:100%;box-sizing:border-box}
 .formation-option{
   display:flex;align-items:center;gap:8px;
   padding:6px 8px;border:1px solid var(--line);background:#fafafa;
   cursor:pointer;transition:.12s;
+  width:100%;box-sizing:border-box;overflow:hidden;
 }
 .formation-option:hover{border-color:var(--accent);background:#f3f9f3}
 .formation-option.selected{background:var(--accent);border-color:var(--accent)}
 .formation-option.selected .f-code,.formation-option.selected .f-badge{color:#fff}
 .f-code{font-weight:800;font-size:13px;min-width:48px;color:#222}
-.f-badge{font-size:10px;color:#666;line-height:1.2}
+.f-badge{font-size:10px;color:#666;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;flex:1}
 .formation-option.selected .f-badge{color:#cfe9d8}
 .hint-line{font-size:11px;color:#888;margin-top:6px}
 
@@ -2482,12 +2483,21 @@ body.liga-manager-screen #mobileTabBar{display:none!important}
    grandes). */
 .lm-app-grid{
   display:grid;
-  grid-template-columns: minmax(370px,480px) minmax(420px,520px) minmax(340px,440px) minmax(340px,440px);
+  grid-template-columns: repeat(4, minmax(380px,460px));
   justify-content:center;
   width:100%;
   max-width:1900px;
   margin:0 auto;
   gap:0;
+}
+/* Animación breve y elegante al reordenar columnas — un fundido con
+   ligero desplazamiento lateral, nada brusco. */
+@keyframes lmColSwap{
+  0%{opacity:0;transform:translateX(10px)}
+  100%{opacity:1;transform:translateX(0)}
+}
+.lm-app-grid.lm-col-reordering > *{
+  animation:lmColSwap .32s cubic-bezier(.25,.8,.35,1);
 }
 .lm-panel{
   background:#15181a;border-right:1px solid #22282b;
@@ -2718,7 +2728,19 @@ body.liga-manager-screen #mobileTabBar{display:none!important}
    real: remitente + asunto en la lista, se lee expandiendo la fila. */
 .lm-correo-box{
   background:#12151a;border:1px solid #22282b;border-radius:8px;
-  margin-top:12px;overflow:hidden;
+  margin-top:12px;overflow:hidden;position:relative;
+}
+/* Notificación de correo nuevo — círculo rojo con pulso en la esquina
+   superior derecha de la interfaz, se ve incluso sin abrir la bandeja. */
+.lm-correo-notif-dot{
+  position:absolute;top:8px;right:8px;width:10px;height:10px;border-radius:50%;
+  background:#e24b4a;z-index:4;box-shadow:0 0 0 rgba(226,75,74,.6);
+  animation:lmCorreoPulse 1.6s ease-out infinite;
+}
+@keyframes lmCorreoPulse{
+  0%{box-shadow:0 0 0 0 rgba(226,75,74,.6)}
+  70%{box-shadow:0 0 0 8px rgba(226,75,74,0)}
+  100%{box-shadow:0 0 0 0 rgba(226,75,74,0)}
 }
 .lm-correo-header{
   display:flex;align-items:center;justify-content:space-between;
@@ -3078,26 +3100,49 @@ body.liga-manager-screen #mobileTabBar{display:none!important}
   .lm-sobre-cards{grid-template-columns:1fr}
 }
 
-/* Interfaz de TRABAJADORES — contratar/despedir cuerpo técnico */
-.lm-trab-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin:10px 0}
-.lm-trab-rol{background:#1a1d1f;border:1px solid #2f3539;border-radius:10px;padding:10px}
-.lm-trab-rol-titulo{font-family:'Bebas Neue',Impact,sans-serif;font-size:13px;letter-spacing:.5px;color:var(--gold);margin-bottom:8px;text-align:center}
-.lm-trab-card{background:#1e2326;border:1px solid #2f3539;border-radius:8px;padding:8px 10px;margin-bottom:6px}
-.lm-trab-card-actual{border-color:#c9a227}
-.lm-trab-card-vacante{display:flex;align-items:center;gap:8px;color:#777;font-size:11px;font-style:italic;justify-content:center;padding:14px 10px}
+/* Interfaz de TRABAJADORES — condensada en filas horizontales (una por
+   puesto) en vez de tarjetas apiladas: más ancha que alta, cabe entera
+   en pantalla sin tener que hacer scroll. */
+.lm-trab-grid{display:flex;flex-direction:column;gap:8px;margin:10px 0}
+.lm-trab-rol-row{
+  display:flex;align-items:stretch;gap:8px;background:#171a1c;border:1px solid #22282b;
+  border-radius:8px;padding:8px;
+}
+.lm-trab-rol-titulo{
+  font-family:'Bebas Neue',Impact,sans-serif;font-size:11px;letter-spacing:.5px;color:var(--gold);
+  writing-mode:horizontal-tb;flex:0 0 90px;display:flex;align-items:center;justify-content:center;
+  text-align:center;line-height:1.2;
+}
+.lm-trab-chips{display:flex;gap:6px;flex:1;flex-wrap:wrap}
+.lm-trab-chip{
+  flex:1;min-width:120px;background:#1e2326;border:1px solid #2f3539;border-radius:6px;
+  padding:6px 8px;display:flex;flex-direction:column;gap:2px;
+}
+.lm-trab-chip-actual{border-color:#c9a227}
+.lm-trab-chip-vacante{
+  display:flex;flex-direction:row;align-items:center;justify-content:center;gap:6px;
+  color:#777;font-size:10px;font-style:italic;
+}
+.lm-trab-chip-vacante i{font-size:16px}
+.lm-trab-chip-top{display:flex;justify-content:space-between;align-items:center;gap:4px}
+.lm-trab-nombre{font-size:10px;font-weight:700;color:#eee;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lm-trab-estrellas{font-size:10px;color:var(--gold);letter-spacing:1px;white-space:nowrap;flex-shrink:0}
+.lm-trab-sueldo{font-size:9px;color:#999}
 .lm-trab-despedir{
-  width:100%;margin-top:6px;padding:7px 6px;font-size:10px;border-radius:6px;cursor:pointer;
+  width:100%;margin-top:4px;padding:5px 4px;font-size:9px;border-radius:5px;cursor:pointer;
   background:#c0392b;color:#fff;border:none;font-family:inherit;font-weight:600;
 }
 .lm-trab-despedir:hover{background:#a93226}
-.lm-trab-card-vacante i{font-size:20px}
-.lm-trab-card-top{display:flex;justify-content:space-between;align-items:center;gap:6px}
-.lm-trab-nombre{font-size:11px;font-weight:700;color:#eee}
-.lm-trab-estrellas{font-size:11px;color:var(--gold);letter-spacing:1px;white-space:nowrap}
-.lm-trab-sueldo{font-size:10px;color:#999;margin-top:2px}
-.lm-trab-candidatos{margin-top:4px}
-@media(max-width:1050px){
-  .lm-trab-grid{grid-template-columns:1fr}
+.lm-trab-contratar{
+  width:100%;margin-top:4px;padding:5px 4px;font-size:9px;border-radius:5px;cursor:pointer;
+  background:var(--gold);color:#1a1400;border:none;font-family:inherit;font-weight:700;
+}
+.lm-trab-contratar:hover{background:#e0b82a}
+@media(max-width:900px){
+  .lm-trab-rol-row{flex-direction:column}
+  .lm-trab-rol-titulo{flex:none;padding-bottom:4px}
+  .lm-trab-chips{flex-wrap:wrap}
+  .lm-trab-chip{min-width:45%}
 }
 
 /* Partido en vivo — el CONTENIDO reutiliza literalmente las clases de
@@ -3291,6 +3336,10 @@ body.liga-manager-screen #profileTabAchievements{
 }
 body.liga-manager-screen #profileOverlay .auth-tabs{
   grid-template-columns:1fr;
+}
+/* ABANDONAR LIGA — solo tiene sentido dentro de Liga Manager. */
+body.liga-manager-screen #profileAbandonarLigaWrap{
+  display:block!important;
 }
 /* "Personalizar equipo" abre el editor de escudos de Copa Leyendas — no
    tiene sentido desde Liga Manager, que tiene su propio escudo aparte. */

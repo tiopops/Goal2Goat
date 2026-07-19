@@ -359,6 +359,7 @@
   let perfilEquipoColapsado=false;
   let correoExpandido=null;
   let ordenColumnasSaveTimer=null; // el orden de columnas se persiste solo tras 60s sin más cambios
+  let acabaDeReordenarColumnas=false;
   let setupData={liga:'es', moneda:null, nombre:'', escudo:null};
 
   function nuevoEstadoSinEmpezar(){ return { setupComplete:false }; }
@@ -1680,11 +1681,13 @@
       cerrar();
     });
   }
-  // Si has despedido a quien ocupaba un puesto, no se puede entrar a su
-  // interfaz hasta contratar a otra persona.
+  // Si has despedido a quien ocupaba un puesto (o todavía no lo has
+  // cubierto), en vez de un aviso genérico abrimos directamente
+  // TRABAJADORES ya filtrado a ese puesto concreto.
   function bloqueadoPorVacante(rol){
     if(!state.trabajadores || !state.trabajadores[rol]){
-      mostrarAvisoJuego('Has despedido a quien ocupaba este puesto — contrata a alguien nuevo desde TRABAJADORES para poder usar esta pantalla.');
+      if(typeof window.playSound==='function') window.playSound('select');
+      abrirTrabajadores(rol);
       return true;
     }
     return false;
@@ -2713,7 +2716,7 @@
     const filasBanquillo=banquillo.map(filaJugador).join('');
 
     root.innerHTML = `
-      <div class="lm-app-grid">
+      <div class="lm-app-grid ${acabaDeReordenarColumnas?'lm-col-reordering':''}">
         <div class="lm-panel lm-left-panel" style="${columnaOrderStyle('left')}">${columnaControlesHTML('left')}
           <div class="lm-header-team">
             ${crestHTML(state.escudo, 76)}
@@ -2828,7 +2831,6 @@
                   ${campoBarraHTML(campoRival, true)}
                 </div>`;
               })()}
-              ${weatherDisplayHTML(clima)}
               <div class="lm-rival-profile">
                 ${[['ATAQUE','attack'],['DEFENSA','defense'],['RITMO','pace'],['PASE','passing'],['TÉCNICA','technique']].map(([label,k])=>`
                   <div class="stat-row"><span>${label}</span><span>${rival[k]}</span></div>
@@ -2877,6 +2879,7 @@
           </div>
 
           <div class="lm-correo-box">
+            ${(state.correoInterno||[]).filter(c=>!c.leido).length?'<span class="lm-correo-notif-dot"></span>':''}
             <div class="lm-correo-header">
               <span><i class="ph ph-bold ph-envelope"></i> CORREO INTERNO</span>
               ${(state.correoInterno||[]).filter(c=>!c.leido).length?`<span class="lm-correo-badge">${(state.correoInterno||[]).filter(c=>!c.leido).length}</span>`:''}
@@ -2904,15 +2907,12 @@
                 </div>`).join(''):'<p class="lm-setup-desc" style="text-align:center;padding:10px 0">Bandeja vacía por ahora.</p>'}
             </div>
           </div>
-          <div class="lm-match-actions lm-match-actions-sticky">
-            <button id="lmAbandonarBtn" class="lm-btn-abandonar">ABANDONAR LIGA</button>
-            <button id="ligaManagerBackBtn" class="lm-btn-volver">VOLVER AL MENÚ</button>
-          </div>
         </div>
       </div>
     `;
 
     if(clima) aplicarClimaVisualLM(clima.id);
+    acabaDeReordenarColumnas=false;
 
     const medicoInfoBtn=document.getElementById('lmMedicoInfoBtn');
     if(medicoInfoBtn) medicoInfoBtn.addEventListener('click', (e)=>{
@@ -2956,17 +2956,6 @@
       } else {
         render();
       }
-    });
-    const backBtn=document.getElementById('ligaManagerBackBtn');
-    if(backBtn) backBtn.addEventListener('click', ()=>{
-      if(typeof window.playSound==='function') window.playSound('select');
-      document.body.classList.remove('liga-manager-screen');
-      document.body.classList.add('menu-screen');
-    });
-    const abandonarBtn=document.getElementById('lmAbandonarBtn');
-    if(abandonarBtn) abandonarBtn.addEventListener('click', ()=>{
-      if(typeof window.playSound==='function') window.playSound('select');
-      abandonarLiga();
     });
     const trabajadoresBtn=document.getElementById('lmTrabajadoresBtn');
     if(trabajadoresBtn) trabajadoresBtn.addEventListener('click', ()=>{
@@ -3423,6 +3412,7 @@
     const tmp=arr[idx]; arr[idx]=arr[nuevoIdx]; arr[nuevoIdx]=tmp;
     if(ordenColumnasSaveTimer) clearTimeout(ordenColumnasSaveTimer);
     ordenColumnasSaveTimer=setTimeout(()=>{ guardarEstado(); ordenColumnasSaveTimer=null; }, 60000);
+    acabaDeReordenarColumnas=true;
     render();
   }
   function columnaControlesHTML(key){
@@ -4691,7 +4681,7 @@
      técnico. Cada mes se renuevan 2 candidatos por puesto (mismo momento
      que la nómina), con nivel y sueldo acordes; despedir deja el puesto
      vacante (sin sueldo) hasta contratar a alguien. ---------- */
-  function abrirTrabajadores(){
+  function abrirTrabajadores(rolFiltrado){
     const overlay=document.createElement('div');
     overlay.id='lmTrabajadoresOverlay';
     document.getElementById('ligaManagerScreen').appendChild(overlay);
@@ -4700,44 +4690,35 @@
     function fichaTrabajadorHTML(rol){
       const actual=state.trabajadores[rol];
       const candidatos=(state.candidatosTrabajo||[]).filter(c=>c.rol===rol).sort((a,b)=>a.nivel-b.nivel);
+      const chipActual = actual ? `
+        <div class="lm-trab-chip lm-trab-chip-actual">
+          <div class="lm-trab-chip-top"><span class="lm-trab-nombre">${actual.nombre}</span><span class="lm-trab-estrellas">${estrellasNivel(actual.nivel, 3)}</span></div>
+          <div class="lm-trab-sueldo">${formatoDinero(actual.sueldo)}/mes</div>
+          <button class="lm-trab-despedir" data-despedir="${rol}">DESPEDIR (${formatoDinero(calcularFiniquito(actual))})</button>
+        </div>` : `
+        <div class="lm-trab-chip lm-trab-chip-vacante"><i class="ph ph-bold ph-user-circle-minus"></i><span>Vacante</span></div>`;
+      const chipsCandidatos = candidatos.map(c=>`
+        <div class="lm-trab-chip">
+          <div class="lm-trab-chip-top"><span class="lm-trab-nombre">${c.nombre}</span><span class="lm-trab-estrellas">${estrellasNivel(c.nivel, 3)}</span></div>
+          <div class="lm-trab-sueldo">${formatoDinero(c.sueldo)}/mes</div>
+          <button class="lm-trab-contratar" data-contratar="${c.id}" data-rol="${rol}">CONTRATAR</button>
+        </div>`).join('') || '<p class="lm-setup-desc" style="margin:0">Sin candidatos este mes</p>';
       return `
-      <div class="lm-trab-rol">
+      <div class="lm-trab-rol-row">
         <div class="lm-trab-rol-titulo">${NOMBRE_ROL[rol]}</div>
-        ${actual ? `
-          <div class="lm-trab-card lm-trab-card-actual">
-            <div class="lm-trab-card-top">
-              <span class="lm-trab-nombre">${actual.nombre}</span>
-              <span class="lm-trab-estrellas">${estrellasNivel(actual.nivel, 3)}</span>
-            </div>
-            <div class="lm-trab-sueldo">${formatoDinero(actual.sueldo)}/mes</div>
-            <button class="lm-trab-despedir" data-despedir="${rol}">DESPEDIR (finiquito ${formatoDinero(calcularFiniquito(actual))})</button>
-          </div>` : `
-          <div class="lm-trab-card lm-trab-card-vacante">
-            <i class="ph ph-bold ph-user-circle-minus"></i>
-            <span>Puesto vacante</span>
-          </div>`}
-        <div class="lm-trab-candidatos">
-          ${candidatos.map(c=>`
-            <div class="lm-trab-card">
-              <div class="lm-trab-card-top">
-                <span class="lm-trab-nombre">${c.nombre}</span>
-                <span class="lm-trab-estrellas">${estrellasNivel(c.nivel, 3)}</span>
-              </div>
-              <div class="lm-trab-sueldo">${formatoDinero(c.sueldo)}/mes</div>
-              <button class="mode-card-btn mode-card-btn-gold lm-trab-contratar" data-contratar="${c.id}" data-rol="${rol}" style="padding:6px;font-size:10px;margin-top:6px">CONTRATAR</button>
-            </div>`).join('') || '<p class="lm-setup-desc" style="text-align:center">Sin candidatos este mes</p>'}
-        </div>
+        <div class="lm-trab-chips">${chipActual}${chipsCandidatos}</div>
       </div>`;
     }
 
     function pintar(){
+      const roles = rolFiltrado ? [rolFiltrado] : ROLES_TRABAJO;
       overlay.innerHTML=`
-        <div class="lm-dilemma-card" style="max-width:680px;text-align:left">
+        <div class="lm-dilemma-card" style="width:960px;max-width:94vw;text-align:left">
           ${xCerrarHTML()}
-          <div class="lm-dilemma-title" style="text-align:center"><i class="ph ph-bold ph-users-three"></i> TRABAJADORES</div>
-          <p class="lm-setup-desc" style="text-align:center;margin-bottom:10px">Cada mes aparecen nuevos candidatos por puesto — compara nivel y sueldo antes de decidir si te compensa un cambio.</p>
+          <div class="lm-dilemma-title" style="text-align:center"><i class="ph ph-bold ph-users-three"></i> TRABAJADORES${rolFiltrado?` — ${NOMBRE_ROL[rolFiltrado]}`:''}</div>
+          <p class="lm-setup-desc" style="text-align:center;margin-bottom:10px">Cada mes aparecen nuevos candidatos por puesto — compara nivel y sueldo antes de decidir si te compensa un cambio.${rolFiltrado?' <span id="lmTrabVerTodos" style="color:var(--gold);cursor:pointer;text-decoration:underline">Ver todos los puestos</span>':''}</p>
           <div class="lm-trab-grid">
-            ${ROLES_TRABAJO.map(fichaTrabajadorHTML).join('')}
+            ${roles.map(fichaTrabajadorHTML).join('')}
           </div>
           <div class="lm-popup-actions lm-popup-actions-compact">
             <button id="lmTrabajadoresCerrar" class="mode-card-btn mode-card-btn-gold">CERRAR</button>
@@ -4749,6 +4730,12 @@
         if(typeof window.playSound==='function') window.playSound('select');
         overlay.remove();
         render();
+      });
+      const verTodos=document.getElementById('lmTrabVerTodos');
+      if(verTodos) verTodos.addEventListener('click', ()=>{
+        if(typeof window.playSound==='function') window.playSound('select');
+        rolFiltrado=null;
+        pintar();
       });
       overlay.querySelectorAll('[data-despedir]').forEach(btn=>{
         btn.addEventListener('click', ()=>{
@@ -4784,6 +4771,6 @@
     render();
   }
 
-  window.G2G_LigaManager={ init };
+  window.G2G_LigaManager={ init, abandonarLiga };
 
 })();

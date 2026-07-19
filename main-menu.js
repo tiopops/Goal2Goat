@@ -148,6 +148,18 @@
     });
   }
 
+  function wireAbandonarLigaBtn(){
+    const btn = document.getElementById('profileAbandonarLigaBtn');
+    if(!btn) return;
+    btn.addEventListener('click', function(){
+      const overlay = document.getElementById('profileOverlay');
+      if(overlay) overlay.style.display = 'none';
+      if(window.G2G_LigaManager && typeof window.G2G_LigaManager.abandonarLiga === 'function'){
+        window.G2G_LigaManager.abandonarLiga();
+      }
+    });
+  }
+
   function wireMenu(){
     const copaCard = document.getElementById('modeCardCopa');
     const copaBtn  = document.getElementById('modeCardCopaBtn');
@@ -195,6 +207,7 @@
     }
 
     wireProfileDefaultTab();
+    wireAbandonarLigaBtn();
   }
 
   if(document.readyState === 'loading'){
