@@ -24,7 +24,7 @@
    ============================================================ */
 (function(){
 
-  const SAVE_KEY = 'g2g_liga_manager_v11';
+  const SAVE_KEY = 'g2g_liga_manager_v12';
   // Identidad del club (nombre + escudo) — PERSISTE entre partidas, no se
   // pierde al abandonar/descender. Si ya existe, el flujo de entrada no
   // vuelve a pedir nombre ni escudo (solo liga y moneda cada vez).
@@ -342,6 +342,8 @@
   const LM_SORT_LABELS={arrival:'LLEGADA', position:'POSICIÓN', rating:'PUNTOS'};
   const LM_SORT_NEXT={arrival:'position', position:'rating', rating:'arrival'};
   let clasifColapsada=true; // la clasificación empieza contraída, igual que el glosario de Copa Leyendas
+  let perfilEquipoColapsado=false;
+  let correoExpandido=null;
   let setupData={liga:'es', moneda:null, nombre:'', escudo:null};
 
   function nuevoEstadoSinEmpezar(){ return { setupComplete:false }; }
@@ -480,7 +482,9 @@
         directorDeportivo:null
       },
       candidatosTrabajo:[],
-      mesTrabajadoresGenerado:0
+      mesTrabajadoresGenerado:0,
+      correoInterno:[],
+      correoUltimoEnviado:{}
     };
     state.medicoCartas = inicializarCartasMedico();
     state.mantenimientoCartas = inicializarCartasMantenimiento();
@@ -1018,6 +1022,8 @@
       });
     }
 
+    generarCorreosTrasJornada();
+
     state.jornadaActual++;
     guardarEstado();
     return miPartidoInfo;
@@ -1036,7 +1042,7 @@
       <div class="match-modal" style="overflow:hidden;display:flex;flex-direction:column;max-height:85vh">
         <div class="match-header">
           <div class="match-side">
-            ${miEsLocal?crestHTML(state.escudo,72):rivalCrestHTML(72, info.home.crestImg)}
+            ${miEsLocal?crestHTML(state.escudo,92):rivalCrestHTML(92, info.home.crestImg)}
             <span class="match-team-name">${info.home.name}</span>
           </div>
           <div style="text-align:center;flex:0 0 auto">
@@ -1050,7 +1056,7 @@
             </div>
           </div>
           <div class="match-side">
-            ${!miEsLocal?crestHTML(state.escudo,72):rivalCrestHTML(72, info.away.crestImg)}
+            ${!miEsLocal?crestHTML(state.escudo,92):rivalCrestHTML(92, info.away.crestImg)}
             <span class="match-team-name">${info.away.name}</span>
           </div>
         </div>
@@ -1611,6 +1617,21 @@
   }
 
   function colorCampo(valor){ if(valor>=70) return 'green'; if(valor>=40) return 'yellow'; return 'red'; }
+  // Cierre universal de popups: botón X en la esquina + clic fuera de la
+  // tarjeta (sobre el fondo oscuro) también cierra.
+  function xCerrarHTML(){ return '<button class="lm-popup-close-x" data-cerrar-x title="Cerrar">×</button>'; }
+  function habilitarCierreOverlay(overlay, cerrarFn){
+    overlay.addEventListener('click', (e)=>{ if(e.target===overlay) cerrarFn(); });
+  }
+  // Si has despedido a quien ocupaba un puesto, no se puede entrar a su
+  // interfaz hasta contratar a otra persona.
+  function bloqueadoPorVacante(rol){
+    if(!state.trabajadores || !state.trabajadores[rol]){
+      alert('Has despedido a quien ocupaba este puesto — contrata a alguien nuevo desde TRABAJADORES para poder usar esta pantalla.');
+      return true;
+    }
+    return false;
+  }
   // Foto de un puesto del cuerpo técnico — si está vacante (despedido o
   // todavía sin cubrir), se usa la variante en blanco y negro cuyo
   // nombre de archivo termina en "_escenario" en vez de la foto normal.
@@ -1719,16 +1740,17 @@
     for(let i=0;i<pesos.length;i++){ r-=pesos[i]; if(r<=0) return i+1; }
     return 1;
   }
-  function generarCandidatoTrabajo(rol){
-    const nivel=nivelAleatorioTrabajador();
+  function generarCandidatoTrabajo(rol, nivelFijo){
+    const nivel=nivelFijo||nivelAleatorioTrabajador();
     const sueldo=Math.round(SUELDO_BASE_ROL[rol]*(0.55+nivel*0.55)*(0.9+Math.random()*0.2));
     return {id:'cand'+Date.now()+Math.floor(Math.random()*100000), rol, ...nombreTrabajadorAleatorio(), nivel, sueldo};
   }
+  // Un candidato de CADA nivel (1★ a 5★) por puesto, para poder elegir a
+  // conciencia cada mes — no un sorteo con posibilidad de repetir nivel.
   function regenerarCandidatosTrabajo(){
     const candidatos=[];
     ROLES_TRABAJO.forEach(rol=>{
-      candidatos.push(generarCandidatoTrabajo(rol));
-      candidatos.push(generarCandidatoTrabajo(rol));
+      for(let nivel=1;nivel<=5;nivel++) candidatos.push(generarCandidatoTrabajo(rol, nivel));
     });
     state.candidatosTrabajo=candidatos;
   }
@@ -1741,9 +1763,79 @@
     guardarEstado();
     return true;
   }
+  // Finiquito — dos meses de sueldo, igual que una indemnización real.
+  function calcularFiniquito(trabajador){
+    return trabajador ? Math.round(trabajador.sueldo*2) : 0;
+  }
   function despedirTrabajador(rol){
     if(!state.trabajadores) return;
+    const actual=state.trabajadores[rol];
+    if(!actual) return;
+    const finiquito=calcularFiniquito(actual);
+    state.capital=Math.round((state.capital||0)-finiquito);
+    registrarMovimientoFinanciero('Finiquito de '+actual.nombre, -finiquito, state.jornadaActual);
     state.trabajadores[rol]=null;
+    guardarEstado();
+  }
+
+  /* ---------- 9c-ter. CORREO INTERNO — cada trabajador puede mandar un
+     correo con algo importante, pero como mucho uno por jornada, y solo
+     si de verdad hay algo que contar (no todas las jornadas). Textos
+     cortos y directos, pensados para leerse de un vistazo. ---------- */
+  const CORREO_ICONOS={medico:'ph-first-aid-kit', mantenimiento:'ph-flag-pennant', directorGeneral:'ph-briefcase', directorDeportivo:'ph-binoculars'};
+  function enviarCorreo(rol, asunto, cuerpo){
+    if(!state.correoInterno) state.correoInterno=[];
+    if(!state.correoUltimoEnviado) state.correoUltimoEnviado={};
+    state.correoInterno.unshift({id:'mail'+Date.now()+Math.floor(Math.random()*100000), rol, asunto, cuerpo, jornada:state.jornadaActual, leido:false});
+    state.correoUltimoEnviado[rol]=state.jornadaActual;
+    if(state.correoInterno.length>40) state.correoInterno=state.correoInterno.slice(0,40);
+  }
+  function generarCorreosTrasJornada(){
+    if(!state.correoInterno) state.correoInterno=[];
+    if(!state.correoUltimoEnviado) state.correoUltimoEnviado={};
+    const trab=state.trabajadores||{};
+    const yaEnviado=(rol)=>state.correoUltimoEnviado[rol]===state.jornadaActual;
+
+    if(trab.mantenimiento && !yaEnviado('mantenimiento')){
+      const est=state.estadio||{};
+      if(est.campo<40){
+        enviarCorreo('mantenimiento', 'El estado del césped es preocupante',
+          `El césped está en ${Math.round(est.campo)}/100. Como sigamos así, va a subir el riesgo de lesión y la afición lo va a notar. Convendría invertir en el terreno de juego pronto.`);
+      } else if(est.satisfaccion<-30){
+        enviarCorreo('mantenimiento', 'La grada está muy descontenta',
+          `La satisfacción de la afición ha caído a ${est.satisfaccion}. Sería buena idea organizar algo para calmar los ánimos antes de que vaya a más.`);
+      }
+    }
+    if(trab.medico && !yaEnviado('medico')){
+      const lesionados=(state.plantilla||[]).filter(p=>p.injured);
+      const graves=lesionados.filter(p=>p.injurySeverity==='grave');
+      if(graves.length){
+        enviarCorreo('medico', `${graves[0].name} tiene una lesión grave`,
+          `${graves[0].name} se ha lesionado de gravedad y va a necesitar bastante tiempo de baja. Revisa las cartas del equipo médico por si podemos acelerar la recuperación.`);
+      } else if(lesionados.length>=3){
+        enviarCorreo('medico', `${lesionados.length} jugadores lesionados a la vez`,
+          `Tenemos ${lesionados.length} bajas en la enfermería al mismo tiempo. La plantilla puede ir justa para el próximo partido, échale un ojo.`);
+      }
+    }
+    if(trab.directorGeneral && !yaEnviado('directorGeneral')){
+      if((state.capital||0)<0){
+        enviarCorreo('directorGeneral', 'Números rojos en las cuentas del club',
+          `El capital del club está en negativo (${formatoDinero(state.capital)}). Hay que generar ingresos o recortar gastos cuanto antes.`);
+      } else {
+        const nomina=calcularNominaMensual();
+        if((state.capital||0)<nomina.total){
+          enviarCorreo('directorGeneral', 'La próxima nómina puede dar problemas',
+            `Con el capital actual (${formatoDinero(state.capital)}) no cubrimos la próxima nómina (${formatoDinero(nomina.total)}). Conviene reaccionar antes de que llegue el mes.`);
+        }
+      }
+    }
+    if(trab.directorDeportivo && !yaEnviado('directorDeportivo')){
+      const nivelSobre=nivelDeDD('sobresFichajes');
+      if(nivelSobre>=1 && (state.capital||0)>=(SOBRE_COSTES[nivelSobre]||0) && Math.random()<0.3){
+        enviarCorreo('directorDeportivo', 'Sobre de fichajes listo para abrir',
+          `Tenemos un sobre de nivel ${nivelSobre} disponible y presupuesto de sobra para abrirlo. Cuando tengas un momento, échale un vistazo.`);
+      }
+    }
     guardarEstado();
   }
 
@@ -2280,6 +2372,8 @@
     });
     if(!state.candidatosTrabajo || !state.candidatosTrabajo.length) regenerarCandidatosTrabajo();
     if(state.mesTrabajadoresGenerado===undefined) state.mesTrabajadoresGenerado=Math.floor((state.jornadaActual-1)/4)+1;
+    if(!state.correoInterno) state.correoInterno=[];
+    if(!state.correoUltimoEnviado) state.correoUltimoEnviado={};
     if(!state.mantenimientoCartas || !state.mantenimientoCartas.length) state.mantenimientoCartas=inicializarCartasMantenimiento();
     if(!state.mantenimientoCartasAgotadas) state.mantenimientoCartasAgotadas=[];
     if(!state.mantenimientoHistorial) state.mantenimientoHistorial=[];
@@ -2390,13 +2484,15 @@
           </div>
 
           <div class="team-profile box" style="margin-top:14px">
-            <h3>PERFIL DEL EQUIPO</h3>
-            <div class="ovr-team"><span class="team-stat-title">NOTA MEDIA</span><span>${statsEquipo.overall}</span></div>
+            <h3 id="lmPerfilEquipoHeader" class="lm-perfil-header">PERFIL DEL EQUIPO <span class="lm-perfil-arrow ${perfilEquipoColapsado?'':'lm-perfil-arrow-open'}">▾</span></h3>
+            <div class="lm-perfil-nota-grande">${statsEquipo.overall}</div>
+            ${!perfilEquipoColapsado?`
             ${[['attack','ATAQUE'],['defense','DEFENSA'],['pace','RITMO'],['passing','PASE'],['technique','TÉCNICA']].map(([k,label])=>`
               <div class="stat-row"><span>${label}</span><span>${statsEquipo[k]}</span></div>
               <div class="stat-bar-row"><div class="stat-bar"><div style="width:${Math.max(0,Math.min(100,statsEquipo[k]))}%"></div></div></div>
             `).join('')}
             <p class="lm-setup-desc" style="text-align:left;margin-top:6px">Media de los ${state.plantilla.length} jugadores de la plantilla.</p>
+            `:''}
           </div>
         </div>
 
@@ -2444,18 +2540,20 @@
             ${rival ? `
               <div class="lm-vs-label" style="text-align:center;margin-bottom:6px">${esLocal?'JUEGAS EN CASA':'JUEGAS FUERA'}</div>
               <div class="lm-rival-crest-block">
-                ${rivalCrestHTML(72, rival.crestImg)}<span class="lm-title" style="font-size:15px">${rival.name}</span>
+                ${rivalCrestHTML(100, rival.crestImg)}<span class="lm-title" style="font-size:16px">${rival.name}</span>
               </div>
               ${(()=>{
                 const fila=calcularClasificacion();
                 const idx=fila.findIndex(t=>t.id===rival.id);
-                const datos=fila[idx]||{pj:0,pts:0,gf:0,gc:0};
+                const datos=fila[idx]||{pj:0,pg:0,pe:0,pp:0,pts:0,gf:0,gc:0};
                 const dg=datos.gf-datos.gc;
-                return `<div class="lm-rival-stats-row">
-                  <span><i class="ph ph-bold ph-ranking"></i> ${idx+1}º</span>
-                  <span><i class="ph ph-bold ph-trophy"></i> ${datos.pts} pts</span>
-                  <span><i class="ph ph-bold ph-soccer-ball"></i> ${dg>=0?'+':''}${dg}</span>
-                </div>`;
+                return `<table class="lm-rival-mini-table">
+                  <tr><td>Posición</td><td><strong>${idx+1}º</strong></td></tr>
+                  <tr><td>Puntos</td><td><strong>${datos.pts}</strong></td></tr>
+                  <tr><td>Jugados</td><td>${datos.pj}</td></tr>
+                  <tr><td>V - E - D</td><td>${datos.pg} - ${datos.pe} - ${datos.pp}</td></tr>
+                  <tr><td>Goles (F:C)</td><td>${datos.gf}:${datos.gc} <span style="color:${dg>=0?'#5dcaa5':'#e24b4a'}">(${dg>=0?'+':''}${dg})</span></td></tr>
+                </table>`;
               })()}
               ${(()=>{
                 const campoRival=campoRivalEstimado(rival);
@@ -2492,6 +2590,9 @@
             <span><i class="lm-legend-dot lm-zona-descenso"></i>Descenso</span>
           </div>
           </div>
+          <button id="lmJugarBtn" class="lm-btn-jugar" style="margin-top:12px" ${(state.jornadaActual>38||hayVacantes)?'disabled':''}>
+            ${state.jornadaActual>38?'TEMPORADA COMPLETA':(hayVacantes?'CONTRATA AL CUERPO TÉCNICO':'JUGAR JORNADA')}
+          </button>
         </div>
 
         <div class="lm-panel lm-staff-panel">
@@ -2505,12 +2606,30 @@
             ${staffTileHTML('directorGeneral', {btnId:'lmDirectorGeneralBtn', infoId:'lmDirectorGeneralInfoBtn', infoTitle:'Finanzas del club', notif:notifDG, badgeTexto:'!', carpeta:'director_general', archivo:'director_general', alt:'Director General', icono:'ph-briefcase', rolLabel:'DIRECTOR GENERAL', acento:'lm-staff-tile-dg', desc:'Patrocinios, merchandising, aforo y precio de las entradas'})}
             ${staffTileHTML('directorDeportivo', {btnId:'lmDirectorDeportivoBtn', infoId:'lmDirectorDeportivoInfoBtn', infoTitle:'Salarios de la plantilla', notif:notifDD, badgeTexto:'!', carpeta:'director_deportivo', archivo:'director_deportivo', alt:'Director Deportivo', icono:'ph-binoculars', rolLabel:'DIRECTOR DEPORTIVO', acento:'lm-staff-tile-dd', desc:'Fichajes, ojeadores y sobres de nuevos jugadores'})}
             ${staffTileHTML('medico', {btnId:'lmMedicoBtn', infoId:'lmMedicoInfoBtn', infoTitle:'Historial médico', notif:notif, badgeTexto:'1', carpeta:'medico', archivo:'medico', alt:'Equipo médico', icono:'ph-first-aid-kit', rolLabel:'EQUIPO MÉDICO', desc:'Previene, diagnostica y trata las lesiones de tus jugadores', acento:'lm-staff-tile-medico'})}
-            ${staffTileHTML('mantenimiento', {btnId:'lmMantenimientoBtn', infoId:'lmMantenimientoInfoBtn', infoTitle:'Estado del estadio', notif:notifMant, badgeTexto:'!', carpeta:'mantenimiento_y_seguridad', archivo:'mantenimiento_y_seguridad', alt:'Mantenimiento y seguridad', icono:'ph-flag-pennant', rolLabel:'MANTENIMIENTO', desc:'Cuida el césped, la seguridad y la satisfacción de la afición', acento:'lm-staff-tile-mant'})}
+            ${staffTileHTML('mantenimiento', {btnId:'lmMantenimientoBtn', infoId:'lmMantenimientoInfoBtn', infoTitle:'Estado del estadio', notif:notifMant, badgeTexto:'!', carpeta:'mantenimiento', archivo:'mantenimiento_y_seguridad', alt:'Mantenimiento y seguridad', icono:'ph-flag-pennant', rolLabel:'MANTENIMIENTO Y SEGURIDAD', desc:'Cuida el césped, la seguridad y la satisfacción de la afición', acento:'lm-staff-tile-mant'})}
           </div>
-          <div class="lm-match-actions" style="margin-top:auto">
-            <button id="lmJugarBtn" class="lm-btn-jugar" ${(state.jornadaActual>38||hayVacantes)?'disabled':''}>
-              ${state.jornadaActual>38?'TEMPORADA COMPLETA':(hayVacantes?'CONTRATA AL CUERPO TÉCNICO':'JUGAR JORNADA')}
-            </button>
+
+          <div class="lm-correo-box">
+            <div class="lm-correo-header">
+              <span><i class="ph ph-bold ph-envelope"></i> CORREO INTERNO</span>
+              ${(state.correoInterno||[]).filter(c=>!c.leido).length?`<span class="lm-correo-badge">${(state.correoInterno||[]).filter(c=>!c.leido).length}</span>`:''}
+            </div>
+            <div class="lm-correo-list">
+              ${(state.correoInterno||[]).length?(state.correoInterno||[]).slice(0,10).map(c=>`
+                <div class="lm-correo-item ${c.leido?'':'lm-correo-no-leido'} ${correoExpandido===c.id?'lm-correo-expandido':''}" data-correo="${c.id}">
+                  <div class="lm-correo-item-top">
+                    <i class="ph ph-bold ${CORREO_ICONOS[c.rol]}"></i>
+                    <div class="lm-correo-item-info">
+                      <div class="lm-correo-remitente">${NOMBRE_ROL[c.rol]}</div>
+                      <div class="lm-correo-asunto">${c.asunto}</div>
+                    </div>
+                    <div class="lm-correo-jornada">J${c.jornada}</div>
+                  </div>
+                  ${correoExpandido===c.id?`<div class="lm-correo-cuerpo">${c.cuerpo}</div>`:''}
+                </div>`).join(''):'<p class="lm-setup-desc" style="text-align:center;padding:10px 0">Bandeja vacía por ahora.</p>'}
+            </div>
+          </div>
+          <div class="lm-match-actions lm-match-actions-sticky">
             <button id="lmAbandonarBtn" class="lm-btn-abandonar">ABANDONAR LIGA</button>
             <button id="ligaManagerBackBtn" class="lm-btn-volver">VOLVER AL MENÚ</button>
           </div>
@@ -2523,6 +2642,7 @@
     const medicoInfoBtn=document.getElementById('lmMedicoInfoBtn');
     if(medicoInfoBtn) medicoInfoBtn.addEventListener('click', (e)=>{
       e.stopPropagation();
+      if(bloqueadoPorVacante('medico')) return;
       if(typeof window.playSound==='function') window.playSound('select');
       abrirHistorialMedico();
     });
@@ -2584,6 +2704,22 @@
       clasifColapsada=!clasifColapsada;
       render();
     });
+    const perfilHeader=document.getElementById('lmPerfilEquipoHeader');
+    if(perfilHeader) perfilHeader.addEventListener('click', ()=>{
+      if(typeof window.playSound==='function') window.playSound('select');
+      perfilEquipoColapsado=!perfilEquipoColapsado;
+      render();
+    });
+    root.querySelectorAll('[data-correo]').forEach(el=>{
+      el.addEventListener('click', ()=>{
+        const id=el.getAttribute('data-correo');
+        if(typeof window.playSound==='function') window.playSound('select');
+        const correo=(state.correoInterno||[]).find(c=>c.id===id);
+        if(correo && !correo.leido){ correo.leido=true; guardarEstado(); }
+        correoExpandido = correoExpandido===id ? null : id;
+        render();
+      });
+    });
     const sortBtn=document.getElementById('lmSortBtn');
     if(sortBtn) sortBtn.addEventListener('click', ()=>{
       if(typeof window.playSound==='function') window.playSound('select');
@@ -2592,39 +2728,46 @@
     });
     const medicoBtn=document.getElementById('lmMedicoBtn');
     if(medicoBtn) medicoBtn.addEventListener('click', ()=>{
+      if(bloqueadoPorVacante('medico')) return;
       if(typeof window.playSound==='function') window.playSound('select');
       abrirMedico();
     });
     const mantenimientoBtn=document.getElementById('lmMantenimientoBtn');
     if(mantenimientoBtn) mantenimientoBtn.addEventListener('click', ()=>{
+      if(bloqueadoPorVacante('mantenimiento')) return;
       if(typeof window.playSound==='function') window.playSound('select');
       abrirMantenimiento();
     });
     const mantenimientoInfoBtn=document.getElementById('lmMantenimientoInfoBtn');
     if(mantenimientoInfoBtn) mantenimientoInfoBtn.addEventListener('click', (e)=>{
       e.stopPropagation();
+      if(bloqueadoPorVacante('mantenimiento')) return;
       if(typeof window.playSound==='function') window.playSound('select');
       abrirEstadoEstadio();
     });
     const dgBtn=document.getElementById('lmDirectorGeneralBtn');
     if(dgBtn) dgBtn.addEventListener('click', ()=>{
+      if(bloqueadoPorVacante('directorGeneral')) return;
       if(typeof window.playSound==='function') window.playSound('select');
       abrirDirectorGeneral();
     });
     const dgInfoBtn=document.getElementById('lmDirectorGeneralInfoBtn');
     if(dgInfoBtn) dgInfoBtn.addEventListener('click', (e)=>{
       e.stopPropagation();
+      if(bloqueadoPorVacante('directorGeneral')) return;
       if(typeof window.playSound==='function') window.playSound('select');
       abrirFinanzasDG();
     });
     const ddBtn=document.getElementById('lmDirectorDeportivoBtn');
     if(ddBtn) ddBtn.addEventListener('click', ()=>{
+      if(bloqueadoPorVacante('directorDeportivo')) return;
       if(typeof window.playSound==='function') window.playSound('select');
       abrirDirectorDeportivo();
     });
     const ddInfoBtn=document.getElementById('lmDirectorDeportivoInfoBtn');
     if(ddInfoBtn) ddInfoBtn.addEventListener('click', (e)=>{
       e.stopPropagation();
+      if(bloqueadoPorVacante('directorDeportivo')) return;
       if(typeof window.playSound==='function') window.playSound('select');
       abrirSalariosDD();
     });
@@ -2740,6 +2883,7 @@
 
       overlay.innerHTML=`
         <div class="lm-dilemma-card lm-dilemma-card-medico" style="max-width:480px;text-align:left">
+          ${xCerrarHTML()}
           <div class="lm-dilemma-title" style="text-align:center"><i class="ph ph-bold ph-clock-counter-clockwise"></i> HISTORIAL MÉDICO</div>
           <div class="formation-tabs">
             <div class="formation-tab ${histTab==='tratamientos'?'active':''}" data-histtab="tratamientos">TRATAMIENTOS <span class="counter-badge">${tratamientos.length}</span></div>
@@ -2765,12 +2909,16 @@
           pintar();
         });
       });
-      document.getElementById('lmHistorialCerrar').addEventListener('click', ()=>{
+      const cerrarHist=()=>{
         if(typeof window.playSound==='function') window.playSound('select');
         overlay.remove();
-      });
+      };
+      document.getElementById('lmHistorialCerrar').addEventListener('click', cerrarHist);
+      const xBtnHist=overlay.querySelector('[data-cerrar-x]');
+      if(xBtnHist) xBtnHist.addEventListener('click', cerrarHist);
     }
     document.getElementById('ligaManagerScreen').appendChild(overlay);
+    habilitarCierreOverlay(overlay, ()=>overlay.remove());
     pintar();
   }
 
@@ -2959,6 +3107,7 @@
     const overlay=document.createElement('div');
     overlay.id='lmMedicoOverlay';
     document.getElementById('ligaManagerScreen').appendChild(overlay);
+    habilitarCierreOverlay(overlay, ()=>{ overlay.remove(); render(); });
 
     function jugadoresLesionadosPara(def){
       if(!def.requiereLesion) return [];
@@ -3006,13 +3155,12 @@
 
       overlay.innerHTML=`
         <div class="lm-dilemma-card lm-dilemma-card-medico" style="max-width:640px">
+          ${xCerrarHTML()}
           <div class="lm-dilemma-title"><i class="ph ph-bold ph-first-aid-kit"></i> EQUIPO MÉDICO</div>
           ${notif?`
-          <div class="lm-dilemma-text" style="background:#2a1e1e;border:1px solid #e24b4a;border-radius:8px;padding:10px;margin-bottom:14px">
-            <strong style="color:#e24b4a">URGENTE:</strong> ${jugadorUrgente?jugadorUrgente.name:'Un jugador'} tiene una lesión ${notif.severidad}.
-            <div style="text-align:right;margin-top:8px">
-              <button id="lmAtenderUrgente" class="mode-card-btn mode-card-btn-gold" style="width:auto;padding:7px 16px">ATENDER (sumar ${notif.dificultad}+)</button>
-            </div>
+          <div class="lm-urgente-row">
+            <div class="lm-urgente-texto"><strong style="color:#e24b4a">URGENTE:</strong> ${jugadorUrgente?jugadorUrgente.name:'Un jugador'} tiene una lesión ${notif.severidad}.</div>
+            <button id="lmAtenderUrgente" class="mode-card-btn mode-card-btn-gold">ATENDER (sumar ${notif.dificultad}+)</button>
           </div>` : ''}
           ${renderNivelesEquipoHTML()}
           <div class="lm-setup-desc" style="text-align:center;margin:10px 0 8px">dados disponibles este partido: <strong>${state.diceAvailable}</strong> (compartidos con el resto del cuerpo técnico) · cambios de carta: <strong>${state.medicoCambioUsado?0:1}/1</strong> · rerolls de dado hoy: <strong>${state.dadoRerollsDisponibles||0}/1</strong></div>
@@ -3022,6 +3170,8 @@
           </div>
         </div>`;
 
+      const xBtnMed=overlay.querySelector('[data-cerrar-x]');
+      if(xBtnMed) xBtnMed.addEventListener('click', ()=>{ overlay.remove(); render(); });
       const cerrarBtn=document.getElementById('lmMedicoCerrar');
       if(cerrarBtn) cerrarBtn.addEventListener('click', ()=>{
         if(typeof window.playSound==='function') window.playSound('select');
@@ -3205,6 +3355,7 @@
     const overlay=document.createElement('div');
     overlay.id='lmMantenimientoOverlay';
     document.getElementById('ligaManagerScreen').appendChild(overlay);
+    habilitarCierreOverlay(overlay, ()=>{ overlay.remove(); render(); });
 
     function renderHub(){
       const est=state.estadio||{campo:90,satisfaccion:0};
@@ -3240,6 +3391,7 @@
 
       overlay.innerHTML=`
         <div class="lm-dilemma-card lm-dilemma-card-mant" style="max-width:640px">
+          ${xCerrarHTML()}
           <div class="lm-dilemma-title"><i class="ph ph-bold ph-flag-pennant"></i> MANTENIMIENTO Y SEGURIDAD</div>
           ${renderNivelesMantenimientoHTML()}
           <div class="lm-setup-desc" style="text-align:center;margin:10px 0 8px">dados disponibles este partido: <strong>${state.diceAvailable}</strong> (compartidos con el resto del cuerpo técnico) · cambios de carta: <strong>${state.mantenimientoCambioUsado?0:1}/1</strong> · rerolls de dado hoy: <strong>${state.dadoRerollsDisponibles||0}/1</strong></div>
@@ -3249,6 +3401,8 @@
           </div>
         </div>`;
 
+      const xBtnMant=overlay.querySelector('[data-cerrar-x]');
+      if(xBtnMant) xBtnMant.addEventListener('click', ()=>{ overlay.remove(); render(); });
       const cerrarBtn=document.getElementById('lmMantenimientoCerrar');
       if(cerrarBtn) cerrarBtn.addEventListener('click', ()=>{
         if(typeof window.playSound==='function') window.playSound('select');
@@ -3352,6 +3506,7 @@
     const ultima=est.ultimaAsistencia;
     overlay.innerHTML=`
       <div class="lm-dilemma-card lm-dilemma-card-mant" style="max-width:480px;text-align:left">
+        ${xCerrarHTML()}
         <div class="lm-dilemma-title" style="text-align:center"><i class="ph ph-bold ph-stadium"></i> ESTADO DEL ESTADIO</div>
         <div class="lm-estadio-bars">
           <div>
@@ -3383,6 +3538,9 @@
         </div>
       </div>`;
     document.getElementById('ligaManagerScreen').appendChild(overlay);
+    habilitarCierreOverlay(overlay, ()=>overlay.remove());
+    const xBtnEstadio=overlay.querySelector('[data-cerrar-x]');
+    if(xBtnEstadio) xBtnEstadio.addEventListener('click', ()=>overlay.remove());
     document.getElementById('lmEstadoEstadioCerrar').addEventListener('click', ()=>{
       if(typeof window.playSound==='function') window.playSound('select');
       overlay.remove();
@@ -3396,6 +3554,7 @@
     const overlay=document.createElement('div');
     overlay.id='lmDirectorGeneralOverlay';
     document.getElementById('ligaManagerScreen').appendChild(overlay);
+    habilitarCierreOverlay(overlay, ()=>{ overlay.remove(); render(); });
 
     function renderHub(){
       const cartasHTML=state.directorGeneralCartas.map((instancia,idx)=>{
@@ -3429,6 +3588,7 @@
 
       overlay.innerHTML=`
         <div class="lm-dilemma-card lm-dilemma-card-dg" style="max-width:640px">
+          ${xCerrarHTML()}
           <div class="lm-dilemma-title"><i class="ph ph-bold ph-briefcase"></i> DIRECTOR GENERAL</div>
           <div class="lm-capital-box">
             <i class="ph ph-bold ph-coins lm-capital-icon"></i>
@@ -3457,6 +3617,8 @@
         guardarEstado();
         renderHub();
       });
+      const xBtnDG=overlay.querySelector('[data-cerrar-x]');
+      if(xBtnDG) xBtnDG.addEventListener('click', ()=>{ overlay.remove(); render(); });
       const cerrarBtn=document.getElementById('lmDirectorGeneralCerrar');
       if(cerrarBtn) cerrarBtn.addEventListener('click', ()=>{
         if(typeof window.playSound==='function') window.playSound('select');
@@ -3616,6 +3778,7 @@
     }
     overlay.innerHTML=`
       <div class="lm-dilemma-card lm-dilemma-card-dg" style="max-width:480px;text-align:left">
+        ${xCerrarHTML()}
         <div class="lm-dilemma-title" style="text-align:center"><i class="ph ph-bold ph-chart-line-up"></i> FINANZAS DEL CLUB</div>
         <div class="lm-capital-box" style="margin-bottom:12px">
           <i class="ph ph-bold ph-coins lm-capital-icon"></i>
@@ -3631,6 +3794,9 @@
         </div>
       </div>`;
     document.getElementById('ligaManagerScreen').appendChild(overlay);
+    habilitarCierreOverlay(overlay, ()=>overlay.remove());
+    const xBtnFin=overlay.querySelector('[data-cerrar-x]');
+    if(xBtnFin) xBtnFin.addEventListener('click', ()=>overlay.remove());
     document.getElementById('lmFinanzasCerrar').addEventListener('click', ()=>{
       if(typeof window.playSound==='function') window.playSound('select');
       overlay.remove();
@@ -3645,6 +3811,7 @@
     const overlay=document.createElement('div');
     overlay.id='lmDirectorDeportivoOverlay';
     document.getElementById('ligaManagerScreen').appendChild(overlay);
+    habilitarCierreOverlay(overlay, ()=>{ overlay.remove(); render(); });
 
     function renderHub(){
       const nivelSobre=nivelDeDD('sobresFichajes');
@@ -3687,6 +3854,7 @@
 
       overlay.innerHTML=`
         <div class="lm-dilemma-card lm-dilemma-card-dd" style="max-width:640px">
+          ${xCerrarHTML()}
           <div class="lm-dilemma-title"><i class="ph ph-bold ph-binoculars"></i> DIRECTOR DEPORTIVO</div>
           <div class="lm-capital-box">
             <i class="ph ph-bold ph-coins lm-capital-icon"></i>
@@ -3702,6 +3870,8 @@
           </div>
         </div>`;
 
+      const xBtnDD=overlay.querySelector('[data-cerrar-x]');
+      if(xBtnDD) xBtnDD.addEventListener('click', ()=>{ overlay.remove(); render(); });
       const cerrarBtn=document.getElementById('lmDirectorDeportivoCerrar');
       if(cerrarBtn) cerrarBtn.addEventListener('click', ()=>{
         if(typeof window.playSound==='function') window.playSound('select');
@@ -3887,6 +4057,7 @@
       }).join('');
       overlay.innerHTML=`
         <div class="lm-dilemma-card lm-dilemma-card-dd" style="max-width:480px;text-align:left">
+          ${xCerrarHTML()}
           <div class="lm-dilemma-title" style="text-align:center"><i class="ph ph-bold ph-file-text"></i> SALARIOS DE LA PLANTILLA</div>
           <div class="lm-setup-desc" style="text-align:center;margin-bottom:8px">Nómina total de jugadores: <strong>${formatoDinero(totalNomina)}/mes</strong> · plantilla: <strong>${jugadores.length}</strong></div>
           <p class="lm-setup-desc" style="text-align:center;margin-bottom:8px">No puedes vender si te dejaría por debajo de 11 jugadores sanos disponibles.</p>
@@ -3895,6 +4066,8 @@
             <button id="lmSalariosCerrar" class="mode-card-btn mode-card-btn-gold">CERRAR</button>
           </div>
         </div>`;
+      const xBtnSal=overlay.querySelector('[data-cerrar-x]');
+      if(xBtnSal) xBtnSal.addEventListener('click', ()=>overlay.remove());
       document.getElementById('lmSalariosCerrar').addEventListener('click', ()=>{
         if(typeof window.playSound==='function') window.playSound('select');
         overlay.remove();
@@ -3920,6 +4093,7 @@
       });
     }
     document.getElementById('ligaManagerScreen').appendChild(overlay);
+    habilitarCierreOverlay(overlay, ()=>overlay.remove());
     pintar();
   }
 
@@ -3931,10 +4105,11 @@
     const overlay=document.createElement('div');
     overlay.id='lmTrabajadoresOverlay';
     document.getElementById('ligaManagerScreen').appendChild(overlay);
+    habilitarCierreOverlay(overlay, ()=>{ overlay.remove(); render(); });
 
     function fichaTrabajadorHTML(rol){
       const actual=state.trabajadores[rol];
-      const candidatos=(state.candidatosTrabajo||[]).filter(c=>c.rol===rol);
+      const candidatos=(state.candidatosTrabajo||[]).filter(c=>c.rol===rol).sort((a,b)=>a.nivel-b.nivel);
       return `
       <div class="lm-trab-rol">
         <div class="lm-trab-rol-titulo">${NOMBRE_ROL[rol]}</div>
@@ -3945,7 +4120,7 @@
               <span class="lm-trab-estrellas">${estrellasNivel(actual.nivel)}</span>
             </div>
             <div class="lm-trab-sueldo">${formatoDinero(actual.sueldo)}/mes</div>
-            <button class="mode-card-btn mode-card-btn-secondary lm-trab-despedir" data-despedir="${rol}" style="padding:6px;font-size:10px;margin-top:6px">DESPEDIR</button>
+            <button class="lm-trab-despedir" data-despedir="${rol}">DESPEDIR (finiquito ${formatoDinero(calcularFiniquito(actual))})</button>
           </div>` : `
           <div class="lm-trab-card lm-trab-card-vacante">
             <i class="ph ph-bold ph-user-circle-minus"></i>
@@ -3968,6 +4143,7 @@
     function pintar(){
       overlay.innerHTML=`
         <div class="lm-dilemma-card" style="max-width:680px;text-align:left">
+          ${xCerrarHTML()}
           <div class="lm-dilemma-title" style="text-align:center"><i class="ph ph-bold ph-users-three"></i> TRABAJADORES</div>
           <p class="lm-setup-desc" style="text-align:center;margin-bottom:10px">Cada mes aparecen nuevos candidatos por puesto — compara nivel y sueldo antes de decidir si te compensa un cambio.</p>
           <div class="lm-trab-grid">
@@ -3977,6 +4153,8 @@
             <button id="lmTrabajadoresCerrar" class="mode-card-btn mode-card-btn-gold">CERRAR</button>
           </div>
         </div>`;
+      const xBtnTrab=overlay.querySelector('[data-cerrar-x]');
+      if(xBtnTrab) xBtnTrab.addEventListener('click', ()=>{ overlay.remove(); render(); });
       document.getElementById('lmTrabajadoresCerrar').addEventListener('click', ()=>{
         if(typeof window.playSound==='function') window.playSound('select');
         overlay.remove();
@@ -3988,8 +4166,8 @@
           const actual=state.trabajadores[rol];
           const proceder=()=>{ despedirTrabajador(rol); pintar(); };
           if(typeof window.showConfirmPopup==='function'){
-            window.showConfirmPopup(`¿Despedir a ${actual.nombre} (${NOMBRE_ROL[rol]})? El puesto quedará vacante hasta que contrates a otra persona.`, proceder, 'DESPEDIR');
-          } else if(confirm(`¿Despedir a ${actual.nombre}?`)){
+            window.showConfirmPopup(`¿Despedir a ${actual.nombre} (${NOMBRE_ROL[rol]})? Costará un finiquito de ${formatoDinero(calcularFiniquito(actual))} y el puesto quedará vacante hasta que contrates a otra persona.`, proceder, 'DESPEDIR');
+          } else if(confirm(`¿Despedir a ${actual.nombre} por ${formatoDinero(calcularFiniquito(actual))} de finiquito?`)){
             proceder();
           }
         });
