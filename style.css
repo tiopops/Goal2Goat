@@ -2825,12 +2825,13 @@ body.liga-manager-screen #mobileTabBar{display:none!important}
 /* JUGAR JORNADA junto al escudo — icono grande "play circle" + SEGUIR
    debajo, en vez del botón de texto ancho de antes. */
 .lm-btn-jugar-icon{
-  flex-shrink:0;width:76px;height:76px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+  flex-shrink:0;width:82px;height:82px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
   background:var(--gold);color:#1a1400;border:none;box-sizing:border-box;
   cursor:pointer;transition:transform .12s,background .15s;
+  border-radius:16px!important;
 }
-.lm-btn-jugar-icon i{font-size:28px;line-height:1}
-.lm-btn-jugar-icon span{font-family:'Bebas Neue',Impact,sans-serif;font-size:10px;letter-spacing:1px}
+.lm-btn-jugar-icon i{font-size:36px;line-height:1}
+.lm-btn-jugar-icon span{font-family:'Bebas Neue',Impact,sans-serif;font-size:13px;letter-spacing:1px}
 .lm-btn-jugar-icon:hover:not(:disabled){background:#e0b82a;transform:scale(1.05)}
 .lm-btn-jugar-icon:disabled{opacity:.4;cursor:not-allowed}
 /* Aviso sutil tras 1 minuto sin tocarlo ni pasar el ratón por encima —
@@ -3155,9 +3156,10 @@ body.liga-manager-screen #mobileTabBar{display:none!important}
 }
 .lm-trab-rol-titulo{
   font-family:'Bebas Neue',Impact,sans-serif;font-size:11px;letter-spacing:.5px;color:var(--gold);
-  writing-mode:horizontal-tb;flex:0 0 90px;display:flex;align-items:center;justify-content:center;
+  flex:0 0 90px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
   text-align:center;line-height:1.2;
 }
+.lm-trab-rol-titulo i{font-size:22px}
 .lm-trab-chips{display:flex;gap:6px;flex:1;flex-wrap:wrap}
 .lm-trab-chip{
   flex:1;min-width:120px;background:#1e2326;border:1px solid #2f3539;border-radius:6px;
@@ -3174,6 +3176,15 @@ body.liga-manager-screen #mobileTabBar{display:none!important}
 @keyframes lmVacantePulse{
   0%,100%{background:rgba(226,75,74,.10)}
   50%{background:rgba(226,75,74,.22)}
+}
+/* Ficha genérica gris y desactivada — mantiene siempre 3 huecos de
+   candidato para que la fila no se reajuste horizontalmente al
+   contratar o despedir a alguien. */
+.lm-trab-chip-generica{opacity:.4;border-style:dashed}
+.lm-trab-chip-generica .lm-trab-nombre{color:#666}
+.lm-trab-generica-btn{
+  width:100%;margin-top:4px;padding:5px 4px;font-size:9px;border-radius:5px;
+  background:#2a2a2a;color:#666;border:none;font-family:inherit;font-weight:600;cursor:not-allowed;
 }
 .lm-trab-chip-top{display:flex;justify-content:space-between;align-items:center;gap:4px}
 .lm-trab-nombre{font-size:10px;font-weight:700;color:#eee;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}

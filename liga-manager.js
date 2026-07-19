@@ -1288,6 +1288,14 @@
     return id;
   }
   function cerrarLesionHistorial(jugador, resueltoPor){
+    // El aviso URGENTE (con su botón ATENDER) apunta a un jugador
+    // concreto — si se recupera por cualquier vía (tiempo natural,
+    // carta, dado urgente...) antes de haberlo atendido, hay que
+    // limpiarlo aquí también, o se queda pidiendo dados para curar a
+    // alguien que ya está sano.
+    if(state.medicoNotificacion && state.medicoNotificacion.jugadorId===jugador.id){
+      state.medicoNotificacion=null;
+    }
     if(!jugador.lesionLogId || !state.medicoHistorial) return;
     const entry=state.medicoHistorial.find(h=>h.id===jugador.lesionLogId);
     if(entry && !entry.resuelta){
@@ -1724,7 +1732,7 @@
       if(e) e.preventDefault();
       if(activo) return;
       activo=true;
-      abrirInfoFn();
+      abrirInfoFn(true);
     };
     const ocultar=()=>{
       if(!activo) return;
@@ -3300,7 +3308,7 @@
      tratadas (jornada, rival, tipo, cómo se resolvió) y el progreso de
      las cartas de acumulación, más reciente primero. ---------- */
   let histTab='tratamientos';
-  function abrirHistorialMedico(){
+  function abrirHistorialMedico(esModoMantener){
     const overlay=document.createElement('div');
     overlay.id='lmHistorialOverlay';
     const historial=(state.medicoHistorial||[]).slice().reverse(); // más reciente primero
@@ -3331,9 +3339,9 @@
               ${tratamientos.length?filas:'<p class="lm-setup-desc" style="text-align:center">Todavía no hay nada que contar — de momento tu plantilla está sana.</p>'}
             </div>
           </div>
-          <div class="lm-popup-actions lm-popup-actions-compact">
+          ${esModoMantener?'':`<div class="lm-popup-actions lm-popup-actions-compact">
             <button id="lmHistorialCerrar" class="mode-card-btn mode-card-btn-gold">CERRAR</button>
-          </div>
+          </div>`}
         </div>`;
       overlay.querySelectorAll('[data-histtab]').forEach(el=>{
         el.addEventListener('click', ()=>{
@@ -3346,7 +3354,8 @@
         if(typeof window.playSound==='function') window.playSound('select');
         overlay.remove();
       };
-      document.getElementById('lmHistorialCerrar').addEventListener('click', cerrarHist);
+      const btnCerrarHist=document.getElementById('lmHistorialCerrar');
+      if(btnCerrarHist) btnCerrarHist.addEventListener('click', cerrarHist);
       const xBtnHist=overlay.querySelector('[data-cerrar-x]');
       if(xBtnHist) xBtnHist.addEventListener('click', cerrarHist);
     }
@@ -3590,8 +3599,12 @@
     }
 
     function renderHub(){
-      const notif=state.medicoNotificacion;
-      const jugadorUrgente=notif?state.plantilla.find(p=>p.id===notif.jugadorId):null;
+      let notif=state.medicoNotificacion;
+      let jugadorUrgente=notif?state.plantilla.find(p=>p.id===notif.jugadorId):null;
+      if(notif && (!jugadorUrgente || !jugadorUrgente.injured)){
+        state.medicoNotificacion=null;
+        notif=null; jugadorUrgente=null;
+      }
 
       const cartasHTML=state.medicoCartas.map((instancia,idx)=>{
         const def=cartaDef(instancia.cartaId);
@@ -3989,7 +4002,7 @@
      Seguridad: las 3 barras (césped/satisfacción/moral) y el panel de
      aforo, que antes vivían en el hub de cartas y ahora quedan aparte
      como consulta rápida, igual que el historial médico. ---------- */
-  function abrirEstadoEstadio(){
+  function abrirEstadoEstadio(esModoMantener){
     const overlay=document.createElement('div');
     overlay.id='lmEstadoEstadioOverlay';
     const est=state.estadio||{campo:90, satisfaccion:0, aforoTotal:12000, ultimaAsistencia:null};
@@ -4025,15 +4038,16 @@
             </div>
           </div>
         </div>
-        <div class="lm-popup-actions lm-popup-actions-compact">
+        ${esModoMantener?'':`<div class="lm-popup-actions lm-popup-actions-compact">
           <button id="lmEstadoEstadioCerrar" class="mode-card-btn mode-card-btn-gold">CERRAR</button>
-        </div>
+        </div>`}
       </div>`;
     document.getElementById('ligaManagerScreen').appendChild(overlay);
     habilitarCierreOverlay(overlay, ()=>overlay.remove());
     const xBtnEstadio=overlay.querySelector('[data-cerrar-x]');
     if(xBtnEstadio) xBtnEstadio.addEventListener('click', ()=>overlay.remove());
-    document.getElementById('lmEstadoEstadioCerrar').addEventListener('click', ()=>{
+    const btnCerrarEstadio=document.getElementById('lmEstadoEstadioCerrar');
+    if(btnCerrarEstadio) btnCerrarEstadio.addEventListener('click', ()=>{
       if(typeof window.playSound==='function') window.playSound('select');
       overlay.remove();
     });
@@ -4253,7 +4267,7 @@
 
   /* ---------- 13e. Finanzas del Director General — burbuja "i": tabla
      mensual de ingresos/gastos con mini barras, agrupada por mes. ---------- */
-  function abrirFinanzasDG(){
+  function abrirFinanzasDG(esModoMantener){
     const overlay=document.createElement('div');
     overlay.id='lmFinanzasOverlay';
     const historial=state.finanzasHistorial||[];
@@ -4311,15 +4325,16 @@
         ${filaMesActual}
         <p class="lm-setup-desc" style="text-align:left;margin:12px 0 4px">Histórico de meses anteriores (neto por mes)</p>
         ${graficoHistorico}
-        <div class="lm-popup-actions lm-popup-actions-compact">
+        ${esModoMantener?'':`<div class="lm-popup-actions lm-popup-actions-compact">
           <button id="lmFinanzasCerrar" class="mode-card-btn mode-card-btn-gold">CERRAR</button>
-        </div>
+        </div>`}
       </div>`;
     document.getElementById('ligaManagerScreen').appendChild(overlay);
     habilitarCierreOverlay(overlay, ()=>overlay.remove());
     const xBtnFin=overlay.querySelector('[data-cerrar-x]');
     if(xBtnFin) xBtnFin.addEventListener('click', ()=>overlay.remove());
-    document.getElementById('lmFinanzasCerrar').addEventListener('click', ()=>{
+    const btnCerrarFin=document.getElementById('lmFinanzasCerrar');
+    if(btnCerrarFin) btnCerrarFin.addEventListener('click', ()=>{
       if(typeof window.playSound==='function') window.playSound('select');
       overlay.remove();
     });
@@ -4592,7 +4607,7 @@
 
   /* ---------- 13g. Salarios de la plantilla — burbuja "i" del Director
      Deportivo: lista completa de jugadores con su salario mensual. ---------- */
-  function abrirSalariosDD(){
+  function abrirSalariosDD(esModoMantener){
     const overlay=document.createElement('div');
     overlay.id='lmSalariosOverlay';
     function pintar(){
@@ -4627,12 +4642,13 @@
             </table>
           </div>
           <div class="lm-popup-actions lm-popup-actions-compact">
-            <button id="lmSalariosCerrar" class="mode-card-btn mode-card-btn-gold">CERRAR</button>
+            ${esModoMantener?'':'<button id="lmSalariosCerrar" class="mode-card-btn mode-card-btn-gold">CERRAR</button>'}
           </div>
         </div>`;
       const xBtnSal=overlay.querySelector('[data-cerrar-x]');
       if(xBtnSal) xBtnSal.addEventListener('click', ()=>overlay.remove());
-      document.getElementById('lmSalariosCerrar').addEventListener('click', ()=>{
+      const btnCerrarSal=document.getElementById('lmSalariosCerrar');
+      if(btnCerrarSal) btnCerrarSal.addEventListener('click', ()=>{
         if(typeof window.playSound==='function') window.playSound('select');
         overlay.remove();
       });
@@ -4842,7 +4858,7 @@
 
   /* ---------- 13j. Historial de entrenamientos — burbuja "i" del
      Preparador Físico. ---------- */
-  function abrirHistorialPF(){
+  function abrirHistorialPF(esModoMantener){
     const overlay=document.createElement('div');
     overlay.id='lmHistorialPFOverlay';
     const hist=state.preparadorFisicoHistorial||[];
@@ -4861,15 +4877,16 @@
         ${renderNivelesPFHTML()}
         <p class="lm-setup-desc" style="text-align:left;margin:10px 0 4px">Mejoras individuales conseguidas</p>
         <div class="lm-hist-list">${filas||'<p class="lm-setup-desc" style="text-align:center">Todavía no se ha entrenado a ningún jugador.</p>'}</div>
-        <div class="lm-popup-actions lm-popup-actions-compact">
+        ${esModoMantener?'':`<div class="lm-popup-actions lm-popup-actions-compact">
           <button id="lmHistorialPFCerrar" class="mode-card-btn mode-card-btn-gold">CERRAR</button>
-        </div>
+        </div>`}
       </div>`;
     document.getElementById('ligaManagerScreen').appendChild(overlay);
     habilitarCierreOverlay(overlay, ()=>overlay.remove());
     const xBtnHPF=overlay.querySelector('[data-cerrar-x]');
     if(xBtnHPF) xBtnHPF.addEventListener('click', ()=>overlay.remove());
-    document.getElementById('lmHistorialPFCerrar').addEventListener('click', ()=>{
+    const btnCerrarHPF=document.getElementById('lmHistorialPFCerrar');
+    if(btnCerrarHPF) btnCerrarHPF.addEventListener('click', ()=>{
       if(typeof window.playSound==='function') window.playSound('select');
       overlay.remove();
     });
@@ -4906,11 +4923,21 @@
           <div class="lm-trab-chip-top"><span class="lm-trab-nombre">${c.nombre}</span><span class="lm-trab-estrellas">${estrellasNivel(c.nivel, 3)}</span></div>
           <div class="lm-trab-sueldo">${formatoDinero(c.sueldo)}/mes</div>
           <button class="lm-trab-contratar" data-contratar="${c.id}" data-rol="${rol}">CONTRATAR</button>
-        </div>`).join('') || '<p class="lm-setup-desc" style="margin:0">Sin candidatos este mes</p>';
+        </div>`).join('');
+      // Siempre 3 huecos de candidato aunque falten (p.ej. tras contratar
+      // a uno este mes) — una ficha genérica gris y desactivada en vez de
+      // dejar que la fila se reajuste horizontalmente.
+      const huecos=Math.max(0, 3-candidatos.length);
+      const chipsGenericos=Array.from({length:huecos}).map(()=>`
+        <div class="lm-trab-chip lm-trab-chip-generica">
+          <div class="lm-trab-chip-top"><span class="lm-trab-nombre">—</span></div>
+          <div class="lm-trab-sueldo">Sin candidato</div>
+          <button class="lm-trab-generica-btn" disabled>—</button>
+        </div>`).join('');
       return `
       <div class="lm-trab-rol-row">
-        <div class="lm-trab-rol-titulo">${NOMBRE_ROL[rol]}</div>
-        <div class="lm-trab-chips">${chipActual}${chipsCandidatos}</div>
+        <div class="lm-trab-rol-titulo"><i class="ph ph-bold ${CORREO_ICONOS[rol]||'ph-user'}"></i><span>${NOMBRE_ROL[rol]}</span></div>
+        <div class="lm-trab-chips">${chipActual}${chipsCandidatos}${chipsGenericos}</div>
       </div>`;
     }
 
