@@ -474,10 +474,10 @@
       directorDeportivoNiveles:{calidadOjeo:0, ahorroSalarial:0, sobresFichajes:0, costeSobres:0},
       // ---- Trabajadores del cuerpo técnico ----
       trabajadores:{
-        medico:{id:'t0', ...nombreTrabajadorAleatorio(), nivel:1, sueldo:4400},
-        mantenimiento:{id:'t1', ...nombreTrabajadorAleatorio(), nivel:1, sueldo:4400},
-        directorGeneral:{id:'t2', ...nombreTrabajadorAleatorio(), nivel:1, sueldo:5500},
-        directorDeportivo:{id:'t3', ...nombreTrabajadorAleatorio(), nivel:1, sueldo:5500}
+        medico:null,
+        mantenimiento:null,
+        directorGeneral:null,
+        directorDeportivo:null
       },
       candidatosTrabajo:[],
       mesTrabajadoresGenerado:0
@@ -2298,6 +2298,7 @@
     const notifMant = !!(state.estadio && (state.estadio.satisfaccion<=-50 || state.estadio.campo<=20));
     const notifDG = (state.capital||0)<0;
     const notifDD = nivelDeDD('sobresFichajes')>=1;
+    const hayVacantes = ROLES_TRABAJO.some(r=>!state.trabajadores[r]);
     const monedaInfo=MONEDAS[state.moneda]||MONEDAS.EUR;
 
     function fatigueColor(f){ if(f>=75) return 'green'; if(f>=40) return 'yellow'; return 'red'; }
@@ -2355,15 +2356,6 @@
     const filasBanquillo=banquillo.map(filaJugador).join('');
 
     root.innerHTML = `
-      <div class="lm-staff-bar">
-        <div class="lm-staff-bar-title"><i class="ph ph-bold ph-users-three"></i> CUERPO TÉCNICO</div>
-        <div class="lm-staff-bar-row">
-          ${staffTileHTML('directorGeneral', {btnId:'lmDirectorGeneralBtn', infoId:'lmDirectorGeneralInfoBtn', infoTitle:'Finanzas del club', notif:notifDG, badgeTexto:'!', carpeta:'director_general', archivo:'director_general', alt:'Director General', icono:'ph-briefcase', rolLabel:'DIRECTOR GENERAL', acento:'lm-staff-tile-dg'})}
-          ${staffTileHTML('directorDeportivo', {btnId:'lmDirectorDeportivoBtn', infoId:'lmDirectorDeportivoInfoBtn', infoTitle:'Salarios de la plantilla', notif:notifDD, badgeTexto:'!', carpeta:'director_deportivo', archivo:'director_deportivo', alt:'Director Deportivo', icono:'ph-binoculars', rolLabel:'DIRECTOR DEPORTIVO', acento:'lm-staff-tile-dd'})}
-          ${staffTileHTML('medico', {btnId:'lmMedicoBtn', infoId:'lmMedicoInfoBtn', infoTitle:'Historial médico', notif:notif, badgeTexto:'1', carpeta:'medico', archivo:'medico', alt:'Equipo médico', icono:'ph-first-aid-kit', rolLabel:'EQUIPO MÉDICO'})}
-          ${staffTileHTML('mantenimiento', {btnId:'lmMantenimientoBtn', infoId:'lmMantenimientoInfoBtn', infoTitle:'Estado del estadio', notif:notifMant, badgeTexto:'!', carpeta:'mantenimiento', archivo:'mantenimiento', alt:'Mantenimiento y seguridad', icono:'ph-flag-pennant', rolLabel:'MANTENIMIENTO'})}
-        </div>
-      </div>
       <div class="lm-app-grid">
         <div class="lm-panel lm-left-panel">
           <div class="lm-header-team">
@@ -2395,18 +2387,6 @@
               <thead><tr><th>Jugador</th><th>Resist.</th><th>Pos</th><th>ATA</th><th>DEF</th><th>RIT</th><th>PAS</th><th>TEC</th><th>Rat.</th></tr></thead>
               <tbody>${filasBanquillo}</tbody>
             </table>
-          </div>
-
-          <div class="bench-title"><span>FORMACIÓN</span><span>${state.formacionCode}</span></div>
-          <div class="formation-tabs">
-            ${Object.keys(FORMATION_CODES).map(cat=>`<div class="formation-tab ${(formacionCategoriaVista||state.formacionCategoria)===cat?'active':''}" data-categoria="${cat}">${CAT_LABELS[cat]}</div>`).join('')}
-          </div>
-          <div id="formationList">
-            ${FORMATION_CODES[formacionCategoriaVista||state.formacionCategoria].map(code=>`
-              <div class="formation-option ${state.formacionCode===code?'selected':''}" data-formacion-codigo="${code}">
-                <span class="f-code">${code}</span>
-                <span class="f-badge">${code.split('-').length} líneas</span>
-              </div>`).join('')}
           </div>
 
           <div class="team-profile box" style="margin-top:14px">
@@ -2445,15 +2425,17 @@
             const clases=['position', vacio?'empty-slot':'locked', lesionado?'lm-pos-injured':'', seleccionado?'highlight-pos':''].filter(Boolean).join(' ');
             return `<div class="${clases}" data-slot="${def.slot}" style="left:${def.x}%;top:${def.y}%" title="${jugador?jugador.name+' ('+efectivoOverall(jugador)+')':'Vacío'}">${inner}</div>`;
           }).join('')}</div>
-          <p class="lm-pitch-caption">Toca una posición para asignar o cambiar jugador. Puedes cambiar de formación antes de cada partido.</p>
 
-          <div class="lm-match-actions">
-            <button id="lmJugarBtn" class="lm-btn-jugar" ${state.jornadaActual>38?'disabled':''}>
-              ${state.jornadaActual>38?'TEMPORADA COMPLETA':'JUGAR JORNADA'}
-            </button>
-            <button id="lmTrabajadoresBtn" class="lm-btn-trabajadores">TRABAJADORES</button>
-            <button id="lmAbandonarBtn" class="lm-btn-abandonar">ABANDONAR LIGA</button>
-            <button id="ligaManagerBackBtn" class="lm-btn-volver">VOLVER AL MENÚ</button>
+          <div class="bench-title" style="margin-top:14px"><span>FORMACIÓN</span><span>${state.formacionCode}</span></div>
+          <div class="formation-tabs">
+            ${Object.keys(FORMATION_CODES).map(cat=>`<div class="formation-tab ${(formacionCategoriaVista||state.formacionCategoria)===cat?'active':''}" data-categoria="${cat}">${CAT_LABELS[cat]}</div>`).join('')}
+          </div>
+          <div id="formationList">
+            ${FORMATION_CODES[formacionCategoriaVista||state.formacionCategoria].map(code=>`
+              <div class="formation-option ${state.formacionCode===code?'selected':''}" data-formacion-codigo="${code}">
+                <span class="f-code">${code}</span>
+                <span class="f-badge">${code.split('-').length} líneas</span>
+              </div>`).join('')}
           </div>
         </div>
 
@@ -2461,8 +2443,8 @@
           <div class="lm-nextmatch-box">
             ${rival ? `
               <div class="lm-vs-label" style="text-align:center;margin-bottom:6px">${esLocal?'JUEGAS EN CASA':'JUEGAS FUERA'}</div>
-              <div class="lm-header-team-rival" style="justify-content:center;gap:10px">
-                ${rivalCrestHTML(64, rival.crestImg)}<span class="lm-title" style="font-size:15px">${rival.name}</span>
+              <div class="lm-rival-crest-block">
+                ${rivalCrestHTML(72, rival.crestImg)}<span class="lm-title" style="font-size:15px">${rival.name}</span>
               </div>
               ${(()=>{
                 const fila=calcularClasificacion();
@@ -2511,6 +2493,28 @@
           </div>
           </div>
         </div>
+
+        <div class="lm-panel lm-staff-panel">
+          <div class="lm-staff-bar-header">
+            <div class="lm-staff-bar-title"><i class="ph ph-bold ph-users-three"></i> CUERPO TÉCNICO</div>
+            <div class="lm-staff-bar-capital"><i class="ph ph-bold ph-coins"></i> ${formatoDinero(state.capital)}</div>
+          </div>
+          ${hayVacantes?`<div class="lm-staff-warning"><i class="ph ph-bold ph-warning"></i> Todavía te falta cuerpo técnico por contratar antes de poder jugar tu próxima jornada.</div>`:''}
+          <button id="lmTrabajadoresBtn" class="lm-btn-trabajadores" style="width:100%;margin-bottom:10px">CONTRATAR/DESPEDIR TRABAJADORES</button>
+          <div class="lm-staff-bar-row">
+            ${staffTileHTML('directorGeneral', {btnId:'lmDirectorGeneralBtn', infoId:'lmDirectorGeneralInfoBtn', infoTitle:'Finanzas del club', notif:notifDG, badgeTexto:'!', carpeta:'director_general', archivo:'director_general', alt:'Director General', icono:'ph-briefcase', rolLabel:'DIRECTOR GENERAL', acento:'lm-staff-tile-dg', desc:'Patrocinios, merchandising, aforo y precio de las entradas'})}
+            ${staffTileHTML('directorDeportivo', {btnId:'lmDirectorDeportivoBtn', infoId:'lmDirectorDeportivoInfoBtn', infoTitle:'Salarios de la plantilla', notif:notifDD, badgeTexto:'!', carpeta:'director_deportivo', archivo:'director_deportivo', alt:'Director Deportivo', icono:'ph-binoculars', rolLabel:'DIRECTOR DEPORTIVO', acento:'lm-staff-tile-dd', desc:'Fichajes, ojeadores y sobres de nuevos jugadores'})}
+            ${staffTileHTML('medico', {btnId:'lmMedicoBtn', infoId:'lmMedicoInfoBtn', infoTitle:'Historial médico', notif:notif, badgeTexto:'1', carpeta:'medico', archivo:'medico', alt:'Equipo médico', icono:'ph-first-aid-kit', rolLabel:'EQUIPO MÉDICO', desc:'Previene, diagnostica y trata las lesiones de tus jugadores', acento:'lm-staff-tile-medico'})}
+            ${staffTileHTML('mantenimiento', {btnId:'lmMantenimientoBtn', infoId:'lmMantenimientoInfoBtn', infoTitle:'Estado del estadio', notif:notifMant, badgeTexto:'!', carpeta:'mantenimiento_y_seguridad', archivo:'mantenimiento_y_seguridad', alt:'Mantenimiento y seguridad', icono:'ph-flag-pennant', rolLabel:'MANTENIMIENTO', desc:'Cuida el césped, la seguridad y la satisfacción de la afición', acento:'lm-staff-tile-mant'})}
+          </div>
+          <div class="lm-match-actions" style="margin-top:auto">
+            <button id="lmJugarBtn" class="lm-btn-jugar" ${(state.jornadaActual>38||hayVacantes)?'disabled':''}>
+              ${state.jornadaActual>38?'TEMPORADA COMPLETA':(hayVacantes?'CONTRATA AL CUERPO TÉCNICO':'JUGAR JORNADA')}
+            </button>
+            <button id="lmAbandonarBtn" class="lm-btn-abandonar">ABANDONAR LIGA</button>
+            <button id="ligaManagerBackBtn" class="lm-btn-volver">VOLVER AL MENÚ</button>
+          </div>
+        </div>
       </div>
     `;
 
@@ -2545,6 +2549,11 @@
 
     const jugarBtn=document.getElementById('lmJugarBtn');
     if(jugarBtn) jugarBtn.addEventListener('click', ()=>{
+      if(ROLES_TRABAJO.some(r=>!state.trabajadores[r])){
+        if(typeof window.playSound==='function') window.playSound('select');
+        alert('Todavía tienes puestos vacantes en el cuerpo técnico. Contrata desde TRABAJADORES antes de jugar la jornada.');
+        return;
+      }
       if(typeof window.playSound==='function') window.playSound('select');
       const info=jugarJornada();
       if(info){
@@ -2730,19 +2739,21 @@
       }).join('');
 
       overlay.innerHTML=`
-        <div class="lm-dilemma-card" style="max-width:480px;text-align:left">
+        <div class="lm-dilemma-card lm-dilemma-card-medico" style="max-width:480px;text-align:left">
           <div class="lm-dilemma-title" style="text-align:center"><i class="ph ph-bold ph-clock-counter-clockwise"></i> HISTORIAL MÉDICO</div>
           <div class="formation-tabs">
             <div class="formation-tab ${histTab==='tratamientos'?'active':''}" data-histtab="tratamientos">TRATAMIENTOS <span class="counter-badge">${tratamientos.length}</span></div>
             <div class="formation-tab ${histTab==='mejoras'?'active':''}" data-histtab="mejoras">INSTALACIONES <span class="counter-badge">${totalEstrellas}/${NIVELES_EQUIPO_INFO.length*NIVEL_MAXIMO_EQUIPO}</span></div>
           </div>
-          ${histTab==='tratamientos' ? `
-          <div class="lm-hist-list">
-            ${tratamientos.length?filas:'<p class="lm-setup-desc" style="text-align:center">Todavía no hay nada que contar — de momento tu plantilla está sana.</p>'}
-          </div>` : `
-          <p class="lm-setup-desc" style="text-align:left;margin:8px 0 4px">Nivel actual de cada especialidad del cuerpo médico.</p>
-          ${renderNivelesEquipoHTML()}
-          `}
+          <div class="lm-tab-content">
+            ${histTab==='tratamientos' ? `
+            <div class="lm-hist-list">
+              ${tratamientos.length?filas:'<p class="lm-setup-desc" style="text-align:center">Todavía no hay nada que contar — de momento tu plantilla está sana.</p>'}
+            </div>` : `
+            <p class="lm-setup-desc" style="text-align:left;margin:8px 0 4px">Nivel actual de cada especialidad del cuerpo médico.</p>
+            ${renderNivelesEquipoHTML()}
+            `}
+          </div>
           <div class="lm-popup-actions lm-popup-actions-compact">
             <button id="lmHistorialCerrar" class="mode-card-btn mode-card-btn-gold">CERRAR</button>
           </div>
@@ -2763,23 +2774,36 @@
     pintar();
   }
 
-  // Barajado 2D de las caras del dado — CALCO del slot-machine de
-  // selección de equipos del draft de Copa Leyendas (showTeamChoice):
-  // reutiliza las mismas clases .slot-reel/.slot-strip y los mismos
-  // sonidos spin/reveal, cambiando de cara a cara al azar durante un
-  // momento antes de fijar el resultado real. Compartida por el equipo
-  // médico y el de mantenimiento (comparten el mismo fondo de dados).
+  // Caras de dado con PIPS (puntos), no números — blancas y con esquinas
+  // redondeadas, tamaño grande para que se lea de un vistazo.
+  const LM_DICE_PIPS={
+    1:[[50,50]],
+    2:[[27,27],[73,73]],
+    3:[[27,27],[50,50],[73,73]],
+    4:[[27,27],[73,27],[27,73],[73,73]],
+    5:[[27,27],[73,27],[50,50],[27,73],[73,73]],
+    6:[[27,25],[73,25],[27,50],[73,50],[27,75],[73,75]]
+  };
+  function dadoPipsHTML(valor){
+    const pips=LM_DICE_PIPS[valor]||LM_DICE_PIPS[1];
+    return `<svg viewBox="0 0 100 100" class="lm-dice-pips-svg">${pips.map(([x,y])=>`<circle cx="${x}" cy="${y}" r="9"></circle>`).join('')}</svg>`;
+  }
+
+  // Barajado de las caras del dado — CALCO del slot-machine de selección
+  // de equipos del draft de Copa Leyendas (mismos sonidos spin/reveal),
+  // ahora mostrando pips en vez de números, en el mismo estilo/tamaño
+  // que se usará luego para el resultado (sin caja punteada aparte).
   function iniciarBarajadoDados(container, numDados, onDone){
     const tiradasFinal=[]; for(let i=0;i<numDados;i++) tiradasFinal.push(1+Math.floor(Math.random()*6));
     container.innerHTML = Array.from({length:numDados}).map((_,i)=>
-      `<div class="slot-reel lm-dice2d-reel"><div class="slot-strip lm-dice2d-face" id="lmDiceFace${i}">${1+Math.floor(Math.random()*6)}</div></div>`
+      `<div class="lm-dice-face lm-dice-face-shuffling" id="lmDiceFace${i}">${dadoPipsHTML(1+Math.floor(Math.random()*6))}</div>`
     ).join('');
     let ticks=0;
     const totalTicks=11+Math.floor(Math.random()*4); // ~950-1275ms de barajado
     const spin=setInterval(()=>{
       for(let i=0;i<numDados;i++){
         const faceEl=document.getElementById('lmDiceFace'+i);
-        if(faceEl) faceEl.textContent=1+Math.floor(Math.random()*6);
+        if(faceEl) faceEl.innerHTML=dadoPipsHTML(1+Math.floor(Math.random()*6));
       }
       if(typeof window.playSound==='function') window.playSound('spin');
       ticks++;
@@ -2787,7 +2811,7 @@
         clearInterval(spin);
         for(let i=0;i<numDados;i++){
           const faceEl=document.getElementById('lmDiceFace'+i);
-          if(faceEl){ faceEl.textContent=tiradasFinal[i]; faceEl.classList.remove('lm-dice2d-face'); faceEl.classList.add('lm-dice2d-face-final'); }
+          if(faceEl){ faceEl.innerHTML=dadoPipsHTML(tiradasFinal[i]); faceEl.classList.remove('lm-dice-face-shuffling'); }
         }
         if(typeof window.playSound==='function') window.playSound('reveal');
         onDone(tiradasFinal);
@@ -2795,40 +2819,84 @@
     },85);
   }
 
-  // Pantalla de revisión tras el barajado, antes de resolver la carta:
-  // deja repetir UN dado por jornada (compartido entre médico y
-  // mantenimiento) si todavía queda disponible — se pulsa directamente
-  // sobre la píldora del dado que se quiere repetir. Al confirmar, se
-  // pasa la tirada definitiva a onConfirmar (ahí es cuando se aplican
-  // los efectos de verdad).
-  function mostrarRevisionTirada(tiradas, onConfirmar){
-    const tituloEl=document.getElementById('lmDiceTitle');
-    if(tituloEl) tituloEl.textContent='REVISA TU TIRADA';
-    const zona=document.getElementById('lmDiceResultZone');
+  // Anima UN dado concreto (reroll) con el mismo barajado, hasta fijarse
+  // en un valor nuevo al azar.
+  function animarRerollUnDado(faceEl, onNuevoValor){
+    let ticks=0;
+    const totalTicks=7+Math.floor(Math.random()*3);
+    faceEl.classList.add('lm-dice-face-shuffling');
+    const spin=setInterval(()=>{
+      faceEl.innerHTML=dadoPipsHTML(1+Math.floor(Math.random()*6));
+      if(typeof window.playSound==='function') window.playSound('spin');
+      ticks++;
+      if(ticks>=totalTicks){
+        clearInterval(spin);
+        const nuevoValor=1+Math.floor(Math.random()*6);
+        faceEl.innerHTML=dadoPipsHTML(nuevoValor);
+        faceEl.classList.remove('lm-dice-face-shuffling');
+        if(typeof window.playSound==='function') window.playSound('reveal');
+        onNuevoValor(nuevoValor);
+      }
+    },85);
+  }
+
+  // Texto de resultado a partir de lo que devuelven resolverCartaMedico/
+  // Mantenimiento/DG/DD/resolverDilemaMedico — formas ligeramente
+  // distintas, unificadas aquí en un único formateador.
+  function formatearResultadoDados(r){
+    if(!r) return '';
+    if(r.tipo==='directa'){
+      return `Suma <strong>${r.suma}</strong> (necesitabas ${r.dificultad}+) — <span style="color:${r.exito?'#5dcaa5':'#e24b4a'}">${r.exito?'✔ ÉXITO — '+r.texto:'✘ FALLO — '+r.texto}</span>`;
+    }
+    if(r.tipo==='nivel'){
+      return r.exito
+        ? `Suma <strong>${r.suma}</strong> (necesitabas ${r.dificultad}+) — <span style="color:#5dcaa5">✔ ÉXITO</span> — ${r.nombre} sube a nivel ${r.nivelNuevo}/${NIVEL_MAXIMO_EQUIPO}${r.maxAlcanzado?' — <strong>nivel máximo alcanzado</strong>':''}`
+        : `Suma <strong>${r.suma}</strong> (necesitabas ${r.dificultad}+) — <span style="color:#e24b4a">✘ FALLO</span> — ${r.texto}`;
+    }
+    // Forma de resolverDilemaMedico (dado urgente): {suma,dificultad,exito}
+    return `Suma <strong>${r.suma}</strong> (necesitabas ${r.dificultad}+) — <span style="color:${r.exito?'#5dcaa5':'#e24b4a'}">${r.exito?'✔ ÉXITO, recuperación acelerada':'✘ FALLO, sigue el tiempo previsto'}</span>`;
+  }
+
+  // Pantalla ÚNICA de resultado de una tirada — sustituye a la antigua
+  // pareja "revisa tu tirada" + "resultado" (dos pantallas, dos clics
+  // para lo mismo): los dados grandes con pips y la SUMA en grande se ven
+  // desde el primer momento; si queda reroll disponible, cada dado es
+  // tocable (con su propio barajado) para repetirlo; un único botón
+  // aplica el efecto Y enseña el resultado a la vez, y solo hace falta
+  // un segundo toque para cerrar y volver al hub.
+  function mostrarResultadoDados(zonaEl, tiradas, resolverFn, onCerrar){
+    let resultado=null;
     function pintar(){
-      const rerolls=state.dadoRerollsDisponibles||0;
       const suma=tiradas.reduce((a,b)=>a+b,0);
-      zona.innerHTML=`
-        <div class="lm-dice-result-row">${tiradas.map((v,i)=>`<span class="lm-dice-pill${rerolls>0?' lm-dice-pill-reroll':''}" data-reroll-i="${i}" ${rerolls>0?'title="Repetir este dado"':''}>${v}</span>`).join('')}</div>
-        <div class="lm-setup-desc" style="margin-top:8px">Suma actual: <strong>${suma}</strong></div>
-        <div class="lm-setup-desc">rerolls de dado hoy: <strong>${rerolls}/1</strong>${rerolls>0?' — toca un dado para repetirlo':''}</div>
-        <div class="lm-popup-actions"><button id="lmConfirmarTiradaBtn" class="mode-card-btn mode-card-btn-gold">CONFIRMAR TIRADA</button></div>`;
-      if(rerolls>0){
-        zona.querySelectorAll('.lm-dice-pill-reroll').forEach(el=>{
+      const puedeReroll = !resultado && (state.dadoRerollsDisponibles||0)>0;
+      zonaEl.innerHTML=`
+        <div class="lm-dice-result-row">${tiradas.map((v,i)=>`<div class="lm-dice-face${puedeReroll?' lm-dice-face-reroll':''}" data-reroll-i="${i}" id="lmDiceResultFace${i}" ${puedeReroll?'title="Repetir este dado"':''}>${dadoPipsHTML(v)}</div>`).join('')}</div>
+        <div class="lm-dice-suma-grande">${suma}</div>
+        ${puedeReroll?`<div class="lm-setup-desc">toca un dado para repetirlo · rerolls hoy: <strong>${state.dadoRerollsDisponibles}/1</strong></div>`:''}
+        ${resultado?`<div class="lm-dice-resultado-texto">${formatearResultadoDados(resultado)}</div>`:''}
+        <div class="lm-popup-actions"><button id="lmDiceAccionBtn" class="mode-card-btn mode-card-btn-gold">${resultado?'CERRAR':'CONTINUAR'}</button></div>`;
+      if(puedeReroll){
+        zonaEl.querySelectorAll('[data-reroll-i]').forEach(el=>{
           el.addEventListener('click', ()=>{
-            if((state.dadoRerollsDisponibles||0)<=0) return;
+            if(resultado || (state.dadoRerollsDisponibles||0)<=0) return;
             const i=parseInt(el.getAttribute('data-reroll-i'),10);
-            state.dadoRerollsDisponibles--;
-            tiradas[i]=1+Math.floor(Math.random()*6);
-            if(typeof window.playSound==='function') window.playSound('dice');
-            guardarEstado();
-            pintar();
+            animarRerollUnDado(el, (nuevoValor)=>{
+              state.dadoRerollsDisponibles--;
+              tiradas[i]=nuevoValor;
+              guardarEstado();
+              pintar();
+            });
           });
         });
       }
-      document.getElementById('lmConfirmarTiradaBtn').addEventListener('click', ()=>{
+      document.getElementById('lmDiceAccionBtn').addEventListener('click', ()=>{
         if(typeof window.playSound==='function') window.playSound('select');
-        onConfirmar(tiradas);
+        if(!resultado){
+          resultado=resolverFn(tiradas);
+          pintar();
+        } else {
+          onCerrar(resultado);
+        }
       });
     }
     pintar();
@@ -2872,16 +2940,18 @@
     const trab=state.trabajadores[rol];
     return `
     <div class="lm-staff-tile ${o.acento||''} ${trab?'':'lm-staff-tile-vacante'}" id="${o.btnId}">
-      ${o.notif?`<span class="lm-staff-tile-badge">${o.badgeTexto}</span>`:''}
       <div class="lm-staff-tile-photo">
         ${staffFotoHTML(o.carpeta, o.archivo, o.alt, o.icono, trab?trab.genero:'hombre', !trab)}
+        ${o.notif?`<span class="lm-staff-tile-badge">${o.badgeTexto}</span>`:''}
+        <button class="lm-staff-tile-info-btn" id="${o.infoId}" title="${o.infoTitle}"><i class="ph ph-bold ph-info"></i></button>
+        <div class="lm-staff-tile-photo-fade"></div>
       </div>
-      <div class="lm-staff-tile-info">
+      <div class="lm-staff-tile-body">
         <div class="lm-staff-tile-rol">${o.rolLabel}</div>
-        <div class="lm-staff-tile-nombre">${trab?trab.nombre:'Vacante'}</div>
+        <div class="lm-staff-tile-nombre">${trab?trab.nombre:'VACANTE'}</div>
         ${trab?`<div class="lm-staff-tile-estrellas">${estrellasNivel(trab.nivel)}</div>`:'<div class="lm-staff-tile-vacante-txt">Contratar en TRABAJADORES</div>'}
+        <div class="lm-staff-tile-desc">${o.desc}</div>
       </div>
-      <button class="lm-staff-tile-info-btn" id="${o.infoId}" title="${o.infoTitle}"><i class="ph ph-bold ph-info"></i></button>
     </div>`;
   }
 
@@ -2935,12 +3005,14 @@
       }).join('');
 
       overlay.innerHTML=`
-        <div class="lm-dilemma-card" style="max-width:640px">
+        <div class="lm-dilemma-card lm-dilemma-card-medico" style="max-width:640px">
           <div class="lm-dilemma-title"><i class="ph ph-bold ph-first-aid-kit"></i> EQUIPO MÉDICO</div>
           ${notif?`
           <div class="lm-dilemma-text" style="background:#2a1e1e;border:1px solid #e24b4a;border-radius:8px;padding:10px;margin-bottom:14px">
             <strong style="color:#e24b4a">URGENTE:</strong> ${jugadorUrgente?jugadorUrgente.name:'Un jugador'} tiene una lesión ${notif.severidad}.
-            <button id="lmAtenderUrgente" class="mode-card-btn mode-card-btn-gold" style="width:auto;padding:7px 16px;margin-top:8px;display:block">ATENDER (sumar ${notif.dificultad}+)</button>
+            <div style="text-align:right;margin-top:8px">
+              <button id="lmAtenderUrgente" class="mode-card-btn mode-card-btn-gold" style="width:auto;padding:7px 16px">ATENDER (sumar ${notif.dificultad}+)</button>
+            </div>
           </div>` : ''}
           ${renderNivelesEquipoHTML()}
           <div class="lm-setup-desc" style="text-align:center;margin:10px 0 8px">dados disponibles este partido: <strong>${state.diceAvailable}</strong> (compartidos con el resto del cuerpo técnico) · cambios de carta: <strong>${state.medicoCambioUsado?0:1}/1</strong> · rerolls de dado hoy: <strong>${state.dadoRerollsDisponibles||0}/1</strong></div>
@@ -2990,7 +3062,7 @@
 
     function renderSelectorJugador(idx, candidatos){
       overlay.innerHTML=`
-        <div class="lm-dilemma-card">
+        <div class="lm-dilemma-card lm-dilemma-card-medico">
           <div class="lm-dilemma-title">¿SOBRE QUIÉN?</div>
           <div class="lm-slot-list">
             ${candidatos.map(p=>`<div class="lm-slot-option" data-pid="${p.id}"><span>${p.name}</span><span style="color:#e24b4a">${p.injurySeverity} · ${p.injuryWeeks} jornada${p.injuryWeeks===1?'':'s'} restante${p.injuryWeeks===1?'':'s'}</span></div>`).join('')}
@@ -3010,7 +3082,7 @@
       let dadosElegidos=Math.min(1, state.diceAvailable);
       function pintar(){
         overlay.innerHTML=`
-          <div class="lm-dilemma-card">
+          <div class="lm-dilemma-card lm-dilemma-card-medico">
             <i class="ph ph-bold ${def.icon}" style="font-size:26px;color:#5dcaa5"></i>
             <div class="lm-dilemma-title">${def.nombre.toUpperCase()}</div>
             <div class="lm-dilemma-text">${def.desc}${def.tipo==='directa'?` — necesitas sumar ${def.dificultad}+`:(def.tipo==='nivel'?` — necesitas sumar ${dificultadActualNivel(def)}+ para subir a nivel ${nivelDe(def.track)+1}/${NIVEL_MAXIMO_EQUIPO}`:' — los dados invertidos siempre suman al proyecto')}</div>
@@ -3047,42 +3119,25 @@
     // Barajado 2D de las caras del dado — CALCO del slot-machine que ya se
     function renderRolloCarta(idx, numDados, jugadorObjetivoId){
       overlay.innerHTML=`
-        <div class="lm-dilemma-card">
+        <div class="lm-dilemma-card lm-dilemma-card-medico">
           <div class="lm-dilemma-title" id="lmDiceTitle">TIRANDO ${numDados} DADO${numDados>1?'S':''}...</div>
           <div id="lmDice2DRow" class="lm-dice2d-row"></div>
           <div id="lmDiceResultZone"></div>
         </div>`;
       const box=document.getElementById('lmDice2DRow');
-      function conResultado(tiradas){
-        state.diceAvailable=Math.max(0, state.diceAvailable-numDados);
-        const r=resolverCartaMedico(idx, tiradas, jugadorObjetivoId);
+      iniciarBarajadoDados(box, numDados, (tiradas)=>{
         const tituloEl=document.getElementById('lmDiceTitle');
-        if(tituloEl) tituloEl.textContent='RESULTADO';
+        if(tituloEl) tituloEl.textContent='TU TIRADA';
+        box.innerHTML='';
         const zona=document.getElementById('lmDiceResultZone');
-        let textoResultado;
-        if(r.tipo==='directa'){
-          textoResultado=`Suma <strong>${r.suma}</strong> (necesitabas ${r.dificultad}+) — <span style="color:${r.exito?'#5dcaa5':'#e24b4a'}">${r.exito?'✔ ÉXITO — '+r.texto:'✘ FALLO — '+r.texto}</span>`;
-        } else if(r.tipo==='nivel'){
-          textoResultado = r.exito
-            ? `Suma <strong>${r.suma}</strong> (necesitabas ${r.dificultad}+) — <span style="color:#5dcaa5">✔ ÉXITO</span> — ${r.nombre} sube a nivel ${r.nivelNuevo}/${NIVEL_MAXIMO_EQUIPO}${r.maxAlcanzado?' — <strong>nivel máximo alcanzado</strong>':''}`
-            : `Suma <strong>${r.suma}</strong> (necesitabas ${r.dificultad}+) — <span style="color:#e24b4a">✘ FALLO</span> — ${r.texto}`;
-        } else {
-          textoResultado = r.completada
-            ? `+${r.suma} puntos — <span style="color:#5dcaa5">✔ PROYECTO COMPLETADO</span>`
-            : (r.subioNivel
-              ? `+${r.suma} puntos — <span style="color:#5dcaa5">¡Nivel superado!</span> Ahora nivel ${r.nivelActual} (${r.progreso}/${r.umbral})`
-              : `+${r.suma} puntos — progreso ${r.progreso}/${r.umbral}`);
-        }
-        zona.innerHTML=`
-          <div class="lm-dice-result-row">${tiradas.map(v=>`<span class="lm-dice-pill">${v}</span>`).join('')}</div>
-          <div style="font-family:'Bebas Neue';font-size:15px;margin-top:10px;line-height:1.4">${textoResultado}</div>
-          <div class="lm-popup-actions"><button id="lmContinuarBtn" class="mode-card-btn mode-card-btn-gold">CONTINUAR</button></div>`;
-        document.getElementById('lmContinuarBtn').addEventListener('click', ()=>{
-          if(typeof window.playSound==='function') window.playSound('select');
-          renderHub();
-        });
-      }
-      iniciarBarajadoDados(box, numDados, (tiradas)=>mostrarRevisionTirada(tiradas, conResultado));
+        mostrarResultadoDados(zona, tiradas,
+          (tiradasFinales)=>{
+            state.diceAvailable=Math.max(0, state.diceAvailable-numDados);
+            return resolverCartaMedico(idx, tiradasFinales, jugadorObjetivoId);
+          },
+          ()=>{ renderHub(); }
+        );
+      });
     }
 
     // ---- Flujo de la notificación urgente (lesión recién ocurrida) ----
@@ -3092,7 +3147,7 @@
       let dadosElegidos=Math.min(1, state.diceAvailable);
       function pintar(){
         overlay.innerHTML=`
-          <div class="lm-dilemma-card">
+          <div class="lm-dilemma-card lm-dilemma-card-medico">
             <i class="ph ph-bold ph-first-aid-kit" style="font-size:26px;color:#e24b4a"></i>
             <div class="lm-dilemma-title">EL MÉDICO TE CONSULTA</div>
             <div class="lm-dilemma-text">${jugador?jugador.name:'Un jugador'} tiene una lesión ${state.medicoNotificacion.severidad}. Necesitas sumar ${dificultad}+ para acelerar su recuperación.</div>
@@ -3121,31 +3176,22 @@
 
     function renderRolloUrgente(numDados){
       overlay.innerHTML=`
-        <div class="lm-dilemma-card">
+        <div class="lm-dilemma-card lm-dilemma-card-medico">
           <div class="lm-dilemma-title" id="lmDiceTitle">TIRANDO ${numDados} DADO${numDados>1?'S':''}...</div>
           <div id="lmDice2DRow" class="lm-dice2d-row"></div>
           <div id="lmDiceResultZone"></div>
         </div>`;
       const box=document.getElementById('lmDice2DRow');
-      function conResultado(tiradas){
-        const r=resolverDilemaMedico(numDados, tiradas);
+      iniciarBarajadoDados(box, numDados, (tiradas)=>{
         const tituloEl=document.getElementById('lmDiceTitle');
-        if(tituloEl) tituloEl.textContent='RESULTADO';
+        if(tituloEl) tituloEl.textContent='TU TIRADA';
+        box.innerHTML='';
         const zona=document.getElementById('lmDiceResultZone');
-        zona.innerHTML=`
-          <div class="lm-dice-result-row">${tiradas.map(v=>`<span class="lm-dice-pill">${v}</span>`).join('')}</div>
-          <div style="font-family:'Bebas Neue';font-size:16px;margin-top:10px">
-            Suma <strong>${r.suma}</strong> (necesitabas ${r.dificultad}+) —
-            <span style="color:${r.exito?'#5dcaa5':'#e24b4a'}">${r.exito?'✔ ÉXITO, recuperación acelerada':'✘ FALLO, sigue el tiempo previsto'}</span>
-          </div>
-          <div class="lm-popup-actions"><button id="lmContinuarBtn" class="mode-card-btn mode-card-btn-gold">CONTINUAR</button></div>`;
-        document.getElementById('lmContinuarBtn').addEventListener('click', ()=>{
-          if(typeof window.playSound==='function') window.playSound('select');
-          renderHub();
-          render();
-        });
-      }
-      iniciarBarajadoDados(box, numDados, (tiradas)=>mostrarRevisionTirada(tiradas, conResultado));
+        mostrarResultadoDados(zona, tiradas,
+          (tiradasFinales)=>resolverDilemaMedico(numDados, tiradasFinales),
+          ()=>{ renderHub(); render(); }
+        );
+      });
     }
 
     renderHub();
@@ -3193,7 +3239,7 @@
       }).join('');
 
       overlay.innerHTML=`
-        <div class="lm-dilemma-card" style="max-width:640px">
+        <div class="lm-dilemma-card lm-dilemma-card-mant" style="max-width:640px">
           <div class="lm-dilemma-title"><i class="ph ph-bold ph-flag-pennant"></i> MANTENIMIENTO Y SEGURIDAD</div>
           ${renderNivelesMantenimientoHTML()}
           <div class="lm-setup-desc" style="text-align:center;margin:10px 0 8px">dados disponibles este partido: <strong>${state.diceAvailable}</strong> (compartidos con el resto del cuerpo técnico) · cambios de carta: <strong>${state.mantenimientoCambioUsado?0:1}/1</strong> · rerolls de dado hoy: <strong>${state.dadoRerollsDisponibles||0}/1</strong></div>
@@ -3234,7 +3280,7 @@
       let dadosElegidos=Math.min(1, state.diceAvailable);
       function pintar(){
         overlay.innerHTML=`
-          <div class="lm-dilemma-card">
+          <div class="lm-dilemma-card lm-dilemma-card-mant">
             <i class="ph ph-bold ${def.icon}" style="font-size:26px;color:#5dcaa5"></i>
             <div class="lm-dilemma-title">${def.nombre.toUpperCase()}</div>
             <div class="lm-dilemma-text">${def.desc}${def.tipo==='directa'?` — necesitas sumar ${def.dificultad}+`:` — necesitas sumar ${dificultadActualNivelM(def)}+ para subir a nivel ${nivelDeM(def.track)+1}/${NIVEL_MAXIMO_EQUIPO}`}</div>
@@ -3269,36 +3315,25 @@
 
     function renderRolloCarta(idx, numDados){
       overlay.innerHTML=`
-        <div class="lm-dilemma-card">
+        <div class="lm-dilemma-card lm-dilemma-card-mant">
           <div class="lm-dilemma-title" id="lmDiceTitle">TIRANDO ${numDados} DADO${numDados>1?'S':''}...</div>
           <div id="lmDice2DRow" class="lm-dice2d-row"></div>
           <div id="lmDiceResultZone"></div>
         </div>`;
       const box=document.getElementById('lmDice2DRow');
-      function conResultado(tiradas){
-        state.diceAvailable=Math.max(0, state.diceAvailable-numDados);
-        const r=resolverCartaMantenimiento(idx, tiradas);
+      iniciarBarajadoDados(box, numDados, (tiradas)=>{
         const tituloEl=document.getElementById('lmDiceTitle');
-        if(tituloEl) tituloEl.textContent='RESULTADO';
+        if(tituloEl) tituloEl.textContent='TU TIRADA';
+        box.innerHTML='';
         const zona=document.getElementById('lmDiceResultZone');
-        let textoResultado;
-        if(r.tipo==='directa'){
-          textoResultado=`Suma <strong>${r.suma}</strong> (necesitabas ${r.dificultad}+) — <span style="color:${r.exito?'#5dcaa5':'#e24b4a'}">${r.exito?'✔ ÉXITO — '+r.texto:'✘ FALLO — '+r.texto}</span>`;
-        } else {
-          textoResultado = r.exito
-            ? `Suma <strong>${r.suma}</strong> (necesitabas ${r.dificultad}+) — <span style="color:#5dcaa5">✔ ÉXITO</span> — ${r.nombre} sube a nivel ${r.nivelNuevo}/${NIVEL_MAXIMO_EQUIPO}${r.maxAlcanzado?' — <strong>nivel máximo alcanzado</strong>':''}`
-            : `Suma <strong>${r.suma}</strong> (necesitabas ${r.dificultad}+) — <span style="color:#e24b4a">✘ FALLO</span> — ${r.texto}`;
-        }
-        zona.innerHTML=`
-          <div class="lm-dice-result-row">${tiradas.map(v=>`<span class="lm-dice-pill">${v}</span>`).join('')}</div>
-          <div style="font-family:'Bebas Neue';font-size:15px;margin-top:10px;line-height:1.4">${textoResultado}</div>
-          <div class="lm-popup-actions"><button id="lmContinuarBtn" class="mode-card-btn mode-card-btn-gold">CONTINUAR</button></div>`;
-        document.getElementById('lmContinuarBtn').addEventListener('click', ()=>{
-          if(typeof window.playSound==='function') window.playSound('select');
-          renderHub();
-        });
-      }
-      iniciarBarajadoDados(box, numDados, (tiradas)=>mostrarRevisionTirada(tiradas, conResultado));
+        mostrarResultadoDados(zona, tiradas,
+          (tiradasFinales)=>{
+            state.diceAvailable=Math.max(0, state.diceAvailable-numDados);
+            return resolverCartaMantenimiento(idx, tiradasFinales);
+          },
+          ()=>{ renderHub(); }
+        );
+      });
     }
 
     renderHub();
@@ -3316,7 +3351,7 @@
     const prevista=calcularAsistencia(climaActual?climaActual.id:null);
     const ultima=est.ultimaAsistencia;
     overlay.innerHTML=`
-      <div class="lm-dilemma-card" style="max-width:480px;text-align:left">
+      <div class="lm-dilemma-card lm-dilemma-card-mant" style="max-width:480px;text-align:left">
         <div class="lm-dilemma-title" style="text-align:center"><i class="ph ph-bold ph-stadium"></i> ESTADO DEL ESTADIO</div>
         <div class="lm-estadio-bars">
           <div>
@@ -3393,7 +3428,7 @@
       }).join('');
 
       overlay.innerHTML=`
-        <div class="lm-dilemma-card" style="max-width:640px">
+        <div class="lm-dilemma-card lm-dilemma-card-dg" style="max-width:640px">
           <div class="lm-dilemma-title"><i class="ph ph-bold ph-briefcase"></i> DIRECTOR GENERAL</div>
           <div class="lm-capital-box">
             <i class="ph ph-bold ph-coins lm-capital-icon"></i>
@@ -3453,7 +3488,7 @@
       let dadosElegidos=Math.min(1, state.diceAvailable);
       function pintar(){
         overlay.innerHTML=`
-          <div class="lm-dilemma-card">
+          <div class="lm-dilemma-card lm-dilemma-card-dg">
             <i class="ph ph-bold ${def.icon}" style="font-size:26px;color:#e6c94a"></i>
             <div class="lm-dilemma-title">${def.nombre.toUpperCase()}</div>
             <div class="lm-dilemma-text">${def.desc}${def.tipo==='directa'?` — necesitas sumar ${def.dificultad}+`:` — necesitas sumar ${dificultadActualNivelDG(def)}+ para subir a nivel ${nivelDeDG(def.track)+1}/${NIVEL_MAXIMO_EQUIPO}`}</div>
@@ -3488,36 +3523,25 @@
 
     function renderRolloCarta(idx, numDados){
       overlay.innerHTML=`
-        <div class="lm-dilemma-card">
+        <div class="lm-dilemma-card lm-dilemma-card-dg">
           <div class="lm-dilemma-title" id="lmDiceTitle">TIRANDO ${numDados} DADO${numDados>1?'S':''}...</div>
           <div id="lmDice2DRow" class="lm-dice2d-row"></div>
           <div id="lmDiceResultZone"></div>
         </div>`;
       const box=document.getElementById('lmDice2DRow');
-      function conResultado(tiradas){
-        state.diceAvailable=Math.max(0, state.diceAvailable-numDados);
-        const r=resolverCartaDG(idx, tiradas);
+      iniciarBarajadoDados(box, numDados, (tiradas)=>{
         const tituloEl=document.getElementById('lmDiceTitle');
-        if(tituloEl) tituloEl.textContent='RESULTADO';
+        if(tituloEl) tituloEl.textContent='TU TIRADA';
+        box.innerHTML='';
         const zona=document.getElementById('lmDiceResultZone');
-        let textoResultado;
-        if(r.tipo==='directa'){
-          textoResultado=`Suma <strong>${r.suma}</strong> (necesitabas ${r.dificultad}+) — <span style="color:${r.exito?'#5dcaa5':'#e24b4a'}">${r.exito?'✔ ÉXITO — '+r.texto:'✘ FALLO — '+r.texto}</span>`;
-        } else {
-          textoResultado = r.exito
-            ? `Suma <strong>${r.suma}</strong> (necesitabas ${r.dificultad}+) — <span style="color:#5dcaa5">✔ ÉXITO</span> — ${r.nombre} sube a nivel ${r.nivelNuevo}/${NIVEL_MAXIMO_EQUIPO}${r.maxAlcanzado?' — <strong>nivel máximo alcanzado</strong>':''}`
-            : `Suma <strong>${r.suma}</strong> (necesitabas ${r.dificultad}+) — <span style="color:#e24b4a">✘ FALLO</span> — ${r.texto}`;
-        }
-        zona.innerHTML=`
-          <div class="lm-dice-result-row">${tiradas.map(v=>`<span class="lm-dice-pill">${v}</span>`).join('')}</div>
-          <div style="font-family:'Bebas Neue';font-size:15px;margin-top:10px;line-height:1.4">${textoResultado}</div>
-          <div class="lm-popup-actions"><button id="lmContinuarBtn" class="mode-card-btn mode-card-btn-gold">CONTINUAR</button></div>`;
-        document.getElementById('lmContinuarBtn').addEventListener('click', ()=>{
-          if(typeof window.playSound==='function') window.playSound('select');
-          renderHub();
-        });
-      }
-      iniciarBarajadoDados(box, numDados, (tiradas)=>mostrarRevisionTirada(tiradas, conResultado));
+        mostrarResultadoDados(zona, tiradas,
+          (tiradasFinales)=>{
+            state.diceAvailable=Math.max(0, state.diceAvailable-numDados);
+            return resolverCartaDG(idx, tiradasFinales);
+          },
+          ()=>{ renderHub(); }
+        );
+      });
     }
 
     renderHub();
@@ -3555,19 +3579,43 @@
       if(h.monto>=0) meses[h.mes].ingresos+=h.monto; else meses[h.mes].gastos+=Math.abs(h.monto);
       meses[h.mes].movimientos.push(h);
     });
-    const mesesOrdenados=Object.keys(meses).map(Number).sort((a,b)=>b-a);
-    const maxValor=Math.max(1, ...mesesOrdenados.map(m=>Math.max(meses[m].ingresos, meses[m].gastos)));
-    const filas=mesesOrdenados.map(m=>{
-      const d=meses[m];
+    const mesesOrdenadosDesc=Object.keys(meses).map(Number).sort((a,b)=>b-a);
+    const mesActual=mesesOrdenadosDesc[0];
+    const mesesHistoricos=mesesOrdenadosDesc.slice(1).sort((a,b)=>a-b); // resto, de más antiguo a más reciente para el gráfico
+    let filaMesActual='<p class="lm-setup-desc" style="text-align:center">Todavía no hay movimientos este mes.</p>';
+    if(mesActual!==undefined){
+      const d=meses[mesActual];
       const neto=d.ingresos-d.gastos;
-      return `<div class="lm-fin-mes">
-        <div class="lm-fin-mes-title"><span>MES ${m}</span><span style="color:${neto>=0?'#5dcaa5':'#e24b4a'}">${neto>=0?'+':''}${formatoDinero(neto)}</span></div>
+      const maxValor=Math.max(1, d.ingresos, d.gastos);
+      filaMesActual=`<div class="lm-fin-mes">
+        <div class="lm-fin-mes-title"><span>MES ${mesActual} (ACTUAL)</span><span style="color:${neto>=0?'#5dcaa5':'#e24b4a'}">${neto>=0?'+':''}${formatoDinero(neto)}</span></div>
         <div class="lm-fin-bar-row"><span class="lm-fin-bar-label">Ingresos</span><div class="lm-fin-bar-wrap"><div class="lm-fin-bar-fill lm-fin-bar-ingreso" style="width:${Math.round(d.ingresos/maxValor*100)}%"></div></div><span class="lm-fin-bar-valor">${formatoDinero(d.ingresos)}</span></div>
         <div class="lm-fin-bar-row"><span class="lm-fin-bar-label">Gastos</span><div class="lm-fin-bar-wrap"><div class="lm-fin-bar-fill lm-fin-bar-gasto" style="width:${Math.round(d.gastos/maxValor*100)}%"></div></div><span class="lm-fin-bar-valor">${formatoDinero(d.gastos)}</span></div>
       </div>`;
-    }).join('');
+    }
+    // Histórico de meses anteriores — gráfico de barras (neto por mes),
+    // en vez de repetir la misma tabla detallada para cada mes.
+    let graficoHistorico='<p class="lm-setup-desc" style="text-align:center">Todavía no hay histórico de meses anteriores.</p>';
+    if(mesesHistoricos.length){
+      const netos=mesesHistoricos.map(m=>meses[m].ingresos-meses[m].gastos);
+      const maxAbs=Math.max(1, ...netos.map(n=>Math.abs(n)));
+      const w=420, h=150, midY=h/2, hueco=(w-20)/mesesHistoricos.length, barW=Math.min(34, hueco-8);
+      const barras=mesesHistoricos.map((m,i)=>{
+        const neto=netos[i];
+        const barH=Math.max(2, Math.round(Math.abs(neto)/maxAbs*(h/2-14)));
+        const x=10+i*hueco+(hueco-barW)/2;
+        const y=neto>=0 ? midY-barH : midY;
+        const color=neto>=0 ? '#5dcaa5' : '#e24b4a';
+        return `<rect x="${x.toFixed(1)}" y="${y}" width="${barW.toFixed(1)}" height="${barH}" fill="${color}" rx="2"></rect>
+                <text x="${(x+barW/2).toFixed(1)}" y="${h-3}" font-size="8" fill="#888" text-anchor="middle">M${m}</text>`;
+      }).join('');
+      graficoHistorico=`<svg viewBox="0 0 ${w} ${h}" style="width:100%;height:150px">
+        <line x1="0" y1="${midY}" x2="${w}" y2="${midY}" stroke="#3a3f42" stroke-width="1"></line>
+        ${barras}
+      </svg>`;
+    }
     overlay.innerHTML=`
-      <div class="lm-dilemma-card" style="max-width:480px;text-align:left">
+      <div class="lm-dilemma-card lm-dilemma-card-dg" style="max-width:480px;text-align:left">
         <div class="lm-dilemma-title" style="text-align:center"><i class="ph ph-bold ph-chart-line-up"></i> FINANZAS DEL CLUB</div>
         <div class="lm-capital-box" style="margin-bottom:12px">
           <i class="ph ph-bold ph-coins lm-capital-icon"></i>
@@ -3575,9 +3623,9 @@
             <div class="lm-capital-title"><span>CAPITAL ACTUAL</span><strong class="${(state.capital||0)<0?'lm-capital-neg':''}">${formatoDinero(state.capital)}</strong></div>
           </div>
         </div>
-        <div class="lm-hist-list">
-          ${mesesOrdenados.length?filas:'<p class="lm-setup-desc" style="text-align:center">Todavía no hay movimientos que mostrar.</p>'}
-        </div>
+        ${filaMesActual}
+        <p class="lm-setup-desc" style="text-align:left;margin:12px 0 4px">Histórico de meses anteriores (neto por mes)</p>
+        ${graficoHistorico}
         <div class="lm-popup-actions lm-popup-actions-compact">
           <button id="lmFinanzasCerrar" class="mode-card-btn mode-card-btn-gold">CERRAR</button>
         </div>
@@ -3638,7 +3686,7 @@
       }).join('');
 
       overlay.innerHTML=`
-        <div class="lm-dilemma-card" style="max-width:640px">
+        <div class="lm-dilemma-card lm-dilemma-card-dd" style="max-width:640px">
           <div class="lm-dilemma-title"><i class="ph ph-bold ph-binoculars"></i> DIRECTOR DEPORTIVO</div>
           <div class="lm-capital-box">
             <i class="ph ph-bold ph-coins lm-capital-icon"></i>
@@ -3695,7 +3743,7 @@
       let dadosElegidos=Math.min(1, state.diceAvailable);
       function pintar(){
         overlay.innerHTML=`
-          <div class="lm-dilemma-card">
+          <div class="lm-dilemma-card lm-dilemma-card-dd">
             <i class="ph ph-bold ${def.icon}" style="font-size:26px;color:#c9c9c9"></i>
             <div class="lm-dilemma-title">${def.nombre.toUpperCase()}</div>
             <div class="lm-dilemma-text">${def.desc}${def.tipo==='directa'?` — necesitas sumar ${def.dificultad}+`:` — necesitas sumar ${dificultadActualNivelDD(def)}+ para subir a nivel ${nivelDeDD(def.track)+1}/${NIVEL_MAXIMO_EQUIPO}`}</div>
@@ -3730,40 +3778,31 @@
 
     function renderRolloCarta(idx, numDados, esSobre){
       overlay.innerHTML=`
-        <div class="lm-dilemma-card">
+        <div class="lm-dilemma-card lm-dilemma-card-dd">
           <div class="lm-dilemma-title" id="lmDiceTitle">TIRANDO ${numDados} DADO${numDados>1?'S':''}...</div>
           <div id="lmDice2DRow" class="lm-dice2d-row"></div>
           <div id="lmDiceResultZone"></div>
         </div>`;
       const box=document.getElementById('lmDice2DRow');
-      function conResultado(tiradas){
-        state.diceAvailable=Math.max(0, state.diceAvailable-numDados);
-        const r=resolverCartaDD(idx, tiradas);
+      iniciarBarajadoDados(box, numDados, (tiradas)=>{
         const tituloEl=document.getElementById('lmDiceTitle');
-        if(tituloEl) tituloEl.textContent='RESULTADO';
+        if(tituloEl) tituloEl.textContent='TU TIRADA';
+        box.innerHTML='';
         const zona=document.getElementById('lmDiceResultZone');
-        let textoResultado;
-        if(r.tipo==='directa'){
-          textoResultado=`Suma <strong>${r.suma}</strong> (necesitabas ${r.dificultad}+) — <span style="color:${r.exito?'#5dcaa5':'#e24b4a'}">${r.exito?'✔ ÉXITO — '+r.texto:'✘ FALLO — '+r.texto}</span>`;
-        } else {
-          textoResultado = r.exito
-            ? `Suma <strong>${r.suma}</strong> (necesitabas ${r.dificultad}+) — <span style="color:#5dcaa5">✔ ÉXITO</span> — ${r.nombre} sube a nivel ${r.nivelNuevo}/${NIVEL_MAXIMO_EQUIPO}${r.maxAlcanzado?' — <strong>nivel máximo alcanzado, sobre gratis incluido</strong>':''}`
-            : `Suma <strong>${r.suma}</strong> (necesitabas ${r.dificultad}+) — <span style="color:#e24b4a">✘ FALLO</span> — ${r.texto}`;
-        }
-        zona.innerHTML=`
-          <div class="lm-dice-result-row">${tiradas.map(v=>`<span class="lm-dice-pill">${v}</span>`).join('')}</div>
-          <div style="font-family:'Bebas Neue';font-size:15px;margin-top:10px;line-height:1.4">${textoResultado}</div>
-          <div class="lm-popup-actions"><button id="lmContinuarBtn" class="mode-card-btn mode-card-btn-gold">CONTINUAR</button></div>`;
-        document.getElementById('lmContinuarBtn').addEventListener('click', ()=>{
-          if(typeof window.playSound==='function') window.playSound('select');
-          if(r.sobreAbierto && r.sobreAbierto.length){
-            mostrarRevelacionSobre(r.sobreAbierto, renderHub);
-          } else {
-            renderHub();
+        mostrarResultadoDados(zona, tiradas,
+          (tiradasFinales)=>{
+            state.diceAvailable=Math.max(0, state.diceAvailable-numDados);
+            return resolverCartaDD(idx, tiradasFinales);
+          },
+          (resultado)=>{
+            if(resultado && resultado.sobreAbierto && resultado.sobreAbierto.length){
+              mostrarRevelacionSobre(resultado.sobreAbierto, renderHub);
+            } else {
+              renderHub();
+            }
           }
-        });
-      }
-      iniciarBarajadoDados(box, numDados, (tiradas)=>mostrarRevisionTirada(tiradas, conResultado));
+        );
+      });
     }
 
     // Revelación de los 3 jugadores de un sobre — mismo barajado 2D que
@@ -3771,7 +3810,7 @@
     // (todavía sin imagen) y permitiendo fichar al momento.
     function mostrarRevelacionSobre(jugadores, onCerrar){
       overlay.innerHTML=`
-        <div class="lm-dilemma-card" style="max-width:560px">
+        <div class="lm-dilemma-card lm-dilemma-card-dd" style="max-width:560px">
           <div class="lm-dilemma-title"><i class="ph ph-bold ph-envelope-open"></i> SOBRE DE FICHAJES</div>
           <div id="lmSobreReveloZone" class="lm-sobre-grid">
             ${jugadores.map((j,i)=>`<div class="slot-reel lm-sobre-reel" id="lmSobreReel${i}"><div class="slot-strip lm-sobre-face">?</div></div>`).join('')}
@@ -3796,7 +3835,7 @@
             <div class="lm-sobre-card" data-jugador="${i}">
               <div class="lm-sobre-pos">${j.position}</div>
               <div class="lm-sobre-nombre">${j.name}</div>
-              <div class="lm-sobre-overall">${j.overall} <span>overall</span></div>
+              <div class="lm-sobre-overall">${j.overall} <span>puntuación</span></div>
               <div class="lm-sobre-stats">ATA ${j.attack} · DEF ${j.defense} · RIT ${j.pace} · PAS ${j.passing} · TEC ${j.technique}</div>
               <div class="lm-sobre-salario">${formatoDinero(j.salario)}/mes</div>
               <button class="mode-card-btn mode-card-btn-gold lm-sobre-fichar" data-fichar="${i}" style="padding:6px;font-size:10px;margin-top:6px">FICHAR</button>
@@ -3838,7 +3877,7 @@
         <i class="ph ph-bold ph-user" style="color:#c9c9c9"></i>
         <div style="flex:1">
           <div class="lm-hist-title">${p.name} <span class="lm-hist-tag">${p.position}</span>${p.injured?' <span class="cross" title="Lesionado">✚</span>':''}</div>
-          <div class="lm-hist-meta">Overall ${p.overall}</div>
+          <div class="lm-hist-meta">Puntuación ${p.overall}</div>
         </div>
         <div style="text-align:right">
           <div style="font-family:'Bebas Neue';font-size:14px;color:var(--gold);white-space:nowrap">${formatoDinero(p.salario||0)}/mes</div>
@@ -3847,7 +3886,7 @@
       </div>`;
       }).join('');
       overlay.innerHTML=`
-        <div class="lm-dilemma-card" style="max-width:480px;text-align:left">
+        <div class="lm-dilemma-card lm-dilemma-card-dd" style="max-width:480px;text-align:left">
           <div class="lm-dilemma-title" style="text-align:center"><i class="ph ph-bold ph-file-text"></i> SALARIOS DE LA PLANTILLA</div>
           <div class="lm-setup-desc" style="text-align:center;margin-bottom:8px">Nómina total de jugadores: <strong>${formatoDinero(totalNomina)}/mes</strong> · plantilla: <strong>${jugadores.length}</strong></div>
           <p class="lm-setup-desc" style="text-align:center;margin-bottom:8px">No puedes vender si te dejaría por debajo de 11 jugadores sanos disponibles.</p>
