@@ -29,7 +29,7 @@
   // pierde al abandonar/descender. Si ya existe, el flujo de entrada no
   // vuelve a pedir nombre ni escudo (solo liga y moneda cada vez).
   const IDENTITY_KEY = 'g2g_liga_manager_identity';
-  const DICE_POOL_PER_MATCH = 3;
+  const DICE_POOL_PER_MATCH = 5;
 
   /* ---------- 1. Equipos rivales — La Liga 2026-27 real, 19 clubes ---------- */
   const ESCUDOS_DIR='assets/escudos_liga_española/';
@@ -484,7 +484,8 @@
       candidatosTrabajo:[],
       mesTrabajadoresGenerado:0,
       correoInterno:[],
-      correoUltimoEnviado:{}
+      correoUltimoEnviado:{},
+      posicionObjetivoOjeo:'any'
     };
     state.medicoCartas = inicializarCartasMedico();
     state.mantenimientoCartas = inicializarCartasMantenimiento();
@@ -1022,6 +1023,7 @@
       });
     }
 
+    procesarOfertasTraspaso();
     generarCorreosTrasJornada();
 
     state.jornadaActual++;
@@ -1219,6 +1221,13 @@
     }
     jugador.lesionLogId=null;
     jugador.injuryFamilia=null;
+    // El médico avisa por correo de que el jugador ya está disponible —
+    // así deja de tener sentido seguir ofreciendo tratarlo (ya no
+    // aparece en jugadoresLesionadosPara al no estar "injured").
+    if(state.trabajadores && state.trabajadores.medico && typeof enviarCorreo==='function' &&
+       (!state.correoUltimoEnviado || state.correoUltimoEnviado.medico!==state.jornadaActual)){
+      enviarCorreo('medico', `${jugador.name} recupera la disponibilidad`, `Buenas noticias: ${jugador.name} ya está completamente recuperado y disponible para jugar.`);
+    }
   }
   function registrarProgresoHistorial(texto){
     state.medicoHistorial = state.medicoHistorial||[];
@@ -1975,7 +1984,7 @@
     {id:'venta_jugador',           tipo:'directa', nombre:'Venta de Jugador',        icon:'ph-hand-coins',   dificultad:6, desc:'Vende a tu peor suplente por un ingreso de capital'},
     {id:'prestamo_breve',          tipo:'directa', nombre:'Préstamo Breve',          icon:'ph-bank',         dificultad:6, desc:'Ingreso instantáneo de capital'},
     {id:'negociacion_salarial',    tipo:'directa', nombre:'Negociación Salarial',    icon:'ph-file-text',    dificultad:9, desc:'La nómina de jugadores del próximo mes será más barata'},
-    {id:'revision_medica_fichajes',tipo:'directa', nombre:'Revisión Médica de Fichajes', icon:'ph-heartbeat', dificultad:7, desc:'Reduce el riesgo de lesión de la plantilla en el próximo partido'},
+    {id:'informe_ojeo',            tipo:'directa', nombre:'Informe de Ojeo Exprés', icon:'ph-magnifying-glass', dificultad:7, desc:'El próximo sobre que abras traerá mejor calidad de la habitual'},
     {id:'gira_promocional',        tipo:'directa', nombre:'Gira Promocional',        icon:'ph-airplane-tilt',dificultad:6, desc:'Ingreso instantáneo de capital y un pequeño impulso a la moral'},
     {id:'sobres_fichajes',   tipo:'sobre', track:'sobresFichajes', nombre:'Sobres de Fichajes',      icon:'ph-envelope-open', dificultadBase:9, dificultadPaso:5, desc:'Sube el nivel de tus sobres — ábrelos cuando quieras para ver qué jugadores traen'},
     {id:'red_ojeadores',     tipo:'nivel', track:'calidadOjeo',    nombre:'Red de Ojeadores',        icon:'ph-binoculars',    dificultadBase:8, dificultadPaso:4, desc:'Mejora la calidad de los jugadores que salen en los sobres'},
@@ -2015,12 +2024,15 @@
   }
   const SOBRE_COSTES={1:5000, 2:12000, 3:25000};
   // Genera un jugador de sobre: cuanto mayor el nivel del sobre y la Red
-  // de Ojeadores, mejor (y más caro de mantener) — tal como se pidió.
-  function generarJugadorSobre(nivelSobre){
+  // de Ojeadores, mejor (y más caro de mantener) — tal como se pidió. Si
+  // hay una posición objetivo marcada desde el Director Deportivo, los
+  // ojeadores se centran en ella en vez de salir al azar.
+  function generarJugadorSobre(nivelSobre, posicionForzada){
     const calidad=nivelDeDD('calidadOjeo');
-    const overall=Math.max(45, Math.min(94, 50+nivelSobre*10+calidad*4+Math.floor(Math.random()*8)));
+    const bonusInforme = (state.directorDeportivoBonos && state.directorDeportivoBonos.bonusCalidadSobre) ? 8 : 0;
+    const overall=Math.max(45, Math.min(96, 50+nivelSobre*10+calidad*4+bonusInforme+Math.floor(Math.random()*8)));
     const posiciones=['POR','DFC','LI','LD','MC','EI','ED','DC'];
-    const position=posiciones[Math.floor(Math.random()*posiciones.length)];
+    const position = (posicionForzada && posiciones.includes(posicionForzada)) ? posicionForzada : posiciones[Math.floor(Math.random()*posiciones.length)];
     const variar=()=>Math.max(30,Math.min(96, overall+Math.floor(Math.random()*13)-6));
     const ahorro=nivelDeDD('ahorroSalarial')*0.12;
     const salario=Math.round(calcularSalario(overall)*(1-ahorro));
@@ -2032,12 +2044,17 @@
       salario, nivelSobre
     };
   }
+  function posicionObjetivoOjeoActual(){
+    return (state.posicionObjetivoOjeo && state.posicionObjetivoOjeo!=='any') ? state.posicionObjetivoOjeo : null;
+  }
   function abrirSobreEnNivel(nivelSobre){
     const coste=SOBRE_COSTES[nivelSobre]||SOBRE_COSTES[1];
     if((state.capital||0)<coste) return null;
     state.capital-=coste;
     registrarMovimientoFinanciero('Sobre de fichajes (nivel '+nivelSobre+')', -coste, state.jornadaActual);
-    const jugadores=[1,2,3].map(()=>generarJugadorSobre(nivelSobre));
+    const posObjetivo=posicionObjetivoOjeoActual();
+    const jugadores=[1,2,3].map(()=>generarJugadorSobre(nivelSobre, posObjetivo));
+    if(state.directorDeportivoBonos && state.directorDeportivoBonos.bonusCalidadSobre){ state.directorDeportivoBonos.bonusCalidadSobre=false; }
     guardarEstado();
     return jugadores;
   }
@@ -2045,10 +2062,9 @@
     state.plantilla.push({...jugador, esSuplente:true});
     guardarEstado();
   }
-  // Venta manual de jugadores desde la burbuja del Director Deportivo —
-  // blindada para no dejar nunca la plantilla sin gente para jugar:
-  // nunca por debajo de 11 en total, y siempre al menos 11 SANOS
-  // disponibles después de la venta (contando lesionados aparte).
+  // Poner en venta / ofertas de traspaso — blindado igual que antes para
+  // no dejar nunca la plantilla sin gente para jugar: nunca por debajo
+  // de 11 en total, y siempre al menos 11 SANOS disponibles.
   function puedeVenderJugador(jugadorId){
     const plantilla=state.plantilla||[];
     if(plantilla.length<=11) return {ok:false, motivo:'No puedes bajar de 11 jugadores en la plantilla'};
@@ -2056,24 +2072,88 @@
     if(sanosSinEste<11) return {ok:false, motivo:'Necesitas al menos 11 jugadores sanos disponibles después de la venta'};
     return {ok:true};
   }
-  function venderJugadorManual(jugadorId){
+  // Poner un jugador en venta no da dinero al momento: el Director
+  // Deportivo tantea el mercado y, en 1-3 jornadas, avisa por correo de
+  // qué clubes se han interesado — se elige la oferta a aceptar (o
+  // ninguna) desde el propio correo.
+  function ponerJugadorEnVenta(jugadorId){
     const jugador=(state.plantilla||[]).find(p=>p.id===jugadorId);
     if(!jugador) return {ok:false, motivo:'Ese jugador ya no está en la plantilla'};
+    if(jugador.enVenta) return {ok:false, motivo:'Ese jugador ya está en venta'};
     const chequeo=puedeVenderJugador(jugadorId);
     if(!chequeo.ok) return chequeo;
-    const monto=Math.max(3000, Math.round(jugador.overall*400));
-    state.plantilla=state.plantilla.filter(p=>p.id!==jugadorId);
-    if(state.alineacion){ Object.keys(state.alineacion).forEach(k=>{ if(state.alineacion[k]===jugadorId) delete state.alineacion[k]; }); }
-    state.capital=(state.capital||0)+monto;
-    registrarMovimientoFinanciero('Venta de '+jugador.name, monto, state.jornadaActual);
+    jugador.enVenta=true;
+    jugador.ventaResolverJornada=state.jornadaActual+1+Math.floor(Math.random()*3);
     guardarEstado();
-    return {ok:true, monto, jugador};
+    return {ok:true};
+  }
+  function quitarJugadorDeVenta(jugadorId){
+    const jugador=(state.plantilla||[]).find(p=>p.id===jugadorId);
+    if(!jugador) return;
+    jugador.enVenta=false;
+    jugador.ventaResolverJornada=null;
+    guardarEstado();
+  }
+  // Comprueba si ha llegado el plazo de algún jugador puesto en venta y,
+  // si es así, genera las ofertas de 1-3 clubes rivales y manda el
+  // correo del Director Deportivo con los botones para elegir.
+  function procesarOfertasTraspaso(){
+    if(!state.trabajadores || !state.trabajadores.directorDeportivo) return;
+    if(state.correoUltimoEnviado && state.correoUltimoEnviado.directorDeportivo===state.jornadaActual) return;
+    const jugador=(state.plantilla||[]).find(p=>p.enVenta && p.ventaResolverJornada<=state.jornadaActual);
+    if(!jugador) return;
+    const numOfertas=1+Math.floor(Math.random()*3);
+    const clubesDisponibles = typeof shuffle==='function' ? shuffle([...LM_RIVALS]) : [...LM_RIVALS];
+    const ofertas=clubesDisponibles.slice(0,numOfertas).map(c=>({
+      club:c.name, monto:Math.round(jugador.overall*(280+Math.random()*220))
+    })).sort((a,b)=>b.monto-a.monto);
+    jugador.enVenta=false;
+    jugador.ventaResolverJornada=null;
+    const cuerpo = ofertas.length
+      ? `Hemos tanteado el mercado con ${jugador.name} y han llegado ${ofertas.length} oferta${ofertas.length===1?'':'s'}. Elige cuál aceptar — si ninguna te convence, se queda en la plantilla.`
+      : `No ha llegado ninguna oferta seria por ${jugador.name}. De momento sigue en la plantilla.`;
+    if(!state.correoInterno) state.correoInterno=[];
+    if(!state.correoUltimoEnviado) state.correoUltimoEnviado={};
+    state.correoInterno.unshift({
+      id:'mail'+Date.now()+Math.floor(Math.random()*100000), rol:'directorDeportivo',
+      asunto: ofertas.length?`Ofertas por ${jugador.name}`:`Sin ofertas por ${jugador.name}`,
+      cuerpo, jornada:state.jornadaActual, leido:false,
+      tipoEspecial:'oferta_jugador', jugadorId:jugador.id, jugadorNombre:jugador.name, ofertas, resuelto:false
+    });
+    if(state.correoInterno.length>40) state.correoInterno=state.correoInterno.slice(0,40);
+    state.correoUltimoEnviado.directorDeportivo=state.jornadaActual;
+    guardarEstado();
+  }
+  function aceptarOfertaTraspaso(mailId, ofertaIdx){
+    const mail=(state.correoInterno||[]).find(m=>m.id===mailId);
+    if(!mail || mail.resuelto) return {ok:false};
+    const jugador=(state.plantilla||[]).find(p=>p.id===mail.jugadorId);
+    if(!jugador) return {ok:false, motivo:'Ese jugador ya no está en la plantilla'};
+    const chequeo=puedeVenderJugador(jugador.id);
+    if(!chequeo.ok) return chequeo;
+    const oferta=mail.ofertas[ofertaIdx];
+    if(!oferta) return {ok:false};
+    state.plantilla=state.plantilla.filter(p=>p.id!==jugador.id);
+    if(state.alineacion){ Object.keys(state.alineacion).forEach(k=>{ if(state.alineacion[k]===jugador.id) delete state.alineacion[k]; }); }
+    state.capital=(state.capital||0)+oferta.monto;
+    registrarMovimientoFinanciero('Traspaso de '+jugador.name+' a '+oferta.club, oferta.monto, state.jornadaActual);
+    mail.resuelto=true;
+    mail.resultadoTexto=`Aceptaste la oferta de ${oferta.club} por ${formatoDinero(oferta.monto)}.`;
+    guardarEstado();
+    return {ok:true, oferta};
+  }
+  function rechazarOfertasTraspaso(mailId){
+    const mail=(state.correoInterno||[]).find(m=>m.id===mailId);
+    if(!mail || mail.resuelto) return;
+    mail.resuelto=true;
+    mail.resultadoTexto='Rechazaste todas las ofertas — el jugador sigue en la plantilla.';
+    guardarEstado();
   }
   function aplicarEfectoDirectaDD(def){
     switch(def.id){
       case 'ojeo_urgente': {
         const nivelSobre=Math.max(1, nivelDeDD('sobresFichajes'));
-        const jugadores=[1,2,3].map(()=>generarJugadorSobre(nivelSobre));
+        const jugadores=[1,2,3].map(()=>generarJugadorSobre(nivelSobre, posicionObjetivoOjeoActual()));
         return {texto:`Tu ojeador de urgencia trae un sobre de nivel ${nivelSobre} gratis`, sobreAbierto:jugadores};
       }
       case 'venta_jugador': {
@@ -2096,10 +2176,10 @@
         state.directorDeportivoBonos=state.directorDeportivoBonos||{};
         state.directorDeportivoBonos.descuentoNomina=0.15;
         return {texto:'La nómina de jugadores del próximo mes será un 15% más barata'};
-      case 'revision_medica_fichajes':
-        state.medicoBonos=state.medicoBonos||{};
-        state.medicoBonos.riesgoLesionSiguiente=(state.medicoBonos.riesgoLesionSiguiente||1)*0.6;
-        return {texto:'Riesgo de lesión reducido en el próximo partido'};
+      case 'informe_ojeo':
+        state.directorDeportivoBonos=state.directorDeportivoBonos||{};
+        state.directorDeportivoBonos.bonusCalidadSobre=true;
+        return {texto:'El próximo sobre que abras traerá jugadores de mejor calidad'};
       case 'gira_promocional': {
         const monto=10000+Math.round(Math.random()*4000);
         state.capital=(state.capital||0)+monto;
@@ -2121,7 +2201,7 @@
     }
     let sobreAutomatico=null;
     if(def.track==='sobresFichajes' && maxAlcanzado){
-      sobreAutomatico=[1,2,3].map(()=>generarJugadorSobre(3));
+      sobreAutomatico=[1,2,3].map(()=>generarJugadorSobre(3, posicionObjetivoOjeoActual()));
     }
     return {nivelNuevo, maxAlcanzado, sobreAutomatico};
   }
@@ -2374,6 +2454,7 @@
     if(state.mesTrabajadoresGenerado===undefined) state.mesTrabajadoresGenerado=Math.floor((state.jornadaActual-1)/4)+1;
     if(!state.correoInterno) state.correoInterno=[];
     if(!state.correoUltimoEnviado) state.correoUltimoEnviado={};
+    if(!state.posicionObjetivoOjeo) state.posicionObjetivoOjeo='any';
     if(!state.mantenimientoCartas || !state.mantenimientoCartas.length) state.mantenimientoCartas=inicializarCartasMantenimiento();
     if(!state.mantenimientoCartasAgotadas) state.mantenimientoCartasAgotadas=[];
     if(!state.mantenimientoHistorial) state.mantenimientoHistorial=[];
@@ -2625,7 +2706,15 @@
                     </div>
                     <div class="lm-correo-jornada">J${c.jornada}</div>
                   </div>
-                  ${correoExpandido===c.id?`<div class="lm-correo-cuerpo">${c.cuerpo}</div>`:''}
+                  ${correoExpandido===c.id?`<div class="lm-correo-cuerpo">
+                    ${c.cuerpo}
+                    ${(c.tipoEspecial==='oferta_jugador' && !c.resuelto) ? `
+                      <div class="lm-correo-ofertas">
+                        ${c.ofertas.map((o,i)=>`<button class="lm-correo-oferta-btn" data-aceptar-oferta="${c.id}" data-oferta-idx="${i}">${o.club} — ${formatoDinero(o.monto)}</button>`).join('')}
+                        ${c.ofertas.length?`<button class="lm-correo-oferta-rechazar" data-rechazar-oferta="${c.id}">Rechazar todas</button>`:''}
+                      </div>
+                    ` : (c.tipoEspecial==='oferta_jugador' && c.resuelto ? `<div class="lm-correo-resultado">${c.resultadoTexto}</div>` : '')}
+                  </div>`:''}
                 </div>`).join(''):'<p class="lm-setup-desc" style="text-align:center;padding:10px 0">Bandeja vacía por ahora.</p>'}
             </div>
           </div>
@@ -2717,6 +2806,34 @@
         const correo=(state.correoInterno||[]).find(c=>c.id===id);
         if(correo && !correo.leido){ correo.leido=true; guardarEstado(); }
         correoExpandido = correoExpandido===id ? null : id;
+        render();
+      });
+    });
+    root.querySelectorAll('[data-aceptar-oferta]').forEach(btn=>{
+      btn.addEventListener('click', (e)=>{
+        e.stopPropagation();
+        const mailId=btn.getAttribute('data-aceptar-oferta');
+        const idx=parseInt(btn.getAttribute('data-oferta-idx'),10);
+        const mail=(state.correoInterno||[]).find(m=>m.id===mailId);
+        const proceder=()=>{
+          if(typeof window.playSound==='function') window.playSound('select');
+          const r=aceptarOfertaTraspaso(mailId, idx);
+          if(r && !r.ok && r.motivo) alert(r.motivo);
+          render();
+        };
+        if(mail && typeof window.showConfirmPopup==='function'){
+          window.showConfirmPopup(`¿Aceptar la oferta de ${mail.ofertas[idx].club} por ${formatoDinero(mail.ofertas[idx].monto)}? El jugador se irá al club rival.`, proceder, 'ACEPTAR');
+        } else {
+          proceder();
+        }
+      });
+    });
+    root.querySelectorAll('[data-rechazar-oferta]').forEach(btn=>{
+      btn.addEventListener('click', (e)=>{
+        e.stopPropagation();
+        const mailId=btn.getAttribute('data-rechazar-oferta');
+        if(typeof window.playSound==='function') window.playSound('select');
+        rechazarOfertasTraspaso(mailId);
         render();
       });
     });
@@ -3863,6 +3980,14 @@
               <div class="lm-aforo-nota">${nivelSobre>=1?`Sobres de Fichajes a nivel ${nivelSobre}/${NIVEL_MAXIMO_EQUIPO} — puedes abrirlos cuando quieras desde su tarjeta`:'Sube el proyecto "Sobres de Fichajes" para empezar a fichar'}</div>
             </div>
           </div>
+          <div class="lm-precio-box">
+            <div class="lm-estadio-bar-label"><i class="ph ph-bold ph-magnifying-glass"></i><span>POSICIÓN OBJETIVO DE LOS OJEADORES</span></div>
+            <select id="lmPosicionOjeoSelect" class="lm-ojeo-select">
+              <option value="any" ${(!state.posicionObjetivoOjeo||state.posicionObjetivoOjeo==='any')?'selected':''}>Cualquiera (por defecto)</option>
+              ${['POR','DFC','LI','LD','MC','EI','ED','DC'].map(p=>`<option value="${p}" ${state.posicionObjetivoOjeo===p?'selected':''}>${p}</option>`).join('')}
+            </select>
+            <div class="lm-aforo-nota">Los ojeadores se centrarán en esta posición para los próximos sobres que abras.</div>
+          </div>
           <div class="lm-setup-desc" style="text-align:center;margin:10px 0 8px">dados disponibles este partido: <strong>${state.diceAvailable}</strong> (compartidos con el resto del cuerpo técnico) · cambios de carta: <strong>${state.directorDeportivoCambioUsado?0:1}/1</strong> · rerolls de dado hoy: <strong>${state.dadoRerollsDisponibles||0}/1</strong></div>
           <div class="med-card-grid">${cartasHTML}</div>
           <div class="lm-popup-actions lm-popup-actions-compact">
@@ -3871,6 +3996,12 @@
         </div>`;
 
       const xBtnDD=overlay.querySelector('[data-cerrar-x]');
+      const posicionOjeoSelect=document.getElementById('lmPosicionOjeoSelect');
+      if(posicionOjeoSelect) posicionOjeoSelect.addEventListener('change', ()=>{
+        state.posicionObjetivoOjeo=posicionOjeoSelect.value;
+        if(typeof window.playSound==='function') window.playSound('select');
+        guardarEstado();
+      });
       if(xBtnDD) xBtnDD.addEventListener('click', ()=>{ overlay.remove(); render(); });
       const cerrarBtn=document.getElementById('lmDirectorDeportivoCerrar');
       if(cerrarBtn) cerrarBtn.addEventListener('click', ()=>{
@@ -3980,7 +4111,7 @@
     // (todavía sin imagen) y permitiendo fichar al momento.
     function mostrarRevelacionSobre(jugadores, onCerrar){
       overlay.innerHTML=`
-        <div class="lm-dilemma-card lm-dilemma-card-dd" style="max-width:560px">
+        <div class="lm-dilemma-card lm-dilemma-card-dd" style="max-width:640px">
           <div class="lm-dilemma-title"><i class="ph ph-bold ph-envelope-open"></i> SOBRE DE FICHAJES</div>
           <div id="lmSobreReveloZone" class="lm-sobre-grid">
             ${jugadores.map((j,i)=>`<div class="slot-reel lm-sobre-reel" id="lmSobreReel${i}"><div class="slot-strip lm-sobre-face">?</div></div>`).join('')}
@@ -3989,26 +4120,37 @@
         </div>`;
       let ticks=0;
       const totalTicks=11+Math.floor(Math.random()*4);
-      const posiciones=['POR','DFC','LI','LD','MC','EI','ED','DC'];
+      // Se barajan NOMBRES de jugador al azar (no posiciones): lo que se
+      // está sorteando es a qué jugador vas a fichar, no en qué posición
+      // va a jugar (eso ya lo trae fijo cada carta del sobre).
       const spin=setInterval(()=>{
         jugadores.forEach((j,i)=>{
           const el=document.getElementById('lmSobreReel'+i);
-          if(el) el.querySelector('.lm-sobre-face').textContent=posiciones[Math.floor(Math.random()*posiciones.length)];
+          if(el) el.querySelector('.lm-sobre-face').textContent=nombreJugadorAleatorio();
         });
         if(typeof window.playSound==='function') window.playSound('spin');
         ticks++;
         if(ticks>=totalTicks){
           clearInterval(spin);
           if(typeof window.playSound==='function') window.playSound('reveal');
+          // La fila de barajado ya no hace falta — el resultado real se
+          // pinta debajo con las fichas completas; si se deja aquí se
+          // queda "temblando" para siempre (la animación de pulso no se
+          // detiene sola).
+          const zonaReels=document.getElementById('lmSobreReveloZone');
+          if(zonaReels) zonaReels.innerHTML='';
           const zona=document.getElementById('lmSobreResultado');
           zona.innerHTML=`<div class="lm-sobre-cards">${jugadores.map((j,i)=>`
             <div class="lm-sobre-card" data-jugador="${i}">
               <div class="lm-sobre-pos">${j.position}</div>
               <div class="lm-sobre-nombre">${j.name}</div>
               <div class="lm-sobre-overall">${j.overall} <span>puntuación</span></div>
-              <div class="lm-sobre-stats">ATA ${j.attack} · DEF ${j.defense} · RIT ${j.pace} · PAS ${j.passing} · TEC ${j.technique}</div>
+              <div class="lm-sobre-stats">
+                <span>ATA ${j.attack}</span><span>DEF ${j.defense}</span><span>RIT ${j.pace}</span>
+                <span>PAS ${j.passing}</span><span>TEC ${j.technique}</span>
+              </div>
               <div class="lm-sobre-salario">${formatoDinero(j.salario)}/mes</div>
-              <button class="mode-card-btn mode-card-btn-gold lm-sobre-fichar" data-fichar="${i}" style="padding:6px;font-size:10px;margin-top:6px">FICHAR</button>
+              <button class="mode-card-btn mode-card-btn-gold lm-sobre-fichar" data-fichar="${i}">FICHAR</button>
             </div>`).join('')}</div>
             <div class="lm-popup-actions" style="margin-top:12px"><button id="lmSobreCerrar" class="mode-card-btn mode-card-btn-secondary">CERRAR SOBRE</button></div>`;
           zona.querySelectorAll('[data-fichar]').forEach(btn=>{
@@ -4042,26 +4184,31 @@
       const totalNomina=jugadores.reduce((s,p)=>s+(p.salario||0),0);
       const filas=jugadores.map(p=>{
         const chequeo=puedeVenderJugador(p.id);
-        return `
-      <div class="lm-hist-item">
-        <i class="ph ph-bold ph-user" style="color:#c9c9c9"></i>
-        <div style="flex:1">
-          <div class="lm-hist-title">${p.name} <span class="lm-hist-tag">${p.position}</span>${p.injured?' <span class="cross" title="Lesionado">✚</span>':''}</div>
-          <div class="lm-hist-meta">Puntuación ${p.overall}</div>
-        </div>
-        <div style="text-align:right">
-          <div style="font-family:'Bebas Neue';font-size:14px;color:var(--gold);white-space:nowrap">${formatoDinero(p.salario||0)}/mes</div>
-          <button class="mode-card-btn mode-card-btn-secondary lm-vender-btn" data-vender="${p.id}" title="${chequeo.ok?'':chequeo.motivo}" ${chequeo.ok?'':'disabled'} style="padding:4px 8px;font-size:9px;margin-top:3px">VENDER</button>
-        </div>
-      </div>`;
+        let accion;
+        if(p.enVenta){
+          accion=`<span class="lm-venta-estado">EN VENTA (J${p.ventaResolverJornada})</span> <button class="lm-salario-btn lm-salario-btn-retirar" data-retirar-venta="${p.id}">RETIRAR</button>`;
+        } else {
+          accion=`<button class="lm-salario-btn" data-venta="${p.id}" title="${chequeo.ok?'':chequeo.motivo}" ${chequeo.ok?'':'disabled'}>PONER EN VENTA</button>`;
+        }
+        return `<tr>
+          <td>${p.name}${p.injured?' <span class="cross" title="Lesionado">✚</span>':''}</td>
+          <td>${p.position}</td>
+          <td>${p.overall}</td>
+          <td>${formatoDinero(p.salario||0)}</td>
+          <td class="lm-salario-accion-td">${accion}</td>
+        </tr>`;
       }).join('');
       overlay.innerHTML=`
-        <div class="lm-dilemma-card lm-dilemma-card-dd" style="max-width:480px;text-align:left">
+        <div class="lm-dilemma-card lm-dilemma-card-dd" style="max-width:640px;text-align:left">
           ${xCerrarHTML()}
           <div class="lm-dilemma-title" style="text-align:center"><i class="ph ph-bold ph-file-text"></i> SALARIOS DE LA PLANTILLA</div>
-          <div class="lm-setup-desc" style="text-align:center;margin-bottom:8px">Nómina total de jugadores: <strong>${formatoDinero(totalNomina)}/mes</strong> · plantilla: <strong>${jugadores.length}</strong></div>
-          <p class="lm-setup-desc" style="text-align:center;margin-bottom:8px">No puedes vender si te dejaría por debajo de 11 jugadores sanos disponibles.</p>
-          <div class="lm-hist-list">${filas||'<p class="lm-setup-desc" style="text-align:center">No hay jugadores en la plantilla.</p>'}</div>
+          <div class="lm-setup-desc" style="text-align:center;margin-bottom:8px">Nómina total: <strong>${formatoDinero(totalNomina)}/mes</strong> · plantilla: <strong>${jugadores.length}</strong> · al poner en venta, el Director Deportivo avisará por correo en 1-3 jornadas con las ofertas que lleguen.</div>
+          <div class="lm-salarios-tabla-wrap">
+            <table class="lm-salarios-tabla">
+              <thead><tr><th>Jugador</th><th>Pos</th><th>Punt.</th><th>Salario</th><th></th></tr></thead>
+              <tbody>${filas || '<tr><td colspan="5" style="text-align:center">No hay jugadores en la plantilla.</td></tr>'}</tbody>
+            </table>
+          </div>
           <div class="lm-popup-actions lm-popup-actions-compact">
             <button id="lmSalariosCerrar" class="mode-card-btn mode-card-btn-gold">CERRAR</button>
           </div>
@@ -4072,23 +4219,30 @@
         if(typeof window.playSound==='function') window.playSound('select');
         overlay.remove();
       });
-      overlay.querySelectorAll('[data-vender]').forEach(btn=>{
+      overlay.querySelectorAll('[data-venta]').forEach(btn=>{
         btn.addEventListener('click', ()=>{
-          const jugadorId=btn.getAttribute('data-vender');
+          const jugadorId=btn.getAttribute('data-venta');
           const jugador=(state.plantilla||[]).find(p=>p.id===jugadorId);
           if(!jugador) return;
           const proceder=()=>{
-            const r=venderJugadorManual(jugadorId);
+            const r=ponerJugadorEnVenta(jugadorId);
             if(typeof window.playSound==='function') window.playSound('select');
             if(!r.ok && r.motivo) alert(r.motivo);
             pintar();
           };
-          const monto=Math.max(3000, Math.round(jugador.overall*400));
           if(typeof window.showConfirmPopup==='function'){
-            window.showConfirmPopup(`¿Vender a ${jugador.name} por ${formatoDinero(monto)}? Esta acción no se puede deshacer.`, proceder, 'VENDER');
-          } else if(confirm(`¿Vender a ${jugador.name} por ${formatoDinero(monto)}?`)){
+            window.showConfirmPopup(`¿Poner a ${jugador.name} en venta? En 1-3 jornadas el Director Deportivo te avisará por correo de las ofertas que lleguen.`, proceder, 'PONER EN VENTA');
+          } else if(confirm(`¿Poner a ${jugador.name} en venta?`)){
             proceder();
           }
+        });
+      });
+      overlay.querySelectorAll('[data-retirar-venta]').forEach(btn=>{
+        btn.addEventListener('click', ()=>{
+          const jugadorId=btn.getAttribute('data-retirar-venta');
+          if(typeof window.playSound==='function') window.playSound('select');
+          quitarJugadorDeVenta(jugadorId);
+          pintar();
         });
       });
     }
