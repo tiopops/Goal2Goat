@@ -90,14 +90,14 @@ body.dark-theme .version-tag{color:#555}
 #convocadosTable tr:hover td,#benchTable tr:hover td{background:#f8f5ee}
 .star{color:var(--gold);font-weight:700}
 .cross{color:var(--red);font-weight:700}
-.bench-title{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#888;margin:10px 0 6px;display:flex;justify-content:space-between}
+.bench-title{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#888;margin:10px 0 6px;display:flex;justify-content:space-between;width:100%}
 
 /* ===================== ESTRATEGIA / FORMATIONS ===================== */
-.formation-tabs{display:flex;gap:4px;margin-bottom:8px}
+.formation-tabs{display:flex;gap:4px;margin-bottom:8px;width:100%;max-width:420px}
 .formation-tab{flex:1;padding:6px 2px;font-size:11px;font-weight:600;border:1px solid #ccc;background:#fff;cursor:pointer;transition:.15s}
 .formation-tab.active{background:var(--accent);color:#fff;border-color:var(--accent)}
 .formation-tab:hover:not(.active){border-color:var(--accent);color:var(--accent)}
-#formationList{display:flex;flex-direction:column;gap:4px;min-height:238px}
+#formationList{display:flex;flex-direction:column;gap:4px;min-height:238px;width:100%;max-width:420px}
 .formation-option{
   display:flex;align-items:center;gap:8px;
   padding:6px 8px;border:1px solid var(--line);background:#fafafa;
@@ -2487,10 +2487,11 @@ body.liga-manager-screen #mobileTabBar{display:none!important}
   width:100%;
   max-width:1900px;
   margin:0 auto;
+  gap:0;
 }
 .lm-panel{
   background:#15181a;border-right:1px solid #22282b;
-  overflow-y:auto;overflow-x:hidden;padding:12px;
+  overflow-y:auto;overflow-x:hidden;padding:34px 8px 12px;
   display:flex;flex-direction:column;gap:10px;
   position:relative;
 }
@@ -2527,7 +2528,7 @@ body.liga-manager-screen #mobileTabBar{display:none!important}
    Leyendas (fondo oscuro, campo centrado, mismo ancho máximo/aspect-ratio). */
 .lm-center-panel{
   display:flex;flex-direction:column;align-items:center;justify-content:flex-start;
-  background:#0d0d0d;padding:14px 14px 0;overflow-y:auto;overflow-x:hidden;
+  background:#0d0d0d;padding:34px 8px 0;overflow-y:auto;overflow-x:hidden;
   position:relative;
 }
 .lm-nextmatch-box{
@@ -2641,7 +2642,7 @@ body.liga-manager-screen #mobileTabBar{display:none!important}
 .lm-staff-photo-fallback i{font-size:34px;color:#c9a227}
 
 /* Modal de historial médico */
-.lm-tab-content{min-height:340px}
+.lm-tab-content{min-height:340px;width:100%;box-sizing:border-box}
 .lm-hist-list{max-height:420px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;margin-top:6px}
 .lm-hist-item{display:flex;gap:10px;background:#1e2326;border:1px solid #2f3539;padding:10px;align-items:flex-start}
 .lm-hist-item i{font-size:18px;margin-top:2px;flex-shrink:0}

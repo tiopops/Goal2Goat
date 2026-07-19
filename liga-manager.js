@@ -1803,12 +1803,12 @@
     const sueldo=Math.round(SUELDO_BASE_ROL[rol]*(0.55+nivel*0.55)*(0.9+Math.random()*0.2));
     return {id:'cand'+Date.now()+Math.floor(Math.random()*100000), rol, ...nombreTrabajadorAleatorio(), nivel, sueldo};
   }
-  // Un candidato de CADA nivel (1★ a 5★) por puesto, para poder elegir a
+  // Un candidato de CADA nivel (1★ a 3★) por puesto, para poder elegir a
   // conciencia cada mes — no un sorteo con posibilidad de repetir nivel.
   function regenerarCandidatosTrabajo(){
     const candidatos=[];
     ROLES_TRABAJO.forEach(rol=>{
-      for(let nivel=1;nivel<=5;nivel++) candidatos.push(generarCandidatoTrabajo(rol, nivel));
+      for(let nivel=1;nivel<=3;nivel++) candidatos.push(generarCandidatoTrabajo(rol, nivel));
     });
     state.candidatosTrabajo=candidatos;
   }
@@ -3207,7 +3207,7 @@
       }).join('');
 
       overlay.innerHTML=`
-        <div class="lm-dilemma-card lm-dilemma-card-medico" style="max-width:480px;text-align:left">
+        <div class="lm-dilemma-card lm-dilemma-card-medico" style="width:480px;max-width:90vw;text-align:left">
           ${xCerrarHTML()}
           <div class="lm-dilemma-title" style="text-align:center"><i class="ph ph-bold ph-clock-counter-clockwise"></i> HISTORIAL MÉDICO</div>
           <div class="formation-tabs">
@@ -3453,7 +3453,7 @@
       <div class="lm-staff-tile-body">
         <div class="lm-staff-tile-rol">${o.rolLabel}</div>
         <div class="lm-staff-tile-nombre">${trab?trab.nombre:'VACANTE'}</div>
-        ${trab?`<div class="lm-staff-tile-estrellas">${estrellasNivel(trab.nivel, 5)}</div>`:'<div class="lm-staff-tile-vacante-txt">Contratar en TRABAJADORES</div>'}
+        ${trab?`<div class="lm-staff-tile-estrellas">${estrellasNivel(trab.nivel, 3)}</div>`:'<div class="lm-staff-tile-vacante-txt">Contratar en TRABAJADORES</div>'}
         <div class="lm-staff-tile-desc">${o.desc}</div>
       </div>
     </div>`;
@@ -4707,7 +4707,7 @@
           <div class="lm-trab-card lm-trab-card-actual">
             <div class="lm-trab-card-top">
               <span class="lm-trab-nombre">${actual.nombre}</span>
-              <span class="lm-trab-estrellas">${estrellasNivel(actual.nivel, 5)}</span>
+              <span class="lm-trab-estrellas">${estrellasNivel(actual.nivel, 3)}</span>
             </div>
             <div class="lm-trab-sueldo">${formatoDinero(actual.sueldo)}/mes</div>
             <button class="lm-trab-despedir" data-despedir="${rol}">DESPEDIR (finiquito ${formatoDinero(calcularFiniquito(actual))})</button>
@@ -4721,7 +4721,7 @@
             <div class="lm-trab-card">
               <div class="lm-trab-card-top">
                 <span class="lm-trab-nombre">${c.nombre}</span>
-                <span class="lm-trab-estrellas">${estrellasNivel(c.nivel, 5)}</span>
+                <span class="lm-trab-estrellas">${estrellasNivel(c.nivel, 3)}</span>
               </div>
               <div class="lm-trab-sueldo">${formatoDinero(c.sueldo)}/mes</div>
               <button class="mode-card-btn mode-card-btn-gold lm-trab-contratar" data-contratar="${c.id}" data-rol="${rol}" style="padding:6px;font-size:10px;margin-top:6px">CONTRATAR</button>
