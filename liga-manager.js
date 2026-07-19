@@ -355,7 +355,7 @@
   let lmSortMode='position';
   const LM_SORT_LABELS={arrival:'LLEGADA', position:'POSICIÓN', rating:'PUNTOS'};
   const LM_SORT_NEXT={arrival:'position', position:'rating', rating:'arrival'};
-  let clasifColapsada=true; // la clasificación empieza contraída, igual que el glosario de Copa Leyendas
+  let clasifColapsada=false; // la clasificación empieza desplegada
   let perfilEquipoColapsado=false;
   let correoExpandido=null;
   let ordenColumnasSaveTimer=null; // el orden de columnas se persiste solo tras 60s sin más cambios
@@ -378,6 +378,23 @@
       if(!btn) return;
       if(Date.now()-jugarBtnUltimaInteraccion>60000) btn.classList.add('lm-btn-jugar-pulse');
     }, 3000);
+  }
+  // Flechas de reordenar columnas — se vuelven invisibles tras 10s sin
+  // tocarlas (clic o simplemente pasar el ratón por encima), y
+  // reaparecen en cuanto se vuelve a interactuar con ellas.
+  let colArrowsUltimaInteraccion=Date.now();
+  let colArrowsFadeInterval=null;
+  function marcarInteraccionColArrows(){
+    colArrowsUltimaInteraccion=Date.now();
+    document.querySelectorAll('.lm-col-reorder').forEach(el=>el.classList.remove('lm-col-reorder-oculto'));
+  }
+  function iniciarFadeColArrows(){
+    if(colArrowsFadeInterval) return;
+    colArrowsFadeInterval=setInterval(()=>{
+      if(Date.now()-colArrowsUltimaInteraccion>10000){
+        document.querySelectorAll('.lm-col-reorder').forEach(el=>el.classList.add('lm-col-reorder-oculto'));
+      }
+    }, 1000);
   }
   let setupData={liga:'es', moneda:null, nombre:'', escudo:null};
 
@@ -949,12 +966,12 @@
       registrarMovimientoFinanciero('Merchandising', ingresoMerch, state.jornadaActual);
     }
     if(miEsLocal && clima){
-      const desgasteBase={sunny:3, cloudy:2, rain:8, wind:4, hot:6, snow:7}[clima.id] || 2;
+      const desgasteBase={sunny:7, cloudy:4, rain:15, wind:8, hot:12, snow:14}[clima.id] || 4;
       const reduccion=nivelDeM('prevencionDesgaste')*1.4;
       const desgaste=Math.max(0, desgasteBase-reduccion);
       est.campo=Math.max(0, est.campo-desgaste);
     }
-    const recuperacion=2+nivelDeM('recuperacionCesped')*2;
+    const recuperacion=1+nivelDeM('recuperacionCesped')*2;
     est.campo=Math.min(100, Math.round(est.campo+recuperacion));
 
     const miGoles = miEsLocal ? resultado.golesA : resultado.golesB;
@@ -979,6 +996,7 @@
     const j=state.jornadaActual-1;
     const jornada=state.calendario[j];
     let miPartidoInfo=null;
+    let jugadorLesionadoEstaJornada=null;
     const clima=climaDelPartido();
     jornada.forEach(partido=>{
       const key=j+'-'+partido.home.id+'-'+partido.away.id;
@@ -1007,6 +1025,7 @@
           evInjury.jugador.injuryWeeks=evInjury.sev.weeks;
           evInjury.jugador.injurySeverity=evInjury.sev.label;
           evInjury.jugador.injuryFamilia=evInjury.familia;
+          jugadorLesionadoEstaJornada=evInjury.jugador.id;
           state.medicoNotificacion={jugadorId:evInjury.jugador.id, dificultad:evInjury.sev.dificultad, severidad:evInjury.sev.label};
           const rivalDeEsta = partido.home.id==='lm_0' ? partido.away.name : partido.home.name;
           evInjury.jugador.lesionLogId=registrarLesionHistorial(evInjury.jugador, evInjury.sev, evInjury.tipoLesion, rivalDeEsta, evInjury.familia);
@@ -1040,6 +1059,7 @@
     }
 
     state.plantilla.forEach(p=>{
+      if(p.id===jugadorLesionadoEstaJornada) return; // se acaba de lesionar ahora mismo: su cuenta atrás empieza la próxima jornada, no esta
       if(p.injured && p.injuryWeeks>0){
         p.injuryWeeks--;
         if(p.injuryWeeks<=0){
@@ -1070,8 +1090,11 @@
       });
     }
 
-    procesarOfertasTraspaso();
-    generarCorreosTrasJornada();
+    // Blindado: un fallo aquí (correo/ofertas) NUNCA debe impedir que la
+    // jornada avance — antes un error sin capturar aquí dejaba todo el
+    // juego bloqueado sin ningún aviso.
+    try{ procesarOfertasTraspaso(); }catch(e){ console.error('procesarOfertasTraspaso:', e); }
+    try{ generarCorreosTrasJornada(); }catch(e){ console.error('generarCorreosTrasJornada:', e); }
 
     state.jornadaActual++;
     guardarEstado();
@@ -1256,6 +1279,12 @@
       severidad: sev.label, tipoLesion, familia, semanasPrevistas: sev.weeks,
       resuelta:false, resueltoPor:null, jornadasReales:null
     });
+    // El médico avisa por correo de cualquier lesión nueva, no solo las
+    // graves — así el aviso llega siempre, no solo en los casos más raros.
+    if(state.trabajadores && state.trabajadores.medico && typeof enviarCorreo==='function'){
+      enviarCorreo('medico', `${jugador.name} se ha lesionado`,
+        `${jugador.name} sufre ${tipoLesion?tipoLesion.toLowerCase():'una lesión'} (${sev.label}). Previsión: ${sev.weeks} jornada${sev.weeks===1?'':'s'} de baja.`);
+    }
     return id;
   }
   function cerrarLesionHistorial(jugador, resueltoPor){
@@ -1705,10 +1734,13 @@
     };
     btn.addEventListener('mousedown', mostrar);
     btn.addEventListener('touchstart', mostrar, {passive:false});
-    btn.addEventListener('mouseup', ocultar);
-    btn.addEventListener('mouseleave', ocultar);
-    btn.addEventListener('touchend', ocultar);
-    btn.addEventListener('touchcancel', ocultar);
+    // El popup que se abre al pulsar TAPA al propio botón, así que el
+    // navegador no dispara "mouseup"/"touchend" sobre él si solo
+    // escuchamos ahí — hay que escuchar en document para que suelte
+    // sin importar qué haya debajo del cursor/dedo en ese momento.
+    document.addEventListener('mouseup', ocultar);
+    document.addEventListener('touchend', ocultar);
+    document.addEventListener('touchcancel', ocultar);
   }
   function mostrarAvisoJuego(mensaje){
     const overlay=document.createElement('div');
@@ -1867,6 +1899,12 @@
     const candidato=(state.candidatosTrabajo||[]).find(c=>c.id===candidatoId && c.rol===rol);
     if(!candidato) return false;
     if(!state.trabajadores) state.trabajadores={};
+    const actual=state.trabajadores[rol];
+    if(actual){
+      const finiquito=calcularFiniquito(actual);
+      state.capital=Math.round((state.capital||0)-finiquito);
+      registrarMovimientoFinanciero('Finiquito de '+actual.nombre, -finiquito, state.jornadaActual);
+    }
     state.trabajadores[rol]={id:'t'+Date.now(), nombre:candidato.nombre, genero:candidato.genero, nivel:candidato.nivel, sueldo:candidato.sueldo};
     state.candidatosTrabajo=state.candidatosTrabajo.filter(c=>c.id!==candidatoId);
     guardarEstado();
@@ -2209,7 +2247,8 @@
     const jugador=(state.plantilla||[]).find(p=>p.enVenta && p.ventaResolverJornada<=state.jornadaActual);
     if(!jugador) return;
     const numOfertas=1+Math.floor(Math.random()*3);
-    const clubesDisponibles = typeof shuffle==='function' ? shuffle([...LM_RIVALS]) : [...LM_RIVALS];
+    const clubesDisponibles=[...LM_RIVALS];
+    if(typeof shuffle==='function') shuffle(clubesDisponibles); // shuffle() muta en el sitio, no devuelve nada
     const ofertas=clubesDisponibles.slice(0,numOfertas).map(c=>({
       club:c.name, monto:Math.round(jugador.overall*(280+Math.random()*220))
     })).sort((a,b)=>b.monto-a.monto);
@@ -2778,7 +2817,7 @@
               <div class="lm-title">${state.nombreEquipo.toUpperCase()}</div>
               <div class="lm-sub">Jornada ${Math.min(state.jornadaActual,38)} de 38 · ${monedaInfo.symbol}</div>
             </div>
-            <button id="lmJugarBtn" class="lm-btn-jugar-icon" ${(state.jornadaActual>38||hayVacantes)?'disabled':''} title="${state.jornadaActual>38?'Temporada completa':(hayVacantes?'Contrata al cuerpo técnico primero':'Jugar jornada')}">
+            <button id="lmJugarBtn" class="lm-btn-jugar-icon" ${state.jornadaActual>38?'disabled':''} title="${state.jornadaActual>38?'Temporada completa':(hayVacantes?'Te falta cuerpo técnico por contratar, pero puedes jugar igualmente':'Jugar jornada')}">
               <i class="ph ph-bold ph-play-circle"></i>
               <span>${state.jornadaActual>38?'FIN':'SEGUIR'}</span>
             </button>
@@ -2927,8 +2966,8 @@
             <div class="lm-staff-bar-title"><i class="ph ph-bold ph-users-three"></i> CUERPO TÉCNICO</div>
             <div class="lm-staff-bar-capital"><i class="ph ph-bold ph-coins"></i> ${formatoDinero(state.capital)}</div>
           </div>
-          ${hayVacantes?`<div class="lm-staff-warning"><i class="ph ph-bold ph-warning"></i> Todavía te falta cuerpo técnico por contratar antes de poder jugar tu próxima jornada.</div>`:''}
-          <button id="lmTrabajadoresBtn" class="lm-btn-trabajadores" style="width:100%;margin-bottom:10px">CONTRATAR/DESPEDIR TRABAJADORES</button>
+          ${hayVacantes?`<div class="lm-staff-warning"><i class="ph ph-bold ph-warning"></i> Todavía te falta cuerpo técnico por contratar — puedes jugar igualmente, pero conviene completarlo pronto.</div>`:''}
+          <button id="lmTrabajadoresBtn" class="lm-btn-trabajadores" style="width:100%;margin-bottom:10px"><i class="ph ph-bold ph-user-plus"></i> CONTRATAR</button>
           <div class="lm-staff-bar-row">
             ${staffTileHTML('directorGeneral', {btnId:'lmDirectorGeneralBtn', infoId:'lmDirectorGeneralInfoBtn', infoTitle:'Finanzas del club', notif:notifDG, badgeTexto:'!', carpeta:'director_general', archivo:'director_general', alt:'Director General', icono:'ph-briefcase', rolLabel:'DIRECTOR GENERAL', acento:'lm-staff-tile-dg', desc:'Patrocinios, merchandising, aforo y precio de las entradas'})}
             ${staffTileHTML('directorDeportivo', {btnId:'lmDirectorDeportivoBtn', infoId:'lmDirectorDeportivoInfoBtn', infoTitle:'Salarios de la plantilla', notif:notifDD, badgeTexto:'!', carpeta:'director_deportivo', archivo:'director_deportivo', alt:'Director Deportivo', icono:'ph-binoculars', rolLabel:'DIRECTOR DEPORTIVO', acento:'lm-staff-tile-dd', desc:'Fichajes, ojeadores y sobres de nuevos jugadores'})}
@@ -3005,17 +3044,23 @@
     if(jugarBtn){
       jugarBtn.addEventListener('click', ()=>{
         marcarInteraccionJugarBtn();
-        if(ROLES_TRABAJO.some(r=>!state.trabajadores[r])){
-          if(typeof window.playSound==='function') window.playSound('select');
-          mostrarAvisoJuego('Todavía tienes puestos vacantes en el cuerpo técnico. Contrata desde TRABAJADORES antes de jugar la jornada.');
-          return;
-        }
         if(typeof window.playSound==='function') window.playSound('select');
-        const info=jugarJornada();
-        if(info){
-          mostrarPartidoEnVivo(info, render);
+        const faltaCuerpoTecnico=ROLES_TRABAJO.some(r=>!state.trabajadores[r]);
+        const jugarAhora=()=>{
+          const info=jugarJornada();
+          if(info){
+            mostrarPartidoEnVivo(info, render);
+          } else {
+            render();
+          }
+        };
+        if(faltaCuerpoTecnico && !state.avisoCuerpoTecnicoMostrado){
+          state.avisoCuerpoTecnicoMostrado=true;
+          guardarEstado();
+          mostrarAvisoJuego('Todavía te falta contratar a parte del cuerpo técnico — puedes jugar igualmente, pero te vendrá bien completarlo cuanto antes desde CONTRATAR.');
+          jugarAhora();
         } else {
-          render();
+          jugarAhora();
         }
       });
       jugarBtn.addEventListener('mouseenter', marcarInteraccionJugarBtn);
@@ -3037,12 +3082,19 @@
     root.querySelectorAll('[data-mover-col]').forEach(btn=>{
       btn.addEventListener('click', ()=>{
         if(btn.disabled) return;
+        marcarInteraccionColArrows();
         const key=btn.getAttribute('data-mover-col');
         const dir=parseInt(btn.getAttribute('data-mover-dir'),10);
         if(typeof window.playSound==='function') window.playSound('select');
         moverColumna(key, dir);
       });
     });
+    root.querySelectorAll('.lm-col-reorder').forEach(el=>{
+      el.addEventListener('mouseenter', marcarInteraccionColArrows);
+      el.addEventListener('touchstart', marcarInteraccionColArrows, {passive:true});
+      if(Date.now()-colArrowsUltimaInteraccion>10000) el.classList.add('lm-col-reorder-oculto');
+    });
+    iniciarFadeColArrows();
     const perfilHeader=document.getElementById('lmPerfilEquipoHeader');
     if(perfilHeader) perfilHeader.addEventListener('click', ()=>{
       if(typeof window.playSound==='function') window.playSound('select');
@@ -3274,18 +3326,10 @@
         <div class="lm-dilemma-card lm-dilemma-card-medico" style="width:480px;max-width:90vw;text-align:left">
           ${xCerrarHTML()}
           <div class="lm-dilemma-title" style="text-align:center"><i class="ph ph-bold ph-clock-counter-clockwise"></i> HISTORIAL MÉDICO</div>
-          <div class="formation-tabs">
-            <div class="formation-tab ${histTab==='tratamientos'?'active':''}" data-histtab="tratamientos">TRATAMIENTOS <span class="counter-badge">${tratamientos.length}</span></div>
-            <div class="formation-tab ${histTab==='mejoras'?'active':''}" data-histtab="mejoras">INSTALACIONES <span class="counter-badge">${totalEstrellas}/${NIVELES_EQUIPO_INFO.length*NIVEL_MAXIMO_EQUIPO}</span></div>
-          </div>
           <div class="lm-tab-content">
-            ${histTab==='tratamientos' ? `
             <div class="lm-hist-list">
               ${tratamientos.length?filas:'<p class="lm-setup-desc" style="text-align:center">Todavía no hay nada que contar — de momento tu plantilla está sana.</p>'}
-            </div>` : `
-            <p class="lm-setup-desc" style="text-align:left;margin:8px 0 4px">Nivel actual de cada especialidad del cuerpo médico.</p>
-            ${renderNivelesEquipoHTML()}
-            `}
+            </div>
           </div>
           <div class="lm-popup-actions lm-popup-actions-compact">
             <button id="lmHistorialCerrar" class="mode-card-btn mode-card-btn-gold">CERRAR</button>
@@ -3448,6 +3492,8 @@
     if(!cardEl){ onDone(); return; }
     const iconEl = cardEl.querySelector('.med-card-icon');
     const titleEl = cardEl.querySelector('.med-card-title');
+    const tagEl = cardEl.querySelector('.med-card-tag');
+    const descEl = cardEl.querySelector('.med-card-desc');
     const swapBtn = cardEl.querySelector('.med-card-swap');
     if(!iconEl || !titleEl){ onDone(); return; }
     if(swapBtn) swapBtn.disabled=true;
@@ -3458,6 +3504,8 @@
       const rnd=catalogo[Math.floor(Math.random()*catalogo.length)];
       iconEl.className=`ph ph-bold ${rnd.icon} med-card-icon`;
       titleEl.textContent=rnd.nombre;
+      if(tagEl) tagEl.textContent = rnd.tipo==='nivel' ? 'PROYECTO' : (rnd.tipo==='sobre' ? 'PROYECTO ESPECIAL' : 'MISIÓN');
+      if(descEl) descEl.textContent = rnd.desc;
       if(typeof window.playSound==='function') window.playSound('spin');
       ticks++;
       if(ticks>=totalTicks){
@@ -3529,6 +3577,12 @@
     overlay.id='lmMedicoOverlay';
     document.getElementById('ligaManagerScreen').appendChild(overlay);
     habilitarCierreOverlay(overlay, ()=>{ overlay.remove(); render(); });
+    // Delegado: cualquier X que aparezca dentro de este overlay en
+    // cualquier pantalla (selector de dados, tirada, etc.) lo cierra.
+    overlay.addEventListener('click', (e)=>{
+      const xEl = e.target.closest && e.target.closest('[data-cerrar-x]');
+      if(xEl){ overlay.remove(); render(); }
+    });
 
     function jugadoresLesionadosPara(def){
       if(!def.requiereLesion) return [];
@@ -3564,7 +3618,7 @@
         return `
         <div class="med-card med-card-medico ${bloqueada?'med-card-bloqueada':''}" data-idx="${idx}">
           <button class="med-card-swap" data-swap="${idx}" title="Cambiar carta" ${cambioDisponible?'':'disabled'}><i class="ph ph-bold ph-arrows-clockwise"></i></button>
-          <div class="med-card-tag">${def.tipo==='nivel'?'MEJORA':(def.tipo==='acumulacion'?'PROYECTO':'MISIÓN')}</div>
+          <div class="med-card-tag">${def.tipo==='nivel'?'PROYECTO':(def.tipo==='acumulacion'?'PROYECTO':'MISIÓN')}</div>
           <i class="ph ph-bold ${def.icon} med-card-icon"></i>
           <div class="med-card-title">${def.nombre}</div>
           <div class="med-card-divider"></div>
@@ -3636,6 +3690,7 @@
     function renderSelectorJugador(idx, candidatos){
       overlay.innerHTML=`
         <div class="lm-dilemma-card lm-dilemma-card-medico">
+            ${xCerrarHTML()}
           <div class="lm-dilemma-title">¿SOBRE QUIÉN?</div>
           <div class="lm-slot-list">
             ${candidatos.map(p=>`<div class="lm-slot-option" data-pid="${p.id}"><span>${p.name}</span><span style="color:#e24b4a">${p.injurySeverity} · ${p.injuryWeeks} jornada${p.injuryWeeks===1?'':'s'} restante${p.injuryWeeks===1?'':'s'}</span></div>`).join('')}
@@ -3656,6 +3711,7 @@
       function pintar(){
         overlay.innerHTML=`
           <div class="lm-dilemma-card lm-dilemma-card-medico">
+            ${xCerrarHTML()}
             <i class="ph ph-bold ${def.icon}" style="font-size:26px;color:#5dcaa5"></i>
             <div class="lm-dilemma-title">${def.nombre.toUpperCase()}</div>
             <div class="lm-dilemma-text">${def.desc}${def.tipo==='directa'?` — necesitas sumar ${def.dificultad}+`:(def.tipo==='nivel'?` — necesitas sumar ${dificultadActualNivel(def)}+ para subir a nivel ${nivelDe(def.track)+1}/${NIVEL_MAXIMO_EQUIPO}`:' — los dados invertidos siempre suman al proyecto')}</div>
@@ -3693,6 +3749,7 @@
     function renderRolloCarta(idx, numDados, jugadorObjetivoId){
       overlay.innerHTML=`
         <div class="lm-dilemma-card lm-dilemma-card-medico">
+            ${xCerrarHTML()}
           <div class="lm-dilemma-title" id="lmDiceTitle">TIRANDO ${numDados} DADO${numDados>1?'S':''}...</div>
           <div id="lmDice2DRow" class="lm-dice2d-row"></div>
           <div id="lmDiceResultZone"></div>
@@ -3721,6 +3778,7 @@
       function pintar(){
         overlay.innerHTML=`
           <div class="lm-dilemma-card lm-dilemma-card-medico">
+            ${xCerrarHTML()}
             <i class="ph ph-bold ph-first-aid-kit" style="font-size:26px;color:#e24b4a"></i>
             <div class="lm-dilemma-title">EL MÉDICO TE CONSULTA</div>
             <div class="lm-dilemma-text">${jugador?jugador.name:'Un jugador'} tiene una lesión ${state.medicoNotificacion.severidad}. Necesitas sumar ${dificultad}+ para acelerar su recuperación.</div>
@@ -3750,6 +3808,7 @@
     function renderRolloUrgente(numDados){
       overlay.innerHTML=`
         <div class="lm-dilemma-card lm-dilemma-card-medico">
+            ${xCerrarHTML()}
           <div class="lm-dilemma-title" id="lmDiceTitle">TIRANDO ${numDados} DADO${numDados>1?'S':''}...</div>
           <div id="lmDice2DRow" class="lm-dice2d-row"></div>
           <div id="lmDiceResultZone"></div>
@@ -3779,6 +3838,12 @@
     overlay.id='lmMantenimientoOverlay';
     document.getElementById('ligaManagerScreen').appendChild(overlay);
     habilitarCierreOverlay(overlay, ()=>{ overlay.remove(); render(); });
+    // Delegado: cualquier X que aparezca dentro de este overlay en
+    // cualquier pantalla (selector de dados, tirada, etc.) lo cierra.
+    overlay.addEventListener('click', (e)=>{
+      const xEl = e.target.closest && e.target.closest('[data-cerrar-x]');
+      if(xEl){ overlay.remove(); render(); }
+    });
 
     function renderHub(){
       const est=state.estadio||{campo:90,satisfaccion:0};
@@ -3802,7 +3867,7 @@
         return `
         <div class="med-card med-card-mantenimiento ${bloqueada?'med-card-bloqueada':''}" data-idx="${idx}">
           <button class="med-card-swap" data-swap="${idx}" title="Cambiar carta" ${cambioDisponible?'':'disabled'}><i class="ph ph-bold ph-arrows-clockwise"></i></button>
-          <div class="med-card-tag">${def.tipo==='nivel'?'MEJORA':'MISIÓN'}</div>
+          <div class="med-card-tag">${def.tipo==='nivel'?'PROYECTO':'MISIÓN'}</div>
           <i class="ph ph-bold ${def.icon} med-card-icon"></i>
           <div class="med-card-title">${def.nombre}</div>
           <div class="med-card-divider"></div>
@@ -3860,6 +3925,7 @@
       function pintar(){
         overlay.innerHTML=`
           <div class="lm-dilemma-card lm-dilemma-card-mant">
+            ${xCerrarHTML()}
             <i class="ph ph-bold ${def.icon}" style="font-size:26px;color:#5dcaa5"></i>
             <div class="lm-dilemma-title">${def.nombre.toUpperCase()}</div>
             <div class="lm-dilemma-text">${def.desc}${def.tipo==='directa'?` — necesitas sumar ${def.dificultad}+`:` — necesitas sumar ${dificultadActualNivelM(def)}+ para subir a nivel ${nivelDeM(def.track)+1}/${NIVEL_MAXIMO_EQUIPO}`}</div>
@@ -3895,6 +3961,7 @@
     function renderRolloCarta(idx, numDados){
       overlay.innerHTML=`
         <div class="lm-dilemma-card lm-dilemma-card-mant">
+            ${xCerrarHTML()}
           <div class="lm-dilemma-title" id="lmDiceTitle">TIRANDO ${numDados} DADO${numDados>1?'S':''}...</div>
           <div id="lmDice2DRow" class="lm-dice2d-row"></div>
           <div id="lmDiceResultZone"></div>
@@ -3980,6 +4047,12 @@
     overlay.id='lmDirectorGeneralOverlay';
     document.getElementById('ligaManagerScreen').appendChild(overlay);
     habilitarCierreOverlay(overlay, ()=>{ overlay.remove(); render(); });
+    // Delegado: cualquier X que aparezca dentro de este overlay en
+    // cualquier pantalla (selector de dados, tirada, etc.) lo cierra.
+    overlay.addEventListener('click', (e)=>{
+      const xEl = e.target.closest && e.target.closest('[data-cerrar-x]');
+      if(xEl){ overlay.remove(); render(); }
+    });
 
     function renderHub(){
       const cartasHTML=state.directorGeneralCartas.map((instancia,idx)=>{
@@ -4001,7 +4074,7 @@
         return `
         <div class="med-card med-card-dg ${bloqueada?'med-card-bloqueada':''}" data-idx="${idx}">
           <button class="med-card-swap" data-swap="${idx}" title="Cambiar carta" ${cambioDisponible?'':'disabled'}><i class="ph ph-bold ph-arrows-clockwise"></i></button>
-          <div class="med-card-tag">${def.tipo==='nivel'?'MEJORA':'MISIÓN'}</div>
+          <div class="med-card-tag">${def.tipo==='nivel'?'PROYECTO':'MISIÓN'}</div>
           <i class="ph ph-bold ${def.icon} med-card-icon"></i>
           <div class="med-card-title">${def.nombre}</div>
           <div class="med-card-divider"></div>
@@ -4078,6 +4151,7 @@
       function pintar(){
         overlay.innerHTML=`
           <div class="lm-dilemma-card lm-dilemma-card-dg">
+            ${xCerrarHTML()}
             <i class="ph ph-bold ${def.icon}" style="font-size:26px;color:#e6c94a"></i>
             <div class="lm-dilemma-title">${def.nombre.toUpperCase()}</div>
             <div class="lm-dilemma-text">${def.desc}${def.tipo==='directa'?` — necesitas sumar ${def.dificultad}+`:` — necesitas sumar ${dificultadActualNivelDG(def)}+ para subir a nivel ${nivelDeDG(def.track)+1}/${NIVEL_MAXIMO_EQUIPO}`}</div>
@@ -4113,6 +4187,7 @@
     function renderRolloCarta(idx, numDados){
       overlay.innerHTML=`
         <div class="lm-dilemma-card lm-dilemma-card-dg">
+            ${xCerrarHTML()}
           <div class="lm-dilemma-title" id="lmDiceTitle">TIRANDO ${numDados} DADO${numDados>1?'S':''}...</div>
           <div id="lmDice2DRow" class="lm-dice2d-row"></div>
           <div id="lmDiceResultZone"></div>
@@ -4145,6 +4220,26 @@
   function renderNivelesDGHTML(){
     return `<div class="med-niveles-grid">${NIVELES_DG_INFO.map(info=>{
       const n=nivelDeDG(info.track);
+      return `<div class="med-nivel-row">
+        <i class="ph ph-bold ${info.icon}"></i>
+        <div class="med-nivel-info">
+          <div class="med-nivel-label">${info.label}</div>
+          <div class="med-nivel-desc">${info.desc}</div>
+        </div>
+        <div class="med-nivel-stars" title="Nivel ${n}/${NIVEL_MAXIMO_EQUIPO}">${estrellasNivel(n)}</div>
+      </div>`;
+    }).join('')}</div>`;
+  }
+
+  const NIVELES_DD_INFO=[
+    {track:'calidadOjeo',     label:'Red de Ojeadores',        icon:'ph-binoculars',      desc:'Calidad de los jugadores que salen en los sobres'},
+    {track:'ahorroSalarial',  label:'Negociación de Contratos',icon:'ph-handshake',       desc:'Ahorro en el salario de los jugadores fichados por sobre'},
+    {track:'sobresFichajes',  label:'Sobres de Fichajes',      icon:'ph-envelope-open',   desc:'Nivel de los sobres — ábrelos cuando quieras desde su tarjeta'},
+    {track:'costeSobres',     label:'Formación de Cantera',    icon:'ph-graduation-cap',  desc:'Reduce la dificultad para subir de nivel los sobres'}
+  ];
+  function renderNivelesDDHTML(){
+    return `<div class="med-niveles-grid">${NIVELES_DD_INFO.map(info=>{
+      const n=nivelDeDD(info.track);
       return `<div class="med-nivel-row">
         <i class="ph ph-bold ${info.icon}"></i>
         <div class="med-nivel-info">
@@ -4239,6 +4334,12 @@
     overlay.id='lmDirectorDeportivoOverlay';
     document.getElementById('ligaManagerScreen').appendChild(overlay);
     habilitarCierreOverlay(overlay, ()=>{ overlay.remove(); render(); });
+    // Delegado: cualquier X que aparezca dentro de este overlay en
+    // cualquier pantalla (selector de dados, tirada, etc.) lo cierra.
+    overlay.addEventListener('click', (e)=>{
+      const xEl = e.target.closest && e.target.closest('[data-cerrar-x]');
+      if(xEl){ overlay.remove(); render(); }
+    });
 
     function renderHub(){
       const nivelSobre=nivelDeDD('sobresFichajes');
@@ -4268,7 +4369,7 @@
         return `
         <div class="med-card med-card-dd ${bloqueada&&!nivelMaximoYa?'med-card-bloqueada':''}" data-idx="${idx}">
           <button class="med-card-swap" data-swap="${idx}" title="Cambiar carta" ${cambioDisponible?'':'disabled'}><i class="ph ph-bold ph-arrows-clockwise"></i></button>
-          <div class="med-card-tag">${esSobre?'PROYECTO ESPECIAL':(def.tipo==='nivel'?'MEJORA':'MISIÓN')}</div>
+          <div class="med-card-tag">${esSobre?'PROYECTO ESPECIAL':(def.tipo==='nivel'?'PROYECTO':'MISIÓN')}</div>
           <i class="ph ph-bold ${def.icon} med-card-icon"></i>
           <div class="med-card-title">${def.nombre}</div>
           <div class="med-card-divider"></div>
@@ -4298,6 +4399,7 @@
             </select>
             <div class="lm-aforo-nota">Los ojeadores se centrarán en esta posición para los próximos sobres que abras.</div>
           </div>
+          ${renderNivelesDDHTML()}
           <div class="lm-setup-desc" style="text-align:center;margin:10px 0 8px">dados disponibles este partido: <strong>${state.diceAvailable}</strong> (compartidos con el resto del cuerpo técnico) · cambios de carta: <strong>${state.directorDeportivoCambioUsado?0:1}/1</strong> · rerolls de dado hoy: <strong>${state.dadoRerollsDisponibles||0}/1</strong></div>
           <div class="med-card-grid">${cartasHTML}</div>
           <div class="lm-popup-actions lm-popup-actions-compact">
@@ -4357,6 +4459,7 @@
       function pintar(){
         overlay.innerHTML=`
           <div class="lm-dilemma-card lm-dilemma-card-dd">
+            ${xCerrarHTML()}
             <i class="ph ph-bold ${def.icon}" style="font-size:26px;color:#c9c9c9"></i>
             <div class="lm-dilemma-title">${def.nombre.toUpperCase()}</div>
             <div class="lm-dilemma-text">${def.desc}${def.tipo==='directa'?` — necesitas sumar ${def.dificultad}+`:` — necesitas sumar ${dificultadActualNivelDD(def)}+ para subir a nivel ${nivelDeDD(def.track)+1}/${NIVEL_MAXIMO_EQUIPO}`}</div>
@@ -4392,6 +4495,7 @@
     function renderRolloCarta(idx, numDados, esSobre){
       overlay.innerHTML=`
         <div class="lm-dilemma-card lm-dilemma-card-dd">
+            ${xCerrarHTML()}
           <div class="lm-dilemma-title" id="lmDiceTitle">TIRANDO ${numDados} DADO${numDados>1?'S':''}...</div>
           <div id="lmDice2DRow" class="lm-dice2d-row"></div>
           <div id="lmDiceResultZone"></div>
@@ -4514,6 +4618,7 @@
         <div class="lm-dilemma-card lm-dilemma-card-dd" style="max-width:640px;text-align:left">
           ${xCerrarHTML()}
           <div class="lm-dilemma-title" style="text-align:center"><i class="ph ph-bold ph-file-text"></i> SALARIOS DE LA PLANTILLA</div>
+          ${renderNivelesDDHTML()}
           <div class="lm-setup-desc" style="text-align:center;margin-bottom:8px">Nómina total: <strong>${formatoDinero(totalNomina)}/mes</strong> · plantilla: <strong>${jugadores.length}</strong> · al poner en venta, el Director Deportivo avisará por correo en 1-3 jornadas con las ofertas que lleguen.</div>
           <div class="lm-salarios-tabla-wrap">
             <table class="lm-salarios-tabla">
@@ -4590,6 +4695,12 @@
     overlay.id='lmPreparadorFisicoOverlay';
     document.getElementById('ligaManagerScreen').appendChild(overlay);
     habilitarCierreOverlay(overlay, ()=>{ overlay.remove(); render(); });
+    // Delegado: cualquier X que aparezca dentro de este overlay en
+    // cualquier pantalla (selector de dados, tirada, etc.) lo cierra.
+    overlay.addEventListener('click', (e)=>{
+      const xEl = e.target.closest && e.target.closest('[data-cerrar-x]');
+      if(xEl){ overlay.remove(); render(); }
+    });
 
     function renderHub(){
       const cartasHTML=state.preparadorFisicoCartas.map((instancia,idx)=>{
@@ -4611,7 +4722,7 @@
         return `
         <div class="med-card med-card-pf ${bloqueada&&!nivelMaximoYa?'med-card-bloqueada':''}" data-idx="${idx}">
           <button class="med-card-swap" data-swap="${idx}" title="Cambiar carta" ${cambioDisponible?'':'disabled'}><i class="ph ph-bold ph-arrows-clockwise"></i></button>
-          <div class="med-card-tag">${def.tipo==='nivel'?'MEJORA':'MISIÓN'}</div>
+          <div class="med-card-tag">${def.tipo==='nivel'?'PROYECTO':'MISIÓN'}</div>
           <i class="ph ph-bold ${def.icon} med-card-icon"></i>
           <div class="med-card-title">${def.nombre}</div>
           <div class="med-card-divider"></div>
@@ -4669,6 +4780,7 @@
       function pintar(){
         overlay.innerHTML=`
           <div class="lm-dilemma-card lm-dilemma-card-pf">
+            ${xCerrarHTML()}
             <i class="ph ph-bold ${def.icon}" style="font-size:26px;color:#e08a3e"></i>
             <div class="lm-dilemma-title">${def.nombre.toUpperCase()}</div>
             <div class="lm-dilemma-text">${def.desc}${def.tipo==='directa'?` — necesitas sumar ${def.dificultad}+`:` — necesitas sumar ${dificultadActualNivelPF(def)}+ para subir a nivel ${nivelDePF(def.track)+1}/${NIVEL_MAXIMO_EQUIPO}`}</div>
@@ -4704,6 +4816,7 @@
     function renderRolloCarta(idx, numDados){
       overlay.innerHTML=`
         <div class="lm-dilemma-card lm-dilemma-card-pf">
+            ${xCerrarHTML()}
           <div class="lm-dilemma-title" id="lmDiceTitle">TIRANDO ${numDados} DADO${numDados>1?'S':''}...</div>
           <div id="lmDice2DRow" class="lm-dice2d-row"></div>
           <div id="lmDiceResultZone"></div>
@@ -4771,6 +4884,12 @@
     overlay.id='lmTrabajadoresOverlay';
     document.getElementById('ligaManagerScreen').appendChild(overlay);
     habilitarCierreOverlay(overlay, ()=>{ overlay.remove(); render(); });
+    // Delegado: cualquier X que aparezca dentro de este overlay en
+    // cualquier pantalla (selector de dados, tirada, etc.) lo cierra.
+    overlay.addEventListener('click', (e)=>{
+      const xEl = e.target.closest && e.target.closest('[data-cerrar-x]');
+      if(xEl){ overlay.remove(); render(); }
+    });
 
     function fichaTrabajadorHTML(rol){
       const actual=state.trabajadores[rol];
@@ -4800,7 +4919,7 @@
       overlay.innerHTML=`
         <div class="lm-dilemma-card" style="width:960px;max-width:94vw;text-align:left">
           ${xCerrarHTML()}
-          <div class="lm-dilemma-title" style="text-align:center"><i class="ph ph-bold ph-users-three"></i> TRABAJADORES${rolFiltrado?` — ${NOMBRE_ROL[rolFiltrado]}`:''}</div>
+          <div class="lm-dilemma-title" style="text-align:center"><i class="ph ph-bold ph-user-plus"></i> CONTRATAR${rolFiltrado?` — ${NOMBRE_ROL[rolFiltrado]}`:''}</div>
           <p class="lm-setup-desc" style="text-align:center;margin-bottom:10px">Cada mes aparecen nuevos candidatos por puesto — compara nivel y sueldo antes de decidir si te compensa un cambio.${rolFiltrado?' <span id="lmTrabVerTodos" style="color:var(--gold);cursor:pointer;text-decoration:underline">Ver todos los puestos</span>':''}</p>
           <div class="lm-trab-grid">
             ${roles.map(fichaTrabajadorHTML).join('')}
@@ -4838,9 +4957,22 @@
         btn.addEventListener('click', ()=>{
           const candidatoId=btn.getAttribute('data-contratar');
           const rol=btn.getAttribute('data-rol');
-          if(typeof window.playSound==='function') window.playSound('select');
-          contratarTrabajador(rol, candidatoId);
-          pintar();
+          const actual=state.trabajadores[rol];
+          const proceder=()=>{
+            if(typeof window.playSound==='function') window.playSound('select');
+            contratarTrabajador(rol, candidatoId);
+            pintar();
+          };
+          if(actual){
+            const finiquito=calcularFiniquito(actual);
+            if(typeof window.showConfirmPopup==='function'){
+              window.showConfirmPopup(`Ya tienes a ${actual.nombre} en este puesto. Al contratar a otra persona se le despedirá (finiquito de ${formatoDinero(finiquito)}). ¿Continuar?`, proceder, 'CONTRATAR');
+            } else if(confirm(`¿Despedir a ${actual.nombre} (finiquito ${formatoDinero(finiquito)}) para contratar al nuevo candidato?`)){
+              proceder();
+            }
+          } else {
+            proceder();
+          }
         });
       });
     }
