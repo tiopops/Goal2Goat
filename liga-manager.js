@@ -360,6 +360,25 @@
   let correoExpandido=null;
   let ordenColumnasSaveTimer=null; // el orden de columnas se persiste solo tras 60s sin más cambios
   let acabaDeReordenarColumnas=false;
+  // Pulso sutil del botón JUGAR JORNADA tras 1 minuto sin tocarlo ni
+  // pasar el ratón por encima — un único intervalo para toda la sesión,
+  // que revisa el botón actual cada pocos segundos (el DOM se rehace en
+  // cada render(), así que no sirve guardar la referencia al elemento).
+  let jugarBtnUltimaInteraccion=Date.now();
+  let jugarBtnPulseInterval=null;
+  function marcarInteraccionJugarBtn(){
+    jugarBtnUltimaInteraccion=Date.now();
+    const btn=document.getElementById('lmJugarBtn');
+    if(btn) btn.classList.remove('lm-btn-jugar-pulse');
+  }
+  function iniciarPulseJugarBtn(){
+    if(jugarBtnPulseInterval) return;
+    jugarBtnPulseInterval=setInterval(()=>{
+      const btn=document.getElementById('lmJugarBtn');
+      if(!btn) return;
+      if(Date.now()-jugarBtnUltimaInteraccion>60000) btn.classList.add('lm-btn-jugar-pulse');
+    }, 3000);
+  }
   let setupData={liga:'es', moneda:null, nombre:'', escudo:null};
 
   function nuevoEstadoSinEmpezar(){ return { setupComplete:false }; }
@@ -1662,6 +1681,35 @@
   }
   // Aviso propio del juego — sustituye al alert() nativo del navegador
   // (ese "www.goal2goat.com dice" no pinta nada aquí).
+  // Botón "MOSTRAR INFORMACIÓN" de cada hub — mientras se mantiene
+  // pulsado (ratón o dedo), aparece la burbuja "i" de ese trabajador
+  // encima; al soltar, se cierra sola.
+  function mostrarInfoHTML(){
+    return `<button type="button" class="mode-card-btn mode-card-btn-secondary lm-mostrar-info-btn" data-mostrar-info><i class="ph ph-bold ph-eye"></i> MOSTRAR INFORMACIÓN</button>`;
+  }
+  function wireMostrarInfoHold(container, abrirInfoFn, overlayId){
+    const btn=container.querySelector('[data-mostrar-info]');
+    if(!btn) return;
+    let activo=false;
+    const mostrar=(e)=>{
+      if(e) e.preventDefault();
+      if(activo) return;
+      activo=true;
+      abrirInfoFn();
+    };
+    const ocultar=()=>{
+      if(!activo) return;
+      activo=false;
+      const ov=document.getElementById(overlayId);
+      if(ov) ov.remove();
+    };
+    btn.addEventListener('mousedown', mostrar);
+    btn.addEventListener('touchstart', mostrar, {passive:false});
+    btn.addEventListener('mouseup', ocultar);
+    btn.addEventListener('mouseleave', ocultar);
+    btn.addEventListener('touchend', ocultar);
+    btn.addEventListener('touchcancel', ocultar);
+  }
   function mostrarAvisoJuego(mensaje){
     const overlay=document.createElement('div');
     overlay.id='lmAvisoOverlay';
@@ -1850,6 +1898,12 @@
     state.correoInterno.unshift({id:'mail'+Date.now()+Math.floor(Math.random()*100000), rol, asunto, cuerpo, jornada:state.jornadaActual, leido:false});
     state.correoUltimoEnviado[rol]=state.jornadaActual;
     if(state.correoInterno.length>40) state.correoInterno=state.correoInterno.slice(0,40);
+  }
+  function borrarCorreo(mailId){
+    if(!state.correoInterno) return;
+    state.correoInterno=state.correoInterno.filter(c=>c.id!==mailId);
+    if(correoExpandido===mailId) correoExpandido=null;
+    guardarEstado();
   }
   function generarCorreosTrasJornada(){
     if(!state.correoInterno) state.correoInterno=[];
@@ -2720,10 +2774,14 @@
         <div class="lm-panel lm-left-panel" style="${columnaOrderStyle('left')}">${columnaControlesHTML('left')}
           <div class="lm-header-team">
             ${crestHTML(state.escudo, 76)}
-            <div>
+            <div style="flex:1;min-width:0">
               <div class="lm-title">${state.nombreEquipo.toUpperCase()}</div>
               <div class="lm-sub">Jornada ${Math.min(state.jornadaActual,38)} de 38 · ${monedaInfo.symbol}</div>
             </div>
+            <button id="lmJugarBtn" class="lm-btn-jugar-icon" ${(state.jornadaActual>38||hayVacantes)?'disabled':''} title="${state.jornadaActual>38?'Temporada completa':(hayVacantes?'Contrata al cuerpo técnico primero':'Jugar jornada')}">
+              <i class="ph ph-bold ph-play-circle"></i>
+              <span>${state.jornadaActual>38?'FIN':'SEGUIR'}</span>
+            </button>
           </div>
           <div class="bench-title">
             <span>ONCE TITULAR</span>
@@ -2803,27 +2861,31 @@
 
         <div class="lm-panel lm-right-panel" style="${columnaOrderStyle('right')}">${columnaControlesHTML('right')}
           <div class="lm-nextmatch-box">
-            <h3 class="lm-nextrival-header">PRÓXIMO RIVAL</h3>
             ${rival ? `
-              <div class="lm-vs-label" style="text-align:center;margin-bottom:6px">${esLocal?'JUEGAS EN CASA':'JUEGAS FUERA'}</div>
-              <div class="lm-rival-crest-block">
-                ${rivalCrestHTML(100, rival.crestImg)}<span class="lm-title" style="font-size:16px">${rival.name}</span>
+              <div class="lm-rival-top-row">
+                <div class="lm-rival-crest-block">
+                  ${rivalCrestHTML(88, rival.crestImg)}<span class="lm-title" style="font-size:15px">${rival.name}</span>
+                </div>
+                <div class="lm-rival-info-col">
+                  <h3 class="lm-nextrival-header" style="text-align:left;margin:0 0 4px">PRÓXIMO RIVAL</h3>
+                  <div class="lm-vs-label" style="text-align:left;margin-bottom:6px">${esLocal?'JUEGAS EN CASA':'JUEGAS FUERA'}</div>
+                  ${(()=>{
+                    const fila=calcularClasificacion();
+                    const idx=fila.findIndex(t=>t.id===rival.id);
+                    const datos=fila[idx]||{pj:0,pg:0,pe:0,pp:0,pts:0,gf:0,gc:0};
+                    const dg=datos.gf-datos.gc;
+                    return `<table class="lm-rival-mini-table">
+                      <tr><td>Posición</td><td><strong>${idx+1}º</strong></td></tr>
+                      <tr><td>Puntos</td><td><strong>${datos.pts}</strong></td></tr>
+                      <tr><td>PJ (jugados)</td><td>${datos.pj}</td></tr>
+                      <tr><td>G (ganados)</td><td>${datos.pg}</td></tr>
+                      <tr><td>E (empatados)</td><td>${datos.pe}</td></tr>
+                      <tr><td>P (perdidos)</td><td>${datos.pp}</td></tr>
+                      <tr><td>Goles (F:C)</td><td>${datos.gf}:${datos.gc} <span style="color:${dg>=0?'#5dcaa5':'#e24b4a'}">(${dg>=0?'+':''}${dg})</span></td></tr>
+                    </table>`;
+                  })()}
+                </div>
               </div>
-              ${(()=>{
-                const fila=calcularClasificacion();
-                const idx=fila.findIndex(t=>t.id===rival.id);
-                const datos=fila[idx]||{pj:0,pg:0,pe:0,pp:0,pts:0,gf:0,gc:0};
-                const dg=datos.gf-datos.gc;
-                return `<table class="lm-rival-mini-table">
-                  <tr><td>Posición</td><td><strong>${idx+1}º</strong></td></tr>
-                  <tr><td>Puntos</td><td><strong>${datos.pts}</strong></td></tr>
-                  <tr><td>PJ (jugados)</td><td>${datos.pj}</td></tr>
-                  <tr><td>G (ganados)</td><td>${datos.pg}</td></tr>
-                  <tr><td>E (empatados)</td><td>${datos.pe}</td></tr>
-                  <tr><td>P (perdidos)</td><td>${datos.pp}</td></tr>
-                  <tr><td>Goles (F:C)</td><td>${datos.gf}:${datos.gc} <span style="color:${dg>=0?'#5dcaa5':'#e24b4a'}">(${dg>=0?'+':''}${dg})</span></td></tr>
-                </table>`;
-              })()}
               ${(()=>{
                 const campoRival=campoRivalEstimado(rival);
                 return `<div style="margin-top:6px">
@@ -2858,9 +2920,6 @@
             <span><i class="lm-legend-dot lm-zona-descenso"></i>Descenso</span>
           </div>
           </div>
-          <button id="lmJugarBtn" class="lm-btn-jugar" style="margin-top:12px" ${(state.jornadaActual>38||hayVacantes)?'disabled':''}>
-            ${state.jornadaActual>38?'TEMPORADA COMPLETA':'JUGAR JORNADA'}
-          </button>
         </div>
 
         <div class="lm-panel lm-staff-panel" style="${columnaOrderStyle('staff')}">${columnaControlesHTML('staff')}
@@ -2893,7 +2952,7 @@
                       <div class="lm-correo-remitente">${NOMBRE_ROL[c.rol]}</div>
                       <div class="lm-correo-asunto">${c.asunto}</div>
                     </div>
-                    <div class="lm-correo-jornada">J${c.jornada}</div>
+                    <button class="lm-correo-borrar" data-borrar-correo="${c.id}" title="Borrar mensaje"><i class="ph ph-bold ph-trash"></i></button>
                   </div>
                   ${correoExpandido===c.id?`<div class="lm-correo-cuerpo">
                     ${c.cuerpo}
@@ -2943,20 +3002,27 @@
     });
 
     const jugarBtn=document.getElementById('lmJugarBtn');
-    if(jugarBtn) jugarBtn.addEventListener('click', ()=>{
-      if(ROLES_TRABAJO.some(r=>!state.trabajadores[r])){
+    if(jugarBtn){
+      jugarBtn.addEventListener('click', ()=>{
+        marcarInteraccionJugarBtn();
+        if(ROLES_TRABAJO.some(r=>!state.trabajadores[r])){
+          if(typeof window.playSound==='function') window.playSound('select');
+          mostrarAvisoJuego('Todavía tienes puestos vacantes en el cuerpo técnico. Contrata desde TRABAJADORES antes de jugar la jornada.');
+          return;
+        }
         if(typeof window.playSound==='function') window.playSound('select');
-        mostrarAvisoJuego('Todavía tienes puestos vacantes en el cuerpo técnico. Contrata desde TRABAJADORES antes de jugar la jornada.');
-        return;
-      }
-      if(typeof window.playSound==='function') window.playSound('select');
-      const info=jugarJornada();
-      if(info){
-        mostrarPartidoEnVivo(info, render);
-      } else {
-        render();
-      }
-    });
+        const info=jugarJornada();
+        if(info){
+          mostrarPartidoEnVivo(info, render);
+        } else {
+          render();
+        }
+      });
+      jugarBtn.addEventListener('mouseenter', marcarInteraccionJugarBtn);
+      jugarBtn.addEventListener('mousemove', marcarInteraccionJugarBtn);
+      if(Date.now()-jugarBtnUltimaInteraccion>60000) jugarBtn.classList.add('lm-btn-jugar-pulse');
+      iniciarPulseJugarBtn();
+    }
     const trabajadoresBtn=document.getElementById('lmTrabajadoresBtn');
     if(trabajadoresBtn) trabajadoresBtn.addEventListener('click', ()=>{
       if(typeof window.playSound==='function') window.playSound('select');
@@ -3018,6 +3084,15 @@
         const mailId=btn.getAttribute('data-rechazar-oferta');
         if(typeof window.playSound==='function') window.playSound('select');
         rechazarOfertasTraspaso(mailId);
+        render();
+      });
+    });
+    root.querySelectorAll('[data-borrar-correo]').forEach(btn=>{
+      btn.addEventListener('click', (e)=>{
+        e.stopPropagation();
+        const mailId=btn.getAttribute('data-borrar-correo');
+        if(typeof window.playSound==='function') window.playSound('select');
+        borrarCorreo(mailId);
         render();
       });
     });
@@ -3512,10 +3587,12 @@
           <div class="lm-setup-desc" style="text-align:center;margin:10px 0 8px">dados disponibles este partido: <strong>${state.diceAvailable}</strong> (compartidos con el resto del cuerpo técnico) · cambios de carta: <strong>${state.medicoCambioUsado?0:1}/1</strong> · rerolls de dado hoy: <strong>${state.dadoRerollsDisponibles||0}/1</strong></div>
           <div class="med-card-grid">${cartasHTML}</div>
           <div class="lm-popup-actions lm-popup-actions-compact">
+            ${mostrarInfoHTML()}
             <button id="lmMedicoCerrar" class="mode-card-btn mode-card-btn-secondary">CERRAR</button>
           </div>
         </div>`;
 
+      wireMostrarInfoHold(overlay, abrirHistorialMedico, 'lmHistorialOverlay');
       const xBtnMed=overlay.querySelector('[data-cerrar-x]');
       if(xBtnMed) xBtnMed.addEventListener('click', ()=>{ overlay.remove(); render(); });
       const cerrarBtn=document.getElementById('lmMedicoCerrar');
@@ -3743,9 +3820,11 @@
           <div class="lm-setup-desc" style="text-align:center;margin:10px 0 8px">dados disponibles este partido: <strong>${state.diceAvailable}</strong> (compartidos con el resto del cuerpo técnico) · cambios de carta: <strong>${state.mantenimientoCambioUsado?0:1}/1</strong> · rerolls de dado hoy: <strong>${state.dadoRerollsDisponibles||0}/1</strong></div>
           <div class="med-card-grid">${cartasHTML}</div>
           <div class="lm-popup-actions lm-popup-actions-compact">
+            ${mostrarInfoHTML()}
             <button id="lmMantenimientoCerrar" class="mode-card-btn mode-card-btn-secondary">CERRAR</button>
           </div>
         </div>`;
+        wireMostrarInfoHold(overlay, abrirEstadoEstadio, 'lmEstadoEstadioOverlay');
 
       const xBtnMant=overlay.querySelector('[data-cerrar-x]');
       if(xBtnMant) xBtnMant.addEventListener('click', ()=>{ overlay.remove(); render(); });
@@ -3952,9 +4031,11 @@
           <div class="lm-setup-desc" style="text-align:center;margin:10px 0 8px">dados disponibles este partido: <strong>${state.diceAvailable}</strong> (compartidos con el resto del cuerpo técnico) · cambios de carta: <strong>${state.directorGeneralCambioUsado?0:1}/1</strong> · rerolls de dado hoy: <strong>${state.dadoRerollsDisponibles||0}/1</strong></div>
           <div class="med-card-grid">${cartasHTML}</div>
           <div class="lm-popup-actions lm-popup-actions-compact">
+            ${mostrarInfoHTML()}
             <button id="lmDirectorGeneralCerrar" class="mode-card-btn mode-card-btn-secondary">CERRAR</button>
           </div>
         </div>`;
+        wireMostrarInfoHold(overlay, abrirFinanzasDG, 'lmFinanzasOverlay');
 
       const slider=document.getElementById('lmPrecioEntradaSlider');
       if(slider) slider.addEventListener('change', ()=>{
@@ -4220,9 +4301,11 @@
           <div class="lm-setup-desc" style="text-align:center;margin:10px 0 8px">dados disponibles este partido: <strong>${state.diceAvailable}</strong> (compartidos con el resto del cuerpo técnico) · cambios de carta: <strong>${state.directorDeportivoCambioUsado?0:1}/1</strong> · rerolls de dado hoy: <strong>${state.dadoRerollsDisponibles||0}/1</strong></div>
           <div class="med-card-grid">${cartasHTML}</div>
           <div class="lm-popup-actions lm-popup-actions-compact">
+            ${mostrarInfoHTML()}
             <button id="lmDirectorDeportivoCerrar" class="mode-card-btn mode-card-btn-secondary">CERRAR</button>
           </div>
         </div>`;
+        wireMostrarInfoHold(overlay, abrirSalariosDD, 'lmSalariosOverlay');
 
       const xBtnDD=overlay.querySelector('[data-cerrar-x]');
       const posicionOjeoSelect=document.getElementById('lmPosicionOjeoSelect');
@@ -4546,9 +4629,11 @@
           <div class="lm-setup-desc" style="text-align:center;margin:10px 0 8px">dados disponibles este partido: <strong>${state.diceAvailable}</strong> (compartidos con el resto del cuerpo técnico) · cambios de carta: <strong>${state.preparadorFisicoCambioUsado?0:1}/1</strong> · rerolls de dado hoy: <strong>${state.dadoRerollsDisponibles||0}/1</strong></div>
           <div class="med-card-grid">${cartasHTML}</div>
           <div class="lm-popup-actions lm-popup-actions-compact">
+            ${mostrarInfoHTML()}
             <button id="lmPreparadorFisicoCerrar" class="mode-card-btn mode-card-btn-secondary">CERRAR</button>
           </div>
         </div>`;
+        wireMostrarInfoHold(overlay, abrirHistorialPF, 'lmHistorialPFOverlay');
 
       const xBtnPF=overlay.querySelector('[data-cerrar-x]');
       if(xBtnPF) xBtnPF.addEventListener('click', ()=>{ overlay.remove(); render(); });
