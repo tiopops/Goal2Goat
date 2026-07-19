@@ -140,7 +140,9 @@
     const profileBtn = document.getElementById('profileBtn');
     if(!profileBtn) return;
     profileBtn.addEventListener('click', function(){
-      if(document.body.classList.contains('menu-screen') && typeof window.switchProfileTab === 'function'){
+      const enMenu = document.body.classList.contains('menu-screen');
+      const enLigaManager = document.body.classList.contains('liga-manager-screen');
+      if((enMenu || enLigaManager) && typeof window.switchProfileTab === 'function'){
         window.switchProfileTab('user');
       }
     });

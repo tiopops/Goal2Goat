@@ -24,7 +24,7 @@
    ============================================================ */
 (function(){
 
-  const SAVE_KEY = 'g2g_liga_manager_v12';
+  const SAVE_KEY = 'g2g_liga_manager_v13';
   // Identidad del club (nombre + escudo) — PERSISTE entre partidas, no se
   // pierde al abandonar/descender. Si ya existe, el flujo de entrada no
   // vuelve a pedir nombre ni escudo (solo liga y moneda cada vez).
@@ -262,6 +262,15 @@
   // Media de las 5 categorías de los titulares asignados (si no hay
   // ninguno asignado todavía, usa la media de toda la plantilla como
   // valor por defecto, para que la simulación nunca se quede sin datos).
+  // Bonus real de la formación activa — mismos valores que usa Copa
+  // Leyendas (FORMATIONS[cat].bonus), sumados directamente a las 5
+  // estadísticas del once titular: elegir formación ahora afecta de
+  // verdad al ataque/defensa/etc., no es solo un dibujo visual.
+  function formacionBonusActual(){
+    const cat=FORMATIONS[state.formacionCategoria] ? state.formacionCategoria : 'equilibrada';
+    const f=(FORMATIONS[cat]||[]).find(x=>x.code===state.formacionCode);
+    return f ? f.bonus : {attack:0,defense:0,pace:0,passing:0,technique:0};
+  }
   function calcularStatsEquipo(){
     const ids=Object.values(state.alineacion||{}).filter(Boolean);
     const titulares = ids.map(id=>state.plantilla.find(p=>p.id===id)).filter(p=>p && !p.injured);
@@ -270,7 +279,12 @@
     const suma = {attack:0,defense:0,pace:0,passing:0,technique:0};
     baseFinal.forEach(p=>{ suma.attack+=p.attack; suma.defense+=p.defense; suma.pace+=p.pace; suma.passing+=p.passing; suma.technique+=p.technique; });
     const n=baseFinal.length||1;
-    return {attack:suma.attack/n, defense:suma.defense/n, pace:suma.pace/n, passing:suma.passing/n, technique:suma.technique/n};
+    const bonus=formacionBonusActual();
+    const tecPF=nivelDePF('potencialTecnico')*2, fisPF=nivelDePF('potencialFisico')*2;
+    return {
+      attack:suma.attack/n+(bonus.attack||0), defense:suma.defense/n+(bonus.defense||0), pace:suma.pace/n+(bonus.pace||0)+fisPF,
+      passing:suma.passing/n+(bonus.passing||0), technique:suma.technique/n+(bonus.technique||0)+tecPF
+    };
   }
 
 
@@ -344,6 +358,7 @@
   let clasifColapsada=true; // la clasificación empieza contraída, igual que el glosario de Copa Leyendas
   let perfilEquipoColapsado=false;
   let correoExpandido=null;
+  let ordenColumnasSaveTimer=null; // el orden de columnas se persiste solo tras 60s sin más cambios
   let setupData={liga:'es', moneda:null, nombre:'', escudo:null};
 
   function nuevoEstadoSinEmpezar(){ return { setupComplete:false }; }
@@ -479,18 +494,26 @@
         medico:null,
         mantenimiento:null,
         directorGeneral:null,
-        directorDeportivo:null
+        directorDeportivo:null,
+        preparadorFisico:null
       },
       candidatosTrabajo:[],
       mesTrabajadoresGenerado:0,
       correoInterno:[],
       correoUltimoEnviado:{},
-      posicionObjetivoOjeo:'any'
+      posicionObjetivoOjeo:'any',
+      preparadorFisicoCartas:[],
+      preparadorFisicoCambioUsado:false,
+      preparadorFisicoCartasAgotadas:[],
+      preparadorFisicoHistorial:[],
+      preparadorFisicoNiveles:{resistenciaBase:0, recuperacionSemanal:0, potencialTecnico:0, potencialFisico:0},
+      ordenColumnas:['left','center','right','staff']
     };
     state.medicoCartas = inicializarCartasMedico();
     state.mantenimientoCartas = inicializarCartasMantenimiento();
     state.directorGeneralCartas = inicializarCartasDG();
     state.directorDeportivoCartas = inicializarCartasDD();
+    state.preparadorFisicoCartas = inicializarCartasPF();
     guardarEstado();
   }
 
@@ -1010,16 +1033,20 @@
     // Leyendas: quien ha jugado esta jornada (los 11 del campo) pierde
     // resistencia (el portero apenas se cansa, los centrales son los que
     // menos corren), y quien se queda en el banquillo recupera del todo.
-    // Antes el campo "fatigue" existía pero nunca bajaba jugando.
+    // Antes el campo "fatigue" existía pero nunca bajaba jugando. El
+    // Preparador Físico puede suavizar la pérdida (resistenciaBase) y dar
+    // algo de recuperación extra a los propios titulares (recuperacionSemanal).
     if(miPartidoInfo){
       const titularIdsJornada=new Set(Object.values(state.alineacion||{}).filter(Boolean));
+      const factorResistencia=1-nivelDePF('resistenciaBase')*0.12;
+      const recuperacionExtra=nivelDePF('recuperacionSemanal')*5;
       state.plantilla.forEach(p=>{
         const actual=(p.fatigue===undefined)?100:p.fatigue;
         if(!titularIdsJornada.has(p.id)){ p.fatigue=100; return; }
-        if(p.position==='POR'){ p.fatigue=Math.max(0, Math.round(actual-(2+Math.random()*4))); return; }
+        if(p.position==='POR'){ p.fatigue=Math.max(0, Math.min(100, Math.round(actual-(2+Math.random()*4)*factorResistencia+recuperacionExtra))); return; }
         let loss=8+Math.random()*6;
         if(p.position==='DFC') loss*=0.65;
-        p.fatigue=Math.max(0, Math.round(actual-loss));
+        p.fatigue=Math.max(0, Math.min(100, Math.round(actual-loss*factorResistencia+recuperacionExtra)));
       });
     }
 
@@ -1302,7 +1329,7 @@
     {track:'prevencionMuscular', label:'Prevención muscular',   icon:'ph-heartbeat',         desc:'Riesgo de sufrir una lesión muscular'},
     {track:'prevencionOsea',     label:'Protección ósea',       icon:'ph-shield-plus',       desc:'Riesgo de sufrir una lesión ósea'}
   ];
-  function estrellasNivel(n){ return '★'.repeat(n) + '☆'.repeat(NIVEL_MAXIMO_EQUIPO-n); }
+  function estrellasNivel(n, max){ max=max||NIVEL_MAXIMO_EQUIPO; n=Math.max(0,Math.min(max,n)); return '★'.repeat(n) + '☆'.repeat(max-n); }
   function renderNivelesEquipoHTML(){
     return `<div class="med-niveles-grid">${NIVELES_EQUIPO_INFO.map(info=>{
       const n=nivelDe(info.track);
@@ -1632,11 +1659,32 @@
   function habilitarCierreOverlay(overlay, cerrarFn){
     overlay.addEventListener('click', (e)=>{ if(e.target===overlay) cerrarFn(); });
   }
+  // Aviso propio del juego — sustituye al alert() nativo del navegador
+  // (ese "www.goal2goat.com dice" no pinta nada aquí).
+  function mostrarAvisoJuego(mensaje){
+    const overlay=document.createElement('div');
+    overlay.id='lmAvisoOverlay';
+    overlay.innerHTML=`
+      <div class="lm-dilemma-card" style="max-width:380px">
+        <i class="ph ph-bold ph-warning-circle" style="font-size:30px;color:var(--gold)"></i>
+        <div class="lm-dilemma-text" style="margin:10px 0 16px">${mensaje}</div>
+        <div class="lm-popup-actions lm-popup-actions-compact">
+          <button id="lmAvisoCerrar" class="mode-card-btn mode-card-btn-gold">ACEPTAR</button>
+        </div>
+      </div>`;
+    document.getElementById('ligaManagerScreen').appendChild(overlay);
+    const cerrar=()=>overlay.remove();
+    habilitarCierreOverlay(overlay, cerrar);
+    document.getElementById('lmAvisoCerrar').addEventListener('click', ()=>{
+      if(typeof window.playSound==='function') window.playSound('select');
+      cerrar();
+    });
+  }
   // Si has despedido a quien ocupaba un puesto, no se puede entrar a su
   // interfaz hasta contratar a otra persona.
   function bloqueadoPorVacante(rol){
     if(!state.trabajadores || !state.trabajadores[rol]){
-      alert('Has despedido a quien ocupaba este puesto — contrata a alguien nuevo desde TRABAJADORES para poder usar esta pantalla.');
+      mostrarAvisoJuego('Has despedido a quien ocupaba este puesto — contrata a alguien nuevo desde TRABAJADORES para poder usar esta pantalla.');
       return true;
     }
     return false;
@@ -1709,7 +1757,8 @@
     const nominaMantenimiento=(trab.mantenimiento?trab.mantenimiento.sueldo:0)+nivelTotalDe(state.mantenimientoNiveles)*1200;
     const nominaDG=(trab.directorGeneral?trab.directorGeneral.sueldo:0)+nivelTotalDe(state.directorGeneralNiveles)*1500;
     const nominaDD=(trab.directorDeportivo?trab.directorDeportivo.sueldo:0)+nivelTotalDe(state.directorDeportivoNiveles)*1500;
-    const nominaStaff=nominaMedico+nominaMantenimiento+nominaDG+nominaDD;
+    const nominaPF=(trab.preparadorFisico?trab.preparadorFisico.sueldo:0)+nivelTotalDe(state.preparadorFisicoNiveles)*1200;
+    const nominaStaff=nominaMedico+nominaMantenimiento+nominaDG+nominaDD+nominaPF;
     const ingresoPatrocinio=nivelDeDG('ingresoPatrocinio')*15000;
     return {nominaJugadores, nominaStaff, ingresoPatrocinio, total:nominaJugadores+nominaStaff};
   }
@@ -1737,9 +1786,9 @@
      Cada mes aparece un puñado de candidatos nuevos para poder comparar
      si compensa cambiar; despedir deja el puesto vacante (sin sueldo,
      pero también sin nadie al mando) hasta contratar a otra persona. ---------- */
-  const ROLES_TRABAJO=['medico','mantenimiento','directorGeneral','directorDeportivo'];
-  const SUELDO_BASE_ROL={medico:4000, mantenimiento:4000, directorGeneral:5000, directorDeportivo:5000};
-  const NOMBRE_ROL={medico:'Equipo Médico', mantenimiento:'Mantenimiento y Seguridad', directorGeneral:'Director General', directorDeportivo:'Director Deportivo'};
+  const ROLES_TRABAJO=['medico','mantenimiento','directorGeneral','directorDeportivo','preparadorFisico'];
+  const SUELDO_BASE_ROL={medico:4000, mantenimiento:4000, directorGeneral:5000, directorDeportivo:5000, preparadorFisico:4200};
+  const NOMBRE_ROL={medico:'Equipo Médico', mantenimiento:'Mantenimiento y Seguridad', directorGeneral:'Director General', directorDeportivo:'Director Deportivo', preparadorFisico:'Preparador Físico'};
   function nivelAleatorioTrabajador(){
     // 1★ es lo más común, 5★ muy raro — igual de espíritu que la rareza
     // de un sobre de fichajes.
@@ -1791,7 +1840,7 @@
      correo con algo importante, pero como mucho uno por jornada, y solo
      si de verdad hay algo que contar (no todas las jornadas). Textos
      cortos y directos, pensados para leerse de un vistazo. ---------- */
-  const CORREO_ICONOS={medico:'ph-first-aid-kit', mantenimiento:'ph-flag-pennant', directorGeneral:'ph-briefcase', directorDeportivo:'ph-binoculars'};
+  const CORREO_ICONOS={medico:'ph-first-aid-kit', mantenimiento:'ph-flag-pennant', directorGeneral:'ph-briefcase', directorDeportivo:'ph-binoculars', preparadorFisico:'ph-barbell'};
   function enviarCorreo(rol, asunto, cuerpo){
     if(!state.correoInterno) state.correoInterno=[];
     if(!state.correoUltimoEnviado) state.correoUltimoEnviado={};
@@ -2234,6 +2283,133 @@
     return resultado;
   }
 
+  /* ---------- 9g. CARTAS DEL PREPARADOR FÍSICO — mejora las estadísticas
+     de los jugadores de formas originales: entrenamientos individuales
+     que suben stats concretas de un jugador al azar de forma PERMANENTE,
+     más 4 programas de nivel con bonus pasivo de equipo (resistencia,
+     recuperación, técnica y ritmo). Mismo sistema de 10 cartas que el
+     resto de departamentos. ---------- */
+  const PREPARADOR_FISICO_CARTAS_BASE=[
+    {id:'entrenamiento_tecnico', tipo:'directa', nombre:'Entrenamiento Técnico',   icon:'ph-target',        dificultad:6, desc:'+3 de TÉCNICA permanente a un jugador al azar de la plantilla'},
+    {id:'entrenamiento_fisico',  tipo:'directa', nombre:'Entrenamiento Físico',    icon:'ph-person-simple-run', dificultad:6, desc:'+3 de RITMO permanente a un jugador al azar de la plantilla'},
+    {id:'entrenamiento_tactico', tipo:'directa', nombre:'Entrenamiento de Pase',   icon:'ph-arrows-split',  dificultad:7, desc:'+3 de PASE permanente a un jugador al azar de la plantilla'},
+    {id:'pretemporada_intensiva',tipo:'directa', nombre:'Pretemporada Intensiva', icon:'ph-barbell',       dificultad:9, desc:'+2 a TODAS las estadísticas de un jugador al azar, de forma permanente'},
+    {id:'recuperacion_expres',   tipo:'directa', nombre:'Recuperación Exprés',    icon:'ph-battery-charging', dificultad:5, desc:'Restaura al instante la resistencia de toda la plantilla'},
+    {id:'charla_motivacional',   tipo:'directa', nombre:'Charla Motivacional',    icon:'ph-megaphone-simple', dificultad:5, desc:'Pequeño impulso a la moral del equipo'},
+    {id:'resistencia_base',      tipo:'nivel', track:'resistenciaBase',    nombre:'Programa de Resistencia',   icon:'ph-heartbeat',         dificultadBase:8, dificultadPaso:4, desc:'Reduce la resistencia que se pierde al jugar cada partido'},
+    {id:'recuperacion_semanal',  tipo:'nivel', track:'recuperacionSemanal',nombre:'Recuperación Semanal',      icon:'ph-clock-clockwise',   dificultadBase:8, dificultadPaso:4, desc:'Los titulares también recuperan algo de resistencia entre jornadas'},
+    {id:'potencial_tecnico',     tipo:'nivel', track:'potencialTecnico',   nombre:'Potencial Técnico',         icon:'ph-soccer-ball',       dificultadBase:8, dificultadPaso:4, desc:'Sube la TÉCNICA de todo el equipo de forma permanente'},
+    {id:'potencial_fisico',      tipo:'nivel', track:'potencialFisico',    nombre:'Potencial Físico',          icon:'ph-lightning',         dificultadBase:8, dificultadPaso:4, desc:'Sube el RITMO de todo el equipo de forma permanente'}
+  ];
+  function cartaDefPF(id){ return PREPARADOR_FISICO_CARTAS_BASE.find(c=>c.id===id); }
+  function nivelDePF(track){ return (state.preparadorFisicoNiveles && state.preparadorFisicoNiveles[track]) || 0; }
+  function dificultadActualNivelPF(def){ return def.dificultadBase + nivelDePF(def.track)*def.dificultadPaso; }
+  function generarCartaAleatoriaPF(excluirIds){
+    excluirIds=excluirIds||[];
+    const agotadas=state.preparadorFisicoCartasAgotadas||[];
+    const disponibles=PREPARADOR_FISICO_CARTAS_BASE.filter(c=>!excluirIds.includes(c.id) && !agotadas.includes(c.id));
+    const pool=disponibles.length?disponibles:PREPARADOR_FISICO_CARTAS_BASE.filter(c=>!agotadas.includes(c.id));
+    if(!pool.length) return null;
+    const def=pool[Math.floor(Math.random()*pool.length)];
+    return {cartaId:def.id, progreso:0, nivelActual:1};
+  }
+  function inicializarCartasPF(){
+    const cartas=[];
+    for(let i=0;i<3;i++){ const nueva=generarCartaAleatoriaPF(cartas.map(c=>c.cartaId)); if(nueva) cartas.push(nueva); }
+    return cartas;
+  }
+  function cambiarCartaPF(idx){
+    if(state.preparadorFisicoCambioUsado) return false;
+    const otras=state.preparadorFisicoCartas.filter((c,i)=>i!==idx).map(c=>c.cartaId);
+    const nueva=generarCartaAleatoriaPF(otras);
+    if(!nueva) return false;
+    state.preparadorFisicoCartas[idx]=nueva;
+    state.preparadorFisicoCambioUsado=true;
+    guardarEstado();
+    return true;
+  }
+  // Entrena a un jugador al azar (no lesionado) subiéndole una estadística
+  // de forma permanente — la "manera original" de mejorar jugadores que
+  // se pidió, en vez de solo bonus de equipo.
+  function entrenarJugadorAleatorio(campos, cantidad){
+    const elegibles=(state.plantilla||[]).filter(p=>!p.injured);
+    if(!elegibles.length) return null;
+    const jugador=elegibles[Math.floor(Math.random()*elegibles.length)];
+    campos.forEach(campo=>{ jugador[campo]=Math.min(99, Math.round(jugador[campo]+cantidad)); });
+    if(!state.preparadorFisicoHistorial) state.preparadorFisicoHistorial=[];
+    const NOMBRE_STAT={attack:'ataque',defense:'defensa',pace:'ritmo',passing:'pase',technique:'técnica'};
+    const detalle=campos.map(c=>NOMBRE_STAT[c]||c).join(', ');
+    state.preparadorFisicoHistorial.unshift({id:'ent'+Date.now()+Math.floor(Math.random()*10000), jugador:jugador.name, detalle, cantidad, jornada:state.jornadaActual});
+    if(state.preparadorFisicoHistorial.length>30) state.preparadorFisicoHistorial=state.preparadorFisicoHistorial.slice(0,30);
+    return jugador;
+  }
+  function aplicarEfectoDirectaPF(def){
+    switch(def.id){
+      case 'entrenamiento_tecnico': {
+        const j=entrenarJugadorAleatorio(['technique'],3);
+        return j?{texto:`${j.name} mejora su técnica permanentemente (ahora ${j.technique})`}:{texto:'No hay jugadores disponibles para entrenar'};
+      }
+      case 'entrenamiento_fisico': {
+        const j=entrenarJugadorAleatorio(['pace'],3);
+        return j?{texto:`${j.name} mejora su ritmo permanentemente (ahora ${j.pace})`}:{texto:'No hay jugadores disponibles para entrenar'};
+      }
+      case 'entrenamiento_tactico': {
+        const j=entrenarJugadorAleatorio(['passing'],3);
+        return j?{texto:`${j.name} mejora su pase permanentemente (ahora ${j.passing})`}:{texto:'No hay jugadores disponibles para entrenar'};
+      }
+      case 'pretemporada_intensiva': {
+        const j=entrenarJugadorAleatorio(['attack','defense','pace','passing','technique'],2);
+        return j?{texto:`${j.name} completa una pretemporada excelente — mejora en todas sus estadísticas`}:{texto:'No hay jugadores disponibles para entrenar'};
+      }
+      case 'recuperacion_expres':
+        (state.plantilla||[]).forEach(p=>{ p.fatigue=100; });
+        return {texto:'Toda la plantilla recupera su resistencia al máximo'};
+      case 'charla_motivacional':
+        state.moral=Math.max(-50,Math.min(50,(state.moral||0)+4));
+        return {texto:'El vestuario responde bien a la charla — sube la moral'};
+      default: return {texto:'Aplicado'};
+    }
+  }
+  function aplicarNivelMejoraPF(def){
+    if(!state.preparadorFisicoNiveles) state.preparadorFisicoNiveles={resistenciaBase:0, recuperacionSemanal:0, potencialTecnico:0, potencialFisico:0};
+    const nivelNuevo=Math.min(NIVEL_MAXIMO_EQUIPO, nivelDePF(def.track)+1);
+    state.preparadorFisicoNiveles[def.track]=nivelNuevo;
+    const maxAlcanzado=nivelNuevo>=NIVEL_MAXIMO_EQUIPO;
+    if(maxAlcanzado){
+      state.preparadorFisicoCartasAgotadas=state.preparadorFisicoCartasAgotadas||[];
+      state.preparadorFisicoCartasAgotadas.push(def.id);
+    }
+    return {nivelNuevo, maxAlcanzado};
+  }
+  function resolverCartaPF(idx, tiradas){
+    const instancia=state.preparadorFisicoCartas[idx];
+    const def=cartaDefPF(instancia.cartaId);
+    const suma=tiradas.reduce((a,b)=>a+b,0);
+    let resultado;
+    if(def.tipo==='directa'){
+      const exito=suma>=def.dificultad;
+      if(exito){
+        const efecto=aplicarEfectoDirectaPF(def);
+        state.preparadorFisicoCartas[idx]=generarCartaAleatoriaPF(state.preparadorFisicoCartas.map(c=>c.cartaId)) || instancia;
+        resultado={tipo:'directa', exito:true, suma, dificultad:def.dificultad, texto:efecto.texto};
+      } else {
+        resultado={tipo:'directa', exito:false, suma, dificultad:def.dificultad, texto:'La carta se queda en tu mano — puedes reintentarlo más adelante'};
+      }
+    } else {
+      const dificultadActual=dificultadActualNivelPF(def);
+      const exito=suma>=dificultadActual;
+      if(exito){
+        const {nivelNuevo, maxAlcanzado}=aplicarNivelMejoraPF(def);
+        state.preparadorFisicoCartas[idx]=generarCartaAleatoriaPF(state.preparadorFisicoCartas.map(c=>c.cartaId)) || instancia;
+        resultado={tipo:'nivel', exito:true, suma, dificultad:dificultadActual, nivelNuevo, maxAlcanzado, nombre:def.nombre};
+      } else {
+        resultado={tipo:'nivel', exito:false, suma, dificultad:dificultadActual, nombre:def.nombre, texto:'La carta se queda en tu mano — puedes reintentarlo más adelante'};
+      }
+    }
+    guardarEstado();
+    return resultado;
+  }
+
   /* ---------- 10. Abandonar la liga ---------- */
   function abandonarLiga(){
     function proceder(){
@@ -2455,6 +2631,12 @@
     if(!state.correoInterno) state.correoInterno=[];
     if(!state.correoUltimoEnviado) state.correoUltimoEnviado={};
     if(!state.posicionObjetivoOjeo) state.posicionObjetivoOjeo='any';
+    if(!state.ordenColumnas || state.ordenColumnas.length!==4) state.ordenColumnas=['left','center','right','staff'];
+    if(!state.preparadorFisicoCartas || !state.preparadorFisicoCartas.length) state.preparadorFisicoCartas=inicializarCartasPF();
+    if(!state.preparadorFisicoCartasAgotadas) state.preparadorFisicoCartasAgotadas=[];
+    if(!state.preparadorFisicoHistorial) state.preparadorFisicoHistorial=[];
+    if(!state.preparadorFisicoNiveles) state.preparadorFisicoNiveles={resistenciaBase:0, recuperacionSemanal:0, potencialTecnico:0, potencialFisico:0};
+    if(state.trabajadores && state.trabajadores.preparadorFisico===undefined) state.trabajadores.preparadorFisico=null;
     if(!state.mantenimientoCartas || !state.mantenimientoCartas.length) state.mantenimientoCartas=inicializarCartasMantenimiento();
     if(!state.mantenimientoCartasAgotadas) state.mantenimientoCartasAgotadas=[];
     if(!state.mantenimientoHistorial) state.mantenimientoHistorial=[];
@@ -2532,7 +2714,7 @@
 
     root.innerHTML = `
       <div class="lm-app-grid">
-        <div class="lm-panel lm-left-panel">
+        <div class="lm-panel lm-left-panel" style="${columnaOrderStyle('left')}">${columnaControlesHTML('left')}
           <div class="lm-header-team">
             ${crestHTML(state.escudo, 76)}
             <div>
@@ -2577,7 +2759,7 @@
           </div>
         </div>
 
-        <div class="lm-center-panel">
+        <div class="lm-center-panel" style="${columnaOrderStyle('center')}">${columnaControlesHTML('center')}
           <div id="lmPitchBox">${PITCH_SVG}<div id="lmCampoLayer" style="opacity:${campoOpacidadDesgaste(state.estadio?state.estadio.campo:100)}"></div><div id="lmWeatherLayer"></div>${formacionActual().slots.map(def=>{
             const pid=state.alineacion&&state.alineacion[def.slot];
             const jugador=pid?state.plantilla.find(p=>p.id===pid):null;
@@ -2605,19 +2787,20 @@
 
           <div class="bench-title" style="margin-top:14px"><span>FORMACIÓN</span><span>${state.formacionCode}</span></div>
           <div class="formation-tabs">
-            ${Object.keys(FORMATION_CODES).map(cat=>`<div class="formation-tab ${(formacionCategoriaVista||state.formacionCategoria)===cat?'active':''}" data-categoria="${cat}">${CAT_LABELS[cat]}</div>`).join('')}
+            ${Object.keys(FORMATIONS).map(cat=>`<div class="formation-tab ${(formacionCategoriaVista||state.formacionCategoria)===cat?'active':''}" data-categoria="${cat}">${CAT_NAMES[cat]}</div>`).join('')}
           </div>
           <div id="formationList">
-            ${FORMATION_CODES[formacionCategoriaVista||state.formacionCategoria].map(code=>`
-              <div class="formation-option ${state.formacionCode===code?'selected':''}" data-formacion-codigo="${code}">
-                <span class="f-code">${code}</span>
-                <span class="f-badge">${code.split('-').length} líneas</span>
+            ${FORMATIONS[formacionCategoriaVista||state.formacionCategoria].map(f=>`
+              <div class="formation-option ${state.formacionCode===f.code?'selected':''}" data-formacion-codigo="${f.code}">
+                <span class="f-code">${f.code}</span>
+                <span class="f-badge">${f.label}</span>
               </div>`).join('')}
           </div>
         </div>
 
-        <div class="lm-panel lm-right-panel">
+        <div class="lm-panel lm-right-panel" style="${columnaOrderStyle('right')}">${columnaControlesHTML('right')}
           <div class="lm-nextmatch-box">
+            <h3 class="lm-nextrival-header">PRÓXIMO RIVAL</h3>
             ${rival ? `
               <div class="lm-vs-label" style="text-align:center;margin-bottom:6px">${esLocal?'JUEGAS EN CASA':'JUEGAS FUERA'}</div>
               <div class="lm-rival-crest-block">
@@ -2631,8 +2814,10 @@
                 return `<table class="lm-rival-mini-table">
                   <tr><td>Posición</td><td><strong>${idx+1}º</strong></td></tr>
                   <tr><td>Puntos</td><td><strong>${datos.pts}</strong></td></tr>
-                  <tr><td>Jugados</td><td>${datos.pj}</td></tr>
-                  <tr><td>V - E - D</td><td>${datos.pg} - ${datos.pe} - ${datos.pp}</td></tr>
+                  <tr><td>PJ (jugados)</td><td>${datos.pj}</td></tr>
+                  <tr><td>G (ganados)</td><td>${datos.pg}</td></tr>
+                  <tr><td>E (empatados)</td><td>${datos.pe}</td></tr>
+                  <tr><td>P (perdidos)</td><td>${datos.pp}</td></tr>
                   <tr><td>Goles (F:C)</td><td>${datos.gf}:${datos.gc} <span style="color:${dg>=0?'#5dcaa5':'#e24b4a'}">(${dg>=0?'+':''}${dg})</span></td></tr>
                 </table>`;
               })()}
@@ -2655,11 +2840,11 @@
           <div id="lmClasifBody" style="${clasifColapsada?'display:none':''}">
           <div class="lm-table-wrap">
             <table class="lm-table">
-              <thead><tr><th></th><th>#</th><th>Equipo</th><th>PJ</th><th>Pts</th></tr></thead>
+              <thead><tr><th></th><th>#</th><th>Equipo</th><th>PJ</th><th>G</th><th>E</th><th>P</th><th>Pts</th></tr></thead>
               <tbody>
                 ${clasif.map((t,i)=>`<tr class="${t.id==='lm_0'?'lm-myteam':''} lm-zona-${zonaClasificacion(i+1)}">
                   <td>${t.id==='lm_0'?crestHTML(state.escudo,18):rivalCrestHTML(18, t.crestImg)}</td>
-                  <td>${i+1}</td><td>${t.name}</td><td>${t.pj}</td><td><strong>${t.pts}</strong></td>
+                  <td>${i+1}</td><td>${t.name}</td><td>${t.pj}</td><td>${t.pg}</td><td>${t.pe}</td><td>${t.pp}</td><td><strong>${t.pts}</strong></td>
                 </tr>`).join('')}
               </tbody>
             </table>
@@ -2672,11 +2857,11 @@
           </div>
           </div>
           <button id="lmJugarBtn" class="lm-btn-jugar" style="margin-top:12px" ${(state.jornadaActual>38||hayVacantes)?'disabled':''}>
-            ${state.jornadaActual>38?'TEMPORADA COMPLETA':(hayVacantes?'CONTRATA AL CUERPO TÉCNICO':'JUGAR JORNADA')}
+            ${state.jornadaActual>38?'TEMPORADA COMPLETA':'JUGAR JORNADA'}
           </button>
         </div>
 
-        <div class="lm-panel lm-staff-panel">
+        <div class="lm-panel lm-staff-panel" style="${columnaOrderStyle('staff')}">${columnaControlesHTML('staff')}
           <div class="lm-staff-bar-header">
             <div class="lm-staff-bar-title"><i class="ph ph-bold ph-users-three"></i> CUERPO TÉCNICO</div>
             <div class="lm-staff-bar-capital"><i class="ph ph-bold ph-coins"></i> ${formatoDinero(state.capital)}</div>
@@ -2688,6 +2873,7 @@
             ${staffTileHTML('directorDeportivo', {btnId:'lmDirectorDeportivoBtn', infoId:'lmDirectorDeportivoInfoBtn', infoTitle:'Salarios de la plantilla', notif:notifDD, badgeTexto:'!', carpeta:'director_deportivo', archivo:'director_deportivo', alt:'Director Deportivo', icono:'ph-binoculars', rolLabel:'DIRECTOR DEPORTIVO', acento:'lm-staff-tile-dd', desc:'Fichajes, ojeadores y sobres de nuevos jugadores'})}
             ${staffTileHTML('medico', {btnId:'lmMedicoBtn', infoId:'lmMedicoInfoBtn', infoTitle:'Historial médico', notif:notif, badgeTexto:'1', carpeta:'medico', archivo:'medico', alt:'Equipo médico', icono:'ph-first-aid-kit', rolLabel:'EQUIPO MÉDICO', desc:'Previene, diagnostica y trata las lesiones de tus jugadores', acento:'lm-staff-tile-medico'})}
             ${staffTileHTML('mantenimiento', {btnId:'lmMantenimientoBtn', infoId:'lmMantenimientoInfoBtn', infoTitle:'Estado del estadio', notif:notifMant, badgeTexto:'!', carpeta:'mantenimiento', archivo:'mantenimiento_y_seguridad', alt:'Mantenimiento y seguridad', icono:'ph-flag-pennant', rolLabel:'MANTENIMIENTO Y SEGURIDAD', desc:'Cuida el césped, la seguridad y la satisfacción de la afición', acento:'lm-staff-tile-mant'})}
+            ${staffTileHTML('preparadorFisico', {btnId:'lmPreparadorFisicoBtn', infoId:'lmPreparadorFisicoInfoBtn', infoTitle:'Historial de entrenamientos', notif:false, badgeTexto:'', carpeta:'preparador_fisico', archivo:'preparador_fisico', alt:'Preparador Físico', icono:'ph-barbell', rolLabel:'PREPARADOR FÍSICO', desc:'Entrena a tus jugadores y mejora sus estadísticas de forma original', acento:'lm-staff-tile-pf'})}
           </div>
 
           <div class="lm-correo-box">
@@ -2760,7 +2946,7 @@
     if(jugarBtn) jugarBtn.addEventListener('click', ()=>{
       if(ROLES_TRABAJO.some(r=>!state.trabajadores[r])){
         if(typeof window.playSound==='function') window.playSound('select');
-        alert('Todavía tienes puestos vacantes en el cuerpo técnico. Contrata desde TRABAJADORES antes de jugar la jornada.');
+        mostrarAvisoJuego('Todavía tienes puestos vacantes en el cuerpo técnico. Contrata desde TRABAJADORES antes de jugar la jornada.');
         return;
       }
       if(typeof window.playSound==='function') window.playSound('select');
@@ -2793,6 +2979,15 @@
       clasifColapsada=!clasifColapsada;
       render();
     });
+    root.querySelectorAll('[data-mover-col]').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        if(btn.disabled) return;
+        const key=btn.getAttribute('data-mover-col');
+        const dir=parseInt(btn.getAttribute('data-mover-dir'),10);
+        if(typeof window.playSound==='function') window.playSound('select');
+        moverColumna(key, dir);
+      });
+    });
     const perfilHeader=document.getElementById('lmPerfilEquipoHeader');
     if(perfilHeader) perfilHeader.addEventListener('click', ()=>{
       if(typeof window.playSound==='function') window.playSound('select');
@@ -2818,7 +3013,7 @@
         const proceder=()=>{
           if(typeof window.playSound==='function') window.playSound('select');
           const r=aceptarOfertaTraspaso(mailId, idx);
-          if(r && !r.ok && r.motivo) alert(r.motivo);
+          if(r && !r.ok && r.motivo) mostrarAvisoJuego(r.motivo);
           render();
         };
         if(mail && typeof window.showConfirmPopup==='function'){
@@ -2887,6 +3082,19 @@
       if(bloqueadoPorVacante('directorDeportivo')) return;
       if(typeof window.playSound==='function') window.playSound('select');
       abrirSalariosDD();
+    });
+    const pfBtn=document.getElementById('lmPreparadorFisicoBtn');
+    if(pfBtn) pfBtn.addEventListener('click', ()=>{
+      if(bloqueadoPorVacante('preparadorFisico')) return;
+      if(typeof window.playSound==='function') window.playSound('select');
+      abrirPreparadorFisico();
+    });
+    const pfInfoBtn=document.getElementById('lmPreparadorFisicoInfoBtn');
+    if(pfInfoBtn) pfInfoBtn.addEventListener('click', (e)=>{
+      e.stopPropagation();
+      if(bloqueadoPorVacante('preparadorFisico')) return;
+      if(typeof window.playSound==='function') window.playSound('select');
+      abrirHistorialPF();
     });
     root.querySelectorAll('#lmPitchBox .position').forEach(el=>{
       el.addEventListener('click', ()=>{
@@ -3201,6 +3409,37 @@
   // superior "CUERPO TÉCNICO" — foto (con el género correcto o la
   // variante en blanco y negro si está vacante), rol, nombre de quien lo
   // ocupa y su nivel en estrellas, con badge de aviso y burbuja de info.
+  // Columnas intercambiables (solo escritorio) — flechitas ‹ › en la
+  // esquina de cada columna para moverla a izquierda/derecha. El nuevo
+  // orden se ve al instante, pero solo se GUARDA en el estado si pasa 1
+  // minuto entero sin que el usuario vuelva a tocar nada (debounce), para
+  // no escribir en cada clic mientras está todavía "probando" el orden.
+  function moverColumna(key, direccion){
+    if(!state.ordenColumnas || state.ordenColumnas.length!==4) state.ordenColumnas=['left','center','right','staff'];
+    const arr=state.ordenColumnas;
+    const idx=arr.indexOf(key);
+    const nuevoIdx=idx+direccion;
+    if(idx<0 || nuevoIdx<0 || nuevoIdx>=arr.length) return;
+    const tmp=arr[idx]; arr[idx]=arr[nuevoIdx]; arr[nuevoIdx]=tmp;
+    if(ordenColumnasSaveTimer) clearTimeout(ordenColumnasSaveTimer);
+    ordenColumnasSaveTimer=setTimeout(()=>{ guardarEstado(); ordenColumnasSaveTimer=null; }, 60000);
+    render();
+  }
+  function columnaControlesHTML(key){
+    const arr=state.ordenColumnas||['left','center','right','staff'];
+    const idx=arr.indexOf(key);
+    const esPrimera=idx<=0, esUltima=idx>=arr.length-1;
+    return `<div class="lm-col-reorder">
+      <button class="lm-col-arrow" data-mover-col="${key}" data-mover-dir="-1" ${esPrimera?'disabled':''} title="Mover a la izquierda">‹</button>
+      <button class="lm-col-arrow" data-mover-col="${key}" data-mover-dir="1" ${esUltima?'disabled':''} title="Mover a la derecha">›</button>
+    </div>`;
+  }
+  function columnaOrderStyle(key){
+    const arr=state.ordenColumnas||['left','center','right','staff'];
+    const idx=arr.indexOf(key);
+    return idx>=0 ? `order:${idx}` : '';
+  }
+
   function staffTileHTML(rol, o){
     const trab=state.trabajadores[rol];
     return `
@@ -3214,7 +3453,7 @@
       <div class="lm-staff-tile-body">
         <div class="lm-staff-tile-rol">${o.rolLabel}</div>
         <div class="lm-staff-tile-nombre">${trab?trab.nombre:'VACANTE'}</div>
-        ${trab?`<div class="lm-staff-tile-estrellas">${estrellasNivel(trab.nivel)}</div>`:'<div class="lm-staff-tile-vacante-txt">Contratar en TRABAJADORES</div>'}
+        ${trab?`<div class="lm-staff-tile-estrellas">${estrellasNivel(trab.nivel, 5)}</div>`:'<div class="lm-staff-tile-vacante-txt">Contratar en TRABAJADORES</div>'}
         <div class="lm-staff-tile-desc">${o.desc}</div>
       </div>
     </div>`;
@@ -4227,7 +4466,7 @@
           const proceder=()=>{
             const r=ponerJugadorEnVenta(jugadorId);
             if(typeof window.playSound==='function') window.playSound('select');
-            if(!r.ok && r.motivo) alert(r.motivo);
+            if(!r.ok && r.motivo) mostrarAvisoJuego(r.motivo);
             pintar();
           };
           if(typeof window.showConfirmPopup==='function'){
@@ -4251,6 +4490,203 @@
     pintar();
   }
 
+  const NIVELES_PF_INFO=[
+    {track:'resistenciaBase',     label:'Programa de Resistencia', icon:'ph-heartbeat',       desc:'Resistencia que se pierde al jugar cada partido'},
+    {track:'recuperacionSemanal', label:'Recuperación Semanal',    icon:'ph-clock-clockwise', desc:'Recuperación extra de los titulares entre jornadas'},
+    {track:'potencialTecnico',    label:'Potencial Técnico',       icon:'ph-soccer-ball',     desc:'Técnica de equipo, de forma permanente'},
+    {track:'potencialFisico',     label:'Potencial Físico',        icon:'ph-lightning',       desc:'Ritmo de equipo, de forma permanente'}
+  ];
+  function renderNivelesPFHTML(){
+    return `<div class="med-niveles-grid">${NIVELES_PF_INFO.map(info=>{
+      const n=nivelDePF(info.track);
+      return `<div class="med-nivel-row">
+        <i class="ph ph-bold ${info.icon}"></i>
+        <div class="med-nivel-info">
+          <div class="med-nivel-label">${info.label}</div>
+          <div class="med-nivel-desc">${info.desc}</div>
+        </div>
+        <div class="med-nivel-stars" title="Nivel ${n}/${NIVEL_MAXIMO_EQUIPO}">${estrellasNivel(n)}</div>
+      </div>`;
+    }).join('')}</div>`;
+  }
+
+  /* ---------- 13i. Interfaz del Preparador Físico — mismo patrón de
+     hub con cartas que médico/mantenimiento/directores. ---------- */
+  function abrirPreparadorFisico(){
+    const overlay=document.createElement('div');
+    overlay.id='lmPreparadorFisicoOverlay';
+    document.getElementById('ligaManagerScreen').appendChild(overlay);
+    habilitarCierreOverlay(overlay, ()=>{ overlay.remove(); render(); });
+
+    function renderHub(){
+      const cartasHTML=state.preparadorFisicoCartas.map((instancia,idx)=>{
+        const def=cartaDefPF(instancia.cartaId);
+        const dificultadEfectiva = def.tipo==='nivel' ? dificultadActualNivelPF(def) : def.dificultad;
+        const maxPosible = state.diceAvailable*6;
+        const imposiblePorDados = maxPosible < dificultadEfectiva;
+        const nivelMaximoYa = def.tipo==='nivel' && nivelDePF(def.track)>=NIVEL_MAXIMO_EQUIPO;
+        const bloqueada = imposiblePorDados || nivelMaximoYa;
+        const cambioDisponible=!state.preparadorFisicoCambioUsado;
+        let cuerpo;
+        if(def.tipo==='nivel'){
+          const n=nivelDePF(def.track);
+          cuerpo=`<div class="med-card-progress-label" style="text-align:center;letter-spacing:2px;color:var(--gold)">${estrellasNivel(n)}</div>
+                  <div class="med-card-dificultad">${nivelMaximoYa?'Nivel máximo alcanzado':`Dificultad ${dificultadEfectiva}+ para subir a nivel ${n+1}/${NIVEL_MAXIMO_EQUIPO}`}</div>`;
+        } else {
+          cuerpo=`<div class="med-card-dificultad">Dificultad ${def.dificultad}+</div>`;
+        }
+        return `
+        <div class="med-card med-card-pf ${bloqueada&&!nivelMaximoYa?'med-card-bloqueada':''}" data-idx="${idx}">
+          <button class="med-card-swap" data-swap="${idx}" title="Cambiar carta" ${cambioDisponible?'':'disabled'}><i class="ph ph-bold ph-arrows-clockwise"></i></button>
+          <div class="med-card-tag">${def.tipo==='nivel'?'MEJORA':'MISIÓN'}</div>
+          <i class="ph ph-bold ${def.icon} med-card-icon"></i>
+          <div class="med-card-title">${def.nombre}</div>
+          <div class="med-card-divider"></div>
+          <div class="med-card-desc">${def.desc}</div>
+          ${cuerpo}
+          ${(bloqueada&&!nivelMaximoYa)?`<div class="med-card-bloqueada-label">Imposible con los dados que quedan</div>`:(nivelMaximoYa?'':`<button class="mode-card-btn mode-card-btn-gold med-card-btn" data-usar="${idx}" style="padding:7px;font-size:11px">USAR</button>`)}
+        </div>`;
+      }).join('');
+
+      overlay.innerHTML=`
+        <div class="lm-dilemma-card lm-dilemma-card-pf" style="max-width:640px">
+          ${xCerrarHTML()}
+          <div class="lm-dilemma-title"><i class="ph ph-bold ph-barbell"></i> PREPARADOR FÍSICO</div>
+          ${renderNivelesPFHTML()}
+          <div class="lm-setup-desc" style="text-align:center;margin:10px 0 8px">dados disponibles este partido: <strong>${state.diceAvailable}</strong> (compartidos con el resto del cuerpo técnico) · cambios de carta: <strong>${state.preparadorFisicoCambioUsado?0:1}/1</strong> · rerolls de dado hoy: <strong>${state.dadoRerollsDisponibles||0}/1</strong></div>
+          <div class="med-card-grid">${cartasHTML}</div>
+          <div class="lm-popup-actions lm-popup-actions-compact">
+            <button id="lmPreparadorFisicoCerrar" class="mode-card-btn mode-card-btn-secondary">CERRAR</button>
+          </div>
+        </div>`;
+
+      const xBtnPF=overlay.querySelector('[data-cerrar-x]');
+      if(xBtnPF) xBtnPF.addEventListener('click', ()=>{ overlay.remove(); render(); });
+      const cerrarBtn=document.getElementById('lmPreparadorFisicoCerrar');
+      if(cerrarBtn) cerrarBtn.addEventListener('click', ()=>{
+        if(typeof window.playSound==='function') window.playSound('select');
+        overlay.remove();
+        render();
+      });
+      overlay.querySelectorAll('[data-swap]').forEach(btn=>{
+        btn.addEventListener('click', ()=>{
+          const idx=parseInt(btn.getAttribute('data-swap'),10);
+          if(state.preparadorFisicoCambioUsado) return;
+          if(typeof window.playSound==='function') window.playSound('select');
+          animarRerollCarta(overlay, idx, PREPARADOR_FISICO_CARTAS_BASE, ()=>{
+            cambiarCartaPF(idx);
+            renderHub();
+          });
+        });
+      });
+      overlay.querySelectorAll('[data-usar]').forEach(btn=>{
+        btn.addEventListener('click', ()=>{
+          const idx=parseInt(btn.getAttribute('data-usar'),10);
+          if(typeof window.playSound==='function') window.playSound('select');
+          renderSelectorCarta(idx);
+        });
+      });
+    }
+
+    function renderSelectorCarta(idx){
+      const def=cartaDefPF(state.preparadorFisicoCartas[idx].cartaId);
+      let dadosElegidos=Math.min(1, state.diceAvailable);
+      function pintar(){
+        overlay.innerHTML=`
+          <div class="lm-dilemma-card lm-dilemma-card-pf">
+            <i class="ph ph-bold ${def.icon}" style="font-size:26px;color:#e08a3e"></i>
+            <div class="lm-dilemma-title">${def.nombre.toUpperCase()}</div>
+            <div class="lm-dilemma-text">${def.desc}${def.tipo==='directa'?` — necesitas sumar ${def.dificultad}+`:` — necesitas sumar ${dificultadActualNivelPF(def)}+ para subir a nivel ${nivelDePF(def.track)+1}/${NIVEL_MAXIMO_EQUIPO}`}</div>
+            <div class="lm-dice-selector">
+              <button id="lmDiceMinus" class="lm-dice-stepper">−</button>
+              <span id="lmDiceCount">${dadosElegidos}</span>
+              <button id="lmDicePlus" class="lm-dice-stepper">+</button>
+            </div>
+            <div class="lm-setup-desc">dados disponibles: ${state.diceAvailable}</div>
+            <div class="lm-popup-actions">
+              <button id="lmTirarBtn" class="mode-card-btn mode-card-btn-gold" ${state.diceAvailable<1?'disabled':''}>TIRAR ${dadosElegidos} DADO${dadosElegidos>1?'S':''}</button>
+              <button id="lmCancelarCartaBtn" class="lm-btn-cancelar">CANCELAR</button>
+            </div>
+          </div>`;
+        const minus=document.getElementById('lmDiceMinus');
+        const plus=document.getElementById('lmDicePlus');
+        const tirarBtn=document.getElementById('lmTirarBtn');
+        const cancelarBtn=document.getElementById('lmCancelarCartaBtn');
+        if(minus) minus.addEventListener('click', ()=>{ if(dadosElegidos>1){ dadosElegidos--; pintar(); } });
+        if(plus) plus.addEventListener('click', ()=>{ if(dadosElegidos<state.diceAvailable){ dadosElegidos++; pintar(); } });
+        if(cancelarBtn) cancelarBtn.addEventListener('click', ()=>{
+          if(typeof window.playSound==='function') window.playSound('select');
+          renderHub();
+        });
+        if(tirarBtn) tirarBtn.addEventListener('click', ()=>{
+          if(typeof window.playSound==='function') window.playSound('select');
+          renderRolloCarta(idx, dadosElegidos);
+        });
+      }
+      pintar();
+    }
+
+    function renderRolloCarta(idx, numDados){
+      overlay.innerHTML=`
+        <div class="lm-dilemma-card lm-dilemma-card-pf">
+          <div class="lm-dilemma-title" id="lmDiceTitle">TIRANDO ${numDados} DADO${numDados>1?'S':''}...</div>
+          <div id="lmDice2DRow" class="lm-dice2d-row"></div>
+          <div id="lmDiceResultZone"></div>
+        </div>`;
+      const box=document.getElementById('lmDice2DRow');
+      iniciarBarajadoDados(box, numDados, (tiradas)=>{
+        const tituloEl=document.getElementById('lmDiceTitle');
+        if(tituloEl) tituloEl.textContent='TU TIRADA';
+        box.innerHTML='';
+        const zona=document.getElementById('lmDiceResultZone');
+        mostrarResultadoDados(zona, tiradas,
+          (tiradasFinales)=>{
+            state.diceAvailable=Math.max(0, state.diceAvailable-numDados);
+            return resolverCartaPF(idx, tiradasFinales);
+          },
+          ()=>{ renderHub(); }
+        );
+      });
+    }
+
+    renderHub();
+  }
+
+  /* ---------- 13j. Historial de entrenamientos — burbuja "i" del
+     Preparador Físico. ---------- */
+  function abrirHistorialPF(){
+    const overlay=document.createElement('div');
+    overlay.id='lmHistorialPFOverlay';
+    const hist=state.preparadorFisicoHistorial||[];
+    const filas=hist.map(h=>`
+      <div class="lm-hist-item">
+        <i class="ph ph-bold ph-barbell" style="color:#e08a3e"></i>
+        <div style="flex:1">
+          <div class="lm-hist-title">${h.jugador} <span class="lm-hist-tag">+${h.cantidad}</span></div>
+          <div class="lm-hist-meta">${h.detalle} · Jornada ${h.jornada}</div>
+        </div>
+      </div>`).join('');
+    overlay.innerHTML=`
+      <div class="lm-dilemma-card lm-dilemma-card-pf" style="max-width:480px;text-align:left">
+        ${xCerrarHTML()}
+        <div class="lm-dilemma-title" style="text-align:center"><i class="ph ph-bold ph-clock-counter-clockwise"></i> HISTORIAL DE ENTRENAMIENTOS</div>
+        ${renderNivelesPFHTML()}
+        <p class="lm-setup-desc" style="text-align:left;margin:10px 0 4px">Mejoras individuales conseguidas</p>
+        <div class="lm-hist-list">${filas||'<p class="lm-setup-desc" style="text-align:center">Todavía no se ha entrenado a ningún jugador.</p>'}</div>
+        <div class="lm-popup-actions lm-popup-actions-compact">
+          <button id="lmHistorialPFCerrar" class="mode-card-btn mode-card-btn-gold">CERRAR</button>
+        </div>
+      </div>`;
+    document.getElementById('ligaManagerScreen').appendChild(overlay);
+    habilitarCierreOverlay(overlay, ()=>overlay.remove());
+    const xBtnHPF=overlay.querySelector('[data-cerrar-x]');
+    if(xBtnHPF) xBtnHPF.addEventListener('click', ()=>overlay.remove());
+    document.getElementById('lmHistorialPFCerrar').addEventListener('click', ()=>{
+      if(typeof window.playSound==='function') window.playSound('select');
+      overlay.remove();
+    });
+  }
+
   /* ---------- 13h. TRABAJADORES — contratar y despedir al cuerpo
      técnico. Cada mes se renuevan 2 candidatos por puesto (mismo momento
      que la nómina), con nivel y sueldo acordes; despedir deja el puesto
@@ -4271,7 +4707,7 @@
           <div class="lm-trab-card lm-trab-card-actual">
             <div class="lm-trab-card-top">
               <span class="lm-trab-nombre">${actual.nombre}</span>
-              <span class="lm-trab-estrellas">${estrellasNivel(actual.nivel)}</span>
+              <span class="lm-trab-estrellas">${estrellasNivel(actual.nivel, 5)}</span>
             </div>
             <div class="lm-trab-sueldo">${formatoDinero(actual.sueldo)}/mes</div>
             <button class="lm-trab-despedir" data-despedir="${rol}">DESPEDIR (finiquito ${formatoDinero(calcularFiniquito(actual))})</button>
@@ -4285,7 +4721,7 @@
             <div class="lm-trab-card">
               <div class="lm-trab-card-top">
                 <span class="lm-trab-nombre">${c.nombre}</span>
-                <span class="lm-trab-estrellas">${estrellasNivel(c.nivel)}</span>
+                <span class="lm-trab-estrellas">${estrellasNivel(c.nivel, 5)}</span>
               </div>
               <div class="lm-trab-sueldo">${formatoDinero(c.sueldo)}/mes</div>
               <button class="mode-card-btn mode-card-btn-gold lm-trab-contratar" data-contratar="${c.id}" data-rol="${rol}" style="padding:6px;font-size:10px;margin-top:6px">CONTRATAR</button>
