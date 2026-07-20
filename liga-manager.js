@@ -271,13 +271,184 @@
     const f=(FORMATIONS[cat]||[]).find(x=>x.code===state.formacionCode);
     return f ? f.bonus : {attack:0,defense:0,pace:0,passing:0,technique:0};
   }
+  // Ventana de días editables del calendario de entrenamiento — los días
+  // entre el partido anterior (exclusive) y el próximo (exclusive). La
+  // jornada 1 no tiene semana previa, así que no hay días que preparar.
+  function ventanaEntrenoActual(){
+    if(!state.jornadaActual || state.jornadaActual<=1 || state.jornadaActual>38) return null;
+    const anterior=fechaJornadaLM(state.jornadaActual-1);
+    const proxima=fechaJornadaLM(state.jornadaActual);
+    if(!anterior||!proxima) return null;
+    return {desde:anterior, hasta:proxima};
+  }
+  function fechaEsEditable(fecha){
+    const v=ventanaEntrenoActual();
+    if(!v) return false;
+    const t=fecha.getTime();
+    return t>v.desde.getTime() && t<v.hasta.getTime();
+  }
+  function contarEntrenoSemanaActual(){
+    const v=ventanaEntrenoActual();
+    if(!v) return {entreno:0, descanso:0, dias:0};
+    let entreno=0, dias=0;
+    const cur=new Date(v.desde); cur.setDate(cur.getDate()+1);
+    while(cur.getTime()<v.hasta.getTime()){
+      dias++;
+      if(state.calendarioEntrenamiento && state.calendarioEntrenamiento[fechaISO(cur)]) entreno++;
+      cur.setDate(cur.getDate()+1);
+    }
+    return {entreno, descanso:dias-entreno, dias};
+  }
+  // Procesa la semana de entrenamiento día a día: solo los jugadores
+  // elegidos en el PLAN DE ENTRENAMIENTO mejoran de verdad (permanente,
+  // sube su valor real), y entrenar muchos días seguidos sube el riesgo
+  // de lesión por sobrecarga — mitigado por la prevención del médico.
+  // Devuelve la lista de eventos día a día para el visionado rápido de
+  // la semana antes del partido.
+  function procesarEntrenamientoSemanal(){
+    const v=ventanaEntrenoActual();
+    const eventosDias=[];
+    if(!v) return eventosDias;
+    const NOMBRE_STAT={attack:'ataque',defense:'defensa',pace:'ritmo',passing:'pase',technique:'técnica'};
+    const plan=(state.pfPlanEntrenamiento||[])
+      .map(entry=>{
+        const jugador=state.plantilla.find(p=>p.id===entry.jugadorId);
+        return jugador ? {jugador, stat:entry.stat} : null;
+      })
+      .filter(Boolean);
+    const nivelesMed=state.medicoNiveles||{};
+    const bonusPlanificacion=1+nivelDePF('planificacionSemanal')*0.25;
+    const cur=new Date(v.desde); cur.setDate(cur.getDate()+1);
+    let seguidos=0;
+    while(cur.getTime()<v.hasta.getTime()){
+      const iso=fechaISO(cur);
+      const esEntreno=!!(state.calendarioEntrenamiento && state.calendarioEntrenamiento[iso]);
+      const textos=[];
+      if(esEntreno){
+        seguidos++;
+        plan.forEach(({jugador:j, stat:campo})=>{
+          if(!campo) return; // sin enfoque elegido, no entrena de verdad
+          if(Math.random()<0.30*bonusPlanificacion){
+            j[campo]=Math.min(99, Math.round((j[campo]||50)+1));
+            textos.push(`${j.name} mejora su ${NOMBRE_STAT[campo]} (+1)`);
+          }
+        });
+        // Entrenar 3+ días seguidos empieza a pasar factura — la
+        // prevención del médico (muscular y ósea) reduce este riesgo,
+        // igual que hace con las lesiones de partido.
+        const factorPrevencion=Math.pow(0.85, (nivelesMed.prevencionMuscular||0)+(nivelesMed.prevencionOsea||0));
+        const riesgoSobrecarga=Math.max(0, seguidos-2)*0.05*factorPrevencion;
+        if(riesgoSobrecarga>0 && Math.random()<riesgoSobrecarga){
+          const candidatos=(plan.length?plan.map(p=>p.jugador):state.plantilla).filter(p=>!p.injured);
+          if(candidatos.length){
+            const jugador=candidatos[Math.floor(Math.random()*candidatos.length)];
+            const familia=Math.random()<0.5?'muscular':'osea';
+            const sev={label:'leve', weeks:1};
+            jugador.injured=true; jugador.injurySeverity=sev.label; jugador.injuryWeeks=sev.weeks; jugador.injuryFamilia=familia;
+            jugador.lesionLogId=registrarLesionHistorial(jugador, sev, 'Sobrecarga por exceso de entrenamiento', 'el propio entrenamiento', familia);
+            textos.push(`${jugador.name} se resiente por sobrecarga de entrenamiento (leve)`);
+          }
+        }
+        if(!textos.length) textos.push('Entrenamiento sin incidencias');
+      } else {
+        seguidos=0;
+        textos.push('Día de descanso — la plantilla recupera resistencia');
+      }
+      eventosDias.push({fecha:new Date(cur), iso, tipo:esEntreno?'entreno':'descanso', textos});
+      cur.setDate(cur.getDate()+1);
+    }
+    guardarEstado();
+    return eventosDias;
+  }
+
+  // Días de un mes concreto para pintar la rejilla del calendario —
+  // semana empezando en lunes, huecos en blanco antes del día 1. Se
+  // apoya solo en Date nativo, así que sigue siendo correcto pintando
+  // cualquier año futuro sin tocar nada.
+  function generarDiasMes(year, month){
+    const primerDia=new Date(year, month, 1);
+    const ultimoDia=new Date(year, month+1, 0);
+    let offset=primerDia.getDay()-1; if(offset<0) offset=6;
+    const dias=[];
+    for(let i=0;i<offset;i++) dias.push(null);
+    for(let d=1; d<=ultimoDia.getDate(); d++) dias.push(new Date(year, month, d));
+    return dias;
+  }
+  // ¿Juega mi equipo ese día? Recorre las 38 jornadas (barato, nada que
+  // optimizar) y devuelve el rival si coincide la fecha.
+  function partidoMioEnFecha(isoStr){
+    for(let n=1;n<=38;n++){
+      const f=fechaJornadaLM(n);
+      if(!f || fechaISO(f)!==isoStr) continue;
+      const jornada=state.calendario[n-1];
+      if(!jornada) return null;
+      const miPartido=jornada.find(p=>p.home.id==='lm_0'||p.away.id==='lm_0');
+      if(!miPartido) return null;
+      const esLocal=miPartido.home.id==='lm_0';
+      return {jornada:n, rival: esLocal?miPartido.away:miPartido.home, esLocal};
+    }
+    return null;
+  }
+  let calendarioMesVisto=null; // {year,month} — se fija la primera vez que se pinta, en el mes del próximo partido
+  function calendarioHTML(){
+    if(!state.fechaInicioLiga) return '';
+    if(!calendarioMesVisto){
+      const base=fechaJornadaLM(Math.min(state.jornadaActual,38)) || new Date(state.fechaInicioLiga+'T00:00:00');
+      calendarioMesVisto={year:base.getFullYear(), month:base.getMonth()};
+    }
+    const {year, month}=calendarioMesVisto;
+    const dias=generarDiasMes(year, month);
+    const celdas=dias.map(d=>{
+      if(!d) return `<div class="lm-cal-celda lm-cal-vacia"></div>`;
+      const iso=fechaISO(d);
+      const partido=partidoMioEnFecha(iso);
+      const editable=fechaEsEditable(d);
+      const entrenado=!!(state.calendarioEntrenamiento && state.calendarioEntrenamiento[iso]);
+      let contenido='';
+      if(partido){
+        contenido=`<div class="lm-cal-partido" title="Jornada ${partido.jornada} — ${partido.esLocal?'vs':'fuera vs'} ${partido.rival.name}">${rivalCrestHTML(20, partido.rival.crestImg)}</div>`;
+      } else if(entrenado){
+        contenido=`<i class="ph ph-bold ph-barbell lm-cal-entreno-icon"></i>`;
+      }
+      const clases=['lm-cal-celda'];
+      if(partido) clases.push('lm-cal-dia-partido');
+      if(editable) clases.push('lm-cal-editable');
+      if(!editable) clases.push('lm-cal-bloqueado');
+      return `<div class="${clases.join(' ')}" ${editable?`data-cal-dia="${iso}"`:''} title="${editable?'Toca para marcar/quitar entrenamiento':''}">
+        <span class="lm-cal-num">${d.getDate()}</span>
+        ${contenido}
+      </div>`;
+    }).join('');
+    const {entreno, descanso}=contarEntrenoSemanaActual();
+    return `<div class="lm-calendario-box">
+      <div class="lm-cal-header">
+        <button class="lm-cal-nav" data-cal-nav="-1" title="Mes anterior"><i class="ph ph-bold ph-caret-left"></i></button>
+        <span class="lm-cal-titulo">${MESES_LARGO[month].toUpperCase()} ${year}</span>
+        <button class="lm-cal-nav" data-cal-nav="1" title="Mes siguiente"><i class="ph ph-bold ph-caret-right"></i></button>
+      </div>
+      <div class="lm-cal-semana-dias"><span>L</span><span>M</span><span>X</span><span>J</span><span>V</span><span>S</span><span>D</span></div>
+      <div class="lm-cal-grid">${celdas}</div>
+      <div class="lm-cal-leyenda">
+        <span><i class="ph ph-bold ph-barbell"></i> Entrenamiento (${entreno})</span>
+        <span><i class="ph ph-bold ph-bed"></i> Descanso (${descanso})</span>
+        <span class="lm-cal-leyenda-escudo">${crestHTML(state.escudo||null,14)} Partido</span>
+      </div>
+      <p class="lm-setup-desc" style="text-align:center;margin-top:4px">Entrenar mejora un poco las estadísticas de esta semana, pero cansa — deja días en blanco para que la plantilla recupere resistencia.</p>
+    </div>`;
+  }
+
   function calcularStatsEquipo(){
     const ids=Object.values(state.alineacion||{}).filter(Boolean);
-    const titulares = ids.map(id=>state.plantilla.find(p=>p.id===id)).filter(p=>p && !p.injured);
-    const base = titulares.length ? titulares : state.plantilla.filter(p=>!p.injured);
-    const baseFinal = base.length ? base : state.plantilla; // último recurso: si toda la plantilla está lesionada
+    const titulares = ids.map(id=>state.plantilla.find(p=>p.id===id)).filter(Boolean);
+    const base = titulares.length ? titulares : state.plantilla;
+    const baseFinal = base.length ? base : state.plantilla; // último recurso: si la plantilla está vacía
     const suma = {attack:0,defense:0,pace:0,passing:0,technique:0};
-    baseFinal.forEach(p=>{ suma.attack+=p.attack; suma.defense+=p.defense; suma.pace+=p.pace; suma.passing+=p.passing; suma.technique+=p.technique; });
+    baseFinal.forEach(p=>{
+      // Un jugador lesionado SÍ puede jugar, pero rinde peor — mismo
+      // factor de penalización (0.6) que efectivoOverall().
+      const f=p.injured?0.6:1;
+      suma.attack+=p.attack*f; suma.defense+=p.defense*f; suma.pace+=p.pace*f; suma.passing+=p.passing*f; suma.technique+=p.technique*f;
+    });
     const n=baseFinal.length||1;
     const bonus=formacionBonusActual();
     const tecPF=nivelDePF('potencialTecnico')*2, fisPF=nivelDePF('potencialFisico')*2;
@@ -289,6 +460,49 @@
 
 
   /* ---------- 3. Calendario ida/vuelta (método del círculo) ---------- */
+  /* ---------- 2b. Fechas reales del calendario de entrenamiento — se
+     apoya siempre en el objeto Date nativo del navegador, nunca en
+     tablas de días fijas, así que sigue siendo correcto dentro de 20 o
+     50 años sin tocar una línea. La liga arranca el sábado más cercano
+     (hoy mismo si hoy ya es sábado) a partir del día en que se crea la
+     partida, y cada jornada siguiente cae 7 días después. ---------- */
+  function fechaISO(d){
+    const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,'0'), day=String(d.getDate()).padStart(2,'0');
+    return `${y}-${m}-${day}`;
+  }
+  function proximoSabadoDesde(base){
+    const d=new Date(base); d.setHours(0,0,0,0);
+    const diasHasta=(6-d.getDay()+7)%7; // 6 = sábado; si hoy ya es sábado, diasHasta=0
+    d.setDate(d.getDate()+diasHasta);
+    return d;
+  }
+  // Reparto real de LaLiga: cada jornada se juega entre viernes y lunes
+  // (a veces incluso más días por aplazamientos, pero nos quedamos con
+  // el núcleo habitual), con la mayoría de partidos en sábado y domingo,
+  // algo menos el viernes, y solo alguno el lunes — igual que en la
+  // competición real. El día se calcula con un hash determinista a
+  // partir del número de jornada, así que siempre sale el mismo sin
+  // tener que guardar nada aparte en el estado.
+  function offsetDiaJornada(n){
+    let h=(n*2654435761)%2147483647; if(h<0) h+=2147483647;
+    const r=h/2147483647; // 0..1 estable para cada jornada
+    if(r<0.12) return -1; // viernes
+    if(r<0.52) return 0;  // sábado
+    if(r<0.90) return 1;  // domingo
+    return 2;              // lunes
+  }
+  function fechaJornadaLM(n){
+    if(!state.fechaInicioLiga) return null;
+    const inicio=new Date(state.fechaInicioLiga+'T00:00:00');
+    const f=new Date(inicio);
+    f.setDate(inicio.getDate()+(n-1)*7+offsetDiaJornada(n));
+    return f;
+  }
+  function diaSemanaCorto(d){
+    return ['DOM','LUN','MAR','MIÉ','JUE','VIE','SÁB'][d.getDay()];
+  }
+  const MESES_LARGO=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+
   function generarCalendario(teams){
     const n=teams.length, rounds=n-1, half=n/2;
     let arr=teams.slice(1);
@@ -483,6 +697,9 @@
       liga, moneda, nombreEquipo, escudo,
       jornadaActual:1,
       calendario:generarCalendario(teams),
+      fechaInicioLiga:fechaISO(proximoSabadoDesde(new Date())),
+      calendarioEntrenamiento:{},
+      pfPlanEntrenamiento:[],
       resultados:{},
       plantilla,
       formacionCategoria:'equilibrada',
@@ -543,7 +760,7 @@
       preparadorFisicoCambioUsado:false,
       preparadorFisicoCartasAgotadas:[],
       preparadorFisicoHistorial:[],
-      preparadorFisicoNiveles:{resistenciaBase:0, recuperacionSemanal:0, potencialTecnico:0, potencialFisico:0},
+      preparadorFisicoNiveles:{resistenciaBase:0, recuperacionSemanal:0, potencialTecnico:0, potencialFisico:0, planificacionSemanal:0},
       ordenColumnas:['left','center','right','staff']
     };
     state.medicoCartas = inicializarCartasMedico();
@@ -885,6 +1102,34 @@
         eventos.push({minute:20+Math.floor(Math.random()*65), team:misLado, type:'injury', jugador, sev:{...sev, weeks}, tipoLesion, familia});
       }
     }
+    // Jugar ya lesionado ahora está permitido, pero no es gratis: hay
+    // riesgo de que la lesión se agrave durante el propio partido (más
+    // aún si el campo está en mal estado).
+    const idsParaAgravar=Object.values(state.alineacion||{}).filter(Boolean);
+    idsParaAgravar.forEach(id=>{
+      const p=state.plantilla.find(x=>x.id===id);
+      if(!p || !p.injured) return;
+      const riesgoAgravar=0.14*factorCampo*(bonos.riesgoLesionSiguiente||1);
+      if(Math.random()>=riesgoAgravar) return;
+      const orden=['leve','moderada','grave'];
+      const idxActual=orden.indexOf(p.injurySeverity);
+      let severidadNueva=p.injurySeverity, semanasExtra=2;
+      if(idxActual>=0 && idxActual<orden.length-1){
+        severidadNueva=orden[idxActual+1];
+        semanasExtra=severidadNueva==='grave'?3:2;
+        p.injurySeverity=severidadNueva;
+      }
+      p.injuryWeeks=(p.injuryWeeks||0)+semanasExtra;
+      if(p.lesionLogId && state.medicoHistorial){
+        const entry=state.medicoHistorial.find(h=>h.id===p.lesionLogId);
+        if(entry){ entry.severidad=severidadNueva; entry.semanasPrevistas=(entry.semanasPrevistas||0)+semanasExtra; }
+      }
+      if(state.trabajadores && state.trabajadores.medico && typeof enviarCorreo==='function' &&
+         (!state.correoUltimoEnviado || state.correoUltimoEnviado.medico!==state.jornadaActual)){
+        enviarCorreo('medico', `${p.name} agrava su lesión jugando`,
+          `${p.name} ha seguido jugando con la lesión a cuestas y se le ha agravado — ahora es ${severidadNueva} y le quedan ${p.injuryWeeks} jornada${p.injuryWeeks===1?'':'s'} de baja.`);
+      }
+    });
     // Actualizar rachas de gol: quien marca suma, el resto de titulares que
     // NO marcaron este partido pierden la racha (mismo concepto que el
     // "streak" de goleador ya usado en Copa Leyendas).
@@ -1080,13 +1325,23 @@
       const titularIdsJornada=new Set(Object.values(state.alineacion||{}).filter(Boolean));
       const factorResistencia=1-nivelDePF('resistenciaBase')*0.12;
       const recuperacionExtra=nivelDePF('recuperacionSemanal')*5;
+      // Calendario de entrenamiento de esta semana: entrenar cansa (toda
+      // la plantilla, jueguen o no ese fin de semana) pero descansar
+      // recupera mucha resistencia — así el jugador tiene que dejar
+      // días en blanco a propósito.
+      const {entreno, descanso}=contarEntrenoSemanaActual();
+      const fatigaEntreno=entreno*2.2;
+      const fatigaDescanso=descanso*4;
       state.plantilla.forEach(p=>{
         const actual=(p.fatigue===undefined)?100:p.fatigue;
-        if(!titularIdsJornada.has(p.id)){ p.fatigue=100; return; }
-        if(p.position==='POR'){ p.fatigue=Math.max(0, Math.min(100, Math.round(actual-(2+Math.random()*4)*factorResistencia+recuperacionExtra))); return; }
+        if(!titularIdsJornada.has(p.id)){
+          p.fatigue=Math.max(0, Math.min(100, Math.round(100-fatigaEntreno+fatigaDescanso*0.5)));
+          return;
+        }
+        if(p.position==='POR'){ p.fatigue=Math.max(0, Math.min(100, Math.round(actual-(2+Math.random()*4)*factorResistencia+recuperacionExtra-fatigaEntreno+fatigaDescanso))); return; }
         let loss=8+Math.random()*6;
         if(p.position==='DFC') loss*=0.65;
-        p.fatigue=Math.max(0, Math.min(100, Math.round(actual-loss*factorResistencia+recuperacionExtra)));
+        p.fatigue=Math.max(0, Math.min(100, Math.round(actual-loss*factorResistencia+recuperacionExtra-fatigaEntreno+fatigaDescanso)));
       });
     }
 
@@ -1106,6 +1361,66 @@
      .match-scoreline), dos tiempos claramente separados con descanso,
      goles con goleador real, lesiones durante el propio partido, y
      badge de racha (🔥) si el goleador lleva varios partidos marcando. ---------- */
+  // Vista rápida de la semana antes del partido — avanza sola día a día
+  // (mismo espíritu que el minutero del partido en vivo, pero con los
+  // días de la semana), mostrando qué ha pasado en cada uno según el
+  // calendario. Al llegar al final, hay que pulsar para jugar el partido.
+  const DIAS_LARGO=['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+  function mostrarSemanaEnVivo(eventosDias, onJugarPartido){
+    const overlay=document.createElement('div');
+    overlay.id='lmSemanaOverlay';
+    document.getElementById('ligaManagerScreen').appendChild(overlay);
+    const rival=(()=>{
+      const j=state.jornadaActual-1;
+      const jornada=j>=0 && j<38 ? state.calendario[j] : null;
+      const miPartido=jornada?jornada.find(p=>p.home.id==='lm_0'||p.away.id==='lm_0'):null;
+      if(!miPartido) return null;
+      return miPartido.home.id==='lm_0'?miPartido.away:miPartido.home;
+    })();
+    function pantallaFinal(){
+      overlay.innerHTML=`
+        <div class="lm-dilemma-card" style="max-width:380px">
+          <div class="lm-dilemma-title"><i class="ph ph-bold ph-flag-checkered"></i> SEMANA COMPLETADA</div>
+          ${rival?`<div class="lm-rival-crest-block" style="margin:10px auto">${rivalCrestHTML(64, rival.crestImg)}<span class="lm-title" style="font-size:15px">${rival.name}</span></div>`:''}
+          <p class="lm-dilemma-text">Ya toca jugar el partido.</p>
+          <div class="lm-popup-actions">
+            <button id="lmJugarPartidoBtn" class="mode-card-btn mode-card-btn-gold">JUGAR PARTIDO</button>
+          </div>
+        </div>`;
+      document.getElementById('lmJugarPartidoBtn').addEventListener('click', ()=>{
+        if(typeof window.playSound==='function') window.playSound('select');
+        overlay.remove();
+        onJugarPartido();
+      });
+    }
+    if(!eventosDias || !eventosDias.length){ pantallaFinal(); return; }
+    let idx=0;
+    function pintarDia(){
+      const ev=eventosDias[idx];
+      const nombreDia=DIAS_LARGO[ev.fecha.getDay()];
+      overlay.innerHTML=`
+        <div class="lm-dilemma-card" style="max-width:380px">
+          <div class="lm-dilemma-title" style="text-transform:uppercase">${nombreDia} ${ev.fecha.getDate()}</div>
+          <div class="lm-semana-dia-icono ${ev.tipo==='entreno'?'lm-semana-entreno':'lm-semana-descanso'}">
+            <i class="ph ph-bold ${ev.tipo==='entreno'?'ph-barbell':'ph-bed'}"></i>
+          </div>
+          <div class="lm-semana-dia-tag">${ev.tipo==='entreno'?'ENTRENAMIENTO':'DESCANSO'}</div>
+          <div class="lm-semana-dia-textos">
+            ${ev.textos.map(t=>`<p>${t}</p>`).join('')}
+          </div>
+          <div class="lm-semana-progreso">
+            ${eventosDias.map((_,i)=>`<span class="lm-semana-punto ${i<=idx?'lm-semana-punto-activo':''}"></span>`).join('')}
+          </div>
+        </div>`;
+      setTimeout(()=>{
+        idx++;
+        if(idx<eventosDias.length) pintarDia();
+        else pantallaFinal();
+      }, 700);
+    }
+    pintarDia();
+  }
+
   function mostrarPartidoEnVivo(info, onFinish){
     const miEsLocal = info.home.id==='lm_0';
     const overlay=document.createElement('div');
@@ -1275,7 +1590,7 @@
     const id = 'h'+Date.now()+Math.floor(Math.random()*1000);
     state.medicoHistorial.push({
       id, tipo:'lesion',
-      jugador: jugador.name, jornadaInicio: state.jornadaActual, rival,
+      jugador: jugador.name, jugadorId: jugador.id, jornadaInicio: state.jornadaActual, rival,
       severidad: sev.label, tipoLesion, familia, semanasPrevistas: sev.weeks,
       resuelta:false, resueltoPor:null, jornadasReales:null
     });
@@ -1367,8 +1682,8 @@
     {id:'chequeo',      tipo:'directa',     nombre:'Chequeo de Plantilla',     icon:'ph-clipboard-text',   dificultad:6,  requiereLesion:false, desc:'Mejora la resistencia de toda la plantilla este partido'},
     {id:'fisio_muscular',    tipo:'nivel', track:'curacionMuscular',   nombre:'Unidad de Fisioterapia',        icon:'ph-person-simple-run', dificultadBase:8, dificultadPaso:4, desc:'Acelera la recuperación de lesiones musculares, esguinces y de ligamentos'},
     {id:'fisio_osea',        tipo:'nivel', track:'curacionOsea',       nombre:'Unidad de Traumatología',       icon:'ph-bandaids',          dificultadBase:9, dificultadPaso:4, desc:'Acelera la recuperación de fisuras, fracturas y lesiones de menisco'},
-    {id:'prevencion_muscular',tipo:'nivel', track:'prevencionMuscular', nombre:'Programa de Prevención Muscular', icon:'ph-heartbeat',        dificultadBase:8, dificultadPaso:4, desc:'Reduce el riesgo de sufrir lesiones musculares, esguinces y de ligamentos'},
-    {id:'prevencion_osea',   tipo:'nivel', track:'prevencionOsea',     nombre:'Protocolo de Protección Ósea',  icon:'ph-shield-plus',       dificultadBase:9, dificultadPaso:4, desc:'Reduce el riesgo de sufrir fisuras, fracturas y lesiones de menisco'}
+    {id:'prevencion_muscular',tipo:'nivel', track:'prevencionMuscular', nombre:'Programa de Prevención Muscular', icon:'ph-heartbeat',        dificultadBase:8, dificultadPaso:4, desc:'Reduce el riesgo de lesiones musculares (partido y sobrecarga por exceso de entrenamiento)'},
+    {id:'prevencion_osea',   tipo:'nivel', track:'prevencionOsea',     nombre:'Protocolo de Protección Ósea',  icon:'ph-shield-plus',       dificultadBase:9, dificultadPaso:4, desc:'Reduce el riesgo de lesiones óseas (partido y sobrecarga por exceso de entrenamiento)'}
   ];
 
   const NIVEL_MAXIMO_EQUIPO=3;
@@ -1383,14 +1698,16 @@
   const NIVELES_EQUIPO_INFO=[
     {track:'curacionMuscular',   label:'Fisioterapia',          icon:'ph-person-simple-run', desc:'Recuperación de lesiones musculares'},
     {track:'curacionOsea',       label:'Traumatología',         icon:'ph-bandaids',          desc:'Recuperación de lesiones óseas'},
-    {track:'prevencionMuscular', label:'Prevención muscular',   icon:'ph-heartbeat',         desc:'Riesgo de sufrir una lesión muscular'},
-    {track:'prevencionOsea',     label:'Protección ósea',       icon:'ph-shield-plus',       desc:'Riesgo de sufrir una lesión ósea'}
+    {track:'prevencionMuscular', label:'Prevención muscular',   icon:'ph-heartbeat',         desc:'Lesión muscular en partido o por sobrecarga de entreno'},
+    {track:'prevencionOsea',     label:'Protección ósea',       icon:'ph-shield-plus',       desc:'Lesión ósea en partido o por sobrecarga de entreno'}
   ];
   function estrellasNivel(n, max){ max=max||NIVEL_MAXIMO_EQUIPO; n=Math.max(0,Math.min(max,n)); return '★'.repeat(n) + '☆'.repeat(max-n); }
   function renderNivelesEquipoHTML(){
     return `<div class="med-niveles-grid">${NIVELES_EQUIPO_INFO.map(info=>{
       const n=nivelDe(info.track);
-      return `<div class="med-nivel-row">
+      const completado=n>=NIVEL_MAXIMO_EQUIPO;
+      return `<div class="med-nivel-row${completado?' med-nivel-completado':''}">
+        ${completado?'<i class="ph ph-bold ph-check-circle med-nivel-check" title="Proyecto completado"></i>':''}
         <i class="ph ph-bold ${info.icon}"></i>
         <div class="med-nivel-info">
           <div class="med-nivel-label">${info.label}</div>
@@ -1589,7 +1906,9 @@
   function renderNivelesMantenimientoHTML(){
     return `<div class="med-niveles-grid">${NIVELES_MANTENIMIENTO_INFO.map(info=>{
       const n=nivelDeM(info.track);
-      return `<div class="med-nivel-row">
+      const completado=n>=NIVEL_MAXIMO_EQUIPO;
+      return `<div class="med-nivel-row${completado?' med-nivel-completado':''}">
+        ${completado?'<i class="ph ph-bold ph-check-circle med-nivel-check" title="Proyecto completado"></i>':''}
         <i class="ph ph-bold ${info.icon}"></i>
         <div class="med-nivel-info">
           <div class="med-nivel-label">${info.label}</div>
@@ -2400,10 +2719,12 @@
     {id:'pretemporada_intensiva',tipo:'directa', nombre:'Pretemporada Intensiva', icon:'ph-barbell',       dificultad:9, desc:'+2 a TODAS las estadísticas de un jugador al azar, de forma permanente'},
     {id:'recuperacion_expres',   tipo:'directa', nombre:'Recuperación Exprés',    icon:'ph-battery-charging', dificultad:5, desc:'Restaura al instante la resistencia de toda la plantilla'},
     {id:'charla_motivacional',   tipo:'directa', nombre:'Charla Motivacional',    icon:'ph-megaphone-simple', dificultad:5, desc:'Pequeño impulso a la moral del equipo'},
+    {id:'sesion_doble',          tipo:'directa', nombre:'Sesión Doble',           icon:'ph-calendar-plus',    dificultad:7, desc:'Añade un día de entrenamiento extra a esta semana en el calendario, sin coste de fatiga'},
     {id:'resistencia_base',      tipo:'nivel', track:'resistenciaBase',    nombre:'Programa de Resistencia',   icon:'ph-heartbeat',         dificultadBase:8, dificultadPaso:4, desc:'Reduce la resistencia que se pierde al jugar cada partido'},
-    {id:'recuperacion_semanal',  tipo:'nivel', track:'recuperacionSemanal',nombre:'Recuperación Semanal',      icon:'ph-clock-clockwise',   dificultadBase:8, dificultadPaso:4, desc:'Los titulares también recuperan algo de resistencia entre jornadas'},
+    {id:'recuperacion_semanal',  tipo:'nivel', track:'recuperacionSemanal',nombre:'Recuperación Semanal',      icon:'ph-clock-clockwise',   dificultadBase:8, dificultadPaso:4, desc:'Los días de descanso del calendario recuperan más resistencia'},
     {id:'potencial_tecnico',     tipo:'nivel', track:'potencialTecnico',   nombre:'Potencial Técnico',         icon:'ph-soccer-ball',       dificultadBase:8, dificultadPaso:4, desc:'Sube la TÉCNICA de todo el equipo de forma permanente'},
-    {id:'potencial_fisico',      tipo:'nivel', track:'potencialFisico',    nombre:'Potencial Físico',          icon:'ph-lightning',         dificultadBase:8, dificultadPaso:4, desc:'Sube el RITMO de todo el equipo de forma permanente'}
+    {id:'potencial_fisico',      tipo:'nivel', track:'potencialFisico',    nombre:'Potencial Físico',          icon:'ph-lightning',         dificultadBase:8, dificultadPaso:4, desc:'Sube el RITMO de todo el equipo de forma permanente'},
+    {id:'planificacion_semanal', tipo:'nivel', track:'planificacionSemanal',nombre:'Planificación Semanal',    icon:'ph-calendar-check',    dificultadBase:9, dificultadPaso:4, desc:'Cada día de entrenamiento marcado en el calendario rinde más'}
   ];
   function cartaDefPF(id){ return PREPARADOR_FISICO_CARTAS_BASE.find(c=>c.id===id); }
   function nivelDePF(track){ return (state.preparadorFisicoNiveles && state.preparadorFisicoNiveles[track]) || 0; }
@@ -2471,11 +2792,24 @@
       case 'charla_motivacional':
         state.moral=Math.max(-50,Math.min(50,(state.moral||0)+4));
         return {texto:'El vestuario responde bien a la charla — sube la moral'};
+      case 'sesion_doble': {
+        const v=ventanaEntrenoActual();
+        if(!v) return {texto:'Todavía no hay una semana de calendario que preparar'};
+        if(!state.calendarioEntrenamiento) state.calendarioEntrenamiento={};
+        const cur=new Date(v.desde); cur.setDate(cur.getDate()+1);
+        let marcado=false;
+        while(cur.getTime()<v.hasta.getTime()){
+          const iso=fechaISO(cur);
+          if(!state.calendarioEntrenamiento[iso]){ state.calendarioEntrenamiento[iso]=true; marcado=true; break; }
+          cur.setDate(cur.getDate()+1);
+        }
+        return marcado ? {texto:'Se añade un día de entrenamiento extra a esta semana, sin coste de fatiga'} : {texto:'Esta semana ya está entrenada al completo'};
+      }
       default: return {texto:'Aplicado'};
     }
   }
   function aplicarNivelMejoraPF(def){
-    if(!state.preparadorFisicoNiveles) state.preparadorFisicoNiveles={resistenciaBase:0, recuperacionSemanal:0, potencialTecnico:0, potencialFisico:0};
+    if(!state.preparadorFisicoNiveles) state.preparadorFisicoNiveles={resistenciaBase:0, recuperacionSemanal:0, potencialTecnico:0, potencialFisico:0, planificacionSemanal:0};
     const nivelNuevo=Math.min(NIVEL_MAXIMO_EQUIPO, nivelDePF(def.track)+1);
     state.preparadorFisicoNiveles[def.track]=nivelNuevo;
     const maxAlcanzado=nivelNuevo>=NIVEL_MAXIMO_EQUIPO;
@@ -2739,8 +3073,21 @@
     if(!state.preparadorFisicoCartas || !state.preparadorFisicoCartas.length) state.preparadorFisicoCartas=inicializarCartasPF();
     if(!state.preparadorFisicoCartasAgotadas) state.preparadorFisicoCartasAgotadas=[];
     if(!state.preparadorFisicoHistorial) state.preparadorFisicoHistorial=[];
-    if(!state.preparadorFisicoNiveles) state.preparadorFisicoNiveles={resistenciaBase:0, recuperacionSemanal:0, potencialTecnico:0, potencialFisico:0};
+    if(!state.preparadorFisicoNiveles) state.preparadorFisicoNiveles={resistenciaBase:0, recuperacionSemanal:0, potencialTecnico:0, potencialFisico:0, planificacionSemanal:0};
     if(state.trabajadores && state.trabajadores.preparadorFisico===undefined) state.trabajadores.preparadorFisico=null;
+    if(!state.fechaInicioLiga) state.fechaInicioLiga=fechaISO(proximoSabadoDesde(new Date()));
+    if(!state.calendarioEntrenamiento) state.calendarioEntrenamiento={};
+    if(!state.pfPlanEntrenamiento) state.pfPlanEntrenamiento=[];
+    // Migración desde el formato antiguo (solo lista de ids, sin
+    // estadística elegida) — se les asigna un enfoque sugerido según su
+    // posición para no perder la selección.
+    state.pfPlanEntrenamiento=state.pfPlanEntrenamiento.map(entry=>{
+      if(typeof entry==='string'){
+        const p=state.plantilla.find(x=>x.id===entry);
+        return {jugadorId:entry, stat:statSugeridaPorPosicion(p?p.position:'')};
+      }
+      return entry;
+    }).filter(e=>e && e.jugadorId);
     if(!state.mantenimientoCartas || !state.mantenimientoCartas.length) state.mantenimientoCartas=inicializarCartasMantenimiento();
     if(!state.mantenimientoCartasAgotadas) state.mantenimientoCartasAgotadas=[];
     if(!state.mantenimientoHistorial) state.mantenimientoHistorial=[];
@@ -2967,6 +3314,7 @@
             <span><i class="lm-legend-dot lm-zona-descenso"></i>Descenso</span>
           </div>
           </div>
+          ${calendarioHTML()}
         </div>
 
         <div class="lm-panel lm-staff-panel" style="${columnaOrderStyle('staff')}">${columnaControlesHTML('staff')}
@@ -3055,12 +3403,15 @@
         if(typeof window.playSound==='function') window.playSound('select');
         const faltaCuerpoTecnico=ROLES_TRABAJO.some(r=>!state.trabajadores[r]);
         const jugarAhora=()=>{
-          const info=jugarJornada();
-          if(info){
-            mostrarPartidoEnVivo(info, render);
-          } else {
-            render();
-          }
+          const eventosDias=procesarEntrenamientoSemanal();
+          mostrarSemanaEnVivo(eventosDias, ()=>{
+            const info=jugarJornada();
+            if(info){
+              mostrarPartidoEnVivo(info, render);
+            } else {
+              render();
+            }
+          });
         };
         if(faltaCuerpoTecnico && !state.avisoCuerpoTecnicoMostrado){
           state.avisoCuerpoTecnicoMostrado=true;
@@ -3103,6 +3454,32 @@
       if(Date.now()-colArrowsUltimaInteraccion>10000) el.classList.add('lm-col-reorder-oculto');
     });
     iniciarFadeColArrows();
+    root.querySelectorAll('[data-cal-dia]').forEach(el=>{
+      el.addEventListener('click', ()=>{
+        const iso=el.getAttribute('data-cal-dia');
+        if(typeof window.playSound==='function') window.playSound('select');
+        if(!state.calendarioEntrenamiento) state.calendarioEntrenamiento={};
+        if(state.calendarioEntrenamiento[iso]) delete state.calendarioEntrenamiento[iso];
+        else state.calendarioEntrenamiento[iso]=true;
+        guardarEstado();
+        render();
+      });
+    });
+    root.querySelectorAll('[data-cal-nav]').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        if(typeof window.playSound==='function') window.playSound('select');
+        const dir=parseInt(btn.getAttribute('data-cal-nav'),10);
+        if(!calendarioMesVisto){
+          const base=fechaJornadaLM(Math.min(state.jornadaActual,38)) || new Date(state.fechaInicioLiga+'T00:00:00');
+          calendarioMesVisto={year:base.getFullYear(), month:base.getMonth()};
+        }
+        let {year, month}=calendarioMesVisto;
+        month+=dir;
+        if(month<0){ month=11; year--; } else if(month>11){ month=0; year++; }
+        calendarioMesVisto={year, month};
+        render();
+      });
+    });
     const perfilHeader=document.getElementById('lmPerfilEquipoHeader');
     if(perfilHeader) perfilHeader.addEventListener('click', ()=>{
       if(typeof window.playSound==='function') window.playSound('select');
@@ -3244,7 +3621,9 @@
 
   function manejarClicJugador(playerId){
     const jugador=state.plantilla.find(p=>p.id===playerId);
-    if(jugador && jugador.injured && !seleccionJugador) return; // no se puede seleccionar a un lesionado para jugar
+    // Un jugador lesionado SÍ se puede alinear — juega con más riesgo de
+    // agravar la lesión (se resuelve en el propio partido), ya no se
+    // bloquea aquí como antes.
     if(seleccionJugador===playerId){ seleccionJugador=null; render(); return; }
     if(seleccionJugador){
       // Si NINGUNO de los dos ocupa una posición en el campo no hay nada
@@ -3317,9 +3696,18 @@
 
     function pintar(){
       const filas = tratamientos.map(h=>{
-        const estado = h.resuelta
-          ? `Se recuperó gracias a <strong>${h.resueltoPor}</strong> — estuvo ${h.jornadasReales} jornada${h.jornadasReales===1?'':'s'} sin jugar`
-          : `<span style="color:#e24b4a">Todavía de baja</span> (previsto ${h.semanasPrevistas} jornada${h.semanasPrevistas===1?'':'s'})`;
+        let estado;
+        if(h.resuelta){
+          estado=`Se recuperó gracias a <strong>${h.resueltoPor}</strong> — estuvo ${h.jornadasReales} jornada${h.jornadasReales===1?'':'s'} sin jugar`;
+        } else {
+          // Ojo: semanasPrevistas es la previsión del DÍA de la lesión y
+          // nunca cambia — hay que mirar al jugador real para reflejar
+          // que un tratamiento le ha adelantado la recuperación.
+          const jugadorReal = h.jugadorId ? state.plantilla.find(p=>p.id===h.jugadorId) : null;
+          const restante = jugadorReal ? jugadorReal.injuryWeeks : h.semanasPrevistas;
+          const tratado = jugadorReal && restante < h.semanasPrevistas;
+          estado=`<span style="color:#e24b4a">Todavía de baja</span> (le quedan ${restante} jornada${restante===1?'':'s'}${tratado?' — <span style="color:#5dcaa5">tratamiento aplicado, se ha adelantado</span>':''})`;
+        }
         return `<div class="lm-hist-item">
           <i class="ph ph-bold ph-first-aid-kit" style="color:${h.resuelta?'#5dcaa5':'#e24b4a'}"></i>
           <div>
@@ -4234,7 +4622,9 @@
   function renderNivelesDGHTML(){
     return `<div class="med-niveles-grid">${NIVELES_DG_INFO.map(info=>{
       const n=nivelDeDG(info.track);
-      return `<div class="med-nivel-row">
+      const completado=n>=NIVEL_MAXIMO_EQUIPO;
+      return `<div class="med-nivel-row${completado?' med-nivel-completado':''}">
+        ${completado?'<i class="ph ph-bold ph-check-circle med-nivel-check" title="Proyecto completado"></i>':''}
         <i class="ph ph-bold ${info.icon}"></i>
         <div class="med-nivel-info">
           <div class="med-nivel-label">${info.label}</div>
@@ -4254,7 +4644,9 @@
   function renderNivelesDDHTML(){
     return `<div class="med-niveles-grid">${NIVELES_DD_INFO.map(info=>{
       const n=nivelDeDD(info.track);
-      return `<div class="med-nivel-row">
+      const completado=n>=NIVEL_MAXIMO_EQUIPO;
+      return `<div class="med-nivel-row${completado?' med-nivel-completado':''}">
+        ${completado?'<i class="ph ph-bold ph-check-circle med-nivel-check" title="Proyecto completado"></i>':''}
         <i class="ph ph-bold ${info.icon}"></i>
         <div class="med-nivel-info">
           <div class="med-nivel-label">${info.label}</div>
@@ -4693,7 +5085,9 @@
   function renderNivelesPFHTML(){
     return `<div class="med-niveles-grid">${NIVELES_PF_INFO.map(info=>{
       const n=nivelDePF(info.track);
-      return `<div class="med-nivel-row">
+      const completado=n>=NIVEL_MAXIMO_EQUIPO;
+      return `<div class="med-nivel-row${completado?' med-nivel-completado':''}">
+        ${completado?'<i class="ph ph-bold ph-check-circle med-nivel-check" title="Proyecto completado"></i>':''}
         <i class="ph ph-bold ${info.icon}"></i>
         <div class="med-nivel-info">
           <div class="med-nivel-label">${info.label}</div>
@@ -4702,6 +5096,40 @@
         <div class="med-nivel-stars" title="Nivel ${n}/${NIVEL_MAXIMO_EQUIPO}">${estrellasNivel(n)}</div>
       </div>`;
     }).join('')}</div>`;
+  }
+  // Resumen compacto del PLAN DE ENTRENAMIENTO — los hasta 3 jugadores
+  // elegidos son los únicos que mejoran de verdad al marcar días de
+  // entrenamiento en el calendario.
+  const STATS_ENTRENO=[
+    {key:'attack', label:'Ataque',   icon:'ph-sword'},
+    {key:'defense', label:'Defensa', icon:'ph-shield'},
+    {key:'pace', label:'Ritmo',      icon:'ph-lightning'},
+    {key:'passing', label:'Pase',    icon:'ph-arrows-split'},
+    {key:'technique', label:'Técnica', icon:'ph-soccer-ball'}
+  ];
+  // Sugerencia de enfoque según la posición — un punto de partida
+  // razonable que el usuario siempre puede cambiar a mano.
+  function statSugeridaPorPosicion(pos){
+    if(pos==='DC'||pos==='ED'||pos==='EI') return 'attack';
+    if(pos==='DFC'||pos==='LD'||pos==='LI'||pos==='POR') return 'defense';
+    if(pos==='MC') return 'passing';
+    return 'technique';
+  }
+  function renderPlanEntrenamientoResumenHTML(){
+    const plan=state.pfPlanEntrenamiento||[];
+    const chips=plan.map(entry=>{
+      const p=(state.plantilla||[]).find(x=>x.id===entry.jugadorId);
+      if(!p) return '';
+      const statInfo=STATS_ENTRENO.find(s=>s.key===entry.stat);
+      return `<span class="lm-plan-chip"><i class="ph ph-bold ${statInfo?statInfo.icon:'ph-question'}"></i>${p.name} <em>${statInfo?statInfo.label:'sin enfoque'}</em></span>`;
+    }).filter(Boolean).join('');
+    return `<div class="lm-plan-resumen">
+      <div class="lm-plan-resumen-texto">
+        <i class="ph ph-bold ph-clipboard-text"></i>
+        ${chips?`<div class="lm-plan-chips">${chips}</div>`:'<span>Todavía no has elegido a nadie para entrenar</span>'}
+      </div>
+      <button id="lmPlanEntrenoBtn" class="mode-card-btn mode-card-btn-secondary" style="padding:6px 14px;font-size:10px">PLAN DE ENTRENAMIENTO</button>
+    </div>`;
   }
 
   /* ---------- 13i. Interfaz del Preparador Físico — mismo patrón de
@@ -4753,6 +5181,7 @@
           ${xCerrarHTML()}
           <div class="lm-dilemma-title"><i class="ph ph-bold ph-barbell"></i> PREPARADOR FÍSICO</div>
           ${renderNivelesPFHTML()}
+          ${renderPlanEntrenamientoResumenHTML()}
           <div class="lm-setup-desc" style="text-align:center;margin:10px 0 8px">dados disponibles este partido: <strong>${state.diceAvailable}</strong> (compartidos con el resto del cuerpo técnico) · cambios de carta: <strong>${state.preparadorFisicoCambioUsado?0:1}/1</strong> · rerolls de dado hoy: <strong>${state.dadoRerollsDisponibles||0}/1</strong></div>
           <div class="med-card-grid">${cartasHTML}</div>
           <div class="lm-popup-actions lm-popup-actions-compact">
@@ -4788,7 +5217,124 @@
           renderSelectorCarta(idx);
         });
       });
+      const planBtn=document.getElementById('lmPlanEntrenoBtn');
+      if(planBtn) planBtn.addEventListener('click', ()=>{
+        if(typeof window.playSound==='function') window.playSound('select');
+        renderSelectorPlanEntrenamiento();
+      });
     }
+
+    function renderSelectorPlanEntrenamiento(){
+      // slots: hasta 3 huecos, cada uno {jugadorId, stat} o null si está vacío.
+      const guardado=(state.pfPlanEntrenamiento||[]).slice(0,3);
+      const slots=[0,1,2].map(i=>guardado[i]?{...guardado[i]}:null);
+
+      function pintarPrincipal(){
+        const huecos=slots.map((slot,i)=>{
+          if(!slot){
+            return `<div class="lm-plan-slot lm-plan-slot-vacio" data-plan-slot-add="${i}">
+              <i class="ph ph-bold ph-plus-circle"></i>
+              <span>Añadir jugador</span>
+            </div>`;
+          }
+          const p=state.plantilla.find(x=>x.id===slot.jugadorId);
+          if(!p) return `<div class="lm-plan-slot lm-plan-slot-vacio" data-plan-slot-add="${i}"><i class="ph ph-bold ph-plus-circle"></i><span>Añadir jugador</span></div>`;
+          return `<div class="lm-plan-slot">
+            <div class="lm-plan-slot-top">
+              <div class="lm-plan-slot-jugador">
+                <strong>${p.name}</strong>
+                <span class="lm-hist-tag">${p.position}</span>
+              </div>
+              <button class="lm-plan-slot-quitar" data-plan-slot-quitar="${i}" title="Quitar del plan"><i class="ph ph-bold ph-x"></i></button>
+            </div>
+            <div class="lm-plan-slot-label">Enfoque de este entrenamiento:</div>
+            <div class="lm-plan-stat-row">
+              ${STATS_ENTRENO.map(s=>`<button class="lm-plan-stat-btn ${slot.stat===s.key?'lm-plan-stat-activo':''}" data-plan-slot-stat="${i}" data-plan-stat-key="${s.key}" title="${s.label}"><i class="ph ph-bold ${s.icon}"></i><span>${s.label}</span></button>`).join('')}
+            </div>
+          </div>`;
+        }).join('');
+        const completos=slots.filter(s=>s && s.stat).length;
+        overlay.innerHTML=`
+          <div class="lm-dilemma-card lm-dilemma-card-pf" style="width:520px;max-width:92vw;text-align:left">
+            ${xCerrarHTML()}
+            <div class="lm-dilemma-title" style="text-align:center"><i class="ph ph-bold ph-clipboard-text"></i> PLAN DE ENTRENAMIENTO</div>
+            <p class="lm-setup-desc" style="text-align:center;margin-bottom:10px">Elige hasta 3 jugadores y, para cada uno, QUÉ estadística quieres mejorar — un delantero puede entrenar ataque, un central defensa, etc. Solo mejoran de verdad los días de entrenamiento marcados en el calendario.</p>
+            <div class="lm-plan-slots">${huecos}</div>
+            <div class="lm-popup-actions">
+              <button id="lmPlanGuardar" class="mode-card-btn mode-card-btn-gold">GUARDAR (${completos}/3)</button>
+              <button id="lmPlanCancelar" class="lm-btn-cancelar">CERRAR</button>
+            </div>
+          </div>`;
+        overlay.querySelectorAll('[data-plan-slot-add]').forEach(el=>{
+          el.addEventListener('click', ()=>{
+            const i=parseInt(el.getAttribute('data-plan-slot-add'),10);
+            if(typeof window.playSound==='function') window.playSound('select');
+            pintarElegirJugador(i);
+          });
+        });
+        overlay.querySelectorAll('[data-plan-slot-quitar]').forEach(el=>{
+          el.addEventListener('click', ()=>{
+            const i=parseInt(el.getAttribute('data-plan-slot-quitar'),10);
+            if(typeof window.playSound==='function') window.playSound('select');
+            slots[i]=null;
+            pintarPrincipal();
+          });
+        });
+        overlay.querySelectorAll('[data-plan-slot-stat]').forEach(el=>{
+          el.addEventListener('click', ()=>{
+            const i=parseInt(el.getAttribute('data-plan-slot-stat'),10);
+            const key=el.getAttribute('data-plan-stat-key');
+            if(typeof window.playSound==='function') window.playSound('select');
+            slots[i].stat=key;
+            pintarPrincipal();
+          });
+        });
+        document.getElementById('lmPlanCancelar').addEventListener('click', ()=>{
+          if(typeof window.playSound==='function') window.playSound('select');
+          renderHub();
+        });
+        document.getElementById('lmPlanGuardar').addEventListener('click', ()=>{
+          if(typeof window.playSound==='function') window.playSound('select');
+          state.pfPlanEntrenamiento=slots.filter(s=>s && s.jugadorId && s.stat);
+          guardarEstado();
+          renderHub();
+        });
+      }
+
+      function pintarElegirJugador(slotIdx){
+        const yaElegidosOtros=slots.filter((s,i)=>i!==slotIdx && s).map(s=>s.jugadorId);
+        const filas=(state.plantilla||[]).filter(p=>!yaElegidosOtros.includes(p.id)).map(p=>`
+          <div class="lm-slot-option" data-plan-elegir-pid="${p.id}">
+            <span>${p.name} <span class="lm-hist-tag">${p.position}</span></span>
+            <span>Punt. ${p.overall}</span>
+          </div>`).join('');
+        overlay.innerHTML=`
+          <div class="lm-dilemma-card lm-dilemma-card-pf" style="width:480px;max-width:90vw;text-align:left">
+            ${xCerrarHTML()}
+            <div class="lm-dilemma-title" style="text-align:center"><i class="ph ph-bold ph-user-focus"></i> ELEGIR JUGADOR</div>
+            <div class="lm-slot-list">${filas}</div>
+            <div class="lm-popup-actions">
+              <button id="lmPlanVolver" class="lm-btn-cancelar">VOLVER</button>
+            </div>
+          </div>`;
+        overlay.querySelectorAll('[data-plan-elegir-pid]').forEach(el=>{
+          el.addEventListener('click', ()=>{
+            const pid=el.getAttribute('data-plan-elegir-pid');
+            const p=state.plantilla.find(x=>x.id===pid);
+            if(typeof window.playSound==='function') window.playSound('select');
+            slots[slotIdx]={jugadorId:pid, stat:statSugeridaPorPosicion(p?p.position:'')};
+            pintarPrincipal();
+          });
+        });
+        document.getElementById('lmPlanVolver').addEventListener('click', ()=>{
+          if(typeof window.playSound==='function') window.playSound('select');
+          pintarPrincipal();
+        });
+      }
+
+      pintarPrincipal();
+    }
+
 
     function renderSelectorCarta(idx){
       const def=cartaDefPF(state.preparadorFisicoCartas[idx].cartaId);
