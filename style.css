@@ -2501,7 +2501,7 @@ body.liga-manager-screen #mobileTabBar{display:none!important}
   max-width:1900px;
   margin:0 auto;
   gap:0;
-  height:100%;
+  flex:1;
   min-height:0;
 }
 /* Animación breve y elegante al reordenar columnas — un fundido con
@@ -2617,21 +2617,22 @@ body.liga-manager-screen #mobileTabBar{display:none!important}
   display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:3px;
   font-size:9px;color:#666;text-align:center;font-weight:700;
 }
-.lm-cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+.lm-cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
 .lm-cal-celda{
-  aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  aspect-ratio:1;min-width:36px;display:flex;flex-direction:column;align-items:center;justify-content:center;
   gap:1px;border-radius:5px;background:#171a1c;position:relative;
 }
 .lm-cal-vacia{background:transparent}
-.lm-cal-num{font-size:9px;color:#666}
+.lm-cal-num{font-size:13px;color:#999;font-weight:600}
 .lm-cal-bloqueado{opacity:.55}
 .lm-cal-editable{cursor:pointer;background:#20262a;border:1px solid #33393d;transition:background .12s,border-color .12s}
 .lm-cal-editable:hover{border-color:#e08a3e;background:#262c30}
-.lm-cal-editable .lm-cal-num{color:#ccc}
-.lm-cal-entreno-icon{color:#e08a3e;font-size:13px}
-.lm-cal-dia-partido{background:rgba(230,201,74,.1);border:1px solid rgba(230,201,74,.4)}
+.lm-cal-editable .lm-cal-num{color:#f0f0f0}
+.lm-cal-entreno-icon{color:#e08a3e;font-size:16px}
+.lm-cal-dia-partido{background:rgba(230,201,74,.14);border:1px solid rgba(230,201,74,.55)}
 .lm-cal-dia-partido .lm-cal-num{display:none}
-.lm-cal-partido{width:20px;height:20px;display:flex;align-items:center;justify-content:center}
+.lm-cal-partido{width:30px;height:30px;display:flex;align-items:center;justify-content:center}
+.lm-cal-partido img,.lm-cal-partido svg{width:100%;height:100%}
 .lm-cal-leyenda{
   display:flex;flex-wrap:wrap;gap:10px;margin-top:8px;padding-top:8px;
   border-top:1px solid #2a2f33;font-size:9px;color:#999;

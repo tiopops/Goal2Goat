@@ -275,10 +275,20 @@
   // entre el partido anterior (exclusive) y el próximo (exclusive). La
   // jornada 1 no tiene semana previa, así que no hay días que preparar.
   function ventanaEntrenoActual(){
-    if(!state.jornadaActual || state.jornadaActual<=1 || state.jornadaActual>38) return null;
-    const anterior=fechaJornadaLM(state.jornadaActual-1);
+    if(!state.jornadaActual || state.jornadaActual>38) return null;
     const proxima=fechaJornadaLM(state.jornadaActual);
-    if(!anterior||!proxima) return null;
+    if(!proxima) return null;
+    let anterior;
+    if(state.jornadaActual<=1){
+      // Antes del primer partido no hay "jornada anterior" — la semana
+      // de preparación va desde hoy (el día real de hoy) hasta el
+      // partido, así que sí se puede planificar la primera semana.
+      anterior=new Date(); anterior.setHours(0,0,0,0); anterior.setDate(anterior.getDate()-1);
+    } else {
+      anterior=fechaJornadaLM(state.jornadaActual-1);
+    }
+    if(!anterior) return null;
+    if(anterior.getTime()>=proxima.getTime()) return null; // sin margen (la liga arranca hoy mismo)
     return {desde:anterior, hasta:proxima};
   }
   function fechaEsEditable(fecha){
@@ -350,9 +360,11 @@
           }
         }
         if(!textos.length) textos.push('Entrenamiento sin incidencias');
+        state.plantilla.forEach(p=>{ p.fatigue=Math.max(0, Math.min(100, Math.round((p.fatigue===undefined?100:p.fatigue)-2.2))); });
       } else {
         seguidos=0;
         textos.push('Día de descanso — la plantilla recupera resistencia');
+        state.plantilla.forEach(p=>{ p.fatigue=Math.max(0, Math.min(100, Math.round((p.fatigue===undefined?100:p.fatigue)+4))); });
       }
       eventosDias.push({fecha:new Date(cur), iso, tipo:esEntreno?'entreno':'descanso', textos});
       cur.setDate(cur.getDate()+1);
@@ -406,7 +418,7 @@
       const entrenado=!!(state.calendarioEntrenamiento && state.calendarioEntrenamiento[iso]);
       let contenido='';
       if(partido){
-        contenido=`<div class="lm-cal-partido" title="Jornada ${partido.jornada} — ${partido.esLocal?'vs':'fuera vs'} ${partido.rival.name}">${rivalCrestHTML(20, partido.rival.crestImg)}</div>`;
+        contenido=`<div class="lm-cal-partido" title="Jornada ${partido.jornada} — ${partido.esLocal?'vs':'fuera vs'} ${partido.rival.name}">${rivalCrestHTML(28, partido.rival.crestImg)}</div>`;
       } else if(entrenado){
         contenido=`<i class="ph ph-bold ph-barbell lm-cal-entreno-icon"></i>`;
       }
@@ -494,6 +506,11 @@
   function fechaJornadaLM(n){
     if(!state.fechaInicioLiga) return null;
     const inicio=new Date(state.fechaInicioLiga+'T00:00:00');
+    // La jornada 1 se queda fija en el sábado de inicio de liga — así
+    // nunca puede caer antes de hoy (el offset de las demás jornadas sí
+    // puede adelantar o atrasar el día, pero la 1ª no tiene semana previa
+    // que mover hacia atrás sin arriesgarse a caer en el pasado).
+    if(n<=1) return inicio;
     const f=new Date(inicio);
     f.setDate(inicio.getDate()+(n-1)*7+offsetDiaJornada(n));
     return f;
@@ -1318,30 +1335,20 @@
     // Leyendas: quien ha jugado esta jornada (los 11 del campo) pierde
     // resistencia (el portero apenas se cansa, los centrales son los que
     // menos corren), y quien se queda en el banquillo recupera del todo.
-    // Antes el campo "fatigue" existía pero nunca bajaba jugando. El
-    // Preparador Físico puede suavizar la pérdida (resistenciaBase) y dar
-    // algo de recuperación extra a los propios titulares (recuperacionSemanal).
+    // El efecto del calendario de entrenamiento (entrenar cansa, descansar
+    // recupera) ya se resuelve antes, en procesarEntrenamientoSemanal(),
+    // así se nota en el acto y no hay que esperar a jugar el partido.
     if(miPartidoInfo){
       const titularIdsJornada=new Set(Object.values(state.alineacion||{}).filter(Boolean));
       const factorResistencia=1-nivelDePF('resistenciaBase')*0.12;
       const recuperacionExtra=nivelDePF('recuperacionSemanal')*5;
-      // Calendario de entrenamiento de esta semana: entrenar cansa (toda
-      // la plantilla, jueguen o no ese fin de semana) pero descansar
-      // recupera mucha resistencia — así el jugador tiene que dejar
-      // días en blanco a propósito.
-      const {entreno, descanso}=contarEntrenoSemanaActual();
-      const fatigaEntreno=entreno*2.2;
-      const fatigaDescanso=descanso*4;
       state.plantilla.forEach(p=>{
         const actual=(p.fatigue===undefined)?100:p.fatigue;
-        if(!titularIdsJornada.has(p.id)){
-          p.fatigue=Math.max(0, Math.min(100, Math.round(100-fatigaEntreno+fatigaDescanso*0.5)));
-          return;
-        }
-        if(p.position==='POR'){ p.fatigue=Math.max(0, Math.min(100, Math.round(actual-(2+Math.random()*4)*factorResistencia+recuperacionExtra-fatigaEntreno+fatigaDescanso))); return; }
+        if(!titularIdsJornada.has(p.id)){ p.fatigue=100; return; }
+        if(p.position==='POR'){ p.fatigue=Math.max(0, Math.min(100, Math.round(actual-(2+Math.random()*4)*factorResistencia+recuperacionExtra))); return; }
         let loss=8+Math.random()*6;
         if(p.position==='DFC') loss*=0.65;
-        p.fatigue=Math.max(0, Math.min(100, Math.round(actual-loss*factorResistencia+recuperacionExtra-fatigaEntreno+fatigaDescanso)));
+        p.fatigue=Math.max(0, Math.min(100, Math.round(actual-loss*factorResistencia+recuperacionExtra)));
       });
     }
 
@@ -1366,7 +1373,7 @@
   // días de la semana), mostrando qué ha pasado en cada uno según el
   // calendario. Al llegar al final, hay que pulsar para jugar el partido.
   const DIAS_LARGO=['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
-  function mostrarSemanaEnVivo(eventosDias, onJugarPartido){
+  function mostrarSemanaEnVivo(eventosDias, onAceptar){
     const overlay=document.createElement('div');
     overlay.id='lmSemanaOverlay';
     document.getElementById('ligaManagerScreen').appendChild(overlay);
@@ -1377,29 +1384,45 @@
       if(!miPartido) return null;
       return miPartido.home.id==='lm_0'?miPartido.away:miPartido.home;
     })();
-    function pantallaFinal(){
-      overlay.innerHTML=`
-        <div class="lm-dilemma-card" style="max-width:380px">
-          <div class="lm-dilemma-title"><i class="ph ph-bold ph-flag-checkered"></i> SEMANA COMPLETADA</div>
-          ${rival?`<div class="lm-rival-crest-block" style="margin:10px auto">${rivalCrestHTML(64, rival.crestImg)}<span class="lm-title" style="font-size:15px">${rival.name}</span></div>`:''}
-          <p class="lm-dilemma-text">Ya toca jugar el partido.</p>
-          <div class="lm-popup-actions">
-            <button id="lmJugarPartidoBtn" class="mode-card-btn mode-card-btn-gold">JUGAR PARTIDO</button>
+    // Historial final — resumen de TODO lo ocurrido en la semana, con un
+    // único botón ACEPTAR que solo cierra esta ventana. El partido no se
+    // juega aquí: hace falta un segundo SEGUIR aparte para eso.
+    function pantallaResumen(){
+      const filasHistorial=(eventosDias||[]).map(ev=>{
+        const nombreDia=DIAS_LARGO[ev.fecha.getDay()];
+        return `<div class="lm-hist-item">
+          <i class="ph ph-bold ${ev.tipo==='entreno'?'ph-barbell':'ph-bed'}" style="color:${ev.tipo==='entreno'?'#e08a3e':'#5dcaa5'}"></i>
+          <div>
+            <div class="lm-hist-title">${nombreDia} ${ev.fecha.getDate()} <span class="lm-hist-tag">${ev.tipo==='entreno'?'Entrenamiento':'Descanso'}</span></div>
+            <div class="lm-hist-desc">${ev.textos.join(' · ')}</div>
           </div>
         </div>`;
-      document.getElementById('lmJugarPartidoBtn').addEventListener('click', ()=>{
+      }).join('');
+      overlay.innerHTML=`
+        <div class="lm-dilemma-card lm-semana-card-fija" style="width:420px;max-width:92vw;text-align:left">
+          <div class="lm-dilemma-title" style="text-align:center"><i class="ph ph-bold ph-flag-checkered"></i> SEMANA COMPLETADA</div>
+          ${rival?`<div class="lm-rival-crest-block" style="margin:6px auto 12px">${rivalCrestHTML(56, rival.crestImg)}<span class="lm-title" style="font-size:13px">Próximo: ${rival.name}</span></div>`:''}
+          <div class="lm-hist-list" style="max-height:280px">
+            ${filasHistorial||'<p class="lm-setup-desc" style="text-align:center">No había días que entrenar esta semana.</p>'}
+          </div>
+          <div class="lm-popup-actions" style="justify-content:center">
+            <button id="lmSemanaAceptarBtn" class="mode-card-btn mode-card-btn-gold" style="width:auto;padding:10px 30px">ACEPTAR</button>
+          </div>
+        </div>`;
+      document.getElementById('lmSemanaAceptarBtn').addEventListener('click', ()=>{
         if(typeof window.playSound==='function') window.playSound('select');
         overlay.remove();
-        onJugarPartido();
+        onAceptar();
       });
     }
-    if(!eventosDias || !eventosDias.length){ pantallaFinal(); return; }
+    if(!eventosDias || !eventosDias.length){ pantallaResumen(); return; }
     let idx=0;
     function pintarDia(){
       const ev=eventosDias[idx];
       const nombreDia=DIAS_LARGO[ev.fecha.getDay()];
+      if(typeof window.playSound==='function') window.playSound(ev.tipo==='entreno'?'dice':'select');
       overlay.innerHTML=`
-        <div class="lm-dilemma-card" style="max-width:380px">
+        <div class="lm-dilemma-card lm-semana-card-fija" style="width:380px;max-width:92vw">
           <div class="lm-dilemma-title" style="text-transform:uppercase">${nombreDia} ${ev.fecha.getDate()}</div>
           <div class="lm-semana-dia-icono ${ev.tipo==='entreno'?'lm-semana-entreno':'lm-semana-descanso'}">
             <i class="ph ph-bold ${ev.tipo==='entreno'?'ph-barbell':'ph-bed'}"></i>
@@ -1415,7 +1438,7 @@
       setTimeout(()=>{
         idx++;
         if(idx<eventosDias.length) pintarDia();
-        else pantallaFinal();
+        else pantallaResumen();
       }, 700);
     }
     pintarDia();
@@ -2196,7 +2219,7 @@
      Cada mes aparece un puñado de candidatos nuevos para poder comparar
      si compensa cambiar; despedir deja el puesto vacante (sin sueldo,
      pero también sin nadie al mando) hasta contratar a otra persona. ---------- */
-  const ROLES_TRABAJO=['medico','mantenimiento','directorGeneral','directorDeportivo','preparadorFisico'];
+  const ROLES_TRABAJO=['medico','directorGeneral','directorDeportivo','preparadorFisico','mantenimiento'];
   const SUELDO_BASE_ROL={medico:4000, mantenimiento:4000, directorGeneral:5000, directorDeportivo:5000, preparadorFisico:4200};
   const NOMBRE_ROL={medico:'Equipo Médico', mantenimiento:'Mantenimiento y Seguridad', directorGeneral:'Director General', directorDeportivo:'Director Deportivo', preparadorFisico:'Preparador Físico'};
   function nivelAleatorioTrabajador(){
@@ -3163,6 +3186,16 @@
     const filasPlantilla=plantillaPrincipal.map(filaJugador).join('');
     const filasBanquillo=banquillo.map(filaJugador).join('');
 
+    // El scroll de cada columna es independiente y se pierde cada vez que
+    // se reconstruye el HTML entero — se guarda aquí y se restaura al
+    // final, para que marcar un día del calendario (o cualquier otra
+    // acción) no salte la columna arriba de golpe.
+    const scrollGuardado={};
+    root.querySelectorAll('.lm-panel, .lm-center-panel').forEach(el=>{
+      const clave=el.className;
+      if(clave) scrollGuardado[clave]=el.scrollTop;
+    });
+
     root.innerHTML = `
       <div class="lm-app-grid ${acabaDeReordenarColumnas?'lm-col-reordering':''}">
         <div class="lm-panel lm-left-panel" style="${columnaOrderStyle('left')}">${columnaControlesHTML('left')}
@@ -3294,6 +3327,7 @@
                 `).join('')}
               </div>` : `<div class="lm-vs-label" style="text-align:center">Temporada finalizada</div>`}
           </div>
+          ${calendarioHTML()}
           <h3 class="lm-clasif-header" id="lmClasifHeader"><span style="color:var(--gold)">CLASIFICACIÓN</span> <span class="lm-clasif-arrow ${clasifColapsada?'':'lm-clasif-arrow-open'}">▾</span></h3>
           <div id="lmClasifBody" style="${clasifColapsada?'display:none':''}">
           <div class="lm-table-wrap">
@@ -3314,7 +3348,6 @@
             <span><i class="lm-legend-dot lm-zona-descenso"></i>Descenso</span>
           </div>
           </div>
-          ${calendarioHTML()}
         </div>
 
         <div class="lm-panel lm-staff-panel" style="${columnaOrderStyle('staff')}">${columnaControlesHTML('staff')}
@@ -3328,8 +3361,8 @@
             ${staffTileHTML('directorGeneral', {btnId:'lmDirectorGeneralBtn', infoId:'lmDirectorGeneralInfoBtn', infoTitle:'Finanzas del club', notif:notifDG, badgeTexto:'!', carpeta:'director_general', archivo:'director_general', alt:'Director General', icono:'ph-briefcase', rolLabel:'DIRECTOR GENERAL', acento:'lm-staff-tile-dg', desc:'Patrocinios, merchandising, aforo y precio de las entradas'})}
             ${staffTileHTML('directorDeportivo', {btnId:'lmDirectorDeportivoBtn', infoId:'lmDirectorDeportivoInfoBtn', infoTitle:'Salarios de la plantilla', notif:notifDD, badgeTexto:'!', carpeta:'director_deportivo', archivo:'director_deportivo', alt:'Director Deportivo', icono:'ph-binoculars', rolLabel:'DIRECTOR DEPORTIVO', acento:'lm-staff-tile-dd', desc:'Fichajes, ojeadores y sobres de nuevos jugadores'})}
             ${staffTileHTML('medico', {btnId:'lmMedicoBtn', infoId:'lmMedicoInfoBtn', infoTitle:'Historial médico', notif:notif, badgeTexto:'1', carpeta:'medico', archivo:'medico', alt:'Equipo médico', icono:'ph-first-aid-kit', rolLabel:'EQUIPO MÉDICO', desc:'Previene, diagnostica y trata las lesiones de tus jugadores', acento:'lm-staff-tile-medico'})}
-            ${staffTileHTML('mantenimiento', {btnId:'lmMantenimientoBtn', infoId:'lmMantenimientoInfoBtn', infoTitle:'Estado del estadio', notif:notifMant, badgeTexto:'!', carpeta:'mantenimiento', archivo:'mantenimiento_y_seguridad', alt:'Mantenimiento y seguridad', icono:'ph-flag-pennant', rolLabel:'MANTENIMIENTO Y SEGURIDAD', desc:'Cuida el césped, la seguridad y la satisfacción de la afición', acento:'lm-staff-tile-mant'})}
             ${staffTileHTML('preparadorFisico', {btnId:'lmPreparadorFisicoBtn', infoId:'lmPreparadorFisicoInfoBtn', infoTitle:'Historial de entrenamientos', notif:false, badgeTexto:'', carpeta:'preparador_fisico', archivo:'preparador_fisico', alt:'Preparador Físico', icono:'ph-barbell', rolLabel:'PREPARADOR FÍSICO', desc:'Entrena a tus jugadores y mejora sus estadísticas de forma original', acento:'lm-staff-tile-pf'})}
+            ${staffTileHTML('mantenimiento', {btnId:'lmMantenimientoBtn', infoId:'lmMantenimientoInfoBtn', infoTitle:'Estado del estadio', notif:notifMant, badgeTexto:'!', carpeta:'mantenimiento', archivo:'mantenimiento_y_seguridad', alt:'Mantenimiento y seguridad', icono:'ph-flag-pennant', rolLabel:'MANTENIMIENTO Y SEGURIDAD', desc:'Cuida el césped, la seguridad y la satisfacción de la afición', acento:'lm-staff-tile-mant'})}
           </div>
 
           <div class="lm-correo-box">
@@ -3367,6 +3400,10 @@
 
     if(clima) aplicarClimaVisualLM(clima.id);
     acabaDeReordenarColumnas=false;
+    root.querySelectorAll('.lm-panel, .lm-center-panel').forEach(el=>{
+      const clave=el.className;
+      if(clave && scrollGuardado[clave]!==undefined) el.scrollTop=scrollGuardado[clave];
+    });
 
     const medicoInfoBtn=document.getElementById('lmMedicoInfoBtn');
     if(medicoInfoBtn) medicoInfoBtn.addEventListener('click', (e)=>{
@@ -3403,15 +3440,17 @@
         if(typeof window.playSound==='function') window.playSound('select');
         const faltaCuerpoTecnico=ROLES_TRABAJO.some(r=>!state.trabajadores[r]);
         const jugarAhora=()=>{
-          const eventosDias=procesarEntrenamientoSemanal();
-          mostrarSemanaEnVivo(eventosDias, ()=>{
+          // Si la semana de esta jornada ya se resolvió (primer SEGUIR),
+          // este segundo SEGUIR juega directamente el partido.
+          if(state.semanaResueltaParaJornada===state.jornadaActual){
             const info=jugarJornada();
-            if(info){
-              mostrarPartidoEnVivo(info, render);
-            } else {
-              render();
-            }
-          });
+            if(info){ mostrarPartidoEnVivo(info, render); } else { render(); }
+            return;
+          }
+          const eventosDias=procesarEntrenamientoSemanal();
+          state.semanaResueltaParaJornada=state.jornadaActual;
+          guardarEstado();
+          mostrarSemanaEnVivo(eventosDias, ()=>{ render(); });
         };
         if(faltaCuerpoTecnico && !state.avisoCuerpoTecnicoMostrado){
           state.avisoCuerpoTecnicoMostrado=true;
@@ -3871,6 +3910,14 @@
         if(typeof window.playSound==='function') window.playSound('select');
         if(!resultado){
           resultado=resolverFn(tiradas);
+          // El efecto ya se aplicó y se guardó dentro de resolverFn — aquí
+          // refrescamos el fondo (barras de fatiga, stats del jugador...)
+          // en el acto, sin cerrar el propio popup que sigue abierto encima.
+          const overlayPropio=zonaEl.closest('[id$="Overlay"]');
+          if(overlayPropio && typeof render==='function'){
+            render();
+            document.getElementById('ligaManagerScreen').appendChild(overlayPropio);
+          }
           pintar();
         } else {
           onCerrar(resultado);
