@@ -2500,6 +2500,7 @@ body.liga-manager-screen #mobileTabBar{display:none!important}
 .lm-app-grid{
   display:grid;
   grid-template-columns: repeat(4, minmax(340px, 1fr));
+  grid-template-rows: minmax(0, 1fr);
   justify-content:center;
   width:100%;
   max-width:1900px;
@@ -3347,6 +3348,24 @@ body.liga-manager-screen #mobileTabBar{display:none!important}
 .lm-semana-progreso{display:flex;justify-content:center;gap:5px;margin-top:14px}
 .lm-semana-punto{width:7px;height:7px;border-radius:50%;background:#333}
 .lm-semana-punto-activo{background:var(--gold)}
+/* Resumen condensado de fin de semana — estadísticas globales en vez
+   de un listado día a día, para que se vea profesional y de un vistazo. */
+.lm-resumen-stats-row{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:10px 0 12px;
+}
+.lm-resumen-stat{
+  display:flex;flex-direction:column;align-items:center;gap:2px;
+  background:#1a1d1f;border:1px solid #2f3539;border-radius:8px;padding:10px 4px;
+}
+.lm-resumen-stat i{font-size:18px}
+.lm-resumen-stat strong{font-family:'Bebas Neue',Impact,sans-serif;font-size:20px;color:#eee;line-height:1}
+.lm-resumen-stat span{font-size:9px;color:#888;text-transform:uppercase;letter-spacing:.5px}
+.lm-resumen-lista{max-height:220px;overflow-y:auto;display:flex;flex-direction:column;gap:6px}
+.lm-resumen-fila{
+  display:flex;align-items:center;gap:8px;background:#1a1d1f;border:1px solid #2a2f33;
+  border-radius:6px;padding:8px 10px;font-size:11px;color:#ccc;
+}
+.lm-resumen-fila i{font-size:15px;flex-shrink:0}
 /* La regla original ".live-scoreline.goal-flash" nunca llega a aplicarse
    porque el marcador solo lleva la clase .match-scoreline — se añade
    aquí la combinación correcta (beneficia también a Copa Leyendas). */

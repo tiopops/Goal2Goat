@@ -334,17 +334,25 @@
     const bonusPlanificacion=1+nivelDePF('planificacionSemanal')*0.25;
     const cur=new Date(v.desde); cur.setDate(cur.getDate()+1);
     let seguidos=0;
+    // Seguimiento agregado de toda la semana, para el resumen final
+    // condensado (no hace falta guardar el detalle día a día ahí).
+    const mejorasPorJugador={}; // id -> {nombre, stats:{campo:cantidad}}
+    const lesionesSemana=[]; // {nombre, familia}
+    let diasEntreno=0, diasDescanso=0;
     while(cur.getTime()<v.hasta.getTime()){
       const iso=fechaISO(cur);
       const esEntreno=!!(state.calendarioEntrenamiento && state.calendarioEntrenamiento[iso]);
       const textos=[];
       if(esEntreno){
+        diasEntreno++;
         seguidos++;
         plan.forEach(({jugador:j, stat:campo})=>{
           if(!campo) return; // sin enfoque elegido, no entrena de verdad
           if(Math.random()<0.30*bonusPlanificacion){
             j[campo]=Math.min(99, Math.round((j[campo]||50)+1));
             textos.push(`${j.name} mejora su ${NOMBRE_STAT[campo]} (+1)`);
+            if(!mejorasPorJugador[j.id]) mejorasPorJugador[j.id]={nombre:j.name, stats:{}};
+            mejorasPorJugador[j.id].stats[campo]=(mejorasPorJugador[j.id].stats[campo]||0)+1;
           }
         });
         // Entrenar 3+ días seguidos empieza a pasar factura — la
@@ -370,11 +378,13 @@
             jugador.injured=true; jugador.injurySeverity=sev.label; jugador.injuryWeeks=sev.weeks; jugador.injuryFamilia=familia;
             jugador.lesionLogId=registrarLesionHistorial(jugador, sev, 'Sobrecarga por exceso de entrenamiento', 'el propio entrenamiento', familia);
             textos.push(`${jugador.name} se resiente por sobrecarga de entrenamiento (leve)`);
+            lesionesSemana.push({nombre:jugador.name, familia});
           }
         }
         if(!textos.length) textos.push('Entrenamiento sin incidencias');
         state.plantilla.forEach(p=>{ p.fatigue=Math.max(0, Math.min(100, Math.round((p.fatigue===undefined?100:p.fatigue)-2.2))); });
       } else {
+        diasDescanso++;
         seguidos=0;
         textos.push('Día de descanso — la plantilla recupera resistencia');
         state.plantilla.forEach(p=>{ p.fatigue=Math.max(0, Math.min(100, Math.round((p.fatigue===undefined?100:p.fatigue)+4))); });
@@ -382,6 +392,12 @@
       eventosDias.push({fecha:new Date(cur), iso, tipo:esEntreno?'entreno':'descanso', textos});
       cur.setDate(cur.getDate()+1);
     }
+    eventosDias.resumenSemanal={
+      diasEntreno, diasDescanso,
+      mejoras:Object.values(mejorasPorJugador),
+      lesiones:lesionesSemana,
+      NOMBRE_STAT
+    };
     guardarEstado();
     return eventosDias;
   }
@@ -415,11 +431,17 @@
     return null;
   }
   let calendarioMesVisto=null; // {year,month} — se fija la primera vez que se pinta, en el mes del próximo partido
+  let calendarioJornadaSincronizada=null; // controla cuándo hay que saltar de mes automáticamente
   function calendarioHTML(){
     if(!state.fechaInicioLiga) return '';
-    if(!calendarioMesVisto){
+    // El calendario avanza solo: cada vez que cambia la jornada actual
+    // (se ha jugado un partido), si el próximo cae en otro mes, salta a
+    // ese mes automáticamente. Mientras la jornada no cambie, el usuario
+    // puede navegar libremente con las flechas sin que se le reinicie.
+    if(!calendarioMesVisto || calendarioJornadaSincronizada!==state.jornadaActual){
       const base=fechaJornadaLM(Math.min(state.jornadaActual,38)) || new Date(state.fechaInicioLiga+'T00:00:00');
       calendarioMesVisto={year:base.getFullYear(), month:base.getMonth()};
+      calendarioJornadaSincronizada=state.jornadaActual;
     }
     const {year, month}=calendarioMesVisto;
     const dias=generarDiasMes(year, month);
@@ -721,6 +743,7 @@
 
   function empezarTemporada(nombreEquipo, moneda, liga, escudo){
     calendarioMesVisto=null; // nueva liga: el calendario debe volver a fijarse en el mes de inicio, no arrastrar el de una partida anterior
+    calendarioJornadaSincronizada=null;
     const miEquipo={id:'lm_0', name:nombreEquipo};
     const teams=[miEquipo, ...LM_RIVALS];
     const plantilla=generarMiniPlantilla();
@@ -1548,23 +1571,31 @@
     // único botón ACEPTAR que solo cierra esta ventana. El partido no se
     // juega aquí: hace falta un segundo SEGUIR aparte para eso.
     function pantallaResumen(){
-      const filasHistorial=(eventosDias||[]).map(ev=>{
-        const nombreDia=DIAS_LARGO[ev.fecha.getDay()];
-        return `<div class="lm-hist-item">
-          <i class="ph ph-bold ${ev.tipo==='entreno'?'ph-barbell':'ph-bed'}" style="color:${ev.tipo==='entreno'?'#e08a3e':'#5dcaa5'}"></i>
-          <div>
-            <div class="lm-hist-title">${nombreDia} ${ev.fecha.getDate()} <span class="lm-hist-tag">${ev.tipo==='entreno'?'Entrenamiento':'Descanso'}</span></div>
-            <div class="lm-hist-desc">${ev.textos.join(' · ')}</div>
-          </div>
+      const r=eventosDias.resumenSemanal || {diasEntreno:0, diasDescanso:0, mejoras:[], lesiones:[], NOMBRE_STAT:{}};
+      const totalMejoras=r.mejoras.reduce((s,m)=>s+Object.values(m.stats).reduce((a,b)=>a+b,0), 0);
+      const filasMejoras=r.mejoras.map(m=>{
+        const detalle=Object.entries(m.stats).map(([campo,cant])=>`${r.NOMBRE_STAT[campo]||campo} +${cant}`).join(', ');
+        return `<div class="lm-resumen-fila">
+          <i class="ph ph-bold ph-trend-up" style="color:#5dcaa5"></i>
+          <span><strong>${m.nombre}</strong> — ${detalle}</span>
         </div>`;
       }).join('');
+      const filasLesiones=r.lesiones.map(l=>`
+        <div class="lm-resumen-fila">
+          <i class="ph ph-bold ph-first-aid-kit" style="color:#e24b4a"></i>
+          <span><strong>${l.nombre}</strong> — sobrecarga ${l.familia==='muscular'?'muscular':'ósea'} (leve)</span>
+        </div>`).join('');
       overlay.innerHTML=`
         <div class="lm-dilemma-card lm-semana-card-fija" style="width:420px;max-width:92vw;text-align:left">
           <div class="lm-dilemma-title"><i class="ph ph-bold ph-flag-checkered"></i> SEMANA COMPLETADA</div>
           ${rival?`<div class="lm-rival-crest-block" style="margin:6px auto 12px">${rivalCrestHTML(56, rival.crestImg)}<span class="lm-title" style="font-size:13px">Próximo: ${rival.name}</span></div>`:''}
-          <div class="lm-hist-list" style="max-height:280px">
-            ${filasHistorial||'<p class="lm-setup-desc" style="text-align:center">No había días que entrenar esta semana.</p>'}
+          <div class="lm-resumen-stats-row">
+            <div class="lm-resumen-stat"><i class="ph ph-bold ph-barbell" style="color:#e08a3e"></i><strong>${r.diasEntreno}</strong><span>entreno</span></div>
+            <div class="lm-resumen-stat"><i class="ph ph-bold ph-bed" style="color:#5dcaa5"></i><strong>${r.diasDescanso}</strong><span>descanso</span></div>
+            <div class="lm-resumen-stat"><i class="ph ph-bold ph-trend-up" style="color:#5dcaa5"></i><strong>${totalMejoras}</strong><span>mejoras</span></div>
+            <div class="lm-resumen-stat"><i class="ph ph-bold ph-first-aid-kit" style="color:#e24b4a"></i><strong>${r.lesiones.length}</strong><span>lesiones</span></div>
           </div>
+          ${(filasMejoras||filasLesiones)?`<div class="lm-resumen-lista">${filasMejoras}${filasLesiones}</div>`:'<p class="lm-setup-desc" style="text-align:center">Semana sin incidencias reseñables.</p>'}
           <div class="lm-popup-actions" style="justify-content:center">
             <button id="lmSemanaAceptarBtn" class="mode-card-btn mode-card-btn-gold" style="width:auto;padding:10px 30px">ACEPTAR</button>
           </div>
@@ -3615,7 +3646,6 @@
       jugarBtn.addEventListener('click', ()=>{
         marcarInteraccionJugarBtn();
         if(typeof window.playSound==='function') window.playSound('select');
-        const faltaCuerpoTecnico=ROLES_TRABAJO.some(r=>!state.trabajadores[r]);
         const jugarAhora=()=>{
           // Si la semana de esta jornada ya se resolvió (primer SEGUIR),
           // este segundo SEGUIR juega directamente el partido.
@@ -3624,39 +3654,39 @@
             if(info){ mostrarPartidoEnVivo(info, render); } else { render(); }
             return;
           }
+          const continuarSemana=()=>{
+            const eventosDias=procesarEntrenamientoSemanal();
+            state.semanaResueltaParaJornada=state.jornadaActual;
+            guardarEstado();
+            mostrarSemanaEnVivo(eventosDias, ()=>{ render(); });
+          };
           // Si hay días de entrenamiento marcados en el calendario pero no
           // hay nadie en el Plan de Entrenamiento del Preparador Físico,
-          // esos días no mejorarían a ningún jugador — se avisa y se le da
-          // la oportunidad de corregirlo antes de seguir.
+          // esos días no mejorarían a ningún jugador — se avisa (solo la
+          // primera vez que pase en toda la partida) y se le da la
+          // oportunidad de corregirlo antes de seguir.
           const {entreno}=contarEntrenoSemanaActual();
           const sinPlan=!(state.pfPlanEntrenamiento && state.pfPlanEntrenamiento.length);
-          if(entreno>0 && sinPlan){
-            const continuar=()=>{
-              const eventosDias=procesarEntrenamientoSemanal();
-              state.semanaResueltaParaJornada=state.jornadaActual;
-              guardarEstado();
-              mostrarSemanaEnVivo(eventosDias, ()=>{ render(); });
-            };
+          if(entreno>0 && sinPlan && !state.avisoSinPlanMostrado){
+            state.avisoSinPlanMostrado=true;
+            guardarEstado();
             if(typeof window.showConfirmPopup==='function'){
-              window.showConfirmPopup('Has marcado días de entrenamiento en el calendario, pero no tienes a nadie en el Plan de Entrenamiento del Preparador Físico — esos días no mejorarán a ningún jugador. Puedes cerrar este aviso e ir a configurarlo, o seguir igualmente.', continuar, 'SEGUIR IGUALMENTE');
+              window.showConfirmPopup('Has marcado días de entrenamiento en el calendario, pero no tienes a nadie en el Plan de Entrenamiento del Preparador Físico — esos días no mejorarán a ningún jugador. Puedes cerrar este aviso e ir a configurarlo, o seguir igualmente.', continuarSemana, 'SEGUIR IGUALMENTE');
               return;
             }
-            continuar();
-            return;
           }
-          const eventosDias=procesarEntrenamientoSemanal();
-          state.semanaResueltaParaJornada=state.jornadaActual;
-          guardarEstado();
-          mostrarSemanaEnVivo(eventosDias, ()=>{ render(); });
+          continuarSemana();
         };
+        // Solo un aviso a la vez, y cada uno como mucho una vez en toda la
+        // partida — nunca se apilan dos popups en el mismo clic.
+        const faltaCuerpoTecnico=ROLES_TRABAJO.some(r=>!state.trabajadores[r]);
         if(faltaCuerpoTecnico && !state.avisoCuerpoTecnicoMostrado){
           state.avisoCuerpoTecnicoMostrado=true;
           guardarEstado();
           mostrarAvisoJuego('Todavía te falta contratar a parte del cuerpo técnico — puedes jugar igualmente, pero te vendrá bien completarlo cuanto antes desde CONTRATAR.');
-          jugarAhora();
-        } else {
-          jugarAhora();
+          return;
         }
+        jugarAhora();
       });
       jugarBtn.addEventListener('mouseenter', marcarInteraccionJugarBtn);
       jugarBtn.addEventListener('mousemove', marcarInteraccionJugarBtn);
