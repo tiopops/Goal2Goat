@@ -437,7 +437,7 @@ const CHEAT_USERS = ['jesuslor85@gmail.com', 'silviaenfoque@gmail.com'];
 // Liga Manager está en construcción: acceso restringido solo a tiopops
 // mientras se define/desarrolla. Lista separada de CHEAT_USERS a propósito
 // (aquí NO se incluye silviaenfoque).
-const LIGA_MANAGER_BETA_USERS = ['jesuslor85@gmail.com'];
+const LIGA_MANAGER_BETA_USERS = ['jesuslor85@gmail.com', 'adrian.quart@gmail.com'];
 // Scorer streaks: map playerName -> consecutive matches scored
 let scorerStreaks = {};
 // Current match weather

@@ -39,25 +39,44 @@
   // contra uno defensivo, en vez de enfrentarte siempre al mismo rival
   // "genérico" con números ligeramente distintos.
   const LM_RIVALS = [
-    {id:'lm_1',  name:'Real Madrid',          attack:91, defense:78, pace:92, passing:85, technique:88, crestImg:ESCUDOS_DIR+'realmadrid.png'},      // contragolpe eléctrico
-    {id:'lm_2',  name:'FC Barcelona',         attack:86, defense:80, pace:78, passing:94, technique:93, crestImg:ESCUDOS_DIR+'barcelona.png'},      // posesión y toque
-    {id:'lm_3',  name:'Atlético de Madrid',   attack:78, defense:93, pace:75, passing:78, technique:77, crestImg:ESCUDOS_DIR+'atlmadrid.png'},      // fortín defensivo
-    {id:'lm_4',  name:'Athletic Club',        attack:77, defense:81, pace:83, passing:72, technique:71, crestImg:ESCUDOS_DIR+'athletic.png'},       // físico y directo
-    {id:'lm_5',  name:'Villarreal CF',        attack:75, defense:78, pace:68, passing:83, technique:85, crestImg:ESCUDOS_DIR+'villarreal.png'},     // técnico y organizado
-    {id:'lm_6',  name:'Real Betis',           attack:83, defense:62, pace:74, passing:81, technique:84, crestImg:ESCUDOS_DIR+'betis.png'},          // ofensivo con clase, atrás flojo
-    {id:'lm_7',  name:'Real Sociedad',        attack:73, defense:77, pace:67, passing:83, technique:80, crestImg:ESCUDOS_DIR+'realsociedad.png'},   // posesión organizada
-    {id:'lm_8',  name:'Sevilla FC',           attack:71, defense:81, pace:76, passing:69, technique:69, crestImg:ESCUDOS_DIR+'sevilla.png'},        // sólido y de contragolpe
-    {id:'lm_9',  name:'RC Celta',             attack:76, defense:57, pace:82, passing:71, technique:79, crestImg:ESCUDOS_DIR+'celta.png'},          // bandas rápidas, atrás débil
-    {id:'lm_10', name:'Valencia CF',          attack:67, defense:75, pace:79, passing:65, technique:68, crestImg:ESCUDOS_DIR+'valencia.png'},       // contragolpe veloz
-    {id:'lm_11', name:'Rayo Vallecano',       attack:64, defense:79, pace:77, passing:58, technique:62, crestImg:ESCUDOS_DIR+'rayovallecano.png'},  // presión física
-    {id:'lm_12', name:'CA Osasuna',           attack:58, defense:85, pace:67, passing:56, technique:53, crestImg:ESCUDOS_DIR+'osasuna.png'},        // muy físico y defensivo
-    {id:'lm_13', name:'Getafe CF',            attack:50, defense:89, pace:61, passing:53, technique:48, crestImg:ESCUDOS_DIR+'getafe.png'},         // anti-fútbol extremo
-    {id:'lm_14', name:'RCD Espanyol',         attack:63, defense:69, pace:65, passing:62, technique:63, crestImg:ESCUDOS_DIR+'espanyol.png'},       // equilibrado sin destacar
-    {id:'lm_15', name:'Elche CF',             attack:55, defense:72, pace:59, passing:59, technique:60, crestImg:ESCUDOS_DIR+'elche.png'},          // modesto y ordenado
-    {id:'lm_16', name:'Levante UD',           attack:68, defense:47, pace:63, passing:61, technique:65, crestImg:ESCUDOS_DIR+'levante.png'},        // ofensivo pero muy frágil atrás
-    {id:'lm_17', name:'Deportivo Alavés',     attack:56, defense:77, pace:62, passing:56, technique:54, crestImg:ESCUDOS_DIR+'alaves.png'},         // defensivo y trabajador
-    {id:'lm_18', name:'Racing de Santander',  attack:53, defense:69, pace:61, passing:53, technique:52, crestImg:ESCUDOS_DIR+'racingsantander.png'},// recién ascendido, aguerrido
-    {id:'lm_19', name:'RC Deportivo',         attack:57, defense:56, pace:60, passing:65, technique:66, crestImg:ESCUDOS_DIR+'deportivocoruna.png'} // técnico pero modesto
+    {id:'lm_1',  name:'Real Madrid',          attack:91, defense:78, pace:92, passing:85, technique:88, crestImg:ESCUDOS_DIR+'realmadrid.png',
+      plantilla:['Courtois','Carvajal','Militão','Rüdiger','Álvaro Carreras','Tchouaméni','Valverde','Camavinga','Bellingham','Vinícius','Mbappé','Güler','Brahim Díaz','Mastantuono','Alexander-Arnold','Huijsen']},
+    {id:'lm_2',  name:'FC Barcelona',         attack:86, defense:80, pace:78, passing:94, technique:93, crestImg:ESCUDOS_DIR+'barcelona.png',
+      plantilla:['Joan García','Koundé','Araújo','Cubarsí','Balde','Pedri','de Jong','Gavi','Raphinha','Lamine Yamal','Ferran Torres','Dani Olmo','Fermín López','Lewandowski','Rashford','Gerard Martín']},
+    {id:'lm_3',  name:'Atlético de Madrid',   attack:78, defense:93, pace:75, passing:78, technique:77, crestImg:ESCUDOS_DIR+'atlmadrid.png',
+      plantilla:['Oblak','Giménez','Hancko','Le Normand','Molina','Koke','De Paul','Barrios','Baena','Julián Álvarez','Griezmann','Sørloth','Lino','Gallagher','Almada','Nahuel Molina']},
+    {id:'lm_4',  name:'Athletic Club',        attack:77, defense:81, pace:83, passing:72, technique:71, crestImg:ESCUDOS_DIR+'athletic.png',
+      plantilla:['Unai Simón','Lekue','Yeray','Vivian','Berchiche','Óscar de Marcos','Ander Herrera','Iñigo Ruiz de Galarreta','Nico Williams','Iñaki Williams','Gómez','Sancet','Berenguer','Adama Boiro','Jauregizar','Prados']},
+    {id:'lm_5',  name:'Villarreal CF',        attack:75, defense:78, pace:68, passing:83, technique:85, crestImg:ESCUDOS_DIR+'villarreal.png',
+      plantilla:['Luiz Júnior','Foyth','Cuenca','Costa','Kambwala','Comesaña','Santi Comesaña','Pape Gueye','Moleiro','Gerard Moreno','Ayoze Pérez','Nicolas Pépé','Alex Baena','Buchanan','Renato Veiga','Yeremy Pino']},
+    {id:'lm_6',  name:'Real Betis',           attack:83, defense:62, pace:74, passing:81, technique:84, crestImg:ESCUDOS_DIR+'betis.png',
+      plantilla:['Álvaro Valles','Bartra','Natan','Ricardo Rodríguez','Abner','Marc Roca','Johnny Cardoso','Isco','Lo Celso','Antony','Cucho Hernández','Chimy Ávila','Ez Abde','Rodrigo Riquelme','Pablo Fornals','Assane Diao']},
+    {id:'lm_7',  name:'Real Sociedad',        attack:73, defense:77, pace:67, passing:83, technique:80, crestImg:ESCUDOS_DIR+'realsociedad.png',
+      plantilla:['Remiro','Aihen Muñoz','Zubeldia','Jon Aramburu','Diego Rico','Zubimendi','Marín','Sucic','Óskarsson','Kubo','Oyarzabal','Barrenetxea','Turrientes','Gorosabel','Yangel Herrera','Guedes']},
+    {id:'lm_8',  name:'Sevilla FC',           attack:71, defense:81, pace:76, passing:69, technique:69, crestImg:ESCUDOS_DIR+'sevilla.png',
+      plantilla:['Vlachodimos','Carmona','Marcao','Nianzou','Pedrosa','Sow','Agoumé','Lukebakio','Almeyda','Isaac Romero','Alexis Sánchez','Jesús Navas','Rubén Vargas','Gudelj','Alfon González','Akor Adams']},
+    {id:'lm_9',  name:'RC Celta',             attack:76, defense:57, pace:82, passing:71, technique:79, crestImg:ESCUDOS_DIR+'celta.png',
+      plantilla:['Iván Villar','Starfelt','Manu Fernández','Carreira','Óscar Mingueza','Beltrán','Fran Beltrán','Ilaix Moriba','Iago Aspas','Borja Iglesias','Bryan Zaragoza','Pablo Durán','Williot Swedberg','Damián Rodríguez','Jailson','Sotelo']},
+    {id:'lm_10', name:'Valencia CF',          attack:67, defense:75, pace:79, passing:65, technique:68, crestImg:ESCUDOS_DIR+'valencia.png',
+      plantilla:['Agirrezabala','Thierry Correia','Tárrega','Diakhaby','José Gayà','Javi Guerra','Pepelu','Baraja','Hugo Duro','Diego López','Danjuma','Óscar Rey','Fran Pérez','Almeida','Cömert','Beltrán']},
+    {id:'lm_11', name:'Rayo Vallecano',       attack:64, defense:79, pace:77, passing:58, technique:62, crestImg:ESCUDOS_DIR+'rayovallecano.png',
+      plantilla:['Batalla','Balliu','Lejeune','Ratiu','Pep Chavarría','Óscar Valentín','Unai López','Pathé Ciss','Isi Palazón','Randy Nteka','Álvaro García','Camello','Jorge de Frutos','Fran García','Sergio Camello','Jorge Sáenz']},
+    {id:'lm_12', name:'CA Osasuna',           attack:58, defense:85, pace:67, passing:56, technique:53, crestImg:ESCUDOS_DIR+'osasuna.png',
+      plantilla:['Sergio Herrera','Nacho Vidal','David García','Catena','Juan Cruz','Moncayola','Torró','Iker Muñoz','Rubén García','Ante Budimir','Bryan Zaragoza','Kike Barja','Abde Rebbach','Jon Moncayola','Lucas Torró','Aimar Oroz']},
+    {id:'lm_13', name:'Getafe CF',            attack:50, defense:89, pace:61, passing:53, technique:48, crestImg:ESCUDOS_DIR+'getafe.png',
+      plantilla:['Soria','Djené','Domingos Duarte','Riera','Diego Rico','Milla','Arambarri','Luis Milla','Mayoral','Borja Mayoral','Yellu Santiago','Coba','Jaime Mata','Yellow','Álex Sancris','Diego Bustos']},
+    {id:'lm_14', name:'RCD Espanyol',         attack:63, defense:69, pace:65, passing:62, technique:63, crestImg:ESCUDOS_DIR+'espanyol.png',
+      plantilla:['Marko Dmitrović','Omar El Hilali','Leandro Cabrera','Carlos Romero','Kike García','Pere Milla','Urko González de Zárate','Edu Expósito','Javi Puado','Roberto Fernández','Dolan','Denis Suárez','Miguel Rubio','Cabrera','Alejo Véliz','Álex Kral']},
+    {id:'lm_15', name:'Elche CF',             attack:55, defense:72, pace:59, passing:59, technique:60, crestImg:ESCUDOS_DIR+'elche.png',
+      plantilla:['Dituro','Bigas','Sánchez Miño','Bort','Josan','Nteziryayo','Aguado','Mourad Bejder','André Silva','Rafa Mir','Chust','Pere Milla','Álvaro Núñez','Adrián Butzke','Febas','Enzo Roco']},
+    {id:'lm_16', name:'Levante UD',           attack:68, defense:47, pace:63, passing:61, technique:65, crestImg:ESCUDOS_DIR+'levante.png',
+      plantilla:['Cárdenas','Iago Maidana','Real','Cabrera','Toni Fuidias','Pablo Martínez','Vencedor','Alex Kral','Carlos Álvarez','Iván Romero','José Arnaiz','Etta Eyong','De Frutos','Brugui','Elady Zorrilla','Kervin Andrade']},
+    {id:'lm_17', name:'Deportivo Alavés',     attack:56, defense:77, pace:62, passing:56, technique:54, crestImg:ESCUDOS_DIR+'alaves.png',
+      plantilla:['Antonio Sivera','Diego Torres','Abqar','Tenaglia','Jonny Otto','Guridi','Manu García','Toni Martínez','Kike García','Carlos Vicente','Aleñá','Boyé','Jason','Rioja','Aleix Vidal','Jur Schouten']},
+    {id:'lm_18', name:'Racing de Santander',  attack:53, defense:69, pace:61, passing:53, technique:52, crestImg:ESCUDOS_DIR+'racingsantander.png',
+      plantilla:['Adrián Ortolá','Álvaro Mantilla','Jorge Sáez','Íñigo Sainz-Maza','Andrés Martín','Iñigo Vicente','Pablo Ríos','Antón','Michael Guirassy','Álvaro García','Karrikaburu','Yeray','Villalibre','Suleiman Camara','Chichi Verdugo','Falcón']},
+    {id:'lm_19', name:'RC Deportivo',         attack:57, defense:56, pace:60, passing:65, technique:66, crestImg:ESCUDOS_DIR+'deportivocoruna.png',
+      plantilla:['Yoel','Loureiro','Villares','Mackay','Barcia','Yeremay Hernández','Ximo Navarro','Lucas Pérez','Mella','Dani Barcia','Iker Bravo','Yeremi','Antoñito','Nacho González','Vallejo','Comas']}
   ];
 
   const MONEDAS = {
@@ -132,13 +151,13 @@
   /* ---------- 2. Mini-plantilla de ejemplo (para el Médico) ---------- */
   // Nombres reutilizados tanto para la plantilla inicial como para los
   // jugadores que salen de los sobres de fichajes del Director Deportivo.
-  const NOMBRES_JUGADOR=["Álvaro","Adrián","Hugo","Mario","Pablo","Marcos","Diego","Sergio","Iker","Nacho","Bruno","Izan","Rubén","Guillermo","Álex","Raúl","Daniel","Carlos","Javier","Óscar"];
-  const APELLIDOS_JUGADOR=["García","Fernández","López","Martínez","Sánchez","Pérez","Gómez","Ruiz","Díaz","Moreno","Torres","Ramos","Molina","Ortega","Vázquez","Serrano","Castro","Romero","Navarro","Iglesias"];
+  const NOMBRES_JUGADOR=["Álvaro","Adrián","Hugo","Mario","Pablo","Marcos","Diego","Sergio","Iker","Nacho","Bruno","Izan","Rubén","Guillermo","Álex","Raúl","Daniel","Carlos","Javier","Óscar","Manuel","Antonio","Francisco","José","David","Jorge","Víctor","Iván","Enrique","Ismael","Rodrigo","Samuel","Gonzalo","Fernando","Miguel","Andrés","Emilio","Tomás","Lucas","Gabriel","Martín","Xabi","Unai","Ander","Aitor","Eneko"];
+  const APELLIDOS_JUGADOR=["García","Fernández","López","Martínez","Sánchez","Pérez","Gómez","Ruiz","Díaz","Moreno","Torres","Ramos","Molina","Ortega","Vázquez","Serrano","Castro","Romero","Navarro","Iglesias","Domínguez","Vidal","Santos","Cano","Prieto","Vega","Herrera","Cabrera","Rubio","Marín","Delgado","Soto","Campos","Reyes","Blanco","Suárez","Peña","Flores","Nieto","Cortés","Aguilar","Ibáñez","Lozano","Cruz","Pascual"];
   // Nombres femeninos — el cuerpo técnico (médico, mantenimiento y los
   // dos directores) puede ser hombre o mujer; los jugadores de la
   // plantilla siguen siendo siempre hombres (mismos apellidos para
   // ambos géneros, solo cambia el nombre de pila).
-  const NOMBRES_MUJER=["Ana","Laura","Marta","Sara","Elena","Lucía","Paula","Andrea","Carmen","Irene","Claudia","Sofía","Alba","Nuria","Cristina","Beatriz","Silvia","Patricia","Rocío","Julia"];
+  const NOMBRES_MUJER=["Ana","Laura","Marta","Sara","Elena","Lucía","Paula","Andrea","Carmen","Irene","Claudia","Sofía","Alba","Nuria","Cristina","Beatriz","Silvia","Patricia","Rocío","Julia","María","Isabel","Raquel","Eva","Noelia","Sandra","Natalia","Alicia","Verónica","Yolanda","Pilar","Teresa","Mónica","Cristina","Esther","Gloria","Inés","Marina","Celia","Aitana","Vega","Daniela","Valeria","Olivia"];
   function nombreTrabajadorAleatorio(){
     const genero = Math.random()<0.5 ? 'hombre' : 'mujer';
     const nombres = genero==='mujer' ? NOMBRES_MUJER : NOMBRES_JUGADOR;
@@ -379,9 +398,15 @@
           if(pool.length){
             const jugador=pool[Math.floor(Math.random()*pool.length)];
             const familia=Math.random()<0.5?'muscular':'osea';
-            const sev={label:'leve', weeks:1};
+            const sev={label:'leve', weeks:1, dificultad:7};
             jugador.injured=true; jugador.injurySeverity=sev.label; jugador.injuryWeeks=sev.weeks; jugador.injuryFamilia=familia;
             jugador.lesionLogId=registrarLesionHistorial(jugador, sev, 'Sobrecarga por exceso de entrenamiento', 'el propio entrenamiento', familia);
+            // Igual que con las lesiones de partido: el médico recomienda
+            // tratarla cuanto antes (antes esto solo pasaba en las
+            // lesiones ocurridas jugando, nunca en las de entrenamiento).
+            if(!state.medicoNotificacion){
+              state.medicoNotificacion={jugadorId:jugador.id, dificultad:sev.dificultad, severidad:sev.label};
+            }
             textos.push(`${jugador.name} se resiente por sobrecarga de entrenamiento (leve)`);
             lesionesSemana.push({nombre:jugador.name, familia});
           }
@@ -682,6 +707,32 @@
       if(!btn) return;
       if(Date.now()-jugarBtnUltimaInteraccion>60000) btn.classList.add('lm-btn-jugar-pulse');
     }, 3000);
+  }
+  // Indicador sutil de "hay más contenido abajo" — si pasan 30s sin
+  // hacer scroll en una columna Y esa columna todavía no está desplazada
+  // del todo hasta el final, aparece un puntito con un pulso discreto en
+  // su esquina inferior derecha. En cuanto se scrollea (o se llega al
+  // final) se oculta otra vez. Se guarda por columna (clave = su
+  // className, estable entre renders) porque el DOM se rehace entero
+  // cada vez que se llama a render().
+  let colScrollUltimaInteraccion={};
+  let colScrollHintInterval=null;
+  function marcarScrollColumna(clave){
+    colScrollUltimaInteraccion[clave]=Date.now();
+  }
+  function iniciarHintScrollColumnas(){
+    if(colScrollHintInterval) return;
+    colScrollHintInterval=setInterval(()=>{
+      document.querySelectorAll('.lm-panel, .lm-center-panel').forEach(el=>{
+        const clave=el.className;
+        const hint=el.querySelector('[data-scroll-hint]');
+        if(!hint) return;
+        const quedaContenido = el.scrollHeight-el.scrollTop > el.clientHeight+6;
+        const ultima=colScrollUltimaInteraccion[clave]||0;
+        const inactivaMasDe30s=Date.now()-ultima>30000;
+        hint.classList.toggle('lm-scroll-hint-visible', quedaContenido && inactivaMasDe30s);
+      });
+    }, 1500);
   }
   // Flechas de reordenar columnas — se vuelven invisibles tras 10s sin
   // tocarlas (clic o simplemente pasar el ratón por encima), y
@@ -1120,7 +1171,7 @@
     return titulares[Math.floor(Math.random()*titulares.length)];
   }
 
-  function generarEventosPartido(resultado, miEsLocal, campoRelevante){
+  function generarEventosPartido(resultado, miEsLocal, campoRelevante, rival){
     // "home"/"away" se refiere SIEMPRE al equipo local/visitante real del
     // partido — mi equipo puede ser cualquiera de los dos según el
     // calendario. Antes se asumía que "home" era siempre yo, así que
@@ -1128,13 +1179,22 @@
     // aparecían del lado del rival.
     const misLado = miEsLocal ? 'home' : 'away';
     const rivalLado = miEsLocal ? 'away' : 'home';
+    // Elige un nombre real al azar de la plantilla del rival concreto de
+    // este partido — si por lo que sea no tiene plantilla cargada, cae
+    // en el nombre del propio club para no dejar el hueco en blanco.
+    function jugadorRivalAleatorio(){
+      if(rival && rival.plantilla && rival.plantilla.length){
+        return {name: rival.plantilla[Math.floor(Math.random()*rival.plantilla.length)]};
+      }
+      return {name: rival ? rival.name : 'Rival'};
+    }
     const eventos=[];
     for(let i=0;i<resultado.golesA;i++){
-      const goleador = miEsLocal ? elegirGoleador() : null;
+      const goleador = miEsLocal ? elegirGoleador() : jugadorRivalAleatorio();
       eventos.push({minute:5+Math.floor(Math.random()*85), team:'home', type:'goal', jugador:goleador});
     }
     for(let i=0;i<resultado.golesB;i++){
-      const goleador = miEsLocal ? null : elegirGoleador();
+      const goleador = miEsLocal ? jugadorRivalAleatorio() : elegirGoleador();
       eventos.push({minute:5+Math.floor(Math.random()*85), team:'away', type:'goal', jugador:goleador});
     }
     // Tarjetas amarillas/rojas — de momento solo informativas (sin
@@ -1144,7 +1204,7 @@
       eventos.push({minute:10+Math.floor(Math.random()*78), team:misLado, type:'card', tarjeta:'amarilla', jugador: jugador||{name:state.nombreEquipo}});
     }
     if(Math.random()<0.35){
-      eventos.push({minute:10+Math.floor(Math.random()*78), team:rivalLado, type:'card', tarjeta:'amarilla', jugador:{name:'Rival'}});
+      eventos.push({minute:10+Math.floor(Math.random()*78), team:rivalLado, type:'card', tarjeta:'amarilla', jugador:jugadorRivalAleatorio()});
     }
     if(Math.random()<0.06){
       const jugador=elegirJugadorAlineado();
@@ -1363,7 +1423,8 @@
       const resultado=simularPartido(partido.home, partido.away, contexto);
       state.resultados[key]=resultado;
       if(esMiPartido){
-        const eventos=generarEventosPartido(resultado, miEsLocalDeEste, campoRelevante);
+        const rivalDeEstePartido = miEsLocalDeEste ? partido.away : partido.home;
+        const eventos=generarEventosPartido(resultado, miEsLocalDeEste, campoRelevante, rivalDeEstePartido);
         // Aplicar la lesión generada (si la hay) al estado real del jugador
         const evInjury=eventos.find(e=>e.type==='injury');
         if(evInjury){
@@ -1390,7 +1451,16 @@
     state.mantenimientoCambioUsado = false;
     state.directorGeneralCambioUsado = false;
     state.directorDeportivoCambioUsado = false;
+    state.preparadorFisicoCambioUsado = false;
     state.dadoRerollsDisponibles = 1;
+    // Cada partido trae caras nuevas: la mano de cartas de los 5
+    // departamentos se renueva por completo (respetando las que ya
+    // están agotadas por haber llegado a nivel máximo).
+    state.medicoCartas = inicializarCartasMedico();
+    state.mantenimientoCartas = inicializarCartasMantenimiento();
+    state.directorGeneralCartas = inicializarCartasDG();
+    state.directorDeportivoCartas = inicializarCartasDD();
+    state.preparadorFisicoCartas = inicializarCartasPF();
 
     // Nómina mensual — se cobra una vez al entrar en cada mes (cada 4
     // jornadas: J1, J5, J9...), jugadores + los 4 departamentos técnicos.
@@ -2460,6 +2530,15 @@
     registrarMovimientoFinanciero('Nómina de jugadores', -nominaJugadores, state.jornadaActual);
     registrarMovimientoFinanciero('Nómina del cuerpo técnico', -nominaStaff, state.jornadaActual);
     if(n.ingresoPatrocinio>0) registrarMovimientoFinanciero('Patrocinio mensual', n.ingresoPatrocinio, state.jornadaActual);
+    // Aviso mensual de nóminas pagadas, con acceso directo al balance
+    // económico completo desde el propio correo.
+    const netoMes=n.ingresoPatrocinio-nominaJugadores-nominaStaff;
+    if(typeof enviarCorreo==='function'){
+      enviarCorreo('directorGeneral', 'Nóminas de este mes pagadas',
+        `Se han pagado las nóminas de este mes: ${formatoDinero(nominaJugadores)} de la plantilla y ${formatoDinero(nominaStaff)} del cuerpo técnico${n.ingresoPatrocinio>0?`, compensados con ${formatoDinero(n.ingresoPatrocinio)} de patrocinio`:''}. Balance neto del mes: ${netoMes>=0?'+':''}${formatoDinero(netoMes)}. Capital actual: ${formatoDinero(state.capital)}.`);
+      const ultimo=state.correoInterno && state.correoInterno[0];
+      if(ultimo) ultimo.tipoEspecial='balance_mensual';
+    }
   }
 
   /* ---------- 9c-bis. TRABAJADORES del cuerpo técnico — cada uno de los
@@ -3454,7 +3533,7 @@
 
     root.innerHTML = `
       <div class="lm-app-grid ${acabaDeReordenarColumnas?'lm-col-reordering':''}">
-        <div class="lm-panel lm-left-panel" style="${columnaOrderStyle('left')}">${columnaControlesHTML('left')}
+        <div class="lm-panel lm-left-panel" style="${columnaOrderStyle('left')}">${columnaControlesHTML('left')}<div class="lm-scroll-hint" data-scroll-hint title="Hay más contenido si bajas"><i class="ph ph-bold ph-caret-down"></i></div>
           <div class="lm-header-team">
             ${crestHTML(state.escudo, 76)}
             <div style="flex:1;min-width:0">
@@ -3503,7 +3582,7 @@
           </div>
         </div>
 
-        <div class="lm-center-panel" style="${columnaOrderStyle('center')}">${columnaControlesHTML('center')}
+        <div class="lm-center-panel" style="${columnaOrderStyle('center')}">${columnaControlesHTML('center')}<div class="lm-scroll-hint" data-scroll-hint title="Hay más contenido si bajas"><i class="ph ph-bold ph-caret-down"></i></div>
           <div id="lmPitchBox">${PITCH_SVG}<div id="lmCampoLayer" style="opacity:${campoOpacidadDesgaste(state.estadio?state.estadio.campo:100)}"></div><div id="lmWeatherLayer"></div>${formacionActual().slots.map(def=>{
             const pid=state.alineacion&&state.alineacion[def.slot];
             const jugador=pid?state.plantilla.find(p=>p.id===pid):null;
@@ -3523,7 +3602,7 @@
               const inPos=jugador.position===label;
               const star=inPos?' <span class="star">★</span>':'';
               const statusIcons=lesionado?'<div class="pitch-status-row"><span class="pitch-status-icon pitch-status-injury" title="Lesionado">✚</span></div>':'';
-              inner=`${statusIcons}<span class="pos-rating">${efectivoOverall(jugador)}</span><div class="player-info">${jugador.name}${star}<div class="player-pos-label${inPos?'':' out-of-position'}">${label}</div></div>`;
+              inner=`${statusIcons}<span class="pos-rating">${efectivoOverall(jugador)}</span><div class="player-info"><div class="lm-player-name-row"><span class="lm-player-name-text">${jugador.name}</span>${star}</div><div class="player-pos-label${inPos?'':' out-of-position'}">${label}</div></div>`;
             }
             const clases=['position', vacio?'empty-slot':'locked', lesionado?'lm-pos-injured':'', seleccionado?'highlight-pos':''].filter(Boolean).join(' ');
             return `<div class="${clases}" data-slot="${def.slot}" style="left:${def.x}%;top:${def.y}%" title="${jugador?jugador.name+' ('+efectivoOverall(jugador)+')':'Vacío'}">${inner}</div>`;
@@ -3542,7 +3621,7 @@
           </div>
         </div>
 
-        <div class="lm-panel lm-right-panel" style="${columnaOrderStyle('right')}">${columnaControlesHTML('right')}
+        <div class="lm-panel lm-right-panel" style="${columnaOrderStyle('right')}">${columnaControlesHTML('right')}<div class="lm-scroll-hint" data-scroll-hint title="Hay más contenido si bajas"><i class="ph ph-bold ph-caret-down"></i></div>
           <div class="lm-nextmatch-box">
             ${rival ? `
               <div class="lm-rival-top-row">
@@ -3607,13 +3686,13 @@
           </div>
         </div>
 
-        <div class="lm-panel lm-staff-panel" style="${columnaOrderStyle('staff')}">${columnaControlesHTML('staff')}
+        <div class="lm-panel lm-staff-panel" style="${columnaOrderStyle('staff')}">${columnaControlesHTML('staff')}<div class="lm-scroll-hint" data-scroll-hint title="Hay más contenido si bajas"><i class="ph ph-bold ph-caret-down"></i></div>
           <div class="lm-staff-bar-header">
             <div class="lm-staff-bar-title"><i class="ph ph-bold ph-users-three"></i> CUERPO TÉCNICO</div>
-          </div>
-          <div class="lm-staff-bar-capital" title="Dados y rerolls disponibles este partido">
-            <span><i class="ph ph-bold ph-dice-five"></i> DADOS TÉCNICOS: <strong>${state.diceAvailable}</strong></span>
-            <span><i class="ph ph-bold ph-arrows-clockwise"></i> RERROLLS TÉCNICOS: <strong>${state.dadoRerollsDisponibles||0}</strong></span>
+            <div class="lm-staff-bar-capital" title="Dados y rerolls disponibles este partido">
+              <span><i class="ph ph-bold ph-dice-five"></i> DADOS: <strong>${state.diceAvailable}</strong></span>
+              <span><i class="ph ph-bold ph-arrows-clockwise"></i> RERROLLS: <strong>${state.dadoRerollsDisponibles||0}</strong></span>
+            </div>
           </div>
           ${hayVacantes?`<div class="lm-staff-warning"><i class="ph ph-bold ph-warning"></i> Todavía te falta cuerpo técnico por contratar — puedes jugar igualmente, pero conviene completarlo pronto.</div>`:''}
           <button id="lmTrabajadoresBtn" class="lm-btn-trabajadores" style="width:100%;margin-bottom:10px"><i class="ph ph-bold ph-user-plus"></i> CONTRATAR</button>
@@ -3625,35 +3704,54 @@
             ${staffTileHTML('mantenimiento', {btnId:'lmMantenimientoBtn', infoId:'lmMantenimientoInfoBtn', infoTitle:'Estado del estadio', notif:notifMant, badgeTexto:'!', carpeta:'mantenimiento', archivo:'mantenimiento_y_seguridad', alt:'Mantenimiento y seguridad', icono:'ph-flag-pennant', rolLabel:'MANTENIMIENTO Y SEGURIDAD', desc:'Cuida el césped, la seguridad y la satisfacción de la afición', acento:'lm-staff-tile-mant'})}
           </div>
 
-          <div class="lm-correo-box">
-            ${(state.correoInterno||[]).filter(c=>!c.leido).length?'<span class="lm-correo-notif-dot"></span>':''}
-            <div class="lm-correo-header">
-              <span><i class="ph ph-bold ph-envelope"></i> CORREO INTERNO</span>
-              ${(state.correoInterno||[]).filter(c=>!c.leido).length?`<span class="lm-correo-badge">${(state.correoInterno||[]).filter(c=>!c.leido).length}</span>`:''}
-            </div>
-            <div class="lm-correo-list">
-              ${(state.correoInterno||[]).length?(state.correoInterno||[]).slice(0,10).map(c=>`
-                <div class="lm-correo-item ${c.leido?'':'lm-correo-no-leido'} ${correoExpandido===c.id?'lm-correo-expandido':''}" data-correo="${c.id}">
+          ${(()=>{
+            try{
+              const lista=state.correoInterno||[];
+              const sinLeer=lista.filter(c=>c && !c.leido).length;
+              const filas=lista.length?lista.slice(0,10).map(c=>{
+                if(!c || !c.id) return '';
+                let cuerpoExtra='';
+                if(correoExpandido===c.id){
+                  let extra='';
+                  if(c.tipoEspecial==='oferta_jugador' && !c.resuelto && Array.isArray(c.ofertas)){
+                    extra=`<div class="lm-correo-ofertas">
+                      ${c.ofertas.map((o,i)=>`<button class="lm-correo-oferta-btn" data-aceptar-oferta="${c.id}" data-oferta-idx="${i}">${o.club} — ${formatoDinero(o.monto)}</button>`).join('')}
+                      ${c.ofertas.length?`<button class="lm-correo-oferta-rechazar" data-rechazar-oferta="${c.id}">Rechazar todas</button>`:''}
+                    </div>`;
+                  } else if(c.tipoEspecial==='oferta_jugador' && c.resuelto){
+                    extra=`<div class="lm-correo-resultado">${c.resultadoTexto||''}</div>`;
+                  } else if(c.tipoEspecial==='balance_mensual'){
+                    extra=`<div class="lm-correo-ofertas"><button class="lm-correo-oferta-btn" data-ver-finanzas="1">VER FINANZAS</button></div>`;
+                  }
+                  cuerpoExtra=`<div class="lm-correo-cuerpo">${c.cuerpo||''}${extra}</div>`;
+                }
+                return `<div class="lm-correo-item ${c.leido?'':'lm-correo-no-leido'} ${correoExpandido===c.id?'lm-correo-expandido':''}" data-correo="${c.id}">
                   <div class="lm-correo-item-top">
-                    <i class="ph ph-bold ${CORREO_ICONOS[c.rol]}"></i>
+                    <i class="ph ph-bold ${CORREO_ICONOS[c.rol]||'ph-envelope'}"></i>
                     <div class="lm-correo-item-info">
-                      <div class="lm-correo-remitente">${NOMBRE_ROL[c.rol]}</div>
-                      <div class="lm-correo-asunto">${c.asunto}</div>
+                      <div class="lm-correo-remitente">${NOMBRE_ROL[c.rol]||'Club'}</div>
+                      <div class="lm-correo-asunto">${c.asunto||''}</div>
                     </div>
                     <button class="lm-correo-borrar" data-borrar-correo="${c.id}" title="Borrar mensaje"><i class="ph ph-bold ph-trash"></i></button>
                   </div>
-                  ${correoExpandido===c.id?`<div class="lm-correo-cuerpo">
-                    ${c.cuerpo}
-                    ${(c.tipoEspecial==='oferta_jugador' && !c.resuelto) ? `
-                      <div class="lm-correo-ofertas">
-                        ${c.ofertas.map((o,i)=>`<button class="lm-correo-oferta-btn" data-aceptar-oferta="${c.id}" data-oferta-idx="${i}">${o.club} — ${formatoDinero(o.monto)}</button>`).join('')}
-                        ${c.ofertas.length?`<button class="lm-correo-oferta-rechazar" data-rechazar-oferta="${c.id}">Rechazar todas</button>`:''}
-                      </div>
-                    ` : (c.tipoEspecial==='oferta_jugador' && c.resuelto ? `<div class="lm-correo-resultado">${c.resultadoTexto}</div>` : '')}
-                  </div>`:''}
-                </div>`).join(''):'<p class="lm-setup-desc" style="text-align:center;padding:10px 0">Bandeja vacía por ahora.</p>'}
-            </div>
-          </div>
+                  ${cuerpoExtra}
+                </div>`;
+              }).join('') : '';
+              return `<div class="lm-correo-box">
+                ${sinLeer?'<span class="lm-correo-notif-dot"></span>':''}
+                <div class="lm-correo-header">
+                  <span><i class="ph ph-bold ph-envelope"></i> CORREO INTERNO</span>
+                  ${sinLeer?`<span class="lm-correo-badge">${sinLeer}</span>`:''}
+                </div>
+                <div class="lm-correo-list">
+                  ${filas||'<p class="lm-setup-desc" style="text-align:center;padding:10px 0">Bandeja vacía por ahora.</p>'}
+                </div>
+              </div>`;
+            }catch(e){
+              console.error('Error pintando el correo interno:', e);
+              return `<div class="lm-correo-box"><div class="lm-correo-header"><span><i class="ph ph-bold ph-envelope"></i> CORREO INTERNO</span></div><div class="lm-correo-list"><p class="lm-setup-desc" style="text-align:center;padding:10px 0">No se pudo cargar el correo. Prueba a recargar.</p></div></div>`;
+            }
+          })()}
         </div>
       </div>
     `;
@@ -3663,7 +3761,12 @@
     root.querySelectorAll('.lm-panel, .lm-center-panel').forEach(el=>{
       const clave=el.className;
       if(clave && scrollGuardado[clave]!==undefined) el.scrollTop=scrollGuardado[clave];
+      // Marca la interacción de scroll inicial (recién pintada la
+      // columna) y cada vez que el usuario scrollea de verdad.
+      marcarScrollColumna(clave);
+      el.addEventListener('scroll', ()=>marcarScrollColumna(clave));
     });
+    iniciarHintScrollColumnas();
 
     const medicoInfoBtn=document.getElementById('lmMedicoInfoBtn');
     if(medicoInfoBtn) medicoInfoBtn.addEventListener('click', (e)=>{
@@ -3841,6 +3944,13 @@
         if(typeof window.playSound==='function') window.playSound('select');
         rechazarOfertasTraspaso(mailId);
         render();
+      });
+    });
+    root.querySelectorAll('[data-ver-finanzas]').forEach(btn=>{
+      btn.addEventListener('click', (e)=>{
+        e.stopPropagation();
+        if(typeof window.playSound==='function') window.playSound('select');
+        abrirFinanzasDG();
       });
     });
     root.querySelectorAll('[data-borrar-correo]').forEach(btn=>{
@@ -4480,9 +4590,10 @@
     // Barajado 2D de las caras del dado — CALCO del slot-machine que ya se
     function renderRolloCarta(idx, numDados, jugadorObjetivoId){
       overlay.innerHTML=`
-        <div class="lm-dilemma-card lm-dilemma-card-medico">
+        <div class="lm-dilemma-card lm-dilemma-card-medico lm-dice-roll-card">
             ${xCerrarHTML()}
           <div class="lm-dilemma-title" id="lmDiceTitle" style="justify-content:center;text-align:center">TIRANDO ${numDados} DADO${numDados>1?'S':''}...</div>
+          <div class="lm-dice-reroll-info">rerrolls disponibles hoy: <strong>${state.dadoRerollsDisponibles||0}/1</strong></div>
           <div id="lmDice2DRow" class="lm-dice2d-row"></div>
           <div id="lmDiceResultZone"></div>
         </div>`;
@@ -4539,9 +4650,10 @@
 
     function renderRolloUrgente(numDados){
       overlay.innerHTML=`
-        <div class="lm-dilemma-card lm-dilemma-card-medico">
+        <div class="lm-dilemma-card lm-dilemma-card-medico lm-dice-roll-card">
             ${xCerrarHTML()}
           <div class="lm-dilemma-title" id="lmDiceTitle" style="justify-content:center;text-align:center">TIRANDO ${numDados} DADO${numDados>1?'S':''}...</div>
+          <div class="lm-dice-reroll-info">rerrolls disponibles hoy: <strong>${state.dadoRerollsDisponibles||0}/1</strong></div>
           <div id="lmDice2DRow" class="lm-dice2d-row"></div>
           <div id="lmDiceResultZone"></div>
         </div>`;
@@ -4692,9 +4804,10 @@
 
     function renderRolloCarta(idx, numDados){
       overlay.innerHTML=`
-        <div class="lm-dilemma-card lm-dilemma-card-mant">
+        <div class="lm-dilemma-card lm-dilemma-card-mant lm-dice-roll-card">
             ${xCerrarHTML()}
           <div class="lm-dilemma-title" id="lmDiceTitle" style="justify-content:center;text-align:center">TIRANDO ${numDados} DADO${numDados>1?'S':''}...</div>
+          <div class="lm-dice-reroll-info">rerrolls disponibles hoy: <strong>${state.dadoRerollsDisponibles||0}/1</strong></div>
           <div id="lmDice2DRow" class="lm-dice2d-row"></div>
           <div id="lmDiceResultZone"></div>
         </div>`;
@@ -4919,9 +5032,10 @@
 
     function renderRolloCarta(idx, numDados){
       overlay.innerHTML=`
-        <div class="lm-dilemma-card lm-dilemma-card-dg">
+        <div class="lm-dilemma-card lm-dilemma-card-dg lm-dice-roll-card">
             ${xCerrarHTML()}
           <div class="lm-dilemma-title" id="lmDiceTitle" style="justify-content:center;text-align:center">TIRANDO ${numDados} DADO${numDados>1?'S':''}...</div>
+          <div class="lm-dice-reroll-info">rerrolls disponibles hoy: <strong>${state.dadoRerollsDisponibles||0}/1</strong></div>
           <div id="lmDice2DRow" class="lm-dice2d-row"></div>
           <div id="lmDiceResultZone"></div>
         </div>`;
@@ -5232,9 +5346,10 @@
 
     function renderRolloCarta(idx, numDados, esSobre){
       overlay.innerHTML=`
-        <div class="lm-dilemma-card lm-dilemma-card-dd">
+        <div class="lm-dilemma-card lm-dilemma-card-dd lm-dice-roll-card">
             ${xCerrarHTML()}
           <div class="lm-dilemma-title" id="lmDiceTitle" style="justify-content:center;text-align:center">TIRANDO ${numDados} DADO${numDados>1?'S':''}...</div>
+          <div class="lm-dice-reroll-info">rerrolls disponibles hoy: <strong>${state.dadoRerollsDisponibles||0}/1</strong></div>
           <div id="lmDice2DRow" class="lm-dice2d-row"></div>
           <div id="lmDiceResultZone"></div>
         </div>`;
@@ -5356,7 +5471,6 @@
         <div class="lm-dilemma-card lm-dilemma-card-dd" style="max-width:640px;text-align:left">
           ${xCerrarHTML()}
           <div class="lm-dilemma-title"><i class="ph ph-bold ph-file-text"></i> SALARIOS DE LA PLANTILLA</div>
-          ${renderNivelesDDHTML()}
           <div class="lm-setup-desc" style="text-align:center;margin-bottom:8px">Nómina total: <strong>${formatoDinero(totalNomina)}/mes</strong> · plantilla: <strong>${jugadores.length}</strong> · al poner en venta, el Director Deportivo avisará por correo en 1-3 jornadas con las ofertas que lleguen.</div>
           <div class="lm-salarios-tabla-wrap">
             <table class="lm-salarios-tabla">
@@ -5708,9 +5822,10 @@
 
     function renderRolloCarta(idx, numDados){
       overlay.innerHTML=`
-        <div class="lm-dilemma-card lm-dilemma-card-pf">
+        <div class="lm-dilemma-card lm-dilemma-card-pf lm-dice-roll-card">
             ${xCerrarHTML()}
           <div class="lm-dilemma-title" id="lmDiceTitle" style="justify-content:center;text-align:center">TIRANDO ${numDados} DADO${numDados>1?'S':''}...</div>
+          <div class="lm-dice-reroll-info">rerrolls disponibles hoy: <strong>${state.dadoRerollsDisponibles||0}/1</strong></div>
           <div id="lmDice2DRow" class="lm-dice2d-row"></div>
           <div id="lmDiceResultZone"></div>
         </div>`;
@@ -5751,7 +5866,6 @@
       <div class="lm-dilemma-card lm-dilemma-card-pf" style="max-width:480px;text-align:left">
         ${xCerrarHTML()}
         <div class="lm-dilemma-title"><i class="ph ph-bold ph-clock-counter-clockwise"></i> HISTORIAL DE ENTRENAMIENTOS</div>
-        ${renderNivelesPFHTML()}
         <p class="lm-setup-desc" style="text-align:left;margin:10px 0 4px">Mejoras individuales conseguidas</p>
         <div class="lm-hist-list">${filas||'<p class="lm-setup-desc" style="text-align:center">Todavía no se ha entrenado a ningún jugador.</p>'}</div>
         ${esModoMantener?'':`<div class="lm-popup-actions lm-popup-actions-compact">

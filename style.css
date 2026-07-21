@@ -322,6 +322,9 @@ body.dark-theme .version-tag{color:#555}
 }
 .player-pos-label{font-size:10px;font-weight:600;color:#ffd700;opacity:.9;margin-top:1px}
 .player-pos-label.out-of-position{color:#e74c3c}
+.lm-player-name-row{display:flex;align-items:center;justify-content:center;gap:2px;max-width:100%}
+.lm-player-name-text{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:76px}
+.lm-player-name-row .star{flex-shrink:0}
 .pos-label-inside{font-size:11px;font-weight:700}
 .pos-rating{font-size:16px;font-weight:800}
 
@@ -2552,6 +2555,23 @@ body.liga-manager-screen #mobileTabBar{display:none!important}
 /* Columnas intercambiables (solo escritorio) — flechitas ‹ › en la
    esquina superior derecha de cada columna. */
 .lm-col-reorder{position:absolute;top:8px;right:8px;display:flex;gap:4px;z-index:3;opacity:1;transition:opacity .4s ease}
+/* Indicador sutil de "hay más contenido si bajas" — invisible por
+   defecto, solo aparece tras 30s sin scrollear en esa columna y si de
+   verdad queda algo sin ver más abajo. Un pulso discreto, nada llamativo. */
+.lm-scroll-hint{
+  position:absolute;bottom:10px;right:10px;z-index:3;
+  width:22px;height:22px;border-radius:50%;
+  background:rgba(201,162,39,.12);border:1px solid rgba(201,162,39,.35);color:var(--gold);
+  display:flex;align-items:center;justify-content:center;font-size:12px;
+  opacity:0;pointer-events:none;transition:opacity .6s ease;
+}
+.lm-scroll-hint.lm-scroll-hint-visible{
+  opacity:1;animation:lmScrollHintPulse 2s ease-in-out infinite;
+}
+@keyframes lmScrollHintPulse{
+  0%,100%{box-shadow:0 0 0 0 rgba(201,162,39,.35);transform:translateY(0)}
+  50%{box-shadow:0 0 0 6px rgba(201,162,39,0);transform:translateY(2px)}
+}
 .lm-col-reorder.lm-col-reorder-oculto{opacity:0}
 .lm-col-arrow{
   width:22px;height:22px;border-radius:5px;background:rgba(255,255,255,.06);
@@ -2669,13 +2689,12 @@ body.liga-manager-screen #mobileTabBar{display:none!important}
 }
 .lm-staff-bar-title i{color:var(--gold)}
 .lm-staff-bar-capital{
-  font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:.4px;font-size:13px;color:var(--gold);
-  display:flex;flex-direction:row;flex-wrap:wrap;align-items:center;gap:14px;
-  background:#1a1d1f;border:1px solid #2f3539;border-radius:8px;padding:8px 12px;margin:8px 0;
+  font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:.4px;font-size:12px;color:var(--gold);
+  display:flex;flex-direction:row;flex-wrap:wrap;align-items:center;gap:10px;
 }
-.lm-staff-bar-capital span{display:flex;align-items:center;gap:6px;white-space:nowrap}
-.lm-staff-bar-capital i{font-size:18px}
-.lm-staff-bar-capital strong{font-size:16px}
+.lm-staff-bar-capital span{display:flex;align-items:center;gap:4px;white-space:nowrap}
+.lm-staff-bar-capital i{font-size:14px}
+.lm-staff-bar-capital strong{font-size:13px}
 .lm-staff-warning{
   display:flex;align-items:center;gap:8px;background:#2a1e1e;border:1px solid #e24b4a;
   border-radius:8px;padding:9px 12px;font-size:11px;color:#f0b8b8;
@@ -3461,6 +3480,11 @@ body.liga-manager-screen #mobileTabBar{display:none!important}
   padding:22px 26px;max-width:340px;text-align:center;
   position:relative;
 }
+/* Todas las pantallas de tirada de dados (barajado + resultado) miden
+   siempre lo mismo, para que la interfaz no cambie de ancho ni de alto
+   entre ver los dados girando y ver si se ha acertado o fallado. */
+.lm-dice-roll-card{width:340px;max-width:92vw;min-height:360px}
+.lm-dice-reroll-info{font-size:10px;color:#888;margin:2px 0 8px}
 /* Botón X universal de cierre — esquina superior derecha de cualquier
    popup, además del cierre al hacer clic fuera de la tarjeta. */
 .lm-popup-close-x{
