@@ -3610,10 +3610,10 @@
         <div class="lm-panel lm-staff-panel" style="${columnaOrderStyle('staff')}">${columnaControlesHTML('staff')}
           <div class="lm-staff-bar-header">
             <div class="lm-staff-bar-title"><i class="ph ph-bold ph-users-three"></i> CUERPO TÉCNICO</div>
-            <div class="lm-staff-bar-capital" title="Dados y rerolls disponibles este partido">
-              <span><i class="ph ph-bold ph-dice-five"></i> Dados técnicos: <strong>${state.diceAvailable}</strong></span>
-              <span><i class="ph ph-bold ph-arrows-clockwise"></i> Rerrolls técnicos: <strong>${state.dadoRerollsDisponibles||0}</strong></span>
-            </div>
+          </div>
+          <div class="lm-staff-bar-capital" title="Dados y rerolls disponibles este partido">
+            <span><i class="ph ph-bold ph-dice-five"></i> DADOS TÉCNICOS: <strong>${state.diceAvailable}</strong></span>
+            <span><i class="ph ph-bold ph-arrows-clockwise"></i> RERROLLS TÉCNICOS: <strong>${state.dadoRerollsDisponibles||0}</strong></span>
           </div>
           ${hayVacantes?`<div class="lm-staff-warning"><i class="ph ph-bold ph-warning"></i> Todavía te falta cuerpo técnico por contratar — puedes jugar igualmente, pero conviene completarlo pronto.</div>`:''}
           <button id="lmTrabajadoresBtn" class="lm-btn-trabajadores" style="width:100%;margin-bottom:10px"><i class="ph ph-bold ph-user-plus"></i> CONTRATAR</button>
@@ -5797,7 +5797,7 @@
         <div class="lm-trab-chip lm-trab-chip-vacante"><i class="ph ph-bold ph-user-circle-minus"></i><span>Vacante</span></div>`;
       const chipsCandidatos = candidatos.map(c=>`
         <div class="lm-trab-chip ${c.chollo?'lm-trab-chip-chollo':''}">
-          ${c.chollo?'<div class="lm-trab-chollo-badge"><i class="ph ph-bold ph-seal-percent"></i> CHOLLO</div>':''}
+          ${c.chollo?'<div class="lm-trab-chollo-badge"><i class="ph ph-bold ph-seal-percent"></i> OPORTUNIDAD</div>':''}
           <div class="lm-trab-chip-top"><span class="lm-trab-nombre">${c.nombre}</span><span class="lm-trab-estrellas">${estrellasNivel(c.nivel, 3)}</span></div>
           <div class="lm-trab-sueldo">${formatoDinero(c.sueldo)}/mes</div>
           <button class="lm-trab-contratar" data-contratar="${c.id}" data-rol="${rol}">CONTRATAR</button>
