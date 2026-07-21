@@ -91,6 +91,8 @@ body.dark-theme .version-tag{color:#555}
 .star{color:var(--gold);font-weight:700}
 .cross{color:var(--red);font-weight:700}
 .bench-title{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#888;margin:10px 0 6px;display:flex;justify-content:space-between;width:100%}
+#ligaManagerScreen .bench-title,
+#ligaManagerScreen .lm-staff-bar-title{color:#ccc}
 
 /* ===================== ESTRATEGIA / FORMATIONS ===================== */
 .formation-tabs{display:flex;gap:4px;margin-bottom:8px;width:100%;max-width:100%}
@@ -2476,7 +2478,6 @@ body.liga-manager-screen #mobileTabBar{display:none!important}
    sea cual sea su estilo particular — regla global para no tener que
    repetirla botón a botón. */
 #ligaManagerScreen button{border-radius:0!important}
-#ligaManagerScreen .lm-col-arrow,
 #ligaManagerScreen .lm-popup-close-x,
 #ligaManagerScreen .lm-correo-borrar,
 #ligaManagerScreen .lm-staff-tile-info-btn,
@@ -2484,6 +2485,9 @@ body.liga-manager-screen #mobileTabBar{display:none!important}
 #ligaManagerScreen .lm-correo-badge,
 #ligaManagerScreen .lm-plan-slot-quitar,
 #ligaManagerScreen .lm-correo-notif-dot{border-radius:50%!important} /* controles circulares, quedan al margen de la regla anterior */
+/* Las flechas de reordenar columnas van cuadradas con las esquinas
+   redondeadas, no circulares. */
+#ligaManagerScreen .lm-col-arrow{border-radius:6px!important}
 
 /* Usado solo por las pantallas del flujo de entrada (liga/moneda/nombre/
    escudo) — el hub principal ya usa .lm-app-grid en su lugar. */
@@ -2495,7 +2499,7 @@ body.liga-manager-screen #mobileTabBar{display:none!important}
    grandes). */
 .lm-app-grid{
   display:grid;
-  grid-template-columns: repeat(4, minmax(380px,460px));
+  grid-template-columns: repeat(4, minmax(340px, 1fr));
   justify-content:center;
   width:100%;
   max-width:1900px;
@@ -2573,7 +2577,7 @@ body.liga-manager-screen #mobileTabBar{display:none!important}
 }
 .lm-nextrival-header{
   font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:1px;font-size:12px;
-  color:#888;text-align:center;margin:0 0 8px;
+  color:#ccc;text-align:center;margin:0 0 8px;
 }
 
 .lm-header-team{display:flex;align-items:center;gap:10px}
@@ -2628,18 +2632,18 @@ body.liga-manager-screen #mobileTabBar{display:none!important}
 .lm-cal-editable{cursor:pointer;background:#20262a;border:1px solid #33393d;transition:background .12s,border-color .12s}
 .lm-cal-editable:hover{border-color:#e08a3e;background:#262c30}
 .lm-cal-editable .lm-cal-num{color:#f0f0f0}
-.lm-cal-entreno-icon{color:var(--gold);font-size:16px}
+.lm-cal-entreno-icon{color:#e08a3e;font-size:16px}
 .lm-cal-dia-partido{background:rgba(230,201,74,.14);border:1px solid rgba(230,201,74,.55)}
 .lm-cal-dia-partido .lm-cal-num{display:none}
 .lm-cal-partido{width:40px;height:40px;display:flex;align-items:center;justify-content:center}
 .lm-cal-partido img,.lm-cal-partido svg{width:100%;height:100%}
 .lm-cal-leyenda{
   display:flex;flex-wrap:wrap;gap:10px;margin-top:8px;padding-top:8px;
-  border-top:1px solid #2a2f33;font-size:9px;color:#999;
+  border-top:1px solid #2a2f33;font-size:12px;color:#bbb;
 }
 .lm-cal-leyenda span{display:flex;align-items:center;gap:4px}
-.lm-cal-leyenda i{color:#e08a3e;font-size:12px}
-.lm-cal-leyenda-escudo img,.lm-cal-leyenda-escudo svg{width:14px;height:14px}
+.lm-cal-leyenda i{color:#e08a3e;font-size:14px}
+.lm-cal-leyenda-escudo img,.lm-cal-leyenda-escudo svg{width:16px;height:16px}
 
 .lm-actionsrow{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:4px}
 
@@ -2933,7 +2937,7 @@ body.liga-manager-screen #mobileTabBar{display:none!important}
    plegado como desplegado se ve la nota media, grande y en dorado. */
 .lm-perfil-header{
   display:flex;align-items:center;justify-content:space-between;cursor:pointer;
-  user-select:none;margin-bottom:4px!important;
+  user-select:none;margin-bottom:4px!important;color:#ccc;
 }
 .lm-perfil-arrow{display:inline-block;color:var(--gold);transition:transform .2s ease;transform:rotate(-90deg)}
 .lm-perfil-arrow.lm-perfil-arrow-open{transform:rotate(0deg)}

@@ -292,6 +292,10 @@
     return {desde:anterior, hasta:proxima};
   }
   function fechaEsEditable(fecha){
+    // Si la semana ya se resolvió (primer SEGUIR ya dado), toca jugar el
+    // partido y el calendario de esa semana se queda fijo — no tiene
+    // sentido seguir tocándolo con el entrenamiento ya procesado.
+    if(state.semanaResueltaParaJornada===state.jornadaActual) return false;
     const v=ventanaEntrenoActual();
     if(!v) return false;
     const t=fecha.getTime();
@@ -345,13 +349,22 @@
         });
         // Entrenar 3+ días seguidos empieza a pasar factura — la
         // prevención del médico (muscular y ósea) reduce este riesgo,
-        // igual que hace con las lesiones de partido.
+        // igual que hace con las lesiones de partido. Cualquier jugador
+        // puede resentirse (entrena toda la plantilla esa semana), pero
+        // los del Plan de Entrenamiento llevan mucha más carga extra y
+        // por eso tienen bastante más papeletas.
         const factorPrevencion=Math.pow(0.85, (nivelesMed.prevencionMuscular||0)+(nivelesMed.prevencionOsea||0));
         const riesgoSobrecarga=Math.max(0, seguidos-2)*0.05*factorPrevencion;
         if(riesgoSobrecarga>0 && Math.random()<riesgoSobrecarga){
-          const candidatos=(plan.length?plan.map(p=>p.jugador):state.plantilla).filter(p=>!p.injured);
-          if(candidatos.length){
-            const jugador=candidatos[Math.floor(Math.random()*candidatos.length)];
+          const idsEnPlan=new Set(plan.map(p=>p.jugador.id));
+          const pool=[];
+          state.plantilla.forEach(p=>{
+            if(p.injured) return;
+            const peso=idsEnPlan.has(p.id)?4:1;
+            for(let i=0;i<peso;i++) pool.push(p);
+          });
+          if(pool.length){
+            const jugador=pool[Math.floor(Math.random()*pool.length)];
             const familia=Math.random()<0.5?'muscular':'osea';
             const sev={label:'leve', weeks:1};
             jugador.injured=true; jugador.injurySeverity=sev.label; jugador.injuryWeeks=sev.weeks; jugador.injuryFamilia=familia;
@@ -433,6 +446,7 @@
     }).join('');
     const {entreno, descanso}=contarEntrenoSemanaActual();
     return `<div class="lm-calendario-box">
+      <div class="bench-title" style="margin:0 0 10px"><span><i class="ph ph-bold ph-calendar-blank" style="color:var(--gold);margin-right:6px"></i>CALENDARIO</span></div>
       <div class="lm-cal-header">
         <button class="lm-cal-nav" data-cal-nav="-1" title="Mes anterior"><i class="ph ph-bold ph-caret-left"></i></button>
         <span class="lm-cal-titulo">${MESES_LARGO[month].toUpperCase()} ${year}</span>
@@ -718,6 +732,7 @@
       fechaInicioLiga:fechaISO(proximoSabadoDesde(new Date())),
       calendarioEntrenamiento:{},
       pfPlanEntrenamiento:[],
+      lmPendingPrediction:null,
       resultados:{},
       plantilla,
       formacionCategoria:'equilibrada',
@@ -1207,6 +1222,11 @@
       const extra=(rachaAbs-1)*1.5;
       delta += delta>0 ? extra : (delta<0 ? -extra : 0);
     }
+    // La satisfacción de la afición también pesa en la moral del
+    // vestuario — un ambiente hostil (aficionados descontentos) hace
+    // mella incluso ganando, y una grada volcada anima al equipo.
+    const satisfaccion=(state.estadio && state.estadio.satisfaccion) || 0;
+    delta += satisfaccion/12;
     state.moral=Math.max(-50, Math.min(50, Math.round((state.moral||0)+delta)));
   }
 
@@ -1374,6 +1394,145 @@
   // días de la semana), mostrando qué ha pasado en cada uno según el
   // calendario. Al llegar al final, hay que pulsar para jugar el partido.
   const DIAS_LARGO=['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+  // Rueda de prensa de Liga Manager — MISMA mecánica e interfaz que Copa
+  // Leyendas (mismas clases CSS .press-modal, mismo temporizador de 8s),
+  // pero con preguntas reescritas para encajar en el contexto de una
+  // liga regular (jornadas, clasificación, rival concreto) en vez de un
+  // torneo de eliminatorias. check(r) se evalúa después del partido
+  // contra {myGoals, oppGoals, draw}.
+  const LM_PRESS_EVENTS=[
+    { q:'«¿Vais a mantener la portería a cero en este partido?»', answers:[
+      { text:'«Sí, vamos a por la portería a cero.»', stance:'positive', label:'Confiado', check:(r)=>r.oppGoals===0 },
+      { text:'«Es difícil de prometer, ya veremos.»', stance:'neutral', label:'Prudente', check:()=>null },
+      { text:'«Lo veo complicado, encajaremos.»', stance:'negative', label:'Pesimista', check:(r)=>r.oppGoals>0 },
+    ]},
+    { q:'«¿Vais a ganar por tres goles o más esta jornada?»', answers:[
+      { text:'«Sí, vamos a golear.»', stance:'positive', label:'Ambicioso', check:(r)=>(r.myGoals-r.oppGoals)>=3 },
+      { text:'«No me atrevo a predecir el marcador.»', stance:'neutral', label:'Cauto', check:()=>null },
+      { text:'«No, será un partido ajustado.»', stance:'negative', label:'Realista', check:(r)=>(r.myGoals-r.oppGoals)<3 },
+    ]},
+    { q:'«¿Creéis que os llevaréis los tres puntos hoy?»', answers:[
+      { text:'«Sin duda, vamos a ganar.»', stance:'positive', label:'Contundente', check:(r)=>r.myGoals>r.oppGoals },
+      { text:'«Lo importante es sumar, como sea.»', stance:'neutral', label:'Pragmático', check:()=>null },
+      { text:'«Va a ser un partido muy igualado.»', stance:'negative', label:'Cauteloso', check:(r)=>r.myGoals<=r.oppGoals },
+    ]},
+    { q:'«¿Marcaréis gol en este partido?»', answers:[
+      { text:'«Sí, saldremos a por todas desde el inicio.»', stance:'positive', label:'Decidido', check:(r)=>r.myGoals>0 },
+      { text:'«El plan de partido lo decide el míster.»', stance:'neutral', label:'Diplomático', check:()=>null },
+      { text:'«Va a costarnos encontrar el gol hoy.»', stance:'negative', label:'Cauteloso', check:(r)=>r.myGoals===0 },
+    ]},
+    { q:'«¿Va a generar más ocasiones el rival que vosotros?»', answers:[
+      { text:'«No, vamos a dominar nosotros el partido.»', stance:'positive', label:'Dominante', check:(r)=>r.myGoals>=r.oppGoals },
+      { text:'«Cada partido es distinto, lo veremos en el campo.»', stance:'neutral', label:'Flexible', check:()=>null },
+      { text:'«Es un rival fuerte, nos costará contenerlo.»', stance:'negative', label:'Respetuoso', check:(r)=>r.oppGoals>r.myGoals },
+    ]},
+    { q:'«¿Este resultado os va a acercar a vuestro objetivo en la clasificación?»', answers:[
+      { text:'«Sí, sumar hoy es clave para nuestra clasificación.»', stance:'positive', label:'Ambicioso', check:(r)=>r.myGoals>r.oppGoals },
+      { text:'«Cada jornada cuenta, veremos el resultado.»', stance:'neutral', label:'Prudente', check:()=>null },
+      { text:'«No siempre se puede ganar, hay que ser realistas.»', stance:'negative', label:'Realista', check:(r)=>r.myGoals<r.oppGoals },
+    ]},
+    { q:'«¿Vais a marcar más de un gol en este partido?»', answers:[
+      { text:'«Sí, tenemos gol en las botas.»', stance:'positive', label:'Ofensivo', check:(r)=>r.myGoals>1 },
+      { text:'«Con uno nos conformamos si hace falta.»', stance:'neutral', label:'Pragmático', check:()=>null },
+      { text:'«Va a costarnos encontrar el gol hoy.»', stance:'negative', label:'Cauteloso', check:(r)=>r.myGoals<=1 },
+    ]},
+    { q:'«¿Encajaréis dos goles o más en este partido?»', answers:[
+      { text:'«No, vamos a estar sólidos atrás.»', stance:'positive', label:'Defensivo', check:(r)=>r.oppGoals<2 },
+      { text:'«El fútbol siempre da sorpresas.»', stance:'neutral', label:'Filosófico', check:()=>null },
+      { text:'«El rival tiene mucho gol, puede pasar.»', stance:'negative', label:'Realista', check:(r)=>r.oppGoals>=2 },
+    ]},
+    { q:'«¿Terminará el partido en empate?»', answers:[
+      { text:'«No, vamos a buscar la victoria hasta el final.»', stance:'positive', label:'Ambicioso', check:(r)=>!r.draw },
+      { text:'«Cualquier resultado es posible en esta liga.»', stance:'neutral', label:'Realista', check:()=>null },
+      { text:'«Puede quedarse en un empate, ambos equipos son sólidos.»', stance:'negative', label:'Cauteloso', check:(r)=>r.draw },
+    ]},
+  ];
+  // Devuelve una pregunta al azar, ya con el nombre del rival incrustado
+  // donde corresponde, para que la entrevista se sienta específica de
+  // ese partido concreto.
+  function elegirPreguntaPrensaLM(rivalName){
+    const def=LM_PRESS_EVENTS[Math.floor(Math.random()*LM_PRESS_EVENTS.length)];
+    return {...def, q: def.q.replace('esta jornada','esta jornada ante '+(rivalName||'el rival'))};
+  }
+  // Muestra la rueda de prensa reutilizando literalmente las mismas
+  // clases CSS que Copa Leyendas (.press-modal/.press-icon/...), con el
+  // mismo temporizador de 8s. Al responder o agotarse el tiempo, guarda
+  // la promesa pendiente en el estado y continúa el flujo de la semana.
+  function mostrarRuedaPrensaLM(overlay, rivalName, onDone){
+    const event=elegirPreguntaPrensaLM(rivalName);
+    overlay.innerHTML=`
+      <div class="press-modal">
+        <span class="press-icon">🎙</span>
+        <h3>RUEDA DE PRENSA · ANTES DEL PARTIDO</h3>
+        <p class="press-question">${event.q}</p>
+        <div class="press-answers">
+          ${event.answers.map((a,i)=>`
+            <button class="press-answer-btn" data-lm-press-answer="${i}">
+              <span>${a.text}</span>
+              <span class="press-answer-label">${a.label}</span>
+            </button>`).join('')}
+        </div>
+        <div class="press-timer-track"><div class="press-timer-fill" id="lmPressTimerFill"></div></div>
+      </div>`;
+    let respondido=false;
+    const DURATION=8000;
+    const fill=document.getElementById('lmPressTimerFill');
+    const beepTimers=[5,4,3,2,1].map(secLeft=>setTimeout(()=>{
+      if(respondido) return;
+      if(typeof checkCountdownBeep==='function') checkCountdownBeep(secLeft, 'lmPressConference');
+    }, DURATION-secLeft*1000));
+    if(fill){
+      fill.style.transition='none';
+      fill.style.width='100%';
+      requestAnimationFrame(()=>{
+        requestAnimationFrame(()=>{
+          fill.style.transition=`width ${DURATION}ms linear`;
+          fill.style.width='0%';
+        });
+      });
+    }
+    const timerId=setTimeout(()=>{
+      if(respondido) return;
+      respondido=true;
+      if(typeof showToast==='function') showToast('No respondiste a tiempo — la prensa se queda sin declaraciones.', 'toast-neutral');
+      onDone();
+    }, DURATION);
+    overlay.querySelectorAll('[data-lm-press-answer]').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        if(respondido) return;
+        respondido=true;
+        clearTimeout(timerId);
+        beepTimers.forEach(id=>clearTimeout(id));
+        const idx=parseInt(btn.getAttribute('data-lm-press-answer'),10);
+        const answer=event.answers[idx];
+        state.lmPendingPrediction={event, answer};
+        guardarEstado();
+        if(typeof window.playSound==='function') window.playSound('select');
+        if(typeof showToast==='function') showToast(`Promesa hecha: "${answer.label}"`, 'toast-neutral');
+        setTimeout(onDone, 700);
+      });
+    });
+  }
+  // Resuelve la promesa pendiente contra el resultado real del partido
+  // — mismo efecto que Copa Leyendas: ±8 de moral, o 0 si fue neutral.
+  function resolverPrensaLM(miGoles, suGoles){
+    if(!state.lmPendingPrediction) return null;
+    const {answer}=state.lmPendingPrediction;
+    state.lmPendingPrediction=null;
+    if(answer.stance==='neutral'){
+      return {label:answer.label, outcome:'neutral', delta:0, texto:'🎙 Respuesta neutral: la moral no se ve afectada.'};
+    }
+    const correcto=answer.check({myGoals:miGoles, oppGoals:suGoles, draw:miGoles===suGoles});
+    const delta=correcto?8:-8;
+    state.moral=Math.max(-50,Math.min(50,(state.moral||0)+delta));
+    return {
+      label:answer.label, outcome:correcto?'correct':'wrong', delta,
+      texto: correcto
+        ? `🎙 Promesa cumplida ("${answer.label}"): +${delta} moral.`
+        : `🎙 Promesa incumplida ("${answer.label}"): ${delta} moral.`
+    };
+  }
+
   function mostrarSemanaEnVivo(eventosDias, onAceptar){
     const overlay=document.createElement('div');
     overlay.id='lmSemanaOverlay';
@@ -1417,8 +1576,21 @@
       });
     }
     if(!eventosDias || !eventosDias.length){ pantallaResumen(); return; }
+    // Rueda de prensa — un día al azar de esta semana, antes del
+    // partido, con un 35% de probabilidad (si no hay ya una promesa
+    // pendiente de una semana anterior sin resolver). Pausa el flujo de
+    // días hasta que se responda o se agote el tiempo.
+    const diaPrensaIdx = (rival && !state.lmPendingPrediction && Math.random()<0.5)
+      ? Math.floor(Math.random()*eventosDias.length) : -1;
     let idx=0;
     function pintarDia(){
+      if(idx===diaPrensaIdx){
+        mostrarRuedaPrensaLM(overlay, rival?rival.name:null, ()=>{
+          idx++;
+          if(idx<eventosDias.length) pintarDia(); else pantallaResumen();
+        });
+        return;
+      }
       const ev=eventosDias[idx];
       const nombreDia=DIAS_LARGO[ev.fecha.getDay()];
       if(typeof window.playSound==='function') window.playSound(ev.tipo==='entreno'?'training_day':'rest_day');
@@ -1585,12 +1757,15 @@
         const golesA=info.eventos.filter(e=>e.type==='goal').length;
         const tarjetasA=info.eventos.filter(e=>e.type==='card').length;
         const lesionA=info.eventos.find(e=>e.type==='injury');
+        const prensaResuelta=resolverPrensaLM(miGoles, suGoles);
+        if(prensaResuelta) guardarEstado();
         document.getElementById('lmPostMatchInfo').innerHTML=`
           <div class="match-result-tag ${resultClass}">${resultText}</div>
           <div class="match-summary">
             <strong>${state.nombreEquipo}</strong> ${miGoles} – ${suGoles} <strong>${info.home.id==='lm_0'?info.away.name:info.home.name}</strong><br>
             ${golesA} gol${golesA===1?'':'es'} en total · ${tarjetasA} tarjeta${tarjetasA===1?'':'s'}${lesionA?` · 1 lesión (${lesionA.jugador.name})`:''}
-          </div>`;
+          </div>
+          ${prensaResuelta?`<div class="press-prediction-section ${prensaResuelta.outcome==='correct'?'press-prediction-good':prensaResuelta.outcome==='wrong'?'press-prediction-bad':'press-prediction-neutral'}">${prensaResuelta.texto}</div>`:''}`;
 
         document.getElementById('lmLiveContinuar').style.display='block';
       }
@@ -3208,11 +3383,11 @@
             </div>
             <button id="lmJugarBtn" class="lm-btn-jugar-icon" ${state.jornadaActual>38?'disabled':''} title="${state.jornadaActual>38?'Temporada completa':(hayVacantes?'Te falta cuerpo técnico por contratar, pero puedes jugar igualmente':'Jugar jornada')}">
               <i class="ph ph-bold ph-play-circle"></i>
-              <span>${state.jornadaActual>38?'FIN':'SEGUIR'}</span>
+              <span>${state.jornadaActual>38?'FIN':(state.semanaResueltaParaJornada===state.jornadaActual?'JUGAR':'SEGUIR')}</span>
             </button>
           </div>
           <div class="bench-title">
-            <span>ONCE TITULAR</span>
+            <span><i class="ph ph-bold ph-t-shirt" style="color:var(--gold);margin-right:6px"></i>ONCE TITULAR</span>
             <span style="display:flex;align-items:center;gap:8px">
               <button id="lmSortBtn" class="lm-sort-btn" title="Cambiar orden" aria-label="Cambiar orden">
                 <span id="lmSortLabel">${LM_SORT_LABELS[lmSortMode]}</span>
@@ -3227,7 +3402,7 @@
               <tbody>${filasPlantilla}</tbody>
             </table>
           </div>
-          <div class="bench-title"><span>BANQUILLO</span><span>${banquillo.length}</span></div>
+          <div class="bench-title"><span><i class="ph ph-bold ph-chair" style="color:var(--gold);margin-right:6px"></i>BANQUILLO</span><span>${banquillo.length}</span></div>
           <div>
             <table class="roster-table">
               <thead><tr><th>Jugador</th><th>Resist.</th><th>Pos</th><th>ATA</th><th>DEF</th><th>RIT</th><th>PAS</th><th>TEC</th><th>Rat.</th></tr></thead>
@@ -3236,7 +3411,7 @@
           </div>
 
           <div class="team-profile box" style="margin-top:14px">
-            <h3 id="lmPerfilEquipoHeader" class="lm-perfil-header">PERFIL DEL EQUIPO <span class="lm-perfil-arrow ${perfilEquipoColapsado?'':'lm-perfil-arrow-open'}">▾</span></h3>
+            <h3 id="lmPerfilEquipoHeader" class="lm-perfil-header"><i class="ph ph-bold ph-chart-bar" style="color:var(--gold);margin-right:6px"></i>PERFIL DEL EQUIPO <span class="lm-perfil-arrow ${perfilEquipoColapsado?'':'lm-perfil-arrow-open'}">▾</span></h3>
             <div class="lm-perfil-nota-grande">${statsEquipo.overall}</div>
             ${!perfilEquipoColapsado?`
             ${[['attack','ATAQUE'],['defense','DEFENSA'],['pace','RITMO'],['passing','PASE'],['technique','TÉCNICA']].map(([k,label])=>`
@@ -3274,7 +3449,7 @@
             return `<div class="${clases}" data-slot="${def.slot}" style="left:${def.x}%;top:${def.y}%" title="${jugador?jugador.name+' ('+efectivoOverall(jugador)+')':'Vacío'}">${inner}</div>`;
           }).join('')}</div>
 
-          <div class="bench-title" style="margin-top:14px"><span>FORMACIÓN</span><span>${state.formacionCode}</span></div>
+          <div class="bench-title" style="margin-top:14px"><span><i class="ph ph-bold ph-strategy" style="color:var(--gold);margin-right:6px"></i>FORMACIÓN</span><span>${state.formacionCode}</span></div>
           <div class="formation-tabs">
             ${Object.keys(FORMATIONS).map(cat=>`<div class="formation-tab ${(formacionCategoriaVista||state.formacionCategoria)===cat?'active':''}" data-categoria="${cat}">${CAT_NAMES[cat]}</div>`).join('')}
           </div>
@@ -3296,7 +3471,7 @@
                   <div class="lm-perfil-nota-grande">${Math.round((rival.attack+rival.defense+rival.pace+rival.passing+rival.technique)/5)}</div>
                 </div>
                 <div class="lm-rival-info-col">
-                  <h3 class="lm-nextrival-header" style="text-align:left;margin:0 0 4px">PRÓXIMO RIVAL</h3>
+                  <h3 class="lm-nextrival-header" style="text-align:left;margin:0 0 4px"><i class="ph ph-bold ph-flag" style="color:var(--gold);margin-right:6px"></i>PRÓXIMO RIVAL</h3>
                   <div class="lm-vs-label" style="text-align:left;margin-bottom:6px">${esLocal?'JUEGAS EN CASA':'JUEGAS FUERA'}</div>
                   ${(()=>{
                     const fila=calcularClasificacion();
@@ -3330,7 +3505,7 @@
               </div>` : `<div class="lm-vs-label" style="text-align:center">Temporada finalizada</div>`}
           </div>
           ${calendarioHTML()}
-          <h3 class="lm-clasif-header" id="lmClasifHeader"><span style="color:var(--gold)">CLASIFICACIÓN</span> <span class="lm-clasif-arrow ${clasifColapsada?'':'lm-clasif-arrow-open'}">▾</span></h3>
+          <h3 class="lm-clasif-header" id="lmClasifHeader"><span style="display:flex;align-items:center"><i class="ph ph-bold ph-ranking" style="color:var(--gold);margin-right:6px"></i><span style="color:#ccc">CLASIFICACIÓN</span></span> <span class="lm-clasif-arrow ${clasifColapsada?'':'lm-clasif-arrow-open'}">▾</span></h3>
           <div id="lmClasifBody" style="${clasifColapsada?'display:none':''}">
           <div class="lm-table-wrap">
             <table class="lm-table">
@@ -3355,7 +3530,7 @@
         <div class="lm-panel lm-staff-panel" style="${columnaOrderStyle('staff')}">${columnaControlesHTML('staff')}
           <div class="lm-staff-bar-header">
             <div class="lm-staff-bar-title"><i class="ph ph-bold ph-users-three"></i> CUERPO TÉCNICO</div>
-            <div class="lm-staff-bar-capital"><i class="ph ph-bold ph-coins"></i> ${formatoDinero(state.capital)}</div>
+            <div class="lm-staff-bar-capital" title="Dados y rerolls disponibles este partido"><i class="ph ph-bold ph-dice-five"></i> ${state.diceAvailable} <span style="opacity:.5">·</span> <i class="ph ph-bold ph-arrows-clockwise"></i> ${state.dadoRerollsDisponibles||0}</div>
           </div>
           ${hayVacantes?`<div class="lm-staff-warning"><i class="ph ph-bold ph-warning"></i> Todavía te falta cuerpo técnico por contratar — puedes jugar igualmente, pero conviene completarlo pronto.</div>`:''}
           <button id="lmTrabajadoresBtn" class="lm-btn-trabajadores" style="width:100%;margin-bottom:10px"><i class="ph ph-bold ph-user-plus"></i> CONTRATAR</button>
@@ -5198,7 +5373,7 @@
         <i class="ph ph-bold ph-clipboard-text"></i>
         ${chips?`<div class="lm-plan-chips">${chips}</div>`:'<span>Todavía no has elegido a nadie para entrenar</span>'}
       </div>
-      <button id="lmPlanEntrenoBtn" class="mode-card-btn mode-card-btn-secondary" style="padding:6px 14px;font-size:10px">PLAN DE ENTRENAMIENTO</button>
+      <button id="lmPlanEntrenoBtn" class="mode-card-btn mode-card-btn-secondary" style="padding:9px 16px;font-size:13px;white-space:nowrap">PLAN DE ENTRENAMIENTO</button>
     </div>`;
   }
 
