@@ -33,26 +33,31 @@
 
   /* ---------- 1. Equipos rivales — La Liga 2026-27 real, 19 clubes ---------- */
   const ESCUDOS_DIR='assets/escudos_liga_española/';
+  // Cada equipo tiene un perfil de juego real y reconocible, no solo un
+  // nivel de potencia general — así una formación defensiva de
+  // contragolpe rinde de verdad distinto contra un equipo ofensivo que
+  // contra uno defensivo, en vez de enfrentarte siempre al mismo rival
+  // "genérico" con números ligeramente distintos.
   const LM_RIVALS = [
-    {id:'lm_1',  name:'Real Madrid',          attack:88, defense:85, pace:82, passing:88, technique:89, crestImg:ESCUDOS_DIR+'realmadrid.png'},
-    {id:'lm_2',  name:'FC Barcelona',         attack:87, defense:83, pace:84, passing:89, technique:90, crestImg:ESCUDOS_DIR+'barcelona.png'},
-    {id:'lm_3',  name:'Atlético de Madrid',   attack:84, defense:86, pace:80, passing:82, technique:81, crestImg:ESCUDOS_DIR+'atlmadrid.png'},
-    {id:'lm_4',  name:'Athletic Club',        attack:78, defense:77, pace:76, passing:78, technique:77, crestImg:ESCUDOS_DIR+'athletic.png'},
-    {id:'lm_5',  name:'Villarreal CF',        attack:79, defense:76, pace:75, passing:80, technique:79, crestImg:ESCUDOS_DIR+'villarreal.png'},
-    {id:'lm_6',  name:'Real Betis',           attack:77, defense:74, pace:74, passing:78, technique:77, crestImg:ESCUDOS_DIR+'betis.png'},
-    {id:'lm_7',  name:'Real Sociedad',        attack:76, defense:75, pace:74, passing:77, technique:76, crestImg:ESCUDOS_DIR+'realsociedad.png'},
-    {id:'lm_8',  name:'Sevilla FC',           attack:74, defense:73, pace:72, passing:75, technique:74, crestImg:ESCUDOS_DIR+'sevilla.png'},
-    {id:'lm_9',  name:'RC Celta',             attack:72, defense:70, pace:73, passing:74, technique:73, crestImg:ESCUDOS_DIR+'celta.png'},
-    {id:'lm_10', name:'Valencia CF',          attack:71, defense:72, pace:70, passing:71, technique:71, crestImg:ESCUDOS_DIR+'valencia.png'},
-    {id:'lm_11', name:'Rayo Vallecano',       attack:69, defense:70, pace:68, passing:68, technique:67, crestImg:ESCUDOS_DIR+'rayovallecano.png'},
-    {id:'lm_12', name:'CA Osasuna',           attack:68, defense:71, pace:67, passing:66, technique:65, crestImg:ESCUDOS_DIR+'osasuna.png'},
-    {id:'lm_13', name:'Getafe CF',            attack:66, defense:72, pace:65, passing:62, technique:61, crestImg:ESCUDOS_DIR+'getafe.png'},
-    {id:'lm_14', name:'RCD Espanyol',         attack:65, defense:66, pace:66, passing:64, technique:64, crestImg:ESCUDOS_DIR+'espanyol.png'},
-    {id:'lm_15', name:'Elche CF',             attack:62, defense:63, pace:61, passing:61, technique:60, crestImg:ESCUDOS_DIR+'elche.png'},
-    {id:'lm_16', name:'Levante UD',           attack:61, defense:62, pace:60, passing:60, technique:59, crestImg:ESCUDOS_DIR+'levante.png'},
-    {id:'lm_17', name:'Deportivo Alavés',     attack:64, defense:68, pace:63, passing:62, technique:61, crestImg:ESCUDOS_DIR+'alaves.png'},
-    {id:'lm_18', name:'Racing de Santander',  attack:60, defense:61, pace:60, passing:59, technique:58, crestImg:ESCUDOS_DIR+'racingsantander.png'},
-    {id:'lm_19', name:'RC Deportivo',         attack:61, defense:60, pace:61, passing:60, technique:60, crestImg:ESCUDOS_DIR+'deportivocoruna.png'}
+    {id:'lm_1',  name:'Real Madrid',          attack:91, defense:78, pace:92, passing:85, technique:88, crestImg:ESCUDOS_DIR+'realmadrid.png'},      // contragolpe eléctrico
+    {id:'lm_2',  name:'FC Barcelona',         attack:86, defense:80, pace:78, passing:94, technique:93, crestImg:ESCUDOS_DIR+'barcelona.png'},      // posesión y toque
+    {id:'lm_3',  name:'Atlético de Madrid',   attack:78, defense:93, pace:75, passing:78, technique:77, crestImg:ESCUDOS_DIR+'atlmadrid.png'},      // fortín defensivo
+    {id:'lm_4',  name:'Athletic Club',        attack:77, defense:81, pace:83, passing:72, technique:71, crestImg:ESCUDOS_DIR+'athletic.png'},       // físico y directo
+    {id:'lm_5',  name:'Villarreal CF',        attack:75, defense:78, pace:68, passing:83, technique:85, crestImg:ESCUDOS_DIR+'villarreal.png'},     // técnico y organizado
+    {id:'lm_6',  name:'Real Betis',           attack:83, defense:62, pace:74, passing:81, technique:84, crestImg:ESCUDOS_DIR+'betis.png'},          // ofensivo con clase, atrás flojo
+    {id:'lm_7',  name:'Real Sociedad',        attack:73, defense:77, pace:67, passing:83, technique:80, crestImg:ESCUDOS_DIR+'realsociedad.png'},   // posesión organizada
+    {id:'lm_8',  name:'Sevilla FC',           attack:71, defense:81, pace:76, passing:69, technique:69, crestImg:ESCUDOS_DIR+'sevilla.png'},        // sólido y de contragolpe
+    {id:'lm_9',  name:'RC Celta',             attack:76, defense:57, pace:82, passing:71, technique:79, crestImg:ESCUDOS_DIR+'celta.png'},          // bandas rápidas, atrás débil
+    {id:'lm_10', name:'Valencia CF',          attack:67, defense:75, pace:79, passing:65, technique:68, crestImg:ESCUDOS_DIR+'valencia.png'},       // contragolpe veloz
+    {id:'lm_11', name:'Rayo Vallecano',       attack:64, defense:79, pace:77, passing:58, technique:62, crestImg:ESCUDOS_DIR+'rayovallecano.png'},  // presión física
+    {id:'lm_12', name:'CA Osasuna',           attack:58, defense:85, pace:67, passing:56, technique:53, crestImg:ESCUDOS_DIR+'osasuna.png'},        // muy físico y defensivo
+    {id:'lm_13', name:'Getafe CF',            attack:50, defense:89, pace:61, passing:53, technique:48, crestImg:ESCUDOS_DIR+'getafe.png'},         // anti-fútbol extremo
+    {id:'lm_14', name:'RCD Espanyol',         attack:63, defense:69, pace:65, passing:62, technique:63, crestImg:ESCUDOS_DIR+'espanyol.png'},       // equilibrado sin destacar
+    {id:'lm_15', name:'Elche CF',             attack:55, defense:72, pace:59, passing:59, technique:60, crestImg:ESCUDOS_DIR+'elche.png'},          // modesto y ordenado
+    {id:'lm_16', name:'Levante UD',           attack:68, defense:47, pace:63, passing:61, technique:65, crestImg:ESCUDOS_DIR+'levante.png'},        // ofensivo pero muy frágil atrás
+    {id:'lm_17', name:'Deportivo Alavés',     attack:56, defense:77, pace:62, passing:56, technique:54, crestImg:ESCUDOS_DIR+'alaves.png'},         // defensivo y trabajador
+    {id:'lm_18', name:'Racing de Santander',  attack:53, defense:69, pace:61, passing:53, technique:52, crestImg:ESCUDOS_DIR+'racingsantander.png'},// recién ascendido, aguerrido
+    {id:'lm_19', name:'RC Deportivo',         attack:57, defense:56, pace:60, passing:65, technique:66, crestImg:ESCUDOS_DIR+'deportivocoruna.png'} // técnico pero modesto
   ];
 
   const MONEDAS = {
@@ -439,7 +444,15 @@
     // ese mes automáticamente. Mientras la jornada no cambie, el usuario
     // puede navegar libremente con las flechas sin que se le reinicie.
     if(!calendarioMesVisto || calendarioJornadaSincronizada!==state.jornadaActual){
-      const base=fechaJornadaLM(Math.min(state.jornadaActual,38)) || new Date(state.fechaInicioLiga+'T00:00:00');
+      // Usamos el primer día realmente editable de la ventana (el día
+      // siguiente al partido anterior) como referencia, no la fecha del
+      // propio partido — así el calendario muestra siempre el mes donde
+      // de verdad se pueden marcar entrenamientos, aunque el partido
+      // caiga ya en el mes siguiente.
+      const ventana=ventanaEntrenoActual();
+      let base;
+      if(ventana){ base=new Date(ventana.desde); base.setDate(base.getDate()+1); }
+      else { base=fechaJornadaLM(Math.min(state.jornadaActual,38)) || new Date(state.fechaInicioLiga+'T00:00:00'); }
       calendarioMesVisto={year:base.getFullYear(), month:base.getMonth()};
       calendarioJornadaSincronizada=state.jornadaActual;
     }
@@ -596,6 +609,30 @@
     const mod=window.tacticalModifier(statsA,statsB);
     let lambdaA=Math.max(0.25, 1.15+mod.myScoreMod);
     let lambdaB=Math.max(0.25, 1.15+mod.oppScoreMod);
+    // Leer el partido y elegir bien la formación importa: un
+    // planteamiento defensivo (contragolpe) saca mucho más partido a un
+    // rival muy ofensivo y flojo atrás — se abren espacios a la contra
+    // que una formación defensiva está hecha para aprovechar. Al revés,
+    // jugar ofensivo contra un equipo muy defensivo cuesta más goles de
+    // los que parece que deberían caer solo por diferencia de nivel.
+    const miEsA = teamA.id==='lm_0', miEsB = teamB.id==='lm_0';
+    if(miEsA || miEsB){
+      const misStats = miEsA ? statsA : statsB;
+      const statsRival = miEsA ? statsB : statsA;
+      const miFormacion = state.formacionCategoria;
+      const desequilibrioRival = statsRival.attack - statsRival.defense; // positivo = ofensivo y flojo atrás
+      let bonusPropio=0, penalizacionRival=0;
+      if(miFormacion==='defensiva' && desequilibrioRival>8){
+        bonusPropio=Math.min(0.35, (desequilibrioRival-8)*0.022);
+      } else if(miFormacion==='ofensiva' && desequilibrioRival<-8){
+        // Rival muy defensivo y yo jugando ofensivo: cuesta más de lo
+        // que la diferencia de nivel sugeriría, el rival está hecho para
+        // encerrarse justo contra este tipo de planteamiento.
+        penalizacionRival=Math.min(0.28, (-desequilibrioRival-8)*0.018);
+      }
+      if(miEsA){ lambdaA=Math.max(0.15,lambdaA+bonusPropio-penalizacionRival); }
+      else { lambdaB=Math.max(0.15,lambdaB+bonusPropio-penalizacionRival); }
+    }
     if(contexto && contexto.climaId){
       lambdaA=Math.max(0.15, lambdaA*factorClimaCampo(contexto.climaId, contexto.campoAnfitrion, contexto.anfitrionA));
       lambdaB=Math.max(0.15, lambdaB*factorClimaCampo(contexto.climaId, contexto.campoAnfitrion, !contexto.anfitrionA));
@@ -745,7 +782,9 @@
     calendarioMesVisto=null; // nueva liga: el calendario debe volver a fijarse en el mes de inicio, no arrastrar el de una partida anterior
     calendarioJornadaSincronizada=null;
     const miEquipo={id:'lm_0', name:nombreEquipo};
-    const teams=[miEquipo, ...LM_RIVALS];
+    const rivalesBarajados=[...LM_RIVALS];
+    if(typeof shuffle==='function') shuffle(rivalesBarajados); // shuffle() muta en el sitio, no devuelve nada
+    const teams=[miEquipo, ...rivalesBarajados];
     const plantilla=generarMiniPlantilla();
     state={
       setupComplete:true,
@@ -1272,7 +1311,7 @@
       registrarMovimientoFinanciero('Merchandising', ingresoMerch, state.jornadaActual);
     }
     if(miEsLocal && clima){
-      const desgasteBase={sunny:7, cloudy:4, rain:15, wind:8, hot:12, snow:14}[clima.id] || 4;
+      const desgasteBase={sunny:10, cloudy:6, rain:20, wind:11, hot:16, snow:19}[clima.id] || 6;
       const reduccion=nivelDeM('prevencionDesgaste')*1.4;
       const desgaste=Math.max(0, desgasteBase-reduccion);
       est.campo=Math.max(0, est.campo-desgaste);
@@ -1285,9 +1324,10 @@
     const boostVictoria=1+nivelDeM('boostSatisfaccion')*0.25;
     const proteccion=1-nivelDeM('proteccionSatisfaccion')*0.2;
     let delta=0;
-    if(miGoles>suGoles) delta=8*boostVictoria;
-    else if(miGoles===suGoles) delta=1;
-    else delta=-10*proteccion;
+    const margen=miGoles-suGoles;
+    if(margen>0) delta=(14+Math.min(margen-1,3)*4)*boostVictoria; // gana: 14 base, más cuanto más goleada
+    else if(margen===0) delta=1;
+    else delta=(-18-Math.min(-margen-1,3)*4)*proteccion; // pierde: -18 base, más cuanto más goleada en contra
     if(est.campo<40) delta-=(40-est.campo)*0.15*proteccion;
     if(delta<0 && state.mantenimientoBonos && state.mantenimientoBonos.amortiguarPerdida){
       delta*=0.5;
@@ -1362,6 +1402,8 @@
     if(mesDeEstaJornada>(state.mesTrabajadoresGenerado||0)){
       regenerarCandidatosTrabajo();
       state.mesTrabajadoresGenerado=mesDeEstaJornada;
+      enviarCorreo('directorGeneral', 'Nuevos candidatos disponibles',
+        'Este mes hay nuevos candidatos disponibles para cubrir puestos del cuerpo técnico. Puedes revisarlos en cualquier momento desde CONTRATAR.');
     }
 
     state.plantilla.forEach(p=>{
@@ -1994,7 +2036,7 @@
     switch(def.id){
       case 'urgente':
         if(jugadorObjetivo){
-          jugadorObjetivo.injuryWeeks=Math.max(0,Math.ceil(jugadorObjetivo.injuryWeeks/2));
+          jugadorObjetivo.injuryWeeks=Math.max(0,Math.floor(jugadorObjetivo.injuryWeeks/2));
           if(jugadorObjetivo.injuryWeeks<=0){ jugadorObjetivo.injured=false; jugadorObjetivo.injurySeverity=null; cerrarLesionHistorial(jugadorObjetivo, 'Carta: '+def.nombre); }
         }
         return jugadorObjetivo?`${jugadorObjetivo.name} recorta a la mitad su tiempo de baja${textoReduccion(antes,jugadorObjetivo.injuryWeeks)}`:'Aplicado';
@@ -2299,15 +2341,15 @@
     document.addEventListener('touchend', ocultar);
     document.addEventListener('touchcancel', ocultar);
   }
-  function mostrarAvisoJuego(mensaje){
+  function mostrarAvisoJuego(mensaje, titulo){
     const overlay=document.createElement('div');
     overlay.id='lmAvisoOverlay';
     overlay.innerHTML=`
-      <div class="lm-dilemma-card" style="max-width:380px">
-        <i class="ph ph-bold ph-warning-circle" style="font-size:30px;color:var(--gold)"></i>
+      <div class="lm-dilemma-card" style="max-width:400px">
+        <div class="lm-dilemma-title"><i class="ph ph-bold ph-warning-circle"></i>${titulo||'AVISO DEL CLUB'}</div>
         <div class="lm-dilemma-text" style="margin:10px 0 16px">${mensaje}</div>
         <div class="lm-popup-actions lm-popup-actions-compact">
-          <button id="lmAvisoCerrar" class="mode-card-btn mode-card-btn-gold">ACEPTAR</button>
+          <button id="lmAvisoCerrar" class="mode-card-btn mode-card-btn-gold">ENTENDIDO</button>
         </div>
       </div>`;
     document.getElementById('ligaManagerScreen').appendChild(overlay);
@@ -2426,7 +2468,7 @@
      Cada mes aparece un puñado de candidatos nuevos para poder comparar
      si compensa cambiar; despedir deja el puesto vacante (sin sueldo,
      pero también sin nadie al mando) hasta contratar a otra persona. ---------- */
-  const ROLES_TRABAJO=['medico','directorGeneral','directorDeportivo','preparadorFisico','mantenimiento'];
+  const ROLES_TRABAJO=['directorGeneral','directorDeportivo','medico','preparadorFisico','mantenimiento'];
   const SUELDO_BASE_ROL={medico:4000, mantenimiento:4000, directorGeneral:5000, directorDeportivo:5000, preparadorFisico:4200};
   const NOMBRE_ROL={medico:'Equipo Médico', mantenimiento:'Mantenimiento y Seguridad', directorGeneral:'Director General', directorDeportivo:'Director Deportivo', preparadorFisico:'Preparador Físico'};
   function nivelAleatorioTrabajador(){
@@ -2440,8 +2482,14 @@
   }
   function generarCandidatoTrabajo(rol, nivelFijo){
     const nivel=nivelFijo||nivelAleatorioTrabajador();
-    const sueldo=Math.round(SUELDO_BASE_ROL[rol]*(0.55+nivel*0.55)*(0.9+Math.random()*0.2));
-    return {id:'cand'+Date.now()+Math.floor(Math.random()*100000), rol, ...nombreTrabajadorAleatorio(), nivel, sueldo};
+    // De vez en cuando (solo en niveles 2-3) aparece un auténtico chollo:
+    // el mismo nivel de siempre, pero a un sueldo muy por debajo de lo
+    // normal — poco probable, pero conviene fijarse en TODOS los
+    // candidatos de cada mes por si acaso.
+    const esChollo = nivel>=2 && nivel<=3 && Math.random()<0.07;
+    const factorSueldo = esChollo ? (0.55+Math.random()*0.12) : (0.9+Math.random()*0.2);
+    const sueldo=Math.round(SUELDO_BASE_ROL[rol]*(0.55+nivel*0.55)*factorSueldo);
+    return {id:'cand'+Date.now()+Math.floor(Math.random()*100000), rol, ...nombreTrabajadorAleatorio(), nivel, sueldo, chollo:esChollo};
   }
   // Un candidato de CADA nivel (1★ a 3★) por puesto, para poder elegir a
   // conciencia cada mes — no un sorteo con posibilidad de repetir nivel.
@@ -3085,11 +3133,12 @@
       state=nuevoEstadoSinEmpezar();
       setupStep=1;
       setupData={liga:'es', moneda:null, nombre:'', escudo:null};
-      render();
+      document.body.classList.remove('liga-manager-screen');
+      document.body.classList.add('menu-screen');
     }
     if(typeof window.showConfirmPopup==='function'){
-      window.showConfirmPopup('¿Abandonar la liga? Se perderá todo el progreso de esta temporada y empezarás una partida nueva.', proceder, 'ABANDONAR');
-    } else if(confirm('¿Seguro que quieres abandonar la liga? Se perderá todo el progreso de esta temporada y empezarás una partida nueva.')){
+      window.showConfirmPopup('¿Abandonar la liga? Se perderá todo el progreso de esta temporada y volverás al menú principal.', proceder, 'ABANDONAR');
+    } else if(confirm('¿Seguro que quieres abandonar la liga? Se perderá todo el progreso de esta temporada y volverás al menú principal.')){
       proceder();
     }
   }
@@ -3561,7 +3610,10 @@
         <div class="lm-panel lm-staff-panel" style="${columnaOrderStyle('staff')}">${columnaControlesHTML('staff')}
           <div class="lm-staff-bar-header">
             <div class="lm-staff-bar-title"><i class="ph ph-bold ph-users-three"></i> CUERPO TÉCNICO</div>
-            <div class="lm-staff-bar-capital" title="Dados y rerolls disponibles este partido"><i class="ph ph-bold ph-dice-five"></i> ${state.diceAvailable} <span style="opacity:.5">·</span> <i class="ph ph-bold ph-arrows-clockwise"></i> ${state.dadoRerollsDisponibles||0}</div>
+            <div class="lm-staff-bar-capital" title="Dados y rerolls disponibles este partido">
+              <span><i class="ph ph-bold ph-dice-five"></i> Dados técnicos: <strong>${state.diceAvailable}</strong></span>
+              <span><i class="ph ph-bold ph-arrows-clockwise"></i> Rerrolls técnicos: <strong>${state.dadoRerollsDisponibles||0}</strong></span>
+            </div>
           </div>
           ${hayVacantes?`<div class="lm-staff-warning"><i class="ph ph-bold ph-warning"></i> Todavía te falta cuerpo técnico por contratar — puedes jugar igualmente, pero conviene completarlo pronto.</div>`:''}
           <button id="lmTrabajadoresBtn" class="lm-btn-trabajadores" style="width:100%;margin-bottom:10px"><i class="ph ph-bold ph-user-plus"></i> CONTRATAR</button>
@@ -3683,7 +3735,7 @@
         if(faltaCuerpoTecnico && !state.avisoCuerpoTecnicoMostrado){
           state.avisoCuerpoTecnicoMostrado=true;
           guardarEstado();
-          mostrarAvisoJuego('Todavía te falta contratar a parte del cuerpo técnico — puedes jugar igualmente, pero te vendrá bien completarlo cuanto antes desde CONTRATAR.');
+          mostrarAvisoJuego('La dirección deportiva le recuerda que el organigrama del club tiene puestos por cubrir en el cuerpo técnico. El equipo puede competir con normalidad, pero se recomienda completar la plantilla técnica cuanto antes desde CONTRATAR para no ceder ventaja frente al resto de clubes de la competición.', 'PLANTILLA TÉCNICA INCOMPLETA');
           return;
         }
         jugarAhora();
@@ -4140,12 +4192,16 @@
           resultado=resolverFn(tiradas);
           // El efecto ya se aplicó y se guardó dentro de resolverFn — aquí
           // refrescamos el fondo (barras de fatiga, stats del jugador...)
-          // en el acto, sin cerrar el propio popup que sigue abierto encima.
-          const overlayPropio=zonaEl.closest('[id$="Overlay"]');
-          if(overlayPropio && typeof render==='function'){
-            render();
-            document.getElementById('ligaManagerScreen').appendChild(overlayPropio);
-          }
+          // en el acto, sin cerrar el propio popup que sigue abierto
+          // encima. Blindado: si algo falla al refrescar el fondo, NUNCA
+          // debe impedir que se vea el resultado y el botón CERRAR.
+          try{
+            const overlayPropio=zonaEl.closest('[id$="Overlay"]');
+            if(overlayPropio && typeof render==='function'){
+              render();
+              document.getElementById('ligaManagerScreen').appendChild(overlayPropio);
+            }
+          }catch(e){ console.error('Refresco de fondo tras dados:', e); }
           pintar();
         } else {
           onCerrar(resultado);
@@ -5740,7 +5796,8 @@
         </div>` : `
         <div class="lm-trab-chip lm-trab-chip-vacante"><i class="ph ph-bold ph-user-circle-minus"></i><span>Vacante</span></div>`;
       const chipsCandidatos = candidatos.map(c=>`
-        <div class="lm-trab-chip">
+        <div class="lm-trab-chip ${c.chollo?'lm-trab-chip-chollo':''}">
+          ${c.chollo?'<div class="lm-trab-chollo-badge"><i class="ph ph-bold ph-seal-percent"></i> CHOLLO</div>':''}
           <div class="lm-trab-chip-top"><span class="lm-trab-nombre">${c.nombre}</span><span class="lm-trab-estrellas">${estrellasNivel(c.nivel, 3)}</span></div>
           <div class="lm-trab-sueldo">${formatoDinero(c.sueldo)}/mes</div>
           <button class="lm-trab-contratar" data-contratar="${c.id}" data-rol="${rol}">CONTRATAR</button>

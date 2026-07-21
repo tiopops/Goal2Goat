@@ -2499,7 +2499,7 @@ body.liga-manager-screen #mobileTabBar{display:none!important}
    grandes). */
 .lm-app-grid{
   display:grid;
-  grid-template-columns: repeat(4, minmax(340px, 1fr));
+  grid-template-columns: repeat(4, minmax(260px, 1fr));
   grid-template-rows: minmax(0, 1fr);
   justify-content:center;
   width:100%;
@@ -2648,17 +2648,6 @@ body.liga-manager-screen #mobileTabBar{display:none!important}
 
 .lm-actionsrow{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:4px}
 
-@media(max-width:1500px) and (min-width:1051px){
-  #ligaManagerScreen{overflow-y:auto}
-  .lm-app-grid{grid-template-columns:1fr 1.2fr 1fr;grid-template-areas:"left center right" "staff staff staff";height:auto;min-height:0}
-  .lm-panel,.lm-center-panel{height:auto;max-height:none;overflow-y:visible}
-  .lm-left-panel{grid-area:left}
-  .lm-center-panel{grid-area:center}
-  .lm-right-panel{grid-area:right}
-  .lm-staff-panel{grid-area:staff;border-left:none;border-top:1px solid #22282b}
-  .lm-staff-panel .lm-staff-bar-row{flex-direction:row;flex-wrap:wrap}
-  .lm-staff-panel .lm-staff-tile{flex:1 1 200px}
-}
 @media(max-width:1050px){
   #ligaManagerScreen{overflow-y:auto}
   .lm-app-grid{grid-template-columns:1fr;justify-content:stretch;height:auto;min-height:0}
@@ -2680,9 +2669,11 @@ body.liga-manager-screen #mobileTabBar{display:none!important}
 }
 .lm-staff-bar-title i{color:var(--gold)}
 .lm-staff-bar-capital{
-  font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:.5px;font-size:15px;color:var(--gold);
-  display:flex;align-items:center;gap:6px;
+  font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:.3px;font-size:11px;color:var(--gold);
+  display:flex;flex-direction:column;align-items:flex-end;gap:3px;
 }
+.lm-staff-bar-capital span{display:flex;align-items:center;gap:5px;white-space:nowrap}
+.lm-staff-bar-capital strong{font-size:13px}
 .lm-staff-warning{
   display:flex;align-items:center;gap:8px;background:#2a1e1e;border:1px solid #e24b4a;
   border-radius:8px;padding:9px 12px;font-size:11px;color:#f0b8b8;
@@ -2690,7 +2681,7 @@ body.liga-manager-screen #mobileTabBar{display:none!important}
 .lm-staff-warning i{color:#e24b4a;font-size:16px;flex-shrink:0}
 .lm-staff-bar-row{display:flex;flex-direction:column;gap:12px}
 .lm-staff-tile{
-  position:relative;display:flex;flex-direction:row;align-items:stretch;min-height:96px;
+  position:relative;display:flex;flex-direction:row;align-items:stretch;height:96px;
   border:1px solid #2f3539;border-radius:12px;background:#1a1d1f;overflow:hidden;cursor:pointer;
   transition:border-color .15s ease,transform .15s ease,box-shadow .15s ease;
 }
@@ -2712,11 +2703,14 @@ body.liga-manager-screen #mobileTabBar{display:none!important}
 .lm-staff-tile:hover .lm-staff-tile-photo img{filter:grayscale(0)}
 .lm-staff-tile-photo-fade{position:absolute;inset:0;background:linear-gradient(90deg,transparent 70%,rgba(0,0,0,.35) 100%);pointer-events:none}
 .lm-staff-tile-body{flex:1;min-width:0;padding:10px 12px;text-align:left;display:flex;flex-direction:column;justify-content:center}
-.lm-staff-tile-rol{font-size:10px;letter-spacing:.6px;color:#888;text-transform:uppercase}
-.lm-staff-tile-nombre{font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:.5px;font-size:16px;color:#eee;margin:2px 0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lm-staff-tile-rol{font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:.5px;font-size:16px;color:#eee;text-transform:none}
+.lm-staff-tile-nombre{font-size:11px;letter-spacing:.3px;color:#999;margin:2px 0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-transform:uppercase}
 .lm-staff-tile-estrellas{font-size:13px;color:var(--gold);letter-spacing:2px}
 .lm-staff-tile-vacante-txt{font-size:10px;color:#e6c94a;font-style:italic}
-.lm-staff-tile-desc{font-size:10px;color:#888;line-height:1.35;margin-top:4px}
+.lm-staff-tile-desc{
+  font-size:12px;color:#999;line-height:1.4;margin-top:4px;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+}
 .lm-staff-tile-badge{
   position:absolute;top:6px;right:6px;background:#e24b4a;color:#fff;
   width:20px;height:20px;border-radius:50%;font-size:10px;font-weight:700;
@@ -3278,9 +3272,16 @@ body.liga-manager-screen #mobileTabBar{display:none!important}
 .lm-trab-chips{display:flex;gap:6px;flex:1;flex-wrap:wrap}
 .lm-trab-chip{
   flex:1;min-width:120px;background:#1e2326;border:1px solid #2f3539;border-radius:6px;
-  padding:6px 8px;display:flex;flex-direction:column;gap:2px;
+  padding:6px 8px;display:flex;flex-direction:column;gap:2px;position:relative;
 }
 .lm-trab-chip-actual{border-color:#c9a227}
+.lm-trab-chip-chollo{border-color:#5dcaa5;box-shadow:0 0 0 1px rgba(93,202,165,.3)}
+.lm-trab-chollo-badge{
+  position:absolute;top:-9px;right:6px;background:#5dcaa5;color:#0d1f18;
+  font-size:8px;font-weight:800;letter-spacing:.5px;padding:2px 6px;border-radius:4px;
+  display:flex;align-items:center;gap:2px;
+}
+.lm-trab-chollo-badge i{font-size:10px}
 .lm-trab-chip-vacante{
   display:flex;flex-direction:row;align-items:center;justify-content:center;gap:6px;
   color:#ff6b6b;font-size:12px;font-weight:800;font-style:normal;letter-spacing:.5px;
