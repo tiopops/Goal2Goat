@@ -418,7 +418,7 @@
       const entrenado=!!(state.calendarioEntrenamiento && state.calendarioEntrenamiento[iso]);
       let contenido='';
       if(partido){
-        contenido=`<div class="lm-cal-partido" title="Jornada ${partido.jornada} — ${partido.esLocal?'vs':'fuera vs'} ${partido.rival.name}">${rivalCrestHTML(28, partido.rival.crestImg)}</div>`;
+        contenido=`<div class="lm-cal-partido" title="Jornada ${partido.jornada} — ${partido.esLocal?'vs':'fuera vs'} ${partido.rival.name}">${rivalCrestHTML(40, partido.rival.crestImg)}</div>`;
       } else if(entrenado){
         contenido=`<i class="ph ph-bold ph-barbell lm-cal-entreno-icon"></i>`;
       }
@@ -706,6 +706,7 @@
   }
 
   function empezarTemporada(nombreEquipo, moneda, liga, escudo){
+    calendarioMesVisto=null; // nueva liga: el calendario debe volver a fijarse en el mes de inicio, no arrastrar el de una partida anterior
     const miEquipo={id:'lm_0', name:nombreEquipo};
     const teams=[miEquipo, ...LM_RIVALS];
     const plantilla=generarMiniPlantilla();
@@ -1400,7 +1401,7 @@
       }).join('');
       overlay.innerHTML=`
         <div class="lm-dilemma-card lm-semana-card-fija" style="width:420px;max-width:92vw;text-align:left">
-          <div class="lm-dilemma-title" style="text-align:center"><i class="ph ph-bold ph-flag-checkered"></i> SEMANA COMPLETADA</div>
+          <div class="lm-dilemma-title"><i class="ph ph-bold ph-flag-checkered"></i> SEMANA COMPLETADA</div>
           ${rival?`<div class="lm-rival-crest-block" style="margin:6px auto 12px">${rivalCrestHTML(56, rival.crestImg)}<span class="lm-title" style="font-size:13px">Próximo: ${rival.name}</span></div>`:''}
           <div class="lm-hist-list" style="max-height:280px">
             ${filasHistorial||'<p class="lm-setup-desc" style="text-align:center">No había días que entrenar esta semana.</p>'}
@@ -1420,10 +1421,10 @@
     function pintarDia(){
       const ev=eventosDias[idx];
       const nombreDia=DIAS_LARGO[ev.fecha.getDay()];
-      if(typeof window.playSound==='function') window.playSound(ev.tipo==='entreno'?'dice':'select');
+      if(typeof window.playSound==='function') window.playSound(ev.tipo==='entreno'?'training_day':'rest_day');
       overlay.innerHTML=`
         <div class="lm-dilemma-card lm-semana-card-fija" style="width:380px;max-width:92vw">
-          <div class="lm-dilemma-title" style="text-transform:uppercase">${nombreDia} ${ev.fecha.getDate()}</div>
+          <div class="lm-dilemma-title" style="text-transform:uppercase;justify-content:center;text-align:center">${nombreDia} ${ev.fecha.getDate()}</div>
           <div class="lm-semana-dia-icono ${ev.tipo==='entreno'?'lm-semana-entreno':'lm-semana-descanso'}">
             <i class="ph ph-bold ${ev.tipo==='entreno'?'ph-barbell':'ph-bed'}"></i>
           </div>
@@ -3220,14 +3221,14 @@
               <span>${plantillaPrincipal.length}</span>
             </span>
           </div>
-          <div style="overflow-x:auto">
+          <div>
             <table class="roster-table">
               <thead><tr><th>Jugador</th><th>Resist.</th><th>Pos</th><th>ATA</th><th>DEF</th><th>RIT</th><th>PAS</th><th>TEC</th><th>Rat.</th></tr></thead>
               <tbody>${filasPlantilla}</tbody>
             </table>
           </div>
           <div class="bench-title"><span>BANQUILLO</span><span>${banquillo.length}</span></div>
-          <div style="overflow-x:auto">
+          <div>
             <table class="roster-table">
               <thead><tr><th>Jugador</th><th>Resist.</th><th>Pos</th><th>ATA</th><th>DEF</th><th>RIT</th><th>PAS</th><th>TEC</th><th>Rat.</th></tr></thead>
               <tbody>${filasBanquillo}</tbody>
@@ -3292,6 +3293,7 @@
               <div class="lm-rival-top-row">
                 <div class="lm-rival-crest-block">
                   ${rivalCrestHTML(88, rival.crestImg)}<span class="lm-title" style="font-size:15px">${rival.name}</span>
+                  <div class="lm-perfil-nota-grande">${Math.round((rival.attack+rival.defense+rival.pace+rival.passing+rival.technique)/5)}</div>
                 </div>
                 <div class="lm-rival-info-col">
                   <h3 class="lm-nextrival-header" style="text-align:left;margin:0 0 4px">PRÓXIMO RIVAL</h3>
@@ -3447,6 +3449,26 @@
             if(info){ mostrarPartidoEnVivo(info, render); } else { render(); }
             return;
           }
+          // Si hay días de entrenamiento marcados en el calendario pero no
+          // hay nadie en el Plan de Entrenamiento del Preparador Físico,
+          // esos días no mejorarían a ningún jugador — se avisa y se le da
+          // la oportunidad de corregirlo antes de seguir.
+          const {entreno}=contarEntrenoSemanaActual();
+          const sinPlan=!(state.pfPlanEntrenamiento && state.pfPlanEntrenamiento.length);
+          if(entreno>0 && sinPlan){
+            const continuar=()=>{
+              const eventosDias=procesarEntrenamientoSemanal();
+              state.semanaResueltaParaJornada=state.jornadaActual;
+              guardarEstado();
+              mostrarSemanaEnVivo(eventosDias, ()=>{ render(); });
+            };
+            if(typeof window.showConfirmPopup==='function'){
+              window.showConfirmPopup('Has marcado días de entrenamiento en el calendario, pero no tienes a nadie en el Plan de Entrenamiento del Preparador Físico — esos días no mejorarán a ningún jugador. Puedes cerrar este aviso e ir a configurarlo, o seguir igualmente.', continuar, 'SEGUIR IGUALMENTE');
+              return;
+            }
+            continuar();
+            return;
+          }
           const eventosDias=procesarEntrenamientoSemanal();
           state.semanaResueltaParaJornada=state.jornadaActual;
           guardarEstado();
@@ -3496,9 +3518,10 @@
     root.querySelectorAll('[data-cal-dia]').forEach(el=>{
       el.addEventListener('click', ()=>{
         const iso=el.getAttribute('data-cal-dia');
-        if(typeof window.playSound==='function') window.playSound('select');
         if(!state.calendarioEntrenamiento) state.calendarioEntrenamiento={};
-        if(state.calendarioEntrenamiento[iso]) delete state.calendarioEntrenamiento[iso];
+        const yaEntrena=!!state.calendarioEntrenamiento[iso];
+        if(typeof window.playSound==='function') window.playSound(yaEntrena?'rest_day':'training_day');
+        if(yaEntrena) delete state.calendarioEntrenamiento[iso];
         else state.calendarioEntrenamiento[iso]=true;
         guardarEstado();
         render();
@@ -3760,7 +3783,7 @@
       overlay.innerHTML=`
         <div class="lm-dilemma-card lm-dilemma-card-medico" style="width:480px;max-width:90vw;text-align:left">
           ${xCerrarHTML()}
-          <div class="lm-dilemma-title" style="text-align:center"><i class="ph ph-bold ph-clock-counter-clockwise"></i> HISTORIAL MÉDICO</div>
+          <div class="lm-dilemma-title"><i class="ph ph-bold ph-clock-counter-clockwise"></i> HISTORIAL MÉDICO</div>
           <div class="lm-tab-content">
             <div class="lm-hist-list">
               ${tratamientos.length?filas:'<p class="lm-setup-desc" style="text-align:center">Todavía no hay nada que contar — de momento tu plantilla está sana.</p>'}
@@ -4139,7 +4162,7 @@
       overlay.innerHTML=`
         <div class="lm-dilemma-card lm-dilemma-card-medico">
             ${xCerrarHTML()}
-          <div class="lm-dilemma-title">¿SOBRE QUIÉN?</div>
+          <div class="lm-dilemma-title" style="justify-content:center;text-align:center">¿SOBRE QUIÉN?</div>
           <div class="lm-slot-list">
             ${candidatos.map(p=>`<div class="lm-slot-option" data-pid="${p.id}"><span>${p.name}</span><span style="color:#e24b4a">${p.injurySeverity} · ${p.injuryWeeks} jornada${p.injuryWeeks===1?'':'s'} restante${p.injuryWeeks===1?'':'s'}</span></div>`).join('')}
           </div>
@@ -4161,7 +4184,7 @@
           <div class="lm-dilemma-card lm-dilemma-card-medico">
             ${xCerrarHTML()}
             <i class="ph ph-bold ${def.icon}" style="font-size:26px;color:#5dcaa5"></i>
-            <div class="lm-dilemma-title">${def.nombre.toUpperCase()}</div>
+            <div class="lm-dilemma-title" style="justify-content:center;text-align:center">${def.nombre.toUpperCase()}</div>
             <div class="lm-dilemma-text">${def.desc}${def.tipo==='directa'?` — necesitas sumar ${def.dificultad}+`:(def.tipo==='nivel'?` — necesitas sumar ${dificultadActualNivel(def)}+ para subir a nivel ${nivelDe(def.track)+1}/${NIVEL_MAXIMO_EQUIPO}`:' — los dados invertidos siempre suman al proyecto')}</div>
             ${jugadorObjetivo?`<div class="lm-setup-desc" style="margin-top:-4px">Sobre <strong>${jugadorObjetivo.name}</strong> — ${jugadorObjetivo.injurySeverity} · ${jugadorObjetivo.injuryWeeks} jornada${jugadorObjetivo.injuryWeeks===1?'':'s'} restante${jugadorObjetivo.injuryWeeks===1?'':'s'}</div>`:''}
             <div class="lm-dice-selector">
@@ -4198,7 +4221,7 @@
       overlay.innerHTML=`
         <div class="lm-dilemma-card lm-dilemma-card-medico">
             ${xCerrarHTML()}
-          <div class="lm-dilemma-title" id="lmDiceTitle">TIRANDO ${numDados} DADO${numDados>1?'S':''}...</div>
+          <div class="lm-dilemma-title" id="lmDiceTitle" style="justify-content:center;text-align:center">TIRANDO ${numDados} DADO${numDados>1?'S':''}...</div>
           <div id="lmDice2DRow" class="lm-dice2d-row"></div>
           <div id="lmDiceResultZone"></div>
         </div>`;
@@ -4228,7 +4251,7 @@
           <div class="lm-dilemma-card lm-dilemma-card-medico">
             ${xCerrarHTML()}
             <i class="ph ph-bold ph-first-aid-kit" style="font-size:26px;color:#e24b4a"></i>
-            <div class="lm-dilemma-title">EL MÉDICO TE CONSULTA</div>
+            <div class="lm-dilemma-title" style="justify-content:center;text-align:center">EL MÉDICO TE CONSULTA</div>
             <div class="lm-dilemma-text">${jugador?jugador.name:'Un jugador'} tiene una lesión ${state.medicoNotificacion.severidad}. Necesitas sumar ${dificultad}+ para acelerar su recuperación.</div>
             <div class="lm-dice-selector">
               <button id="lmDiceMinus" class="lm-dice-stepper">−</button>
@@ -4257,7 +4280,7 @@
       overlay.innerHTML=`
         <div class="lm-dilemma-card lm-dilemma-card-medico">
             ${xCerrarHTML()}
-          <div class="lm-dilemma-title" id="lmDiceTitle">TIRANDO ${numDados} DADO${numDados>1?'S':''}...</div>
+          <div class="lm-dilemma-title" id="lmDiceTitle" style="justify-content:center;text-align:center">TIRANDO ${numDados} DADO${numDados>1?'S':''}...</div>
           <div id="lmDice2DRow" class="lm-dice2d-row"></div>
           <div id="lmDiceResultZone"></div>
         </div>`;
@@ -4375,7 +4398,7 @@
           <div class="lm-dilemma-card lm-dilemma-card-mant">
             ${xCerrarHTML()}
             <i class="ph ph-bold ${def.icon}" style="font-size:26px;color:#5dcaa5"></i>
-            <div class="lm-dilemma-title">${def.nombre.toUpperCase()}</div>
+            <div class="lm-dilemma-title" style="justify-content:center;text-align:center">${def.nombre.toUpperCase()}</div>
             <div class="lm-dilemma-text">${def.desc}${def.tipo==='directa'?` — necesitas sumar ${def.dificultad}+`:` — necesitas sumar ${dificultadActualNivelM(def)}+ para subir a nivel ${nivelDeM(def.track)+1}/${NIVEL_MAXIMO_EQUIPO}`}</div>
             <div class="lm-dice-selector">
               <button id="lmDiceMinus" class="lm-dice-stepper">−</button>
@@ -4410,7 +4433,7 @@
       overlay.innerHTML=`
         <div class="lm-dilemma-card lm-dilemma-card-mant">
             ${xCerrarHTML()}
-          <div class="lm-dilemma-title" id="lmDiceTitle">TIRANDO ${numDados} DADO${numDados>1?'S':''}...</div>
+          <div class="lm-dilemma-title" id="lmDiceTitle" style="justify-content:center;text-align:center">TIRANDO ${numDados} DADO${numDados>1?'S':''}...</div>
           <div id="lmDice2DRow" class="lm-dice2d-row"></div>
           <div id="lmDiceResultZone"></div>
         </div>`;
@@ -4447,7 +4470,7 @@
     overlay.innerHTML=`
       <div class="lm-dilemma-card lm-dilemma-card-mant" style="max-width:480px;text-align:left">
         ${xCerrarHTML()}
-        <div class="lm-dilemma-title" style="text-align:center"><i class="ph ph-bold ph-stadium"></i> ESTADO DEL ESTADIO</div>
+        <div class="lm-dilemma-title"><i class="ph ph-bold ph-stadium"></i> ESTADO DEL ESTADIO</div>
         <div class="lm-estadio-bars">
           <div>
             <div class="lm-estadio-bar-label"><i class="ph ph-bold ph-plant"></i><span>ESTADO DEL CÉSPED</span><span>${Math.round(est.campo)}/100</span></div>
@@ -4602,7 +4625,7 @@
           <div class="lm-dilemma-card lm-dilemma-card-dg">
             ${xCerrarHTML()}
             <i class="ph ph-bold ${def.icon}" style="font-size:26px;color:#e6c94a"></i>
-            <div class="lm-dilemma-title">${def.nombre.toUpperCase()}</div>
+            <div class="lm-dilemma-title" style="justify-content:center;text-align:center">${def.nombre.toUpperCase()}</div>
             <div class="lm-dilemma-text">${def.desc}${def.tipo==='directa'?` — necesitas sumar ${def.dificultad}+`:` — necesitas sumar ${dificultadActualNivelDG(def)}+ para subir a nivel ${nivelDeDG(def.track)+1}/${NIVEL_MAXIMO_EQUIPO}`}</div>
             <div class="lm-dice-selector">
               <button id="lmDiceMinus" class="lm-dice-stepper">−</button>
@@ -4637,7 +4660,7 @@
       overlay.innerHTML=`
         <div class="lm-dilemma-card lm-dilemma-card-dg">
             ${xCerrarHTML()}
-          <div class="lm-dilemma-title" id="lmDiceTitle">TIRANDO ${numDados} DADO${numDados>1?'S':''}...</div>
+          <div class="lm-dilemma-title" id="lmDiceTitle" style="justify-content:center;text-align:center">TIRANDO ${numDados} DADO${numDados>1?'S':''}...</div>
           <div id="lmDice2DRow" class="lm-dice2d-row"></div>
           <div id="lmDiceResultZone"></div>
         </div>`;
@@ -4754,7 +4777,7 @@
     overlay.innerHTML=`
       <div class="lm-dilemma-card lm-dilemma-card-dg" style="max-width:480px;text-align:left">
         ${xCerrarHTML()}
-        <div class="lm-dilemma-title" style="text-align:center"><i class="ph ph-bold ph-chart-line-up"></i> FINANZAS DEL CLUB</div>
+        <div class="lm-dilemma-title"><i class="ph ph-bold ph-chart-line-up"></i> FINANZAS DEL CLUB</div>
         <div class="lm-capital-box" style="margin-bottom:12px">
           <i class="ph ph-bold ph-coins lm-capital-icon"></i>
           <div class="lm-capital-info">
@@ -4915,7 +4938,7 @@
           <div class="lm-dilemma-card lm-dilemma-card-dd">
             ${xCerrarHTML()}
             <i class="ph ph-bold ${def.icon}" style="font-size:26px;color:#c9c9c9"></i>
-            <div class="lm-dilemma-title">${def.nombre.toUpperCase()}</div>
+            <div class="lm-dilemma-title" style="justify-content:center;text-align:center">${def.nombre.toUpperCase()}</div>
             <div class="lm-dilemma-text">${def.desc}${def.tipo==='directa'?` — necesitas sumar ${def.dificultad}+`:` — necesitas sumar ${dificultadActualNivelDD(def)}+ para subir a nivel ${nivelDeDD(def.track)+1}/${NIVEL_MAXIMO_EQUIPO}`}</div>
             <div class="lm-dice-selector">
               <button id="lmDiceMinus" class="lm-dice-stepper">−</button>
@@ -4950,7 +4973,7 @@
       overlay.innerHTML=`
         <div class="lm-dilemma-card lm-dilemma-card-dd">
             ${xCerrarHTML()}
-          <div class="lm-dilemma-title" id="lmDiceTitle">TIRANDO ${numDados} DADO${numDados>1?'S':''}...</div>
+          <div class="lm-dilemma-title" id="lmDiceTitle" style="justify-content:center;text-align:center">TIRANDO ${numDados} DADO${numDados>1?'S':''}...</div>
           <div id="lmDice2DRow" class="lm-dice2d-row"></div>
           <div id="lmDiceResultZone"></div>
         </div>`;
@@ -5071,7 +5094,7 @@
       overlay.innerHTML=`
         <div class="lm-dilemma-card lm-dilemma-card-dd" style="max-width:640px;text-align:left">
           ${xCerrarHTML()}
-          <div class="lm-dilemma-title" style="text-align:center"><i class="ph ph-bold ph-file-text"></i> SALARIOS DE LA PLANTILLA</div>
+          <div class="lm-dilemma-title"><i class="ph ph-bold ph-file-text"></i> SALARIOS DE LA PLANTILLA</div>
           ${renderNivelesDDHTML()}
           <div class="lm-setup-desc" style="text-align:center;margin-bottom:8px">Nómina total: <strong>${formatoDinero(totalNomina)}/mes</strong> · plantilla: <strong>${jugadores.length}</strong> · al poner en venta, el Director Deportivo avisará por correo en 1-3 jornadas con las ofertas que lleguen.</div>
           <div class="lm-salarios-tabla-wrap">
@@ -5304,7 +5327,7 @@
         overlay.innerHTML=`
           <div class="lm-dilemma-card lm-dilemma-card-pf" style="width:520px;max-width:92vw;text-align:left">
             ${xCerrarHTML()}
-            <div class="lm-dilemma-title" style="text-align:center"><i class="ph ph-bold ph-clipboard-text"></i> PLAN DE ENTRENAMIENTO</div>
+            <div class="lm-dilemma-title"><i class="ph ph-bold ph-clipboard-text"></i> PLAN DE ENTRENAMIENTO</div>
             <p class="lm-setup-desc" style="text-align:center;margin-bottom:10px">Elige hasta 3 jugadores y, para cada uno, QUÉ estadística quieres mejorar — un delantero puede entrenar ataque, un central defensa, etc. Solo mejoran de verdad los días de entrenamiento marcados en el calendario.</p>
             <div class="lm-plan-slots">${huecos}</div>
             <div class="lm-popup-actions">
@@ -5358,7 +5381,7 @@
         overlay.innerHTML=`
           <div class="lm-dilemma-card lm-dilemma-card-pf" style="width:480px;max-width:90vw;text-align:left">
             ${xCerrarHTML()}
-            <div class="lm-dilemma-title" style="text-align:center"><i class="ph ph-bold ph-user-focus"></i> ELEGIR JUGADOR</div>
+            <div class="lm-dilemma-title"><i class="ph ph-bold ph-user-focus"></i> ELEGIR JUGADOR</div>
             <div class="lm-slot-list">${filas}</div>
             <div class="lm-popup-actions">
               <button id="lmPlanVolver" class="lm-btn-cancelar">VOLVER</button>
@@ -5391,7 +5414,7 @@
           <div class="lm-dilemma-card lm-dilemma-card-pf">
             ${xCerrarHTML()}
             <i class="ph ph-bold ${def.icon}" style="font-size:26px;color:#e08a3e"></i>
-            <div class="lm-dilemma-title">${def.nombre.toUpperCase()}</div>
+            <div class="lm-dilemma-title" style="justify-content:center;text-align:center">${def.nombre.toUpperCase()}</div>
             <div class="lm-dilemma-text">${def.desc}${def.tipo==='directa'?` — necesitas sumar ${def.dificultad}+`:` — necesitas sumar ${dificultadActualNivelPF(def)}+ para subir a nivel ${nivelDePF(def.track)+1}/${NIVEL_MAXIMO_EQUIPO}`}</div>
             <div class="lm-dice-selector">
               <button id="lmDiceMinus" class="lm-dice-stepper">−</button>
@@ -5426,7 +5449,7 @@
       overlay.innerHTML=`
         <div class="lm-dilemma-card lm-dilemma-card-pf">
             ${xCerrarHTML()}
-          <div class="lm-dilemma-title" id="lmDiceTitle">TIRANDO ${numDados} DADO${numDados>1?'S':''}...</div>
+          <div class="lm-dilemma-title" id="lmDiceTitle" style="justify-content:center;text-align:center">TIRANDO ${numDados} DADO${numDados>1?'S':''}...</div>
           <div id="lmDice2DRow" class="lm-dice2d-row"></div>
           <div id="lmDiceResultZone"></div>
         </div>`;
@@ -5466,7 +5489,7 @@
     overlay.innerHTML=`
       <div class="lm-dilemma-card lm-dilemma-card-pf" style="max-width:480px;text-align:left">
         ${xCerrarHTML()}
-        <div class="lm-dilemma-title" style="text-align:center"><i class="ph ph-bold ph-clock-counter-clockwise"></i> HISTORIAL DE ENTRENAMIENTOS</div>
+        <div class="lm-dilemma-title"><i class="ph ph-bold ph-clock-counter-clockwise"></i> HISTORIAL DE ENTRENAMIENTOS</div>
         ${renderNivelesPFHTML()}
         <p class="lm-setup-desc" style="text-align:left;margin:10px 0 4px">Mejoras individuales conseguidas</p>
         <div class="lm-hist-list">${filas||'<p class="lm-setup-desc" style="text-align:center">Todavía no se ha entrenado a ningún jugador.</p>'}</div>
@@ -5539,7 +5562,7 @@
       overlay.innerHTML=`
         <div class="lm-dilemma-card" style="width:960px;max-width:94vw;text-align:left">
           ${xCerrarHTML()}
-          <div class="lm-dilemma-title" style="text-align:center"><i class="ph ph-bold ph-user-plus"></i> CONTRATAR${rolFiltrado?` — ${NOMBRE_ROL[rolFiltrado]}`:''}</div>
+          <div class="lm-dilemma-title"><i class="ph ph-bold ph-user-plus"></i> CONTRATAR${rolFiltrado?` — ${NOMBRE_ROL[rolFiltrado]}`:''}</div>
           <p class="lm-setup-desc" style="text-align:center;margin-bottom:10px">Cada mes aparecen nuevos candidatos por puesto — compara nivel y sueldo antes de decidir si te compensa un cambio.${rolFiltrado?' <span id="lmTrabVerTodos" style="color:var(--gold);cursor:pointer;text-decoration:underline">Ver todos los puestos</span>':''}</p>
           <div class="lm-trab-grid">
             ${roles.map(fichaTrabajadorHTML).join('')}

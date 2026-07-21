@@ -327,6 +327,14 @@ function playSound(name, data){
       [0,1,2,3,4].forEach((i)=>tone(ctx, 180+Math.random()*90, i*0.085, 0.05, 'square', 0.10, 0.0001));
       tone(ctx, 140, 0.46, 0.09, 'triangle', 0.13, 0.0001);
       break;
+    case 'training_day': // día de entrenamiento en el calendario de Liga
+      // Manager — un par de notas suaves y ascendentes, nada percusivo.
+      tone(ctx, 500, 0, 0.11, 'sine', 0.09, 0.0001);
+      tone(ctx, 700, 0.09, 0.14, 'sine', 0.10, 0.0001);
+      break;
+    case 'rest_day': // día de descanso — un tono único, calmado y breve
+      tone(ctx, 420, 0, 0.16, 'sine', 0.07, 0.0001);
+      break;
   }
 }
 

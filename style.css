@@ -2619,7 +2619,7 @@ body.liga-manager-screen #mobileTabBar{display:none!important}
 }
 .lm-cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
 .lm-cal-celda{
-  aspect-ratio:1;min-width:36px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  aspect-ratio:1;min-width:44px;display:flex;flex-direction:column;align-items:center;justify-content:center;
   gap:1px;border-radius:5px;background:#171a1c;position:relative;
 }
 .lm-cal-vacia{background:transparent}
@@ -2628,10 +2628,10 @@ body.liga-manager-screen #mobileTabBar{display:none!important}
 .lm-cal-editable{cursor:pointer;background:#20262a;border:1px solid #33393d;transition:background .12s,border-color .12s}
 .lm-cal-editable:hover{border-color:#e08a3e;background:#262c30}
 .lm-cal-editable .lm-cal-num{color:#f0f0f0}
-.lm-cal-entreno-icon{color:#e08a3e;font-size:16px}
+.lm-cal-entreno-icon{color:var(--gold);font-size:16px}
 .lm-cal-dia-partido{background:rgba(230,201,74,.14);border:1px solid rgba(230,201,74,.55)}
 .lm-cal-dia-partido .lm-cal-num{display:none}
-.lm-cal-partido{width:30px;height:30px;display:flex;align-items:center;justify-content:center}
+.lm-cal-partido{width:40px;height:40px;display:flex;align-items:center;justify-content:center}
 .lm-cal-partido img,.lm-cal-partido svg{width:100%;height:100%}
 .lm-cal-leyenda{
   display:flex;flex-wrap:wrap;gap:10px;margin-top:8px;padding-top:8px;
@@ -2886,7 +2886,7 @@ body.liga-manager-screen #mobileTabBar{display:none!important}
 
 /* JUGAR JORNADA junto al escudo — icono grande "play circle" + SEGUIR
    debajo, en vez del botón de texto ancho de antes. */
-.lm-btn-jugar-icon{
+#ligaManagerScreen .lm-btn-jugar-icon{
   flex-shrink:0;width:82px;height:82px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
   background:var(--gold);color:#1a1400;border:none;box-sizing:border-box;
   cursor:pointer;transition:transform .12s,background .15s;
@@ -2959,7 +2959,7 @@ body.liga-manager-screen #mobileTabBar{display:none!important}
 /* Campo (mismo SVG que Copa Leyendas), mismo tamaño/posición que #pitch */
 #lmPitchBox{
   width:100%;max-width:min(420px, 65vh);aspect-ratio:3/4;border-radius:0;overflow:hidden;
-  border:1px solid #22282b;margin:0 auto;
+  border:1px solid #22282b;margin:0 auto;box-sizing:border-box;
   position:relative;
 }
 #lmPitchBox svg{width:100%;height:100%;display:block}
@@ -3348,7 +3348,11 @@ body.liga-manager-screen #mobileTabBar{display:none!important}
    aquí la combinación correcta (beneficia también a Copa Leyendas). */
 .match-scoreline.goal-flash{animation:goalFlash .5s ease}
 
-.lm-dilemma-title{font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:1px;color:#eee;font-size:15px;margin:10px 0 8px}
+.lm-dilemma-title{
+  font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:1px;color:#ccc;font-size:15px;margin:10px 0 8px;
+  display:flex;align-items:center;gap:8px;text-align:left;
+}
+.lm-dilemma-title i{color:var(--gold);font-size:18px;flex-shrink:0}
 .lm-dilemma-text{font-size:12px;color:#bbb;margin-bottom:16px;line-height:1.5}
 
 /* Selector de cuántos dados usar, antes de tirar */
@@ -3449,7 +3453,11 @@ body.liga-manager-screen #mobileTabBar{display:none!important}
 }
 .lm-urgente-texto{flex:1;font-size:12px;color:#ddd;line-height:1.4}
 .lm-urgente-row .mode-card-btn{width:auto;padding:8px 14px;flex-shrink:0;white-space:nowrap}
-.lm-dilemma-title{font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:1px;color:#eee;font-size:15px;margin:10px 0 8px}
+.lm-dilemma-title{
+  font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:1px;color:#ccc;font-size:15px;margin:10px 0 8px;
+  display:flex;align-items:center;gap:8px;text-align:left;
+}
+.lm-dilemma-title i{color:var(--gold);font-size:18px;flex-shrink:0}
 .lm-dilemma-text{font-size:12px;color:#bbb;margin-bottom:16px;line-height:1.5}
 
 /* Color característico por departamento — se nota tanto en el hub de
