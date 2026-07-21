@@ -3767,6 +3767,38 @@
       el.addEventListener('scroll', ()=>marcarScrollColumna(clave));
     });
     iniciarHintScrollColumnas();
+    // Arreglo definitivo del scroll de columnas: en vez de confiar en que
+    // el 100% de altura se calcule bien en cascada por flex+grid (que en
+    // ciertas resoluciones se quedaba sin efecto y recortaba el
+    // contenido sin dejar hacer scroll), se fija aquí la altura EXACTA
+    // en píxeles de cada columna a partir de su posición real en
+    // pantalla y el alto real de la ventana — así el navegador no tiene
+    // ninguna duda de dónde debe cortar y empezar a scrollear.
+    function ajustarAlturaColumnas(){
+      document.querySelectorAll('#ligaManagerScreen .lm-app-grid > .lm-panel, #ligaManagerScreen .lm-app-grid > .lm-center-panel').forEach(el=>{
+        if(window.innerWidth<1051) { el.style.removeProperty('height'); return; } // en móvil manda el scroll de página normal
+        const top=el.getBoundingClientRect().top;
+        const alturaDisponible=Math.max(200, window.innerHeight-top);
+        el.style.setProperty('height', alturaDisponible+'px', 'important');
+        el.style.setProperty('overflow-y', 'auto', 'important');
+      });
+    }
+    ajustarAlturaColumnas();
+    if(!window.G2G_LM_resizeListenerPuesto){
+      window.G2G_LM_resizeListenerPuesto=true;
+      let resizeTimer=null;
+      window.addEventListener('resize', ()=>{
+        clearTimeout(resizeTimer);
+        resizeTimer=setTimeout(()=>{
+          document.querySelectorAll('#ligaManagerScreen .lm-app-grid > .lm-panel, #ligaManagerScreen .lm-app-grid > .lm-center-panel').forEach(el=>{
+            if(window.innerWidth<1051){ el.style.removeProperty('height'); return; }
+            const top=el.getBoundingClientRect().top;
+            el.style.setProperty('height', Math.max(200, window.innerHeight-top)+'px', 'important');
+            el.style.setProperty('overflow-y', 'auto', 'important');
+          });
+        }, 120);
+      });
+    }
 
     const medicoInfoBtn=document.getElementById('lmMedicoInfoBtn');
     if(medicoInfoBtn) medicoInfoBtn.addEventListener('click', (e)=>{
