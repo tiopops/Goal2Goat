@@ -3827,6 +3827,36 @@
 
     if(clima) aplicarClimaVisualLM(clima.id);
     acabaDeReordenarColumnas=false;
+    root.querySelectorAll('.lm-panel, .lm-center-panel').forEach(el=>{
+      const clave=el.className;
+      if(clave && scrollGuardado[clave]!==undefined) el.scrollTop=scrollGuardado[clave];
+      marcarScrollColumna(clave);
+      el.addEventListener('scroll', ()=>marcarScrollColumna(clave));
+    });
+    iniciarHintScrollColumnas();
+    // Altura exacta de cada columna, calculada en píxeles reales a
+    // partir de su posición en pantalla — con doble requestAnimationFrame
+    // para asegurarnos de medir DESPUÉS de que el navegador termine el
+    // layout de verdad (evita medir a medias justo tras cambiar el HTML).
+    function ajustarAlturaColumnas(){
+      document.querySelectorAll('#ligaManagerScreen .lm-app-grid > .lm-panel, #ligaManagerScreen .lm-app-grid > .lm-center-panel').forEach(el=>{
+        if(window.innerWidth<1051){ el.style.removeProperty('height'); return; }
+        const top=el.getBoundingClientRect().top;
+        const alturaDisponible=Math.max(200, window.innerHeight-top);
+        el.style.setProperty('height', alturaDisponible+'px', 'important');
+        el.style.setProperty('overflow-y', 'auto', 'important');
+      });
+    }
+    requestAnimationFrame(()=>requestAnimationFrame(ajustarAlturaColumnas));
+    if(!window.G2G_LM_resizeListenerPuesto){
+      window.G2G_LM_resizeListenerPuesto=true;
+      let resizeTimer=null;
+      window.addEventListener('resize', ()=>{
+        clearTimeout(resizeTimer);
+        resizeTimer=setTimeout(()=>requestAnimationFrame(()=>requestAnimationFrame(ajustarAlturaColumnas)), 120);
+      });
+    }
+
     const medicoInfoBtn=document.getElementById('lmMedicoInfoBtn');
     if(medicoInfoBtn) medicoInfoBtn.addEventListener('click', (e)=>{
       e.stopPropagation();

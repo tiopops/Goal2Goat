@@ -2469,8 +2469,7 @@ body.menu-screen #mobileTabBar{display:none!important}
   display:none;
   flex:1;min-height:0;
   flex-direction:column;
-  overflow-y:auto;
-  overflow-x:hidden;
+  overflow:hidden;
   position:relative;
   background:#0d0d0d;
 }
@@ -2505,12 +2504,15 @@ body.liga-manager-screen #mobileTabBar{display:none!important}
 .lm-app-grid{
   display:grid;
   grid-template-columns: repeat(4, minmax(260px, 1fr));
-  align-items:start;
+  grid-template-rows: minmax(0, 1fr);
+  align-items:stretch;
   justify-content:center;
   width:100%;
   max-width:1900px;
   margin:0 auto;
   gap:0;
+  flex:1;
+  min-height:0;
 }
 /* Animación breve y elegante al reordenar columnas — un fundido con
    ligero desplazamiento lateral, nada brusco. */
@@ -2523,10 +2525,10 @@ body.liga-manager-screen #mobileTabBar{display:none!important}
 }
 .lm-panel{
   background:#15181a;border-right:none;
-  overflow-y:visible;overflow-x:hidden;padding:34px 8px 12px;
+  overflow-y:auto;overflow-x:hidden;padding:34px 8px 12px;
   display:flex;flex-direction:column;gap:10px;
   position:relative;
-  height:auto;min-height:0;
+  height:100%;min-height:0;
 }
 /* Scroll independiente por columna, pero sin la barra visible — sigue
    siendo desplazable con rueda/gesto, solo se oculta el indicador. */
@@ -2588,9 +2590,9 @@ body.liga-manager-screen #mobileTabBar{display:none!important}
    Leyendas (fondo oscuro, campo centrado, mismo ancho máximo/aspect-ratio). */
 .lm-center-panel{
   display:flex;flex-direction:column;align-items:center;justify-content:flex-start;
-  background:#15181a;padding:34px 8px 0;overflow-y:visible;overflow-x:hidden;
+  background:#15181a;padding:34px 8px 0;overflow-y:auto;overflow-x:hidden;
   position:relative;
-  height:auto;min-height:0;
+  height:100%;min-height:0;
 }
 .lm-nextmatch-box{
   background:#1e2326;border:1px solid #2f3539;border-radius:8px;
