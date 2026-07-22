@@ -3323,6 +3323,34 @@ body.liga-manager-screen #mobileTabBar{display:none!important}
 @media(max-width:1050px){
   .lm-sobre-cards{grid-template-columns:1fr}
 }
+/* FICHAJE ESTRELLA — cuando el sobre trae un jugador real de otro
+   equipo en vez de un canterano inventado, se anuncia a lo grande: un
+   banner dorado con brillo antes de las tarjetas, y la propia tarjeta
+   del jugador con un borde y sombra dorada que la separa claramente
+   del resto — es el momento de más subidón del sobre, tiene que notarse. */
+@keyframes lmEstrellaShine{
+  0%,100%{box-shadow:0 0 12px rgba(201,162,39,.5)}
+  50%{box-shadow:0 0 22px rgba(201,162,39,.85)}
+}
+.lm-fichaje-estrella-banner{
+  text-align:center;font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:1.5px;
+  font-size:16px;color:var(--gold);background:rgba(201,162,39,.1);
+  border:1px solid var(--gold);border-radius:8px;padding:10px;margin-bottom:10px;
+  animation:lmEstrellaShine 1.4s ease-in-out infinite;
+}
+.lm-fichaje-estrella-banner i{margin:0 6px}
+.lm-sobre-card-estrella{
+  border:2px solid var(--gold)!important;position:relative;
+  animation:lmEstrellaShine 2s ease-in-out infinite;
+}
+.lm-fichaje-estrella-tag{
+  position:absolute;top:-11px;left:50%;transform:translateX(-50%);
+  background:var(--gold);color:#1a1400;font-size:9px;font-weight:800;
+  letter-spacing:.5px;padding:3px 10px;border-radius:10px;white-space:nowrap;
+  display:flex;align-items:center;gap:3px;
+}
+.lm-sobre-procedencia{font-size:10px;color:#888;margin:-2px 0 4px;font-style:italic}
+.lm-sobre-abrir-btn{display:flex;align-items:center;gap:6px;justify-content:center}
 
 /* Interfaz de TRABAJADORES — condensada en filas horizontales (una por
    puesto) en vez de tarjetas apiladas: más ancha que alta, cabe entera

@@ -892,6 +892,15 @@
       directorDeportivoCartasAgotadas:[],
       directorDeportivoHistorial:[],
       directorDeportivoNiveles:{calidadOjeo:0, ahorroSalarial:0, sobresFichajes:0, costeSobres:0},
+      // Sobres de fichajes: ya NO se abren directamente desde la tarjeta.
+      // Se generan solos con el tiempo (más a menudo cuanto más subida
+      // esté la carta "Sobres de Fichajes") y avisan por correo cuando
+      // están listos — desde ahí se abren. Máximo 3 sin abrir a la vez.
+      sobresFichajesPendientes:[],
+      // Jugadores reales de otros equipos ya fichados en ESTA partida —
+      // desaparecen de su equipo de origen (no vuelven a aparecer como
+      // goleadores/alineación suyos) en cuanto se fichan.
+      jugadoresRealesFichados:[],
       // ---- Trabajadores del cuerpo técnico ----
       trabajadores:{
         medico:null,
@@ -1187,7 +1196,9 @@
     // en el nombre del propio club para no dejar el hueco en blanco.
     function jugadorRivalAleatorio(){
       if(rival && rival.plantilla && rival.plantilla.length){
-        const elegido=rival.plantilla[Math.floor(Math.random()*rival.plantilla.length)];
+        const disponibles = rival.plantilla.filter(j=>!jugadorYaFichado(rival.id, j.name));
+        const pool = disponibles.length ? disponibles : rival.plantilla;
+        const elegido=pool[Math.floor(Math.random()*pool.length)];
         return {name: elegido.name||elegido, numero: elegido.n};
       }
       return {name: rival ? rival.name : 'Rival'};
@@ -2426,7 +2437,7 @@
   // rivales, así que se reparten con una pequeña variación alrededor de
   // su media, con una formación genérica razonable.
   function generarOnceRivalFicticio(rival){
-    const nombres=(rival.plantilla||[]).slice();
+    const nombres=(rival.plantilla||[]).filter(j=>!jugadorYaFichado(rival.id, j.name));
     function statVariada(base){ return Math.max(35, Math.min(97, Math.round(base+Math.floor(Math.random()*13)-6))); }
     function jugadorDe(entry, idx, pos, offsetExtra){
       const nombre = entry ? (entry.name||entry) : `Jugador ${idx+1}${offsetExtra||''}`;
@@ -2443,6 +2454,80 @@
     const banquillo=posicionesBanquillo.map((pos,i)=>jugadorDe(nombres[11+i], i, pos));
     return {titulares, banquillo};
   }
+  // Versión independiente de la revelación del sobre, para poder
+  // abrirlo directamente desde el correo (sin pasar por la interfaz del
+  // Director Deportivo). Misma animación de barajado y misma mecánica
+  // de fichar, pero con un overlay propio — y con el destacado especial
+  // para el FICHAJE ESTRELLA cuando aparece un jugador real de otro
+  // equipo en vez de un canterano inventado.
+  function mostrarRevelacionSobreDesdeCorreo(jugadores, onCerrar){
+    const overlay=document.createElement('div');
+    overlay.id='lmSobreCorreoOverlay';
+    overlay.innerHTML=`
+      <div class="lm-dilemma-card lm-dilemma-card-dd" style="max-width:640px">
+        <div class="lm-dilemma-title"><i class="ph ph-bold ph-envelope-open"></i> SOBRE DE FICHAJES</div>
+        <div id="lmSobreReveloZoneCorreo" class="lm-sobre-grid">
+          ${jugadores.map((j,i)=>`<div class="slot-reel lm-sobre-reel" id="lmSobreReelC${i}"><div class="slot-strip lm-sobre-face">?</div></div>`).join('')}
+        </div>
+        <div id="lmSobreResultadoCorreo"></div>
+      </div>`;
+    document.getElementById('ligaManagerScreen').appendChild(overlay);
+    let ticks=0;
+    const totalTicks=11+Math.floor(Math.random()*4);
+    const spin=setInterval(()=>{
+      jugadores.forEach((j,i)=>{
+        const el=document.getElementById('lmSobreReelC'+i);
+        if(el) el.querySelector('.lm-sobre-face').textContent=nombreJugadorAleatorio();
+      });
+      if(typeof window.playSound==='function') window.playSound('spin');
+      ticks++;
+      if(ticks>=totalTicks){
+        clearInterval(spin);
+        // El fichaje estrella se anuncia con más fanfarria — sonido y
+        // vibración visual propios, para que destaque de verdad frente
+        // a un canterano cualquiera.
+        const hayEstrella=jugadores.some(j=>j.esFichajeEstrella);
+        if(typeof window.playSound==='function') window.playSound(hayEstrella?'victory':'reveal');
+        const zonaReels=document.getElementById('lmSobreReveloZoneCorreo');
+        if(zonaReels) zonaReels.innerHTML='';
+        const zona=document.getElementById('lmSobreResultadoCorreo');
+        zona.innerHTML=`${hayEstrella?'<div class="lm-fichaje-estrella-banner"><i class="ph ph-bold ph-sparkle"></i> ¡HAY UN FICHAJE ESTRELLA EN ESTE SOBRE! <i class="ph ph-bold ph-sparkle"></i></div>':''}
+          <div class="lm-sobre-cards">${jugadores.map((j,i)=>`
+          <div class="lm-sobre-card ${j.esFichajeEstrella?'lm-sobre-card-estrella':''}" data-jugador="${i}">
+            ${j.esFichajeEstrella?`<div class="lm-fichaje-estrella-tag"><i class="ph ph-bold ph-star"></i> FICHAJE ESTRELLA</div>`:''}
+            <div class="lm-sobre-pos">${j.position}</div>
+            <div class="lm-sobre-nombre">${j.numero?('#'+j.numero+' '):''}${j.name}</div>
+            ${j.esFichajeEstrella?`<div class="lm-sobre-procedencia">actualmente en ${j.equipoOrigenName}</div>`:''}
+            <div class="lm-sobre-overall">${j.overall} <span>puntuación</span></div>
+            <div class="lm-sobre-stats">
+              <span>ATA ${j.attack}</span><span>DEF ${j.defense}</span><span>RIT ${j.pace}</span>
+              <span>PAS ${j.passing}</span><span>TEC ${j.technique}</span>
+            </div>
+            <div class="lm-sobre-salario">${formatoDinero(j.salario)}/mes</div>
+            <button class="mode-card-btn mode-card-btn-gold lm-sobre-fichar" data-fichar="${i}">FICHAR</button>
+          </div>`).join('')}</div>
+          <div class="lm-popup-actions" style="margin-top:12px"><button id="lmSobreCerrarCorreo" class="mode-card-btn mode-card-btn-secondary">CERRAR SOBRE</button></div>`;
+        let fichadoNombre=null;
+        zona.querySelectorAll('[data-fichar]').forEach(btn=>{
+          btn.addEventListener('click', ()=>{
+            const i=parseInt(btn.getAttribute('data-fichar'),10);
+            if(typeof window.playSound==='function') window.playSound('select');
+            ficharJugadorSobre(jugadores[i]);
+            fichadoNombre=jugadores[i].name;
+            btn.textContent='FICHADO ✔';
+            btn.disabled=true;
+            btn.closest('.lm-sobre-card').classList.add('lm-sobre-card-fichado');
+          });
+        });
+        document.getElementById('lmSobreCerrarCorreo').addEventListener('click', ()=>{
+          if(typeof window.playSound==='function') window.playSound('select');
+          overlay.remove();
+          onCerrar(fichadoNombre);
+        });
+      }
+    },85);
+  }
+
   function abrirOnceRival(rival){
     const overlay=document.createElement('div');
     overlay.id='lmOnceRivalOverlay';
@@ -2751,14 +2836,31 @@
         }
       }
     }
-    if(trab.directorDeportivo && !yaEnviado('directorDeportivo')){
-      const nivelSobre=nivelDeDD('sobresFichajes');
-      if(nivelSobre>=1 && (state.capital||0)>=(SOBRE_COSTES[nivelSobre]||0) && Math.random()<0.3){
-        enviarCorreo('directorDeportivo', 'Sobre de fichajes listo para abrir',
-          `Tenemos un sobre de nivel ${nivelSobre} disponible y presupuesto de sobra para abrirlo. Cuando tengas un momento, échale un vistazo.`);
-      }
+    if(trab.directorDeportivo){
+      intentarGenerarSobreFichajes();
     }
     guardarEstado();
+  }
+
+  // Los sobres de fichajes se generan solos con el tiempo — más a menudo
+  // cuanto más subida esté la Red de Ojeadores del Director Deportivo.
+  // Máximo 3 sin abrir a la vez: si no abres los que tienes, no llegan
+  // más nuevos hasta que hagas hueco. Cada uno avisa por correo en
+  // cuanto está listo, y se abre directamente desde ahí.
+  function intentarGenerarSobreFichajes(){
+    if(!state.sobresFichajesPendientes) state.sobresFichajesPendientes=[];
+    if(state.sobresFichajesPendientes.length>=3) return;
+    const nivel=nivelDeDD('sobresFichajes');
+    const probabilidad=0.08+nivel*0.07; // 8% base, hasta ~29% a nivel máximo
+    if(Math.random()<probabilidad){
+      const nivelSobre=Math.max(1, nivel);
+      const id='sobre'+Date.now()+Math.floor(Math.random()*100000);
+      state.sobresFichajesPendientes.push({id, nivel:nivelSobre, jornadaGenerado:state.jornadaActual});
+      enviarCorreo('directorDeportivo', 'Sobre de fichajes listo para abrir',
+        `Tenemos un sobre de nivel ${nivelSobre} disponible. En cuanto tengas un momento, ábrelo directamente desde aquí para ver qué nos ha traído la red de ojeadores.`);
+      const ultimo=state.correoInterno && state.correoInterno[0];
+      if(ultimo){ ultimo.tipoEspecial='sobre_listo'; ultimo.sobreId=id; }
+    }
   }
 
   /* ---------- 9d. CARTAS DEL DIRECTOR GENERAL (dorado) — economía y
@@ -2899,7 +3001,7 @@
     {id:'negociacion_salarial',    tipo:'directa', nombre:'Negociación Salarial',    icon:'ph-file-text',    dificultad:9, desc:'La nómina de jugadores del próximo mes será más barata'},
     {id:'informe_ojeo',            tipo:'directa', nombre:'Informe de Ojeo Exprés', icon:'ph-magnifying-glass', dificultad:7, desc:'El próximo sobre que abras traerá mejor calidad de la habitual'},
     {id:'gira_promocional',        tipo:'directa', nombre:'Gira Promocional',        icon:'ph-airplane-tilt',dificultad:6, desc:'Ingreso instantáneo de capital y un pequeño impulso a la moral'},
-    {id:'sobres_fichajes',   tipo:'sobre', track:'sobresFichajes', nombre:'Sobres de Fichajes',      icon:'ph-envelope-open', dificultadBase:9, dificultadPaso:5, desc:'Sube el nivel de tus sobres — ábrelos cuando quieras para ver qué jugadores traen'},
+    {id:'sobres_fichajes',   tipo:'nivel', track:'sobresFichajes', nombre:'Red de Ojeadores Activa',      icon:'ph-envelope-open', dificultadBase:9, dificultadPaso:5, desc:'Acorta el tiempo entre sobres de fichajes — llegarán con más frecuencia por correo. A nivel alto, aumenta también la posibilidad de que aparezca un fichaje estrella real'},
     {id:'red_ojeadores',     tipo:'nivel', track:'calidadOjeo',    nombre:'Red de Ojeadores',        icon:'ph-binoculars',    dificultadBase:8, dificultadPaso:4, desc:'Mejora la calidad de los jugadores que salen en los sobres'},
     {id:'negociacion_contratos',tipo:'nivel', track:'ahorroSalarial', nombre:'Negociación de Contratos', icon:'ph-handshake', dificultadBase:8, dificultadPaso:4, desc:'Reduce el salario de los jugadores fichados por sobre'},
     {id:'formacion_cantera', tipo:'nivel', track:'costeSobres',    nombre:'Formación de Cantera',    icon:'ph-graduation-cap',dificultadBase:8, dificultadPaso:4, desc:'Reduce la dificultad para subir de nivel los Sobres de Fichajes'}
@@ -2954,25 +3056,77 @@
       attack:variar(), defense:variar(), pace:variar(), passing:variar(), technique:variar(),
       fatigue:100, racha:0, esSuplente:true,
       injured:false, injuryWeeks:0, injurySeverity:null,
-      salario, nivelSobre
+      salario, nivelSobre, esFichajeEstrella:false
+    };
+  }
+  // FICHAJE ESTRELLA — con la Red de Ojeadores bien subida de nivel
+  // (2-3 estrellas), a veces uno de los 3 candidatos del sobre no es un
+  // canterano inventado, sino un jugador REAL de otro equipo de la
+  // liga, listo para ficharlo. Si se ficha, desaparece de su equipo de
+  // origen el resto de la partida (registrado en
+  // state.jugadoresRealesFichados).
+  function jugadorYaFichado(equipoId, nombre){
+    return (state.jugadoresRealesFichados||[]).some(j=>j.equipoId===equipoId && j.nombre===nombre);
+  }
+  function generarJugadorFichajeEstrella(posicionForzada){
+    const equiposConHueco = LM_RIVALS.filter(eq=>(eq.plantilla||[]).some(j=>!jugadorYaFichado(eq.id, j.name)));
+    if(!equiposConHueco.length) return null;
+    const equipo = equiposConHueco[Math.floor(Math.random()*equiposConHueco.length)];
+    const candidatos = equipo.plantilla.filter(j=>!jugadorYaFichado(equipo.id, j.name));
+    const jugadorReal = candidatos[Math.floor(Math.random()*candidatos.length)];
+    const posiciones=['POR','DFC','LI','LD','MC','EI','ED','DC'];
+    const position = (posicionForzada && posiciones.includes(posicionForzada)) ? posicionForzada : posiciones[Math.floor(Math.random()*posiciones.length)];
+    function statVariada(base){ return Math.max(50, Math.min(97, Math.round(base+Math.floor(Math.random()*11)-5))); }
+    const attack=statVariada(equipo.attack), defense=statVariada(equipo.defense), pace=statVariada(equipo.pace),
+          passing=statVariada(equipo.passing), technique=statVariada(equipo.technique);
+    const overall=Math.round((attack+defense+pace+passing+technique)/5);
+    return {
+      id:'s'+Date.now()+Math.floor(Math.random()*100000), name:jugadorReal.name, numero:jugadorReal.n, position, overall,
+      attack, defense, pace, passing, technique,
+      fatigue:100, racha:0, esSuplente:true,
+      injured:false, injuryWeeks:0, injurySeverity:null,
+      salario:calcularSalario(overall),
+      esFichajeEstrella:true, equipoOrigenId:equipo.id, equipoOrigenName:equipo.name
     };
   }
   function posicionObjetivoOjeoActual(){
     return (state.posicionObjetivoOjeo && state.posicionObjetivoOjeo!=='any') ? state.posicionObjetivoOjeo : null;
   }
-  function abrirSobreEnNivel(nivelSobre){
-    const coste=SOBRE_COSTES[nivelSobre]||SOBRE_COSTES[1];
+  // Abre un sobre concreto de la cola de pendientes (por id) — ya no se
+  // abre "por nivel" desde una tarjeta, sino un sobre específico que ya
+  // estaba esperando, avisado por correo.
+  function abrirSobrePorId(sobreId){
+    const idx=(state.sobresFichajesPendientes||[]).findIndex(s=>s.id===sobreId);
+    if(idx===-1) return null;
+    const sobre=state.sobresFichajesPendientes[idx];
+    const coste=SOBRE_COSTES[sobre.nivel]||SOBRE_COSTES[1];
     if((state.capital||0)<coste) return null;
     state.capital-=coste;
-    registrarMovimientoFinanciero('Sobre de fichajes (nivel '+nivelSobre+')', -coste, state.jornadaActual);
+    registrarMovimientoFinanciero('Sobre de fichajes (nivel '+sobre.nivel+')', -coste, state.jornadaActual);
+    state.sobresFichajesPendientes.splice(idx,1);
     const posObjetivo=posicionObjetivoOjeoActual();
-    const jugadores=[1,2,3].map(()=>generarJugadorSobre(nivelSobre, posObjetivo));
+    // Probabilidad de fichaje estrella: nula a nivel 0-1, y creciente a
+    // partir de nivel 2 de la Red de Ojeadores — como se pidió.
+    const nivelRed=nivelDeDD('sobresFichajes');
+    const probEstrella = nivelRed>=3 ? 0.35 : (nivelRed===2 ? 0.18 : 0);
+    let huboEstrella=false;
+    const jugadores=[1,2,3].map(()=>{
+      if(!huboEstrella && Math.random()<probEstrella){
+        const estrella=generarJugadorFichajeEstrella(posObjetivo);
+        if(estrella){ huboEstrella=true; return estrella; }
+      }
+      return generarJugadorSobre(sobre.nivel, posObjetivo);
+    });
     if(state.directorDeportivoBonos && state.directorDeportivoBonos.bonusCalidadSobre){ state.directorDeportivoBonos.bonusCalidadSobre=false; }
     guardarEstado();
     return jugadores;
   }
   function ficharJugadorSobre(jugador){
     state.plantilla.push({...jugador, esSuplente:true});
+    if(jugador.esFichajeEstrella && jugador.equipoOrigenId){
+      if(!state.jugadoresRealesFichados) state.jugadoresRealesFichados=[];
+      state.jugadoresRealesFichados.push({equipoId:jugador.equipoOrigenId, nombre:jugador.name});
+    }
     guardarEstado();
   }
   // Poner en venta / ofertas de traspaso — blindado igual que antes para
@@ -3611,7 +3765,7 @@
     const notif=state.medicoNotificacion;
     const notifMant = !!(state.estadio && (state.estadio.satisfaccion<=-50 || state.estadio.campo<=20));
     const notifDG = (state.capital||0)<0;
-    const notifDD = nivelDeDD('sobresFichajes')>=1;
+    const notifDD = (state.sobresFichajesPendientes||[]).length>0;
     const hayVacantes = ROLES_TRABAJO.some(r=>!state.trabajadores[r]);
     const monedaInfo=MONEDAS[state.moneda]||MONEDAS.EUR;
 
@@ -3678,7 +3832,8 @@
     const scrollGuardado={};
     root.querySelectorAll('.lm-panel, .lm-center-panel').forEach(el=>{
       const clave=el.className;
-      if(clave) scrollGuardado[clave]=el.scrollTop;
+      const scrollReal=el.querySelector(':scope > .lm-col-scroll-inner')||el;
+      if(clave) scrollGuardado[clave]=scrollReal.scrollTop;
     });
 
     root.innerHTML = `
@@ -3875,6 +4030,20 @@
                     extra=`<div class="lm-correo-resultado">${c.resultadoTexto||''}</div>`;
                   } else if(c.tipoEspecial==='balance_mensual'){
                     extra=`<div class="lm-correo-ofertas"><button class="lm-correo-oferta-btn" data-ver-finanzas="1">VER FINANZAS</button></div>`;
+                  } else if(c.tipoEspecial==='sobre_listo' && !c.resuelto){
+                    const sobrePendiente=(state.sobresFichajesPendientes||[]).find(s=>s.id===c.sobreId);
+                    if(sobrePendiente){
+                      const coste=SOBRE_COSTES[sobrePendiente.nivel]||SOBRE_COSTES[1];
+                      extra=`<div class="lm-correo-ofertas">
+                        <button class="lm-correo-oferta-btn lm-sobre-abrir-btn" data-abrir-sobre-correo="${c.id}" data-sobre-id="${sobrePendiente.id}" ${((state.capital||0)<coste)?'disabled':''}>
+                          <i class="ph ph-bold ph-envelope-open"></i> ABRIR SOBRE (${formatoDinero(coste)})
+                        </button>
+                      </div>`;
+                    } else {
+                      extra=`<div class="lm-correo-resultado">Este sobre ya se abrió.</div>`;
+                    }
+                  } else if(c.tipoEspecial==='sobre_listo' && c.resuelto){
+                    extra=`<div class="lm-correo-resultado">${c.resultadoTexto||'Sobre ya abierto.'}</div>`;
                   }
                   cuerpoExtra=`<div class="lm-correo-cuerpo">${c.cuerpo||''}${extra}</div>`;
                 }
@@ -4130,6 +4299,27 @@
         e.stopPropagation();
         if(typeof window.playSound==='function') window.playSound('select');
         abrirFinanzasDG();
+      });
+    });
+    root.querySelectorAll('[data-abrir-sobre-correo]').forEach(btn=>{
+      btn.addEventListener('click', (e)=>{
+        e.stopPropagation();
+        if(typeof window.playSound==='function') window.playSound('select');
+        const mailId=btn.getAttribute('data-abrir-sobre-correo');
+        const sobreId=btn.getAttribute('data-sobre-id');
+        const jugadores=abrirSobrePorId(sobreId);
+        if(!jugadores){ render(); return; }
+        mostrarRevelacionSobreDesdeCorreo(jugadores, (fichadoNombre)=>{
+          const mail=(state.correoInterno||[]).find(m=>m.id===mailId);
+          if(mail){
+            mail.resuelto=true;
+            mail.resultadoTexto = fichadoNombre
+              ? `Sobre abierto — fichaste a ${fichadoNombre}.`
+              : 'Sobre abierto — no se fichó a nadie esta vez.';
+          }
+          guardarEstado();
+          render();
+        });
       });
     });
     root.querySelectorAll('[data-borrar-correo]').forEach(btn=>{
@@ -5394,20 +5584,16 @@
         const botonAccion = bloqueada
           ? (nivelMaximoYa ? '' : `<div class="med-card-bloqueada-label">Imposible con los dados que quedan</div>`)
           : `<button class="mode-card-btn mode-card-btn-gold med-card-btn" data-usar="${idx}" style="padding:7px;font-size:11px">USAR</button>`;
-        const botonSobre = (esSobre && nivelActualTrack>=1)
-          ? `<button class="mode-card-btn mode-card-btn-secondary med-card-btn" data-abrirsobre="${nivelActualTrack}" style="padding:7px;font-size:11px;margin-top:6px;border:1px solid var(--gold);color:var(--gold)" ${((state.capital||0)<(SOBRE_COSTES[nivelActualTrack]||0))?'disabled':''}>ABRIR SOBRE (${formatoDinero(SOBRE_COSTES[nivelActualTrack]||0)})</button>`
-          : '';
         return `
         <div class="med-card med-card-dd ${bloqueada&&!nivelMaximoYa?'med-card-bloqueada':''}" data-idx="${idx}">
           <button class="med-card-swap" data-swap="${idx}" title="Cambiar carta" ${cambioDisponible?'':'disabled'}><i class="ph ph-bold ph-arrows-clockwise"></i></button>
-          <div class="med-card-tag">${esSobre?'PROYECTO ESPECIAL':(def.tipo==='nivel'?'PROYECTO':'MISIÓN')}</div>
+          <div class="med-card-tag">${def.tipo==='nivel'?'PROYECTO':'MISIÓN'}</div>
           <i class="ph ph-bold ${def.icon} med-card-icon"></i>
           <div class="med-card-title">${def.nombre}</div>
           <div class="med-card-divider"></div>
           <div class="med-card-desc">${def.desc}</div>
           ${cuerpo}
           ${botonAccion}
-          ${botonSobre}
         </div>`;
       }).join('');
 
@@ -5470,15 +5656,6 @@
           const idx=parseInt(btn.getAttribute('data-usar'),10);
           if(typeof window.playSound==='function') window.playSound('select');
           renderSelectorCarta(idx);
-        });
-      });
-      overlay.querySelectorAll('[data-abrirsobre]').forEach(btn=>{
-        btn.addEventListener('click', ()=>{
-          const nivel=parseInt(btn.getAttribute('data-abrirsobre'),10);
-          if(typeof window.playSound==='function') window.playSound('select');
-          const jugadores=abrirSobreEnNivel(nivel);
-          if(!jugadores){ renderHub(); return; }
-          mostrarRevelacionSobre(jugadores, renderHub);
         });
       });
     }
