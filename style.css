@@ -2469,7 +2469,8 @@ body.menu-screen #mobileTabBar{display:none!important}
   display:none;
   flex:1;min-height:0;
   flex-direction:column;
-  overflow:hidden;
+  overflow-y:auto;
+  overflow-x:hidden;
   position:relative;
   background:#0d0d0d;
 }
@@ -2487,6 +2488,7 @@ body.liga-manager-screen #mobileTabBar{display:none!important}
 #ligaManagerScreen .lm-staff-tile-badge,
 #ligaManagerScreen .lm-correo-badge,
 #ligaManagerScreen .lm-plan-slot-quitar,
+#ligaManagerScreen .lm-rival-lupa-btn,
 #ligaManagerScreen .lm-correo-notif-dot{border-radius:50%!important} /* controles circulares, quedan al margen de la regla anterior */
 /* Las flechas de reordenar columnas van cuadradas con las esquinas
    redondeadas, no circulares. */
@@ -2503,14 +2505,12 @@ body.liga-manager-screen #mobileTabBar{display:none!important}
 .lm-app-grid{
   display:grid;
   grid-template-columns: repeat(4, minmax(260px, 1fr));
-  grid-template-rows: minmax(0, 1fr);
+  align-items:start;
   justify-content:center;
   width:100%;
   max-width:1900px;
   margin:0 auto;
   gap:0;
-  flex:1;
-  min-height:0;
 }
 /* Animación breve y elegante al reordenar columnas — un fundido con
    ligero desplazamiento lateral, nada brusco. */
@@ -2523,10 +2523,10 @@ body.liga-manager-screen #mobileTabBar{display:none!important}
 }
 .lm-panel{
   background:#15181a;border-right:none;
-  overflow-y:auto;overflow-x:hidden;padding:34px 8px 12px;
+  overflow-y:visible;overflow-x:hidden;padding:34px 8px 12px;
   display:flex;flex-direction:column;gap:10px;
   position:relative;
-  height:100%;min-height:0;
+  height:auto;min-height:0;
 }
 /* Scroll independiente por columna, pero sin la barra visible — sigue
    siendo desplazable con rueda/gesto, solo se oculta el indicador. */
@@ -2588,9 +2588,9 @@ body.liga-manager-screen #mobileTabBar{display:none!important}
    Leyendas (fondo oscuro, campo centrado, mismo ancho máximo/aspect-ratio). */
 .lm-center-panel{
   display:flex;flex-direction:column;align-items:center;justify-content:flex-start;
-  background:#15181a;padding:34px 8px 0;overflow-y:auto;overflow-x:hidden;
+  background:#15181a;padding:34px 8px 0;overflow-y:visible;overflow-x:hidden;
   position:relative;
-  height:100%;min-height:0;
+  height:auto;min-height:0;
 }
 .lm-nextmatch-box{
   background:#1e2326;border:1px solid #2f3539;border-radius:8px;
@@ -2605,6 +2605,12 @@ body.liga-manager-screen #mobileTabBar{display:none!important}
 .lm-header-team-rival{flex-direction:row-reverse}
 .lm-rival-top-row{display:flex;align-items:flex-start;gap:12px}
 .lm-rival-crest-block{display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;margin:4px 0;flex-shrink:0}
+.lm-rival-lupa-btn{
+  width:26px;height:26px;border-radius:50%;background:rgba(201,162,39,.12);
+  border:1px solid var(--gold);color:var(--gold);cursor:pointer;
+  display:flex;align-items:center;justify-content:center;font-size:12px;margin-top:2px;
+}
+.lm-rival-lupa-btn:hover{background:var(--gold);color:#1a1400}
 .lm-rival-info-col{flex:1;min-width:0}
 .lm-rival-info-col .lm-rival-mini-table{margin:0}
 .lm-vs-label{font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:1px;font-size:11px;color:#666}
@@ -3075,6 +3081,17 @@ body.liga-manager-screen #mobileTabBar{display:none!important}
 .lm-estadio-bars .morale-zero-marker{top:-1px;height:14px}
 .lm-sat-fill.positive{background:var(--gold)!important;box-shadow:0 0 6px rgba(201,162,39,.6)!important}
 .lm-sat-fill.negative{background:var(--red)!important;box-shadow:0 0 6px rgba(192,57,43,.6)!important}
+/* Último cambio de una barra (moral/satisfacción/césped) — discreto,
+   mismo tono que la barra pero apagado, solo para dar contexto de por
+   dónde venía antes de llegar a donde está ahora. */
+.lm-ultimo-cambio{
+  display:inline-flex;align-items:center;gap:3px;font-size:9px;margin-top:3px;
+  padding:1px 6px;border-radius:3px;font-weight:600;
+}
+.lm-ultimo-cambio i{font-size:10px}
+.lm-ultimo-cambio-pos{color:#4a8f6f;background:rgba(74,143,111,.12)}
+.lm-ultimo-cambio-neg{color:#a15050;background:rgba(161,80,80,.12)}
+.lm-ultimo-cambio-mini{font-size:8px;padding:0 4px}
 /* Mini versión de la barra del césped para la ficha del rival */
 .lm-campo-bar-wrap-mini{width:100%;height:8px;background:#2a2a2a;border-radius:4px;overflow:hidden;margin-top:2px}
 .lm-campo-bar-wrap-mini .fatigue-bar{height:100%}
@@ -3615,27 +3632,3 @@ body.light-theme.menu-screen{
 #mainMenuScreen .mode-card-title-blue{color:#8a95a0}
 #mainMenuScreen .mode-card-desc{color:#e2e2e2}
 #mainMenuScreen .mode-card-liga .mode-card-desc{color:#c7ccd1}
-
-/* ============================================================
-   PARCHE DEFENSIVO DE SCROLL — Liga Manager
-   Se ha detectado que, en ciertas resoluciones, la columna del campo
-   (lm-center-panel) y la del cuerpo técnico (lm-staff-panel) dejaban de
-   poder scrollearse verticalmente aunque su contenido no cupiera
-   entero. Esta regla, con máxima especificidad y al final de la hoja
-   de estilos a propósito, GARANTIZA que ambas siempre puedan
-   desplazarse verticalmente en el modo de escritorio (4 columnas),
-   pase lo que pase con el resto de reglas de arriba.
-   ============================================================ */
-@media(min-width:1051px){
-  html body div#ligaManagerScreen .lm-app-grid .lm-center-panel,
-  html body div#ligaManagerScreen .lm-app-grid .lm-staff-panel{
-    overflow-y:auto !important;
-    overflow-x:hidden !important;
-    height:100% !important;
-    max-height:100% !important;
-    min-height:0 !important;
-    -webkit-overflow-scrolling:touch !important;
-    touch-action:pan-y !important;
-    overscroll-behavior:contain;
-  }
-}

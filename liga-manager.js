@@ -58,7 +58,7 @@
     {id:'lm_9',  name:'RC Celta',             attack:76, defense:57, pace:82, passing:71, technique:79, crestImg:ESCUDOS_DIR+'celta.png',
       plantilla:['Iván Villar','Starfelt','Manu Fernández','Carreira','Óscar Mingueza','Beltrán','Fran Beltrán','Ilaix Moriba','Iago Aspas','Borja Iglesias','Bryan Zaragoza','Pablo Durán','Williot Swedberg','Damián Rodríguez','Jailson','Sotelo']},
     {id:'lm_10', name:'Valencia CF',          attack:67, defense:75, pace:79, passing:65, technique:68, crestImg:ESCUDOS_DIR+'valencia.png',
-      plantilla:['Agirrezabala','Thierry Correia','Tárrega','Diakhaby','José Gayà','Javi Guerra','Pepelu','Baraja','Hugo Duro','Diego López','Danjuma','Óscar Rey','Fran Pérez','Almeida','Cömert','Beltrán']},
+      plantilla:['Agirrezabala','Thierry Correia','Tárrega','Copete','José Gayà','Javi Guerra','Pepelu','Rioja','Hugo Duro','Diego López','Danjuma','André Almeida','Ugrinić','Santamaria','Cömert','Foulquier']},
     {id:'lm_11', name:'Rayo Vallecano',       attack:64, defense:79, pace:77, passing:58, technique:62, crestImg:ESCUDOS_DIR+'rayovallecano.png',
       plantilla:['Batalla','Balliu','Lejeune','Ratiu','Pep Chavarría','Óscar Valentín','Unai López','Pathé Ciss','Isi Palazón','Randy Nteka','Álvaro García','Camello','Jorge de Frutos','Fran García','Sergio Camello','Jorge Sáenz']},
     {id:'lm_12', name:'CA Osasuna',           attack:58, defense:85, pace:67, passing:56, technique:53, crestImg:ESCUDOS_DIR+'osasuna.png',
@@ -1349,7 +1349,9 @@
     // mella incluso ganando, y una grada volcada anima al equipo.
     const satisfaccion=(state.estadio && state.estadio.satisfaccion) || 0;
     delta += satisfaccion/12;
-    state.moral=Math.max(-50, Math.min(50, Math.round((state.moral||0)+delta)));
+    delta = Math.round(delta);
+    state.ultimoCambioMoral = delta;
+    state.moral=Math.max(-50, Math.min(50, (state.moral||0)+delta));
   }
 
   function actualizarEstadioTrasPartido(miEsLocal, resultado, clima){
@@ -1370,6 +1372,7 @@
       registrarMovimientoFinanciero('Entradas', ingresoEntradas, state.jornadaActual);
       registrarMovimientoFinanciero('Merchandising', ingresoMerch, state.jornadaActual);
     }
+    const campoAntes=est.campo;
     if(miEsLocal && clima){
       const desgasteBase={sunny:10, cloudy:6, rain:20, wind:11, hot:16, snow:19}[clima.id] || 6;
       const reduccion=nivelDeM('prevencionDesgaste')*1.4;
@@ -1378,6 +1381,7 @@
     }
     const recuperacion=1+nivelDeM('recuperacionCesped')*2;
     est.campo=Math.min(100, Math.round(est.campo+recuperacion));
+    state.ultimoCambioCampo=Math.round(est.campo-campoAntes);
 
     const miGoles = miEsLocal ? resultado.golesA : resultado.golesB;
     const suGoles = miEsLocal ? resultado.golesB : resultado.golesA;
@@ -1393,7 +1397,9 @@
       delta*=0.5;
       state.mantenimientoBonos.amortiguarPerdida=false;
     }
-    est.satisfaccion=Math.max(-100, Math.min(100, Math.round(est.satisfaccion+delta)));
+    delta=Math.round(delta);
+    state.ultimoCambioSatisfaccion=delta;
+    est.satisfaccion=Math.max(-100, Math.min(100, est.satisfaccion+delta));
     actualizarMoralTrasPartido(miGoles, suGoles);
   }
 
@@ -2411,6 +2417,57 @@
     document.addEventListener('touchend', ocultar);
     document.addEventListener('touchcancel', ocultar);
   }
+  // Genera un once + banquillo del rival a partir de su plantilla real y
+  // su nivel medio de equipo — no tenemos stats individuales de los
+  // rivales, así que se reparten con una pequeña variación alrededor de
+  // su media, con una formación genérica razonable.
+  function generarOnceRivalFicticio(rival){
+    const promedio=Math.round((rival.attack+rival.defense+rival.pace+rival.passing+rival.technique)/5);
+    const posicionesTitulares=['POR','DFC','DFC','LI','LD','MC','MC','MC','EI','ED','DC'];
+    const nombres=(rival.plantilla||[]).slice();
+    const titulares=posicionesTitulares.map((pos,i)=>({
+      name: nombres[i] || `Jugador ${i+1}`, position:pos,
+      overall: Math.max(45, Math.min(95, promedio+Math.floor(Math.random()*11)-5))
+    }));
+    const posicionesBanquillo=['POR','DFC','LD','MC','ED','DC'];
+    const banquillo=posicionesBanquillo.map((pos,i)=>({
+      name: nombres[11+i] || `Suplente ${i+1}`, position:pos,
+      overall: Math.max(40, Math.min(90, promedio+Math.floor(Math.random()*11)-7))
+    }));
+    return {titulares, banquillo};
+  }
+  function abrirOnceRival(rival){
+    const overlay=document.createElement('div');
+    overlay.id='lmOnceRivalOverlay';
+    const {titulares, banquillo}=generarOnceRivalFicticio(rival);
+    const filaJugadorRival=j=>`<tr><td>${j.name}</td><td>${j.position}</td><td><strong>${j.overall}</strong></td></tr>`;
+    overlay.innerHTML=`
+      <div class="lm-dilemma-card" style="width:420px;max-width:92vw;text-align:left">
+        ${xCerrarHTML()}
+        <div class="lm-dilemma-title">${rivalCrestHTML(24, rival.crestImg)}<span style="margin-left:6px">${rival.name.toUpperCase()}</span></div>
+        <div class="bench-title" style="margin-top:6px"><span><i class="ph ph-bold ph-t-shirt" style="color:var(--gold);margin-right:6px"></i>ONCE TITULAR</span></div>
+        <div class="lm-table-wrap">
+          <table class="lm-table"><thead><tr><th>Jugador</th><th>Pos</th><th>Punt.</th></tr></thead>
+          <tbody>${titulares.map(filaJugadorRival).join('')}</tbody></table>
+        </div>
+        <div class="bench-title" style="margin-top:10px"><span><i class="ph ph-bold ph-chair" style="color:var(--gold);margin-right:6px"></i>BANQUILLO</span></div>
+        <div class="lm-table-wrap">
+          <table class="lm-table"><thead><tr><th>Jugador</th><th>Pos</th><th>Punt.</th></tr></thead>
+          <tbody>${banquillo.map(filaJugadorRival).join('')}</tbody></table>
+        </div>
+        <div class="lm-popup-actions lm-popup-actions-compact">
+          <button id="lmOnceRivalCerrar" class="mode-card-btn mode-card-btn-gold">CERRAR</button>
+        </div>
+      </div>`;
+    document.getElementById('ligaManagerScreen').appendChild(overlay);
+    habilitarCierreOverlay(overlay, ()=>overlay.remove());
+    const xBtn=overlay.querySelector('[data-cerrar-x]');
+    if(xBtn) xBtn.addEventListener('click', ()=>overlay.remove());
+    document.getElementById('lmOnceRivalCerrar').addEventListener('click', ()=>{
+      if(typeof window.playSound==='function') window.playSound('select');
+      overlay.remove();
+    });
+  }
   function mostrarAvisoJuego(mensaje, titulo){
     const overlay=document.createElement('div');
     overlay.id='lmAvisoOverlay';
@@ -2468,7 +2525,18 @@
   }
   function campoBarraHTML(valor, mini){
     const wrap = mini ? 'lm-campo-bar-wrap-mini' : 'lm-campo-bar-wrap';
-    return `<div class="${wrap}"><div class="fatigue-bar fatigue-${colorCampo(valor)}" style="width:${Math.max(0,Math.min(100,valor))}%"></div></div>`;
+    return `<div class="${wrap}"><div class="fatigue-bar fatigue-${colorCampo(valor)}" style="width:${Math.max(0,Math.min(100,valor))}%"></div></div>${mini?'':ultimoCambioHTML(state.ultimoCambioCampo)}`;
+  }
+  // Etiqueta discreta y oscura con el último cambio de una barra (moral,
+  // satisfacción, césped...) — mismo tono que la propia barra pero
+  // apagado, para verlo de un vistazo sin que grite más que el número
+  // principal.
+  function ultimoCambioHTML(delta, compacto){
+    if(delta===undefined || delta===null || delta===0) return '';
+    const positivo=delta>0;
+    return `<div class="lm-ultimo-cambio ${positivo?'lm-ultimo-cambio-pos':'lm-ultimo-cambio-neg'}${compacto?' lm-ultimo-cambio-mini':''}">
+      <i class="ph ph-bold ${positivo?'ph-trend-up':'ph-trend-down'}"></i>último: ${positivo?'+':''}${delta}
+    </div>`;
   }
   // Barra bidireccional — CALCO exacto de la barra de MORAL de Copa
   // Leyendas (.morale-track/.morale-fill), reutilizada tanto para la
@@ -2476,7 +2544,7 @@
   // equipo (-50..50). "claseExtra" permite un acento de color distinto
   // para cada una (oro para afición, verde/rojo de siempre para moral),
   // así las tres barras del estadio quedan bien diferenciadas entre sí.
-  function bidireccionalBarraHTML(valor, rango, claseExtra){
+  function bidireccionalBarraHTML(valor, rango, claseExtra, ultimoCambio){
     const pct=Math.min(50, Math.abs(valor)/rango*50);
     const positivo=valor>=0;
     const left = positivo ? '50%' : (50-pct)+'%';
@@ -2486,10 +2554,10 @@
       <div class="morale-center"></div>
       <div class="morale-fill ${claseExtra||''} ${positivo?'positive':'negative'}" style="width:${pct}%;left:${left}"></div>
       <div class="morale-zero-marker"></div>
-    </div>`;
+    </div>${ultimoCambioHTML(ultimoCambio)}`;
   }
-  function satisfaccionBarraHTML(valor){ return bidireccionalBarraHTML(valor, 100, 'lm-sat-fill'); }
-  function moralBarraHTML(valor){ return bidireccionalBarraHTML(valor, 50, ''); }
+  function satisfaccionBarraHTML(valor){ return bidireccionalBarraHTML(valor, 100, 'lm-sat-fill', state.ultimoCambioSatisfaccion); }
+  function moralBarraHTML(valor){ return bidireccionalBarraHTML(valor, 50, '', state.ultimoCambioMoral); }
 
   function formatoDinero(v){ return Math.round(v||0).toLocaleString('es-ES')+'€'; }
   function registrarMovimientoFinanciero(concepto, monto, jornada){
@@ -3628,6 +3696,7 @@
                 <div class="lm-rival-crest-block">
                   ${rivalCrestHTML(88, rival.crestImg)}<span class="lm-title" style="font-size:15px">${rival.name}</span>
                   <div class="lm-perfil-nota-grande">${Math.round((rival.attack+rival.defense+rival.pace+rival.passing+rival.technique)/5)}</div>
+                  <button class="lm-rival-lupa-btn" id="lmVerOnceRivalBtn" title="Ver su once titular y banquillo"><i class="ph ph-bold ph-magnifying-glass"></i></button>
                 </div>
                 <div class="lm-rival-info-col">
                   <h3 class="lm-nextrival-header" style="text-align:left;margin:0 0 4px"><i class="ph ph-bold ph-flag" style="color:var(--gold);margin-right:6px"></i>PRÓXIMO RIVAL</h3>
@@ -3758,48 +3827,6 @@
 
     if(clima) aplicarClimaVisualLM(clima.id);
     acabaDeReordenarColumnas=false;
-    root.querySelectorAll('.lm-panel, .lm-center-panel').forEach(el=>{
-      const clave=el.className;
-      if(clave && scrollGuardado[clave]!==undefined) el.scrollTop=scrollGuardado[clave];
-      // Marca la interacción de scroll inicial (recién pintada la
-      // columna) y cada vez que el usuario scrollea de verdad.
-      marcarScrollColumna(clave);
-      el.addEventListener('scroll', ()=>marcarScrollColumna(clave));
-    });
-    iniciarHintScrollColumnas();
-    // Arreglo definitivo del scroll de columnas: en vez de confiar en que
-    // el 100% de altura se calcule bien en cascada por flex+grid (que en
-    // ciertas resoluciones se quedaba sin efecto y recortaba el
-    // contenido sin dejar hacer scroll), se fija aquí la altura EXACTA
-    // en píxeles de cada columna a partir de su posición real en
-    // pantalla y el alto real de la ventana — así el navegador no tiene
-    // ninguna duda de dónde debe cortar y empezar a scrollear.
-    function ajustarAlturaColumnas(){
-      document.querySelectorAll('#ligaManagerScreen .lm-app-grid > .lm-panel, #ligaManagerScreen .lm-app-grid > .lm-center-panel').forEach(el=>{
-        if(window.innerWidth<1051) { el.style.removeProperty('height'); return; } // en móvil manda el scroll de página normal
-        const top=el.getBoundingClientRect().top;
-        const alturaDisponible=Math.max(200, window.innerHeight-top);
-        el.style.setProperty('height', alturaDisponible+'px', 'important');
-        el.style.setProperty('overflow-y', 'auto', 'important');
-      });
-    }
-    ajustarAlturaColumnas();
-    if(!window.G2G_LM_resizeListenerPuesto){
-      window.G2G_LM_resizeListenerPuesto=true;
-      let resizeTimer=null;
-      window.addEventListener('resize', ()=>{
-        clearTimeout(resizeTimer);
-        resizeTimer=setTimeout(()=>{
-          document.querySelectorAll('#ligaManagerScreen .lm-app-grid > .lm-panel, #ligaManagerScreen .lm-app-grid > .lm-center-panel').forEach(el=>{
-            if(window.innerWidth<1051){ el.style.removeProperty('height'); return; }
-            const top=el.getBoundingClientRect().top;
-            el.style.setProperty('height', Math.max(200, window.innerHeight-top)+'px', 'important');
-            el.style.setProperty('overflow-y', 'auto', 'important');
-          });
-        }, 120);
-      });
-    }
-
     const medicoInfoBtn=document.getElementById('lmMedicoInfoBtn');
     if(medicoInfoBtn) medicoInfoBtn.addEventListener('click', (e)=>{
       e.stopPropagation();
@@ -3884,6 +3911,11 @@
     if(trabajadoresBtn) trabajadoresBtn.addEventListener('click', ()=>{
       if(typeof window.playSound==='function') window.playSound('select');
       abrirTrabajadores();
+    });
+    const verOnceRivalBtn=document.getElementById('lmVerOnceRivalBtn');
+    if(verOnceRivalBtn) verOnceRivalBtn.addEventListener('click', ()=>{
+      if(typeof window.playSound==='function') window.playSound('select');
+      if(rival) abrirOnceRival(rival);
     });
     const clasifHeader=document.getElementById('lmClasifHeader');
     if(clasifHeader) clasifHeader.addEventListener('click', ()=>{
