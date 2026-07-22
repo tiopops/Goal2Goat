@@ -3797,7 +3797,6 @@
             ${staffTileHTML('preparadorFisico', {btnId:'lmPreparadorFisicoBtn', infoId:'lmPreparadorFisicoInfoBtn', infoTitle:'Historial de entrenamientos', notif:false, badgeTexto:'', carpeta:'preparador_fisico', archivo:'preparador_fisico', alt:'Preparador Físico', icono:'ph-barbell', rolLabel:'PREPARADOR FÍSICO', desc:'Entrena a tus jugadores y mejora sus estadísticas de forma original', acento:'lm-staff-tile-pf'})}
             ${staffTileHTML('mantenimiento', {btnId:'lmMantenimientoBtn', infoId:'lmMantenimientoInfoBtn', infoTitle:'Estado del estadio', notif:notifMant, badgeTexto:'!', carpeta:'mantenimiento', archivo:'mantenimiento_y_seguridad', alt:'Mantenimiento y seguridad', icono:'ph-flag-pennant', rolLabel:'MANTENIMIENTO Y SEGURIDAD', desc:'Cuida el césped, la seguridad y la satisfacción de la afición', acento:'lm-staff-tile-mant'})}
           </div>
-
           ${(()=>{
             try{
               const lista=state.correoInterno||[];
@@ -3852,35 +3851,36 @@
 
     if(clima) aplicarClimaVisualLM(clima.id);
     acabaDeReordenarColumnas=false;
+    // Scroll de columna a prueba de balas: en vez de confiar en que la
+    // altura en % se calcule bien a través de flex+grid (que en esta
+    // columna concreta llevaba fallando pese a varios intentos), se
+    // envuelve TODO el contenido de cada columna en un div interior con
+    // position:absolute;inset:0 — su tamaño se calcula solo a partir del
+    // propio contenedor (position:relative), sin depender para nada de
+    // cómo se comporte el grid por fuera. Es una técnica distinta a
+    // todo lo probado hasta ahora.
+    try{
+      document.querySelectorAll('#ligaManagerScreen .lm-app-grid > .lm-panel, #ligaManagerScreen .lm-app-grid > .lm-center-panel').forEach(col=>{
+        if(col.querySelector(':scope > .lm-col-scroll-inner')) return; // ya envuelta en este mismo render
+        const hijos=Array.from(col.childNodes).filter(h=>{
+          if(h.nodeType!==1) return true; // texto/comentarios, da igual, se mueven
+          return !h.classList.contains('lm-col-reorder') && !h.classList.contains('lm-scroll-hint');
+        });
+        const inner=document.createElement('div');
+        inner.className='lm-col-scroll-inner';
+        hijos.forEach(h=>inner.appendChild(h));
+        col.appendChild(inner);
+        col.classList.add('lm-col-scroll-outer');
+      });
+    }catch(e){ console.error('Error envolviendo columnas para scroll:', e); }
     root.querySelectorAll('.lm-panel, .lm-center-panel').forEach(el=>{
       const clave=el.className;
-      if(clave && scrollGuardado[clave]!==undefined) el.scrollTop=scrollGuardado[clave];
+      const scrollTarget=el.querySelector('.lm-col-scroll-inner')||el;
+      if(clave && scrollGuardado[clave]!==undefined) scrollTarget.scrollTop=scrollGuardado[clave];
       marcarScrollColumna(clave);
-      el.addEventListener('scroll', ()=>marcarScrollColumna(clave));
+      scrollTarget.addEventListener('scroll', ()=>marcarScrollColumna(clave));
     });
     iniciarHintScrollColumnas();
-    // Altura exacta de cada columna, calculada en píxeles reales a
-    // partir de su posición en pantalla — con doble requestAnimationFrame
-    // para asegurarnos de medir DESPUÉS de que el navegador termine el
-    // layout de verdad (evita medir a medias justo tras cambiar el HTML).
-    function ajustarAlturaColumnas(){
-      document.querySelectorAll('#ligaManagerScreen .lm-app-grid > .lm-panel, #ligaManagerScreen .lm-app-grid > .lm-center-panel').forEach(el=>{
-        if(window.innerWidth<1051){ el.style.removeProperty('height'); return; }
-        const top=el.getBoundingClientRect().top;
-        const alturaDisponible=Math.max(200, window.innerHeight-top);
-        el.style.setProperty('height', alturaDisponible+'px', 'important');
-        el.style.setProperty('overflow-y', 'auto', 'important');
-      });
-    }
-    requestAnimationFrame(()=>requestAnimationFrame(ajustarAlturaColumnas));
-    if(!window.G2G_LM_resizeListenerPuesto){
-      window.G2G_LM_resizeListenerPuesto=true;
-      let resizeTimer=null;
-      window.addEventListener('resize', ()=>{
-        clearTimeout(resizeTimer);
-        resizeTimer=setTimeout(()=>requestAnimationFrame(()=>requestAnimationFrame(ajustarAlturaColumnas)), 120);
-      });
-    }
 
     const medicoInfoBtn=document.getElementById('lmMedicoInfoBtn');
     if(medicoInfoBtn) medicoInfoBtn.addEventListener('click', (e)=>{

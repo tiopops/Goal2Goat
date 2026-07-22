@@ -2532,6 +2532,24 @@ body.liga-manager-screen #mobileTabBar{display:none!important}
   position:relative;
   height:100%;min-height:0;
 }
+/* Cuando JS ha envuelto el contenido (ver render() en liga-manager.js),
+   la propia columna deja de scrollear y pasa a ser solo el marco fijo;
+   quien scrollea de verdad es el div interior con position:absolute —
+   su tamaño se calcula SOLO a partir de este marco, sin depender para
+   nada de cómo calcule flex/grid el alto por fuera. */
+.lm-col-scroll-outer{
+  overflow:hidden!important;padding:0!important;
+}
+.lm-col-scroll-inner{
+  position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;
+  padding:34px 8px 12px;display:flex;flex-direction:column;gap:10px;
+  box-sizing:border-box;
+  scrollbar-width:none;-ms-overflow-style:none;
+}
+.lm-col-scroll-inner::-webkit-scrollbar{display:none}
+.lm-center-panel.lm-col-scroll-outer .lm-col-scroll-inner{
+  align-items:center;justify-content:flex-start;padding:34px 8px 0;
+}
 /* Scroll independiente por columna, pero sin la barra visible — sigue
    siendo desplazable con rueda/gesto, solo se oculta el indicador. */
 .lm-panel,.lm-center-panel{
