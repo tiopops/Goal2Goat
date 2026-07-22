@@ -3505,6 +3505,8 @@ body.liga-manager-screen #mobileTabBar{display:none!important}
 .lm-setup-option.disabled{opacity:.4;cursor:not-allowed}
 .lm-setup-soon{float:right;font-size:9px;color:#888;letter-spacing:.5px}
 .lm-setup-option-currency{flex:1;text-align:center;padding:16px 10px}
+.lm-setup-equipos-list{max-height:340px;overflow-y:auto;padding-right:4px}
+.lm-setup-option-equipo{display:flex;align-items:center;gap:10px}
 .lm-setup-input{
   width:100%;padding:12px 14px;background:#1e2326;border:1px solid #2f3539;
   border-radius:8px;color:#eee;font-size:14px;text-align:center;margin-bottom:6px;

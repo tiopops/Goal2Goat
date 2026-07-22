@@ -175,6 +175,34 @@
     return plantilla;
   }
 
+  // Genera tu plantilla a partir de un equipo real elegido en vez de
+  // crear el tuyo propio — mismos 16 jugadores (11+5) con nombres y
+  // dorsales reales de esa plantilla, y estadísticas individuales
+  // repartidas alrededor del perfil real del equipo (igual que se hace
+  // para generar el once ficticio de los rivales).
+  function generarPlantillaDesdeEquipoReal(equipo){
+    const jugadores=(equipo.plantilla||[]).slice(0,16);
+    function statVariada(base){ return Math.max(35, Math.min(97, Math.round(base+Math.floor(Math.random()*13)-6))); }
+    function jugadorDe(id, idx, pos, esSuplente){
+      const j=jugadores[idx];
+      const attack=statVariada(equipo.attack), defense=statVariada(equipo.defense), pace=statVariada(equipo.pace),
+            passing=statVariada(equipo.passing), technique=statVariada(equipo.technique);
+      const overall=Math.round((attack+defense+pace+passing+technique)/5);
+      return {
+        id, name: j?j.name:('Jugador '+(idx+1)), numero: j?j.n:(idx+1), position:pos, overall,
+        attack, defense, pace, passing, technique,
+        fatigue:100, racha:0, esSuplente:!!esSuplente,
+        injured:false, injuryWeeks:0, injurySeverity:null,
+        salario:calcularSalario(overall)
+      };
+    }
+    const POSICIONES_TITULARES=["POR","DFC","DFC","LI","LD","MC","MC","MC","EI","ED","DC"];
+    const POSICIONES_BANQUILLO=["POR","DFC","MC","ED","DC"];
+    const plantilla=POSICIONES_TITULARES.map((pos,i)=>jugadorDe('p'+i, i, pos, false));
+    POSICIONES_BANQUILLO.forEach((pos,i)=>plantilla.push(jugadorDe('b'+i, 11+i, pos, true)));
+    return plantilla;
+  }
+
   /* ---------- 3b. Formaciones seleccionables — a diferencia de Copa
      Leyendas (fija al empezar), aquí se puede elegir antes de cada
      partido. Coordenadas en % sobre el mismo campo (480×640). ---------- */
@@ -648,8 +676,8 @@
   // Ordenación de la tabla PLANTILLA — mismo sistema de 3 modos que
   // CONVOCADOS en Copa Leyendas (LLEGADA/POSICIÓN/PUNTOS, un botón cíclico).
   let lmSortMode='position';
-  const LM_SORT_LABELS={arrival:'LLEGADA', position:'POSICIÓN', rating:'PUNTOS'};
-  const LM_SORT_NEXT={arrival:'position', position:'rating', rating:'arrival'};
+  const LM_SORT_LABELS={arrival:'LLEGADA', position:'POSICIÓN', rating:'PUNTOS', numero:'DORSAL'};
+  const LM_SORT_NEXT={arrival:'position', position:'rating', rating:'numero', numero:'arrival'};
   let clasifColapsada=false; // la clasificación empieza desplegada
   let perfilEquipoColapsado=false;
   let correoExpandido=null;
@@ -691,9 +719,13 @@
     colScrollHintInterval=setInterval(()=>{
       document.querySelectorAll('.lm-panel, .lm-center-panel').forEach(el=>{
         const clave=el.className;
-        const hint=el.querySelector('[data-scroll-hint]');
+        const hint=el.querySelector(':scope > [data-scroll-hint]');
         if(!hint) return;
-        const quedaContenido = el.scrollHeight-el.scrollTop > el.clientHeight+6;
+        // El que de verdad scrollea es el div interior (envuelto por JS
+        // en render() con position:absolute) cuando existe; si por lo
+        // que sea todavía no se ha envuelto, cae en la propia columna.
+        const scrollEl=el.querySelector(':scope > .lm-col-scroll-inner')||el;
+        const quedaContenido = scrollEl.scrollHeight-scrollEl.scrollTop > scrollEl.clientHeight+6;
         const ultima=colScrollUltimaInteraccion[clave]||0;
         const inactivaMasDe30s=Date.now()-ultima>30000;
         hint.classList.toggle('lm-scroll-hint-visible', quedaContenido && inactivaMasDe30s);
@@ -717,7 +749,7 @@
       }
     }, 1000);
   }
-  let setupData={liga:'es', moneda:null, nombre:'', escudo:null};
+  let setupData={liga:'es', moneda:null, nombre:'', escudo:null, modo:null, equipoElegidoId:null};
 
   function nuevoEstadoSinEmpezar(){ return { setupComplete:false }; }
 
@@ -795,14 +827,19 @@
     };
   }
 
-  function empezarTemporada(nombreEquipo, moneda, liga, escudo){
+  function empezarTemporada(nombreEquipo, moneda, liga, escudo, equipoRealElegidoId){
     calendarioMesVisto=null; // nueva liga: el calendario debe volver a fijarse en el mes de inicio, no arrastrar el de una partida anterior
     calendarioJornadaSincronizada=null;
     const miEquipo={id:'lm_0', name:nombreEquipo};
-    const rivalesBarajados=[...LM_RIVALS];
+    // Si el jugador ha elegido ser uno de los 19 equipos reales en vez de
+    // crear el suyo propio, ese equipo se quita de la lista de rivales
+    // (no te puedes enfrentar a ti mismo) y tu plantilla se genera con
+    // sus jugadores reales en vez de nombres inventados.
+    const rivalesBarajados=LM_RIVALS.filter(r=>r.id!==equipoRealElegidoId).slice();
     if(typeof shuffle==='function') shuffle(rivalesBarajados); // shuffle() muta en el sitio, no devuelve nada
     const teams=[miEquipo, ...rivalesBarajados];
-    const plantilla=generarMiniPlantilla();
+    const equipoRealElegido = equipoRealElegidoId ? LM_RIVALS.find(r=>r.id===equipoRealElegidoId) : null;
+    const plantilla = equipoRealElegido ? generarPlantillaDesdeEquipoReal(equipoRealElegido) : generarMiniPlantilla();
     state={
       setupComplete:true,
       liga, moneda, nombreEquipo, escudo,
@@ -2402,8 +2439,8 @@
     }
     const posicionesTitulares=['POR','DFC','DFC','LI','LD','MC','MC','MC','EI','ED','DC'];
     const titulares=posicionesTitulares.map((pos,i)=>jugadorDe(nombres[i], i, pos));
-    const posicionesBanquillo=['POR','DFC','LD','MC','ED','DC'];
-    const banquillo=posicionesBanquillo.map((pos,i)=>jugadorDe(nombres[11+i], i, pos, ' (susp.)'));
+    const posicionesBanquillo=['POR','DFC','MC','ED','DC'];
+    const banquillo=posicionesBanquillo.map((pos,i)=>jugadorDe(nombres[11+i], i, pos));
     return {titulares, banquillo};
   }
   function abrirOnceRival(rival){
@@ -3259,7 +3296,7 @@
       borrarEstado();
       state=nuevoEstadoSinEmpezar();
       setupStep=1;
-      setupData={liga:'es', moneda:null, nombre:'', escudo:null};
+      setupData={liga:'es', moneda:null, nombre:'', escudo:null, modo:null, equipoElegidoId:null};
       document.body.classList.remove('liga-manager-screen');
       document.body.classList.add('menu-screen');
     }
@@ -3297,6 +3334,32 @@
             </div>`).join('')}
         </div>
         <div class="lm-popup-actions"><button id="lmSetupNext" class="mode-card-btn mode-card-btn-gold" ${setupData.moneda?'':'disabled'}>SIGUIENTE</button></div>
+      `;
+    } else if(setupStep===2.5){
+      inner=`
+        <div class="lm-setup-title">¿CÓMO QUIERES EMPEZAR?</div>
+        <div class="lm-setup-list">
+          <div class="lm-setup-option ${setupData.modo==='propio'?'selected':''}" data-modo="propio">
+            <i class="ph ph-bold ph-shield-plus" style="margin-right:10px;color:var(--gold)"></i>CREAR MI PROPIO EQUIPO
+          </div>
+          <div class="lm-setup-option ${setupData.modo==='existente'?'selected':''}" data-modo="existente">
+            <i class="ph ph-bold ph-users-three" style="margin-right:10px;color:var(--gold)"></i>ELEGIR UN EQUIPO YA EXISTENTE
+          </div>
+        </div>
+        <p class="lm-setup-desc">Puedes fundar un club nuevo con nombre y escudo propios, o ponerte al mando de uno de los 19 equipos reales de la liga, con su plantilla real.</p>
+        <div class="lm-popup-actions"><button id="lmSetupNext" class="mode-card-btn mode-card-btn-gold" ${setupData.modo?'':'disabled'}>SIGUIENTE</button></div>
+      `;
+    } else if(setupStep===2.6){
+      inner=`
+        <div class="lm-setup-title">ELIGE TU EQUIPO</div>
+        <p class="lm-setup-desc">Jugarás con su plantilla real. El resto de la liga son los otros 18 equipos.</p>
+        <div class="lm-setup-list lm-setup-equipos-list">
+          ${LM_RIVALS.map(r=>`
+            <div class="lm-setup-option lm-setup-option-equipo ${setupData.equipoElegidoId===r.id?'selected':''}" data-equipo="${r.id}">
+              ${rivalCrestHTML(28, r.crestImg)}<span>${r.name}</span>
+            </div>`).join('')}
+        </div>
+        <div class="lm-popup-actions"><button id="lmSetupNext" class="mode-card-btn mode-card-btn-gold" ${setupData.equipoElegidoId?'':'disabled'}>EMPEZAR TEMPORADA</button></div>
       `;
     } else if(setupStep===3.5){
       inner=`
@@ -3358,9 +3421,28 @@
       if(next) next.addEventListener('click', ()=>{
         if(!setupData.moneda) return;
         if(typeof window.playSound==='function') window.playSound('select');
-        // Si ya hay una identidad (nombre+escudo) guardada de antes —
-        // propia de Liga Manager o, si es la primera vez, la preferencia
-        // fija de Copa Leyendas — no se vuelve a pedir.
+        setupStep=2.5;
+        renderSetup();
+      });
+    } else if(setupStep===2.5){
+      root.querySelectorAll('[data-modo]').forEach(el=>{
+        el.addEventListener('click', ()=>{
+          setupData.modo=el.getAttribute('data-modo');
+          if(typeof window.playSound==='function') window.playSound('select');
+          renderSetup();
+        });
+      });
+      const next=document.getElementById('lmSetupNext');
+      if(next) next.addEventListener('click', ()=>{
+        if(!setupData.modo) return;
+        if(typeof window.playSound==='function') window.playSound('select');
+        if(setupData.modo==='existente'){
+          setupStep=2.6;
+          renderSetup();
+          return;
+        }
+        // Crear equipo propio — mismo flujo de siempre (identidad
+        // guardada, o nombre + escudo desde cero).
         const identidad=identidadPorDefecto();
         if(identidad && identidad.nombre && identidad.crest){
           setupData.nombre=identidad.nombre;
@@ -3370,6 +3452,24 @@
           setupStep=3;
         }
         renderSetup();
+      });
+    } else if(setupStep===2.6){
+      root.querySelectorAll('[data-equipo]').forEach(el=>{
+        el.addEventListener('click', ()=>{
+          setupData.equipoElegidoId=el.getAttribute('data-equipo');
+          if(typeof window.playSound==='function') window.playSound('select');
+          renderSetup();
+        });
+      });
+      const next=document.getElementById('lmSetupNext');
+      if(next) next.addEventListener('click', ()=>{
+        if(!setupData.equipoElegidoId) return;
+        if(typeof window.playSound==='function') window.playSound('select');
+        const equipo=LM_RIVALS.find(r=>r.id===setupData.equipoElegidoId);
+        if(!equipo) return;
+        const escudo={type:'image', data:equipo.crestImg};
+        empezarTemporada(equipo.name, setupData.moneda, setupData.liga, escudo, equipo.id);
+        render();
       });
     } else if(setupStep===3.5){
       const confirmBtn=document.getElementById('lmSetupConfirm');
@@ -3563,6 +3663,7 @@
         });
       }
       if(lmSortMode==='rating') return [...lista].sort((a,b)=>efectivoOverall(b)-efectivoOverall(a));
+      if(lmSortMode==='numero') return [...lista].sort((a,b)=>(a.numero||99)-(b.numero||99));
       return lista; // 'arrival' = orden de llegada = orden del array tal cual
     }
     const plantillaPrincipal=ordenarPlantilla(state.plantilla.filter(p=>titularIds.has(p.id)));
