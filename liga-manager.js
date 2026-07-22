@@ -40,43 +40,43 @@
   // "genérico" con números ligeramente distintos.
   const LM_RIVALS = [
     {id:'lm_1',  name:'Real Madrid',          attack:91, defense:78, pace:92, passing:85, technique:88, crestImg:ESCUDOS_DIR+'realmadrid.png',
-      plantilla:['Courtois','Carvajal','Militão','Rüdiger','Álvaro Carreras','Tchouaméni','Valverde','Camavinga','Bellingham','Vinícius','Mbappé','Güler','Brahim Díaz','Mastantuono','Alexander-Arnold','Huijsen']},
+      plantilla:[{n:1,name:'Courtois'},{n:2,name:'Carvajal'},{n:3,name:'Militão'},{n:22,name:'Rüdiger'},{n:18,name:'Álvaro Carreras'},{n:14,name:'Tchouaméni'},{n:8,name:'Valverde'},{n:6,name:'Camavinga'},{n:5,name:'Bellingham'},{n:7,name:'Vinícius'},{n:10,name:'Mbappé'},{n:15,name:'Güler'},{n:21,name:'Brahim Díaz'},{n:30,name:'Mastantuono'},{n:12,name:'Alexander-Arnold'},{n:24,name:'Huijsen'}]},
     {id:'lm_2',  name:'FC Barcelona',         attack:86, defense:80, pace:78, passing:94, technique:93, crestImg:ESCUDOS_DIR+'barcelona.png',
-      plantilla:['Joan García','Koundé','Araújo','Cubarsí','Balde','Pedri','de Jong','Gavi','Raphinha','Lamine Yamal','Ferran Torres','Dani Olmo','Fermín López','Lewandowski','Rashford','Gerard Martín']},
+      plantilla:[{n:1,name:'Joan García'},{n:2,name:'Koundé'},{n:3,name:'Araújo'},{n:4,name:'Cubarsí'},{n:5,name:'Balde'},{n:6,name:'Pedri'},{n:7,name:'de Jong'},{n:8,name:'Gavi'},{n:9,name:'Raphinha'},{n:10,name:'Lamine Yamal'},{n:11,name:'Ferran Torres'},{n:12,name:'Dani Olmo'},{n:13,name:'Fermín López'},{n:14,name:'Lewandowski'},{n:15,name:'Rashford'},{n:16,name:'Gerard Martín'}]},
     {id:'lm_3',  name:'Atlético de Madrid',   attack:78, defense:93, pace:75, passing:78, technique:77, crestImg:ESCUDOS_DIR+'atlmadrid.png',
-      plantilla:['Oblak','Giménez','Hancko','Le Normand','Molina','Koke','De Paul','Barrios','Baena','Julián Álvarez','Griezmann','Sørloth','Lino','Gallagher','Almada','Nahuel Molina']},
+      plantilla:[{n:1,name:'Oblak'},{n:2,name:'Giménez'},{n:3,name:'Hancko'},{n:4,name:'Le Normand'},{n:5,name:'Molina'},{n:6,name:'Koke'},{n:7,name:'De Paul'},{n:8,name:'Barrios'},{n:9,name:'Baena'},{n:10,name:'Julián Álvarez'},{n:11,name:'Griezmann'},{n:12,name:'Sørloth'},{n:13,name:'Lino'},{n:14,name:'Gallagher'},{n:15,name:'Almada'},{n:16,name:'Nahuel Molina'}]},
     {id:'lm_4',  name:'Athletic Club',        attack:77, defense:81, pace:83, passing:72, technique:71, crestImg:ESCUDOS_DIR+'athletic.png',
-      plantilla:['Unai Simón','Lekue','Yeray','Vivian','Berchiche','Óscar de Marcos','Ander Herrera','Iñigo Ruiz de Galarreta','Nico Williams','Iñaki Williams','Gómez','Sancet','Berenguer','Adama Boiro','Jauregizar','Prados']},
+      plantilla:[{n:1,name:'Unai Simón'},{n:2,name:'Lekue'},{n:3,name:'Yeray'},{n:4,name:'Vivian'},{n:5,name:'Berchiche'},{n:6,name:'Óscar de Marcos'},{n:7,name:'Ander Herrera'},{n:8,name:'Iñigo Ruiz de Galarreta'},{n:9,name:'Nico Williams'},{n:10,name:'Iñaki Williams'},{n:11,name:'Gómez'},{n:12,name:'Sancet'},{n:13,name:'Berenguer'},{n:14,name:'Adama Boiro'},{n:15,name:'Jauregizar'},{n:16,name:'Prados'}]},
     {id:'lm_5',  name:'Villarreal CF',        attack:75, defense:78, pace:68, passing:83, technique:85, crestImg:ESCUDOS_DIR+'villarreal.png',
-      plantilla:['Luiz Júnior','Foyth','Cuenca','Costa','Kambwala','Comesaña','Santi Comesaña','Pape Gueye','Moleiro','Gerard Moreno','Ayoze Pérez','Nicolas Pépé','Alex Baena','Buchanan','Renato Veiga','Yeremy Pino']},
+      plantilla:[{n:1,name:'Luiz Júnior'},{n:2,name:'Foyth'},{n:3,name:'Cuenca'},{n:4,name:'Costa'},{n:5,name:'Kambwala'},{n:6,name:'Comesaña'},{n:7,name:'Santi Comesaña'},{n:8,name:'Pape Gueye'},{n:9,name:'Moleiro'},{n:10,name:'Gerard Moreno'},{n:11,name:'Ayoze Pérez'},{n:12,name:'Nicolas Pépé'},{n:13,name:'Alex Baena'},{n:14,name:'Buchanan'},{n:15,name:'Renato Veiga'},{n:16,name:'Yeremy Pino'}]},
     {id:'lm_6',  name:'Real Betis',           attack:83, defense:62, pace:74, passing:81, technique:84, crestImg:ESCUDOS_DIR+'betis.png',
-      plantilla:['Álvaro Valles','Bartra','Natan','Ricardo Rodríguez','Abner','Marc Roca','Johnny Cardoso','Isco','Lo Celso','Antony','Cucho Hernández','Chimy Ávila','Ez Abde','Rodrigo Riquelme','Pablo Fornals','Assane Diao']},
+      plantilla:[{n:1,name:'Álvaro Valles'},{n:2,name:'Bartra'},{n:3,name:'Natan'},{n:4,name:'Ricardo Rodríguez'},{n:5,name:'Abner'},{n:6,name:'Marc Roca'},{n:7,name:'Johnny Cardoso'},{n:8,name:'Isco'},{n:9,name:'Lo Celso'},{n:10,name:'Antony'},{n:11,name:'Cucho Hernández'},{n:12,name:'Chimy Ávila'},{n:13,name:'Ez Abde'},{n:14,name:'Rodrigo Riquelme'},{n:15,name:'Pablo Fornals'},{n:16,name:'Assane Diao'}]},
     {id:'lm_7',  name:'Real Sociedad',        attack:73, defense:77, pace:67, passing:83, technique:80, crestImg:ESCUDOS_DIR+'realsociedad.png',
-      plantilla:['Remiro','Aihen Muñoz','Zubeldia','Jon Aramburu','Diego Rico','Zubimendi','Marín','Sucic','Óskarsson','Kubo','Oyarzabal','Barrenetxea','Turrientes','Gorosabel','Yangel Herrera','Guedes']},
+      plantilla:[{n:1,name:'Remiro'},{n:2,name:'Aihen Muñoz'},{n:3,name:'Zubeldia'},{n:4,name:'Jon Aramburu'},{n:5,name:'Diego Rico'},{n:6,name:'Zubimendi'},{n:7,name:'Marín'},{n:8,name:'Sucic'},{n:9,name:'Óskarsson'},{n:10,name:'Kubo'},{n:11,name:'Oyarzabal'},{n:12,name:'Barrenetxea'},{n:13,name:'Turrientes'},{n:14,name:'Gorosabel'},{n:15,name:'Yangel Herrera'},{n:16,name:'Guedes'}]},
     {id:'lm_8',  name:'Sevilla FC',           attack:71, defense:81, pace:76, passing:69, technique:69, crestImg:ESCUDOS_DIR+'sevilla.png',
-      plantilla:['Vlachodimos','Carmona','Marcao','Nianzou','Pedrosa','Sow','Agoumé','Lukebakio','Almeyda','Isaac Romero','Alexis Sánchez','Jesús Navas','Rubén Vargas','Gudelj','Alfon González','Akor Adams']},
+      plantilla:[{n:1,name:'Vlachodimos'},{n:2,name:'Carmona'},{n:3,name:'Marcao'},{n:4,name:'Nianzou'},{n:5,name:'Pedrosa'},{n:6,name:'Sow'},{n:7,name:'Agoumé'},{n:8,name:'Lukebakio'},{n:9,name:'Almeyda'},{n:10,name:'Isaac Romero'},{n:11,name:'Alexis Sánchez'},{n:12,name:'Jesús Navas'},{n:13,name:'Rubén Vargas'},{n:14,name:'Gudelj'},{n:15,name:'Alfon González'},{n:16,name:'Akor Adams'}]},
     {id:'lm_9',  name:'RC Celta',             attack:76, defense:57, pace:82, passing:71, technique:79, crestImg:ESCUDOS_DIR+'celta.png',
-      plantilla:['Iván Villar','Starfelt','Manu Fernández','Carreira','Óscar Mingueza','Beltrán','Fran Beltrán','Ilaix Moriba','Iago Aspas','Borja Iglesias','Bryan Zaragoza','Pablo Durán','Williot Swedberg','Damián Rodríguez','Jailson','Sotelo']},
+      plantilla:[{n:1,name:'Iván Villar'},{n:2,name:'Starfelt'},{n:3,name:'Manu Fernández'},{n:4,name:'Carreira'},{n:5,name:'Óscar Mingueza'},{n:6,name:'Beltrán'},{n:7,name:'Fran Beltrán'},{n:8,name:'Ilaix Moriba'},{n:9,name:'Iago Aspas'},{n:10,name:'Borja Iglesias'},{n:11,name:'Bryan Zaragoza'},{n:12,name:'Pablo Durán'},{n:13,name:'Williot Swedberg'},{n:14,name:'Damián Rodríguez'},{n:15,name:'Jailson'},{n:16,name:'Sotelo'}]},
     {id:'lm_10', name:'Valencia CF',          attack:67, defense:75, pace:79, passing:65, technique:68, crestImg:ESCUDOS_DIR+'valencia.png',
-      plantilla:['Agirrezabala','Thierry Correia','Tárrega','Copete','José Gayà','Javi Guerra','Pepelu','Rioja','Hugo Duro','Diego López','Danjuma','André Almeida','Ugrinić','Santamaria','Cömert','Foulquier']},
+      plantilla:[{n:1,name:'Agirrezabala'},{n:2,name:'Thierry Correia'},{n:3,name:'Tárrega'},{n:4,name:'Copete'},{n:5,name:'José Gayà'},{n:6,name:'Javi Guerra'},{n:7,name:'Pepelu'},{n:8,name:'Rioja'},{n:9,name:'Hugo Duro'},{n:10,name:'Diego López'},{n:11,name:'Danjuma'},{n:12,name:'André Almeida'},{n:13,name:'Ugrinić'},{n:14,name:'Santamaria'},{n:15,name:'Cömert'},{n:16,name:'Foulquier'}]},
     {id:'lm_11', name:'Rayo Vallecano',       attack:64, defense:79, pace:77, passing:58, technique:62, crestImg:ESCUDOS_DIR+'rayovallecano.png',
-      plantilla:['Batalla','Balliu','Lejeune','Ratiu','Pep Chavarría','Óscar Valentín','Unai López','Pathé Ciss','Isi Palazón','Randy Nteka','Álvaro García','Camello','Jorge de Frutos','Fran García','Sergio Camello','Jorge Sáenz']},
+      plantilla:[{n:1,name:'Batalla'},{n:2,name:'Balliu'},{n:3,name:'Lejeune'},{n:4,name:'Ratiu'},{n:5,name:'Pep Chavarría'},{n:6,name:'Óscar Valentín'},{n:7,name:'Unai López'},{n:8,name:'Pathé Ciss'},{n:9,name:'Isi Palazón'},{n:10,name:'Randy Nteka'},{n:11,name:'Álvaro García'},{n:12,name:'Camello'},{n:13,name:'Jorge de Frutos'},{n:14,name:'Fran García'},{n:15,name:'Sergio Camello'},{n:16,name:'Jorge Sáenz'}]},
     {id:'lm_12', name:'CA Osasuna',           attack:58, defense:85, pace:67, passing:56, technique:53, crestImg:ESCUDOS_DIR+'osasuna.png',
-      plantilla:['Sergio Herrera','Nacho Vidal','David García','Catena','Juan Cruz','Moncayola','Torró','Iker Muñoz','Rubén García','Ante Budimir','Bryan Zaragoza','Kike Barja','Abde Rebbach','Jon Moncayola','Lucas Torró','Aimar Oroz']},
+      plantilla:[{n:1,name:'Sergio Herrera'},{n:2,name:'Nacho Vidal'},{n:3,name:'David García'},{n:4,name:'Catena'},{n:5,name:'Juan Cruz'},{n:6,name:'Moncayola'},{n:7,name:'Torró'},{n:8,name:'Iker Muñoz'},{n:9,name:'Rubén García'},{n:10,name:'Ante Budimir'},{n:11,name:'Bryan Zaragoza'},{n:12,name:'Kike Barja'},{n:13,name:'Abde Rebbach'},{n:14,name:'Jon Moncayola'},{n:15,name:'Lucas Torró'},{n:16,name:'Aimar Oroz'}]},
     {id:'lm_13', name:'Getafe CF',            attack:50, defense:89, pace:61, passing:53, technique:48, crestImg:ESCUDOS_DIR+'getafe.png',
-      plantilla:['Soria','Djené','Domingos Duarte','Riera','Diego Rico','Milla','Arambarri','Luis Milla','Mayoral','Borja Mayoral','Yellu Santiago','Coba','Jaime Mata','Yellow','Álex Sancris','Diego Bustos']},
+      plantilla:[{n:1,name:'Soria'},{n:2,name:'Djené'},{n:3,name:'Domingos Duarte'},{n:4,name:'Riera'},{n:5,name:'Diego Rico'},{n:6,name:'Milla'},{n:7,name:'Arambarri'},{n:8,name:'Luis Milla'},{n:9,name:'Mayoral'},{n:10,name:'Borja Mayoral'},{n:11,name:'Yellu Santiago'},{n:12,name:'Coba'},{n:13,name:'Jaime Mata'},{n:14,name:'Yellow'},{n:15,name:'Álex Sancris'},{n:16,name:'Diego Bustos'}]},
     {id:'lm_14', name:'RCD Espanyol',         attack:63, defense:69, pace:65, passing:62, technique:63, crestImg:ESCUDOS_DIR+'espanyol.png',
-      plantilla:['Marko Dmitrović','Omar El Hilali','Leandro Cabrera','Carlos Romero','Kike García','Pere Milla','Urko González de Zárate','Edu Expósito','Javi Puado','Roberto Fernández','Dolan','Denis Suárez','Miguel Rubio','Cabrera','Alejo Véliz','Álex Kral']},
+      plantilla:[{n:1,name:'Marko Dmitrović'},{n:2,name:'Omar El Hilali'},{n:3,name:'Leandro Cabrera'},{n:4,name:'Carlos Romero'},{n:5,name:'Kike García'},{n:6,name:'Pere Milla'},{n:7,name:'Urko González de Zárate'},{n:8,name:'Edu Expósito'},{n:9,name:'Javi Puado'},{n:10,name:'Roberto Fernández'},{n:11,name:'Dolan'},{n:12,name:'Denis Suárez'},{n:13,name:'Miguel Rubio'},{n:14,name:'Cabrera'},{n:15,name:'Alejo Véliz'},{n:16,name:'Álex Kral'}]},
     {id:'lm_15', name:'Elche CF',             attack:55, defense:72, pace:59, passing:59, technique:60, crestImg:ESCUDOS_DIR+'elche.png',
-      plantilla:['Dituro','Bigas','Sánchez Miño','Bort','Josan','Nteziryayo','Aguado','Mourad Bejder','André Silva','Rafa Mir','Chust','Pere Milla','Álvaro Núñez','Adrián Butzke','Febas','Enzo Roco']},
+      plantilla:[{n:1,name:'Dituro'},{n:2,name:'Bigas'},{n:3,name:'Sánchez Miño'},{n:4,name:'Bort'},{n:5,name:'Josan'},{n:6,name:'Nteziryayo'},{n:7,name:'Aguado'},{n:8,name:'Mourad Bejder'},{n:9,name:'André Silva'},{n:10,name:'Rafa Mir'},{n:11,name:'Chust'},{n:12,name:'Pere Milla'},{n:13,name:'Álvaro Núñez'},{n:14,name:'Adrián Butzke'},{n:15,name:'Febas'},{n:16,name:'Enzo Roco'}]},
     {id:'lm_16', name:'Levante UD',           attack:68, defense:47, pace:63, passing:61, technique:65, crestImg:ESCUDOS_DIR+'levante.png',
-      plantilla:['Cárdenas','Iago Maidana','Real','Cabrera','Toni Fuidias','Pablo Martínez','Vencedor','Alex Kral','Carlos Álvarez','Iván Romero','José Arnaiz','Etta Eyong','De Frutos','Brugui','Elady Zorrilla','Kervin Andrade']},
+      plantilla:[{n:1,name:'Cárdenas'},{n:2,name:'Iago Maidana'},{n:3,name:'Real'},{n:4,name:'Cabrera'},{n:5,name:'Toni Fuidias'},{n:6,name:'Pablo Martínez'},{n:7,name:'Vencedor'},{n:8,name:'Alex Kral'},{n:9,name:'Carlos Álvarez'},{n:10,name:'Iván Romero'},{n:11,name:'José Arnaiz'},{n:12,name:'Etta Eyong'},{n:13,name:'De Frutos'},{n:14,name:'Brugui'},{n:15,name:'Elady Zorrilla'},{n:16,name:'Kervin Andrade'}]},
     {id:'lm_17', name:'Deportivo Alavés',     attack:56, defense:77, pace:62, passing:56, technique:54, crestImg:ESCUDOS_DIR+'alaves.png',
-      plantilla:['Antonio Sivera','Diego Torres','Abqar','Tenaglia','Jonny Otto','Guridi','Manu García','Toni Martínez','Kike García','Carlos Vicente','Aleñá','Boyé','Jason','Rioja','Aleix Vidal','Jur Schouten']},
+      plantilla:[{n:1,name:'Antonio Sivera'},{n:2,name:'Diego Torres'},{n:3,name:'Abqar'},{n:4,name:'Tenaglia'},{n:5,name:'Jonny Otto'},{n:6,name:'Guridi'},{n:7,name:'Manu García'},{n:8,name:'Toni Martínez'},{n:9,name:'Kike García'},{n:10,name:'Carlos Vicente'},{n:11,name:'Aleñá'},{n:12,name:'Boyé'},{n:13,name:'Jason'},{n:14,name:'Rioja'},{n:15,name:'Aleix Vidal'},{n:16,name:'Jur Schouten'}]},
     {id:'lm_18', name:'Racing de Santander',  attack:53, defense:69, pace:61, passing:53, technique:52, crestImg:ESCUDOS_DIR+'racingsantander.png',
-      plantilla:['Adrián Ortolá','Álvaro Mantilla','Jorge Sáez','Íñigo Sainz-Maza','Andrés Martín','Iñigo Vicente','Pablo Ríos','Antón','Michael Guirassy','Álvaro García','Karrikaburu','Yeray','Villalibre','Suleiman Camara','Chichi Verdugo','Falcón']},
+      plantilla:[{n:1,name:'Adrián Ortolá'},{n:2,name:'Álvaro Mantilla'},{n:3,name:'Jorge Sáez'},{n:4,name:'Íñigo Sainz-Maza'},{n:5,name:'Andrés Martín'},{n:6,name:'Iñigo Vicente'},{n:7,name:'Pablo Ríos'},{n:8,name:'Antón'},{n:9,name:'Michael Guirassy'},{n:10,name:'Álvaro García'},{n:11,name:'Karrikaburu'},{n:12,name:'Yeray'},{n:13,name:'Villalibre'},{n:14,name:'Suleiman Camara'},{n:15,name:'Chichi Verdugo'},{n:16,name:'Falcón'}]},
     {id:'lm_19', name:'RC Deportivo',         attack:57, defense:56, pace:60, passing:65, technique:66, crestImg:ESCUDOS_DIR+'deportivocoruna.png',
-      plantilla:['Yoel','Loureiro','Villares','Mackay','Barcia','Yeremay Hernández','Ximo Navarro','Lucas Pérez','Mella','Dani Barcia','Iker Bravo','Yeremi','Antoñito','Nacho González','Vallejo','Comas']}
+      plantilla:[{n:1,name:'Yoel'},{n:2,name:'Loureiro'},{n:3,name:'Villares'},{n:4,name:'Mackay'},{n:5,name:'Barcia'},{n:6,name:'Yeremay Hernández'},{n:7,name:'Ximo Navarro'},{n:8,name:'Lucas Pérez'},{n:9,name:'Mella'},{n:10,name:'Dani Barcia'},{n:11,name:'Iker Bravo'},{n:12,name:'Yeremi'},{n:13,name:'Antoñito'},{n:14,name:'Nacho González'},{n:15,name:'Vallejo'},{n:16,name:'Comas'}]}
   ];
 
   const MONEDAS = {
@@ -179,11 +179,18 @@
   function generarMiniPlantilla(){
     const usados=new Set();
     function nombreUnico(){ return nombreJugadorAleatorio(usados); }
+    const numerosUsados=new Set();
+    function numeroUnico(){
+      let n;
+      do{ n=1+Math.floor(Math.random()*30); }while(numerosUsados.has(n));
+      numerosUsados.add(n);
+      return n;
+    }
     function nuevoJugador(id, position, esSuplente){
       const overall=48+Math.floor(Math.random()*18); // 48-65, coherente con "plantilla modesta, recién ascendido"
       const variar=()=>Math.max(30,Math.min(80, overall+Math.floor(Math.random()*11)-5));
       return {
-        id, name:nombreUnico(), position, overall,
+        id, name:nombreUnico(), numero:numeroUnico(), position, overall,
         attack:variar(), defense:variar(), pace:variar(), passing:variar(), technique:variar(),
         fatigue:100, racha:0, esSuplente:!!esSuplente,
         injured:false, injuryWeeks:0, injurySeverity:null,
@@ -1184,7 +1191,8 @@
     // en el nombre del propio club para no dejar el hueco en blanco.
     function jugadorRivalAleatorio(){
       if(rival && rival.plantilla && rival.plantilla.length){
-        return {name: rival.plantilla[Math.floor(Math.random()*rival.plantilla.length)]};
+        const elegido=rival.plantilla[Math.floor(Math.random()*rival.plantilla.length)];
+        return {name: elegido.name||elegido, numero: elegido.n};
       }
       return {name: rival ? rival.name : 'Rival'};
     }
@@ -2422,38 +2430,51 @@
   // rivales, así que se reparten con una pequeña variación alrededor de
   // su media, con una formación genérica razonable.
   function generarOnceRivalFicticio(rival){
-    const promedio=Math.round((rival.attack+rival.defense+rival.pace+rival.passing+rival.technique)/5);
-    const posicionesTitulares=['POR','DFC','DFC','LI','LD','MC','MC','MC','EI','ED','DC'];
     const nombres=(rival.plantilla||[]).slice();
-    const titulares=posicionesTitulares.map((pos,i)=>({
-      name: nombres[i] || `Jugador ${i+1}`, position:pos,
-      overall: Math.max(45, Math.min(95, promedio+Math.floor(Math.random()*11)-5))
-    }));
+    function statVariada(base){ return Math.max(35, Math.min(97, Math.round(base+Math.floor(Math.random()*13)-6))); }
+    function jugadorDe(entry, idx, pos, offsetExtra){
+      const nombre = entry ? (entry.name||entry) : `Jugador ${idx+1}${offsetExtra||''}`;
+      const numero = entry ? entry.n : null;
+      return {
+        name:nombre, numero, position:pos,
+        attack:statVariada(rival.attack), defense:statVariada(rival.defense), pace:statVariada(rival.pace),
+        passing:statVariada(rival.passing), technique:statVariada(rival.technique)
+      };
+    }
+    const posicionesTitulares=['POR','DFC','DFC','LI','LD','MC','MC','MC','EI','ED','DC'];
+    const titulares=posicionesTitulares.map((pos,i)=>jugadorDe(nombres[i], i, pos));
     const posicionesBanquillo=['POR','DFC','LD','MC','ED','DC'];
-    const banquillo=posicionesBanquillo.map((pos,i)=>({
-      name: nombres[11+i] || `Suplente ${i+1}`, position:pos,
-      overall: Math.max(40, Math.min(90, promedio+Math.floor(Math.random()*11)-7))
-    }));
+    const banquillo=posicionesBanquillo.map((pos,i)=>jugadorDe(nombres[11+i], i, pos, ' (susp.)'));
     return {titulares, banquillo};
   }
   function abrirOnceRival(rival){
     const overlay=document.createElement('div');
     overlay.id='lmOnceRivalOverlay';
     const {titulares, banquillo}=generarOnceRivalFicticio(rival);
-    const filaJugadorRival=j=>`<tr><td>${j.name}</td><td>${j.position}</td><td><strong>${j.overall}</strong></td></tr>`;
+    const filaJugadorRival=j=>`<tr>
+      <td class="lm-td-numero">${j.numero||'-'}</td>
+      <td>${j.name}</td>
+      <td><strong>${j.position}</strong></td>
+      <td>${j.attack}</td><td>${j.defense}</td><td>${j.pace}</td><td>${j.passing}</td><td>${j.technique}</td>
+      <td><strong>${Math.round((j.attack+j.defense+j.pace+j.passing+j.technique)/5)}</strong></td>
+    </tr>`;
     overlay.innerHTML=`
-      <div class="lm-dilemma-card" style="width:420px;max-width:92vw;text-align:left">
+      <div class="lm-dilemma-card" style="width:560px;max-width:94vw;text-align:left">
         ${xCerrarHTML()}
-        <div class="lm-dilemma-title">${rivalCrestHTML(24, rival.crestImg)}<span style="margin-left:6px">${rival.name.toUpperCase()}</span></div>
+        <div class="lm-dilemma-title">${rivalCrestHTML(26, rival.crestImg)}<span style="margin-left:6px">${rival.name.toUpperCase()}</span></div>
         <div class="bench-title" style="margin-top:6px"><span><i class="ph ph-bold ph-t-shirt" style="color:var(--gold);margin-right:6px"></i>ONCE TITULAR</span></div>
-        <div class="lm-table-wrap">
-          <table class="lm-table"><thead><tr><th>Jugador</th><th>Pos</th><th>Punt.</th></tr></thead>
-          <tbody>${titulares.map(filaJugadorRival).join('')}</tbody></table>
+        <div>
+          <table class="roster-table">
+            <thead><tr><th>#</th><th>Jugador</th><th>Pos</th><th>ATA</th><th>DEF</th><th>RIT</th><th>PAS</th><th>TEC</th><th>Rat.</th></tr></thead>
+            <tbody>${titulares.map(filaJugadorRival).join('')}</tbody>
+          </table>
         </div>
-        <div class="bench-title" style="margin-top:10px"><span><i class="ph ph-bold ph-chair" style="color:var(--gold);margin-right:6px"></i>BANQUILLO</span></div>
-        <div class="lm-table-wrap">
-          <table class="lm-table"><thead><tr><th>Jugador</th><th>Pos</th><th>Punt.</th></tr></thead>
-          <tbody>${banquillo.map(filaJugadorRival).join('')}</tbody></table>
+        <div class="bench-title" style="margin-top:14px"><span><i class="ph ph-bold ph-chair" style="color:var(--gold);margin-right:6px"></i>BANQUILLO</span></div>
+        <div>
+          <table class="roster-table">
+            <thead><tr><th>#</th><th>Jugador</th><th>Pos</th><th>ATA</th><th>DEF</th><th>RIT</th><th>PAS</th><th>TEC</th><th>Rat.</th></tr></thead>
+            <tbody>${banquillo.map(filaJugadorRival).join('')}</tbody>
+          </table>
         </div>
         <div class="lm-popup-actions lm-popup-actions-compact">
           <button id="lmOnceRivalCerrar" class="mode-card-btn mode-card-btn-gold">CERRAR</button>
@@ -3554,6 +3575,7 @@
       const fueraDePos=slotAsignado && posJugada!==p.position;
       const posCell=`<span style="font-weight:700${fueraDePos?';color:#e24b4a':''}">${posJugada}</span>${star}${fueraDePos?`<br><span style="font-size:9px;color:#888">${p.position}</span>`:''}`;
       return `<tr data-pid="${p.id}" class="${claseFila}">
+        <td class="lm-td-numero">${p.numero||'-'}</td>
         <td>${p.name}${cross}${racha}</td>
         <td>${fatigueBarHTML(p)}</td>
         <td>${posCell}</td>
@@ -3625,14 +3647,14 @@
           </div>
           <div>
             <table class="roster-table">
-              <thead><tr><th>Jugador</th><th>Resist.</th><th>Pos</th><th>ATA</th><th>DEF</th><th>RIT</th><th>PAS</th><th>TEC</th><th>Rat.</th></tr></thead>
+              <thead><tr><th>#</th><th>Jugador</th><th>Resist.</th><th>Pos</th><th>ATA</th><th>DEF</th><th>RIT</th><th>PAS</th><th>TEC</th><th>Rat.</th></tr></thead>
               <tbody>${filasPlantilla}</tbody>
             </table>
           </div>
           <div class="bench-title"><span><i class="ph ph-bold ph-chair" style="color:var(--gold);margin-right:6px"></i>BANQUILLO</span><span>${banquillo.length}</span></div>
           <div>
             <table class="roster-table">
-              <thead><tr><th>Jugador</th><th>Resist.</th><th>Pos</th><th>ATA</th><th>DEF</th><th>RIT</th><th>PAS</th><th>TEC</th><th>Rat.</th></tr></thead>
+              <thead><tr><th>#</th><th>Jugador</th><th>Resist.</th><th>Pos</th><th>ATA</th><th>DEF</th><th>RIT</th><th>PAS</th><th>TEC</th><th>Rat.</th></tr></thead>
               <tbody>${filasBanquillo}</tbody>
             </table>
           </div>
@@ -3694,9 +3716,12 @@
             ${rival ? `
               <div class="lm-rival-top-row">
                 <div class="lm-rival-crest-block">
-                  ${rivalCrestHTML(88, rival.crestImg)}<span class="lm-title" style="font-size:15px">${rival.name}</span>
+                  <div class="lm-rival-crest-img-wrap">
+                    ${rivalCrestHTML(88, rival.crestImg)}
+                    <button class="lm-rival-lupa-btn" id="lmVerOnceRivalBtn" title="Ver su once titular y banquillo"><i class="ph ph-bold ph-magnifying-glass"></i></button>
+                  </div>
+                  <span class="lm-title" style="font-size:15px">${rival.name}</span>
                   <div class="lm-perfil-nota-grande">${Math.round((rival.attack+rival.defense+rival.pace+rival.passing+rival.technique)/5)}</div>
-                  <button class="lm-rival-lupa-btn" id="lmVerOnceRivalBtn" title="Ver su once titular y banquillo"><i class="ph ph-bold ph-magnifying-glass"></i></button>
                 </div>
                 <div class="lm-rival-info-col">
                   <h3 class="lm-nextrival-header" style="text-align:left;margin:0 0 4px"><i class="ph ph-bold ph-flag" style="color:var(--gold);margin-right:6px"></i>PRÓXIMO RIVAL</h3>
