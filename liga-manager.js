@@ -185,8 +185,12 @@
     function statVariada(base){ return Math.max(35, Math.min(97, Math.round(base+Math.floor(Math.random()*13)-6))); }
     function jugadorDe(id, idx, pos, esSuplente){
       const j=jugadores[idx];
-      const attack=statVariada(equipo.attack), defense=statVariada(equipo.defense), pace=statVariada(equipo.pace),
-            passing=statVariada(equipo.passing), technique=statVariada(equipo.technique);
+      const tieneStatsReales = j && j.attack!==undefined;
+      const attack = tieneStatsReales ? j.attack : statVariada(equipo.attack);
+      const defense = tieneStatsReales ? j.defense : statVariada(equipo.defense);
+      const pace = tieneStatsReales ? j.pace : statVariada(equipo.pace);
+      const passing = tieneStatsReales ? j.passing : statVariada(equipo.passing);
+      const technique = tieneStatsReales ? j.technique : statVariada(equipo.technique);
       const overall=Math.round((attack+defense+pace+passing+technique)/5);
       return {
         id, name: j?j.name:('Jugador '+(idx+1)), numero: j?j.n:(idx+1), position:pos, overall,
@@ -2442,10 +2446,18 @@
     function jugadorDe(entry, idx, pos, offsetExtra){
       const nombre = entry ? (entry.name||entry) : `Jugador ${idx+1}${offsetExtra||''}`;
       const numero = entry ? entry.n : null;
+      // Si el jugador ya tiene estadísticas individuales reales cargadas
+      // en teams-data.js, se usan tal cual — solo se generan al azar
+      // alrededor de la media del equipo para los jugadores que todavía
+      // no las tienen (plantillas pendientes de completar).
+      const tieneStatsReales = entry && entry.attack!==undefined;
       return {
         name:nombre, numero, position:pos,
-        attack:statVariada(rival.attack), defense:statVariada(rival.defense), pace:statVariada(rival.pace),
-        passing:statVariada(rival.passing), technique:statVariada(rival.technique)
+        attack: tieneStatsReales ? entry.attack : statVariada(rival.attack),
+        defense: tieneStatsReales ? entry.defense : statVariada(rival.defense),
+        pace: tieneStatsReales ? entry.pace : statVariada(rival.pace),
+        passing: tieneStatsReales ? entry.passing : statVariada(rival.passing),
+        technique: tieneStatsReales ? entry.technique : statVariada(rival.technique)
       };
     }
     const posicionesTitulares=['POR','DFC','DFC','LI','LD','MC','MC','MC','EI','ED','DC'];
@@ -3077,8 +3089,12 @@
     const posiciones=['POR','DFC','LI','LD','MC','EI','ED','DC'];
     const position = (posicionForzada && posiciones.includes(posicionForzada)) ? posicionForzada : posiciones[Math.floor(Math.random()*posiciones.length)];
     function statVariada(base){ return Math.max(50, Math.min(97, Math.round(base+Math.floor(Math.random()*11)-5))); }
-    const attack=statVariada(equipo.attack), defense=statVariada(equipo.defense), pace=statVariada(equipo.pace),
-          passing=statVariada(equipo.passing), technique=statVariada(equipo.technique);
+    const tieneStatsReales = jugadorReal.attack!==undefined;
+    const attack = tieneStatsReales ? jugadorReal.attack : statVariada(equipo.attack);
+    const defense = tieneStatsReales ? jugadorReal.defense : statVariada(equipo.defense);
+    const pace = tieneStatsReales ? jugadorReal.pace : statVariada(equipo.pace);
+    const passing = tieneStatsReales ? jugadorReal.passing : statVariada(equipo.passing);
+    const technique = tieneStatsReales ? jugadorReal.technique : statVariada(equipo.technique);
     const overall=Math.round((attack+defense+pace+passing+technique)/5);
     return {
       id:'s'+Date.now()+Math.floor(Math.random()*100000), name:jugadorReal.name, numero:jugadorReal.n, position, overall,
