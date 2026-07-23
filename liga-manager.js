@@ -2473,31 +2473,36 @@
     overlay.innerHTML=`
       <div class="lm-sobre-apertura-wrap">
         <div class="lm-sobre-apertura-titulo">SOBRE DE FICHAJES</div>
-        <div class="lm-sobre-apertura-hint" id="lmSobreHint"><i class="ph ph-bold ph-arrow-up"></i> ARRASTRA HACIA ARRIBA PARA ABRIR</div>
         <div class="lm-sobre-apertura-stage">
           <img src="assets/images/sobre.png" class="lm-sobre-img-flotante" id="lmSobreImgArrastrable" draggable="false">
-          <div class="lm-sobre-grab-zone" id="lmSobreGrabZone"></div>
+          <div class="lm-sobre-rasga-zona" id="lmSobreGrabZone">
+            <span class="lm-sobre-rasga-flecha lm-sobre-rasga-flecha-izq"><i class="ph ph-bold ph-caret-left"></i></span>
+            <span class="lm-sobre-rasga-linea"></span>
+            <span class="lm-sobre-rasga-flecha lm-sobre-rasga-flecha-der"><i class="ph ph-bold ph-caret-right"></i></span>
+          </div>
         </div>
+        <div class="lm-sobre-apertura-hint" id="lmSobreHint">ARRASTRA HACIA UN LADO POR LA FRANJA MARCADA</div>
       </div>`;
     document.getElementById('ligaManagerScreen').appendChild(overlay);
 
     const img=overlay.querySelector('#lmSobreImgArrastrable');
     const zona=overlay.querySelector('#lmSobreGrabZone');
     const hint=overlay.querySelector('#lmSobreHint');
-    const wrap=overlay.querySelector('.lm-sobre-apertura-wrap');
-    const UMBRAL_APERTURA=70; // px que hay que arrastrar hacia arriba para que el sobre se abra
-    let arrastrando=false, startY=0, abierto=false;
+    const UMBRAL_APERTURA=70; // px que hay que arrastrar hacia cualquier lado para que el sobre se abra
+    let arrastrando=false, startX=0, abierto=false;
 
-    function posY(e){ return (e.touches && e.touches[0]) ? e.touches[0].clientY : e.clientY; }
+    function posX(e){ return (e.touches && e.touches[0]) ? e.touches[0].clientX : e.clientX; }
 
     function onMove(e){
       if(!arrastrando || abierto) return;
-      const delta=Math.max(0, startY-posY(e)); // solo cuenta arrastrar hacia ARRIBA
+      const deltaCrudo=posX(e)-startX; // negativo = hacia la izquierda, positivo = hacia la derecha
+      const delta=Math.abs(deltaCrudo);
       const progreso=Math.min(1, delta/UMBRAL_APERTURA);
-      img.style.transform=`translateY(${-delta*0.6}px) scale(${1+progreso*0.05})`;
+      img.style.transform=`translateX(${deltaCrudo*0.5}px) scale(${1+progreso*0.05})`;
       img.style.filter=`brightness(${1+progreso*0.35})`;
+      zona.style.opacity=String(1-progreso*0.7);
       hint.style.opacity=String(1-progreso);
-      if(delta>=UMBRAL_APERTURA) completarApertura();
+      if(delta>=UMBRAL_APERTURA) completarApertura(deltaCrudo>0?1:-1);
     }
     function onUp(){
       if(abierto) return;
@@ -2506,16 +2511,19 @@
       img.style.transition='transform .3s ease, filter .3s ease';
       img.style.transform='';
       img.style.filter='';
+      zona.style.opacity='1';
       hint.style.opacity='1';
       setTimeout(()=>{ if(img) img.style.transition=''; }, 300);
     }
-    function completarApertura(){
+    function completarApertura(direccion){
       if(abierto) return;
       abierto=true;
       if(typeof window.playSound==='function') window.playSound('select');
       img.style.transition='transform .35s ease, opacity .35s ease';
-      img.style.transform='translateY(-140px) scale(1.1)';
+      img.style.transform=`translateX(${direccion*220}px) scale(1.1)`;
       img.style.opacity='0';
+      zona.style.transition='opacity .2s ease';
+      zona.style.opacity='0';
       hint.style.transition='opacity .2s ease';
       hint.style.opacity='0';
       document.removeEventListener('mousemove', onMove);
@@ -2524,8 +2532,8 @@
       document.removeEventListener('touchend', onUp);
       setTimeout(()=>{ mostrarSpinDeSobre(overlay, jugadores, onCerrar); }, 320);
     }
-    zona.addEventListener('mousedown', (e)=>{ e.preventDefault(); arrastrando=true; startY=posY(e); });
-    zona.addEventListener('touchstart', (e)=>{ arrastrando=true; startY=posY(e); }, {passive:true});
+    zona.addEventListener('mousedown', (e)=>{ e.preventDefault(); arrastrando=true; startX=posX(e); });
+    zona.addEventListener('touchstart', (e)=>{ arrastrando=true; startX=posX(e); }, {passive:true});
     document.addEventListener('mousemove', onMove);
     document.addEventListener('touchmove', onMove, {passive:true});
     document.addEventListener('mouseup', onUp);
