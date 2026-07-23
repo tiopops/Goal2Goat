@@ -930,14 +930,14 @@
     state.directorGeneralCartas = inicializarCartasDG();
     state.directorDeportivoCartas = inicializarCartasDD();
     state.preparadorFisicoCartas = inicializarCartasPF();
-    // Regalo de bienvenida solo para tiopops: un sobre de fichajes ya
+    // Regalo de bienvenida para todos: un sobre de fichajes gratuito ya
     // esperando desde el primer día, avisado por correo como cualquier
-    // otro — se abre exactamente igual, sin trato especial en el resto.
-    if(window.currentUsername==='tiopops'){
+    // otro — se abre igual, pero sin coste al abrirlo.
+    {
       const idRegalo='sobre_regalo_'+Date.now();
-      state.sobresFichajesPendientes.push({id:idRegalo, nivel:1, jornadaGenerado:1});
-      enviarCorreo('directorDeportivo', '¡Bienvenido de vuelta! Un sobre de regalo te espera',
-        'Como agradecimiento por poner en marcha esta liga, la directiva te regala un sobre de fichajes. Ábrelo cuando quieras desde aquí mismo.');
+      state.sobresFichajesPendientes.push({id:idRegalo, nivel:1, jornadaGenerado:1, gratis:true});
+      enviarCorreo('directorDeportivo', '¡Bienvenido al club! Un sobre de regalo te espera',
+        'Como bienvenida a la temporada, la directiva te regala un sobre de fichajes — no te costará nada abrirlo. Cuando tengas un momento, ábrelo desde aquí mismo.');
       const ultimoCorreo=state.correoInterno && state.correoInterno[0];
       if(ultimoCorreo){ ultimoCorreo.tipoEspecial='sobre_listo'; ultimoCorreo.sobreId=idRegalo; }
     }
@@ -2591,14 +2591,13 @@
             <div class="lm-sobre-nombre">${j.numero?('#'+j.numero+' '):''}${j.name}</div>
             ${j.esFichajeEstrella?`<div class="lm-sobre-procedencia">actualmente en ${j.equipoOrigenName}</div>`:''}
             <div class="lm-sobre-overall">${j.overall} <span>puntuación</span></div>
-            <div class="lm-sobre-stats">
-              <span>ATA ${j.attack}</span><span>DEF ${j.defense}</span><span>RIT ${j.pace}</span>
-              <span>PAS ${j.passing}</span><span>TEC ${j.technique}</span>
+            <div class="lm-sobre-stats-fila">
+              <span><b>${j.attack}</b>ATA</span><span><b>${j.defense}</b>DEF</span><span><b>${j.pace}</b>RIT</span><span><b>${j.passing}</b>PAS</span><span><b>${j.technique}</b>TEC</span>
             </div>
             <div class="lm-sobre-salario">${formatoDinero(j.salario)}/mes</div>
             <button class="mode-card-btn mode-card-btn-gold lm-sobre-fichar" data-fichar="${i}">FICHAR</button>
           </div>`).join('')}</div>
-          <div class="lm-popup-actions" style="margin-top:12px"><button id="lmSobreCerrarCorreo" class="mode-card-btn mode-card-btn-secondary">CERRAR SOBRE</button></div>`;
+          <div class="lm-popup-actions" style="margin-top:12px"><button id="lmSobreCerrarCorreo" class="mode-card-btn lm-btn-rojo">CERRAR SOBRE</button></div>`;
         const filaCards=zona.querySelector('#lmSobreCardsRow');
         filaCards.querySelectorAll('.lm-sobre-card').forEach(carta=>{
           carta.addEventListener('click', (e)=>{
@@ -3274,10 +3273,12 @@
     const idx=(state.sobresFichajesPendientes||[]).findIndex(s=>s.id===sobreId);
     if(idx===-1) return null;
     const sobre=state.sobresFichajesPendientes[idx];
-    const coste=SOBRE_COSTES[sobre.nivel]||SOBRE_COSTES[1];
+    const coste=sobre.gratis ? 0 : (SOBRE_COSTES[sobre.nivel]||SOBRE_COSTES[1]);
     if((state.capital||0)<coste) return null;
-    state.capital-=coste;
-    registrarMovimientoFinanciero('Sobre de fichajes (nivel '+sobre.nivel+')', -coste, state.jornadaActual);
+    if(coste>0){
+      state.capital-=coste;
+      registrarMovimientoFinanciero('Sobre de fichajes (nivel '+sobre.nivel+')', -coste, state.jornadaActual);
+    }
     state.sobresFichajesPendientes.splice(idx,1);
     const posObjetivo=posicionObjetivoOjeoActual();
     // Probabilidad de fichaje estrella: nula a nivel 0-1, y creciente a
@@ -4188,10 +4189,10 @@
                   } else if(c.tipoEspecial==='sobre_listo' && !c.resuelto){
                     const sobrePendiente=(state.sobresFichajesPendientes||[]).find(s=>s.id===c.sobreId);
                     if(sobrePendiente){
-                      const coste=SOBRE_COSTES[sobrePendiente.nivel]||SOBRE_COSTES[1];
+                      const coste=sobrePendiente.gratis ? 0 : (SOBRE_COSTES[sobrePendiente.nivel]||SOBRE_COSTES[1]);
                       extra=`<div class="lm-correo-ofertas">
                         <button class="lm-correo-oferta-btn lm-sobre-abrir-btn" data-abrir-sobre-correo="${c.id}" data-sobre-id="${sobrePendiente.id}" ${((state.capital||0)<coste)?'disabled':''}>
-                          <i class="ph ph-bold ph-envelope-open"></i> ABRIR SOBRE (${formatoDinero(coste)})
+                          <i class="ph ph-bold ph-envelope-open"></i> ABRIR SOBRE ${sobrePendiente.gratis?'(GRATIS)':'('+formatoDinero(coste)+')'}
                         </button>
                       </div>`;
                     } else {
