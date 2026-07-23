@@ -2467,6 +2467,20 @@
   // de fichar, pero con un overlay propio — y con el destacado especial
   // para el FICHAJE ESTRELLA cuando aparece un jugador real de otro
   // equipo en vez de un canterano inventado.
+  // Reparte una cara aleatoria por jugador de las 3 tarjetas del sobre,
+  // sin repetir entre ellas — porteros usan siempre una imagen "portero",
+  // el resto de posiciones usan una imagen "jugador".
+  const SOBRE_CARAS_JUGADOR=['jugador1','jugador2','jugador3','jugador4','jugador5','jugador6'];
+  const SOBRE_CARAS_PORTERO=['portero1','portero2','portero3','portero4'];
+  function asignarCarasSobre(jugadores){
+    const jBarajado=SOBRE_CARAS_JUGADOR.slice(); if(typeof shuffle==='function') shuffle(jBarajado);
+    const pBarajado=SOBRE_CARAS_PORTERO.slice(); if(typeof shuffle==='function') shuffle(pBarajado);
+    let jIdx=0, pIdx=0;
+    return jugadores.map(j=>{
+      if(j.position==='POR'){ const f=pBarajado[pIdx%pBarajado.length]; pIdx++; return 'assets/sobres/'+f+'.png'; }
+      const f=jBarajado[jIdx%jBarajado.length]; jIdx++; return 'assets/sobres/'+f+'.png';
+    });
+  }
   function mostrarRevelacionSobreDesdeCorreo(jugadores, onCerrar){
     const overlay=document.createElement('div');
     overlay.id='lmSobreCorreoOverlay';
@@ -2474,11 +2488,9 @@
       <div class="lm-sobre-apertura-wrap">
         <div class="lm-sobre-apertura-titulo">SOBRE DE FICHAJES</div>
         <div class="lm-sobre-apertura-stage">
-          <img src="assets/images/sobre.png" class="lm-sobre-img-flotante" id="lmSobreImgArrastrable" draggable="false">
+          <img src="assets/sobres/sobre.png" class="lm-sobre-img-flotante" id="lmSobreImgArrastrable" draggable="false">
           <div class="lm-sobre-rasga-zona" id="lmSobreGrabZone">
-            <span class="lm-sobre-rasga-flecha lm-sobre-rasga-flecha-izq"><i class="ph ph-bold ph-caret-left"></i></span>
-            <span class="lm-sobre-rasga-linea"></span>
-            <span class="lm-sobre-rasga-flecha lm-sobre-rasga-flecha-der"><i class="ph ph-bold ph-caret-right"></i></span>
+            <span class="lm-sobre-rasga-barrido"></span>
           </div>
         </div>
         <div class="lm-sobre-apertura-hint" id="lmSobreHint">ARRASTRA HACIA UN LADO POR LA FRANJA MARCADA</div>
@@ -2570,11 +2582,12 @@
         const zonaReels=document.getElementById('lmSobreReveloZoneCorreo');
         if(zonaReels) zonaReels.innerHTML='';
         const zona=document.getElementById('lmSobreResultadoCorreo');
+        const caras=asignarCarasSobre(jugadores);
         zona.innerHTML=`${hayEstrella?'<div class="lm-fichaje-estrella-banner"><i class="ph ph-bold ph-sparkle"></i> ¡HAY UN FICHAJE ESTRELLA EN ESTE SOBRE! <i class="ph ph-bold ph-sparkle"></i></div>':''}
           <div class="lm-sobre-cards">${jugadores.map((j,i)=>`
           <div class="lm-sobre-card ${j.esFichajeEstrella?'lm-sobre-card-estrella':''}" data-jugador="${i}">
             ${j.esFichajeEstrella?`<div class="lm-fichaje-estrella-tag"><i class="ph ph-bold ph-star"></i> FICHAJE ESTRELLA</div>`:''}
-            <div class="lm-sobre-pos">${j.position}</div>
+            <div class="lm-sobre-cara"><img src="${caras[i]}" alt="${j.position}"><span class="lm-sobre-pos-badge">${j.position}</span></div>
             <div class="lm-sobre-nombre">${j.numero?('#'+j.numero+' '):''}${j.name}</div>
             ${j.esFichajeEstrella?`<div class="lm-sobre-procedencia">actualmente en ${j.equipoOrigenName}</div>`:''}
             <div class="lm-sobre-overall">${j.overall} <span>puntuación</span></div>
