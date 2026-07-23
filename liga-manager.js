@@ -930,6 +930,17 @@
     state.directorGeneralCartas = inicializarCartasDG();
     state.directorDeportivoCartas = inicializarCartasDD();
     state.preparadorFisicoCartas = inicializarCartasPF();
+    // Regalo de bienvenida solo para tiopops: un sobre de fichajes ya
+    // esperando desde el primer día, avisado por correo como cualquier
+    // otro — se abre exactamente igual, sin trato especial en el resto.
+    if(window.currentUsername==='tiopops'){
+      const idRegalo='sobre_regalo_'+Date.now();
+      state.sobresFichajesPendientes.push({id:idRegalo, nivel:1, jornadaGenerado:1});
+      enviarCorreo('directorDeportivo', '¡Bienvenido de vuelta! Un sobre de regalo te espera',
+        'Como agradecimiento por poner en marcha esta liga, la directiva te regala un sobre de fichajes. Ábrelo cuando quieras desde aquí mismo.');
+      const ultimoCorreo=state.correoInterno && state.correoInterno[0];
+      if(ultimoCorreo){ ultimoCorreo.tipoEspecial='sobre_listo'; ultimoCorreo.sobreId=idRegalo; }
+    }
     guardarEstado();
   }
 
@@ -2404,37 +2415,21 @@
   }
   // Aviso propio del juego — sustituye al alert() nativo del navegador
   // (ese "www.goal2goat.com dice" no pinta nada aquí).
-  // Botón "MOSTRAR INFORMACIÓN" de cada hub — mientras se mantiene
-  // pulsado (ratón o dedo), aparece la burbuja "i" de ese trabajador
-  // encima; al soltar, se cierra sola.
+  // Botón "MOSTRAR INFORMACIÓN" de cada hub — un clic la abre, y se
+  // cierra con la X, con CERRAR, o clicando fuera (igual que el resto
+  // de ventanas del juego). Cada función abrirInfoFn ya trae su propio
+  // cierre completo cuando se le pasa "false" (modo normal, no efímero).
   function mostrarInfoHTML(){
     return `<button type="button" class="mode-card-btn mode-card-btn-secondary lm-mostrar-info-btn" data-mostrar-info><i class="ph ph-bold ph-eye"></i> MOSTRAR INFORMACIÓN</button>`;
   }
-  function wireMostrarInfoHold(container, abrirInfoFn, overlayId){
+  function wireMostrarInfoHold(container, abrirInfoFn){
     const btn=container.querySelector('[data-mostrar-info]');
     if(!btn) return;
-    let activo=false;
-    const mostrar=(e)=>{
-      if(e) e.preventDefault();
-      if(activo) return;
-      activo=true;
-      abrirInfoFn(true);
-    };
-    const ocultar=()=>{
-      if(!activo) return;
-      activo=false;
-      const ov=document.getElementById(overlayId);
-      if(ov) ov.remove();
-    };
-    btn.addEventListener('mousedown', mostrar);
-    btn.addEventListener('touchstart', mostrar, {passive:false});
-    // El popup que se abre al pulsar TAPA al propio botón, así que el
-    // navegador no dispara "mouseup"/"touchend" sobre él si solo
-    // escuchamos ahí — hay que escuchar en document para que suelte
-    // sin importar qué haya debajo del cursor/dedo en ese momento.
-    document.addEventListener('mouseup', ocultar);
-    document.addEventListener('touchend', ocultar);
-    document.addEventListener('touchcancel', ocultar);
+    btn.addEventListener('click', (e)=>{
+      e.preventDefault();
+      if(typeof window.playSound==='function') window.playSound('select');
+      abrirInfoFn(false);
+    });
   }
   // Genera un once + banquillo del rival a partir de su plantilla real y
   // su nivel medio de equipo — no tenemos stats individuales de los
@@ -2476,6 +2471,71 @@
     const overlay=document.createElement('div');
     overlay.id='lmSobreCorreoOverlay';
     overlay.innerHTML=`
+      <div class="lm-sobre-apertura-wrap">
+        <div class="lm-sobre-apertura-titulo">SOBRE DE FICHAJES</div>
+        <div class="lm-sobre-apertura-hint" id="lmSobreHint"><i class="ph ph-bold ph-arrow-up"></i> ARRASTRA HACIA ARRIBA PARA ABRIR</div>
+        <div class="lm-sobre-apertura-stage">
+          <img src="assets/images/sobre.png" class="lm-sobre-img-flotante" id="lmSobreImgArrastrable" draggable="false">
+          <div class="lm-sobre-grab-zone" id="lmSobreGrabZone"></div>
+        </div>
+      </div>`;
+    document.getElementById('ligaManagerScreen').appendChild(overlay);
+
+    const img=overlay.querySelector('#lmSobreImgArrastrable');
+    const zona=overlay.querySelector('#lmSobreGrabZone');
+    const hint=overlay.querySelector('#lmSobreHint');
+    const wrap=overlay.querySelector('.lm-sobre-apertura-wrap');
+    const UMBRAL_APERTURA=70; // px que hay que arrastrar hacia arriba para que el sobre se abra
+    let arrastrando=false, startY=0, abierto=false;
+
+    function posY(e){ return (e.touches && e.touches[0]) ? e.touches[0].clientY : e.clientY; }
+
+    function onMove(e){
+      if(!arrastrando || abierto) return;
+      const delta=Math.max(0, startY-posY(e)); // solo cuenta arrastrar hacia ARRIBA
+      const progreso=Math.min(1, delta/UMBRAL_APERTURA);
+      img.style.transform=`translateY(${-delta*0.6}px) scale(${1+progreso*0.05})`;
+      img.style.filter=`brightness(${1+progreso*0.35})`;
+      hint.style.opacity=String(1-progreso);
+      if(delta>=UMBRAL_APERTURA) completarApertura();
+    }
+    function onUp(){
+      if(abierto) return;
+      arrastrando=false;
+      // No llegó al umbral: el sobre vuelve suavemente a su sitio.
+      img.style.transition='transform .3s ease, filter .3s ease';
+      img.style.transform='';
+      img.style.filter='';
+      hint.style.opacity='1';
+      setTimeout(()=>{ if(img) img.style.transition=''; }, 300);
+    }
+    function completarApertura(){
+      if(abierto) return;
+      abierto=true;
+      if(typeof window.playSound==='function') window.playSound('select');
+      img.style.transition='transform .35s ease, opacity .35s ease';
+      img.style.transform='translateY(-140px) scale(1.1)';
+      img.style.opacity='0';
+      hint.style.transition='opacity .2s ease';
+      hint.style.opacity='0';
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('touchmove', onMove);
+      document.removeEventListener('mouseup', onUp);
+      document.removeEventListener('touchend', onUp);
+      setTimeout(()=>{ mostrarSpinDeSobre(overlay, jugadores, onCerrar); }, 320);
+    }
+    zona.addEventListener('mousedown', (e)=>{ e.preventDefault(); arrastrando=true; startY=posY(e); });
+    zona.addEventListener('touchstart', (e)=>{ arrastrando=true; startY=posY(e); }, {passive:true});
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('touchmove', onMove, {passive:true});
+    document.addEventListener('mouseup', onUp);
+    document.addEventListener('touchend', onUp);
+  }
+
+  // Segunda mitad de la apertura del sobre: la tirada de cartas de
+  // siempre, reutilizando el mismo overlay ya abierto.
+  function mostrarSpinDeSobre(overlay, jugadores, onCerrar){
+    overlay.innerHTML=`
       <div class="lm-dilemma-card lm-dilemma-card-dd" style="max-width:640px">
         <div class="lm-dilemma-title"><i class="ph ph-bold ph-envelope-open"></i> SOBRE DE FICHAJES</div>
         <div id="lmSobreReveloZoneCorreo" class="lm-sobre-grid">
@@ -2483,7 +2543,6 @@
         </div>
         <div id="lmSobreResultadoCorreo"></div>
       </div>`;
-    document.getElementById('ligaManagerScreen').appendChild(overlay);
     let ticks=0;
     const totalTicks=11+Math.floor(Math.random()*4);
     const spin=setInterval(()=>{
@@ -3016,13 +3075,12 @@
     {id:'sobres_fichajes',   tipo:'nivel', track:'sobresFichajes', nombre:'Red de Ojeadores Activa',      icon:'ph-envelope-open', dificultadBase:9, dificultadPaso:5, desc:'Acorta el tiempo entre sobres de fichajes — llegarán con más frecuencia por correo. A nivel alto, aumenta también la posibilidad de que aparezca un fichaje estrella real'},
     {id:'red_ojeadores',     tipo:'nivel', track:'calidadOjeo',    nombre:'Red de Ojeadores',        icon:'ph-binoculars',    dificultadBase:8, dificultadPaso:4, desc:'Mejora la calidad de los jugadores que salen en los sobres'},
     {id:'negociacion_contratos',tipo:'nivel', track:'ahorroSalarial', nombre:'Negociación de Contratos', icon:'ph-handshake', dificultadBase:8, dificultadPaso:4, desc:'Reduce el salario de los jugadores fichados por sobre'},
-    {id:'formacion_cantera', tipo:'nivel', track:'costeSobres',    nombre:'Formación de Cantera',    icon:'ph-graduation-cap',dificultadBase:8, dificultadPaso:4, desc:'Reduce la dificultad para subir de nivel los Sobres de Fichajes'}
+    {id:'formacion_cantera', tipo:'nivel', track:'costeSobres',    nombre:'Formación de Cantera',    icon:'ph-graduation-cap',dificultadBase:8, dificultadPaso:4, desc:'Tu academia forma talento desde la base: cada canterano que llega por sobre nace con un nivel superior al habitual'}
   ];
   function cartaDefDD(id){ return DIRECTOR_DEPORTIVO_CARTAS_BASE.find(c=>c.id===id); }
   function nivelDeDD(track){ return (state.directorDeportivoNiveles && state.directorDeportivoNiveles[track]) || 0; }
   function dificultadActualNivelDD(def){
     let d=def.dificultadBase + nivelDeDD(def.track)*def.dificultadPaso;
-    if(def.track==='sobresFichajes') d-=nivelDeDD('costeSobres')*2;
     return Math.max(4, d);
   }
   function generarCartaAleatoriaDD(excluirIds){
@@ -3056,8 +3114,9 @@
   // ojeadores se centran en ella en vez de salir al azar.
   function generarJugadorSobre(nivelSobre, posicionForzada){
     const calidad=nivelDeDD('calidadOjeo');
+    const canteraBonus=nivelDeDD('costeSobres')*3;
     const bonusInforme = (state.directorDeportivoBonos && state.directorDeportivoBonos.bonusCalidadSobre) ? 8 : 0;
-    const overall=Math.max(45, Math.min(96, 50+nivelSobre*10+calidad*4+bonusInforme+Math.floor(Math.random()*8)));
+    const overall=Math.max(45, Math.min(96, 50+nivelSobre*10+calidad*4+canteraBonus+bonusInforme+Math.floor(Math.random()*8)));
     const posiciones=['POR','DFC','LI','LD','MC','EI','ED','DC'];
     const position = (posicionForzada && posiciones.includes(posicionForzada)) ? posicionForzada : posiciones[Math.floor(Math.random()*posiciones.length)];
     const variar=()=>Math.max(30,Math.min(96, overall+Math.floor(Math.random()*13)-6));
@@ -4004,6 +4063,10 @@
               </div>` : `<div class="lm-vs-label" style="text-align:center">Temporada finalizada</div>`}
           </div>
           ${calendarioHTML()}
+          </div>
+        </div>
+
+        <div class="lm-panel lm-staff-panel" style="${columnaOrderStyle('staff')}">${columnaControlesHTML('staff')}<div class="lm-scroll-hint" data-scroll-hint title="Hay más contenido si bajas"><i class="ph ph-bold ph-caret-down"></i></div>
           <h3 class="lm-clasif-header" id="lmClasifHeader"><span style="display:flex;align-items:center"><i class="ph ph-bold ph-ranking" style="color:var(--gold);margin-right:6px"></i><span style="color:#ccc">CLASIFICACIÓN</span></span> <span class="lm-clasif-arrow ${clasifColapsada?'':'lm-clasif-arrow-open'}">▾</span></h3>
           <div id="lmClasifBody" style="${clasifColapsada?'display:none':''}">
           <div class="lm-table-wrap">
@@ -4024,9 +4087,6 @@
             <span><i class="lm-legend-dot lm-zona-descenso"></i>Descenso</span>
           </div>
           </div>
-        </div>
-
-        <div class="lm-panel lm-staff-panel" style="${columnaOrderStyle('staff')}">${columnaControlesHTML('staff')}<div class="lm-scroll-hint" data-scroll-hint title="Hay más contenido si bajas"><i class="ph ph-bold ph-caret-down"></i></div>
           <div class="lm-staff-bar-header">
             <div class="lm-staff-bar-title"><i class="ph ph-bold ph-users-three"></i> CUERPO TÉCNICO</div>
             <div class="lm-staff-bar-capital" title="Dados y rerolls disponibles este partido">
@@ -5484,7 +5544,7 @@
     {track:'calidadOjeo',     label:'Red de Ojeadores',        icon:'ph-binoculars',      desc:'Calidad de los jugadores que salen en los sobres'},
     {track:'ahorroSalarial',  label:'Negociación de Contratos',icon:'ph-handshake',       desc:'Ahorro en el salario de los jugadores fichados por sobre'},
     {track:'sobresFichajes',  label:'Red de Ojeadores Activa', icon:'ph-envelope-open',   desc:'Acorta el tiempo entre sobres — llegan solos por correo, no se abren desde aquí'},
-    {track:'costeSobres',     label:'Formación de Cantera',    icon:'ph-graduation-cap',  desc:'Reduce la dificultad para subir de nivel los sobres'}
+    {track:'costeSobres',     label:'Formación de Cantera',    icon:'ph-graduation-cap',  desc:'Sube el nivel base de los canteranos que llegan por sobre'}
   ];
   function renderNivelesDDHTML(){
     return `<div class="med-niveles-grid">${NIVELES_DD_INFO.map(info=>{
