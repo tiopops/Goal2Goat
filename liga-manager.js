@@ -1200,7 +1200,7 @@
     // en el nombre del propio club para no dejar el hueco en blanco.
     function jugadorRivalAleatorio(){
       if(rival && rival.plantilla && rival.plantilla.length){
-        const disponibles = rival.plantilla.filter(j=>!jugadorYaFichado(rival.id, j.name));
+        const disponibles = plantillaEfectivaRival(rival);
         const pool = disponibles.length ? disponibles : rival.plantilla;
         const elegido=pool[Math.floor(Math.random()*pool.length)];
         return {name: elegido.name||elegido, numero: elegido.n};
@@ -2441,7 +2441,7 @@
   // rivales, así que se reparten con una pequeña variación alrededor de
   // su media, con una formación genérica razonable.
   function generarOnceRivalFicticio(rival){
-    const nombres=(rival.plantilla||[]).filter(j=>!jugadorYaFichado(rival.id, j.name));
+    const nombres=plantillaEfectivaRival(rival);
     function statVariada(base){ return Math.max(35, Math.min(97, Math.round(base+Math.floor(Math.random()*13)-6))); }
     function jugadorDe(entry, idx, pos, offsetExtra){
       const nombre = entry ? (entry.name||entry) : `Jugador ${idx+1}${offsetExtra||''}`;
@@ -3079,6 +3079,21 @@
   // state.jugadoresRealesFichados).
   function jugadorYaFichado(equipoId, nombre){
     return (state.jugadoresRealesFichados||[]).some(j=>j.equipoId===equipoId && j.nombre===nombre);
+  }
+  // Aunque un equipo tenga más jugadores investigados en teams-data.js
+  // (algunos llegan a 25-29), en el terreno de juego un rival SOLO usa
+  // sus 16 mejores (11 titulares + 5 banquillo) — los mismos que se
+  // muestran en la lupa y los únicos que pueden salir como goleadores.
+  // El resto queda "en la recámara": si uno de esos 16 se ficha (sale
+  // del equipo), el siguiente mejor disponible ocupa su hueco solo,
+  // sin que el jugador tenga que hacer nada. Esto NUNCA afecta a tu
+  // propia plantilla, solo a la de los rivales.
+  function plantillaEfectivaRival(equipo){
+    const disponibles=(equipo.plantilla||[]).filter(j=>!jugadorYaFichado(equipo.id, j.name));
+    const puntuacion=j=> j.attack!==undefined
+      ? Math.round((j.attack+j.defense+j.pace+j.passing+j.technique)/5)
+      : Math.round((equipo.attack+equipo.defense+equipo.pace+equipo.passing+equipo.technique)/5);
+    return [...disponibles].sort((a,b)=>puntuacion(b)-puntuacion(a)).slice(0,16);
   }
   function generarJugadorFichajeEstrella(posicionForzada){
     const equiposConHueco = LM_RIVALS.filter(eq=>(eq.plantilla||[]).some(j=>!jugadorYaFichado(eq.id, j.name)));
@@ -5468,7 +5483,7 @@
   const NIVELES_DD_INFO=[
     {track:'calidadOjeo',     label:'Red de Ojeadores',        icon:'ph-binoculars',      desc:'Calidad de los jugadores que salen en los sobres'},
     {track:'ahorroSalarial',  label:'Negociación de Contratos',icon:'ph-handshake',       desc:'Ahorro en el salario de los jugadores fichados por sobre'},
-    {track:'sobresFichajes',  label:'Sobres de Fichajes',      icon:'ph-envelope-open',   desc:'Nivel de los sobres — ábrelos cuando quieras desde su tarjeta'},
+    {track:'sobresFichajes',  label:'Red de Ojeadores Activa', icon:'ph-envelope-open',   desc:'Acorta el tiempo entre sobres — llegan solos por correo, no se abren desde aquí'},
     {track:'costeSobres',     label:'Formación de Cantera',    icon:'ph-graduation-cap',  desc:'Reduce la dificultad para subir de nivel los sobres'}
   ];
   function renderNivelesDDHTML(){
@@ -5621,7 +5636,13 @@
             <i class="ph ph-bold ph-coins lm-capital-icon"></i>
             <div class="lm-capital-info">
               <div class="lm-capital-title"><span>CAPITAL DEL CLUB</span><strong class="${(state.capital||0)<0?'lm-capital-neg':''}">${formatoDinero(state.capital)}</strong></div>
-              <div class="lm-aforo-nota">${nivelSobre>=1?`Sobres de Fichajes a nivel ${nivelSobre}/${NIVEL_MAXIMO_EQUIPO} — puedes abrirlos cuando quieras desde su tarjeta`:'Sube el proyecto "Sobres de Fichajes" para empezar a fichar'}</div>
+              <div class="lm-aforo-nota">${(()=>{
+                const pendientes=(state.sobresFichajesPendientes||[]).length;
+                if(pendientes>0) return `Tienes ${pendientes} sobre${pendientes>1?'s':''} esperando en el correo interno`;
+                return nivelSobre>=1
+                  ? `Red de Ojeadores a nivel ${nivelSobre}/${NIVEL_MAXIMO_EQUIPO} — los sobres llegan solos con el tiempo, avisan por correo`
+                  : 'Sube la "Red de Ojeadores Activa" para que empiecen a llegar sobres con el tiempo';
+              })()}</div>
             </div>
           </div>
           <div class="lm-precio-box">

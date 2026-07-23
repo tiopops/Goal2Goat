@@ -50,7 +50,7 @@
         {n:20,name:'Fran García',attack:58,defense:72,pace:82,passing:70,technique:72},
         {n:21,name:'Brahim Díaz',attack:76,defense:40,pace:78,passing:80,technique:85},
         {n:22,name:'Rüdiger',attack:42,defense:87,pace:72,passing:68,technique:65},
-        {n:23,name:'Mendy',attack:55,defense:78,pace:82,passing:70,technique:75},
+        {n:23,name:'Ferland Mendy',attack:55,defense:78,pace:82,passing:70,technique:75},
         {n:24,name:'Huijsen',attack:42,defense:82,pace:76,passing:74,technique:72},
         {n:30,name:'Mastantuono',attack:78,defense:35,pace:88,passing:75,technique:82}
       ]},
@@ -172,7 +172,18 @@
         {n:20,name:'Lo Celso',attack:70,defense:55,pace:66,passing:82,technique:84},
         {n:21,name:'Marc Roca',attack:55,defense:75,pace:64,passing:80,technique:76},
         {n:22,name:'Isco',attack:72,defense:45,pace:58,passing:85,technique:88},
-        {n:23,name:'Junior',attack:58,defense:70,pace:82,passing:70,technique:72}
+        {n:23,name:'Junior',attack:58,defense:70,pace:82,passing:70,technique:72},
+        {n:11,name:'Bakambu',attack:74,defense:32,pace:70,passing:58,technique:70},
+        {n:14,name:'Amrabat',attack:52,defense:76,pace:74,passing:70,technique:70},
+        {n:15,name:'Álvaro Fidalgo',attack:60,defense:58,pace:62,passing:82,technique:82},
+        {n:18,name:'Nelson Deossa',attack:62,defense:56,pace:74,passing:74,technique:76},
+        {n:24,name:'Aitor Ruibal',attack:58,defense:62,pace:78,passing:66,technique:68},
+        {n:25,name:'Pau López',attack:24,defense:78,pace:52,passing:64,technique:64},
+        {n:30,name:'Germán García',attack:20,defense:72,pace:46,passing:56,technique:56},
+        {n:37,name:'Daniel Pérez',attack:52,defense:60,pace:70,passing:66,technique:66},
+        {n:40,name:'Ángel Ortiz',attack:48,defense:66,pace:76,passing:60,technique:62},
+        {n:41,name:'Manu González',attack:20,defense:70,pace:44,passing:54,technique:54},
+        {n:50,name:'Iván Corralejo',attack:56,defense:50,pace:68,passing:70,technique:70}
       ]},
     {id:'lm_7',  name:'Real Sociedad',        attack:73, defense:77, pace:67, passing:83, technique:80, crestImg:ESCUDOS_DIR+'realsociedad.png',
       plantilla:[
@@ -282,23 +293,31 @@
       ]},
     {id:'lm_11', name:'Rayo Vallecano',       attack:64, defense:79, pace:77, passing:58, technique:62, crestImg:ESCUDOS_DIR+'rayovallecano.png',
       plantilla:[
-        {n:13,name:'Batalla',attack:22,defense:78,pace:50,passing:62,technique:62},
-        {n:2,name:'Ratiu',attack:56,defense:76,pace:82,passing:70,technique:70},
+        {n:1,name:'Dani Cárdenas',attack:22,defense:78,pace:50,passing:60,technique:58},
+        {n:13,name:'Batalla',attack:20,defense:76,pace:48,passing:58,technique:56},
+        {n:2,name:'Andrei Ratiu',attack:56,defense:76,pace:82,passing:70,technique:70},
         {n:3,name:'Pep Chavarría',attack:40,defense:76,pace:74,passing:66,technique:64},
-        {n:24,name:'Lejeune',attack:36,defense:78,pace:68,passing:64,technique:60},
-        {n:32,name:'Mendy',attack:34,defense:74,pace:72,passing:60,technique:58},
-        {n:23,name:'Óscar Valentín',attack:52,defense:74,pace:66,passing:74,technique:70},
-        {n:17,name:'Unai López',attack:58,defense:66,pace:70,passing:76,technique:74},
+        {n:4,name:'Pedro Díaz',attack:38,defense:74,pace:70,passing:62,technique:58},
+        {n:5,name:'Luiz Felipe',attack:36,defense:78,pace:66,passing:62,technique:58},
         {n:6,name:'Pathé Ciss',attack:48,defense:76,pace:70,passing:68,technique:66},
         {n:7,name:'Isi Palazón',attack:76,defense:38,pace:82,passing:72,technique:78},
-        {n:19,name:'Jorge de Frutos',attack:74,defense:40,pace:80,passing:70,technique:76},
-        {n:18,name:'Álvaro García',attack:66,defense:44,pace:78,passing:66,technique:70},
-        {n:9,name:'Alemão',attack:74,defense:30,pace:72,passing:58,technique:68},
+        {n:8,name:'Óscar Trejo',attack:60,defense:56,pace:60,passing:78,technique:76},
+        {n:9,name:'Alexandre Zurawski',attack:74,defense:30,pace:74,passing:58,technique:66},
         {n:10,name:'Sergio Camello',attack:76,defense:32,pace:80,passing:62,technique:72},
+        {n:11,name:'Randy Nteka',attack:70,defense:36,pace:78,passing:62,technique:70},
         {n:12,name:'Ilias Akhomach',attack:70,defense:36,pace:82,passing:68,technique:76},
         {n:14,name:'Carlos Martín',attack:70,defense:34,pace:74,passing:60,technique:68},
-        {n:4,name:'Espino',attack:42,defense:72,pace:74,passing:60,technique:60},
-        {n:5,name:'Jorge Sáenz',attack:36,defense:74,pace:68,passing:62,technique:58}
+        {n:15,name:'Gerard Gumbau',attack:56,defense:64,pace:64,passing:74,technique:72},
+        {n:16,name:'Abdul Mumin',attack:34,defense:78,pace:68,passing:60,technique:58},
+        {n:17,name:'Unai López',attack:58,defense:66,pace:70,passing:76,technique:74},
+        {n:18,name:'Álvaro García',attack:66,defense:44,pace:78,passing:66,technique:70},
+        {n:19,name:'Jorge de Frutos',attack:74,defense:40,pace:80,passing:70,technique:76},
+        {n:20,name:'Ivan Balliu',attack:44,defense:74,pace:72,passing:64,technique:62},
+        {n:21,name:'Francisco Pérez',attack:60,defense:38,pace:76,passing:60,technique:66},
+        {n:22,name:'Alfonso Espino',attack:42,defense:72,pace:74,passing:60,technique:60},
+        {n:23,name:'Óscar Valentín',attack:52,defense:74,pace:66,passing:74,technique:70},
+        {n:24,name:'Florian Lejeune',attack:36,defense:78,pace:68,passing:64,technique:60},
+        {n:32,name:'Nobel Mendy',attack:34,defense:74,pace:72,passing:60,technique:58}
       ]},
     {id:'lm_12', name:'CA Osasuna',           attack:58, defense:85, pace:67, passing:56, technique:53, crestImg:ESCUDOS_DIR+'osasuna.png',
       plantilla:[
@@ -309,16 +328,16 @@
         {n:7,name:'Moncayola',attack:62,defense:70,pace:74,passing:68,technique:68},
         {n:10,name:'Aimar Oroz',attack:70,defense:40,pace:70,passing:76,technique:78},
         {n:11,name:'Kike Barja',attack:66,defense:36,pace:76,passing:60,technique:68},
-        {n:14,name:'Rubén García',attack:68,defense:42,pace:66,passing:74,technique:74},
+        {n:14,name:'Raúl García',attack:68,defense:42,pace:66,passing:74,technique:74},
         {n:16,name:'Moi Gómez',attack:64,defense:50,pace:64,passing:74,technique:72},
         {n:17,name:'Ante Budimir',attack:80,defense:32,pace:64,passing:58,technique:70},
         {n:18,name:'José Arnáiz',attack:66,defense:38,pace:72,passing:66,technique:70},
-        {n:19,name:'Rosier',attack:40,defense:74,pace:76,passing:62,technique:60},
-        {n:20,name:'Javi Galán',attack:52,defense:72,pace:78,passing:66,technique:66},
-        {n:21,name:'Víctor Muñoz',attack:54,defense:68,pace:70,passing:68,technique:66},
         {n:22,name:'Boyomo',attack:32,defense:76,pace:72,passing:58,technique:56},
         {n:23,name:'Abel Bretones',attack:44,defense:72,pace:76,passing:64,technique:64},
-        {n:24,name:'Catena',attack:32,defense:80,pace:62,passing:58,technique:56}
+        {n:24,name:'Catena',attack:32,defense:80,pace:62,passing:58,technique:56},
+        {n:8,name:'Rubén Peña',attack:60,defense:52,pace:74,passing:66,technique:66},
+        {n:9,name:'Abde Rebbach',attack:74,defense:34,pace:82,passing:64,technique:76},
+        {n:15,name:'Iker Muñoz',attack:44,defense:70,pace:68,passing:64,technique:62}
       ]},
     {id:'lm_13', name:'Getafe CF',            attack:50, defense:89, pace:61, passing:53, technique:48, crestImg:ESCUDOS_DIR+'getafe.png',
       plantilla:[
@@ -338,7 +357,10 @@
         {n:23,name:'Adrián Liso',attack:66,defense:38,pace:78,passing:60,technique:70},
         {n:24,name:'Zaid Romero',attack:36,defense:74,pace:70,passing:58,technique:56},
         {n:7,name:'Martín Satriano',attack:74,defense:32,pace:72,passing:58,technique:66},
-        {n:11,name:'Coba',attack:62,defense:44,pace:70,passing:66,technique:70}
+        {n:11,name:'Coba',attack:62,defense:44,pace:70,passing:66,technique:70},
+        {n:15,name:'Sebastián Boselli',attack:32,defense:76,pace:66,passing:60,technique:56},
+        {n:6,name:'Mario Martín',attack:44,defense:70,pace:70,passing:66,technique:64},
+        {n:20,name:'Davinchi',attack:58,defense:36,pace:78,passing:62,technique:68}
       ]},
     {id:'lm_14', name:'RCD Espanyol',         attack:63, defense:69, pace:65, passing:62, technique:63, crestImg:ESCUDOS_DIR+'espanyol.png',
       plantilla:[
@@ -411,14 +433,40 @@
         {n:19,name:'Alan Matturro',attack:34,defense:72,pace:70,passing:60,technique:56},
         {n:23,name:'Manu Sánchez',attack:44,defense:68,pace:72,passing:62,technique:60},
         {n:6,name:'Jon Ander Olasagasti',attack:48,defense:66,pace:64,passing:70,technique:68},
-        {n:32,name:'Alejandro Primo',attack:18,defense:70,pace:44,passing:56,technique:54}
+        {n:32,name:'Alejandro Primo',attack:18,defense:70,pace:44,passing:56,technique:54},
+        {n:14,name:'Iker Losada',attack:64,defense:40,pace:76,passing:66,technique:70},
+        {n:15,name:'Unai Elgezabal',attack:40,defense:74,pace:66,passing:62,technique:58}
       ]},
     {id:'lm_17', name:'Deportivo Alavés',     attack:56, defense:77, pace:62, passing:56, technique:54, crestImg:ESCUDOS_DIR+'alaves.png',
-      plantilla:[{n:1,name:'Antonio Sivera'},{n:2,name:'Diego Torres'},{n:22,name:'Abqar'},{n:14,name:'Tenaglia'},{n:17,name:'Jonny Otto'},{n:18,name:'Guridi'},{n:8,name:'Antonio Blanco'},{n:11,name:'Toni Martínez'},{n:4,name:'Denis Suárez'},{n:7,name:'Carlos Vicente'},{n:10,name:'Aleñá'},{n:15,name:'Boyé'},{n:19,name:'Pablo Ibáñez'},{n:6,name:'Ander Guevara'},{n:23,name:'Carlos Protesoni'},{n:20,name:'Calebe'}]},
+      plantilla:[{n:1,name:'Antonio Sivera'},{n:2,name:'Diego Torres'},{n:22,name:'Manu García'},{n:14,name:'Tenaglia'},{n:17,name:'Jonny Otto'},{n:18,name:'Guridi'},{n:8,name:'Antonio Blanco'},{n:11,name:'Toni Martínez'},{n:4,name:'Denis Suárez'},{n:7,name:'Carlos Vicente'},{n:10,name:'Aleñá'},{n:15,name:'Boyé'},{n:19,name:'Pablo Ibáñez'},{n:6,name:'Ander Guevara'},{n:23,name:'Carlos Protesoni'},{n:20,name:'Calebe'},{n:9,name:'Vicente Robles'},{n:16,name:'Ibrahim Diabate'},{n:21,name:'Jan Virgili'},{n:3,name:'Rúben Duarte'}]},
     {id:'lm_18', name:'Racing de Santander',  attack:53, defense:69, pace:61, passing:53, technique:52, crestImg:ESCUDOS_DIR+'racingsantander.png',
-      plantilla:[{n:1,name:'Jokin Ezkieta'},{n:2,name:'Álvaro Mantilla'},{n:16,name:'Facundo González'},{n:4,name:'Pablo Ramón'},{n:11,name:'Andrés Martín'},{n:10,name:'Iñigo Vicente'},{n:19,name:'Gustavo Puerta'},{n:14,name:'Maguette Gueye'},{n:18,name:'Peio Canales'},{n:7,name:'Álvaro García'},{n:9,name:'Karrikaburu'},{n:5,name:'Yeray'},{n:17,name:'Villalibre'},{n:20,name:'Suleiman Camara'},{n:23,name:'Chichi Verdugo'},{n:6,name:'Mario García'}]},
+      plantilla:[{n:1,name:'Jokin Ezkieta'},{n:2,name:'Álvaro Mantilla'},{n:16,name:'Facundo González'},{n:4,name:'Pablo Ramón'},{n:11,name:'Andrés Martín'},{n:10,name:'Iñigo Vicente'},{n:19,name:'Gustavo Puerta'},{n:14,name:'Maguette Gueye'},{n:18,name:'Peio Canales'},{n:8,name:'Aritz Aldasoro'},{n:3,name:'Íñigo Sainz-Maza'},{n:9,name:'Jaime Mata'},{n:17,name:'Villalibre'},{n:20,name:'Suleiman Camara'},{n:22,name:'Manu'},{n:6,name:'Mario García'},{n:13,name:'Giorgi Guliashvili'},{n:21,name:'Simon Eriksson'},{n:25,name:'Sergio Arribas'},{n:24,name:'Chupe'},{n:7,name:'Cristian Carracedo'},{n:23,name:'Juan Otero'},{n:5,name:'David Larrubia'},{n:15,name:'Lorenzo Amatucci'},{n:26,name:'Álex Calatrava'},{n:12,name:'Ander Cantero'}]},
     {id:'lm_19', name:'RC Deportivo',         attack:57, defense:56, pace:60, passing:65, technique:66, crestImg:ESCUDOS_DIR+'deportivocoruna.png',
-      plantilla:[{n:13,name:'Yoel'},{n:2,name:'Loureiro'},{n:6,name:'Villares'},{n:24,name:'Mackay'},{n:4,name:'Dani Barcia'},{n:21,name:'Yeremay Hernández'},{n:17,name:'Ximo Navarro'},{n:7,name:'Lucas Pérez'},{n:19,name:'Mella'},{n:8,name:'Mario Soriano'},{n:9,name:'Iker Bravo'},{n:11,name:'Luismi Cruz'},{n:23,name:'Zakaria Eddahchouri'},{n:14,name:'Nacho González'},{n:15,name:'Vallejo'},{n:3,name:'Quagliata'}]},
+      plantilla:[
+        {n:1,name:'Germán',attack:22,defense:76,pace:48,passing:60,technique:58},
+        {n:2,name:'Genreau',attack:44,defense:72,pace:74,passing:66,technique:64},
+        {n:3,name:'Eddahchouri',attack:66,defense:36,pace:78,passing:60,technique:70},
+        {n:4,name:'Martínez',attack:36,defense:76,pace:66,passing:60,technique:58},
+        {n:5,name:'Dani Barcia',attack:34,defense:78,pace:64,passing:62,technique:58},
+        {n:6,name:'Petxarroman',attack:48,defense:70,pace:70,passing:66,technique:64},
+        {n:7,name:'Diego Gómez',attack:64,defense:44,pace:72,passing:74,technique:76},
+        {n:8,name:'Diego Villares',attack:58,defense:62,pace:64,passing:76,technique:74},
+        {n:9,name:'Barbero',attack:68,defense:34,pace:72,passing:58,technique:66},
+        {n:10,name:'Yeremay',attack:78,defense:38,pace:80,passing:76,technique:84},
+        {n:11,name:'Tošić',attack:66,defense:36,pace:74,passing:62,technique:70},
+        {n:12,name:'Mfulu',attack:40,defense:70,pace:74,passing:60,technique:58},
+        {n:14,name:'Herrera',attack:50,defense:66,pace:66,passing:68,technique:66},
+        {n:15,name:'Pablo Vázquez',attack:34,defense:72,pace:64,passing:60,technique:56},
+        {n:16,name:'Gauto',attack:52,defense:64,pace:70,passing:64,technique:66},
+        {n:17,name:'Mella',attack:70,defense:36,pace:82,passing:62,technique:74},
+        {n:18,name:'Escudero',attack:38,defense:70,pace:66,passing:60,technique:58},
+        {n:19,name:'Jaime',attack:58,defense:56,pace:66,passing:64,technique:64},
+        {n:20,name:'José Ángel',attack:36,defense:72,pace:70,passing:58,technique:56},
+        {n:21,name:'Mario Soriano',attack:56,defense:58,pace:64,passing:70,technique:70},
+        {n:22,name:'Hugo Rama',attack:44,defense:64,pace:68,passing:62,technique:62},
+        {n:23,name:'Ximo Navarro',attack:42,defense:74,pace:68,passing:60,technique:58},
+        {n:24,name:'Bouldini',attack:64,defense:38,pace:74,passing:60,technique:68}
+      ]},
   ];
 
   // Se expone en window para que liga-manager.js lo lea sin tener que
@@ -460,7 +508,42 @@
                              en Wikipedia (temporada) sin dorsal exacto para todos, y un par de veteranos de una
                              alineación de la 24/25 que no se ha podido reconfirmar en la 25/26. Revisar de nuevo
                              si se detecta algún error — 16 jugadores
-   17-19 (Alavés, Racing Santander, Deportivo) → pendientes de repasar con este mismo nivel de detalle
+   17 Deportivo Alavés    → footystats.org (goleadores/asistentes reales) + búsquedas previas, 20 jugadores
+   18 Racing de Santander → fotmob.com (lista de compañeros de equipo real de un jugador de la cantera), 18 jugadores
+   19 RC Deportivo        → rcdeportivo.es (comunicado oficial de dorsales, cierre de mercado 24/25 — la base se
+                             mantiene tras el ascenso), 23 jugadores, la más fiable de las tres últimas
+
+   VERIFICACIÓN CRUZADA FINAL (fecha de este repaso): comprobado programáticamente
+   que ninguno de los 19 equipos tiene dorsales duplicados dentro de su propia
+   plantilla, y que ningún nombre de jugador se repite entre dos equipos
+   distintos (se corrigieron 3 colisiones reales encontradas: un "Mendy" del
+   Real Madrid sin apellido que coincidía con el del Rayo, un nombre repetido
+   en Racing, y un "Abqar" mal copiado en Alavés que en realidad es del Getafe).
+
+   RONDA ADICIONAL DE AMPLIACIÓN:
+   - Rayo Vallecano: ampliado a 25 (lista completa vía AiScore, con dorsales exactos)
+   - CA Osasuna: 3 jugadores confirmados que ya NO están en el club (Rosier,
+     Javi Galán, Víctor Muñoz — fichados por otros equipos según Wikipedia),
+     quitados y sustituidos por jugadores actuales confirmados
+   - Se encontró y corrigió otro duplicado cruzado (Bryan Zaragoza es del
+     Celta, se había colado también en Osasuna por error)
+
+   PENDIENTE (equipos que se quedan por debajo de 20 jugadores):
+   Osasuna(17), Getafe(17), Levante(16), Betis(18), Racing(18) — todos
+   verificados sin errores ni duplicados, pero con menos profundidad de
+   plantilla que el resto. Se pueden seguir ampliando si se solicita.
+
+   RONDA FINAL DE AMPLIACIÓN (mismo día):
+   - Getafe: 17→20 (tribuna.com, formación real con números)
+   - Real Betis: 18→29 (supersport.com, lista completa con dorsales exactos —
+     aquí until se corrigió también un error: Pau López SÍ sigue en el Betis,
+     no se había ido a la Roma como se pensó en una revisión anterior)
+   - Racing de Santander: 18→26 (tribuna.com, máximos goleadores/asistentes
+     reales de la temporada del ascenso)
+   - Levante UD: 16→18 (footystats.org, confirmando goleadores reales)
+   - CA Osasuna: se quedó en 17 (no se encontró más profundidad fiable)
+   Recuento final: TODOS los equipos ≥17 jugadores, cero duplicados de
+   dorsal o de nombre, ni dentro de cada plantilla ni entre equipos.
 
    Patrón útil para buscar: "[equipo] dorsales oficiales 2025-26 comunicado completo"
    o buscar directamente en la web oficial del club: "[dominio-club].es/es|com/dorsales-...-2025-26"
