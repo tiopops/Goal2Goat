@@ -2556,7 +2556,7 @@
   // siempre, reutilizando el mismo overlay ya abierto.
   function mostrarSpinDeSobre(overlay, jugadores, onCerrar){
     overlay.innerHTML=`
-      <div class="lm-dilemma-card lm-dilemma-card-dd" style="max-width:640px">
+      <div class="lm-dilemma-card lm-dilemma-card-dd lm-sobre-popup-ancho" style="max-width:860px">
         <div class="lm-dilemma-title"><i class="ph ph-bold ph-envelope-open"></i> SOBRE DE FICHAJES</div>
         <div id="lmSobreReveloZoneCorreo" class="lm-sobre-grid">
           ${jugadores.map((j,i)=>`<div class="slot-reel lm-sobre-reel" id="lmSobreReelC${i}"><div class="slot-strip lm-sobre-face">?</div></div>`).join('')}
@@ -2584,8 +2584,8 @@
         const zona=document.getElementById('lmSobreResultadoCorreo');
         const caras=asignarCarasSobre(jugadores);
         zona.innerHTML=`${hayEstrella?'<div class="lm-fichaje-estrella-banner"><i class="ph ph-bold ph-sparkle"></i> ¡HAY UN FICHAJE ESTRELLA EN ESTE SOBRE! <i class="ph ph-bold ph-sparkle"></i></div>':''}
-          <div class="lm-sobre-cards">${jugadores.map((j,i)=>`
-          <div class="lm-sobre-card ${j.esFichajeEstrella?'lm-sobre-card-estrella':''}" data-jugador="${i}">
+          <div class="lm-sobre-cards" id="lmSobreCardsRow">${jugadores.map((j,i)=>`
+          <div class="lm-sobre-card ${j.esFichajeEstrella?'lm-sobre-card-estrella':''}" data-jugador="${i}" style="animation-delay:${i*0.35}s">
             ${j.esFichajeEstrella?`<div class="lm-fichaje-estrella-tag"><i class="ph ph-bold ph-star"></i> FICHAJE ESTRELLA</div>`:''}
             <div class="lm-sobre-cara"><img src="${caras[i]}" alt="${j.position}"><span class="lm-sobre-pos-badge">${j.position}</span></div>
             <div class="lm-sobre-nombre">${j.numero?('#'+j.numero+' '):''}${j.name}</div>
@@ -2599,6 +2599,17 @@
             <button class="mode-card-btn mode-card-btn-gold lm-sobre-fichar" data-fichar="${i}">FICHAR</button>
           </div>`).join('')}</div>
           <div class="lm-popup-actions" style="margin-top:12px"><button id="lmSobreCerrarCorreo" class="mode-card-btn mode-card-btn-secondary">CERRAR SOBRE</button></div>`;
+        const filaCards=zona.querySelector('#lmSobreCardsRow');
+        filaCards.querySelectorAll('.lm-sobre-card').forEach(carta=>{
+          carta.addEventListener('click', (e)=>{
+            if(e.target.closest('[data-fichar]')) return; // el botón FICHAR tiene su propio manejador
+            if(typeof window.playSound==='function') window.playSound('select');
+            const yaEnfocada=carta.classList.contains('lm-sobre-card-focused');
+            filaCards.querySelectorAll('.lm-sobre-card').forEach(c=>c.classList.remove('lm-sobre-card-focused'));
+            filaCards.classList.toggle('lm-sobre-cards-con-foco', !yaEnfocada);
+            if(!yaEnfocada) carta.classList.add('lm-sobre-card-focused');
+          });
+        });
         let fichadoNombre=null;
         zona.querySelectorAll('[data-fichar]').forEach(btn=>{
           btn.addEventListener('click', ()=>{
@@ -2629,19 +2640,21 @@
     overlay.id='lmClasifOverlay';
     const clasif=calcularClasificacion();
     overlay.innerHTML=`
-      <div class="lm-dilemma-card" style="max-width:560px">
+      <div class="lm-dilemma-card lm-clasif-popup-card" style="max-width:600px">
         ${xCerrarHTML()}
         <div class="lm-dilemma-title"><i class="ph ph-bold ph-ranking"></i> CLASIFICACIÓN</div>
-        <div class="lm-table-wrap">
-          <table class="lm-table">
-            <thead><tr><th></th><th>#</th><th>Equipo</th><th>PJ</th><th>G</th><th>E</th><th>P</th><th>Pts</th></tr></thead>
-            <tbody>
-              ${clasif.map((t,i)=>`<tr class="${t.id==='lm_0'?'lm-myteam':''} lm-zona-${zonaClasificacion(i+1)}">
-                <td>${t.id==='lm_0'?crestHTML(state.escudo,18):rivalCrestHTML(18, t.crestImg)}</td>
-                <td>${i+1}</td><td>${t.name}</td><td>${t.pj}</td><td>${t.pg}</td><td>${t.pe}</td><td>${t.pp}</td><td><strong>${t.pts}</strong></td>
-              </tr>`).join('')}
-            </tbody>
-          </table>
+        <div class="lm-clasif-scroll-area">
+          <div class="lm-table-wrap">
+            <table class="lm-table lm-table-grande">
+              <thead><tr><th></th><th>#</th><th>Equipo</th><th>PJ</th><th>G</th><th>E</th><th>P</th><th>Pts</th></tr></thead>
+              <tbody>
+                ${clasif.map((t,i)=>`<tr class="${t.id==='lm_0'?'lm-myteam':''} lm-zona-${zonaClasificacion(i+1)}">
+                  <td>${t.id==='lm_0'?crestHTML(state.escudo,20):rivalCrestHTML(20, t.crestImg)}</td>
+                  <td>${i+1}</td><td>${t.name}</td><td>${t.pj}</td><td>${t.pg}</td><td>${t.pe}</td><td>${t.pp}</td><td><strong>${t.pts}</strong></td>
+                </tr>`).join('')}
+              </tbody>
+            </table>
+          </div>
         </div>
         <div class="lm-legend">
           <span><i class="lm-legend-dot lm-zona-champions"></i>Champions</span>
