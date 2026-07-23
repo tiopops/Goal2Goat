@@ -2066,7 +2066,16 @@
 
   const NIVEL_MAXIMO_EQUIPO=3;
   function nivelDe(track){ return (state.medicoNiveles && state.medicoNiveles[track]) || 0; }
-  function dificultadActualNivel(def){ return def.dificultadBase + nivelDe(def.track)*def.dificultadPaso; }
+  // Cuantas más estrellas (nivel 1-3) tenga el trabajador contratado en
+  // ese puesto, más fáciles son las tiradas de dados de sus cartas —
+  // 1★ no reduce nada, 2★ resta 1 punto de dificultad, 3★ resta 2.
+  // Se aplica por igual a cartas de nivel y de misión, en los 5
+  // departamentos del cuerpo técnico.
+  function bonusEstrellasTrabajador(rol){
+    const t=state.trabajadores && state.trabajadores[rol];
+    return (t && t.nivel) ? Math.max(0, t.nivel-1) : 0;
+  }
+  function dificultadActualNivel(def){ return Math.max(3, def.dificultadBase + nivelDe(def.track)*def.dificultadPaso - bonusEstrellasTrabajador('medico')); }
 
   // Resumen del equipo médico por especialidad — CONDENSADO a propósito:
   // una fila por especialidad con su nivel actual en estrellas, nunca un
@@ -2206,14 +2215,15 @@
     let resultado;
 
     if(def.tipo==='directa'){
-      const exito = suma>=def.dificultad;
+      const dificultadEfectiva=Math.max(3, def.dificultad - bonusEstrellasTrabajador('medico'));
+      const exito = suma>=dificultadEfectiva;
       const jugadorObjetivo = jugadorObjetivoId ? state.plantilla.find(p=>p.id===jugadorObjetivoId) : null;
       if(exito){
         const texto=aplicarEfectoDirecta(def, jugadorObjetivo);
         state.medicoCartas[idx]=generarCartaAleatoria(state.medicoCartas.map(c=>c.cartaId)) || instancia;
-        resultado={tipo:'directa', exito:true, suma, dificultad:def.dificultad, texto};
+        resultado={tipo:'directa', exito:true, suma, dificultad:dificultadEfectiva, texto};
       } else {
-        resultado={tipo:'directa', exito:false, suma, dificultad:def.dificultad, texto:'La carta se queda en tu mano — puedes reintentarlo más adelante'};
+        resultado={tipo:'directa', exito:false, suma, dificultad:dificultadEfectiva, texto:'La carta se queda en tu mano — puedes reintentarlo más adelante'};
       }
     } else if(def.tipo==='nivel'){
       const dificultadActual=dificultadActualNivel(def);
@@ -2273,7 +2283,7 @@
   ];
   function cartaDefM(id){ return MANTENIMIENTO_CARTAS_BASE.find(c=>c.id===id); }
   function nivelDeM(track){ return (state.mantenimientoNiveles && state.mantenimientoNiveles[track]) || 0; }
-  function dificultadActualNivelM(def){ return def.dificultadBase + nivelDeM(def.track)*def.dificultadPaso; }
+  function dificultadActualNivelM(def){ return Math.max(3, def.dificultadBase + nivelDeM(def.track)*def.dificultadPaso - bonusEstrellasTrabajador('mantenimiento')); }
 
   const NIVELES_MANTENIMIENTO_INFO=[
     {track:'prevencionDesgaste',     label:'Riego automático',      icon:'ph-drop-half-bottom', desc:'Desgaste del césped por el mal tiempo'},
@@ -2383,13 +2393,14 @@
     const suma=tiradas.reduce((a,b)=>a+b,0);
     let resultado;
     if(def.tipo==='directa'){
-      const exito = suma>=def.dificultad;
+      const dificultadEfectiva=Math.max(3, def.dificultad - bonusEstrellasTrabajador('mantenimiento'));
+      const exito = suma>=dificultadEfectiva;
       if(exito){
         const texto=aplicarEfectoDirectaMantenimiento(def);
         state.mantenimientoCartas[idx]=generarCartaAleatoriaMantenimiento(state.mantenimientoCartas.map(c=>c.cartaId)) || instancia;
-        resultado={tipo:'directa', exito:true, suma, dificultad:def.dificultad, texto};
+        resultado={tipo:'directa', exito:true, suma, dificultad:dificultadEfectiva, texto};
       } else {
-        resultado={tipo:'directa', exito:false, suma, dificultad:def.dificultad, texto:'La carta se queda en tu mano — puedes reintentarlo más adelante'};
+        resultado={tipo:'directa', exito:false, suma, dificultad:dificultadEfectiva, texto:'La carta se queda en tu mano — puedes reintentarlo más adelante'};
       }
     } else {
       const dificultadActual=dificultadActualNivelM(def);
@@ -2610,15 +2621,21 @@
           });
         });
         let fichadoNombre=null;
-        zona.querySelectorAll('[data-fichar]').forEach(btn=>{
+        const botonesFichar=zona.querySelectorAll('[data-fichar]');
+        botonesFichar.forEach(btn=>{
           btn.addEventListener('click', ()=>{
             const i=parseInt(btn.getAttribute('data-fichar'),10);
             if(typeof window.playSound==='function') window.playSound('select');
             ficharJugadorSobre(jugadores[i]);
             fichadoNombre=jugadores[i].name;
             btn.textContent='FICHADO ✔';
-            btn.disabled=true;
             btn.closest('.lm-sobre-card').classList.add('lm-sobre-card-fichado');
+            // Solo se puede fichar UNO de los 3 — los otros dos quedan
+            // bloqueados en cuanto se confirma uno.
+            botonesFichar.forEach(otro=>{
+              otro.disabled=true;
+              if(otro!==btn) otro.textContent='NO ELEGIDO';
+            });
           });
         });
         document.getElementById('lmSobreCerrarCorreo').addEventListener('click', ()=>{
@@ -3035,7 +3052,7 @@
   ];
   function cartaDefDG(id){ return DIRECTOR_GENERAL_CARTAS_BASE.find(c=>c.id===id); }
   function nivelDeDG(track){ return (state.directorGeneralNiveles && state.directorGeneralNiveles[track]) || 0; }
-  function dificultadActualNivelDG(def){ return def.dificultadBase + nivelDeDG(def.track)*def.dificultadPaso; }
+  function dificultadActualNivelDG(def){ return Math.max(3, def.dificultadBase + nivelDeDG(def.track)*def.dificultadPaso - bonusEstrellasTrabajador('directorGeneral')); }
   function generarCartaAleatoriaDG(excluirIds){
     excluirIds=excluirIds||[];
     const agotadas=state.directorGeneralCartasAgotadas||[];
@@ -3118,13 +3135,14 @@
     const suma=tiradas.reduce((a,b)=>a+b,0);
     let resultado;
     if(def.tipo==='directa'){
-      const exito=suma>=def.dificultad;
+      const dificultadEfectiva=Math.max(3, def.dificultad - bonusEstrellasTrabajador('directorGeneral'));
+      const exito=suma>=dificultadEfectiva;
       if(exito){
         const texto=aplicarEfectoDirectaDG(def);
         state.directorGeneralCartas[idx]=generarCartaAleatoriaDG(state.directorGeneralCartas.map(c=>c.cartaId)) || instancia;
-        resultado={tipo:'directa', exito:true, suma, dificultad:def.dificultad, texto};
+        resultado={tipo:'directa', exito:true, suma, dificultad:dificultadEfectiva, texto};
       } else {
-        resultado={tipo:'directa', exito:false, suma, dificultad:def.dificultad, texto:'La carta se queda en tu mano — puedes reintentarlo más adelante'};
+        resultado={tipo:'directa', exito:false, suma, dificultad:dificultadEfectiva, texto:'La carta se queda en tu mano — puedes reintentarlo más adelante'};
       }
     } else {
       const dificultadActual=dificultadActualNivelDG(def);
@@ -3164,7 +3182,7 @@
   function cartaDefDD(id){ return DIRECTOR_DEPORTIVO_CARTAS_BASE.find(c=>c.id===id); }
   function nivelDeDD(track){ return (state.directorDeportivoNiveles && state.directorDeportivoNiveles[track]) || 0; }
   function dificultadActualNivelDD(def){
-    let d=def.dificultadBase + nivelDeDD(def.track)*def.dificultadPaso;
+    let d=def.dificultadBase + nivelDeDD(def.track)*def.dificultadPaso - bonusEstrellasTrabajador('directorDeportivo');
     return Math.max(4, d);
   }
   function generarCartaAleatoriaDD(excluirIds){
@@ -3297,8 +3315,19 @@
     guardarEstado();
     return jugadores;
   }
+  // Busca el primer dorsal libre (1-99) en tu plantilla actual — si el
+  // jugador ya trae un número real (p.ej. un fichaje estrella) y ese
+  // número está libre, se respeta; si ya lo tiene otro, se le asigna el
+  // siguiente disponible.
+  function asignarNumeroDisponible(numeroPreferido){
+    const usados=new Set((state.plantilla||[]).map(p=>p.numero).filter(n=>n!=null));
+    if(numeroPreferido && !usados.has(numeroPreferido)) return numeroPreferido;
+    for(let n=1;n<=99;n++){ if(!usados.has(n)) return n; }
+    return null;
+  }
   function ficharJugadorSobre(jugador){
-    state.plantilla.push({...jugador, esSuplente:true});
+    const numero=asignarNumeroDisponible(jugador.numero);
+    state.plantilla.push({...jugador, numero, esSuplente:true});
     if(jugador.esFichajeEstrella && jugador.equipoOrigenId){
       if(!state.jugadoresRealesFichados) state.jugadoresRealesFichados=[];
       state.jugadoresRealesFichados.push({equipoId:jugador.equipoOrigenId, nombre:jugador.name});
@@ -3455,13 +3484,14 @@
     const suma=tiradas.reduce((a,b)=>a+b,0);
     let resultado;
     if(def.tipo==='directa'){
-      const exito=suma>=def.dificultad;
+      const dificultadEfectiva=Math.max(3, def.dificultad - bonusEstrellasTrabajador('directorDeportivo'));
+      const exito=suma>=dificultadEfectiva;
       if(exito){
         const efecto=aplicarEfectoDirectaDD(def);
         state.directorDeportivoCartas[idx]=generarCartaAleatoriaDD(state.directorDeportivoCartas.map(c=>c.cartaId)) || instancia;
-        resultado={tipo:'directa', exito:true, suma, dificultad:def.dificultad, texto:efecto.texto, sobreAbierto:efecto.sobreAbierto||null};
+        resultado={tipo:'directa', exito:true, suma, dificultad:dificultadEfectiva, texto:efecto.texto, sobreAbierto:efecto.sobreAbierto||null};
       } else {
-        resultado={tipo:'directa', exito:false, suma, dificultad:def.dificultad, texto:'La carta se queda en tu mano — puedes reintentarlo más adelante'};
+        resultado={tipo:'directa', exito:false, suma, dificultad:dificultadEfectiva, texto:'La carta se queda en tu mano — puedes reintentarlo más adelante'};
       }
     } else {
       const dificultadActual=dificultadActualNivelDD(def);
@@ -3500,7 +3530,7 @@
   ];
   function cartaDefPF(id){ return PREPARADOR_FISICO_CARTAS_BASE.find(c=>c.id===id); }
   function nivelDePF(track){ return (state.preparadorFisicoNiveles && state.preparadorFisicoNiveles[track]) || 0; }
-  function dificultadActualNivelPF(def){ return def.dificultadBase + nivelDePF(def.track)*def.dificultadPaso; }
+  function dificultadActualNivelPF(def){ return Math.max(3, def.dificultadBase + nivelDePF(def.track)*def.dificultadPaso - bonusEstrellasTrabajador('preparadorFisico')); }
   function generarCartaAleatoriaPF(excluirIds){
     excluirIds=excluirIds||[];
     const agotadas=state.preparadorFisicoCartasAgotadas||[];
@@ -3597,13 +3627,14 @@
     const suma=tiradas.reduce((a,b)=>a+b,0);
     let resultado;
     if(def.tipo==='directa'){
-      const exito=suma>=def.dificultad;
+      const dificultadEfectiva=Math.max(3, def.dificultad - bonusEstrellasTrabajador('preparadorFisico'));
+      const exito=suma>=dificultadEfectiva;
       if(exito){
         const efecto=aplicarEfectoDirectaPF(def);
         state.preparadorFisicoCartas[idx]=generarCartaAleatoriaPF(state.preparadorFisicoCartas.map(c=>c.cartaId)) || instancia;
-        resultado={tipo:'directa', exito:true, suma, dificultad:def.dificultad, texto:efecto.texto};
+        resultado={tipo:'directa', exito:true, suma, dificultad:dificultadEfectiva, texto:efecto.texto};
       } else {
-        resultado={tipo:'directa', exito:false, suma, dificultad:def.dificultad, texto:'La carta se queda en tu mano — puedes reintentarlo más adelante'};
+        resultado={tipo:'directa', exito:false, suma, dificultad:dificultadEfectiva, texto:'La carta se queda en tu mano — puedes reintentarlo más adelante'};
       }
     } else {
       const dificultadActual=dificultadActualNivelPF(def);
@@ -4958,7 +4989,7 @@
         const def=cartaDef(instancia.cartaId);
         const candidatos=jugadoresLesionadosPara(def);
         const sinLesionNecesaria = def.requiereLesion && candidatos.length===0;
-        const dificultadEfectiva = def.tipo==='nivel' ? dificultadActualNivel(def) : def.dificultad;
+        const dificultadEfectiva = def.tipo==='nivel' ? dificultadActualNivel(def) : Math.max(3, def.dificultad - bonusEstrellasTrabajador('medico'));
         const maxPosible = state.diceAvailable*6;
         const imposiblePorDados = (def.tipo==='directa'||def.tipo==='nivel') && maxPosible < dificultadEfectiva;
         const nivelMaximoYa = def.tipo==='nivel' && nivelDe(def.track)>=NIVEL_MAXIMO_EQUIPO;
@@ -5075,7 +5106,7 @@
             ${xCerrarHTML()}
             <i class="ph ph-bold ${def.icon}" style="font-size:26px;color:#5dcaa5"></i>
             <div class="lm-dilemma-title" style="justify-content:center;text-align:center">${def.nombre.toUpperCase()}</div>
-            <div class="lm-dilemma-text">${def.desc}${def.tipo==='directa'?` — necesitas sumar ${def.dificultad}+`:(def.tipo==='nivel'?` — necesitas sumar ${dificultadActualNivel(def)}+ para subir a nivel ${nivelDe(def.track)+1}/${NIVEL_MAXIMO_EQUIPO}`:' — los dados invertidos siempre suman al proyecto')}</div>
+            <div class="lm-dilemma-text">${def.desc}${def.tipo==='directa'?` — necesitas sumar ${dificultadEfectiva}+`:(def.tipo==='nivel'?` — necesitas sumar ${dificultadActualNivel(def)}+ para subir a nivel ${nivelDe(def.track)+1}/${NIVEL_MAXIMO_EQUIPO}`:' — los dados invertidos siempre suman al proyecto')}</div>
             ${jugadorObjetivo?`<div class="lm-setup-desc" style="margin-top:-4px">Sobre <strong>${jugadorObjetivo.name}</strong> — ${jugadorObjetivo.injurySeverity} · ${jugadorObjetivo.injuryWeeks} jornada${jugadorObjetivo.injuryWeeks===1?'':'s'} restante${jugadorObjetivo.injuryWeeks===1?'':'s'}</div>`:''}
             <div class="lm-dice-selector">
               <button id="lmDiceMinus" class="lm-dice-stepper">−</button>
@@ -5213,7 +5244,7 @@
       const cartasHTML=state.mantenimientoCartas.map((instancia,idx)=>{
         const def=cartaDefM(instancia.cartaId);
         const bloqueadaPorEstado=mantenimientoBloqueadaPorEstado(def);
-        const dificultadEfectiva = def.tipo==='nivel' ? dificultadActualNivelM(def) : def.dificultad;
+        const dificultadEfectiva = def.tipo==='nivel' ? dificultadActualNivelM(def) : Math.max(3, def.dificultad - bonusEstrellasTrabajador('mantenimiento'));
         const maxPosible = state.diceAvailable*6;
         const imposiblePorDados = maxPosible < dificultadEfectiva;
         const nivelMaximoYa = def.tipo==='nivel' && nivelDeM(def.track)>=NIVEL_MAXIMO_EQUIPO;
@@ -5291,7 +5322,7 @@
             ${xCerrarHTML()}
             <i class="ph ph-bold ${def.icon}" style="font-size:26px;color:#5dcaa5"></i>
             <div class="lm-dilemma-title" style="justify-content:center;text-align:center">${def.nombre.toUpperCase()}</div>
-            <div class="lm-dilemma-text">${def.desc}${def.tipo==='directa'?` — necesitas sumar ${def.dificultad}+`:` — necesitas sumar ${dificultadActualNivelM(def)}+ para subir a nivel ${nivelDeM(def.track)+1}/${NIVEL_MAXIMO_EQUIPO}`}</div>
+            <div class="lm-dilemma-text">${def.desc}${def.tipo==='directa'?` — necesitas sumar ${dificultadEfectiva}+`:` — necesitas sumar ${dificultadActualNivelM(def)}+ para subir a nivel ${nivelDeM(def.track)+1}/${NIVEL_MAXIMO_EQUIPO}`}</div>
             <div class="lm-dice-selector">
               <button id="lmDiceMinus" class="lm-dice-stepper">−</button>
               <span id="lmDiceCount">${dadosElegidos}</span>
@@ -5422,7 +5453,7 @@
     function renderHub(){
       const cartasHTML=state.directorGeneralCartas.map((instancia,idx)=>{
         const def=cartaDefDG(instancia.cartaId);
-        const dificultadEfectiva = def.tipo==='nivel' ? dificultadActualNivelDG(def) : def.dificultad;
+        const dificultadEfectiva = def.tipo==='nivel' ? dificultadActualNivelDG(def) : Math.max(3, def.dificultad - bonusEstrellasTrabajador('directorGeneral'));
         const maxPosible = state.diceAvailable*6;
         const imposiblePorDados = maxPosible < dificultadEfectiva;
         const nivelMaximoYa = def.tipo==='nivel' && nivelDeDG(def.track)>=NIVEL_MAXIMO_EQUIPO;
@@ -5519,7 +5550,7 @@
             ${xCerrarHTML()}
             <i class="ph ph-bold ${def.icon}" style="font-size:26px;color:#e6c94a"></i>
             <div class="lm-dilemma-title" style="justify-content:center;text-align:center">${def.nombre.toUpperCase()}</div>
-            <div class="lm-dilemma-text">${def.desc}${def.tipo==='directa'?` — necesitas sumar ${def.dificultad}+`:` — necesitas sumar ${dificultadActualNivelDG(def)}+ para subir a nivel ${nivelDeDG(def.track)+1}/${NIVEL_MAXIMO_EQUIPO}`}</div>
+            <div class="lm-dilemma-text">${def.desc}${def.tipo==='directa'?` — necesitas sumar ${dificultadEfectiva}+`:` — necesitas sumar ${dificultadActualNivelDG(def)}+ para subir a nivel ${nivelDeDG(def.track)+1}/${NIVEL_MAXIMO_EQUIPO}`}</div>
             <div class="lm-dice-selector">
               <button id="lmDiceMinus" class="lm-dice-stepper">−</button>
               <span id="lmDiceCount">${dadosElegidos}</span>
@@ -5717,7 +5748,7 @@
       const cartasHTML=state.directorDeportivoCartas.map((instancia,idx)=>{
         const def=cartaDefDD(instancia.cartaId);
         const esSobre=def.tipo==='sobre';
-        const dificultadEfectiva = (def.tipo==='nivel'||esSobre) ? dificultadActualNivelDD(def) : def.dificultad;
+        const dificultadEfectiva = (def.tipo==='nivel'||esSobre) ? dificultadActualNivelDD(def) : Math.max(3, def.dificultad - bonusEstrellasTrabajador('directorDeportivo'));
         const maxPosible = state.diceAvailable*6;
         const imposiblePorDados = maxPosible < dificultadEfectiva;
         const nivelActualTrack = (def.tipo==='nivel'||esSobre) ? nivelDeDD(def.track) : 0;
@@ -5826,7 +5857,7 @@
             ${xCerrarHTML()}
             <i class="ph ph-bold ${def.icon}" style="font-size:26px;color:#c9c9c9"></i>
             <div class="lm-dilemma-title" style="justify-content:center;text-align:center">${def.nombre.toUpperCase()}</div>
-            <div class="lm-dilemma-text">${def.desc}${def.tipo==='directa'?` — necesitas sumar ${def.dificultad}+`:` — necesitas sumar ${dificultadActualNivelDD(def)}+ para subir a nivel ${nivelDeDD(def.track)+1}/${NIVEL_MAXIMO_EQUIPO}`}</div>
+            <div class="lm-dilemma-text">${def.desc}${def.tipo==='directa'?` — necesitas sumar ${dificultadEfectiva}+`:` — necesitas sumar ${dificultadActualNivelDD(def)}+ para subir a nivel ${nivelDeDD(def.track)+1}/${NIVEL_MAXIMO_EQUIPO}`}</div>
             <div class="lm-dice-selector">
               <button id="lmDiceMinus" class="lm-dice-stepper">−</button>
               <span id="lmDiceCount">${dadosElegidos}</span>
@@ -6106,7 +6137,7 @@
     function renderHub(){
       const cartasHTML=state.preparadorFisicoCartas.map((instancia,idx)=>{
         const def=cartaDefPF(instancia.cartaId);
-        const dificultadEfectiva = def.tipo==='nivel' ? dificultadActualNivelPF(def) : def.dificultad;
+        const dificultadEfectiva = def.tipo==='nivel' ? dificultadActualNivelPF(def) : Math.max(3, def.dificultad - bonusEstrellasTrabajador('preparadorFisico'));
         const maxPosible = state.diceAvailable*6;
         const imposiblePorDados = maxPosible < dificultadEfectiva;
         const nivelMaximoYa = def.tipo==='nivel' && nivelDePF(def.track)>=NIVEL_MAXIMO_EQUIPO;
@@ -6302,7 +6333,7 @@
             ${xCerrarHTML()}
             <i class="ph ph-bold ${def.icon}" style="font-size:26px;color:#e08a3e"></i>
             <div class="lm-dilemma-title" style="justify-content:center;text-align:center">${def.nombre.toUpperCase()}</div>
-            <div class="lm-dilemma-text">${def.desc}${def.tipo==='directa'?` — necesitas sumar ${def.dificultad}+`:` — necesitas sumar ${dificultadActualNivelPF(def)}+ para subir a nivel ${nivelDePF(def.track)+1}/${NIVEL_MAXIMO_EQUIPO}`}</div>
+            <div class="lm-dilemma-text">${def.desc}${def.tipo==='directa'?` — necesitas sumar ${dificultadEfectiva}+`:` — necesitas sumar ${dificultadActualNivelPF(def)}+ para subir a nivel ${nivelDePF(def.track)+1}/${NIVEL_MAXIMO_EQUIPO}`}</div>
             <div class="lm-dice-selector">
               <button id="lmDiceMinus" class="lm-dice-stepper">−</button>
               <span id="lmDiceCount">${dadosElegidos}</span>
