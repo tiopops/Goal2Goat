@@ -2599,6 +2599,57 @@
     },85);
   }
 
+  // Clasificación como ventana emergente — se abre desde el botón del
+  // header que antes era "RANKING" (ahora "CLASIFICACIÓN" mientras estás
+  // en Liga Manager). Ya no vive fija dentro de ninguna columna.
+  function abrirClasificacionLM(){
+    if(!state || !state.setupComplete) return;
+    const overlay=document.createElement('div');
+    overlay.id='lmClasifOverlay';
+    const clasif=calcularClasificacion();
+    overlay.innerHTML=`
+      <div class="lm-dilemma-card" style="max-width:560px">
+        ${xCerrarHTML()}
+        <div class="lm-dilemma-title"><i class="ph ph-bold ph-ranking"></i> CLASIFICACIÓN</div>
+        <div class="lm-table-wrap">
+          <table class="lm-table">
+            <thead><tr><th></th><th>#</th><th>Equipo</th><th>PJ</th><th>G</th><th>E</th><th>P</th><th>Pts</th></tr></thead>
+            <tbody>
+              ${clasif.map((t,i)=>`<tr class="${t.id==='lm_0'?'lm-myteam':''} lm-zona-${zonaClasificacion(i+1)}">
+                <td>${t.id==='lm_0'?crestHTML(state.escudo,18):rivalCrestHTML(18, t.crestImg)}</td>
+                <td>${i+1}</td><td>${t.name}</td><td>${t.pj}</td><td>${t.pg}</td><td>${t.pe}</td><td>${t.pp}</td><td><strong>${t.pts}</strong></td>
+              </tr>`).join('')}
+            </tbody>
+          </table>
+        </div>
+        <div class="lm-legend">
+          <span><i class="lm-legend-dot lm-zona-champions"></i>Champions</span>
+          <span><i class="lm-legend-dot lm-zona-europa"></i>Europa Lg.</span>
+          <span><i class="lm-legend-dot lm-zona-conference"></i>Conference</span>
+          <span><i class="lm-legend-dot lm-zona-descenso"></i>Descenso</span>
+        </div>
+        <div class="lm-popup-actions"><button id="lmClasifCerrarBtn" class="mode-card-btn mode-card-btn-gold">CERRAR</button></div>
+      </div>`;
+    document.getElementById('ligaManagerScreen').appendChild(overlay);
+    habilitarCierreOverlay(overlay, ()=>overlay.remove());
+    overlay.querySelector('[data-cerrar-x]').addEventListener('click', ()=>overlay.remove());
+    overlay.querySelector('#lmClasifCerrarBtn').addEventListener('click', ()=>{
+      if(typeof window.playSound==='function') window.playSound('select');
+      overlay.remove();
+    });
+  }
+  window.abrirClasificacionLM = abrirClasificacionLM;
+  // El botón del header decide qué abrir según el modo actual — el
+  // ranking online de Copa Leyendas, o la clasificación de Liga Manager.
+  window.handleRankingOrClasificacionClick = function(){
+    if(document.body.classList.contains('liga-manager-screen')){
+      if(typeof window.playSound==='function') window.playSound('select');
+      window.abrirClasificacionLM();
+    } else if(typeof window.showRankingModal==='function'){
+      window.showRankingModal();
+    }
+  };
+
   function abrirOnceRival(rival){
     const overlay=document.createElement('div');
     overlay.id='lmOnceRivalOverlay';
@@ -4063,30 +4114,9 @@
               </div>` : `<div class="lm-vs-label" style="text-align:center">Temporada finalizada</div>`}
           </div>
           ${calendarioHTML()}
-          </div>
         </div>
 
         <div class="lm-panel lm-staff-panel" style="${columnaOrderStyle('staff')}">${columnaControlesHTML('staff')}<div class="lm-scroll-hint" data-scroll-hint title="Hay más contenido si bajas"><i class="ph ph-bold ph-caret-down"></i></div>
-          <h3 class="lm-clasif-header" id="lmClasifHeader"><span style="display:flex;align-items:center"><i class="ph ph-bold ph-ranking" style="color:var(--gold);margin-right:6px"></i><span style="color:#ccc">CLASIFICACIÓN</span></span> <span class="lm-clasif-arrow ${clasifColapsada?'':'lm-clasif-arrow-open'}">▾</span></h3>
-          <div id="lmClasifBody" style="${clasifColapsada?'display:none':''}">
-          <div class="lm-table-wrap">
-            <table class="lm-table">
-              <thead><tr><th></th><th>#</th><th>Equipo</th><th>PJ</th><th>G</th><th>E</th><th>P</th><th>Pts</th></tr></thead>
-              <tbody>
-                ${clasif.map((t,i)=>`<tr class="${t.id==='lm_0'?'lm-myteam':''} lm-zona-${zonaClasificacion(i+1)}">
-                  <td>${t.id==='lm_0'?crestHTML(state.escudo,18):rivalCrestHTML(18, t.crestImg)}</td>
-                  <td>${i+1}</td><td>${t.name}</td><td>${t.pj}</td><td>${t.pg}</td><td>${t.pe}</td><td>${t.pp}</td><td><strong>${t.pts}</strong></td>
-                </tr>`).join('')}
-              </tbody>
-            </table>
-          </div>
-          <div class="lm-legend">
-            <span><i class="lm-legend-dot lm-zona-champions"></i>Champions</span>
-            <span><i class="lm-legend-dot lm-zona-europa"></i>Europa Lg.</span>
-            <span><i class="lm-legend-dot lm-zona-conference"></i>Conference</span>
-            <span><i class="lm-legend-dot lm-zona-descenso"></i>Descenso</span>
-          </div>
-          </div>
           <div class="lm-staff-bar-header">
             <div class="lm-staff-bar-title"><i class="ph ph-bold ph-users-three"></i> CUERPO TÉCNICO</div>
             <div class="lm-staff-bar-capital" title="Dados y rerolls disponibles este partido">
@@ -4291,12 +4321,6 @@
     if(verOnceRivalBtn) verOnceRivalBtn.addEventListener('click', ()=>{
       if(typeof window.playSound==='function') window.playSound('select');
       if(rival) abrirOnceRival(rival);
-    });
-    const clasifHeader=document.getElementById('lmClasifHeader');
-    if(clasifHeader) clasifHeader.addEventListener('click', ()=>{
-      if(typeof window.playSound==='function') window.playSound('select');
-      clasifColapsada=!clasifColapsada;
-      render();
     });
     root.querySelectorAll('[data-mover-col]').forEach(btn=>{
       btn.addEventListener('click', ()=>{

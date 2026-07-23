@@ -2479,7 +2479,9 @@ body.liga-manager-screen #ligaManagerScreen{display:flex!important}
 body.liga-manager-screen #mainMenuScreen{display:none!important}
 body.liga-manager-screen .app{display:none!important}
 body.liga-manager-screen #mobileTabBar{display:none!important}
-body.liga-manager-screen .ranking-btn{display:none!important}
+.ranking-btn-label-lm{display:none}
+body.liga-manager-screen .ranking-btn-label-normal{display:none}
+body.liga-manager-screen .ranking-btn-label-lm{display:inline}
 /* Todos los botones de Liga Manager con cantos en pico (sin redondear),
    sea cual sea su estilo particular — regla global para no tener que
    repetirla botón a botón. */
