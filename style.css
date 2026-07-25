@@ -3660,7 +3660,7 @@ body.liga-manager-screen .ranking-btn-label-lm{display:inline}
 #lmMedicoOverlay,#lmPlantillaOverlay,#lmSlotOverlay,#lmHistorialOverlay,
 #lmMantenimientoOverlay,#lmEstadoEstadioOverlay,#lmDirectorGeneralOverlay,
 #lmFinanzasOverlay,#lmDirectorDeportivoOverlay,#lmSalariosOverlay,#lmTrabajadoresOverlay,
-#lmPreparadorFisicoOverlay,#lmHistorialPFOverlay,#lmOnceRivalOverlay,#lmClasifOverlay{
+#lmPreparadorFisicoOverlay,#lmHistorialPFOverlay,#lmOnceRivalOverlay,#lmClasifOverlay,#lmHistorialFichajesDDOverlay{
   position:fixed;inset:0;background:rgba(0,0,0,.6);
   display:flex;align-items:center;justify-content:center;z-index:10;
   overflow-y:auto;padding:20px 0;

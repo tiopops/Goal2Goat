@@ -5786,19 +5786,6 @@
         <div class="lm-dilemma-card lm-dilemma-card-dd" style="max-width:640px">
           ${xCerrarHTML()}
           <div class="lm-dilemma-title"><i class="ph ph-bold ph-binoculars"></i> DIRECTOR DEPORTIVO</div>
-          <button type="button" class="mode-card-btn mode-card-btn-secondary" id="lmInfoPlantillaDDBtn" style="width:100%;margin-bottom:10px"><i class="ph ph-bold ph-scroll"></i> INFORMACIÓN DE LA PLANTILLA</button>
-          <div class="lm-capital-box">
-            <i class="ph ph-bold ph-magnifying-glass lm-capital-icon"></i>
-            <div class="lm-capital-info">
-              <div class="lm-aforo-nota">${(()=>{
-                const pendientes=(state.sobresFichajesPendientes||[]).length;
-                if(pendientes>0) return `Tienes ${pendientes} sobre${pendientes>1?'s':''} esperando en el correo interno`;
-                return nivelSobre>=1
-                  ? `Red de Ojeadores a nivel ${nivelSobre}/${NIVEL_MAXIMO_EQUIPO} — los sobres llegan solos con el tiempo, avisan por correo`
-                  : 'Sube la "Red de Ojeadores Activa" para que empiecen a llegar sobres con el tiempo';
-              })()}</div>
-            </div>
-          </div>
           <div class="lm-precio-box">
             <div class="lm-estadio-bar-label"><i class="ph ph-bold ph-magnifying-glass"></i><span>POSICIÓN OBJETIVO DE LOS OJEADORES</span></div>
             <select id="lmPosicionOjeoSelect" class="lm-ojeo-select">
@@ -5807,6 +5794,7 @@
             </select>
             <div class="lm-aforo-nota">Los ojeadores se centrarán en esta posición para los próximos sobres que abras.</div>
           </div>
+          <button type="button" class="mode-card-btn mode-card-btn-secondary" id="lmInfoPlantillaDDBtn" style="width:100%;margin:10px 0"><i class="ph ph-bold ph-scroll"></i> INFORMACIÓN DE LA PLANTILLA</button>
           ${renderNivelesDDHTML()}
           <div class="lm-staff-bar-capital" style="justify-content:center;margin:10px 0 8px" title="Compartido con el resto del cuerpo técnico"><span><i class="ph ph-bold ph-dice-five"></i> DADOS: <strong>${state.diceAvailable}</strong></span><span><i class="ph ph-bold ph-arrows-clockwise"></i> RERROLLS: <strong>${state.dadoRerollsDisponibles||0}</strong></span><span><i class="ph ph-bold ph-cards"></i> CAMBIOS: <strong>${state.directorDeportivoCambioUsado?0:1}/1</strong></span></div>
           <div class="med-card-grid">${cartasHTML}</div>
@@ -5815,7 +5803,7 @@
             <button id="lmDirectorDeportivoCerrar" class="mode-card-btn mode-card-btn-secondary">CERRAR</button>
           </div>
         </div>`;
-        wireMostrarInfoHold(overlay, abrirSalariosDD, 'lmSalariosOverlay');
+        wireMostrarInfoHold(overlay, abrirHistorialFichajesDD, 'lmHistorialFichajesDDOverlay');
         const btnInfoPlantillaDD=overlay.querySelector('#lmInfoPlantillaDDBtn');
         if(btnInfoPlantillaDD) btnInfoPlantillaDD.addEventListener('click', ()=>{
           if(typeof window.playSound==='function') window.playSound('select');
@@ -5997,6 +5985,41 @@
 
   /* ---------- 13g. Salarios de la plantilla — burbuja "i" del Director
      Deportivo: lista completa de jugadores con su salario mensual. ---------- */
+  function abrirHistorialFichajesDD(esModoMantener){
+    const overlay=document.createElement('div');
+    overlay.id='lmHistorialFichajesDDOverlay';
+    const historial=state.directorDeportivoHistorial||[];
+    overlay.innerHTML=`
+      <div class="lm-dilemma-card lm-dilemma-card-dd" style="max-width:520px;text-align:left">
+        ${esModoMantener?'':xCerrarHTML()}
+        <div class="lm-dilemma-title"><i class="ph ph-bold ph-clock-counter-clockwise"></i> HISTÓRICO DE FICHAJES Y VENTAS</div>
+        ${historial.length ? `
+        <div class="lm-historial-dd-lista">
+          ${historial.slice(0,12).map(h=>`
+            <div class="lm-historial-dd-item ${h.tipo==='venta'?'lm-historial-dd-venta':'lm-historial-dd-fichaje'}">
+              <i class="ph ph-bold ${h.tipo==='venta'?'ph-arrow-circle-up':'ph-arrow-circle-down'}"></i>
+              <div class="lm-historial-dd-texto">
+                ${h.tipo==='venta'
+                  ? `Vendiste a <strong>${h.nombre}</strong> (${h.position}, ${h.overall}) a ${h.destino} por <strong>${formatoDinero(h.monto)}</strong>`
+                  : `Fichaste a <strong>${h.nombre}</strong> (${h.position}, ${h.overall})${h.estrella?` — fichaje estrella, procedente de ${h.procedencia}`:' desde un sobre'}`}
+              </div>
+              <span class="lm-historial-dd-jornada">J${h.jornada}</span>
+            </div>`).join('')}
+        </div>` : `<div class="lm-historial-dd-vacio">Todavía no has fichado ni vendido a nadie esta temporada.</div>`}
+        ${esModoMantener?'':'<div class="lm-popup-actions lm-popup-actions-compact"><button id="lmHistorialFichajesDDCerrar" class="mode-card-btn mode-card-btn-gold">CERRAR</button></div>'}
+      </div>`;
+    document.getElementById('ligaManagerScreen').appendChild(overlay);
+    if(!esModoMantener){
+      habilitarCierreOverlay(overlay, ()=>overlay.remove());
+      const xBtn=overlay.querySelector('[data-cerrar-x]');
+      if(xBtn) xBtn.addEventListener('click', ()=>overlay.remove());
+      const btnCerrar=document.getElementById('lmHistorialFichajesDDCerrar');
+      if(btnCerrar) btnCerrar.addEventListener('click', ()=>{
+        if(typeof window.playSound==='function') window.playSound('select');
+        overlay.remove();
+      });
+    }
+  }
   function abrirSalariosDD(esModoMantener){
     const overlay=document.createElement('div');
     overlay.id='lmSalariosOverlay';
@@ -6022,24 +6045,8 @@
       overlay.innerHTML=`
         <div class="lm-dilemma-card lm-dilemma-card-dd" style="max-width:640px;text-align:left">
           ${xCerrarHTML()}
-          <div class="lm-dilemma-title"><i class="ph ph-bold ph-file-text"></i> INFORMACIÓN DE LA PLANTILLA</div>
-          <div class="lm-historial-dd-wrap">
-            <div class="lm-historial-dd-titulo"><i class="ph ph-bold ph-clock-counter-clockwise"></i> HISTÓRICO DE FICHAJES Y VENTAS</div>
-            ${(state.directorDeportivoHistorial||[]).length ? `
-            <div class="lm-historial-dd-lista">
-              ${(state.directorDeportivoHistorial||[]).slice(0,12).map(h=>`
-                <div class="lm-historial-dd-item ${h.tipo==='venta'?'lm-historial-dd-venta':'lm-historial-dd-fichaje'}">
-                  <i class="ph ph-bold ${h.tipo==='venta'?'ph-arrow-circle-up':'ph-arrow-circle-down'}"></i>
-                  <div class="lm-historial-dd-texto">
-                    ${h.tipo==='venta'
-                      ? `Vendiste a <strong>${h.nombre}</strong> (${h.position}, ${h.overall}) a ${h.destino} por <strong>${formatoDinero(h.monto)}</strong>`
-                      : `Fichaste a <strong>${h.nombre}</strong> (${h.position}, ${h.overall})${h.estrella?` — fichaje estrella, procedente de ${h.procedencia}`:' desde un sobre'}`}
-                  </div>
-                  <span class="lm-historial-dd-jornada">J${h.jornada}</span>
-                </div>`).join('')}
-            </div>` : `<div class="lm-historial-dd-vacio">Todavía no has fichado ni vendido a nadie esta temporada.</div>`}
-          </div>
-          <div class="lm-dilemma-title" style="margin-top:14px;font-size:15px"><i class="ph ph-bold ph-list-bullets"></i> SALARIOS DE LA PLANTILLA</div>
+          <div class="lm-dilemma-title"><i class="ph ph-bold ph-file-text"></i> SALARIOS DE LA PLANTILLA</div>
+          <div class="lm-setup-desc" style="text-align:center;margin-bottom:8px">Nómina total: <strong>${formatoDinero(totalNomina)}/mes</strong> · plantilla: <strong>${jugadores.length}</strong> · al poner en venta, el Director Deportivo avisará por correo en 1-3 jornadas con las ofertas que lleguen.</div>
           <div class="lm-setup-desc" style="text-align:center;margin-bottom:8px">Nómina total: <strong>${formatoDinero(totalNomina)}/mes</strong> · plantilla: <strong>${jugadores.length}</strong> · al poner en venta, el Director Deportivo avisará por correo en 1-3 jornadas con las ofertas que lleguen.</div>
           <div class="lm-salarios-tabla-wrap">
             <table class="lm-salarios-tabla">
