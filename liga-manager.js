@@ -161,16 +161,17 @@
     const POSICIONES_TITULARES=["POR","DFC","DFC","LI","LD","MC","MC","MC","EI","ED","DC"];
     const plantilla=POSICIONES_TITULARES.map((pos,i)=>nuevoJugador('p'+i, pos, false));
 
-    // Banquillo: 5 jugadores con posiciones al azar que NO se repiten
-    // entre ellos (aunque sí puedan coincidir con alguna de los 11 de
-    // arriba). Ampliable más adelante mediante mejoras.
+    // Banquillo: tamaño según la mejora "Banquillo" comprada (5 de base,
+    // hasta 10 con el nivel máximo) con posiciones al azar que no se
+    // repiten entre ellas mientras queden posiciones libres.
     const TODAS_POSICIONES=["POR","DFC","LI","LD","MC","EI","ED","DC"];
     const posiciones=TODAS_POSICIONES.slice();
     for(let i=posiciones.length-1;i>0;i--){
       const j=Math.floor(Math.random()*(i+1));
       const tmp=posiciones[i]; posiciones[i]=posiciones[j]; posiciones[j]=tmp;
     }
-    posiciones.slice(0,5).forEach((pos,i)=>{ plantilla.push(nuevoJugador('b'+i, pos, true)); });
+    const tamanoBanquillo=lmMaxBanquillo();
+    for(let i=0;i<tamanoBanquillo;i++){ plantilla.push(nuevoJugador('b'+i, posiciones[i%posiciones.length], true)); }
 
     return plantilla;
   }
@@ -181,7 +182,8 @@
   // repartidas alrededor del perfil real del equipo (igual que se hace
   // para generar el once ficticio de los rivales).
   function generarPlantillaDesdeEquipoReal(equipo){
-    const jugadores=(equipo.plantilla||[]).slice(0,16);
+    const tamanoBanquillo=lmMaxBanquillo();
+    const jugadores=(equipo.plantilla||[]).slice(0,11+tamanoBanquillo);
     function statVariada(base){ return Math.max(35, Math.min(97, Math.round(base+Math.floor(Math.random()*13)-6))); }
     function jugadorDe(id, idx, pos, esSuplente){
       const j=jugadores[idx];
@@ -201,9 +203,9 @@
       };
     }
     const POSICIONES_TITULARES=["POR","DFC","DFC","LI","LD","MC","MC","MC","EI","ED","DC"];
-    const POSICIONES_BANQUILLO=["POR","DFC","MC","ED","DC"];
+    const POSICIONES_BANQUILLO_BASE=["POR","DFC","MC","ED","DC"];
     const plantilla=POSICIONES_TITULARES.map((pos,i)=>jugadorDe('p'+i, i, pos, false));
-    POSICIONES_BANQUILLO.forEach((pos,i)=>plantilla.push(jugadorDe('b'+i, 11+i, pos, true)));
+    for(let i=0;i<tamanoBanquillo;i++){ plantilla.push(jugadorDe('b'+i, 11+i, POSICIONES_BANQUILLO_BASE[i%POSICIONES_BANQUILLO_BASE.length], true)); }
     return plantilla;
   }
 
@@ -683,6 +685,110 @@
   const LM_SORT_LABELS={arrival:'LLEGADA', position:'POSICIÓN', rating:'PUNTOS', numero:'DORSAL'};
   const LM_SORT_NEXT={arrival:'position', position:'rating', rating:'numero', numero:'arrival'};
   let clasifColapsada=false; // la clasificación empieza desplegada
+  // ---- Sistema de mejoras (GOAT Points) de Liga Manager ----
+  // Comparte la MISMA moneda que Copa Leyendas (scratchPoints, en
+  // Firestore users/{uid}) pero los niveles comprados se guardan por
+  // separado (users/{uid}.ligaManagerUpgrades) — gastar puntos aquí no
+  // añade ni quita niveles a las mejoras de Copa Leyendas, y viceversa.
+  const LM_UPGRADE_DEFS=[
+    {id:'lm_bench', icon:'🪑', name:'BANQUILLO', desc:'SUPLENTES DISPONIBLES POR PARTIDO',
+      baseCost:5, maxLevel:5, baseValue:5, tooltip:(lvl)=>`${5+lvl} suplentes disponibles`},
+    {id:'lm_dice', icon:'🎲', name:'DADO TÉCNICO EXTRA', desc:'DADOS DEL CUERPO TÉCNICO POR PARTIDO',
+      baseCost:5, maxLevel:5, baseValue:5, tooltip:(lvl)=>`${5+lvl} dados por partido`},
+    {id:'lm_rerolls', icon:'🔄', name:'RERROLLS EXTRA', desc:'REROLLS DE DADO POR PARTIDO',
+      baseCost:5, maxLevel:3, baseValue:1, tooltip:(lvl)=>`${1+lvl} rerroll${lvl?'s':''} por partido`},
+    {id:'lm_cardswap', icon:'🗂️', name:'CAMBIO DE CARTA EXTRA', desc:'CAMBIOS DE CARTA POR DEPARTAMENTO Y PARTIDO',
+      baseCost:5, maxLevel:3, baseValue:1, tooltip:(lvl)=>`${1+lvl} cambio${lvl>0?'s':''} de carta por partido`},
+  ];
+  function lmUpgradeLevelCost(def, toLevel){ return def.baseCost*Math.pow(2, toLevel-1); }
+  function lmNivelMejora(id){ return (window._lmUpgradeCache && window._lmUpgradeCache[id]) || 0; }
+  function lmMaxBanquillo(){ return LM_UPGRADE_DEFS[0].baseValue + lmNivelMejora('lm_bench'); }
+  function lmDicePoolPorPartido(){ return LM_UPGRADE_DEFS[1].baseValue + lmNivelMejora('lm_dice'); }
+  function lmRerollsPorPartido(){ return LM_UPGRADE_DEFS[2].baseValue + lmNivelMejora('lm_rerolls'); }
+  function lmCambiosCartaPorPartido(){ return LM_UPGRADE_DEFS[3].baseValue + lmNivelMejora('lm_cardswap'); }
+  async function lmCargarUpgradeCache(){
+    try{
+      const user=window._fbAuth && window._fbAuth.currentUser;
+      if(!user){ window._lmUpgradeCache={}; return; }
+      const snap=await window._fbDb.collection('users').doc(user.uid).get();
+      const data=snap.exists?snap.data():{};
+      window._lmUpgradeCache=data.ligaManagerUpgrades||{};
+      window._lmScratchPoints=data.scratchPoints||0;
+    }catch(e){ window._lmUpgradeCache=window._lmUpgradeCache||{}; }
+  }
+  async function renderLigaManagerUpgradesTab(){
+    const list=document.getElementById('lmUpgradesList');
+    const pointsEl=document.getElementById('lmUpgradePointsDisplay');
+    if(!list) return;
+    list.innerHTML=`<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:12px">Cargando...</div>`;
+    await lmCargarUpgradeCache();
+    const user=window._fbAuth && window._fbAuth.currentUser;
+    if(!user){
+      list.innerHTML=`<div style="text-align:center;padding:20px;color:var(--text-muted)">Inicia sesión para ver las mejoras.</div>`;
+      return;
+    }
+    let currentPts=window._lmScratchPoints||0;
+    if(pointsEl) pointsEl.textContent=currentPts;
+    list.innerHTML='';
+    LM_UPGRADE_DEFS.forEach(def=>{
+      const currentLevel=lmNivelMejora(def.id);
+      const nextCost=currentLevel<def.maxLevel ? lmUpgradeLevelCost(def, currentLevel+1) : null;
+      const prevRefund=currentLevel>0 ? lmUpgradeLevelCost(def, currentLevel) : null;
+      const canUpgrade=nextCost!==null && currentPts>=nextCost;
+      const canDowngrade=currentLevel>0;
+      const bars=Array.from({length:def.maxLevel},(_,i)=>`<div class="upgrade-bar ${i<currentLevel?'filled':''}"></div>`).join('');
+      const costHtml=nextCost!==null ? `<span class="cost-star">★</span>${nextCost}` : `<span style="font-size:9px;color:var(--text-muted);letter-spacing:1px">MAX</span>`;
+      const row=document.createElement('div');
+      row.className='upgrade-row';
+      row.id=`lm-upgrade-row-${def.id}`;
+      row.innerHTML=`
+        <div class="upgrade-row-top">
+          <div class="upgrade-icon" style="font-size:20px">${def.icon}</div>
+          <div class="upgrade-label-block">
+            <div class="upgrade-name">${def.name}</div>
+            <div class="upgrade-desc">${def.desc}</div>
+          </div>
+          <div class="upgrade-value-pill">${def.tooltip(currentLevel)}</div>
+        </div>
+        <div class="upgrade-row-bottom">
+          <div class="upgrade-bars">${bars}</div>
+          <div class="upgrade-controls">
+            <div class="upgrade-cost-badge">${costHtml}</div>
+            <button class="upgrade-btn minus" data-lmid="${def.id}" title="Recuperar ${prevRefund||0} pts" ${canDowngrade?'':'disabled'}>−</button>
+            <button class="upgrade-btn plus" data-lmid="${def.id}" title="Coste: ${nextCost||0} pts" ${canUpgrade?'':'disabled'}>+</button>
+          </div>
+        </div>`;
+      list.appendChild(row);
+    });
+    list.querySelectorAll('.upgrade-btn').forEach(btn=>{
+      btn.addEventListener('click', async ()=>{
+        const id=btn.getAttribute('data-lmid');
+        const def=LM_UPGRADE_DEFS.find(d=>d.id===id);
+        if(!def) return;
+        const currentLevel=lmNivelMejora(id);
+        const esCompra=btn.classList.contains('plus');
+        if(typeof window.playSound==='function') window.playSound('select');
+        if(esCompra){
+          if(currentLevel>=def.maxLevel) return;
+          const cost=lmUpgradeLevelCost(def, currentLevel+1);
+          if((window._lmScratchPoints||0)<cost) return;
+          window._lmUpgradeCache[id]=currentLevel+1;
+          window._lmScratchPoints=(window._lmScratchPoints||0)-cost;
+        } else {
+          if(currentLevel<=0) return;
+          const refund=lmUpgradeLevelCost(def, currentLevel);
+          window._lmUpgradeCache[id]=currentLevel-1;
+          window._lmScratchPoints=(window._lmScratchPoints||0)+refund;
+        }
+        try{
+          const u=window._fbAuth && window._fbAuth.currentUser;
+          if(u) await window._fbDb.collection('users').doc(u.uid).set({ligaManagerUpgrades:window._lmUpgradeCache, scratchPoints:window._lmScratchPoints}, {merge:true});
+        }catch(e){}
+        renderLigaManagerUpgradesTab();
+      });
+    });
+  }
+  window.renderLigaManagerUpgradesTab = renderLigaManagerUpgradesTab;
   let perfilEquipoColapsado=false;
   let correoExpandido=null;
   let ordenColumnasSaveTimer=null; // el orden de columnas se persiste solo tras 60s sin más cambios
@@ -861,7 +967,7 @@
       medicoNotificacion:null,
       diceAvailable:DICE_POOL_PER_MATCH,
       medicoCartas:[],
-      medicoCambioUsado:false,
+      medicoCambiosUsados:0,
       medicoCartasAgotadas:[],
       medicoBonos:{},
       medicoHistorial:[],
@@ -874,7 +980,7 @@
       moral:0,
       rachaResultados:0,
       mantenimientoCartas:[],
-      mantenimientoCambioUsado:false,
+      mantenimientoCambiosUsados:0,
       mantenimientoCartasAgotadas:[],
       mantenimientoHistorial:[],
       mantenimientoNiveles:{prevencionDesgaste:0, recuperacionCesped:0, boostSatisfaccion:0, proteccionSatisfaccion:0},
@@ -887,12 +993,12 @@
       mesesPagados:0,
       finanzasHistorial:[],
       directorGeneralCartas:[],
-      directorGeneralCambioUsado:false,
+      directorGeneralCambiosUsados:0,
       directorGeneralCartasAgotadas:[],
       directorGeneralHistorial:[],
       directorGeneralNiveles:{aforoExtra:0, ingresoPatrocinio:0, ingresoMerchandising:0, toleranciaPrecio:0},
       directorDeportivoCartas:[],
-      directorDeportivoCambioUsado:false,
+      directorDeportivoCambiosUsados:0,
       directorDeportivoCartasAgotadas:[],
       directorDeportivoHistorial:[],
       directorDeportivoNiveles:{calidadOjeo:0, ahorroSalarial:0, sobresFichajes:0, costeSobres:0},
@@ -919,7 +1025,7 @@
       correoUltimoEnviado:{},
       posicionObjetivoOjeo:'any',
       preparadorFisicoCartas:[],
-      preparadorFisicoCambioUsado:false,
+      preparadorFisicoCambiosUsados:0,
       preparadorFisicoCartasAgotadas:[],
       preparadorFisicoHistorial:[],
       preparadorFisicoNiveles:{resistenciaBase:0, recuperacionSemanal:0, potencialTecnico:0, potencialFisico:0, planificacionSemanal:0},
@@ -1482,13 +1588,13 @@
     // la jornada anterior se pierden (use-it-or-lose-it, ya definido).
     // Médico y Mantenimiento COMPARTEN este mismo fondo de dados: hay que
     // repartir entre las dos plantillas de cartas cada partido.
-    state.diceAvailable = DICE_POOL_PER_MATCH;
-    state.medicoCambioUsado = false;
-    state.mantenimientoCambioUsado = false;
-    state.directorGeneralCambioUsado = false;
-    state.directorDeportivoCambioUsado = false;
-    state.preparadorFisicoCambioUsado = false;
-    state.dadoRerollsDisponibles = 1;
+    state.diceAvailable = lmDicePoolPorPartido();
+    state.medicoCambiosUsados = 0;
+    state.mantenimientoCambiosUsados = 0;
+    state.directorGeneralCambiosUsados = 0;
+    state.directorDeportivoCambiosUsados = 0;
+    state.preparadorFisicoCambiosUsados = 0;
+    state.dadoRerollsDisponibles = lmRerollsPorPartido();
     // Cada partido trae caras nuevas: la mano de cartas de los 5
     // departamentos se renueva por completo (respetando las que ya
     // están agotadas por haber llegado a nivel máximo).
@@ -2127,12 +2233,12 @@
   }
 
   function cambiarCartaMedico(idx){
-    if(state.medicoCambioUsado) return false;
+    if((state.medicoCambiosUsados||0)>=lmCambiosCartaPorPartido()) return false;
     const otras=state.medicoCartas.filter((c,i)=>i!==idx).map(c=>c.cartaId);
     const nueva=generarCartaAleatoria(otras);
     if(!nueva) return false;
     state.medicoCartas[idx]=nueva;
-    state.medicoCambioUsado=true;
+    state.medicoCambiosUsados=(state.medicoCambiosUsados||0)+1;
     guardarEstado();
     return true;
   }
@@ -2325,12 +2431,12 @@
     return cartas;
   }
   function cambiarCartaMantenimiento(idx){
-    if(state.mantenimientoCambioUsado) return false;
+    if((state.mantenimientoCambiosUsados||0)>=lmCambiosCartaPorPartido()) return false;
     const otras=state.mantenimientoCartas.filter((c,i)=>i!==idx).map(c=>c.cartaId);
     const nueva=generarCartaAleatoriaMantenimiento(otras);
     if(!nueva) return false;
     state.mantenimientoCartas[idx]=nueva;
-    state.mantenimientoCambioUsado=true;
+    state.mantenimientoCambiosUsados=(state.mantenimientoCambiosUsados||0)+1;
     guardarEstado();
     return true;
   }
@@ -3068,12 +3174,12 @@
     return cartas;
   }
   function cambiarCartaDG(idx){
-    if(state.directorGeneralCambioUsado) return false;
+    if((state.directorGeneralCambiosUsados||0)>=lmCambiosCartaPorPartido()) return false;
     const otras=state.directorGeneralCartas.filter((c,i)=>i!==idx).map(c=>c.cartaId);
     const nueva=generarCartaAleatoriaDG(otras);
     if(!nueva) return false;
     state.directorGeneralCartas[idx]=nueva;
-    state.directorGeneralCambioUsado=true;
+    state.directorGeneralCambiosUsados=(state.directorGeneralCambiosUsados||0)+1;
     guardarEstado();
     return true;
   }
@@ -3200,12 +3306,12 @@
     return cartas;
   }
   function cambiarCartaDD(idx){
-    if(state.directorDeportivoCambioUsado) return false;
+    if((state.directorDeportivoCambiosUsados||0)>=lmCambiosCartaPorPartido()) return false;
     const otras=state.directorDeportivoCartas.filter((c,i)=>i!==idx).map(c=>c.cartaId);
     const nueva=generarCartaAleatoriaDD(otras);
     if(!nueva) return false;
     state.directorDeportivoCartas[idx]=nueva;
-    state.directorDeportivoCambioUsado=true;
+    state.directorDeportivoCambiosUsados=(state.directorDeportivoCambiosUsados||0)+1;
     guardarEstado();
     return true;
   }
@@ -3550,12 +3656,12 @@
     return cartas;
   }
   function cambiarCartaPF(idx){
-    if(state.preparadorFisicoCambioUsado) return false;
+    if((state.preparadorFisicoCambiosUsados||0)>=lmCambiosCartaPorPartido()) return false;
     const otras=state.preparadorFisicoCartas.filter((c,i)=>i!==idx).map(c=>c.cartaId);
     const nueva=generarCartaAleatoriaPF(otras);
     if(!nueva) return false;
     state.preparadorFisicoCartas[idx]=nueva;
-    state.preparadorFisicoCambioUsado=true;
+    state.preparadorFisicoCambiosUsados=(state.preparadorFisicoCambiosUsados||0)+1;
     guardarEstado();
     return true;
   }
@@ -4998,7 +5104,7 @@
         const imposiblePorDados = (def.tipo==='directa'||def.tipo==='nivel') && maxPosible < dificultadEfectiva;
         const nivelMaximoYa = def.tipo==='nivel' && nivelDe(def.track)>=NIVEL_MAXIMO_EQUIPO;
         const bloqueada = sinLesionNecesaria || imposiblePorDados || nivelMaximoYa;
-        const cambioDisponible=!state.medicoCambioUsado;
+        const cambioDisponible=(state.medicoCambiosUsados||0)<lmCambiosCartaPorPartido();
         let cuerpo;
         if(def.tipo==='nivel'){
           const n=nivelDe(def.track);
@@ -5034,7 +5140,7 @@
             <button id="lmAtenderUrgente" class="mode-card-btn mode-card-btn-gold">ATENDER (sumar ${notif.dificultad}+)</button>
           </div>` : ''}
           ${renderNivelesEquipoHTML()}
-          <div class="lm-staff-bar-capital" style="justify-content:center;margin:10px 0 8px"><span><i class="ph ph-bold ph-dice-five"></i> DADOS: <strong>${state.diceAvailable}</strong></span><span><i class="ph ph-bold ph-arrows-clockwise"></i> RERROLLS: <strong>${state.dadoRerollsDisponibles||0}</strong></span><span><i class="ph ph-bold ph-cards"></i> CAMBIOS: <strong>${state.medicoCambioUsado?0:1}/1</strong></span></div>
+          <div class="lm-staff-bar-capital" style="justify-content:center;margin:10px 0 8px"><span><i class="ph ph-bold ph-dice-five"></i> DADOS: <strong>${state.diceAvailable}</strong></span><span><i class="ph ph-bold ph-arrows-clockwise"></i> RERROLLS: <strong>${state.dadoRerollsDisponibles||0}</strong></span><span><i class="ph ph-bold ph-cards"></i> CAMBIOS: <strong>${Math.max(0,lmCambiosCartaPorPartido()-(state.medicoCambiosUsados||0))}/${lmCambiosCartaPorPartido()}</strong></span></div>
           <div class="med-card-grid">${cartasHTML}</div>
           <div class="lm-popup-actions lm-popup-actions-compact">
             ${mostrarInfoHTML()}
@@ -5060,7 +5166,7 @@
       overlay.querySelectorAll('[data-swap]').forEach(btn=>{
         btn.addEventListener('click', ()=>{
           const idx=parseInt(btn.getAttribute('data-swap'),10);
-          if(state.medicoCambioUsado) return;
+          if((state.medicoCambiosUsados||0)>=lmCambiosCartaPorPartido()) return;
           if(typeof window.playSound==='function') window.playSound('select');
           animarRerollCarta(overlay, idx, MEDICO_CARTAS_BASE, ()=>{
             cambiarCartaMedico(idx);
@@ -5253,7 +5359,7 @@
         const imposiblePorDados = maxPosible < dificultadEfectiva;
         const nivelMaximoYa = def.tipo==='nivel' && nivelDeM(def.track)>=NIVEL_MAXIMO_EQUIPO;
         const bloqueada = bloqueadaPorEstado || imposiblePorDados || nivelMaximoYa;
-        const cambioDisponible=!state.mantenimientoCambioUsado;
+        const cambioDisponible=(state.mantenimientoCambiosUsados||0)<lmCambiosCartaPorPartido();
         let cuerpo;
         if(def.tipo==='nivel'){
           const n=nivelDeM(def.track);
@@ -5280,7 +5386,7 @@
           ${xCerrarHTML()}
           <div class="lm-dilemma-title"><i class="ph ph-bold ph-flag-pennant"></i> MANTENIMIENTO Y SEGURIDAD</div>
           ${renderNivelesMantenimientoHTML()}
-          <div class="lm-staff-bar-capital" style="justify-content:center;margin:10px 0 8px"><span><i class="ph ph-bold ph-dice-five"></i> DADOS: <strong>${state.diceAvailable}</strong></span><span><i class="ph ph-bold ph-arrows-clockwise"></i> RERROLLS: <strong>${state.dadoRerollsDisponibles||0}</strong></span><span><i class="ph ph-bold ph-cards"></i> CAMBIOS: <strong>${state.mantenimientoCambioUsado?0:1}/1</strong></span></div>
+          <div class="lm-staff-bar-capital" style="justify-content:center;margin:10px 0 8px"><span><i class="ph ph-bold ph-dice-five"></i> DADOS: <strong>${state.diceAvailable}</strong></span><span><i class="ph ph-bold ph-arrows-clockwise"></i> RERROLLS: <strong>${state.dadoRerollsDisponibles||0}</strong></span><span><i class="ph ph-bold ph-cards"></i> CAMBIOS: <strong>${Math.max(0,lmCambiosCartaPorPartido()-(state.mantenimientoCambiosUsados||0))}/${lmCambiosCartaPorPartido()}</strong></span></div>
           <div class="med-card-grid">${cartasHTML}</div>
           <div class="lm-popup-actions lm-popup-actions-compact">
             ${mostrarInfoHTML()}
@@ -5300,7 +5406,7 @@
       overlay.querySelectorAll('[data-swap]').forEach(btn=>{
         btn.addEventListener('click', ()=>{
           const idx=parseInt(btn.getAttribute('data-swap'),10);
-          if(state.mantenimientoCambioUsado) return;
+          if((state.mantenimientoCambiosUsados||0)>=lmCambiosCartaPorPartido()) return;
           if(typeof window.playSound==='function') window.playSound('select');
           animarRerollCarta(overlay, idx, MANTENIMIENTO_CARTAS_BASE, ()=>{
             cambiarCartaMantenimiento(idx);
@@ -5462,7 +5568,7 @@
         const imposiblePorDados = maxPosible < dificultadEfectiva;
         const nivelMaximoYa = def.tipo==='nivel' && nivelDeDG(def.track)>=NIVEL_MAXIMO_EQUIPO;
         const bloqueada = imposiblePorDados || nivelMaximoYa;
-        const cambioDisponible=!state.directorGeneralCambioUsado;
+        const cambioDisponible=(state.directorGeneralCambiosUsados||0)<lmCambiosCartaPorPartido();
         let cuerpo;
         if(def.tipo==='nivel'){
           const n=nivelDeDG(def.track);
@@ -5501,7 +5607,7 @@
             <div class="lm-aforo-nota">Más caro = más ingreso por entrada, pero menos afición vendrá a verte (se nota menos cuanto más nivel tengas en Relaciones con la Afición).</div>
           </div>
           ${renderNivelesDGHTML()}
-          <div class="lm-staff-bar-capital" style="justify-content:center;margin:10px 0 8px"><span><i class="ph ph-bold ph-dice-five"></i> DADOS: <strong>${state.diceAvailable}</strong></span><span><i class="ph ph-bold ph-arrows-clockwise"></i> RERROLLS: <strong>${state.dadoRerollsDisponibles||0}</strong></span><span><i class="ph ph-bold ph-cards"></i> CAMBIOS: <strong>${state.directorGeneralCambioUsado?0:1}/1</strong></span></div>
+          <div class="lm-staff-bar-capital" style="justify-content:center;margin:10px 0 8px"><span><i class="ph ph-bold ph-dice-five"></i> DADOS: <strong>${state.diceAvailable}</strong></span><span><i class="ph ph-bold ph-arrows-clockwise"></i> RERROLLS: <strong>${state.dadoRerollsDisponibles||0}</strong></span><span><i class="ph ph-bold ph-cards"></i> CAMBIOS: <strong>${Math.max(0,lmCambiosCartaPorPartido()-(state.directorGeneralCambiosUsados||0))}/${lmCambiosCartaPorPartido()}</strong></span></div>
           <div class="med-card-grid">${cartasHTML}</div>
           <div class="lm-popup-actions lm-popup-actions-compact">
             ${mostrarInfoHTML()}
@@ -5528,7 +5634,7 @@
       overlay.querySelectorAll('[data-swap]').forEach(btn=>{
         btn.addEventListener('click', ()=>{
           const idx=parseInt(btn.getAttribute('data-swap'),10);
-          if(state.directorGeneralCambioUsado) return;
+          if((state.directorGeneralCambiosUsados||0)>=lmCambiosCartaPorPartido()) return;
           if(typeof window.playSound==='function') window.playSound('select');
           animarRerollCarta(overlay, idx, DIRECTOR_GENERAL_CARTAS_BASE, ()=>{
             cambiarCartaDG(idx);
@@ -5758,7 +5864,7 @@
         const nivelActualTrack = (def.tipo==='nivel'||esSobre) ? nivelDeDD(def.track) : 0;
         const nivelMaximoYa = (def.tipo==='nivel'||esSobre) && nivelActualTrack>=NIVEL_MAXIMO_EQUIPO;
         const bloqueada = imposiblePorDados || nivelMaximoYa;
-        const cambioDisponible=!state.directorDeportivoCambioUsado;
+        const cambioDisponible=(state.directorDeportivoCambiosUsados||0)<lmCambiosCartaPorPartido();
         let cuerpo;
         if(def.tipo==='nivel'||esSobre){
           cuerpo=`<div class="med-card-progress-label" style="text-align:center;letter-spacing:2px;color:var(--gold)">${estrellasNivel(nivelActualTrack)}</div>
@@ -5796,7 +5902,7 @@
           </div>
           <button type="button" class="mode-card-btn mode-card-btn-secondary" id="lmInfoPlantillaDDBtn" style="width:100%;margin:10px 0"><i class="ph ph-bold ph-scroll"></i> INFORMACIÓN DE LA PLANTILLA</button>
           ${renderNivelesDDHTML()}
-          <div class="lm-staff-bar-capital" style="justify-content:center;margin:10px 0 8px"><span><i class="ph ph-bold ph-dice-five"></i> DADOS: <strong>${state.diceAvailable}</strong></span><span><i class="ph ph-bold ph-arrows-clockwise"></i> RERROLLS: <strong>${state.dadoRerollsDisponibles||0}</strong></span><span><i class="ph ph-bold ph-cards"></i> CAMBIOS: <strong>${state.directorDeportivoCambioUsado?0:1}/1</strong></span></div>
+          <div class="lm-staff-bar-capital" style="justify-content:center;margin:10px 0 8px"><span><i class="ph ph-bold ph-dice-five"></i> DADOS: <strong>${state.diceAvailable}</strong></span><span><i class="ph ph-bold ph-arrows-clockwise"></i> RERROLLS: <strong>${state.dadoRerollsDisponibles||0}</strong></span><span><i class="ph ph-bold ph-cards"></i> CAMBIOS: <strong>${Math.max(0,lmCambiosCartaPorPartido()-(state.directorDeportivoCambiosUsados||0))}/${lmCambiosCartaPorPartido()}</strong></span></div>
           <div class="med-card-grid">${cartasHTML}</div>
           <div class="lm-popup-actions lm-popup-actions-compact">
             ${mostrarInfoHTML()}
@@ -5827,7 +5933,7 @@
       overlay.querySelectorAll('[data-swap]').forEach(btn=>{
         btn.addEventListener('click', ()=>{
           const idx=parseInt(btn.getAttribute('data-swap'),10);
-          if(state.directorDeportivoCambioUsado) return;
+          if((state.directorDeportivoCambiosUsados||0)>=lmCambiosCartaPorPartido()) return;
           if(typeof window.playSound==='function') window.playSound('select');
           animarRerollCarta(overlay, idx, DIRECTOR_DEPORTIVO_CARTAS_BASE, ()=>{
             cambiarCartaDD(idx);
@@ -6175,7 +6281,7 @@
         const imposiblePorDados = maxPosible < dificultadEfectiva;
         const nivelMaximoYa = def.tipo==='nivel' && nivelDePF(def.track)>=NIVEL_MAXIMO_EQUIPO;
         const bloqueada = imposiblePorDados || nivelMaximoYa;
-        const cambioDisponible=!state.preparadorFisicoCambioUsado;
+        const cambioDisponible=(state.preparadorFisicoCambiosUsados||0)<lmCambiosCartaPorPartido();
         let cuerpo;
         if(def.tipo==='nivel'){
           const n=nivelDePF(def.track);
@@ -6203,7 +6309,7 @@
           <div class="lm-dilemma-title"><i class="ph ph-bold ph-barbell"></i> PREPARADOR FÍSICO</div>
           ${renderNivelesPFHTML()}
           ${renderPlanEntrenamientoResumenHTML()}
-          <div class="lm-staff-bar-capital" style="justify-content:center;margin:10px 0 8px"><span><i class="ph ph-bold ph-dice-five"></i> DADOS: <strong>${state.diceAvailable}</strong></span><span><i class="ph ph-bold ph-arrows-clockwise"></i> RERROLLS: <strong>${state.dadoRerollsDisponibles||0}</strong></span><span><i class="ph ph-bold ph-cards"></i> CAMBIOS: <strong>${state.preparadorFisicoCambioUsado?0:1}/1</strong></span></div>
+          <div class="lm-staff-bar-capital" style="justify-content:center;margin:10px 0 8px"><span><i class="ph ph-bold ph-dice-five"></i> DADOS: <strong>${state.diceAvailable}</strong></span><span><i class="ph ph-bold ph-arrows-clockwise"></i> RERROLLS: <strong>${state.dadoRerollsDisponibles||0}</strong></span><span><i class="ph ph-bold ph-cards"></i> CAMBIOS: <strong>${Math.max(0,lmCambiosCartaPorPartido()-(state.preparadorFisicoCambiosUsados||0))}/${lmCambiosCartaPorPartido()}</strong></span></div>
           <div class="med-card-grid">${cartasHTML}</div>
           <div class="lm-popup-actions lm-popup-actions-compact">
             ${mostrarInfoHTML()}
@@ -6223,7 +6329,7 @@
       overlay.querySelectorAll('[data-swap]').forEach(btn=>{
         btn.addEventListener('click', ()=>{
           const idx=parseInt(btn.getAttribute('data-swap'),10);
-          if(state.preparadorFisicoCambioUsado) return;
+          if((state.preparadorFisicoCambiosUsados||0)>=lmCambiosCartaPorPartido()) return;
           if(typeof window.playSound==='function') window.playSound('select');
           animarRerollCarta(overlay, idx, PREPARADOR_FISICO_CARTAS_BASE, ()=>{
             cambiarCartaPF(idx);
@@ -6617,6 +6723,7 @@
     setupStep=1;
     formacionCategoriaVista=null;
     seleccionJugador=null;
+    lmCargarUpgradeCache().then(()=>render());
     render();
   }
 
