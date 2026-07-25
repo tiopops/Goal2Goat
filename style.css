@@ -3782,14 +3782,19 @@ body.menu-screen #audioToggle{
    de momento se ocultan aquí también (mismo patrón que el menú principal).
    El tema oscuro/claro SÍ se puede cambiar con normalidad (a diferencia
    del menú principal, aquí ya estás dentro de un modo de juego). */
-body.liga-manager-screen #profileTabStats,
 body.liga-manager-screen #profileTabUpgrades,
 body.liga-manager-screen #profileTabNotes,
 body.liga-manager-screen #profileTabAchievements{
   display:none!important;
 }
+/* Liga Manager usa su propio panel de ESTADÍSTICAS (datos de la
+   temporada de Liga Manager) en vez del de Copa Leyendas — mismo estilo
+   exacto, contenido distinto. */
+body.liga-manager-screen #profileStatsPane{ display:none!important; }
+body.liga-manager-screen #lmProfileStatsPane.profile-tab-pane-active{ display:block!important; }
+#lmProfileStatsPane{ display:none; }
 body.liga-manager-screen #profileOverlay .auth-tabs{
-  grid-template-columns:1fr;
+  grid-template-columns:repeat(2,1fr);
 }
 /* ABANDONAR LIGA — solo tiene sentido dentro de Liga Manager. */
 body.liga-manager-screen #profileAbandonarLigaWrap{

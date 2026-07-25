@@ -6171,18 +6171,25 @@ function initFirebaseAuth(){
   };
 
   window.switchProfileTab=function(tab){
+    const enLigaManager=document.body.classList.contains('liga-manager-screen');
     const tabs={
-      stats:        {btn:$id("profileTabStats"),        pane:$id("profileStatsPane")},
+      stats:        {btn:$id("profileTabStats"),        pane:$id(enLigaManager?"lmProfileStatsPane":"profileStatsPane")},
       user:         {btn:$id("profileTabUser"),         pane:$id("profileUserPane")},
       upgrades:     {btn:$id("profileTabUpgrades"),     pane:$id("profileUpgradesPane")},
       notes:        {btn:$id("profileTabNotes"),        pane:$id("profileNotesPane")},
       achievements: {btn:$id("profileTabAchievements"), pane:$id("profileAchievementsPane")},
     };
+    // El panel del OTRO modo (el que no toca ahora) se desactiva a mano,
+    // porque ambos comparten la misma pestaña ESTADÍSTICAS pero viven en
+    // dos <div> distintos.
+    const paneAjeno=$id(enLigaManager?"profileStatsPane":"lmProfileStatsPane");
+    if(paneAjeno) paneAjeno.classList.remove('profile-tab-pane-active');
     Object.entries(tabs).forEach(([key,{btn,pane}])=>{
       const active=(key===tab);
       btn?.classList.toggle("auth-tab-active", active);
       pane?.classList.toggle("profile-tab-pane-active", active);
     });
+    if(tab==='stats' && enLigaManager && typeof window.renderLigaManagerProfileStats==='function') window.renderLigaManagerProfileStats();
     if(tab==='upgrades'){ renderUpgradesTab(); hideGoatPointsBadge(); }
     if(tab==='notes'){ renderSkillsTab(); const sb=$id('skillsBadge'); if(sb) sb.style.display='none'; }
     if(tab==='achievements'){

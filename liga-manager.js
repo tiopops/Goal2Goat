@@ -5034,7 +5034,7 @@
             <button id="lmAtenderUrgente" class="mode-card-btn mode-card-btn-gold">ATENDER (sumar ${notif.dificultad}+)</button>
           </div>` : ''}
           ${renderNivelesEquipoHTML()}
-          <div class="lm-staff-bar-capital" style="justify-content:center;margin:10px 0 8px" title="Compartido con el resto del cuerpo técnico"><span><i class="ph ph-bold ph-dice-five"></i> DADOS: <strong>${state.diceAvailable}</strong></span><span><i class="ph ph-bold ph-arrows-clockwise"></i> RERROLLS: <strong>${state.dadoRerollsDisponibles||0}</strong></span><span><i class="ph ph-bold ph-cards"></i> CAMBIOS: <strong>${state.medicoCambioUsado?0:1}/1</strong></span></div>
+          <div class="lm-staff-bar-capital" style="justify-content:center;margin:10px 0 8px"><span><i class="ph ph-bold ph-dice-five"></i> DADOS: <strong>${state.diceAvailable}</strong></span><span><i class="ph ph-bold ph-arrows-clockwise"></i> RERROLLS: <strong>${state.dadoRerollsDisponibles||0}</strong></span><span><i class="ph ph-bold ph-cards"></i> CAMBIOS: <strong>${state.medicoCambioUsado?0:1}/1</strong></span></div>
           <div class="med-card-grid">${cartasHTML}</div>
           <div class="lm-popup-actions lm-popup-actions-compact">
             ${mostrarInfoHTML()}
@@ -5280,7 +5280,7 @@
           ${xCerrarHTML()}
           <div class="lm-dilemma-title"><i class="ph ph-bold ph-flag-pennant"></i> MANTENIMIENTO Y SEGURIDAD</div>
           ${renderNivelesMantenimientoHTML()}
-          <div class="lm-staff-bar-capital" style="justify-content:center;margin:10px 0 8px" title="Compartido con el resto del cuerpo técnico"><span><i class="ph ph-bold ph-dice-five"></i> DADOS: <strong>${state.diceAvailable}</strong></span><span><i class="ph ph-bold ph-arrows-clockwise"></i> RERROLLS: <strong>${state.dadoRerollsDisponibles||0}</strong></span><span><i class="ph ph-bold ph-cards"></i> CAMBIOS: <strong>${state.mantenimientoCambioUsado?0:1}/1</strong></span></div>
+          <div class="lm-staff-bar-capital" style="justify-content:center;margin:10px 0 8px"><span><i class="ph ph-bold ph-dice-five"></i> DADOS: <strong>${state.diceAvailable}</strong></span><span><i class="ph ph-bold ph-arrows-clockwise"></i> RERROLLS: <strong>${state.dadoRerollsDisponibles||0}</strong></span><span><i class="ph ph-bold ph-cards"></i> CAMBIOS: <strong>${state.mantenimientoCambioUsado?0:1}/1</strong></span></div>
           <div class="med-card-grid">${cartasHTML}</div>
           <div class="lm-popup-actions lm-popup-actions-compact">
             ${mostrarInfoHTML()}
@@ -5501,7 +5501,7 @@
             <div class="lm-aforo-nota">Más caro = más ingreso por entrada, pero menos afición vendrá a verte (se nota menos cuanto más nivel tengas en Relaciones con la Afición).</div>
           </div>
           ${renderNivelesDGHTML()}
-          <div class="lm-staff-bar-capital" style="justify-content:center;margin:10px 0 8px" title="Compartido con el resto del cuerpo técnico"><span><i class="ph ph-bold ph-dice-five"></i> DADOS: <strong>${state.diceAvailable}</strong></span><span><i class="ph ph-bold ph-arrows-clockwise"></i> RERROLLS: <strong>${state.dadoRerollsDisponibles||0}</strong></span><span><i class="ph ph-bold ph-cards"></i> CAMBIOS: <strong>${state.directorGeneralCambioUsado?0:1}/1</strong></span></div>
+          <div class="lm-staff-bar-capital" style="justify-content:center;margin:10px 0 8px"><span><i class="ph ph-bold ph-dice-five"></i> DADOS: <strong>${state.diceAvailable}</strong></span><span><i class="ph ph-bold ph-arrows-clockwise"></i> RERROLLS: <strong>${state.dadoRerollsDisponibles||0}</strong></span><span><i class="ph ph-bold ph-cards"></i> CAMBIOS: <strong>${state.directorGeneralCambioUsado?0:1}/1</strong></span></div>
           <div class="med-card-grid">${cartasHTML}</div>
           <div class="lm-popup-actions lm-popup-actions-compact">
             ${mostrarInfoHTML()}
@@ -5796,7 +5796,7 @@
           </div>
           <button type="button" class="mode-card-btn mode-card-btn-secondary" id="lmInfoPlantillaDDBtn" style="width:100%;margin:10px 0"><i class="ph ph-bold ph-scroll"></i> INFORMACIÓN DE LA PLANTILLA</button>
           ${renderNivelesDDHTML()}
-          <div class="lm-staff-bar-capital" style="justify-content:center;margin:10px 0 8px" title="Compartido con el resto del cuerpo técnico"><span><i class="ph ph-bold ph-dice-five"></i> DADOS: <strong>${state.diceAvailable}</strong></span><span><i class="ph ph-bold ph-arrows-clockwise"></i> RERROLLS: <strong>${state.dadoRerollsDisponibles||0}</strong></span><span><i class="ph ph-bold ph-cards"></i> CAMBIOS: <strong>${state.directorDeportivoCambioUsado?0:1}/1</strong></span></div>
+          <div class="lm-staff-bar-capital" style="justify-content:center;margin:10px 0 8px"><span><i class="ph ph-bold ph-dice-five"></i> DADOS: <strong>${state.diceAvailable}</strong></span><span><i class="ph ph-bold ph-arrows-clockwise"></i> RERROLLS: <strong>${state.dadoRerollsDisponibles||0}</strong></span><span><i class="ph ph-bold ph-cards"></i> CAMBIOS: <strong>${state.directorDeportivoCambioUsado?0:1}/1</strong></span></div>
           <div class="med-card-grid">${cartasHTML}</div>
           <div class="lm-popup-actions lm-popup-actions-compact">
             ${mostrarInfoHTML()}
@@ -6203,7 +6203,7 @@
           <div class="lm-dilemma-title"><i class="ph ph-bold ph-barbell"></i> PREPARADOR FÍSICO</div>
           ${renderNivelesPFHTML()}
           ${renderPlanEntrenamientoResumenHTML()}
-          <div class="lm-staff-bar-capital" style="justify-content:center;margin:10px 0 8px" title="Compartido con el resto del cuerpo técnico"><span><i class="ph ph-bold ph-dice-five"></i> DADOS: <strong>${state.diceAvailable}</strong></span><span><i class="ph ph-bold ph-arrows-clockwise"></i> RERROLLS: <strong>${state.dadoRerollsDisponibles||0}</strong></span><span><i class="ph ph-bold ph-cards"></i> CAMBIOS: <strong>${state.preparadorFisicoCambioUsado?0:1}/1</strong></span></div>
+          <div class="lm-staff-bar-capital" style="justify-content:center;margin:10px 0 8px"><span><i class="ph ph-bold ph-dice-five"></i> DADOS: <strong>${state.diceAvailable}</strong></span><span><i class="ph ph-bold ph-arrows-clockwise"></i> RERROLLS: <strong>${state.dadoRerollsDisponibles||0}</strong></span><span><i class="ph ph-bold ph-cards"></i> CAMBIOS: <strong>${state.preparadorFisicoCambioUsado?0:1}/1</strong></span></div>
           <div class="med-card-grid">${cartasHTML}</div>
           <div class="lm-popup-actions lm-popup-actions-compact">
             ${mostrarInfoHTML()}
@@ -6575,6 +6575,43 @@
   }
 
   /* ---------- 14. Inicialización ---------- */
+  // Rellena el panel ESTADÍSTICAS del menú de perfil con los datos
+  // reales de la temporada de Liga Manager en curso — mismo estilo que
+  // Copa Leyendas, pero con sus propios números.
+  function renderLigaManagerProfileStats(){
+    if(!state || !state.setupComplete) return;
+    const set=(id,val)=>{ const el=document.getElementById(id); if(el) el.textContent=val; };
+    let pj=0,pg=0,pe=0,pp=0,gf=0,gc=0;
+    for(let j=0;j<state.jornadaActual-1;j++){
+      (state.calendario[j]||[]).forEach(partido=>{
+        if(partido.home.id!=='lm_0' && partido.away.id!=='lm_0') return;
+        const key=j+'-'+partido.home.id+'-'+partido.away.id;
+        const res=state.resultados[key];
+        if(!res) return;
+        pj++;
+        const esLocal=partido.home.id==='lm_0';
+        const misGoles=esLocal?res.home:res.away, susGoles=esLocal?res.away:res.home;
+        gf+=misGoles; gc+=susGoles;
+        if(misGoles>susGoles) pg++; else if(misGoles===susGoles) pe++; else pp++;
+      });
+    }
+    const clasif=calcularClasificacion();
+    const posicion=clasif.findIndex(t=>t.id==='lm_0')+1;
+    set('lmpstat-jornada', Math.min(state.jornadaActual,38)+'/38');
+    set('lmpstat-posicion', posicion>0?(posicion+'º'):'—');
+    set('lmpstat-games', pj);
+    set('lmpstat-wins', pg);
+    set('lmpstat-draws', pe);
+    set('lmpstat-losses', pp);
+    set('lmpstat-gf', gf);
+    set('lmpstat-ga', gc);
+    set('lmpstat-plantilla', (state.plantilla||[]).length);
+    const racha=state.rachaResultados||0;
+    set('lmpstat-racha', racha===0 ? '—' : (racha>0 ? `${racha}V` : `${Math.abs(racha)}D`));
+    set('lmpstat-capital', formatoDinero(state.capital||0));
+  }
+  window.renderLigaManagerProfileStats = renderLigaManagerProfileStats;
+
   function init(){
     state=cargarEstado();
     setupStep=1;
