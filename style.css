@@ -1126,15 +1126,6 @@ body.dark-theme .settings-item:hover{background:var(--row-hover);color:var(--gol
 .profile-stat-card.best .pstat-val{color:var(--gold)}
 .pstat-label{font-size:8px;color:var(--text-muted);letter-spacing:.8px;text-transform:uppercase}
 
-/* Liga Manager tiene 2 tarjetas más que Copa Leyendas en ESTADÍSTICAS
-   (jornada + clasificación) — se compacta un poco para que quepa sin
-   scroll vertical en el popup. */
-#lmProfileStatsPane .stats-section-label{margin:8px 0 4px}
-#lmProfileStatsPane .stats-section-label:first-child{margin-top:0}
-#lmProfileStatsPane .profile-stats-grid{margin:4px 0;gap:5px}
-#lmProfileStatsPane .profile-stat-card{padding:8px 6px;gap:2px}
-#lmProfileStatsPane .pstat-val{font-size:22px}
-
 /* VOLVER button in player selection banner */
 .spb-back-btn{
   margin-top:8px;width:100%;
@@ -3051,6 +3042,50 @@ body.liga-manager-screen .ranking-btn-label-lm{display:inline}
 }
 #lmPitchBox svg{width:100%;height:100%;display:block}
 .lm-pitch-caption{font-size:10px;color:#666;text-align:center;margin-top:8px;line-height:1.4;max-width:420px}
+
+.lm-pitch-lupa-btn{
+  position:absolute;top:8px;right:8px;z-index:6;width:32px;height:32px;
+  border-radius:50%;border:1px solid rgba(255,255,255,.25);
+  background:rgba(10,12,10,.55);backdrop-filter:blur(3px);color:#fff;
+  display:flex;align-items:center;justify-content:center;font-size:15px;
+  cursor:pointer;transition:background .15s ease,transform .15s ease;
+}
+.lm-pitch-lupa-btn:hover{background:rgba(201,162,39,.85);color:#1a1400;transform:scale(1.08)}
+
+/* Popup de información del club — nivel de estadio + estadísticas
+   generales, diseño profesional con imagen a todo lo ancho arriba. */
+#lmInfoClubOverlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;
+  display:flex;align-items:center;justify-content:center;overflow-y:auto;padding:20px 0;
+}
+.lm-infoclub-card{ max-width:480px!important;text-align:left; }
+.lm-infoclub-estadio{ margin:4px 0 14px;text-align:center; }
+.lm-infoclub-estadio img{
+  width:100%;border-radius:8px;display:block;
+  box-shadow:0 10px 26px rgba(0,0,0,.5);border:1px solid rgba(201,162,39,.35);
+}
+.lm-infoclub-estadio-nivel{
+  font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:1.5px;font-size:15px;
+  color:var(--gold);margin-top:10px;display:flex;align-items:center;justify-content:center;gap:6px;
+}
+.lm-infoclub-estrellas-bar{
+  width:100%;height:6px;background:#222;border-radius:4px;overflow:hidden;margin-top:8px;
+}
+.lm-infoclub-estrellas-fill{
+  height:100%;background:linear-gradient(90deg,#7a6115,var(--gold));border-radius:4px;
+  transition:width .4s ease;
+}
+.lm-infoclub-estrellas-txt{ font-size:10px;color:#999;margin-top:5px; }
+.lm-infoclub-stats-grid{
+  display:grid;grid-template-columns:1fr 1fr;gap:8px;
+}
+.lm-infoclub-stat{
+  display:flex;align-items:center;gap:10px;background:#1c2023;border:1px solid #2a2f32;
+  border-radius:8px;padding:10px 12px;
+}
+.lm-infoclub-stat i{font-size:20px;color:var(--gold);flex-shrink:0}
+.lm-infoclub-stat-val{font-family:'Bebas Neue',Impact,sans-serif;font-size:16px;color:#fff;line-height:1.1}
+.lm-infoclub-stat-label{font-size:9px;color:#888;letter-spacing:.5px;text-transform:uppercase;margin-top:1px}
 
 /* Slots de posición sobre el campo — CALCO exacto de Copa Leyendas: el
    propio campo reutiliza las clases globales .position/.player-info/

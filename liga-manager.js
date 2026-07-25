@@ -696,7 +696,7 @@
     {id:'lm_dice', phIcon:'ph-dice-five', name:'DADO TÉCNICO EXTRA', desc:'DADOS DEL CUERPO TÉCNICO POR PARTIDO',
       baseCost:5, maxLevel:5, baseValue:5, tooltip:(lvl)=>`${5+lvl} dados por partido`},
     {id:'lm_rerolls', phIcon:'ph-arrows-clockwise', name:'RERROLLS EXTRA', desc:'REROLLS DE DADO POR PARTIDO',
-      baseCost:5, maxLevel:3, baseValue:1, tooltip:(lvl)=>`${1+lvl} rerroll${lvl?'s':''} por partido`},
+      baseCost:5, maxLevel:5, baseValue:1, tooltip:(lvl)=>`${1+lvl} rerroll${lvl?'s':''} por partido`},
     {id:'lm_cardswap', phIcon:'ph-cards', name:'CAMBIO DE CARTA EXTRA', desc:'CAMBIOS DE CARTA POR DEPARTAMENTO Y PARTIDO',
       baseCost:5, maxLevel:3, baseValue:1, tooltip:(lvl)=>`${1+lvl} cambio${lvl>0?'s':''} de carta por partido`},
   ];
@@ -2920,6 +2920,90 @@
     }
   };
 
+  // Suma todas las estrellas de nivel conseguidas en los proyectos de
+  // los 5 departamentos del cuerpo técnico (máximo 3★ cada track) —
+  // determina el nivel visual del estadio: 5 niveles de imagen, y solo
+  // tenerlas TODAS al máximo da el nivel 5.
+  function calcularEstrellasClub(){
+    const grupos=[
+      state.medicoNiveles, state.mantenimientoNiveles, state.directorGeneralNiveles,
+      state.directorDeportivoNiveles, state.preparadorFisicoNiveles
+    ];
+    let total=0, max=0;
+    grupos.forEach(g=>{
+      if(!g) return;
+      Object.values(g).forEach(v=>{ total+=(v||0); max+=NIVEL_MAXIMO_EQUIPO; });
+    });
+    const ratio = max>0 ? total/max : 0;
+    let nivelEstadio;
+    if(ratio>=1) nivelEstadio=5;
+    else if(ratio>=0.75) nivelEstadio=4;
+    else if(ratio>=0.5) nivelEstadio=3;
+    else if(ratio>=0.25) nivelEstadio=2;
+    else nivelEstadio=1;
+    return {total, max, nivelEstadio};
+  }
+  function abrirInfoClub(){
+    const overlay=document.createElement('div');
+    overlay.id='lmInfoClubOverlay';
+    const {total, max, nivelEstadio}=calcularEstrellasClub();
+    const estadio=state.estadio||{campo:100,satisfaccion:0,aforoTotal:0,ultimaAsistencia:null};
+    const monedaInfo=MONEDAS[state.moneda]||MONEDAS.EUR;
+    overlay.innerHTML=`
+      <div class="lm-dilemma-card lm-infoclub-card">
+        ${xCerrarHTML()}
+        <div class="lm-dilemma-title"><i class="ph ph-bold ph-magnifying-glass"></i> INFORMACIÓN DEL CLUB</div>
+        <div class="lm-infoclub-estadio">
+          <img src="assets/estadio/estadio_nivel${nivelEstadio}.png" alt="Estadio nivel ${nivelEstadio}">
+          <div class="lm-infoclub-estadio-nivel"><i class="ph ph-bold ph-star"></i> NIVEL DE ESTADIO ${nivelEstadio}/5</div>
+          <div class="lm-infoclub-estrellas-bar"><div class="lm-infoclub-estrellas-fill" style="width:${Math.min(100,(total/max)*100)}%"></div></div>
+          <div class="lm-infoclub-estrellas-txt">${total}/${max} estrellas de proyectos conseguidas</div>
+        </div>
+        <div class="lm-infoclub-stats-grid">
+          <div class="lm-infoclub-stat">
+            <i class="ph ph-bold ph-coins"></i>
+            <div><div class="lm-infoclub-stat-val">${formatoDinero(state.capital||0)}</div><div class="lm-infoclub-stat-label">CAPITAL</div></div>
+          </div>
+          <div class="lm-infoclub-stat">
+            <i class="ph ph-bold ph-users"></i>
+            <div><div class="lm-infoclub-stat-val">${(estadio.aforoTotal||0).toLocaleString('es-ES')}</div><div class="lm-infoclub-stat-label">AFORO MÁXIMO</div></div>
+          </div>
+          <div class="lm-infoclub-stat">
+            <i class="ph ph-bold ph-ticket"></i>
+            <div><div class="lm-infoclub-stat-val">${(estadio.ultimaAsistencia||0).toLocaleString('es-ES')}</div><div class="lm-infoclub-stat-label">ÚLTIMA ASISTENCIA</div></div>
+          </div>
+          <div class="lm-infoclub-stat">
+            <i class="ph ph-bold ph-money"></i>
+            <div><div class="lm-infoclub-stat-val">${monedaInfo.symbol}${state.precioEntrada||0}</div><div class="lm-infoclub-stat-label">PRECIO ENTRADA</div></div>
+          </div>
+          <div class="lm-infoclub-stat">
+            <i class="ph ph-bold ph-smiley"></i>
+            <div><div class="lm-infoclub-stat-val">${estadio.satisfaccion||0}</div><div class="lm-infoclub-stat-label">SATISFACCIÓN AFICIÓN</div></div>
+          </div>
+          <div class="lm-infoclub-stat">
+            <i class="ph ph-bold ph-heartbeat"></i>
+            <div><div class="lm-infoclub-stat-val">${state.moral||0}</div><div class="lm-infoclub-stat-label">MORAL DEL EQUIPO</div></div>
+          </div>
+          <div class="lm-infoclub-stat">
+            <i class="ph ph-bold ph-grass"></i>
+            <div><div class="lm-infoclub-stat-val">${estadio.campo||0}%</div><div class="lm-infoclub-stat-label">ESTADO DEL CÉSPED</div></div>
+          </div>
+          <div class="lm-infoclub-stat">
+            <i class="ph ph-bold ph-users-three"></i>
+            <div><div class="lm-infoclub-stat-val">${(state.plantilla||[]).length}</div><div class="lm-infoclub-stat-label">PLANTILLA</div></div>
+          </div>
+        </div>
+        <div class="lm-popup-actions"><button id="lmInfoClubCerrar" class="mode-card-btn mode-card-btn-gold">CERRAR</button></div>
+      </div>`;
+    document.getElementById('ligaManagerScreen').appendChild(overlay);
+    habilitarCierreOverlay(overlay, ()=>overlay.remove());
+    overlay.querySelector('[data-cerrar-x]').addEventListener('click', ()=>overlay.remove());
+    overlay.querySelector('#lmInfoClubCerrar').addEventListener('click', ()=>{
+      if(typeof window.playSound==='function') window.playSound('select');
+      overlay.remove();
+    });
+  }
+
   function abrirOnceRival(rival){
     const overlay=document.createElement('div');
     overlay.id='lmOnceRivalOverlay';
@@ -4323,7 +4407,7 @@
         </div>
 
         <div class="lm-center-panel" style="${columnaOrderStyle('center')}">${columnaControlesHTML('center')}<div class="lm-scroll-hint" data-scroll-hint title="Hay más contenido si bajas"><i class="ph ph-bold ph-caret-down"></i></div>
-          <div id="lmPitchBox">${PITCH_SVG}<div id="lmCampoLayer" style="opacity:${campoOpacidadDesgaste(state.estadio?state.estadio.campo:100)}"></div><div id="lmWeatherLayer"></div>${formacionActual().slots.map(def=>{
+          <div id="lmPitchBox"><button type="button" id="lmInfoClubBtn" class="lm-pitch-lupa-btn" title="Información del club"><i class="ph ph-bold ph-magnifying-glass"></i></button>${PITCH_SVG}<div id="lmCampoLayer" style="opacity:${campoOpacidadDesgaste(state.estadio?state.estadio.campo:100)}"></div><div id="lmWeatherLayer"></div>${formacionActual().slots.map(def=>{
             const pid=state.alineacion&&state.alineacion[def.slot];
             const jugador=pid?state.plantilla.find(p=>p.id===pid):null;
             const vacio=!jugador;
@@ -4702,6 +4786,11 @@
         rechazarOfertasTraspaso(mailId);
         render();
       });
+    });
+    const btnInfoClub=document.getElementById('lmInfoClubBtn');
+    if(btnInfoClub) btnInfoClub.addEventListener('click', ()=>{
+      if(typeof window.playSound==='function') window.playSound('select');
+      abrirInfoClub();
     });
     root.querySelectorAll('[data-ver-finanzas]').forEach(btn=>{
       btn.addEventListener('click', (e)=>{
