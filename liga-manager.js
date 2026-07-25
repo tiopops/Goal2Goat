@@ -3332,6 +3332,8 @@
       if(!state.jugadoresRealesFichados) state.jugadoresRealesFichados=[];
       state.jugadoresRealesFichados.push({equipoId:jugador.equipoOrigenId, nombre:jugador.name});
     }
+    if(!state.directorDeportivoHistorial) state.directorDeportivoHistorial=[];
+    state.directorDeportivoHistorial.unshift({tipo:'fichaje', nombre:jugador.name, position:jugador.position, overall:jugador.overall, estrella:!!jugador.esFichajeEstrella, procedencia:jugador.equipoOrigenName||null, jornada:state.jornadaActual});
     guardarEstado();
   }
   // Poner en venta / ofertas de traspaso — blindado igual que antes para
@@ -3410,6 +3412,8 @@
     if(state.alineacion){ Object.keys(state.alineacion).forEach(k=>{ if(state.alineacion[k]===jugador.id) delete state.alineacion[k]; }); }
     state.capital=(state.capital||0)+oferta.monto;
     registrarMovimientoFinanciero('Traspaso de '+jugador.name+' a '+oferta.club, oferta.monto, state.jornadaActual);
+    if(!state.directorDeportivoHistorial) state.directorDeportivoHistorial=[];
+    state.directorDeportivoHistorial.unshift({tipo:'venta', nombre:jugador.name, position:jugador.position, overall:jugador.overall, destino:oferta.club, monto:oferta.monto, jornada:state.jornadaActual});
     mail.resuelto=true;
     mail.resultadoTexto=`Aceptaste la oferta de ${oferta.club} por ${formatoDinero(oferta.monto)}.`;
     guardarEstado();
@@ -5030,7 +5034,7 @@
             <button id="lmAtenderUrgente" class="mode-card-btn mode-card-btn-gold">ATENDER (sumar ${notif.dificultad}+)</button>
           </div>` : ''}
           ${renderNivelesEquipoHTML()}
-          <div class="lm-setup-desc" style="text-align:center;margin:10px 0 8px">dados disponibles este partido: <strong>${state.diceAvailable}</strong> (compartidos con el resto del cuerpo técnico) · cambios de carta: <strong>${state.medicoCambioUsado?0:1}/1</strong> · rerolls de dado hoy: <strong>${state.dadoRerollsDisponibles||0}/1</strong></div>
+          <div class="lm-staff-bar-capital" style="justify-content:center;margin:10px 0 8px" title="Compartido con el resto del cuerpo técnico"><span><i class="ph ph-bold ph-dice-five"></i> DADOS: <strong>${state.diceAvailable}</strong></span><span><i class="ph ph-bold ph-arrows-clockwise"></i> RERROLLS: <strong>${state.dadoRerollsDisponibles||0}</strong></span><span><i class="ph ph-bold ph-cards"></i> CAMBIOS: <strong>${state.medicoCambioUsado?0:1}/1</strong></span></div>
           <div class="med-card-grid">${cartasHTML}</div>
           <div class="lm-popup-actions lm-popup-actions-compact">
             ${mostrarInfoHTML()}
@@ -5276,7 +5280,7 @@
           ${xCerrarHTML()}
           <div class="lm-dilemma-title"><i class="ph ph-bold ph-flag-pennant"></i> MANTENIMIENTO Y SEGURIDAD</div>
           ${renderNivelesMantenimientoHTML()}
-          <div class="lm-setup-desc" style="text-align:center;margin:10px 0 8px">dados disponibles este partido: <strong>${state.diceAvailable}</strong> (compartidos con el resto del cuerpo técnico) · cambios de carta: <strong>${state.mantenimientoCambioUsado?0:1}/1</strong> · rerolls de dado hoy: <strong>${state.dadoRerollsDisponibles||0}/1</strong></div>
+          <div class="lm-staff-bar-capital" style="justify-content:center;margin:10px 0 8px" title="Compartido con el resto del cuerpo técnico"><span><i class="ph ph-bold ph-dice-five"></i> DADOS: <strong>${state.diceAvailable}</strong></span><span><i class="ph ph-bold ph-arrows-clockwise"></i> RERROLLS: <strong>${state.dadoRerollsDisponibles||0}</strong></span><span><i class="ph ph-bold ph-cards"></i> CAMBIOS: <strong>${state.mantenimientoCambioUsado?0:1}/1</strong></span></div>
           <div class="med-card-grid">${cartasHTML}</div>
           <div class="lm-popup-actions lm-popup-actions-compact">
             ${mostrarInfoHTML()}
@@ -5497,7 +5501,7 @@
             <div class="lm-aforo-nota">Más caro = más ingreso por entrada, pero menos afición vendrá a verte (se nota menos cuanto más nivel tengas en Relaciones con la Afición).</div>
           </div>
           ${renderNivelesDGHTML()}
-          <div class="lm-setup-desc" style="text-align:center;margin:10px 0 8px">dados disponibles este partido: <strong>${state.diceAvailable}</strong> (compartidos con el resto del cuerpo técnico) · cambios de carta: <strong>${state.directorGeneralCambioUsado?0:1}/1</strong> · rerolls de dado hoy: <strong>${state.dadoRerollsDisponibles||0}/1</strong></div>
+          <div class="lm-staff-bar-capital" style="justify-content:center;margin:10px 0 8px" title="Compartido con el resto del cuerpo técnico"><span><i class="ph ph-bold ph-dice-five"></i> DADOS: <strong>${state.diceAvailable}</strong></span><span><i class="ph ph-bold ph-arrows-clockwise"></i> RERROLLS: <strong>${state.dadoRerollsDisponibles||0}</strong></span><span><i class="ph ph-bold ph-cards"></i> CAMBIOS: <strong>${state.directorGeneralCambioUsado?0:1}/1</strong></span></div>
           <div class="med-card-grid">${cartasHTML}</div>
           <div class="lm-popup-actions lm-popup-actions-compact">
             ${mostrarInfoHTML()}
@@ -5633,7 +5637,7 @@
   const NIVELES_DD_INFO=[
     {track:'calidadOjeo',     label:'Red de Ojeadores',        icon:'ph-binoculars',      desc:'Calidad de los jugadores que salen en los sobres'},
     {track:'ahorroSalarial',  label:'Negociación de Contratos',icon:'ph-handshake',       desc:'Ahorro en el salario de los jugadores fichados por sobre'},
-    {track:'sobresFichajes',  label:'Red de Ojeadores Activa', icon:'ph-envelope-open',   desc:'Acorta el tiempo entre sobres — llegan solos por correo, no se abren desde aquí'},
+    {track:'sobresFichajes',  label:'Red de Ojeadores Activa', icon:'ph-envelope-open',   desc:'Acorta el tiempo entre sobres — Los recibirás por correo cuando estén disponibles'},
     {track:'costeSobres',     label:'Formación de Cantera',    icon:'ph-graduation-cap',  desc:'Sube el nivel base de los canteranos que llegan por sobre'}
   ];
   function renderNivelesDDHTML(){
@@ -5782,10 +5786,10 @@
         <div class="lm-dilemma-card lm-dilemma-card-dd" style="max-width:640px">
           ${xCerrarHTML()}
           <div class="lm-dilemma-title"><i class="ph ph-bold ph-binoculars"></i> DIRECTOR DEPORTIVO</div>
+          <button type="button" class="mode-card-btn mode-card-btn-secondary" id="lmInfoPlantillaDDBtn" style="width:100%;margin-bottom:10px"><i class="ph ph-bold ph-scroll"></i> INFORMACIÓN DE LA PLANTILLA</button>
           <div class="lm-capital-box">
-            <i class="ph ph-bold ph-coins lm-capital-icon"></i>
+            <i class="ph ph-bold ph-magnifying-glass lm-capital-icon"></i>
             <div class="lm-capital-info">
-              <div class="lm-capital-title"><span>CAPITAL DEL CLUB</span><strong class="${(state.capital||0)<0?'lm-capital-neg':''}">${formatoDinero(state.capital)}</strong></div>
               <div class="lm-aforo-nota">${(()=>{
                 const pendientes=(state.sobresFichajesPendientes||[]).length;
                 if(pendientes>0) return `Tienes ${pendientes} sobre${pendientes>1?'s':''} esperando en el correo interno`;
@@ -5804,7 +5808,7 @@
             <div class="lm-aforo-nota">Los ojeadores se centrarán en esta posición para los próximos sobres que abras.</div>
           </div>
           ${renderNivelesDDHTML()}
-          <div class="lm-setup-desc" style="text-align:center;margin:10px 0 8px">dados disponibles este partido: <strong>${state.diceAvailable}</strong> (compartidos con el resto del cuerpo técnico) · cambios de carta: <strong>${state.directorDeportivoCambioUsado?0:1}/1</strong> · rerolls de dado hoy: <strong>${state.dadoRerollsDisponibles||0}/1</strong></div>
+          <div class="lm-staff-bar-capital" style="justify-content:center;margin:10px 0 8px" title="Compartido con el resto del cuerpo técnico"><span><i class="ph ph-bold ph-dice-five"></i> DADOS: <strong>${state.diceAvailable}</strong></span><span><i class="ph ph-bold ph-arrows-clockwise"></i> RERROLLS: <strong>${state.dadoRerollsDisponibles||0}</strong></span><span><i class="ph ph-bold ph-cards"></i> CAMBIOS: <strong>${state.directorDeportivoCambioUsado?0:1}/1</strong></span></div>
           <div class="med-card-grid">${cartasHTML}</div>
           <div class="lm-popup-actions lm-popup-actions-compact">
             ${mostrarInfoHTML()}
@@ -5812,6 +5816,11 @@
           </div>
         </div>`;
         wireMostrarInfoHold(overlay, abrirSalariosDD, 'lmSalariosOverlay');
+        const btnInfoPlantillaDD=overlay.querySelector('#lmInfoPlantillaDDBtn');
+        if(btnInfoPlantillaDD) btnInfoPlantillaDD.addEventListener('click', ()=>{
+          if(typeof window.playSound==='function') window.playSound('select');
+          abrirSalariosDD(false);
+        });
 
       const xBtnDD=overlay.querySelector('[data-cerrar-x]');
       const posicionOjeoSelect=document.getElementById('lmPosicionOjeoSelect');
@@ -6013,7 +6022,24 @@
       overlay.innerHTML=`
         <div class="lm-dilemma-card lm-dilemma-card-dd" style="max-width:640px;text-align:left">
           ${xCerrarHTML()}
-          <div class="lm-dilemma-title"><i class="ph ph-bold ph-file-text"></i> SALARIOS DE LA PLANTILLA</div>
+          <div class="lm-dilemma-title"><i class="ph ph-bold ph-file-text"></i> INFORMACIÓN DE LA PLANTILLA</div>
+          <div class="lm-historial-dd-wrap">
+            <div class="lm-historial-dd-titulo"><i class="ph ph-bold ph-clock-counter-clockwise"></i> HISTÓRICO DE FICHAJES Y VENTAS</div>
+            ${(state.directorDeportivoHistorial||[]).length ? `
+            <div class="lm-historial-dd-lista">
+              ${(state.directorDeportivoHistorial||[]).slice(0,12).map(h=>`
+                <div class="lm-historial-dd-item ${h.tipo==='venta'?'lm-historial-dd-venta':'lm-historial-dd-fichaje'}">
+                  <i class="ph ph-bold ${h.tipo==='venta'?'ph-arrow-circle-up':'ph-arrow-circle-down'}"></i>
+                  <div class="lm-historial-dd-texto">
+                    ${h.tipo==='venta'
+                      ? `Vendiste a <strong>${h.nombre}</strong> (${h.position}, ${h.overall}) a ${h.destino} por <strong>${formatoDinero(h.monto)}</strong>`
+                      : `Fichaste a <strong>${h.nombre}</strong> (${h.position}, ${h.overall})${h.estrella?` — fichaje estrella, procedente de ${h.procedencia}`:' desde un sobre'}`}
+                  </div>
+                  <span class="lm-historial-dd-jornada">J${h.jornada}</span>
+                </div>`).join('')}
+            </div>` : `<div class="lm-historial-dd-vacio">Todavía no has fichado ni vendido a nadie esta temporada.</div>`}
+          </div>
+          <div class="lm-dilemma-title" style="margin-top:14px;font-size:15px"><i class="ph ph-bold ph-list-bullets"></i> SALARIOS DE LA PLANTILLA</div>
           <div class="lm-setup-desc" style="text-align:center;margin-bottom:8px">Nómina total: <strong>${formatoDinero(totalNomina)}/mes</strong> · plantilla: <strong>${jugadores.length}</strong> · al poner en venta, el Director Deportivo avisará por correo en 1-3 jornadas con las ofertas que lleguen.</div>
           <div class="lm-salarios-tabla-wrap">
             <table class="lm-salarios-tabla">
@@ -6170,7 +6196,7 @@
           <div class="lm-dilemma-title"><i class="ph ph-bold ph-barbell"></i> PREPARADOR FÍSICO</div>
           ${renderNivelesPFHTML()}
           ${renderPlanEntrenamientoResumenHTML()}
-          <div class="lm-setup-desc" style="text-align:center;margin:10px 0 8px">dados disponibles este partido: <strong>${state.diceAvailable}</strong> (compartidos con el resto del cuerpo técnico) · cambios de carta: <strong>${state.preparadorFisicoCambioUsado?0:1}/1</strong> · rerolls de dado hoy: <strong>${state.dadoRerollsDisponibles||0}/1</strong></div>
+          <div class="lm-staff-bar-capital" style="justify-content:center;margin:10px 0 8px" title="Compartido con el resto del cuerpo técnico"><span><i class="ph ph-bold ph-dice-five"></i> DADOS: <strong>${state.diceAvailable}</strong></span><span><i class="ph ph-bold ph-arrows-clockwise"></i> RERROLLS: <strong>${state.dadoRerollsDisponibles||0}</strong></span><span><i class="ph ph-bold ph-cards"></i> CAMBIOS: <strong>${state.preparadorFisicoCambioUsado?0:1}/1</strong></span></div>
           <div class="med-card-grid">${cartasHTML}</div>
           <div class="lm-popup-actions lm-popup-actions-compact">
             ${mostrarInfoHTML()}
