@@ -6176,15 +6176,15 @@ function initFirebaseAuth(){
       stats:        {btn:$id("profileTabStats"),        pane:$id(enLigaManager?"lmProfileStatsPane":"profileStatsPane")},
       user:         {btn:$id("profileTabUser"),         pane:$id("profileUserPane")},
       upgrades:     {btn:$id("profileTabUpgrades"),     pane:$id(enLigaManager?"lmProfileUpgradesPane":"profileUpgradesPane")},
-      notes:        {btn:$id("profileTabNotes"),        pane:$id("profileNotesPane")},
+      notes:        {btn:$id("profileTabNotes"),        pane:$id(enLigaManager?"lmProfileNotesPane":"profileNotesPane")},
       achievements: {btn:$id("profileTabAchievements"), pane:$id(enLigaManager?"lmProfileAchievementsPane":"profileAchievementsPane")},
     };
     // El panel del OTRO modo (el que no toca ahora) se desactiva a mano,
     // porque ambos comparten la misma pestaña pero viven en dos <div>
-    // distintos (ESTADÍSTICAS, MEJORAS y LOGROS).
+    // distintos (ESTADÍSTICAS, MEJORAS, HABILIDADES y LOGROS).
     const panesAjenos=enLigaManager
-      ? [$id("profileStatsPane"), $id("profileUpgradesPane"), $id("profileAchievementsPane")]
-      : [$id("lmProfileStatsPane"), $id("lmProfileUpgradesPane"), $id("lmProfileAchievementsPane")];
+      ? [$id("profileStatsPane"), $id("profileUpgradesPane"), $id("profileNotesPane"), $id("profileAchievementsPane")]
+      : [$id("lmProfileStatsPane"), $id("lmProfileUpgradesPane"), $id("lmProfileNotesPane"), $id("lmProfileAchievementsPane")];
     panesAjenos.forEach(p=>{ if(p) p.classList.remove('profile-tab-pane-active'); });
     Object.entries(tabs).forEach(([key,{btn,pane}])=>{
       const active=(key===tab);
@@ -6194,7 +6194,8 @@ function initFirebaseAuth(){
     if(tab==='stats' && enLigaManager && typeof window.renderLigaManagerProfileStats==='function') window.renderLigaManagerProfileStats();
     if(tab==='upgrades' && enLigaManager && typeof window.renderLigaManagerUpgradesTab==='function'){ window.renderLigaManagerUpgradesTab(); hideGoatPointsBadge(); }
     else if(tab==='upgrades'){ renderUpgradesTab(); hideGoatPointsBadge(); }
-    if(tab==='notes'){ renderSkillsTab(); const sb=$id('skillsBadge'); if(sb) sb.style.display='none'; }
+    if(tab==='notes' && enLigaManager && typeof window.renderLigaManagerSkillsTab==='function'){ window.renderLigaManagerSkillsTab(); const sb=$id('skillsBadge'); if(sb) sb.style.display='none'; }
+    else if(tab==='notes'){ renderSkillsTab(); const sb=$id('skillsBadge'); if(sb) sb.style.display='none'; }
     if(tab==='achievements' && enLigaManager && typeof window.renderLigaManagerAchievementsTab==='function'){
       window.renderLigaManagerAchievementsTab();
       const ab=$id('achievementsBadge');

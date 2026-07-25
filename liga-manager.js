@@ -428,6 +428,15 @@
       lesiones:lesionesSemana,
       NOMBRE_STAT
     };
+    // Médico de Élite: las lesiones leves se curan solas al terminar la
+    // semana de entrenamiento, sin necesitar carta del médico.
+    if(typeof lmSkillActiva==='function' && lmSkillActiva('lm_medico_elite')){
+      state.plantilla.forEach(p=>{
+        if(p.injured && p.injurySeverity==='leve'){
+          p.injured=false; p.injuryWeeks=0; p.injurySeverity=null; p.injuryFamilia=null;
+        }
+      });
+    }
     guardarEstado();
     return eventosDias;
   }
@@ -699,6 +708,8 @@
       baseCost:5, maxLevel:5, baseValue:1, tooltip:(lvl)=>`${1+lvl} rerroll${lvl?'s':''} por partido`},
     {id:'lm_cardswap', phIcon:'ph-cards', name:'CAMBIO DE CARTA EXTRA', desc:'CAMBIOS DE CARTA POR DEPARTAMENTO Y PARTIDO',
       baseCost:5, maxLevel:3, baseValue:1, tooltip:(lvl)=>`${1+lvl} cambio${lvl>0?'s':''} de carta por partido`},
+    {id:'lm_sobredescuento', phIcon:'ph-percent', name:'REBAJA DE SOBRES', desc:'DESCUENTO AL ABRIR CUALQUIER SOBRE DE FICHAJES',
+      baseCost:5, maxLevel:5, baseValue:0, tooltip:(lvl)=>lvl===0?'Sin descuento':`${lvl*10}% de descuento al abrir sobres`},
   ];
   function lmUpgradeLevelCost(def, toLevel){ return def.baseCost*Math.pow(2, toLevel-1); }
   function lmNivelMejora(id){ return (window._lmUpgradeCache && window._lmUpgradeCache[id]) || 0; }
@@ -706,6 +717,7 @@
   function lmDicePoolPorPartido(){ return LM_UPGRADE_DEFS[1].baseValue + lmNivelMejora('lm_dice'); }
   function lmRerollsPorPartido(){ return LM_UPGRADE_DEFS[2].baseValue + lmNivelMejora('lm_rerolls'); }
   function lmCambiosCartaPorPartido(){ return LM_UPGRADE_DEFS[3].baseValue + lmNivelMejora('lm_cardswap'); }
+  function lmDescuentoSobres(){ return lmNivelMejora('lm_sobredescuento')*0.10; } // 0, .10, .20, .30, .40, .50
   async function lmCargarUpgradeCache(){
     try{
       const user=window._fbAuth && window._fbAuth.currentUser;
@@ -881,6 +893,102 @@
     if(lab) lab.style.display='none';
   }
   window.renderLigaManagerAchievementsTab = renderLigaManagerAchievementsTab;
+
+  // ---- Habilidades de Liga Manager ----
+  // Se activan/desactivan (no tienen niveles), igual que en Copa
+  // Leyendas — comparten la misma moneda (scratchPoints) pero se
+  // guardan en un campo propio (ligaManagerSkills) que no interfiere
+  // con las habilidades de Copa Leyendas.
+  const LM_SKILL_DEFS=[
+    {id:'lm_medico_elite', category:'PLANTILLA', name:'MÉDICO DE ÉLITE', cost:40, phIcon:'ph-first-aid-kit',
+      tooltip:'Las lesiones leves se curan solas al terminar la semana de entrenamiento.'},
+    {id:'lm_negociador', category:'CLUB', name:'NEGOCIADOR NATO', cost:35, phIcon:'ph-handshake',
+      tooltip:'Las ofertas de traspaso que recibes por tus jugadores suben un 15%.'},
+    {id:'lm_ojo_clinico', category:'FICHAJES', name:'OJO CLÍNICO', cost:45, phIcon:'ph-eye',
+      tooltip:'Sube un 50% la probabilidad de que aparezca un fichaje estrella en tus sobres.'},
+    {id:'lm_aficion_fiel', category:'CLUB', name:'AFICIÓN FIEL', cost:30, phIcon:'ph-heart',
+      tooltip:'La satisfacción de la afición nunca cae por debajo de un mínimo, pase lo que pase.'},
+    {id:'lm_recuperacion_expres', category:'PLANTILLA', name:'RECUPERACIÓN EXPRÉS', cost:35, phIcon:'ph-lightning',
+      tooltip:'Las lesiones nuevas duran una semana menos (mínimo 1 semana).'},
+    {id:'lm_capitan_vestuario', category:'PLANTILLA', name:'CAPITÁN DE VESTUARIO', cost:30, phIcon:'ph-shield-star',
+      tooltip:'La moral del equipo nunca cae por debajo de un mínimo tras una derrota.'},
+  ];
+  async function lmCargarSkillsCache(){
+    try{
+      const user=window._fbAuth && window._fbAuth.currentUser;
+      if(!user){ window._lmSkillsCache={}; return; }
+      const snap=await window._fbDb.collection('users').doc(user.uid).get();
+      const data=snap.exists?snap.data():{};
+      window._lmSkillsCache=data.ligaManagerSkills||{};
+    }catch(e){ window._lmSkillsCache=window._lmSkillsCache||{}; }
+  }
+  function lmSkillActiva(id){ return !!(window._lmSkillsCache && window._lmSkillsCache[id]); }
+  async function renderLigaManagerSkillsTab(){
+    const list=document.getElementById('lmSkillsList');
+    const pointsEl=document.getElementById('lmSkillPointsDisplay');
+    if(!list) return;
+    if(!list.children.length) list.innerHTML=`<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:12px">Cargando...</div>`;
+    const user=window._fbAuth && window._fbAuth.currentUser;
+    if(!user){ list.innerHTML=`<div style="text-align:center;padding:20px;color:var(--text-muted)">Inicia sesión para ver las habilidades.</div>`; return; }
+    await lmCargarSkillsCache();
+    let pts=window._lmScratchPoints;
+    if(pts===undefined){
+      const snap=await window._fbDb.collection('users').doc(user.uid).get();
+      pts=(snap.exists?snap.data().scratchPoints:0)||0;
+      window._lmScratchPoints=pts;
+    }
+    if(pointsEl) pointsEl.textContent=pts;
+    list.innerHTML='';
+    list.style.overflowX='hidden';
+    list.style.width='100%';
+    list.style.paddingRight='12px';
+    const categorias=[...new Set(LM_SKILL_DEFS.map(d=>d.category))];
+    categorias.forEach(cat=>{
+      const label=document.createElement('div');
+      label.style.cssText='font-family:"Bebas Neue",Impact,sans-serif;font-size:11px;letter-spacing:2px;color:var(--text-muted);border-bottom:1px solid var(--line);padding-bottom:4px;margin:12px 0 8px';
+      label.textContent=cat;
+      list.appendChild(label);
+      const grid=document.createElement('div');
+      grid.className='skill-grid';
+      grid.style.cssText='display:grid;grid-template-columns:1fr 1fr;gap:6px';
+      list.appendChild(grid);
+      LM_SKILL_DEFS.filter(d=>d.category===cat).forEach(def=>{
+        const active=lmSkillActiva(def.id);
+        const btn=document.createElement('button');
+        btn.className='skill-toggle-btn';
+        btn.dataset.lmid=def.id;
+        btn.style.cssText=`display:flex;flex-direction:column;align-items:center;justify-content:space-between;gap:0;border:2px solid ${active?'var(--gold)':'var(--line)'};background:${active?'rgba(201,162,39,.12)':'var(--panel)'};color:${active?'var(--gold)':'var(--text)'};cursor:pointer;transition:.15s;text-align:center;width:100%;box-sizing:border-box;overflow:hidden;height:200px`;
+        const iconPart=`<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;padding:12px 8px 8px;flex:1">
+          <i class="ph ph-bold ${def.phIcon}" style="font-size:26px;color:${active?'var(--gold)':'var(--accent)'}"></i>
+          <span style="font-family:'Bebas Neue',Impact,sans-serif;font-size:13px;letter-spacing:.8px;color:${active?'var(--gold)':'var(--text)'};line-height:1.1">${def.name}</span>
+          <span style="font-size:12px;color:${active?'var(--accent)':'var(--text-muted)'};line-height:1.4;padding:0 4px">${def.tooltip}</span>
+        </div>`;
+        const footerPart=`<div style="width:100%;padding:6px;background:${active?'rgba(201,162,39,.15)':'rgba(0,0,0,.15)'};border-top:1px solid ${active?'rgba(201,162,39,.3)':'var(--line)'}">
+          <span style="font-family:'Bebas Neue',Impact,sans-serif;font-size:12px;color:${active?'var(--gold)':'var(--text-muted)'};letter-spacing:1px">${active?'✓ ACTIVA · PULSA PARA DESACTIVAR':'★ '+def.cost+' PTS'}</span>
+        </div>`;
+        btn.innerHTML=iconPart+footerPart;
+        btn.addEventListener('click', async ()=>{
+          btn.disabled=true;
+          if(typeof window.playSound==='function') window.playSound('select');
+          if(!window._lmSkillsCache) window._lmSkillsCache={};
+          if(window._lmSkillsCache[def.id]){
+            delete window._lmSkillsCache[def.id];
+            window._lmScratchPoints=(window._lmScratchPoints||0)+def.cost;
+          } else {
+            if((window._lmScratchPoints||0)<def.cost){ btn.disabled=false; return; }
+            window._lmSkillsCache[def.id]=true;
+            window._lmScratchPoints=(window._lmScratchPoints||0)-def.cost;
+          }
+          try{
+            await window._fbDb.collection('users').doc(user.uid).set({ligaManagerSkills:window._lmSkillsCache, scratchPoints:window._lmScratchPoints}, {merge:true});
+          }catch(e){}
+          renderLigaManagerSkillsTab();
+        });
+        grid.appendChild(btn);
+      });
+    });
+  }
+  window.renderLigaManagerSkillsTab = renderLigaManagerSkillsTab;
   let perfilEquipoColapsado=false;
   let correoExpandido=null;
   let ordenColumnasSaveTimer=null; // el orden de columnas se persiste solo tras 60s sin más cambios
@@ -1579,7 +1687,8 @@
     delta += satisfaccion/12;
     delta = Math.round(delta);
     state.ultimoCambioMoral = delta;
-    state.moral=Math.max(-50, Math.min(50, (state.moral||0)+delta));
+    const minMoral = (miGoles<suGoles && typeof lmSkillActiva==='function' && lmSkillActiva('lm_capitan_vestuario')) ? -15 : -50;
+    state.moral=Math.max(minMoral, Math.min(50, (state.moral||0)+delta));
   }
 
   function actualizarEstadioTrasPartido(miEsLocal, resultado, clima){
@@ -1627,7 +1736,8 @@
     }
     delta=Math.round(delta);
     state.ultimoCambioSatisfaccion=delta;
-    est.satisfaccion=Math.max(-100, Math.min(100, est.satisfaccion+delta));
+    const minSatisfaccion = (typeof lmSkillActiva==='function' && lmSkillActiva('lm_aficion_fiel')) ? -20 : -100;
+    est.satisfaccion=Math.max(minSatisfaccion, Math.min(100, est.satisfaccion+delta));
     actualizarMoralTrasPartido(miGoles, suGoles);
   }
 
@@ -1663,7 +1773,7 @@
         const evInjury=eventos.find(e=>e.type==='injury');
         if(evInjury){
           evInjury.jugador.injured=true;
-          evInjury.jugador.injuryWeeks=evInjury.sev.weeks;
+          evInjury.jugador.injuryWeeks = lmSkillActiva('lm_recuperacion_expres') ? Math.max(1, evInjury.sev.weeks-1) : evInjury.sev.weeks;
           evInjury.jugador.injurySeverity=evInjury.sev.label;
           evInjury.jugador.injuryFamilia=evInjury.familia;
           jugadorLesionadoEstaJornada=evInjury.jugador.id;
@@ -2786,11 +2896,21 @@
   // Segunda mitad de la apertura del sobre: la tirada de cartas de
   // siempre, reutilizando el mismo overlay ya abierto.
   function mostrarSpinDeSobre(overlay, jugadores, onCerrar){
+    const carasBarajado=[...SOBRE_CARAS_JUGADOR, ...SOBRE_CARAS_PORTERO];
+    const posicionesBarajado=['POR','DFC','LI','LD','MC','EI','ED','DC'];
     overlay.innerHTML=`
       <div class="lm-dilemma-card lm-dilemma-card-dd lm-sobre-popup-ancho" style="max-width:860px">
         <div class="lm-dilemma-title"><i class="ph ph-bold ph-envelope-open"></i> SOBRE DE FICHAJES</div>
-        <div id="lmSobreReveloZoneCorreo" class="lm-sobre-grid">
-          ${jugadores.map((j,i)=>`<div class="slot-reel lm-sobre-reel" id="lmSobreReelC${i}"><div class="slot-strip lm-sobre-face">?</div></div>`).join('')}
+        <div id="lmSobreReveloZoneCorreo" class="lm-sobre-cards">
+          ${jugadores.map((j,i)=>`
+          <div class="lm-sobre-card lm-sobre-card-barajando" id="lmSobreReelC${i}" style="animation-delay:${i*0.35}s">
+            <div class="lm-sobre-cara"><img id="lmSobreCaraBarajo${i}" src="assets/sobres/${carasBarajado[Math.floor(Math.random()*carasBarajado.length)]}.png" alt=""><span class="lm-sobre-pos-badge" id="lmSobrePosBarajo${i}">?</span></div>
+            <div class="lm-sobre-nombre" id="lmSobreNombreBarajo${i}">···</div>
+            <div class="lm-sobre-overall" id="lmSobreOverallBarajo${i}">??</div>
+            <div class="lm-sobre-stats-fila">
+              <span><b>··</b>ATA</span><span><b>··</b>DEF</span><span><b>··</b>RIT</span><span><b>··</b>PAS</span><span><b>··</b>TEC</span>
+            </div>
+          </div>`).join('')}
         </div>
         <div id="lmSobreResultadoCorreo"></div>
       </div>`;
@@ -2798,8 +2918,14 @@
     const totalTicks=11+Math.floor(Math.random()*4);
     const spin=setInterval(()=>{
       jugadores.forEach((j,i)=>{
-        const el=document.getElementById('lmSobreReelC'+i);
-        if(el) el.querySelector('.lm-sobre-face').textContent=nombreJugadorAleatorio();
+        const nombreEl=document.getElementById('lmSobreNombreBarajo'+i);
+        const caraEl=document.getElementById('lmSobreCaraBarajo'+i);
+        const posEl=document.getElementById('lmSobrePosBarajo'+i);
+        const overallEl=document.getElementById('lmSobreOverallBarajo'+i);
+        if(nombreEl) nombreEl.textContent=nombreJugadorAleatorio();
+        if(caraEl) caraEl.src='assets/sobres/'+carasBarajado[Math.floor(Math.random()*carasBarajado.length)]+'.png';
+        if(posEl) posEl.textContent=posicionesBarajado[Math.floor(Math.random()*posicionesBarajado.length)];
+        if(overallEl) overallEl.textContent=40+Math.floor(Math.random()*55);
       });
       if(typeof window.playSound==='function') window.playSound('spin');
       ticks++;
@@ -3596,7 +3722,8 @@
     const idx=(state.sobresFichajesPendientes||[]).findIndex(s=>s.id===sobreId);
     if(idx===-1) return null;
     const sobre=state.sobresFichajesPendientes[idx];
-    const coste=sobre.gratis ? 0 : (SOBRE_COSTES[sobre.nivel]||SOBRE_COSTES[1]);
+    const costeBase=sobre.gratis ? 0 : (SOBRE_COSTES[sobre.nivel]||SOBRE_COSTES[1]);
+    const coste=Math.round(costeBase*(1-lmDescuentoSobres()));
     if((state.capital||0)<coste) return null;
     if(coste>0){
       state.capital-=coste;
@@ -3608,7 +3735,8 @@
     // Probabilidad de fichaje estrella: nula a nivel 0-1, y creciente a
     // partir de nivel 2 de la Red de Ojeadores — como se pidió.
     const nivelRed=nivelDeDD('sobresFichajes');
-    const probEstrella = nivelRed>=3 ? 0.35 : (nivelRed===2 ? 0.18 : 0);
+    const probEstrellaBase = nivelRed>=3 ? 0.35 : (nivelRed===2 ? 0.18 : 0);
+    const probEstrella = probEstrellaBase * (lmSkillActiva('lm_ojo_clinico')?1.5:1);
     let huboEstrella=false;
     const jugadores=[1,2,3].map(()=>{
       if(!huboEstrella && Math.random()<probEstrella){
@@ -3687,7 +3815,7 @@
     const clubesDisponibles=[...LM_RIVALS];
     if(typeof shuffle==='function') shuffle(clubesDisponibles); // shuffle() muta en el sitio, no devuelve nada
     const ofertas=clubesDisponibles.slice(0,numOfertas).map(c=>({
-      club:c.name, monto:Math.round(jugador.overall*(280+Math.random()*220))
+      club:c.name, monto:Math.round(jugador.overall*(280+Math.random()*220)*(lmSkillActiva('lm_negociador')?1.15:1))
     })).sort((a,b)=>b.monto-a.monto);
     jugador.enVenta=false;
     jugador.ventaResolverJornada=null;
@@ -4532,7 +4660,7 @@
                   } else if(c.tipoEspecial==='sobre_listo' && !c.resuelto){
                     const sobrePendiente=(state.sobresFichajesPendientes||[]).find(s=>s.id===c.sobreId);
                     if(sobrePendiente){
-                      const coste=sobrePendiente.gratis ? 0 : (SOBRE_COSTES[sobrePendiente.nivel]||SOBRE_COSTES[1]);
+                      const coste=sobrePendiente.gratis ? 0 : Math.round((SOBRE_COSTES[sobrePendiente.nivel]||SOBRE_COSTES[1])*(1-lmDescuentoSobres()));
                       extra=`<div class="lm-correo-ofertas">
                         <button class="lm-correo-oferta-btn lm-sobre-abrir-btn" data-abrir-sobre-correo="${c.id}" data-sobre-id="${sobrePendiente.id}" ${((state.capital||0)<coste)?'disabled':''}>
                           <i class="ph ph-bold ph-envelope-open"></i> ABRIR SOBRE ${sobrePendiente.gratis?'(GRATIS)':'('+formatoDinero(coste)+')'}
@@ -5423,7 +5551,7 @@
             ${xCerrarHTML()}
             <i class="ph ph-bold ${def.icon}" style="font-size:26px;color:#5dcaa5"></i>
             <div class="lm-dilemma-title" style="justify-content:center;text-align:center">${def.nombre.toUpperCase()}</div>
-            <div class="lm-dilemma-text">${def.desc}${def.tipo==='directa'?` — necesitas sumar ${dificultadEfectiva}+`:(def.tipo==='nivel'?` — necesitas sumar ${dificultadActualNivel(def)}+ para subir a nivel ${nivelDe(def.track)+1}/${NIVEL_MAXIMO_EQUIPO}`:' — los dados invertidos siempre suman al proyecto')}</div>
+            <div class="lm-dilemma-text">${def.desc}${def.tipo==='directa'?` — necesitas sumar ${Math.max(3, def.dificultad - bonusEstrellasTrabajador('medico'))}+`:(def.tipo==='nivel'?` — necesitas sumar ${dificultadActualNivel(def)}+ para subir a nivel ${nivelDe(def.track)+1}/${NIVEL_MAXIMO_EQUIPO}`:' — los dados invertidos siempre suman al proyecto')}</div>
             ${jugadorObjetivo?`<div class="lm-setup-desc" style="margin-top:-4px">Sobre <strong>${jugadorObjetivo.name}</strong> — ${jugadorObjetivo.injurySeverity} · ${jugadorObjetivo.injuryWeeks} jornada${jugadorObjetivo.injuryWeeks===1?'':'s'} restante${jugadorObjetivo.injuryWeeks===1?'':'s'}</div>`:''}
             <div class="lm-dice-selector">
               <button id="lmDiceMinus" class="lm-dice-stepper">−</button>
@@ -5639,7 +5767,7 @@
             ${xCerrarHTML()}
             <i class="ph ph-bold ${def.icon}" style="font-size:26px;color:#5dcaa5"></i>
             <div class="lm-dilemma-title" style="justify-content:center;text-align:center">${def.nombre.toUpperCase()}</div>
-            <div class="lm-dilemma-text">${def.desc}${def.tipo==='directa'?` — necesitas sumar ${dificultadEfectiva}+`:` — necesitas sumar ${dificultadActualNivelM(def)}+ para subir a nivel ${nivelDeM(def.track)+1}/${NIVEL_MAXIMO_EQUIPO}`}</div>
+            <div class="lm-dilemma-text">${def.desc}${def.tipo==='directa'?` — necesitas sumar ${Math.max(3, def.dificultad - bonusEstrellasTrabajador('mantenimiento'))}+`:` — necesitas sumar ${dificultadActualNivelM(def)}+ para subir a nivel ${nivelDeM(def.track)+1}/${NIVEL_MAXIMO_EQUIPO}`}</div>
             <div class="lm-dice-selector">
               <button id="lmDiceMinus" class="lm-dice-stepper">−</button>
               <span id="lmDiceCount">${dadosElegidos}</span>
@@ -5867,7 +5995,7 @@
             ${xCerrarHTML()}
             <i class="ph ph-bold ${def.icon}" style="font-size:26px;color:#e6c94a"></i>
             <div class="lm-dilemma-title" style="justify-content:center;text-align:center">${def.nombre.toUpperCase()}</div>
-            <div class="lm-dilemma-text">${def.desc}${def.tipo==='directa'?` — necesitas sumar ${dificultadEfectiva}+`:` — necesitas sumar ${dificultadActualNivelDG(def)}+ para subir a nivel ${nivelDeDG(def.track)+1}/${NIVEL_MAXIMO_EQUIPO}`}</div>
+            <div class="lm-dilemma-text">${def.desc}${def.tipo==='directa'?` — necesitas sumar ${Math.max(3, def.dificultad - bonusEstrellasTrabajador('directorGeneral'))}+`:` — necesitas sumar ${dificultadActualNivelDG(def)}+ para subir a nivel ${nivelDeDG(def.track)+1}/${NIVEL_MAXIMO_EQUIPO}`}</div>
             <div class="lm-dice-selector">
               <button id="lmDiceMinus" class="lm-dice-stepper">−</button>
               <span id="lmDiceCount">${dadosElegidos}</span>
@@ -6167,7 +6295,7 @@
             ${xCerrarHTML()}
             <i class="ph ph-bold ${def.icon}" style="font-size:26px;color:#c9c9c9"></i>
             <div class="lm-dilemma-title" style="justify-content:center;text-align:center">${def.nombre.toUpperCase()}</div>
-            <div class="lm-dilemma-text">${def.desc}${def.tipo==='directa'?` — necesitas sumar ${dificultadEfectiva}+`:` — necesitas sumar ${dificultadActualNivelDD(def)}+ para subir a nivel ${nivelDeDD(def.track)+1}/${NIVEL_MAXIMO_EQUIPO}`}</div>
+            <div class="lm-dilemma-text">${def.desc}${def.tipo==='directa'?` — necesitas sumar ${Math.max(3, def.dificultad - bonusEstrellasTrabajador('directorDeportivo'))}+`:` — necesitas sumar ${dificultadActualNivelDD(def)}+ para subir a nivel ${nivelDeDD(def.track)+1}/${NIVEL_MAXIMO_EQUIPO}`}</div>
             <div class="lm-dice-selector">
               <button id="lmDiceMinus" class="lm-dice-stepper">−</button>
               <span id="lmDiceCount">${dadosElegidos}</span>
@@ -6678,7 +6806,7 @@
             ${xCerrarHTML()}
             <i class="ph ph-bold ${def.icon}" style="font-size:26px;color:#e08a3e"></i>
             <div class="lm-dilemma-title" style="justify-content:center;text-align:center">${def.nombre.toUpperCase()}</div>
-            <div class="lm-dilemma-text">${def.desc}${def.tipo==='directa'?` — necesitas sumar ${dificultadEfectiva}+`:` — necesitas sumar ${dificultadActualNivelPF(def)}+ para subir a nivel ${nivelDePF(def.track)+1}/${NIVEL_MAXIMO_EQUIPO}`}</div>
+            <div class="lm-dilemma-text">${def.desc}${def.tipo==='directa'?` — necesitas sumar ${Math.max(3, def.dificultad - bonusEstrellasTrabajador('preparadorFisico'))}+`:` — necesitas sumar ${dificultadActualNivelPF(def)}+ para subir a nivel ${nivelDePF(def.track)+1}/${NIVEL_MAXIMO_EQUIPO}`}</div>
             <div class="lm-dice-selector">
               <button id="lmDiceMinus" class="lm-dice-stepper">−</button>
               <span id="lmDiceCount">${dadosElegidos}</span>
@@ -6930,6 +7058,7 @@
     formacionCategoriaVista=null;
     seleccionJugador=null;
     lmCargarUpgradeCache().then(()=>render());
+    lmCargarSkillsCache();
     render();
   }
 
