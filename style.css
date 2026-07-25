@@ -1126,6 +1126,15 @@ body.dark-theme .settings-item:hover{background:var(--row-hover);color:var(--gol
 .profile-stat-card.best .pstat-val{color:var(--gold)}
 .pstat-label{font-size:8px;color:var(--text-muted);letter-spacing:.8px;text-transform:uppercase}
 
+/* Liga Manager tiene 2 tarjetas más que Copa Leyendas en ESTADÍSTICAS
+   (jornada + clasificación) — se compacta un poco para que quepa sin
+   scroll vertical en el popup. */
+#lmProfileStatsPane .stats-section-label{margin:8px 0 4px}
+#lmProfileStatsPane .stats-section-label:first-child{margin-top:0}
+#lmProfileStatsPane .profile-stats-grid{margin:4px 0;gap:5px}
+#lmProfileStatsPane .profile-stat-card{padding:8px 6px;gap:2px}
+#lmProfileStatsPane .pstat-val{font-size:22px}
+
 /* VOLVER button in player selection banner */
 .spb-back-btn{
   margin-top:8px;width:100%;
@@ -3777,20 +3786,23 @@ body.menu-screen #audioToggle{
    de momento se ocultan aquí también (mismo patrón que el menú principal).
    El tema oscuro/claro SÍ se puede cambiar con normalidad (a diferencia
    del menú principal, aquí ya estás dentro de un modo de juego). */
-body.liga-manager-screen #profileTabNotes,
-body.liga-manager-screen #profileTabAchievements{
+body.liga-manager-screen #profileTabNotes{
   display:none!important;
 }
-/* Liga Manager usa sus propios paneles de ESTADÍSTICAS y MEJORAS en vez
-   de los de Copa Leyendas — mismo estilo exacto, contenido distinto. */
+/* Liga Manager usa sus propios paneles de ESTADÍSTICAS, MEJORAS y
+   LOGROS en vez de los de Copa Leyendas — mismo estilo exacto,
+   contenido distinto. */
 body.liga-manager-screen #profileStatsPane{ display:none!important; }
 body.liga-manager-screen #lmProfileStatsPane.profile-tab-pane-active{ display:block!important; }
 #lmProfileStatsPane{ display:none; }
 body.liga-manager-screen #profileUpgradesPane{ display:none!important; }
 body.liga-manager-screen #lmProfileUpgradesPane.profile-tab-pane-active{ display:block!important; }
 #lmProfileUpgradesPane{ display:none; }
+body.liga-manager-screen #profileAchievementsPane{ display:none!important; }
+body.liga-manager-screen #lmProfileAchievementsPane.profile-tab-pane-active{ display:block!important; }
+#lmProfileAchievementsPane{ display:none; }
 body.liga-manager-screen #profileOverlay .auth-tabs{
-  grid-template-columns:repeat(3,1fr);
+  grid-template-columns:repeat(4,1fr);
 }
 /* ABANDONAR LIGA — solo tiene sentido dentro de Liga Manager. */
 body.liga-manager-screen #profileAbandonarLigaWrap{

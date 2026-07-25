@@ -691,13 +691,13 @@
   // separado (users/{uid}.ligaManagerUpgrades) — gastar puntos aquí no
   // añade ni quita niveles a las mejoras de Copa Leyendas, y viceversa.
   const LM_UPGRADE_DEFS=[
-    {id:'lm_bench', icon:'🪑', name:'BANQUILLO', desc:'SUPLENTES DISPONIBLES POR PARTIDO',
+    {id:'lm_bench', phIcon:'ph-users-three', name:'BANQUILLO', desc:'SUPLENTES DISPONIBLES POR PARTIDO',
       baseCost:5, maxLevel:5, baseValue:5, tooltip:(lvl)=>`${5+lvl} suplentes disponibles`},
-    {id:'lm_dice', icon:'🎲', name:'DADO TÉCNICO EXTRA', desc:'DADOS DEL CUERPO TÉCNICO POR PARTIDO',
+    {id:'lm_dice', phIcon:'ph-dice-five', name:'DADO TÉCNICO EXTRA', desc:'DADOS DEL CUERPO TÉCNICO POR PARTIDO',
       baseCost:5, maxLevel:5, baseValue:5, tooltip:(lvl)=>`${5+lvl} dados por partido`},
-    {id:'lm_rerolls', icon:'🔄', name:'RERROLLS EXTRA', desc:'REROLLS DE DADO POR PARTIDO',
+    {id:'lm_rerolls', phIcon:'ph-arrows-clockwise', name:'RERROLLS EXTRA', desc:'REROLLS DE DADO POR PARTIDO',
       baseCost:5, maxLevel:3, baseValue:1, tooltip:(lvl)=>`${1+lvl} rerroll${lvl?'s':''} por partido`},
-    {id:'lm_cardswap', icon:'🗂️', name:'CAMBIO DE CARTA EXTRA', desc:'CAMBIOS DE CARTA POR DEPARTAMENTO Y PARTIDO',
+    {id:'lm_cardswap', phIcon:'ph-cards', name:'CAMBIO DE CARTA EXTRA', desc:'CAMBIOS DE CARTA POR DEPARTAMENTO Y PARTIDO',
       baseCost:5, maxLevel:3, baseValue:1, tooltip:(lvl)=>`${1+lvl} cambio${lvl>0?'s':''} de carta por partido`},
   ];
   function lmUpgradeLevelCost(def, toLevel){ return def.baseCost*Math.pow(2, toLevel-1); }
@@ -743,7 +743,7 @@
       row.id=`lm-upgrade-row-${def.id}`;
       row.innerHTML=`
         <div class="upgrade-row-top">
-          <div class="upgrade-icon" style="font-size:20px">${def.icon}</div>
+          <div class="upgrade-icon" style="color:var(--accent);font-size:22px;display:flex;align-items:center;justify-content:center"><i class="ph ph-bold ${def.phIcon}"></i></div>
           <div class="upgrade-label-block">
             <div class="upgrade-name">${def.name}</div>
             <div class="upgrade-desc">${def.desc}</div>
@@ -789,6 +789,98 @@
     });
   }
   window.renderLigaManagerUpgradesTab = renderLigaManagerUpgradesTab;
+
+  // ---- Logros de Liga Manager ----
+  // Catálogo propio (no comparte progreso con los de Copa Leyendas),
+  // pero desbloquearlos SÍ suma a los mismos GOAT Points compartidos.
+  const LM_TIER_COLOR={'básico':'#7bbf7b','intermedio':'#5b9bd5','difícil':'#c9a227','mítico':'#e67e22'};
+  const LM_ACHIEVEMENT_DEFS=[
+    {id:'lm_first_match',    tier:'básico', pts:1, icon:'ph-megaphone',      name:'PRIMER PARTIDO',      desc:'Juega tu primer partido de Liga Manager'},
+    {id:'lm_first_win',      tier:'básico', pts:1, icon:'ph-trophy',         name:'PRIMEROS TRES PUNTOS', desc:'Gana tu primer partido'},
+    {id:'lm_first_sobre',    tier:'básico', pts:1, icon:'ph-envelope-open',  name:'SOBRE ABIERTO',        desc:'Abre tu primer sobre de fichajes'},
+    {id:'lm_first_sale',     tier:'básico', pts:1, icon:'ph-handshake',      name:'PRIMER TRASPASO',      desc:'Vende a tu primer jugador'},
+    {id:'lm_first_worker',   tier:'básico', pts:1, icon:'ph-user-plus',      name:'CUERPO TÉCNICO COMPLETO', desc:'Contrata a los 5 puestos del cuerpo técnico'},
+    {id:'lm_clean_sheet',    tier:'básico', pts:1, icon:'ph-shield-check',   name:'PORTERÍA A CERO',      desc:'Gana un partido sin encajar ningún gol'},
+    {id:'lm_win_streak_3',   tier:'intermedio', pts:2, icon:'ph-trend-up',   name:'EN RACHA',             desc:'Gana 3 partidos seguidos'},
+    {id:'lm_star_signing',   tier:'intermedio', pts:2, icon:'ph-star',       name:'FICHAJE ESTRELLA',     desc:'Ficha a un jugador real de otro equipo desde un sobre'},
+    {id:'lm_top4',           tier:'intermedio', pts:2, icon:'ph-medal',      name:'ZONA EUROPEA',         desc:'Termina una jornada entre los 4 primeros'},
+    {id:'lm_win_10',         tier:'intermedio', pts:2, icon:'ph-soccer-ball', name:'DIEZ VICTORIAS',       desc:'Consigue 10 victorias en una misma temporada'},
+    {id:'lm_season_complete',tier:'difícil', pts:3, icon:'ph-flag-checkered', name:'TEMPORADA COMPLETA',  desc:'Llega a la jornada 38'},
+    {id:'lm_champion',       tier:'mítico', pts:5, icon:'ph-crown',          name:'CAMPEÓN DE LIGA',      desc:'Termina la temporada en 1ª posición'},
+  ];
+  async function unlockLMAchievement(id){
+    if(!window._lmAchievementsCache) window._lmAchievementsCache=new Set();
+    if(window._lmAchievementsCache.has(id)) return;
+    const user=window._fbAuth && window._fbAuth.currentUser;
+    if(!user) return;
+    const def=LM_ACHIEVEMENT_DEFS.find(a=>a.id===id);
+    if(!def) return;
+    window._lmAchievementsCache.add(id);
+    try{
+      const snap=await window._fbDb.collection('users').doc(user.uid).get();
+      const d=snap.exists?snap.data():{};
+      const current=d.ligaManagerAchievements||[];
+      if(current.includes(id)) return;
+      const newPts=(d.scratchPoints||0)+def.pts;
+      await window._fbDb.collection('users').doc(user.uid).set({
+        ligaManagerAchievements:[...current,id],
+        scratchPoints:newPts,
+        scratchPointsEarned:(d.scratchPointsEarned||0)+def.pts
+      },{merge:true});
+      window._lmScratchPoints=newPts;
+      if(typeof window.showAchievementToast==='function') window.showAchievementToast(def);
+      const lab=document.getElementById('lmAchievementsBadge');
+      if(lab) lab.style.display='inline-block';
+    }catch(e){ console.warn('LM achievement error:', e); }
+  }
+  window.unlockLMAchievement = unlockLMAchievement;
+  async function renderLigaManagerAchievementsTab(){
+    const list=document.getElementById('lmAchievementsList');
+    if(!list) return;
+    list.innerHTML=`<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:12px">Cargando...</div>`;
+    const user=window._fbAuth && window._fbAuth.currentUser;
+    if(!user){ list.innerHTML=`<div style="text-align:center;padding:20px;color:var(--text-muted)">Inicia sesión para ver tus logros.</div>`; return; }
+    const snap=await window._fbDb.collection('users').doc(user.uid).get();
+    const unlocked=new Set((snap.exists && snap.data().ligaManagerAchievements)||[]);
+    window._lmAchievementsCache=unlocked;
+    const total=LM_ACHIEVEMENT_DEFS.length;
+    const done=[...unlocked].filter(id=>LM_ACHIEVEMENT_DEFS.find(a=>a.id===id)).length;
+    list.innerHTML='';
+    list.style.paddingRight='12px';
+    const progress=document.createElement('div');
+    progress.style.cssText='display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;font-family:"Bebas Neue",Impact,sans-serif';
+    progress.innerHTML=`<span style="font-size:13px;color:var(--text-muted);letter-spacing:1px">${done} / ${total} LOGROS</span>
+      <span style="font-size:13px;color:var(--gold)">${LM_ACHIEVEMENT_DEFS.filter(a=>unlocked.has(a.id)).reduce((s,a)=>s+a.pts,0)} PTS GANADOS</span>`;
+    list.appendChild(progress);
+    const grid=document.createElement('div');
+    grid.style.cssText='display:grid;grid-template-columns:1fr 1fr;gap:6px;padding-right:4px';
+    list.appendChild(grid);
+    LM_ACHIEVEMENT_DEFS.forEach(def=>{
+      const isUnlocked=unlocked.has(def.id);
+      const isLight=document.body.classList.contains('light-theme');
+      const card=document.createElement('div');
+      const lockedBg=isLight?'#ede8df':'#1a1e20';
+      const unlockedBg=isLight?'#e8f4ec':'rgba(0,0,0,.3)';
+      const borderColor=isUnlocked?LM_TIER_COLOR[def.tier]:(isLight?'#d4cec4':'var(--line)');
+      card.style.cssText='display:flex;align-items:center;gap:10px;padding:10px;border:1px solid '+borderColor+';background:'+(isUnlocked?unlockedBg:lockedBg)+';position:relative;overflow:hidden';
+      const iconColor=isUnlocked?'#c9a227':(isLight?'#bbb':'var(--text-muted)');
+      const iconHtml='<i class="ph ph-bold '+def.icon+'" style="font-size:26px;flex-shrink:0;color:'+iconColor+';'+(isUnlocked?'':' opacity:.5')+'"></i>';
+      const checkHtml=isUnlocked?'<i class="ph ph-bold ph-check" style="position:absolute;top:5px;right:6px;font-size:12px;color:'+(LM_TIER_COLOR[def.tier]||'#c9a227')+'"></i>':'';
+      const tierColor=LM_TIER_COLOR[def.tier]||'#aaa';
+      const nameColor=isUnlocked?(isLight?'#1a1a1a':'#fff'):(isLight?'#333':'var(--text-muted)');
+      const descColor=isUnlocked?(isLight?'#444':'#aaa'):(isLight?'#666':'var(--text-muted)');
+      card.innerHTML=iconHtml+checkHtml+
+        '<div style="min-width:0;flex:1">'+
+        '<div style="font-size:12px;letter-spacing:.8px;color:'+nameColor+';line-height:1.2;font-weight:700">'+def.name+'</div>'+
+        '<div style="font-size:11px;color:'+descColor+';line-height:1.4;margin-top:2px">'+def.desc+'</div>'+
+        '<div style="font-size:9px;color:'+tierColor+';letter-spacing:1px;margin-top:3px">'+def.tier.toUpperCase()+'</div>'+
+        '</div>';
+      grid.appendChild(card);
+    });
+    const lab=document.getElementById('lmAchievementsBadge');
+    if(lab) lab.style.display='none';
+  }
+  window.renderLigaManagerAchievementsTab = renderLigaManagerAchievementsTab;
   let perfilEquipoColapsado=false;
   let correoExpandido=null;
   let ordenColumnasSaveTimer=null; // el orden de columnas se persiste solo tras 60s sin más cambios
@@ -1581,6 +1673,15 @@
         }
         miPartidoInfo={ home:partido.home, away:partido.away, resultado, eventos };
         actualizarEstadioTrasPartido(miEsLocalDeEste, resultado, clima);
+        if(typeof window.unlockLMAchievement==='function'){
+          window.unlockLMAchievement('lm_first_match');
+          const misGoles=miEsLocalDeEste?resultado.home:resultado.away, susGoles=miEsLocalDeEste?resultado.away:resultado.home;
+          if(misGoles>susGoles){
+            window.unlockLMAchievement('lm_first_win');
+            if(susGoles===0) window.unlockLMAchievement('lm_clean_sheet');
+            if((state.rachaResultados||0)+1>=3) window.unlockLMAchievement('lm_win_streak_3');
+          }
+        }
       }
     });
 
@@ -1657,6 +1758,19 @@
     try{ generarCorreosTrasJornada(); }catch(e){ console.error('generarCorreosTrasJornada:', e); }
 
     state.jornadaActual++;
+    if(typeof window.unlockLMAchievement==='function'){
+      try{
+        const clasif=calcularClasificacion();
+        const miPos=clasif.findIndex(t=>t.id==='lm_0')+1;
+        if(miPos>0 && miPos<=4) window.unlockLMAchievement('lm_top4');
+        const misVictorias=clasif.find(t=>t.id==='lm_0');
+        if(misVictorias && misVictorias.pg>=10) window.unlockLMAchievement('lm_win_10');
+        if(state.jornadaActual>38){
+          window.unlockLMAchievement('lm_season_complete');
+          if(miPos===1) window.unlockLMAchievement('lm_champion');
+        }
+      }catch(e){}
+    }
     guardarEstado();
     return miPartidoInfo;
   }
@@ -3039,6 +3153,7 @@
     }
     state.trabajadores[rol]={id:'t'+Date.now(), nombre:candidato.nombre, genero:candidato.genero, nivel:candidato.nivel, sueldo:candidato.sueldo};
     state.candidatosTrabajo=state.candidatosTrabajo.filter(c=>c.id!==candidatoId);
+    if(typeof window.unlockLMAchievement==='function' && ROLES_TRABAJO.every(r=>state.trabajadores[r])) window.unlockLMAchievement('lm_first_worker');
     guardarEstado();
     return true;
   }
@@ -3404,6 +3519,7 @@
       registrarMovimientoFinanciero('Sobre de fichajes (nivel '+sobre.nivel+')', -coste, state.jornadaActual);
     }
     state.sobresFichajesPendientes.splice(idx,1);
+    if(typeof window.unlockLMAchievement==='function') window.unlockLMAchievement('lm_first_sobre');
     const posObjetivo=posicionObjetivoOjeoActual();
     // Probabilidad de fichaje estrella: nula a nivel 0-1, y creciente a
     // partir de nivel 2 de la Red de Ojeadores — como se pidió.
@@ -3437,6 +3553,7 @@
     if(jugador.esFichajeEstrella && jugador.equipoOrigenId){
       if(!state.jugadoresRealesFichados) state.jugadoresRealesFichados=[];
       state.jugadoresRealesFichados.push({equipoId:jugador.equipoOrigenId, nombre:jugador.name});
+      if(typeof window.unlockLMAchievement==='function') window.unlockLMAchievement('lm_star_signing');
     }
     if(!state.directorDeportivoHistorial) state.directorDeportivoHistorial=[];
     state.directorDeportivoHistorial.unshift({tipo:'fichaje', nombre:jugador.name, position:jugador.position, overall:jugador.overall, estrella:!!jugador.esFichajeEstrella, procedencia:jugador.equipoOrigenName||null, jornada:state.jornadaActual});
@@ -3520,6 +3637,7 @@
     registrarMovimientoFinanciero('Traspaso de '+jugador.name+' a '+oferta.club, oferta.monto, state.jornadaActual);
     if(!state.directorDeportivoHistorial) state.directorDeportivoHistorial=[];
     state.directorDeportivoHistorial.unshift({tipo:'venta', nombre:jugador.name, position:jugador.position, overall:jugador.overall, destino:oferta.club, monto:oferta.monto, jornada:state.jornadaActual});
+    if(typeof window.unlockLMAchievement==='function') window.unlockLMAchievement('lm_first_sale');
     mail.resuelto=true;
     mail.resultadoTexto=`Aceptaste la oferta de ${oferta.club} por ${formatoDinero(oferta.monto)}.`;
     guardarEstado();

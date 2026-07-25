@@ -6177,14 +6177,14 @@ function initFirebaseAuth(){
       user:         {btn:$id("profileTabUser"),         pane:$id("profileUserPane")},
       upgrades:     {btn:$id("profileTabUpgrades"),     pane:$id(enLigaManager?"lmProfileUpgradesPane":"profileUpgradesPane")},
       notes:        {btn:$id("profileTabNotes"),        pane:$id("profileNotesPane")},
-      achievements: {btn:$id("profileTabAchievements"), pane:$id("profileAchievementsPane")},
+      achievements: {btn:$id("profileTabAchievements"), pane:$id(enLigaManager?"lmProfileAchievementsPane":"profileAchievementsPane")},
     };
     // El panel del OTRO modo (el que no toca ahora) se desactiva a mano,
     // porque ambos comparten la misma pestaña pero viven en dos <div>
-    // distintos (ESTADÍSTICAS y MEJORAS).
+    // distintos (ESTADÍSTICAS, MEJORAS y LOGROS).
     const panesAjenos=enLigaManager
-      ? [$id("profileStatsPane"), $id("profileUpgradesPane")]
-      : [$id("lmProfileStatsPane"), $id("lmProfileUpgradesPane")];
+      ? [$id("profileStatsPane"), $id("profileUpgradesPane"), $id("profileAchievementsPane")]
+      : [$id("lmProfileStatsPane"), $id("lmProfileUpgradesPane"), $id("lmProfileAchievementsPane")];
     panesAjenos.forEach(p=>{ if(p) p.classList.remove('profile-tab-pane-active'); });
     Object.entries(tabs).forEach(([key,{btn,pane}])=>{
       const active=(key===tab);
@@ -6195,7 +6195,11 @@ function initFirebaseAuth(){
     if(tab==='upgrades' && enLigaManager && typeof window.renderLigaManagerUpgradesTab==='function'){ window.renderLigaManagerUpgradesTab(); hideGoatPointsBadge(); }
     else if(tab==='upgrades'){ renderUpgradesTab(); hideGoatPointsBadge(); }
     if(tab==='notes'){ renderSkillsTab(); const sb=$id('skillsBadge'); if(sb) sb.style.display='none'; }
-    if(tab==='achievements'){
+    if(tab==='achievements' && enLigaManager && typeof window.renderLigaManagerAchievementsTab==='function'){
+      window.renderLigaManagerAchievementsTab();
+      const ab=$id('achievementsBadge');
+      if(ab) ab.style.display='none';
+    } else if(tab==='achievements'){
       renderAchievementsTab();
       const ab=$id('achievementsBadge');
       if(ab) ab.style.display='none';

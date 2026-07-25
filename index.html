@@ -243,20 +243,16 @@
            datos propios de la temporada de Liga Manager en curso) -->
       <div id="lmProfileStatsPane" class="profile-tab-pane" style="position:relative">
 
-        <div class="stats-section-label">TEMPORADA ACTUAL</div>
-        <div class="profile-stats-grid" style="grid-template-columns:repeat(2,1fr)">
+        <div class="stats-section-label">RESULTADOS</div>
+        <div class="profile-stats-grid" style="grid-template-columns:repeat(3,1fr)">
           <div class="profile-stat-card">
             <div class="pstat-val" id="lmpstat-jornada">—</div>
             <div class="pstat-label">JORNADA</div>
           </div>
           <div class="profile-stat-card">
             <div class="pstat-val" id="lmpstat-posicion">—</div>
-            <div class="pstat-label">CLASIFICACIÓN</div>
+            <div class="pstat-label">CLASIF.</div>
           </div>
-        </div>
-
-        <div class="stats-section-label">RESULTADOS</div>
-        <div class="profile-stats-grid" style="grid-template-columns:repeat(2,1fr)">
           <div class="profile-stat-card">
             <div class="pstat-val" id="lmpstat-games">—</div>
             <div class="pstat-label">PARTIDOS</div>
@@ -426,6 +422,18 @@
           </div>
         </div>
         <div id="achievementsList"></div>
+      </div>
+
+      <!-- LOGROS TAB — LIGA MANAGER (mismo diseño de tarjetas que Copa
+           Leyendas, catálogo propio, comparte GOAT Points al desbloquear) -->
+      <div id="lmProfileAchievementsPane" class="profile-tab-pane">
+        <div class="upgrades-header">
+          <div class="upgrades-title-row">
+            <span class="upgrades-title">LOGROS</span>
+            <span class="upgrades-subtitle">Desafíos y recompensas</span>
+          </div>
+        </div>
+        <div id="lmAchievementsList"></div>
       </div>
 
     </div>
