@@ -6153,7 +6153,6 @@
           ${xCerrarHTML()}
           <div class="lm-dilemma-title"><i class="ph ph-bold ph-file-text"></i> SALARIOS DE LA PLANTILLA</div>
           <div class="lm-setup-desc" style="text-align:center;margin-bottom:8px">Nómina total: <strong>${formatoDinero(totalNomina)}/mes</strong> · plantilla: <strong>${jugadores.length}</strong> · al poner en venta, el Director Deportivo avisará por correo en 1-3 jornadas con las ofertas que lleguen.</div>
-          <div class="lm-setup-desc" style="text-align:center;margin-bottom:8px">Nómina total: <strong>${formatoDinero(totalNomina)}/mes</strong> · plantilla: <strong>${jugadores.length}</strong> · al poner en venta, el Director Deportivo avisará por correo en 1-3 jornadas con las ofertas que lleguen.</div>
           <div class="lm-salarios-tabla-wrap">
             <table class="lm-salarios-tabla">
               <thead><tr><th>Jugador</th><th>Pos</th><th>Punt.</th><th>Salario</th><th></th></tr></thead>

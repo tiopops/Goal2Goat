@@ -3750,17 +3750,12 @@ body.liga-manager-screen .ranking-btn-label-lm{display:inline}
 body.menu-screen #profileTabStats,
 body.menu-screen #profileTabUpgrades,
 body.menu-screen #profileTabNotes,
-body.menu-screen #profileTabAchievements,
-body.liga-manager-screen #profileTabStats,
-body.liga-manager-screen #profileTabUpgrades,
-body.liga-manager-screen #profileTabNotes,
-body.liga-manager-screen #profileTabAchievements{
+body.menu-screen #profileTabAchievements{
   display:none!important;
 }
 /* Con una sola pestaña visible (AJUSTES), que ocupe todo el ancho
    en vez de dejar hueco vacío de la rejilla de 5 columnas. */
-body.menu-screen #profileOverlay .auth-tabs,
-body.liga-manager-screen #profileOverlay .auth-tabs{
+body.menu-screen #profileOverlay .auth-tabs{
   grid-template-columns:1fr;
 }
 
