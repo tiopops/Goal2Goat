@@ -765,8 +765,13 @@
   // verdad, mostrándose justo después de cerrar el resultado del
   // siguiente partido: premio económico siempre, y si se acierta más de
   // la mitad, también 1-3 rasgos a repartir entre tu plantilla.
-  function generarBoletoQuiniela(){
-    const jSiguiente=state.jornadaActual; // índice 0-based de la PRÓXIMA jornada (esta función se llama antes de incrementar jornadaActual)
+  function generarBoletoQuiniela(jornadaIndexForzado){
+    // Normalmente esto se llama a mitad de jugarJornada(), antes de
+    // incrementar jornadaActual — el índice 0-based de jornadaActual
+    // apunta entonces a la PRÓXIMA jornada de verdad. La única
+    // excepción es el regalo de bienvenida (se llama antes de jugar
+    // absolutamente nada), donde se fuerza a la jornada 1 (índice 0).
+    const jSiguiente = jornadaIndexForzado!==undefined ? jornadaIndexForzado : state.jornadaActual;
     if(jSiguiente>=38) return;
     const partidos=state.calendario[jSiguiente];
     if(!partidos || !partidos.length) return;
@@ -777,7 +782,7 @@
       predicciones:{}, rellenado:false
     };
     enviarCorreo('directorGeneral', '¡Tienes una quiniela esperando!',
-      'Tres victorias seguidas merecen premio: el club te invita a rellenar una quiniela con los partidos de la próxima jornada. Acierta y llévate un buen pellizco — y si aciertas más de la mitad, hasta rasgos nuevos para tu plantilla.');
+      'Tres victorias esta temporada merecen premio: el club te invita a rellenar una quiniela con los partidos de la próxima jornada. Acierta y llévate un buen pellizco — y si aciertas más de la mitad, hasta rasgos nuevos para tu plantilla.');
     const ultimo=state.correoInterno && state.correoInterno[0];
     if(ultimo){ ultimo.tipoEspecial='quiniela_lista'; }
   }
@@ -1505,7 +1510,7 @@
     // lista para rellenar desde el primer día — mismo mecanismo que las
     // que se ganan jugando (cada 3 victorias, acumulado).
     if(window.currentUsername==='tiopops'){
-      generarBoletoQuiniela();
+      generarBoletoQuiniela(0);
     }
     guardarEstado();
   }
