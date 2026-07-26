@@ -777,8 +777,8 @@
     if(!partidos || !partidos.length) return;
     state.quinielaBoleto={
       jornadaIndex:jSiguiente,
-      partidos:partidos.map(p=>({homeId:p.home.id, homeName:p.home.name, homeCrest:p.home.crestImg||null,
-        awayId:p.away.id, awayName:p.away.name, awayCrest:p.away.crestImg||null})),
+      partidos:partidos.map(p=>({homeId:p.home.id, homeName:p.home.name, homeCrest:p.home.crestImg||null, homeEsMio:p.home.id==='lm_0',
+        awayId:p.away.id, awayName:p.away.name, awayCrest:p.away.crestImg||null, awayEsMio:p.away.id==='lm_0'})),
       predicciones:{}, rellenado:false
     };
     enviarCorreo('directorGeneral', '¡Tienes una quiniela esperando!',
@@ -790,6 +790,15 @@
     if(res.golesA>res.golesB) return '1';
     if(res.golesA<res.golesB) return '2';
     return 'X';
+  }
+  // El propio equipo no tiene una URL de escudo como los rivales (usa
+  // state.escudo con su propio formato) — este helper elige la forma
+  // correcta según quién sea, para poder mostrar SIEMPRE un escudo en
+  // la quiniela, sea rival o el mío.
+  function quinielaEscudoHTML(esMio, crestUrl, size){
+    if(esMio) return crestHTML(state.escudo, size);
+    if(crestUrl) return `<img src="${crestUrl}" alt="" style="width:${size}px;height:${size}px;object-fit:contain">`;
+    return '';
   }
   // Se llama al final de cada jugarJornada() — si hay un boleto
   // rellenado esperando justo esta jornada, calcula aciertos, premio y
@@ -843,13 +852,13 @@
               const key=boleto.jornadaIndex+'-'+p.homeId+'-'+p.awayId;
               const elegido=boleto.predicciones[key];
               return `<div class="lm-quiniela-fila">
-                <div class="lm-quiniela-equipo lm-quiniela-equipo-local">${p.homeCrest?`<img src="${p.homeCrest}" alt="">`:''}<span>${p.homeName}</span></div>
+                <div class="lm-quiniela-equipo lm-quiniela-equipo-local">${quinielaEscudoHTML(p.homeEsMio, p.homeCrest, 26)}<span>${p.homeName}</span></div>
                 <div class="lm-quiniela-opciones">
                   <button class="lm-quiniela-btn ${elegido==='1'?'lm-quiniela-btn-activa':''}" data-qk="${key}" data-qv="1">1</button>
                   <button class="lm-quiniela-btn ${elegido==='X'?'lm-quiniela-btn-activa':''}" data-qk="${key}" data-qv="X">X</button>
                   <button class="lm-quiniela-btn ${elegido==='2'?'lm-quiniela-btn-activa':''}" data-qk="${key}" data-qv="2">2</button>
                 </div>
-                <div class="lm-quiniela-equipo lm-quiniela-equipo-visitante"><span>${p.awayName}</span>${p.awayCrest?`<img src="${p.awayCrest}" alt="">`:''}</div>
+                <div class="lm-quiniela-equipo lm-quiniela-equipo-visitante"><span>${p.awayName}</span>${quinielaEscudoHTML(p.awayEsMio, p.awayCrest, 26)}</div>
               </div>`;
             }).join('')}
           </div>
@@ -899,6 +908,21 @@
         <div class="lm-quiniela-premio-box">
           <i class="ph ph-bold ph-coins"></i>
           <div><div class="lm-quiniela-premio-val">${formatoDinero(r.premio)}</div><div class="lm-quiniela-premio-label">PREMIO ECONÓMICO</div></div>
+        </div>
+        <div class="lm-quiniela-detalle-lista">
+          ${r.detalle.map(d=>`
+            <div class="lm-quiniela-detalle-fila ${d.acierto?'lm-quiniela-detalle-acierto':'lm-quiniela-detalle-fallo'}">
+              <i class="ph ph-bold ${d.acierto?'ph-check-circle':'ph-x-circle'}"></i>
+              <div class="lm-quiniela-detalle-equipos">
+                <span class="lm-quiniela-detalle-equipo">${quinielaEscudoHTML(d.homeEsMio, d.homeCrest, 22)}${d.homeName}</span>
+                <span class="lm-quiniela-detalle-vs">vs</span>
+                <span class="lm-quiniela-detalle-equipo">${d.awayName}${quinielaEscudoHTML(d.awayEsMio, d.awayCrest, 22)}</span>
+              </div>
+              <div class="lm-quiniela-detalle-pronosticos">
+                <span class="lm-quiniela-detalle-tu">TU: <strong>${d.prediccion}</strong></span>
+                <span class="lm-quiniela-detalle-real">REAL: <strong>${d.real}</strong></span>
+              </div>
+            </div>`).join('')}
         </div>
         ${r.rasgosGanados.length?`
         <div class="lm-quiniela-rasgos-titulo"><i class="ph ph-bold ph-sparkle"></i> ¡MÁS DE LA MITAD ACERTADOS! HAS GANADO ${r.rasgosGanados.length} RASGO${r.rasgosGanados.length>1?'S':''}</div>
