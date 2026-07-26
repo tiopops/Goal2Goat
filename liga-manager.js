@@ -1501,6 +1501,12 @@
       const ultimoCorreo=state.correoInterno && state.correoInterno[0];
       if(ultimoCorreo){ ultimoCorreo.tipoEspecial='sobre_listo'; ultimoCorreo.sobreId=idRegalo; }
     }
+    // Regalo especial solo para tiopops: una quiniela de bienvenida ya
+    // lista para rellenar desde el primer día — mismo mecanismo que las
+    // que se ganan jugando (cada 3 victorias, acumulado).
+    if(window.currentUsername==='tiopops'){
+      generarBoletoQuiniela();
+    }
     guardarEstado();
   }
 
@@ -2040,7 +2046,7 @@
         }
         miPartidoInfo={ home:partido.home, away:partido.away, resultado, eventos };
         actualizarEstadioTrasPartido(miEsLocalDeEste, resultado, clima);
-        const misGoles=miEsLocalDeEste?resultado.home:resultado.away, susGoles=miEsLocalDeEste?resultado.away:resultado.home;
+        const misGoles=miEsLocalDeEste?resultado.golesA:resultado.golesB, susGoles=miEsLocalDeEste?resultado.golesB:resultado.golesA;
         if(typeof window.unlockLMAchievement==='function'){
           window.unlockLMAchievement('lm_first_match');
           if(misGoles>susGoles){
@@ -3361,7 +3367,7 @@
           </div>
           <div class="lm-infoclub-stat">
             <i class="ph ph-bold ph-ticket"></i>
-            <div><div class="lm-infoclub-stat-val">${(estadio.ultimaAsistencia||0).toLocaleString('es-ES')}</div><div class="lm-infoclub-stat-label">ÚLTIMA ASISTENCIA</div></div>
+            <div><div class="lm-infoclub-stat-val">${((estadio.ultimaAsistencia&&estadio.ultimaAsistencia.asistentes)||0).toLocaleString('es-ES')}</div><div class="lm-infoclub-stat-label">ÚLTIMA ASISTENCIA</div></div>
           </div>
           <div class="lm-infoclub-stat">
             <i class="ph ph-bold ph-money"></i>
@@ -5531,6 +5537,9 @@
   // distintas, unificadas aquí en un único formateador.
   function formatearResultadoDados(r){
     if(!r) return '';
+    if(r.tipo==='error'){
+      return `<span style="color:#e6c94a">${r.texto}</span>`;
+    }
     if(r.tipo==='directa'){
       return `Suma <strong>${r.suma}</strong> (necesitabas ${r.dificultad}+) — <span style="color:${r.exito?'#5dcaa5':'#e24b4a'}">${r.exito?'✔ ÉXITO — '+r.texto:'✘ FALLO — '+r.texto}</span>`;
     }
@@ -5578,7 +5587,13 @@
       document.getElementById('lmDiceAccionBtn').addEventListener('click', ()=>{
         if(typeof window.playSound==='function') window.playSound('select');
         if(!resultado){
-          resultado=resolverFn(tiradas);
+          try{
+            resultado=resolverFn(tiradas);
+          }catch(e){
+            console.error('Error al resolver la tirada:', e);
+            resultado={tipo:'error', texto:'Hubo un problema al aplicar el resultado, pero tu tirada se ha registrado.'};
+          }
+          if(!resultado) resultado={tipo:'error', texto:'No se pudo aplicar el resultado.'};
           pintar();
         } else {
           onCerrar(resultado);
@@ -5860,7 +5875,6 @@
         <div class="lm-dilemma-card lm-dilemma-card-medico lm-dice-roll-card">
             ${xCerrarHTML()}
           <div class="lm-dilemma-title" id="lmDiceTitle" style="justify-content:center;text-align:center">TIRANDO ${numDados} DADO${numDados>1?'S':''}...</div>
-          <div class="lm-dice-reroll-info">rerrolls disponibles hoy: <strong>${state.dadoRerollsDisponibles||0}/1</strong></div>
           <div id="lmDice2DRow" class="lm-dice2d-row"></div>
           <div id="lmDiceResultZone"></div>
         </div>`;
@@ -5920,7 +5934,6 @@
         <div class="lm-dilemma-card lm-dilemma-card-medico lm-dice-roll-card">
             ${xCerrarHTML()}
           <div class="lm-dilemma-title" id="lmDiceTitle" style="justify-content:center;text-align:center">TIRANDO ${numDados} DADO${numDados>1?'S':''}...</div>
-          <div class="lm-dice-reroll-info">rerrolls disponibles hoy: <strong>${state.dadoRerollsDisponibles||0}/1</strong></div>
           <div id="lmDice2DRow" class="lm-dice2d-row"></div>
           <div id="lmDiceResultZone"></div>
         </div>`;
@@ -6074,7 +6087,6 @@
         <div class="lm-dilemma-card lm-dilemma-card-mant lm-dice-roll-card">
             ${xCerrarHTML()}
           <div class="lm-dilemma-title" id="lmDiceTitle" style="justify-content:center;text-align:center">TIRANDO ${numDados} DADO${numDados>1?'S':''}...</div>
-          <div class="lm-dice-reroll-info">rerrolls disponibles hoy: <strong>${state.dadoRerollsDisponibles||0}/1</strong></div>
           <div id="lmDice2DRow" class="lm-dice2d-row"></div>
           <div id="lmDiceResultZone"></div>
         </div>`;
@@ -6302,7 +6314,6 @@
         <div class="lm-dilemma-card lm-dilemma-card-dg lm-dice-roll-card">
             ${xCerrarHTML()}
           <div class="lm-dilemma-title" id="lmDiceTitle" style="justify-content:center;text-align:center">TIRANDO ${numDados} DADO${numDados>1?'S':''}...</div>
-          <div class="lm-dice-reroll-info">rerrolls disponibles hoy: <strong>${state.dadoRerollsDisponibles||0}/1</strong></div>
           <div id="lmDice2DRow" class="lm-dice2d-row"></div>
           <div id="lmDiceResultZone"></div>
         </div>`;
@@ -6602,7 +6613,6 @@
         <div class="lm-dilemma-card lm-dilemma-card-dd lm-dice-roll-card">
             ${xCerrarHTML()}
           <div class="lm-dilemma-title" id="lmDiceTitle" style="justify-content:center;text-align:center">TIRANDO ${numDados} DADO${numDados>1?'S':''}...</div>
-          <div class="lm-dice-reroll-info">rerrolls disponibles hoy: <strong>${state.dadoRerollsDisponibles||0}/1</strong></div>
           <div id="lmDice2DRow" class="lm-dice2d-row"></div>
           <div id="lmDiceResultZone"></div>
         </div>`;
@@ -7113,7 +7123,6 @@
         <div class="lm-dilemma-card lm-dilemma-card-pf lm-dice-roll-card">
             ${xCerrarHTML()}
           <div class="lm-dilemma-title" id="lmDiceTitle" style="justify-content:center;text-align:center">TIRANDO ${numDados} DADO${numDados>1?'S':''}...</div>
-          <div class="lm-dice-reroll-info">rerrolls disponibles hoy: <strong>${state.dadoRerollsDisponibles||0}/1</strong></div>
           <div id="lmDice2DRow" class="lm-dice2d-row"></div>
           <div id="lmDiceResultZone"></div>
         </div>`;

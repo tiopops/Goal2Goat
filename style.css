@@ -3080,11 +3080,12 @@ body.liga-manager-screen .ranking-btn-label-lm{display:inline}
   display:grid;grid-template-columns:1fr 1fr;gap:8px;
 }
 .lm-infoclub-stat{
-  display:flex;align-items:center;justify-content:center;gap:10px;background:#1c2023;border:1px solid #2a2f32;
+  display:flex;flex-direction:row;flex-wrap:nowrap;align-items:center;justify-content:center;gap:10px;background:#1c2023;border:1px solid #2a2f32;
   border-radius:8px;padding:10px 12px;text-align:center;
 }
-.lm-infoclub-stat i{font-size:20px;color:var(--gold);flex-shrink:0}
-.lm-infoclub-stat-val{font-family:'Bebas Neue',Impact,sans-serif;font-size:16px;color:#fff;line-height:1.1;text-align:center}
+.lm-infoclub-stat i{font-size:20px;color:var(--gold);flex-shrink:0;line-height:1}
+.lm-infoclub-stat>div{display:flex;flex-direction:column;align-items:center;min-width:0}
+.lm-infoclub-stat-val{font-family:'Bebas Neue',Impact,sans-serif;font-size:16px;color:#fff;line-height:1.1;text-align:center;white-space:nowrap}
 .lm-infoclub-stat-label{font-size:9px;color:#888;letter-spacing:.5px;text-transform:uppercase;margin-top:1px;text-align:center}
 .lm-rasgo-icono{font-size:11px;color:var(--gold);margin-left:4px;vertical-align:middle;cursor:help}
 
