@@ -28,7 +28,7 @@
   const LM_RIVALS = [
     {id:'lm_1',  name:'Real Madrid',          attack:91, defense:78, pace:92, passing:85, technique:88, crestImg:ESCUDOS_DIR+'realmadrid.png',
       plantilla:[
-        {n:1,name:'Courtois',attack:28,defense:88,pace:55,passing:65,technique:70},
+        {n:1,name:'Courtois',pos:'POR',attack:28,defense:88,pace:55,passing:65,technique:70},
         {n:2,name:'Carvajal',attack:65,defense:80,pace:72,passing:75,technique:74},
         {n:3,name:'Militão',attack:40,defense:86,pace:80,passing:65,technique:68},
         {n:4,name:'Alaba',attack:45,defense:82,pace:63,passing:78,technique:76},
@@ -40,7 +40,7 @@
         {n:10,name:'Mbappé',attack:94,defense:35,pace:97,passing:78,technique:90},
         {n:11,name:'Rodrygo',attack:82,defense:45,pace:85,passing:78,technique:86},
         {n:12,name:'Alexander-Arnold',attack:60,defense:70,pace:70,passing:92,technique:82},
-        {n:13,name:'Lunin',attack:25,defense:78,pace:50,passing:60,technique:62},
+        {n:13,name:'Lunin',pos:'POR',attack:25,defense:78,pace:50,passing:60,technique:62},
         {n:14,name:'Tchouaméni',attack:55,defense:85,pace:75,passing:80,technique:78},
         {n:15,name:'Arda Güler',attack:78,defense:40,pace:75,passing:85,technique:88},
         {n:16,name:'Gonzalo García',attack:70,defense:35,pace:78,passing:60,technique:70},
@@ -56,7 +56,7 @@
       ]},
     {id:'lm_2',  name:'FC Barcelona',         attack:86, defense:80, pace:78, passing:94, technique:93, crestImg:ESCUDOS_DIR+'barcelona.png',
       plantilla:[
-        {n:1,name:'Ter Stegen',attack:24,defense:87,pace:45,passing:68,technique:70},
+        {n:1,name:'Ter Stegen',pos:'POR',attack:24,defense:87,pace:45,passing:68,technique:70},
         {n:3,name:'Balde',attack:65,defense:75,pace:92,passing:75,technique:78},
         {n:4,name:'Araújo',attack:42,defense:87,pace:82,passing:65,technique:65},
         {n:5,name:'Cubarsí',attack:38,defense:83,pace:78,passing:78,technique:75},
@@ -66,7 +66,7 @@
         {n:9,name:'Lewandowski',attack:88,defense:30,pace:63,passing:70,technique:82},
         {n:10,name:'Lamine Yamal',attack:88,defense:35,pace:90,passing:82,technique:93},
         {n:11,name:'Raphinha',attack:87,defense:45,pace:88,passing:80,technique:87},
-        {n:13,name:'Joan García',attack:22,defense:82,pace:50,passing:65,technique:65},
+        {n:13,name:'Joan García',pos:'POR',attack:22,defense:82,pace:50,passing:65,technique:65},
         {n:14,name:'Rashford',attack:82,defense:38,pace:88,passing:72,technique:84},
         {n:15,name:'Christensen',attack:35,defense:80,pace:66,passing:75,technique:72},
         {n:16,name:'Fermín López',attack:78,defense:55,pace:78,passing:80,technique:84},
@@ -77,12 +77,12 @@
         {n:22,name:'Marc Bernal',attack:60,defense:70,pace:75,passing:76,technique:78},
         {n:23,name:'Koundé',attack:50,defense:82,pace:86,passing:74,technique:75},
         {n:24,name:'Eric García',attack:38,defense:78,pace:75,passing:76,technique:74},
-        {n:25,name:'Szczęsny',attack:20,defense:79,pace:40,passing:60,technique:60},
+        {n:25,name:'Szczęsny',pos:'POR',attack:20,defense:79,pace:40,passing:60,technique:60},
         {n:28,name:'Roony Bardghji',attack:74,defense:35,pace:88,passing:70,technique:82}
       ]},
     {id:'lm_3',  name:'Atlético de Madrid',   attack:78, defense:93, pace:75, passing:78, technique:77, crestImg:ESCUDOS_DIR+'atlmadrid.png',
       plantilla:[
-        {n:13,name:'Oblak',attack:26,defense:89,pace:50,passing:68,technique:70},
+        {n:13,name:'Oblak',pos:'POR',attack:26,defense:89,pace:50,passing:68,technique:70},
         {n:2,name:'Giménez',attack:35,defense:85,pace:70,passing:65,technique:62},
         {n:3,name:'Ruggeri',attack:55,defense:76,pace:82,passing:70,technique:72},
         {n:4,name:'Mendoza',attack:35,defense:74,pace:75,passing:62,technique:60},
@@ -107,7 +107,7 @@
       ]},
     {id:'lm_4',  name:'Athletic Club',        attack:77, defense:81, pace:83, passing:72, technique:71, crestImg:ESCUDOS_DIR+'athletic.png',
       plantilla:[
-        {n:1,name:'Unai Simón',attack:24,defense:83,pace:52,passing:66,technique:68},
+        {n:1,name:'Unai Simón',pos:'POR',attack:24,defense:83,pace:52,passing:66,technique:68},
         {n:2,name:'Gorosabel',attack:58,defense:74,pace:78,passing:72,technique:70},
         {n:3,name:'Vivian',attack:40,defense:80,pace:74,passing:68,technique:66},
         {n:8,name:'Sancet',attack:74,defense:60,pace:72,passing:78,technique:80},
@@ -130,7 +130,7 @@
       ]},
     {id:'lm_5',  name:'Villarreal CF',        attack:75, defense:78, pace:68, passing:83, technique:85, crestImg:ESCUDOS_DIR+'villarreal.png',
       plantilla:[
-        {n:1,name:'Luiz Júnior',attack:24,defense:80,pace:50,passing:65,technique:68},
+        {n:1,name:'Luiz Júnior',pos:'POR',attack:24,defense:80,pace:50,passing:65,technique:68},
         {n:2,name:'Foyth',attack:45,defense:78,pace:74,passing:70,technique:70},
         {n:3,name:'Pedraza',attack:52,defense:74,pace:78,passing:70,technique:70},
         {n:4,name:'Rafa Marín',attack:38,defense:78,pace:74,passing:70,technique:68},
@@ -155,7 +155,7 @@
       ]},
     {id:'lm_6',  name:'Real Betis',           attack:83, defense:62, pace:74, passing:81, technique:84, crestImg:ESCUDOS_DIR+'betis.png',
       plantilla:[
-        {n:1,name:'Álvaro Valles',attack:24,defense:78,pace:52,passing:64,technique:66},
+        {n:1,name:'Álvaro Valles',pos:'POR',attack:24,defense:78,pace:52,passing:64,technique:66},
         {n:2,name:'Bellerín',attack:60,defense:70,pace:82,passing:74,technique:74},
         {n:3,name:'Diego Llorente',attack:38,defense:78,pace:70,passing:68,technique:66},
         {n:4,name:'Natan',attack:36,defense:80,pace:76,passing:64,technique:62},
@@ -187,7 +187,7 @@
       ]},
     {id:'lm_7',  name:'Real Sociedad',        attack:73, defense:77, pace:67, passing:83, technique:80, crestImg:ESCUDOS_DIR+'realsociedad.png',
       plantilla:[
-        {n:1,name:'Remiro',attack:24,defense:80,pace:52,passing:66,technique:68},
+        {n:1,name:'Remiro',pos:'POR',attack:24,defense:80,pace:52,passing:66,technique:68},
         {n:2,name:'Jon Aramburu',attack:56,defense:72,pace:80,passing:72,technique:70},
         {n:3,name:'Aihen Muñoz',attack:55,defense:74,pace:78,passing:72,technique:72},
         {n:4,name:'Gorrotxategi',attack:35,defense:76,pace:70,passing:68,technique:64},
@@ -210,7 +210,7 @@
       ]},
     {id:'lm_8',  name:'Sevilla FC',           attack:71, defense:81, pace:76, passing:69, technique:69, crestImg:ESCUDOS_DIR+'sevilla.png',
       plantilla:[
-        {n:1,name:'Vlachodimos',attack:24,defense:79,pace:50,passing:64,technique:66},
+        {n:1,name:'Vlachodimos',pos:'POR',attack:24,defense:79,pace:50,passing:64,technique:66},
         {n:2,name:'Carmona',attack:58,defense:72,pace:80,passing:72,technique:70},
         {n:3,name:'Azpilicueta',attack:42,defense:80,pace:62,passing:74,technique:72},
         {n:4,name:'Kike Salas',attack:35,defense:74,pace:70,passing:62,technique:60},
@@ -236,7 +236,7 @@
       ]},
     {id:'lm_9',  name:'RC Celta',             attack:76, defense:57, pace:82, passing:71, technique:79, crestImg:ESCUDOS_DIR+'celta.png',
       plantilla:[
-        {n:1,name:'Iván Villar',attack:22,defense:78,pace:50,passing:64,technique:64},
+        {n:1,name:'Iván Villar',pos:'POR',attack:22,defense:78,pace:50,passing:64,technique:64},
         {n:2,name:'Carl Starfelt',attack:34,defense:78,pace:68,passing:68,technique:64},
         {n:3,name:'Óscar Mingueza',attack:48,defense:75,pace:76,passing:72,technique:70},
         {n:4,name:'Joseph Aidoo',attack:36,defense:76,pace:74,passing:62,technique:60},
@@ -267,7 +267,7 @@
       ]},
     {id:'lm_10', name:'Valencia CF',          attack:67, defense:75, pace:79, passing:65, technique:68, crestImg:ESCUDOS_DIR+'valencia.png',
       plantilla:[
-        {n:1,name:'Dimitrievski',attack:24,defense:78,pace:50,passing:64,technique:64},
+        {n:1,name:'Dimitrievski',pos:'POR',attack:24,defense:78,pace:50,passing:64,technique:64},
         {n:3,name:'Copete',attack:36,defense:78,pace:74,passing:66,technique:64},
         {n:4,name:'Diakhaby',attack:38,defense:80,pace:72,passing:64,technique:62},
         {n:5,name:'Tárrega',attack:34,defense:78,pace:70,passing:66,technique:62},
@@ -293,8 +293,8 @@
       ]},
     {id:'lm_11', name:'Rayo Vallecano',       attack:64, defense:79, pace:77, passing:58, technique:62, crestImg:ESCUDOS_DIR+'rayovallecano.png',
       plantilla:[
-        {n:1,name:'Dani Cárdenas',attack:22,defense:78,pace:50,passing:60,technique:58},
-        {n:13,name:'Batalla',attack:20,defense:76,pace:48,passing:58,technique:56},
+        {n:1,name:'Dani Cárdenas',pos:'POR',attack:22,defense:78,pace:50,passing:60,technique:58},
+        {n:13,name:'Batalla',pos:'POR',attack:20,defense:76,pace:48,passing:58,technique:56},
         {n:2,name:'Andrei Ratiu',attack:56,defense:76,pace:82,passing:70,technique:70},
         {n:3,name:'Pep Chavarría',attack:40,defense:76,pace:74,passing:66,technique:64},
         {n:4,name:'Pedro Díaz',attack:38,defense:74,pace:70,passing:62,technique:58},
@@ -321,7 +321,7 @@
       ]},
     {id:'lm_12', name:'CA Osasuna',           attack:58, defense:85, pace:67, passing:56, technique:53, crestImg:ESCUDOS_DIR+'osasuna.png',
       plantilla:[
-        {n:1,name:'Sergio Herrera',attack:22,defense:80,pace:50,passing:62,technique:60},
+        {n:1,name:'Sergio Herrera',pos:'POR',attack:22,defense:80,pace:50,passing:62,technique:60},
         {n:3,name:'Juan Cruz',attack:38,defense:76,pace:74,passing:62,technique:60},
         {n:5,name:'Jorge Herrando',attack:34,defense:78,pace:68,passing:60,technique:58},
         {n:6,name:'Torró',attack:46,defense:74,pace:64,passing:70,technique:68},
@@ -341,7 +341,7 @@
       ]},
     {id:'lm_13', name:'Getafe CF',            attack:50, defense:89, pace:61, passing:53, technique:48, crestImg:ESCUDOS_DIR+'getafe.png',
       plantilla:[
-        {n:13,name:'David Soria',attack:20,defense:76,pace:46,passing:60,technique:58},
+        {n:13,name:'David Soria',pos:'POR',attack:20,defense:76,pace:46,passing:60,technique:58},
         {n:2,name:'Djené',attack:32,defense:80,pace:68,passing:60,technique:58},
         {n:3,name:'Abqar',attack:34,defense:78,pace:70,passing:64,technique:62},
         {n:5,name:'Luis Milla',attack:56,defense:64,pace:66,passing:86,technique:78},
@@ -364,7 +364,7 @@
       ]},
     {id:'lm_14', name:'RCD Espanyol',         attack:63, defense:69, pace:65, passing:62, technique:63, crestImg:ESCUDOS_DIR+'espanyol.png',
       plantilla:[
-        {n:1,name:'Ángel Fortuño',attack:22,defense:76,pace:48,passing:60,technique:58},
+        {n:1,name:'Ángel Fortuño',pos:'POR',attack:22,defense:76,pace:48,passing:60,technique:58},
         {n:2,name:'Rubén Sánchez',attack:44,defense:72,pace:78,passing:64,technique:64},
         {n:4,name:'Urko González de Zárate',attack:50,defense:70,pace:64,passing:76,technique:74},
         {n:5,name:'Fernando Calero',attack:34,defense:78,pace:66,passing:62,technique:58},
@@ -375,7 +375,7 @@
         {n:10,name:'Pol Lozano',attack:58,defense:62,pace:64,passing:78,technique:76},
         {n:11,name:'Pere Milla',attack:66,defense:44,pace:70,passing:68,technique:70},
         {n:12,name:'José Salinas',attack:32,defense:70,pace:68,passing:58,technique:56},
-        {n:13,name:'Marko Dmitrović',attack:22,defense:78,pace:46,passing:60,technique:60},
+        {n:13,name:'Marko Dmitrović',pos:'POR',attack:22,defense:78,pace:46,passing:60,technique:60},
         {n:14,name:'Ramon Terrats',attack:54,defense:68,pace:66,passing:74,technique:72},
         {n:15,name:'Miguel Rubio',attack:34,defense:76,pace:64,passing:62,technique:58},
         {n:16,name:'Cyril Ngonge',attack:74,defense:36,pace:84,passing:64,technique:74},
@@ -390,7 +390,7 @@
       ]},
     {id:'lm_15', name:'Elche CF',             attack:55, defense:72, pace:59, passing:59, technique:60, crestImg:ESCUDOS_DIR+'elche.png',
       plantilla:[
-        {n:1,name:'Matías Dituro',attack:22,defense:78,pace:48,passing:60,technique:60},
+        {n:1,name:'Matías Dituro',pos:'POR',attack:22,defense:78,pace:48,passing:60,technique:60},
         {n:3,name:'Adrià Pedrosa',attack:52,defense:74,pace:78,passing:70,technique:70},
         {n:5,name:'Federico Redondo',attack:56,defense:68,pace:70,passing:76,technique:74},
         {n:6,name:'Pedro Bigas',attack:36,defense:78,pace:60,passing:66,technique:62},
@@ -418,7 +418,7 @@
       ]},
     {id:'lm_16', name:'Levante UD',           attack:68, defense:47, pace:63, passing:61, technique:65, crestImg:ESCUDOS_DIR+'levante.png',
       plantilla:[
-        {n:1,name:'Pablo Cuñat',attack:20,defense:74,pace:46,passing:58,technique:56},
+        {n:1,name:'Pablo Cuñat',pos:'POR',attack:20,defense:74,pace:46,passing:58,technique:56},
         {n:13,name:'Mathew Ryan',attack:22,defense:76,pace:48,passing:62,technique:60},
         {n:4,name:'Adrián de la Fuente',attack:36,defense:74,pace:70,passing:62,technique:58},
         {n:22,name:'Raúl Sánchez',attack:38,defense:72,pace:72,passing:62,technique:60},
@@ -438,12 +438,12 @@
         {n:15,name:'Unai Elgezabal',attack:40,defense:74,pace:66,passing:62,technique:58}
       ]},
     {id:'lm_17', name:'Deportivo Alavés',     attack:56, defense:77, pace:62, passing:56, technique:54, crestImg:ESCUDOS_DIR+'alaves.png',
-      plantilla:[{n:1,name:'Antonio Sivera'},{n:2,name:'Diego Torres'},{n:22,name:'Manu García'},{n:14,name:'Tenaglia'},{n:17,name:'Jonny Otto'},{n:18,name:'Guridi'},{n:8,name:'Antonio Blanco'},{n:11,name:'Toni Martínez'},{n:4,name:'Denis Suárez'},{n:7,name:'Carlos Vicente'},{n:10,name:'Aleñá'},{n:15,name:'Boyé'},{n:19,name:'Pablo Ibáñez'},{n:6,name:'Ander Guevara'},{n:23,name:'Carlos Protesoni'},{n:20,name:'Calebe'},{n:9,name:'Vicente Robles'},{n:16,name:'Ibrahim Diabate'},{n:21,name:'Jan Virgili'},{n:3,name:'Rúben Duarte'}]},
+      plantilla:[{n:1,name:'Antonio Sivera',pos:'POR'},{n:2,name:'Diego Torres'},{n:22,name:'Manu García'},{n:14,name:'Tenaglia'},{n:17,name:'Jonny Otto'},{n:18,name:'Guridi'},{n:8,name:'Antonio Blanco'},{n:11,name:'Toni Martínez'},{n:4,name:'Denis Suárez'},{n:7,name:'Carlos Vicente'},{n:10,name:'Aleñá'},{n:15,name:'Boyé'},{n:19,name:'Pablo Ibáñez'},{n:6,name:'Ander Guevara'},{n:23,name:'Carlos Protesoni'},{n:20,name:'Calebe'},{n:9,name:'Vicente Robles'},{n:16,name:'Ibrahim Diabate'},{n:21,name:'Jan Virgili'},{n:3,name:'Rúben Duarte'}]},
     {id:'lm_18', name:'Racing de Santander',  attack:53, defense:69, pace:61, passing:53, technique:52, crestImg:ESCUDOS_DIR+'racingsantander.png',
-      plantilla:[{n:1,name:'Jokin Ezkieta'},{n:2,name:'Álvaro Mantilla'},{n:16,name:'Facundo González'},{n:4,name:'Pablo Ramón'},{n:11,name:'Andrés Martín'},{n:10,name:'Iñigo Vicente'},{n:19,name:'Gustavo Puerta'},{n:14,name:'Maguette Gueye'},{n:18,name:'Peio Canales'},{n:8,name:'Aritz Aldasoro'},{n:3,name:'Íñigo Sainz-Maza'},{n:9,name:'Jaime Mata'},{n:17,name:'Villalibre'},{n:20,name:'Suleiman Camara'},{n:22,name:'Manu'},{n:6,name:'Mario García'},{n:13,name:'Giorgi Guliashvili'},{n:21,name:'Simon Eriksson'},{n:25,name:'Sergio Arribas'},{n:24,name:'Chupe'},{n:7,name:'Cristian Carracedo'},{n:23,name:'Juan Otero'},{n:5,name:'David Larrubia'},{n:15,name:'Lorenzo Amatucci'},{n:26,name:'Álex Calatrava'},{n:12,name:'Ander Cantero'}]},
+      plantilla:[{n:1,name:'Jokin Ezkieta',pos:'POR'},{n:2,name:'Álvaro Mantilla'},{n:16,name:'Facundo González'},{n:4,name:'Pablo Ramón'},{n:11,name:'Andrés Martín'},{n:10,name:'Iñigo Vicente'},{n:19,name:'Gustavo Puerta'},{n:14,name:'Maguette Gueye'},{n:18,name:'Peio Canales'},{n:8,name:'Aritz Aldasoro'},{n:3,name:'Íñigo Sainz-Maza'},{n:9,name:'Jaime Mata'},{n:17,name:'Villalibre'},{n:20,name:'Suleiman Camara'},{n:22,name:'Manu'},{n:6,name:'Mario García'},{n:13,name:'Giorgi Guliashvili'},{n:21,name:'Simon Eriksson'},{n:25,name:'Sergio Arribas'},{n:24,name:'Chupe'},{n:7,name:'Cristian Carracedo'},{n:23,name:'Juan Otero'},{n:5,name:'David Larrubia'},{n:15,name:'Lorenzo Amatucci'},{n:26,name:'Álex Calatrava'},{n:12,name:'Ander Cantero'}]},
     {id:'lm_19', name:'RC Deportivo',         attack:57, defense:56, pace:60, passing:65, technique:66, crestImg:ESCUDOS_DIR+'deportivocoruna.png',
       plantilla:[
-        {n:1,name:'Germán',attack:22,defense:76,pace:48,passing:60,technique:58},
+        {n:1,name:'Germán',pos:'POR',attack:22,defense:76,pace:48,passing:60,technique:58},
         {n:2,name:'Genreau',attack:44,defense:72,pace:74,passing:66,technique:64},
         {n:3,name:'Eddahchouri',attack:66,defense:36,pace:78,passing:60,technique:70},
         {n:4,name:'Martínez',attack:36,defense:76,pace:66,passing:60,technique:58},

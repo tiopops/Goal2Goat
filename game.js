@@ -7552,6 +7552,11 @@ async function unlockAchievement(id){
 
 function showAchievementToast(def){
   const toast=document.createElement('div');
+  const claveNombre='ach.'+def.id, claveDesc='ach.'+def.id+'.d';
+  const nombreT = window.t ? window.t(claveNombre) : null;
+  const descT = window.t ? window.t(claveDesc) : null;
+  const nombreFinal = (nombreT && nombreT!==claveNombre) ? nombreT : def.name;
+  const descFinal = (descT && descT!==claveDesc) ? descT : def.desc;
   toast.style.cssText=`position:fixed;bottom:80px;left:50%;transform:translateX(-50%);
     background:#1a1a0a;border:2px solid ${TIER_COLOR[def.tier]};
     padding:12px 20px;z-index:99999;display:flex;align-items:center;gap:12px;
@@ -7561,8 +7566,8 @@ function showAchievementToast(def){
     <i class="ph ph-bold ${def.icon}" style="font-size:28px;color:${TIER_COLOR[def.tier]}"></i>
     <div>
       <div style="font-size:10px;letter-spacing:2px;color:${TIER_COLOR[def.tier]};margin-bottom:2px">${t("match.achievement_unlocked")} · ${getTierLabel(def.tier)}</div>
-      <div style="font-size:16px;color:#fff;letter-spacing:1px">${window.t?window.t('ach.'+def.id)||def.name:def.name}</div>
-      <div style="font-size:11px;color:#aaa;margin-top:2px">${window.t?window.t('ach.'+def.id+'.d')||def.desc:def.desc}</div>
+      <div style="font-size:16px;color:#fff;letter-spacing:1px">${nombreFinal}</div>
+      <div style="font-size:11px;color:#aaa;margin-top:2px">${descFinal}</div>
     </div>`;
   document.body.appendChild(toast);
   setTimeout(()=>{ toast.style.transition='opacity .5s'; toast.style.opacity='0'; setTimeout(()=>toast.remove(),500); },4000);
