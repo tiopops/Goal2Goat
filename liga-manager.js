@@ -508,7 +508,7 @@
     }).join('');
     const {entreno, descanso}=contarEntrenoSemanaActual();
     return `<div class="lm-calendario-box">
-      <div class="bench-title" style="margin:0 0 10px"><span><i class="ph ph-bold ph-calendar-blank" style="color:var(--gold);margin-right:6px"></i>CALENDARIO</span></div>
+      <div class="bench-title" style="margin:0 0 10px"><span><i class="ph ph-bold ph-calendar-blank" style="color:var(--gold);margin-right:6px"></i>${t("lm.calendario")}</span></div>
       <div class="lm-cal-header">
         <button class="lm-cal-nav" data-cal-nav="-1" title="Mes anterior"><i class="ph ph-bold ph-caret-left"></i></button>
         <span class="lm-cal-titulo">${MESES_LARGO[month].toUpperCase()} ${year}</span>
@@ -717,6 +717,17 @@
   let lmSortMode='position';
   const LM_SORT_LABELS={arrival:'LLEGADA', position:'POSICIÓN', rating:'PUNTOS', numero:'DORSAL'};
   const LM_SORT_NEXT={arrival:'position', position:'rating', rating:'numero', numero:'arrival'};
+  // Los catálogos de cartas (MEDICO_CARTAS_BASE, etc.) son const que se
+  // evalúan una sola vez al cargar el archivo — si el nombre/descripción
+  // se tradujera AL DEFINIR la carta, se quedaría congelado en el
+  // idioma que estuviera activo en ese momento. Por eso se resuelve
+  // aquí, cada vez que se muestra, con el texto en español original
+  // como respaldo si falta la clave.
+  function tc(prefix, id, campo, fallback){
+    const key=prefix+'.'+id+'.'+campo;
+    const val=(typeof window.t==='function') ? window.t(key) : null;
+    return (val && val!==key) ? val : fallback;
+  }
   let clasifColapsada=false; // la clasificación empieza desplegada
   // ---- Rasgos de jugador ----
   // Se ganan a través de la quiniela (nunca se compran) y se quedan
@@ -3600,14 +3611,14 @@
       <div class="lm-dilemma-card" style="width:560px;max-width:94vw;text-align:left">
         ${xCerrarHTML()}
         <div class="lm-dilemma-title">${rivalCrestHTML(26, rival.crestImg)}<span style="margin-left:6px">${rival.name.toUpperCase()}</span></div>
-        <div class="bench-title" style="margin-top:6px"><span><i class="ph ph-bold ph-t-shirt" style="color:var(--gold);margin-right:6px"></i>ONCE TITULAR</span></div>
+        <div class="bench-title" style="margin-top:6px"><span><i class="ph ph-bold ph-t-shirt" style="color:var(--gold);margin-right:6px"></i>${t("lm.once_titular")}</span></div>
         <div>
           <table class="roster-table">
             <thead><tr><th>#</th><th>Jugador</th><th>Pos</th><th>ATA</th><th>DEF</th><th>RIT</th><th>PAS</th><th>TEC</th><th>Rat.</th></tr></thead>
             <tbody>${titulares.map(filaJugadorRival).join('')}</tbody>
           </table>
         </div>
-        <div class="bench-title" style="margin-top:14px"><span><i class="ph ph-bold ph-chair" style="color:var(--gold);margin-right:6px"></i>BANQUILLO</span></div>
+        <div class="bench-title" style="margin-top:14px"><span><i class="ph ph-bold ph-chair" style="color:var(--gold);margin-right:6px"></i>${t("lm.banquillo")}</span></div>
         <div>
           <table class="roster-table">
             <thead><tr><th>#</th><th>Jugador</th><th>Pos</th><th>ATA</th><th>DEF</th><th>RIT</th><th>PAS</th><th>TEC</th><th>Rat.</th></tr></thead>
@@ -4582,79 +4593,79 @@
 
     if(setupStep===1){
       inner=`
-        <div class="lm-setup-title">ELIGE TU LIGA</div>
+        <div class="lm-setup-title">${t('lm.elige_liga')}</div>
         <div class="lm-setup-list">
           ${LIGAS_DISPONIBLES.map(l=>`
             <div class="lm-setup-option ${l.activa?'active selected':'disabled'}" data-liga="${l.id}">
               <img src="${l.flagImg}" alt="" style="width:22px;height:16px;object-fit:cover;border-radius:2px;vertical-align:middle;margin-right:10px">${l.nombre}
-              ${!l.activa?'<span class="lm-setup-soon">PRÓXIMAMENTE</span>':''}
+              ${!l.activa?`<span class="lm-setup-soon">${t('lm.proximamente')}</span>`:''}
             </div>`).join('')}
         </div>
-        <div class="lm-popup-actions"><button id="lmSetupNext" class="mode-card-btn mode-card-btn-gold">SIGUIENTE</button></div>
+        <div class="lm-popup-actions"><button id="lmSetupNext" class="mode-card-btn mode-card-btn-gold">${t('lm.siguiente')}</button></div>
       `;
     } else if(setupStep===2){
       inner=`
-        <div class="lm-setup-title">ELIGE TU MONEDA</div>
+        <div class="lm-setup-title">${t('lm.elige_moneda')}</div>
         <div class="lm-setup-list lm-setup-list-row">
           ${Object.keys(MONEDAS).map(k=>`
             <div class="lm-setup-option lm-setup-option-currency ${setupData.moneda===k?'selected':''}" data-moneda="${k}">
               <span style="font-size:22px">${MONEDAS[k].symbol}</span><br>${MONEDAS[k].label}
             </div>`).join('')}
         </div>
-        <div class="lm-popup-actions"><button id="lmSetupNext" class="mode-card-btn mode-card-btn-gold" ${setupData.moneda?'':'disabled'}>SIGUIENTE</button></div>
+        <div class="lm-popup-actions"><button id="lmSetupNext" class="mode-card-btn mode-card-btn-gold" ${setupData.moneda?'':'disabled'}>${t('lm.siguiente')}</button></div>
       `;
     } else if(setupStep===2.5){
       inner=`
-        <div class="lm-setup-title">¿CÓMO QUIERES EMPEZAR?</div>
+        <div class="lm-setup-title">${t('lm.como_empezar')}</div>
         <div class="lm-setup-list">
           <div class="lm-setup-option ${setupData.modo==='propio'?'selected':''}" data-modo="propio">
-            <i class="ph ph-bold ph-shield-plus" style="margin-right:10px;color:var(--gold)"></i>CREAR MI PROPIO EQUIPO
+            <i class="ph ph-bold ph-shield-plus" style="margin-right:10px;color:var(--gold)"></i>${t('lm.crear_equipo_propio')}
           </div>
           <div class="lm-setup-option ${setupData.modo==='existente'?'selected':''}" data-modo="existente">
-            <i class="ph ph-bold ph-users-three" style="margin-right:10px;color:var(--gold)"></i>ELEGIR UN EQUIPO YA EXISTENTE
+            <i class="ph ph-bold ph-users-three" style="margin-right:10px;color:var(--gold)"></i>${t('lm.elegir_equipo_existente')}
           </div>
         </div>
-        <p class="lm-setup-desc">Puedes fundar un club nuevo con nombre y escudo propios, o ponerte al mando de uno de los 19 equipos reales de la liga, con su plantilla real.</p>
-        <div class="lm-popup-actions"><button id="lmSetupNext" class="mode-card-btn mode-card-btn-gold" ${setupData.modo?'':'disabled'}>SIGUIENTE</button></div>
+        <p class="lm-setup-desc">${t('lm.como_empezar_desc')}</p>
+        <div class="lm-popup-actions"><button id="lmSetupNext" class="mode-card-btn mode-card-btn-gold" ${setupData.modo?'':'disabled'}>${t('lm.siguiente')}</button></div>
       `;
     } else if(setupStep===2.6){
       inner=`
-        <div class="lm-setup-title">ELIGE TU EQUIPO</div>
-        <p class="lm-setup-desc">Jugarás con su plantilla real. El resto de la liga son los otros 18 equipos.</p>
+        <div class="lm-setup-title">${t('lm.elige_tu_equipo')}</div>
+        <p class="lm-setup-desc">${t('lm.elige_tu_equipo_desc')}</p>
         <div class="lm-setup-list lm-setup-equipos-list">
           ${LM_RIVALS.map(r=>`
             <div class="lm-setup-option lm-setup-option-equipo ${setupData.equipoElegidoId===r.id?'selected':''}" data-equipo="${r.id}">
               ${rivalCrestHTML(28, r.crestImg)}<span>${r.name}</span>
             </div>`).join('')}
         </div>
-        <div class="lm-popup-actions"><button id="lmSetupNext" class="mode-card-btn mode-card-btn-gold" ${setupData.equipoElegidoId?'':'disabled'}>EMPEZAR TEMPORADA</button></div>
+        <div class="lm-popup-actions"><button id="lmSetupNext" class="mode-card-btn mode-card-btn-gold" ${setupData.equipoElegidoId?'':'disabled'}>${t('lm.empezar_temporada')}</button></div>
       `;
     } else if(setupStep===3.5){
       inner=`
-        <div class="lm-setup-title">TU CLUB YA ESTÁ CREADO</div>
-        <p class="lm-setup-desc">Encontramos un equipo guardado de una partida anterior. Puedes usarlo tal cual o cambiar nombre/escudo.</p>
+        <div class="lm-setup-title">${t('lm.club_ya_creado')}</div>
+        <p class="lm-setup-desc">${t('lm.club_ya_creado_desc')}</p>
         <div class="lm-crest-preview">${crestHTML(setupData.escudo, 64)}</div>
         <div class="lm-setup-title" style="font-size:16px;margin:6px 0 22px">${setupData.nombre}</div>
         <div class="lm-popup-actions">
-          <button id="lmSetupConfirm" class="mode-card-btn mode-card-btn-gold">EMPEZAR TEMPORADA</button>
-          <button id="lmSetupCambiar" class="mode-card-btn mode-card-btn-secondary">CAMBIAR NOMBRE/ESCUDO</button>
+          <button id="lmSetupConfirm" class="mode-card-btn mode-card-btn-gold">${t('lm.empezar_temporada')}</button>
+          <button id="lmSetupCambiar" class="mode-card-btn mode-card-btn-secondary">${t('lm.cambiar_nombre_escudo')}</button>
         </div>
       `;
     } else if(setupStep===3){
       inner=`
-        <div class="lm-setup-title">NOMBRE DE TU EQUIPO</div>
-        <p class="lm-setup-desc">Este será tu club, recién ascendido a Primera. El resto de la liga son los 19 equipos reales de La Liga.</p>
-        <input id="lmSetupNombre" type="text" maxlength="24" placeholder="Ej: CF Ejemplo" class="lm-setup-input" value="${setupData.nombre||''}">
-        <div class="lm-popup-actions"><button id="lmSetupNext" class="mode-card-btn mode-card-btn-gold" ${setupData.nombre&&setupData.nombre.trim()?'':'disabled'}>SIGUIENTE</button></div>
+        <div class="lm-setup-title">${t('lm.nombre_de_tu_equipo')}</div>
+        <p class="lm-setup-desc">${t('lm.nombre_de_tu_equipo_desc')}</p>
+        <input id="lmSetupNombre" type="text" maxlength="24" placeholder="${t('lm.nombre_placeholder')}" class="lm-setup-input" value="${setupData.nombre||''}">
+        <div class="lm-popup-actions"><button id="lmSetupNext" class="mode-card-btn mode-card-btn-gold" ${setupData.nombre&&setupData.nombre.trim()?'':'disabled'}>${t('lm.siguiente')}</button></div>
       `;
     } else if(setupStep===4){
       inner=`
-        <div class="lm-setup-title">CREA TU ESCUDO</div>
-        <p class="lm-setup-desc">Se abre el mismo editor de escudos de Copa Leyendas (por capas o subiendo una imagen) — solo que esto se guarda aparte, como identidad de Liga Manager.</p>
+        <div class="lm-setup-title">${t('lm.crea_tu_escudo')}</div>
+        <p class="lm-setup-desc">${t('lm.crea_tu_escudo_desc')}</p>
         <div class="lm-crest-preview">${crestHTML(setupData.escudo, 64)}</div>
-        <div class="lm-popup-actions"><button id="lmAbrirEditorBtn" class="mode-card-btn mode-card-btn-gold">ABRIR EDITOR DE ESCUDOS</button></div>
+        <div class="lm-popup-actions"><button id="lmAbrirEditorBtn" class="mode-card-btn mode-card-btn-gold">${t('lm.abrir_editor_escudos')}</button></div>
         <div class="lm-popup-actions">
-          <button id="lmSetupConfirm" class="mode-card-btn mode-card-btn-gold" ${setupData.escudo?'':'disabled'}>EMPEZAR TEMPORADA</button>
+          <button id="lmSetupConfirm" class="mode-card-btn mode-card-btn-gold" ${setupData.escudo?'':'disabled'}>${t('lm.empezar_temporada')}</button>
         </div>
       `;
     }
@@ -4662,7 +4673,7 @@
     root.innerHTML = `
       <div class="lm-wrap">
         <div class="lm-setup-card">
-          <div class="lm-setup-header">LIGA MANAGER — NUEVA PARTIDA</div>
+          <div class="lm-setup-header">${t('lm.setup_header')}</div>
           ${inner}
         </div>
       </div>`;
@@ -4965,7 +4976,7 @@
             </button>
           </div>
           <div class="bench-title">
-            <span><i class="ph ph-bold ph-t-shirt" style="color:var(--gold);margin-right:6px"></i>ONCE TITULAR</span>
+            <span><i class="ph ph-bold ph-t-shirt" style="color:var(--gold);margin-right:6px"></i>${t("lm.once_titular")}</span>
             <span style="display:flex;align-items:center;gap:8px">
               <button id="lmSortBtn" class="lm-sort-btn" title="Cambiar orden" aria-label="Cambiar orden">
                 <span id="lmSortLabel">${LM_SORT_LABELS[lmSortMode]}</span>
@@ -4980,7 +4991,7 @@
               <tbody>${filasPlantilla}</tbody>
             </table>
           </div>
-          <div class="bench-title"><span><i class="ph ph-bold ph-chair" style="color:var(--gold);margin-right:6px"></i>BANQUILLO</span><span>${banquillo.length}</span></div>
+          <div class="bench-title"><span><i class="ph ph-bold ph-chair" style="color:var(--gold);margin-right:6px"></i>${t("lm.banquillo")}</span><span>${banquillo.length}</span></div>
           <div>
             <table class="roster-table">
               <thead><tr><th>#</th><th>Jugador</th><th>Resist.</th><th>Pos</th><th>ATA</th><th>DEF</th><th>RIT</th><th>PAS</th><th>TEC</th><th>Rat.</th></tr></thead>
@@ -5053,7 +5064,7 @@
                   <div class="lm-perfil-nota-grande">${Math.round((rival.attack+rival.defense+rival.pace+rival.passing+rival.technique)/5)}</div>
                 </div>
                 <div class="lm-rival-info-col">
-                  <h3 class="lm-nextrival-header" style="text-align:left;margin:0 0 4px"><i class="ph ph-bold ph-flag" style="color:var(--gold);margin-right:6px"></i>PRÓXIMO RIVAL</h3>
+                  <h3 class="lm-nextrival-header" style="text-align:left;margin:0 0 4px"><i class="ph ph-bold ph-flag" style="color:var(--gold);margin-right:6px"></i>${t("lm.proximo_rival")}</h3>
                   <div class="lm-vs-label" style="text-align:left;margin-bottom:6px">${esLocal?'JUEGAS EN CASA':'JUEGAS FUERA'}</div>
                   ${(()=>{
                     const fila=calcularClasificacion();
@@ -5091,7 +5102,7 @@
 
         <div class="lm-panel lm-staff-panel" style="${columnaOrderStyle('staff')}">${columnaControlesHTML('staff')}<div class="lm-scroll-hint" data-scroll-hint title="Hay más contenido si bajas"><i class="ph ph-bold ph-caret-down"></i></div>
           <div class="lm-staff-bar-header">
-            <div class="lm-staff-bar-title"><i class="ph ph-bold ph-users-three"></i> CUERPO TÉCNICO</div>
+            <div class="lm-staff-bar-title"><i class="ph ph-bold ph-users-three"></i> ${t("lm.cuerpo_tecnico")}</div>
             <div class="lm-staff-bar-capital" title="Dados y rerolls disponibles este partido">
               <span><i class="ph ph-bold ph-dice-five"></i> DADOS: <strong>${state.diceAvailable}</strong></span>
               <span><i class="ph ph-bold ph-arrows-clockwise"></i> RERROLLS: <strong>${state.dadoRerollsDisponibles||0}</strong></span>
@@ -5100,11 +5111,11 @@
           ${hayVacantes?`<div class="lm-staff-warning"><i class="ph ph-bold ph-warning"></i> Todavía te falta cuerpo técnico por contratar — puedes jugar igualmente, pero conviene completarlo pronto.</div>`:''}
           <button id="lmTrabajadoresBtn" class="lm-btn-trabajadores" style="width:100%;margin-bottom:10px"><i class="ph ph-bold ph-user-plus"></i> CONTRATAR</button>
           <div class="lm-staff-bar-row">
-            ${staffTileHTML('directorGeneral', {btnId:'lmDirectorGeneralBtn', infoId:'lmDirectorGeneralInfoBtn', infoTitle:'Finanzas del club', notif:notifDG, badgeTexto:'!', carpeta:'director_general', archivo:'director_general', alt:'Director General', icono:'ph-briefcase', rolLabel:'DIRECTOR GENERAL', acento:'lm-staff-tile-dg', desc:'Patrocinios, merchandising, aforo y precio de las entradas'})}
-            ${staffTileHTML('directorDeportivo', {btnId:'lmDirectorDeportivoBtn', infoId:'lmDirectorDeportivoInfoBtn', infoTitle:'Histórico de fichajes y ventas', notif:notifDD, badgeTexto:'!', carpeta:'director_deportivo', archivo:'director_deportivo', alt:'Director Deportivo', icono:'ph-binoculars', rolLabel:'DIRECTOR DEPORTIVO', acento:'lm-staff-tile-dd', desc:'Fichajes, ojeadores y sobres de nuevos jugadores'})}
-            ${staffTileHTML('medico', {btnId:'lmMedicoBtn', infoId:'lmMedicoInfoBtn', infoTitle:'Historial médico', notif:notif, badgeTexto:'1', carpeta:'medico', archivo:'medico', alt:'Equipo médico', icono:'ph-first-aid-kit', rolLabel:'EQUIPO MÉDICO', desc:'Previene, diagnostica y trata las lesiones de tus jugadores', acento:'lm-staff-tile-medico'})}
-            ${staffTileHTML('preparadorFisico', {btnId:'lmPreparadorFisicoBtn', infoId:'lmPreparadorFisicoInfoBtn', infoTitle:'Historial de entrenamientos', notif:false, badgeTexto:'', carpeta:'preparador_fisico', archivo:'preparador_fisico', alt:'Preparador Físico', icono:'ph-barbell', rolLabel:'PREPARADOR FÍSICO', desc:'Entrena a tus jugadores y mejora sus estadísticas de forma original', acento:'lm-staff-tile-pf'})}
-            ${staffTileHTML('mantenimiento', {btnId:'lmMantenimientoBtn', infoId:'lmMantenimientoInfoBtn', infoTitle:'Estado del estadio', notif:notifMant, badgeTexto:'!', carpeta:'mantenimiento', archivo:'mantenimiento_y_seguridad', alt:'Mantenimiento y seguridad', icono:'ph-flag-pennant', rolLabel:'MANTENIMIENTO Y SEGURIDAD', desc:'Cuida el césped, la seguridad y la satisfacción de la afición', acento:'lm-staff-tile-mant'})}
+            ${staffTileHTML('directorGeneral', {btnId:'lmDirectorGeneralBtn', infoId:'lmDirectorGeneralInfoBtn', infoTitle:t('lm.info_dg'), notif:notifDG, badgeTexto:'!', carpeta:'director_general', archivo:'director_general', alt:'Director General', icono:'ph-briefcase', rolLabel:t('lm.rol_dg'), acento:'lm-staff-tile-dg', desc:t('lm.desc_dg')})}
+            ${staffTileHTML('directorDeportivo', {btnId:'lmDirectorDeportivoBtn', infoId:'lmDirectorDeportivoInfoBtn', infoTitle:t('lm.info_dd'), notif:notifDD, badgeTexto:'!', carpeta:'director_deportivo', archivo:'director_deportivo', alt:'Director Deportivo', icono:'ph-binoculars', rolLabel:t('lm.rol_dd'), acento:'lm-staff-tile-dd', desc:t('lm.desc_dd')})}
+            ${staffTileHTML('medico', {btnId:'lmMedicoBtn', infoId:'lmMedicoInfoBtn', infoTitle:t('lm.info_medico'), notif:notif, badgeTexto:'1', carpeta:'medico', archivo:'medico', alt:'Equipo médico', icono:'ph-first-aid-kit', rolLabel:t('lm.rol_medico'), desc:t('lm.desc_medico'), acento:'lm-staff-tile-medico'})}
+            ${staffTileHTML('preparadorFisico', {btnId:'lmPreparadorFisicoBtn', infoId:'lmPreparadorFisicoInfoBtn', infoTitle:t('lm.info_pf'), notif:false, badgeTexto:'', carpeta:'preparador_fisico', archivo:'preparador_fisico', alt:'Preparador Físico', icono:'ph-barbell', rolLabel:t('lm.rol_pf'), desc:t('lm.desc_pf'), acento:'lm-staff-tile-pf'})}
+            ${staffTileHTML('mantenimiento', {btnId:'lmMantenimientoBtn', infoId:'lmMantenimientoInfoBtn', infoTitle:t('lm.info_mant'), notif:notifMant, badgeTexto:'!', carpeta:'mantenimiento', archivo:'mantenimiento_y_seguridad', alt:'Mantenimiento y seguridad', icono:'ph-flag-pennant', rolLabel:t('lm.rol_mant'), desc:t('lm.desc_mant'), acento:'lm-staff-tile-mant'})}
           </div>
           ${(()=>{
             try{
@@ -5162,7 +5173,7 @@
               return `<div class="lm-correo-box">
                 ${sinLeer?'<span class="lm-correo-notif-dot"></span>':''}
                 <div class="lm-correo-header">
-                  <span><i class="ph ph-bold ph-envelope"></i> CORREO INTERNO</span>
+                  <span><i class="ph ph-bold ph-envelope"></i> ${t("lm.correo_interno")}</span>
                   ${sinLeer?`<span class="lm-correo-badge">${sinLeer}</span>`:''}
                 </div>
                 <div class="lm-correo-list">
@@ -5171,7 +5182,7 @@
               </div>`;
             }catch(e){
               console.error('Error pintando el correo interno:', e);
-              return `<div class="lm-correo-box"><div class="lm-correo-header"><span><i class="ph ph-bold ph-envelope"></i> CORREO INTERNO</span></div><div class="lm-correo-list"><p class="lm-setup-desc" style="text-align:center;padding:10px 0">No se pudo cargar el correo. Prueba a recargar.</p></div></div>`;
+              return `<div class="lm-correo-box"><div class="lm-correo-header"><span><i class="ph ph-bold ph-envelope"></i> ${t("lm.correo_interno")}</span></div><div class="lm-correo-list"><p class="lm-setup-desc" style="text-align:center;padding:10px 0">No se pudo cargar el correo. Prueba a recargar.</p></div></div>`;
             }
           })()}
         </div>
@@ -5935,9 +5946,9 @@
           <button class="med-card-swap" data-swap="${idx}" title="Cambiar carta" ${cambioDisponible?'':'disabled'}><i class="ph ph-bold ph-arrows-clockwise"></i></button>
           <div class="med-card-tag">${def.tipo==='nivel'?'PROYECTO':(def.tipo==='acumulacion'?'PROYECTO':'MISIÓN')}</div>
           <i class="ph ph-bold ${def.icon} med-card-icon"></i>
-          <div class="med-card-title">${def.nombre}</div>
+          <div class="med-card-title">${tc('med', def.id, 'nombre', def.nombre)}</div>
           <div class="med-card-divider"></div>
-          <div class="med-card-desc">${def.desc}</div>
+          <div class="med-card-desc">${tc('med', def.id, 'desc', def.desc)}</div>
           ${cuerpo}
           ${bloqueada?`<div class="med-card-bloqueada-label">${sinLesionNecesaria?'Necesitas una lesión activa':(nivelMaximoYa?'Especialidad al máximo nivel':'Imposible con los dados que quedan')}</div>`:`<button class="mode-card-btn mode-card-btn-gold med-card-btn" data-usar="${idx}" style="padding:7px;font-size:11px">USAR</button>`}
         </div>`;
@@ -6028,8 +6039,8 @@
           <div class="lm-dilemma-card lm-dilemma-card-medico">
             ${xCerrarHTML()}
             <i class="ph ph-bold ${def.icon}" style="font-size:26px;color:#5dcaa5"></i>
-            <div class="lm-dilemma-title" style="justify-content:center;text-align:center">${def.nombre.toUpperCase()}</div>
-            <div class="lm-dilemma-text">${def.desc}${def.tipo==='directa'?` — necesitas sumar ${Math.max(3, def.dificultad - bonusEstrellasTrabajador('medico'))}+`:(def.tipo==='nivel'?` — necesitas sumar ${dificultadActualNivel(def)}+ para subir a nivel ${nivelDe(def.track)+1}/${NIVEL_MAXIMO_EQUIPO}`:' — los dados invertidos siempre suman al proyecto')}</div>
+            <div class="lm-dilemma-title" style="justify-content:center;text-align:center">${tc('med', def.id, 'nombre', def.nombre).toUpperCase()}</div>
+            <div class="lm-dilemma-text">${tc('med', def.id, 'desc', def.desc)}${def.tipo==='directa'?` — necesitas sumar ${Math.max(3, def.dificultad - bonusEstrellasTrabajador('medico'))}+`:(def.tipo==='nivel'?` — necesitas sumar ${dificultadActualNivel(def)}+ para subir a nivel ${nivelDe(def.track)+1}/${NIVEL_MAXIMO_EQUIPO}`:' — los dados invertidos siempre suman al proyecto')}</div>
             ${jugadorObjetivo?`<div class="lm-setup-desc" style="margin-top:-4px">Sobre <strong>${jugadorObjetivo.name}</strong> — ${jugadorObjetivo.injurySeverity} · ${jugadorObjetivo.injuryWeeks} jornada${jugadorObjetivo.injuryWeeks===1?'':'s'} restante${jugadorObjetivo.injuryWeeks===1?'':'s'}</div>`:''}
             <div class="lm-dice-selector">
               <button id="lmDiceMinus" class="lm-dice-stepper">−</button>
@@ -6285,7 +6296,7 @@
         <div class="lm-dilemma-card lm-dilemma-card-mant" style="max-width:640px">
           ${xCerrarHTML()}
           <div class="lm-dilemma-title"><i class="ph ph-bold ph-flag-pennant"></i> MANTENIMIENTO Y SEGURIDAD</div>
-          <button type="button" class="mode-card-btn mode-card-btn-secondary" id="lmSeguridadEstadioBtn" style="width:100%;margin-bottom:10px"><i class="ph ph-bold ph-shield-check"></i> SEGURIDAD DEL ESTADIO</button>
+          <button type="button" class="mode-card-btn mode-card-btn-gold" id="lmSeguridadEstadioBtn" style="width:100%;margin-bottom:10px"><i class="ph ph-bold ph-shield-check"></i> SEGURIDAD DEL ESTADIO</button>
           ${renderNivelesMantenimientoHTML()}
           <div class="lm-staff-bar-capital" style="justify-content:center;margin:10px 0 8px"><span><i class="ph ph-bold ph-dice-five"></i> DADOS: <strong>${state.diceAvailable}</strong></span><span><i class="ph ph-bold ph-arrows-clockwise"></i> RERROLLS: <strong>${state.dadoRerollsDisponibles||0}</strong></span><span><i class="ph ph-bold ph-cards"></i> CAMBIOS: <strong>${Math.max(0,lmCambiosCartaPorPartido()-(state.mantenimientoCambiosUsados||0))}/${lmCambiosCartaPorPartido()}</strong></span></div>
           <div class="med-card-grid">${cartasHTML}</div>
@@ -7157,7 +7168,7 @@
         <i class="ph ph-bold ph-clipboard-text"></i>
         ${chips?`<div class="lm-plan-chips">${chips}</div>`:'<span>Todavía no has elegido a nadie para entrenar</span>'}
       </div>
-      <button id="lmPlanEntrenoBtn" class="mode-card-btn mode-card-btn-secondary" style="padding:9px 16px;font-size:13px;white-space:nowrap">PLAN DE ENTRENAMIENTO</button>
+      <button id="lmPlanEntrenoBtn" class="mode-card-btn mode-card-btn-gold" style="padding:9px 16px;font-size:13px;white-space:nowrap">PLAN DE ENTRENAMIENTO</button>
     </div>`;
   }
 
@@ -7209,8 +7220,8 @@
         <div class="lm-dilemma-card lm-dilemma-card-pf" style="max-width:640px">
           ${xCerrarHTML()}
           <div class="lm-dilemma-title"><i class="ph ph-bold ph-barbell"></i> PREPARADOR FÍSICO</div>
-          ${renderNivelesPFHTML()}
           ${renderPlanEntrenamientoResumenHTML()}
+          ${renderNivelesPFHTML()}
           <div class="lm-staff-bar-capital" style="justify-content:center;margin:10px 0 8px"><span><i class="ph ph-bold ph-dice-five"></i> DADOS: <strong>${state.diceAvailable}</strong></span><span><i class="ph ph-bold ph-arrows-clockwise"></i> RERROLLS: <strong>${state.dadoRerollsDisponibles||0}</strong></span><span><i class="ph ph-bold ph-cards"></i> CAMBIOS: <strong>${Math.max(0,lmCambiosCartaPorPartido()-(state.preparadorFisicoCambiosUsados||0))}/${lmCambiosCartaPorPartido()}</strong></span></div>
           <div class="med-card-grid">${cartasHTML}</div>
           <div class="lm-popup-actions lm-popup-actions-compact">
