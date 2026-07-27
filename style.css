@@ -2745,6 +2745,10 @@ body.liga-manager-screen .ranking-btn-label-lm{display:inline}
 }
 .lm-staff-tile:hover{transform:translateY(-2px);border-color:#c9a227;box-shadow:0 8px 20px rgba(0,0,0,.5)}
 .lm-staff-tile.lm-staff-tile-vacante{border-style:dashed;opacity:.9}
+.lm-staff-tile-rol-icon{
+  position:absolute;top:6px;right:8px;font-size:15px;color:rgba(201,162,39,.55);
+  z-index:2;pointer-events:none;
+}
 .lm-staff-tile-dg{border-color:#5a4f22}
 .lm-staff-tile-dg:hover{border-color:#e6c94a}
 .lm-staff-tile-dd{border-color:#4a4c4f}
@@ -3561,6 +3565,7 @@ body.liga-manager-screen .ranking-btn-label-lm{display:inline}
   display:flex;align-items:center;gap:2px;
 }
 .lm-trab-chollo-badge i{font-size:10px}
+.lm-sobre-oportunidad-badge{position:absolute;top:-11px;left:50%;right:auto;transform:translateX(-50%);white-space:nowrap}
 .lm-trab-chip-vacante{
   display:flex;flex-direction:row;align-items:center;justify-content:center;gap:6px;
   color:#ff6b6b;font-size:12px;font-weight:800;font-style:normal;letter-spacing:.5px;
@@ -3991,3 +3996,56 @@ body.light-theme.menu-screen{
   border-radius:6px;color:#eee;font-size:12px;
 }
 .lm-rasgo-select:disabled{opacity:.6}
+
+/* ============================================================
+   SEGURIDAD DEL ESTADIO — mapa de las 12 zonas con guardias y
+   disturbios. Mismo lenguaje visual que el resto de Liga Manager.
+   ============================================================ */
+#lmSeguridadEstadioOverlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:220;
+  display:flex;align-items:center;justify-content:center;overflow-y:auto;padding:24px 0;
+}
+.lm-seguridad-card{max-width:640px!important;width:94vw;text-align:left;max-height:90vh;overflow-y:auto}
+.lm-seguridad-resumen{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.lm-seguridad-resumen-item{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+  background:#1c2023;border:1px solid #2a2f32;border-radius:8px;padding:10px 6px;text-align:center;
+}
+.lm-seguridad-resumen-item i{font-size:18px;color:var(--gold)}
+.lm-seguridad-resumen-val{font-family:'Bebas Neue',Impact,sans-serif;font-size:16px;color:#fff;line-height:1.1;margin-top:2px}
+.lm-seguridad-resumen-label{font-size:8px;color:#888;letter-spacing:.5px;text-transform:uppercase;margin-top:1px}
+.lm-seguridad-contratar-row{display:flex;gap:8px;margin-bottom:14px}
+.lm-seguridad-contratar-row button{flex:1;padding:10px;font-size:12px}
+.lm-seguridad-mapa-wrap{position:relative;width:100%;border-radius:10px;overflow:hidden;background:#0a0c0a}
+.lm-seguridad-mapa-img{width:100%;display:block}
+.lm-zona-marcador{
+  position:absolute;transform:translate(-50%,-50%);display:flex;align-items:center;justify-content:center;
+  z-index:2;
+}
+.lm-zona-tinte{
+  position:absolute;top:50%;left:50%;width:64px;height:64px;border-radius:50%;
+  transform:translate(-50%,-50%);opacity:.35;filter:blur(6px);pointer-events:none;
+}
+.lm-zona-marcador-grave .lm-zona-tinte{animation:lmZonaPulso 1.1s ease-in-out infinite}
+@keyframes lmZonaPulso{
+  0%,100%{opacity:.3;transform:translate(-50%,-50%) scale(1)}
+  50%{opacity:.65;transform:translate(-50%,-50%) scale(1.25)}
+}
+.lm-zona-etiqueta{
+  position:relative;background:rgba(10,12,10,.88);border:1px solid rgba(255,255,255,.15);
+  border-radius:8px;padding:5px 8px;min-width:104px;text-align:center;
+  box-shadow:0 4px 10px rgba(0,0,0,.5);
+}
+.lm-zona-marcador[style*="--zona-color"] .lm-zona-etiqueta{border-color:var(--zona-color)}
+.lm-zona-nombre{font-size:8px;color:#ddd;letter-spacing:.3px;line-height:1.2}
+.lm-zona-disturbio{font-family:'Bebas Neue',Impact,sans-serif;font-size:10px;letter-spacing:1px;margin-top:1px}
+.lm-zona-guardias-fila{display:flex;align-items:center;justify-content:center;gap:5px;margin-top:4px}
+.lm-zona-guardias-num{font-size:9px;color:#eee;display:flex;align-items:center;gap:2px}
+.lm-zona-guardias-num i{color:var(--gold);font-size:10px}
+.lm-zona-btn{
+  width:16px;height:16px;border-radius:4px;border:1px solid #333;background:#1e2326;
+  color:#ccc;font-size:8px;display:flex;align-items:center;justify-content:center;
+  cursor:pointer;padding:0;
+}
+.lm-zona-btn:disabled{opacity:.35;cursor:default}
+.lm-zona-btn:not(:disabled):hover{border-color:var(--gold);color:var(--gold)}

@@ -723,6 +723,104 @@
   // para siempre en el jugador que los recibe. La mayoría suman +5 a
   // una de sus 5 estadísticas; Versátil es especial: quita la
   // penalización de jugar fuera de su posición natural.
+  // ---- Guardias de seguridad ----
+  // 12 zonas reales del estadio (gradas.png), con su posición aproximada
+  // sobre la imagen para poder pintar la insignia y los botones +/- en
+  // el sitio correcto.
+  const LM_ZONAS_ESTADIO=[
+    {id:'norte_1', label:'Tribuna Norte · Sector 1', left:26, top:12},
+    {id:'norte_2', label:'Tribuna Norte · Sector 2', left:49, top:9},
+    {id:'norte_3', label:'Tribuna Norte · Sector 3', left:72, top:12},
+    {id:'este_1',  label:'Fondo Este · Sector 1',    left:86, top:28},
+    {id:'este_2',  label:'Fondo Este · Sector 2',    left:89, top:46},
+    {id:'este_3',  label:'Fondo Este · Sector 3',    left:86, top:64},
+    {id:'sur_3',   label:'Tribuna Sur · Sector 3',   left:72, top:80},
+    {id:'sur_2',   label:'Tribuna Sur · Sector 2',   left:49, top:83},
+    {id:'sur_1',   label:'Tribuna Sur · Sector 1',   left:26, top:80},
+    {id:'oeste_3', label:'Fondo Oeste · Sector 3',   left:11, top:64},
+    {id:'oeste_2', label:'Fondo Oeste · Sector 2',   left:8,  top:46},
+    {id:'oeste_1', label:'Fondo Oeste · Sector 1',   left:11, top:28},
+  ];
+  const LM_DISTURBIO_LABEL={0:'SIN DISTURBIOS',1:'LEVE',2:'MEDIO',3:'GRAVE'};
+  const LM_DISTURBIO_COLOR={0:null,1:'#e6c94a',2:'#e88a2e',3:'#e24b4a'};
+  // Coste base del guardia y descuento por trabajador de nivel alto —
+  // igual que el resto del cuerpo técnico, 3 estrellas abarata las cosas.
+  const GUARDIA_SALARIO_BASE=900;
+  function guardiaSalarioActual(){
+    const trab=state.trabajadores && state.trabajadores.mantenimiento;
+    const nivel=trab?trab.nivel:1;
+    const descuento = nivel>=3 ? 0.25 : (nivel===2 ? 0.10 : 0);
+    return Math.round(GUARDIA_SALARIO_BASE*(1-descuento));
+  }
+  function guardiasAsignadosTotal(){
+    return Object.values(state.guardiasZonas||{}).reduce((a,b)=>a+(b||0),0);
+  }
+  function guardiasDisponibles(){
+    return Math.max(0, (state.guardiasContratados||0)-guardiasAsignadosTotal());
+  }
+  function contratarGuardia(){
+    state.guardiasContratados=(state.guardiasContratados||0)+1;
+    guardarEstado();
+  }
+  function despedirGuardiaDisponible(){
+    if(guardiasDisponibles()<=0) return false;
+    state.guardiasContratados=Math.max(0,(state.guardiasContratados||0)-1);
+    guardarEstado();
+    return true;
+  }
+  function asignarGuardiaZona(zonaId){
+    if(guardiasDisponibles()<=0) return false;
+    if(!state.guardiasZonas) state.guardiasZonas={};
+    if((state.guardiasZonas[zonaId]||0)>=3) return false;
+    state.guardiasZonas[zonaId]=(state.guardiasZonas[zonaId]||0)+1;
+    guardarEstado();
+    return true;
+  }
+  function quitarGuardiaZona(zonaId){
+    if(!state.guardiasZonas || !(state.guardiasZonas[zonaId]>0)) return false;
+    state.guardiasZonas[zonaId]--;
+    guardarEstado();
+    return true;
+  }
+  // Se llama una vez por jornada jugada como local — las zonas sin
+  // guardias van acumulando disturbios si la afición está descontenta;
+  // más guardias en una zona reducen o frenan ese avance. Una zona que
+  // llega a GRAVE sin ningún guardia puede estallar en disturbios de
+  // verdad, con daños económicos reales.
+  function procesarDisturbiosTrasPartido(){
+    if(!state.disturbiosZonas) return;
+    const satisfaccion=(state.estadio&&state.estadio.satisfaccion)||0;
+    // Cuanto peor esté la afición, más probable que una zona sin
+    // vigilancia empeore; con buena satisfacción, las zonas tienden a
+    // calmarse solas con el tiempo.
+    const probabilidadEmpeorar = satisfaccion<=-40 ? 0.55 : (satisfaccion<=-10 ? 0.32 : (satisfaccion<10 ? 0.12 : 0));
+    const probabilidadMejorar = satisfaccion>=10 ? 0.4 : 0.15;
+    let zonaEstallada=null;
+    LM_ZONAS_ESTADIO.forEach(z=>{
+      const guardias=state.guardiasZonas[z.id]||0;
+      let nivel=state.disturbiosZonas[z.id]||0;
+      if(guardias>0){
+        // Cada guardia asignado da más probabilidad de que la zona
+        // mejore un nivel, y ninguna de que empeore.
+        if(nivel>0 && Math.random()<0.25+guardias*0.2) nivel=Math.max(0, nivel-1);
+      } else {
+        if(nivel<3 && Math.random()<probabilidadEmpeorar) nivel=Math.min(3, nivel+1);
+        else if(nivel>0 && Math.random()<probabilidadMejorar) nivel=Math.max(0, nivel-1);
+        // Una zona GRAVE, sin ningún guardia, puede estallar de verdad.
+        if(nivel>=3 && !zonaEstallada && Math.random()<0.3) zonaEstallada=z;
+      }
+      state.disturbiosZonas[z.id]=nivel;
+    });
+    if(zonaEstallada) resolverEstallidoDisturbios(zonaEstallada);
+  }
+  function resolverEstallidoDisturbios(zona){
+    const daño=1200+Math.floor(Math.random()*2600);
+    state.capital=(state.capital||0)-daño;
+    registrarMovimientoFinanciero('Daños por disturbios en '+zona.label, -daño, state.jornadaActual);
+    state.disturbiosZonas[zona.id]=1; // vuelve a leve tras el suceso, no a cero — el ambiente sigue algo caldeado
+    enviarCorreo('mantenimiento', 'Incidentes en '+zona.label,
+      `Hubo disturbios en ${zona.label} durante el partido. Los daños al estadio han costado ${formatoDinero(daño)}, ya descontados del capital del club. Conviene reforzar la zona con guardias de seguridad.`);
+  }
   const LM_RASGOS_DEFS=[
     {id:'killer', icon:'ph-target', name:'Killer', stat:'attack', desc:'+5 de Ataque — un depredador dentro del área.'},
     {id:'muro_defensivo', icon:'ph-shield', name:'Muro Defensivo', stat:'defense', desc:'+5 de Defensa — nadie pasa por su banda.'},
@@ -1099,7 +1197,8 @@
     {id:'lm_season_complete',tier:'difícil', pts:3, icon:'ph-flag-checkered', name:'TEMPORADA COMPLETA',  desc:'Llega a la jornada 38'},
     {id:'lm_champion',       tier:'mítico', pts:5, icon:'ph-crown',          name:'CAMPEÓN DE LIGA',      desc:'Termina la temporada en 1ª posición'},
   ];
-  async function unlockLMAchievement(id){
+  async function unlockLMAchievement(id, mostrarInmediatamente){
+    if(mostrarInmediatamente===undefined) mostrarInmediatamente=true;
     if(!window._lmAchievementsCache) window._lmAchievementsCache=new Set();
     if(window._lmAchievementsCache.has(id)) return;
     const user=window._fbAuth && window._fbAuth.currentUser;
@@ -1119,12 +1218,31 @@
         scratchPointsEarned:(d.scratchPointsEarned||0)+def.pts
       },{merge:true});
       window._lmScratchPoints=newPts;
-      if(typeof window.showAchievementToast==='function') window.showAchievementToast(def);
+      if(mostrarInmediatamente){
+        if(typeof window.showAchievementToast==='function') window.showAchievementToast(def);
+      } else {
+        if(!window._lmLogrosParaMostrar) window._lmLogrosParaMostrar=[];
+        window._lmLogrosParaMostrar.push(def);
+      }
       const lab=document.getElementById('lmAchievementsBadge');
       if(lab) lab.style.display='inline-block';
     }catch(e){ console.warn('LM achievement error:', e); }
   }
   window.unlockLMAchievement = unlockLMAchievement;
+  // Los logros conseguidos DURANTE la simulación de un partido no se
+  // muestran al instante (podrían chivar el resultado antes de que el
+  // jugador vea la animación) — se guardan en cola y se sueltan aquí,
+  // justo después de cerrar la ventana de resultado del partido.
+  function mostrarLogrosPendientes(){
+    const pendientes=window._lmLogrosParaMostrar;
+    if(!pendientes || !pendientes.length) return;
+    window._lmLogrosParaMostrar=[];
+    pendientes.forEach((def,i)=>{
+      setTimeout(()=>{
+        if(typeof window.showAchievementToast==='function') window.showAchievementToast(def);
+      }, i*1400);
+    });
+  }
   async function renderLigaManagerAchievementsTab(){
     const list=document.getElementById('lmAchievementsList');
     if(!list) return;
@@ -1481,6 +1599,14 @@
       mantenimientoCartasAgotadas:[],
       mantenimientoHistorial:[],
       mantenimientoNiveles:{prevencionDesgaste:0, recuperacionCesped:0, boostSatisfaccion:0, proteccionSatisfaccion:0},
+      // ---- Guardias de seguridad ----
+      // guardiasContratados: cuántos guardias tienes en plantilla en total.
+      // guardiasZonas: cuántos de esos están asignados a cada zona (máx 3).
+      // Los "disponibles" son contratados menos asignados.
+      // disturbiosZonas: nivel de disturbios de cada zona del estadio.
+      guardiasContratados:0,
+      guardiasZonas:{norte_1:0,norte_2:0,norte_3:0,sur_1:0,sur_2:0,sur_3:0,oeste_1:0,oeste_2:0,oeste_3:0,este_1:0,este_2:0,este_3:0},
+      disturbiosZonas:{norte_1:0,norte_2:0,norte_3:0,sur_1:0,sur_2:0,sur_3:0,oeste_1:0,oeste_2:0,oeste_3:0,este_1:0,este_2:0,este_3:0},
       dadoRerollsDisponibles:lmRerollsPorPartido(),
       // ---- Economía ----
       // Capital inicial modesto, coherente con un recién ascendido: dos o
@@ -2041,10 +2167,18 @@
       delta*=0.5;
       state.mantenimientoBonos.amortiguarPerdida=false;
     }
+    // Bajar mucho el precio de la entrada es un gesto que la afición
+    // agradece — cuanto más por debajo de los 15€ de referencia, mayor
+    // el extra de satisfacción (con tope para no desequilibrar).
+    const precioActual=state.precioEntrada===undefined?15:state.precioEntrada;
+    if(precioActual<15){
+      delta += Math.min(15, (15-precioActual)*1.2);
+    }
     delta=Math.round(delta);
     state.ultimoCambioSatisfaccion=delta;
     est.satisfaccion=Math.max(-100, Math.min(100, est.satisfaccion+delta));
     actualizarMoralTrasPartido(miGoles, suGoles);
+    if(miEsLocal){ try{ procesarDisturbiosTrasPartido(); }catch(e){ console.error('procesarDisturbiosTrasPartido:', e); } }
   }
 
   function jugarJornada(){
@@ -2091,11 +2225,11 @@
         actualizarEstadioTrasPartido(miEsLocalDeEste, resultado, clima);
         const misGoles=miEsLocalDeEste?resultado.golesA:resultado.golesB, susGoles=miEsLocalDeEste?resultado.golesB:resultado.golesA;
         if(typeof window.unlockLMAchievement==='function'){
-          window.unlockLMAchievement('lm_first_match');
+          window.unlockLMAchievement('lm_first_match', false);
           if(misGoles>susGoles){
-            window.unlockLMAchievement('lm_first_win');
-            if(susGoles===0) window.unlockLMAchievement('lm_clean_sheet');
-            if((state.rachaResultados||0)+1>=3) window.unlockLMAchievement('lm_win_streak_3');
+            window.unlockLMAchievement('lm_first_win', false);
+            if(susGoles===0) window.unlockLMAchievement('lm_clean_sheet', false);
+            if((state.rachaResultados||0)+1>=3) window.unlockLMAchievement('lm_win_streak_3', false);
           }
         }
         if(misGoles>susGoles){
@@ -2186,12 +2320,12 @@
       try{
         const clasif=calcularClasificacion();
         const miPos=clasif.findIndex(t=>t.id==='lm_0')+1;
-        if(miPos>0 && miPos<=4) window.unlockLMAchievement('lm_top4');
+        if(miPos>0 && miPos<=4) window.unlockLMAchievement('lm_top4', false);
         const misVictorias=clasif.find(t=>t.id==='lm_0');
-        if(misVictorias && misVictorias.pg>=10) window.unlockLMAchievement('lm_win_10');
+        if(misVictorias && misVictorias.pg>=10) window.unlockLMAchievement('lm_win_10', false);
         if(state.jornadaActual>38){
-          window.unlockLMAchievement('lm_season_complete');
-          if(miPos===1) window.unlockLMAchievement('lm_champion');
+          window.unlockLMAchievement('lm_season_complete', false);
+          if(miPos===1) window.unlockLMAchievement('lm_champion', false);
         }
       }catch(e){}
     }
@@ -3066,7 +3200,7 @@
   // tarjeta (sobre el fondo oscuro) también cierra.
   function xCerrarHTML(){ return '<button class="lm-popup-close-x" data-cerrar-x title="Cerrar">×</button>'; }
   function habilitarCierreOverlay(overlay, cerrarFn){
-    overlay.addEventListener('click', (e)=>{ if(e.target===overlay) cerrarFn(); });
+    overlay.addEventListener('click', (e)=>{ if(e.target===overlay){ if(typeof window.playSound==='function') window.playSound('select'); cerrarFn(); } });
   }
   // Aviso propio del juego — sustituye al alert() nativo del navegador
   // (ese "www.goal2goat.com dice" no pinta nada aquí).
@@ -3272,6 +3406,7 @@
           <div class="lm-sobre-cards" id="lmSobreCardsRow">${jugadores.map((j,i)=>`
           <div class="lm-sobre-card ${j.esFichajeEstrella?'lm-sobre-card-estrella':''}" data-jugador="${i}" style="animation-delay:${i*0.35}s">
             ${j.esFichajeEstrella?`<div class="lm-fichaje-estrella-tag"><i class="ph ph-bold ph-star"></i> FICHAJE ESTRELLA</div>`:''}
+            ${(!j.esFichajeEstrella && j.esOportunidad)?`<div class="lm-trab-chollo-badge lm-sobre-oportunidad-badge"><i class="ph ph-bold ph-seal-percent"></i> OPORTUNIDAD</div>`:''}
             <div class="lm-sobre-cara"><img src="${caras[i]}" alt="${j.position}"><span class="lm-sobre-pos-badge">${j.position}</span></div>
             <div class="lm-sobre-nombre">${j.numero?('#'+j.numero+' '):''}${j.name}</div>
             ${j.esFichajeEstrella?`<div class="lm-sobre-procedencia">actualmente en ${j.equipoOrigenName}</div>`:''}
@@ -3599,10 +3734,11 @@
     const trab=state.trabajadores||{};
     const nominaMedico=(trab.medico?trab.medico.sueldo:0)+nivelTotalDe(state.medicoNiveles)*1200;
     const nominaMantenimiento=(trab.mantenimiento?trab.mantenimiento.sueldo:0)+nivelTotalDe(state.mantenimientoNiveles)*1200;
+    const nominaGuardias=(state.guardiasContratados||0)*guardiaSalarioActual();
     const nominaDG=(trab.directorGeneral?trab.directorGeneral.sueldo:0)+nivelTotalDe(state.directorGeneralNiveles)*1500;
     const nominaDD=(trab.directorDeportivo?trab.directorDeportivo.sueldo:0)+nivelTotalDe(state.directorDeportivoNiveles)*1500;
     const nominaPF=(trab.preparadorFisico?trab.preparadorFisico.sueldo:0)+nivelTotalDe(state.preparadorFisicoNiveles)*1200;
-    const nominaStaff=nominaMedico+nominaMantenimiento+nominaDG+nominaDD+nominaPF;
+    const nominaStaff=nominaMedico+nominaMantenimiento+nominaGuardias+nominaDG+nominaDD+nominaPF;
     const ingresoPatrocinio=nivelDeDG('ingresoPatrocinio')*15000;
     return {nominaJugadores, nominaStaff, ingresoPatrocinio, total:nominaJugadores+nominaStaff};
   }
@@ -3969,18 +4105,23 @@
     const calidad=nivelDeDD('calidadOjeo');
     const canteraBonus=nivelDeDD('costeSobres')*3;
     const bonusInforme = (state.directorDeportivoBonos && state.directorDeportivoBonos.bonusCalidadSobre) ? 8 : 0;
-    const overall=Math.max(45, Math.min(96, 50+nivelSobre*10+calidad*4+canteraBonus+bonusInforme+Math.floor(Math.random()*8)));
+    // OPORTUNIDAD (7%, igual que con los candidatos del cuerpo técnico):
+    // el canterano sale con una nota algo superior a la habitual, pero
+    // pidiendo un sueldo más bajo del que le correspondería por esa nota.
+    const esOportunidad = Math.random()<0.07;
+    const overall=Math.max(45, Math.min(96, 50+nivelSobre*10+calidad*4+canteraBonus+bonusInforme+(esOportunidad?6:0)+Math.floor(Math.random()*8)));
     const posiciones=['POR','DFC','LI','LD','MC','EI','ED','DC'];
     const position = (posicionForzada && posiciones.includes(posicionForzada)) ? posicionForzada : posiciones[Math.floor(Math.random()*posiciones.length)];
     const variar=()=>Math.max(30,Math.min(96, overall+Math.floor(Math.random()*13)-6));
     const ahorro=nivelDeDD('ahorroSalarial')*0.12;
-    const salario=Math.round(calcularSalario(overall)*(1-ahorro));
+    const descuentoOportunidad = esOportunidad ? 0.35 : 0;
+    const salario=Math.round(calcularSalario(overall)*(1-ahorro)*(1-descuentoOportunidad));
     return {
       id:'s'+Date.now()+Math.floor(Math.random()*100000), name:nombreJugadorAleatorio(), position, overall,
       attack:variar(), defense:variar(), pace:variar(), passing:variar(), technique:variar(),
       fatigue:100, racha:0, esSuplente:true,
       injured:false, injuryWeeks:0, injurySeverity:null,
-      salario, nivelSobre, esFichajeEstrella:false
+      salario, nivelSobre, esFichajeEstrella:false, esOportunidad
     };
   }
   // FICHAJE ESTRELLA — con la Red de Ojeadores bien subida de nivel
@@ -5108,7 +5249,7 @@
           // este segundo SEGUIR juega directamente el partido.
           if(state.semanaResueltaParaJornada===state.jornadaActual){
             const info=jugarJornada();
-            if(info){ mostrarPartidoEnVivo(info, ()=>{ render(); mostrarResolucionQuinielaSiToca(); }); } else { render(); }
+            if(info){ mostrarPartidoEnVivo(info, ()=>{ render(); mostrarLogrosPendientes(); mostrarResolucionQuinielaSiToca(); }); } else { render(); }
             return;
           }
           const continuarSemana=()=>{
@@ -5726,6 +5867,7 @@
     const trab=state.trabajadores[rol];
     return `
     <div class="lm-staff-tile ${o.acento||''} ${trab?'':'lm-staff-tile-vacante'}" id="${o.btnId}">
+      <i class="ph ph-bold ${o.icono} lm-staff-tile-rol-icon"></i>
       <div class="lm-staff-tile-photo">
         ${staffFotoHTML(o.carpeta, o.archivo, o.alt, o.icono, trab?trab.genero:'hombre', !trab)}
         ${o.notif?`<span class="lm-staff-tile-badge">${o.badgeTexto}</span>`:''}
@@ -5750,7 +5892,7 @@
     // cualquier pantalla (selector de dados, tirada, etc.) lo cierra.
     overlay.addEventListener('click', (e)=>{
       const xEl = e.target.closest && e.target.closest('[data-cerrar-x]');
-      if(xEl){ overlay.remove(); render(); }
+      if(xEl){ if(typeof window.playSound==='function') window.playSound('select'); overlay.remove(); render(); }
     });
 
     function jugadoresLesionadosPara(def){
@@ -6006,6 +6148,95 @@
      equipo médico (misma mano de 3 cartas, mismo fondo de dados
      compartido, mismo barajado 2D), pero sin selección de jugador ya
      que las cartas actúan directamente sobre el estadio. ---------- */
+  function abrirSeguridadEstadio(){
+    const overlay=document.createElement('div');
+    overlay.id='lmSeguridadEstadioOverlay';
+    function pintar(){
+      const contratados=state.guardiasContratados||0;
+      const disponibles=guardiasDisponibles();
+      const salario=guardiaSalarioActual();
+      overlay.innerHTML=`
+        <div class="lm-dilemma-card lm-seguridad-card">
+          ${xCerrarHTML()}
+          <div class="lm-dilemma-title"><i class="ph ph-bold ph-shield-check"></i> SEGURIDAD DEL ESTADIO</div>
+          <div class="lm-seguridad-resumen">
+            <div class="lm-seguridad-resumen-item">
+              <i class="ph ph-bold ph-users-three"></i>
+              <div><div class="lm-seguridad-resumen-val">${contratados}</div><div class="lm-seguridad-resumen-label">GUARDIAS CONTRATADOS</div></div>
+            </div>
+            <div class="lm-seguridad-resumen-item">
+              <i class="ph ph-bold ph-user-plus"></i>
+              <div><div class="lm-seguridad-resumen-val">${disponibles}</div><div class="lm-seguridad-resumen-label">SIN ASIGNAR</div></div>
+            </div>
+            <div class="lm-seguridad-resumen-item">
+              <i class="ph ph-bold ph-coins"></i>
+              <div><div class="lm-seguridad-resumen-val">${formatoDinero(salario)}</div><div class="lm-seguridad-resumen-label">SUELDO/GUARDIA/MES</div></div>
+            </div>
+          </div>
+          <div class="lm-seguridad-contratar-row">
+            <button id="lmContratarGuardiaBtn" class="mode-card-btn mode-card-btn-gold"><i class="ph ph-bold ph-plus"></i> CONTRATAR GUARDIA</button>
+            <button id="lmDespedirGuardiaBtn" class="mode-card-btn mode-card-btn-secondary" ${disponibles<=0?'disabled':''}><i class="ph ph-bold ph-minus"></i> DESPEDIR UNO LIBRE</button>
+          </div>
+          <div class="lm-seguridad-mapa-wrap">
+            <img src="assets/estadio/gradas.png" alt="Estadio" class="lm-seguridad-mapa-img">
+            ${LM_ZONAS_ESTADIO.map(z=>{
+              const guardiasZona=state.guardiasZonas[z.id]||0;
+              const nivel=state.disturbiosZonas[z.id]||0;
+              const color=LM_DISTURBIO_COLOR[nivel];
+              return `<div class="lm-zona-marcador ${nivel===3?'lm-zona-marcador-grave':''}" style="left:${z.left}%;top:${z.top}%;${color?`--zona-color:${color}`:''}">
+                ${color?`<div class="lm-zona-tinte" style="background:${color}"></div>`:''}
+                <div class="lm-zona-etiqueta">
+                  <div class="lm-zona-nombre">${z.label}</div>
+                  ${nivel>0?`<div class="lm-zona-disturbio" style="color:${color}">${LM_DISTURBIO_LABEL[nivel]}</div>`:''}
+                  <div class="lm-zona-guardias-fila">
+                    <button class="lm-zona-btn" data-zona-quitar="${z.id}" ${guardiasZona<=0?'disabled':''}><i class="ph ph-bold ph-minus"></i></button>
+                    <span class="lm-zona-guardias-num"><i class="ph ph-bold ph-shield"></i> ${guardiasZona}/3</span>
+                    <button class="lm-zona-btn" data-zona-anadir="${z.id}" ${(guardiasZona>=3||disponibles<=0)?'disabled':''}><i class="ph ph-bold ph-plus"></i></button>
+                  </div>
+                </div>
+              </div>`;
+            }).join('')}
+          </div>
+          <div class="lm-setup-desc" style="text-align:center;margin-top:8px">Las zonas sin ningún guardia pueden ir acumulando disturbios si la afición está descontenta — más guardias en una zona ayudan a que se calme.</div>
+          <div class="lm-popup-actions"><button id="lmSeguridadCerrarBtn" class="mode-card-btn mode-card-btn-gold">CERRAR</button></div>
+        </div>`;
+      document.getElementById('lmContratarGuardiaBtn').addEventListener('click', ()=>{
+        if(typeof window.playSound==='function') window.playSound('select');
+        contratarGuardia();
+        pintar();
+      });
+      const despedirBtn=document.getElementById('lmDespedirGuardiaBtn');
+      if(despedirBtn) despedirBtn.addEventListener('click', ()=>{
+        if(typeof window.playSound==='function') window.playSound('select');
+        despedirGuardiaDisponible();
+        pintar();
+      });
+      overlay.querySelectorAll('[data-zona-anadir]').forEach(btn=>{
+        btn.addEventListener('click', ()=>{
+          if(typeof window.playSound==='function') window.playSound('select');
+          asignarGuardiaZona(btn.getAttribute('data-zona-anadir'));
+          pintar();
+        });
+      });
+      overlay.querySelectorAll('[data-zona-quitar]').forEach(btn=>{
+        btn.addEventListener('click', ()=>{
+          if(typeof window.playSound==='function') window.playSound('select');
+          quitarGuardiaZona(btn.getAttribute('data-zona-quitar'));
+          pintar();
+        });
+      });
+      habilitarCierreOverlay(overlay, ()=>overlay.remove());
+      const xBtn=overlay.querySelector('[data-cerrar-x]');
+      if(xBtn) xBtn.addEventListener('click', ()=>overlay.remove());
+      document.getElementById('lmSeguridadCerrarBtn').addEventListener('click', ()=>{
+        if(typeof window.playSound==='function') window.playSound('select');
+        overlay.remove();
+      });
+    }
+    document.getElementById('ligaManagerScreen').appendChild(overlay);
+    pintar();
+  }
+
   function abrirMantenimiento(){
     const overlay=document.createElement('div');
     overlay.id='lmMantenimientoOverlay';
@@ -6015,7 +6246,7 @@
     // cualquier pantalla (selector de dados, tirada, etc.) lo cierra.
     overlay.addEventListener('click', (e)=>{
       const xEl = e.target.closest && e.target.closest('[data-cerrar-x]');
-      if(xEl){ overlay.remove(); render(); }
+      if(xEl){ if(typeof window.playSound==='function') window.playSound('select'); overlay.remove(); render(); }
     });
 
     function renderHub(){
@@ -6054,6 +6285,7 @@
         <div class="lm-dilemma-card lm-dilemma-card-mant" style="max-width:640px">
           ${xCerrarHTML()}
           <div class="lm-dilemma-title"><i class="ph ph-bold ph-flag-pennant"></i> MANTENIMIENTO Y SEGURIDAD</div>
+          <button type="button" class="mode-card-btn mode-card-btn-secondary" id="lmSeguridadEstadioBtn" style="width:100%;margin-bottom:10px"><i class="ph ph-bold ph-shield-check"></i> SEGURIDAD DEL ESTADIO</button>
           ${renderNivelesMantenimientoHTML()}
           <div class="lm-staff-bar-capital" style="justify-content:center;margin:10px 0 8px"><span><i class="ph ph-bold ph-dice-five"></i> DADOS: <strong>${state.diceAvailable}</strong></span><span><i class="ph ph-bold ph-arrows-clockwise"></i> RERROLLS: <strong>${state.dadoRerollsDisponibles||0}</strong></span><span><i class="ph ph-bold ph-cards"></i> CAMBIOS: <strong>${Math.max(0,lmCambiosCartaPorPartido()-(state.mantenimientoCambiosUsados||0))}/${lmCambiosCartaPorPartido()}</strong></span></div>
           <div class="med-card-grid">${cartasHTML}</div>
@@ -6063,6 +6295,11 @@
           </div>
         </div>`;
         wireMostrarInfoHold(overlay, abrirEstadoEstadio, 'lmEstadoEstadioOverlay');
+        const btnSeguridad=overlay.querySelector('#lmSeguridadEstadioBtn');
+        if(btnSeguridad) btnSeguridad.addEventListener('click', ()=>{
+          if(typeof window.playSound==='function') window.playSound('select');
+          abrirSeguridadEstadio();
+        });
 
       const xBtnMant=overlay.querySelector('[data-cerrar-x]');
       if(xBtnMant) xBtnMant.addEventListener('click', ()=>{ overlay.remove(); render(); });
@@ -6225,7 +6462,7 @@
     // cualquier pantalla (selector de dados, tirada, etc.) lo cierra.
     overlay.addEventListener('click', (e)=>{
       const xEl = e.target.closest && e.target.closest('[data-cerrar-x]');
-      if(xEl){ overlay.remove(); render(); }
+      if(xEl){ if(typeof window.playSound==='function') window.playSound('select'); overlay.remove(); render(); }
     });
 
     function renderHub(){
@@ -6517,7 +6754,7 @@
     // cualquier pantalla (selector de dados, tirada, etc.) lo cierra.
     overlay.addEventListener('click', (e)=>{
       const xEl = e.target.closest && e.target.closest('[data-cerrar-x]');
-      if(xEl){ overlay.remove(); render(); }
+      if(xEl){ if(typeof window.playSound==='function') window.playSound('select'); overlay.remove(); render(); }
     });
 
     function renderHub(){
@@ -6935,7 +7172,7 @@
     // cualquier pantalla (selector de dados, tirada, etc.) lo cierra.
     overlay.addEventListener('click', (e)=>{
       const xEl = e.target.closest && e.target.closest('[data-cerrar-x]');
-      if(xEl){ overlay.remove(); render(); }
+      if(xEl){ if(typeof window.playSound==='function') window.playSound('select'); overlay.remove(); render(); }
     });
 
     function renderHub(){
@@ -7242,7 +7479,7 @@
     // cualquier pantalla (selector de dados, tirada, etc.) lo cierra.
     overlay.addEventListener('click', (e)=>{
       const xEl = e.target.closest && e.target.closest('[data-cerrar-x]');
-      if(xEl){ overlay.remove(); render(); }
+      if(xEl){ if(typeof window.playSound==='function') window.playSound('select'); overlay.remove(); render(); }
     });
 
     function fichaTrabajadorHTML(rol){
@@ -7308,6 +7545,7 @@
       });
       overlay.querySelectorAll('[data-despedir]').forEach(btn=>{
         btn.addEventListener('click', ()=>{
+          if(typeof window.playSound==='function') window.playSound('select');
           const rol=btn.getAttribute('data-despedir');
           const actual=state.trabajadores[rol];
           const proceder=()=>{ despedirTrabajador(rol); pintar(); };
