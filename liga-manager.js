@@ -743,7 +743,16 @@
     if(!jugador.rasgos) jugador.rasgos=[];
     if(jugador.rasgos.includes(rasgoId)) return false;
     jugador.rasgos.push(rasgoId);
-    if(def.stat){ jugador[def.stat]=Math.min(99, (jugador[def.stat]||0)+5); }
+    if(def.stat){
+      jugador[def.stat]=Math.min(99, (jugador[def.stat]||0)+5);
+      // El overall del jugador se recalcula a partir de sus 5
+      // estadísticas reales — así la media del equipo (que se calcula a
+      // partir de esto) y su valor de venta (que usa overall
+      // directamente al generar ofertas) quedan siempre al día, sin
+      // quedarse con un número antiguo.
+      jugador.overall=Math.round((jugador.attack+jugador.defense+jugador.pace+jugador.passing+jugador.technique)/5);
+      jugador.salario=calcularSalario(jugador.overall);
+    }
     guardarEstado();
     return true;
   }
@@ -812,9 +821,14 @@
       const key=jIndexJugado+'-'+p.homeId+'-'+p.awayId;
       const res=state.resultados[key];
       const real = res ? resultadoPartidoQuiniela(res) : null;
-      const acierto = real && boleto.predicciones[jIndexJugado+'-'+p.homeId+'-'+p.awayId]===real;
+      // Con los cheats activados, la quiniela sale siempre perfecta —
+      // se muestra la predicción como si hubiera acertado el resultado
+      // real en todos los partidos.
+      const prediccionReal=boleto.predicciones[jIndexJugado+'-'+p.homeId+'-'+p.awayId];
+      const prediccion = window.CHEATS_ACTIVE ? real : prediccionReal;
+      const acierto = window.CHEATS_ACTIVE ? !!real : (real && prediccionReal===real);
       if(acierto) aciertos++;
-      return {...p, prediccion:boleto.predicciones[jIndexJugado+'-'+p.homeId+'-'+p.awayId], real, acierto};
+      return {...p, prediccion, real, acierto};
     });
     const total=detalle.length;
     const premio=Math.round((aciertos/total)*aciertos*3500); // crece más que proporcional cuantos más aciertas
@@ -3141,10 +3155,22 @@
     const img=overlay.querySelector('#lmSobreImgArrastrable');
     const zona=overlay.querySelector('#lmSobreGrabZone');
     const hint=overlay.querySelector('#lmSobreHint');
-    const UMBRAL_APERTURA=70; // px que hay que arrastrar hacia cualquier lado para que el sobre se abra
-    let arrastrando=false, startX=0, abierto=false;
+    const UMBRAL_APERTURA=180; // px que hay que arrastrar — casi todo el recorrido de la franja, para que no se abra al mínimo roce
+    let arrastrando=false, startX=0, abierto=false, ultimaEstelaTs=0;
 
     function posX(e){ return (e.touches && e.touches[0]) ? e.touches[0].clientX : e.clientX; }
+    function posY(e){ return (e.touches && e.touches[0]) ? e.touches[0].clientY : e.clientY; }
+    // Estela amarilla que sigue al puntero mientras se arrastra — una
+    // mota nueva cada pocos milisegundos, que se desvanece sola.
+    function crearEstela(x, y){
+      const punto=document.createElement('div');
+      punto.className='lm-sobre-estela-punto';
+      punto.style.left=x+'px';
+      punto.style.top=y+'px';
+      document.body.appendChild(punto);
+      requestAnimationFrame(()=>{ punto.style.opacity='0'; punto.style.transform='translate(-50%,-50%) scale(2.2)'; });
+      setTimeout(()=>punto.remove(), 450);
+    }
 
     function onMove(e){
       if(!arrastrando || abierto) return;
@@ -3155,6 +3181,8 @@
       img.style.filter=`brightness(${1+progreso*0.35})`;
       zona.style.opacity=String(1-progreso*0.7);
       hint.style.opacity=String(1-progreso);
+      const ahora=Date.now();
+      if(ahora-ultimaEstelaTs>28){ ultimaEstelaTs=ahora; crearEstela(posX(e), posY(e)); }
       if(delta>=UMBRAL_APERTURA) completarApertura(deltaCrudo>0?1:-1);
     }
     function onUp(){
@@ -3387,36 +3415,28 @@
         </div>
         <div class="lm-infoclub-stats-grid">
           <div class="lm-infoclub-stat">
-            <i class="ph ph-bold ph-coins"></i>
-            <div><div class="lm-infoclub-stat-val">${formatoDinero(state.capital||0)}</div><div class="lm-infoclub-stat-label">CAPITAL</div></div>
+            <div class="lm-infoclub-stat-top"><i class="ph ph-bold ph-coins"></i><div class="lm-infoclub-stat-val">${formatoDinero(state.capital||0)}</div></div><div class="lm-infoclub-stat-label">CAPITAL</div>
           </div>
           <div class="lm-infoclub-stat">
-            <i class="ph ph-bold ph-users"></i>
-            <div><div class="lm-infoclub-stat-val">${(estadio.aforoTotal||0).toLocaleString('es-ES')}</div><div class="lm-infoclub-stat-label">AFORO MÁXIMO</div></div>
+            <div class="lm-infoclub-stat-top"><i class="ph ph-bold ph-users"></i><div class="lm-infoclub-stat-val">${(estadio.aforoTotal||0).toLocaleString('es-ES')}</div></div><div class="lm-infoclub-stat-label">AFORO MÁXIMO</div>
           </div>
           <div class="lm-infoclub-stat">
-            <i class="ph ph-bold ph-ticket"></i>
-            <div><div class="lm-infoclub-stat-val">${((estadio.ultimaAsistencia&&estadio.ultimaAsistencia.asistentes)||0).toLocaleString('es-ES')}</div><div class="lm-infoclub-stat-label">ÚLTIMA ASISTENCIA</div></div>
+            <div class="lm-infoclub-stat-top"><i class="ph ph-bold ph-ticket"></i><div class="lm-infoclub-stat-val">${((estadio.ultimaAsistencia&&estadio.ultimaAsistencia.asistentes)||0).toLocaleString('es-ES')}</div></div><div class="lm-infoclub-stat-label">ÚLTIMA ASISTENCIA</div>
           </div>
           <div class="lm-infoclub-stat">
-            <i class="ph ph-bold ph-money"></i>
-            <div><div class="lm-infoclub-stat-val">${monedaInfo.symbol}${state.precioEntrada||0}</div><div class="lm-infoclub-stat-label">PRECIO ENTRADA</div></div>
+            <div class="lm-infoclub-stat-top"><i class="ph ph-bold ph-money"></i><div class="lm-infoclub-stat-val">${monedaInfo.symbol}${state.precioEntrada||0}</div></div><div class="lm-infoclub-stat-label">PRECIO ENTRADA</div>
           </div>
           <div class="lm-infoclub-stat">
-            <i class="ph ph-bold ph-smiley"></i>
-            <div><div class="lm-infoclub-stat-val">${estadio.satisfaccion||0}</div><div class="lm-infoclub-stat-label">SATISFACCIÓN AFICIÓN</div></div>
+            <div class="lm-infoclub-stat-top"><i class="ph ph-bold ph-smiley"></i><div class="lm-infoclub-stat-val">${estadio.satisfaccion||0}</div></div><div class="lm-infoclub-stat-label">SATISFACCIÓN AFICIÓN</div>
           </div>
           <div class="lm-infoclub-stat">
-            <i class="ph ph-bold ph-heartbeat"></i>
-            <div><div class="lm-infoclub-stat-val">${state.moral||0}</div><div class="lm-infoclub-stat-label">MORAL DEL EQUIPO</div></div>
+            <div class="lm-infoclub-stat-top"><i class="ph ph-bold ph-heartbeat"></i><div class="lm-infoclub-stat-val">${state.moral||0}</div></div><div class="lm-infoclub-stat-label">MORAL DEL EQUIPO</div>
           </div>
           <div class="lm-infoclub-stat">
-            <i class="ph ph-bold ph-grass"></i>
-            <div><div class="lm-infoclub-stat-val">${estadio.campo||0}%</div><div class="lm-infoclub-stat-label">ESTADO DEL CÉSPED</div></div>
+            <div class="lm-infoclub-stat-top"><i class="ph ph-bold ph-grass"></i><div class="lm-infoclub-stat-val">${estadio.campo||0}%</div></div><div class="lm-infoclub-stat-label">ESTADO DEL CÉSPED</div>
           </div>
           <div class="lm-infoclub-stat">
-            <i class="ph ph-bold ph-users-three"></i>
-            <div><div class="lm-infoclub-stat-val">${(state.plantilla||[]).length}</div><div class="lm-infoclub-stat-label">PLANTILLA</div></div>
+            <div class="lm-infoclub-stat-top"><i class="ph ph-bold ph-users-three"></i><div class="lm-infoclub-stat-val">${(state.plantilla||[]).length}</div></div><div class="lm-infoclub-stat-label">PLANTILLA</div>
           </div>
         </div>
         <div class="lm-popup-actions"><button id="lmInfoClubCerrar" class="mode-card-btn mode-card-btn-gold">CERRAR</button></div>

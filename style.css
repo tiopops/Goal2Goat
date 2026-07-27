@@ -2342,6 +2342,7 @@ body.light-theme .mp-search-input{background:#f5f1e8;border-color:#d4cec4;color:
 body.menu-screen #mainMenuScreen{display:flex!important}
 body.menu-screen .app{display:none!important}
 body.menu-screen #mobileTabBar{display:none!important}
+body.menu-screen .ranking-btn{display:none!important}
 
 .menu-bg{
   position:absolute;inset:0;z-index:0;
@@ -3080,12 +3081,12 @@ body.liga-manager-screen .ranking-btn-label-lm{display:inline}
   display:grid;grid-template-columns:1fr 1fr;gap:8px;
 }
 .lm-infoclub-stat{
-  display:flex;flex-direction:row;flex-wrap:nowrap;align-items:center;justify-content:center;gap:10px;background:#1c2023;border:1px solid #2a2f32;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;background:#1c2023;border:1px solid #2a2f32;
   border-radius:8px;padding:10px 12px;text-align:center;
 }
-.lm-infoclub-stat i{font-size:20px;color:var(--gold);flex-shrink:0;line-height:1}
-.lm-infoclub-stat>div{display:flex;flex-direction:column;align-items:center;min-width:0}
-.lm-infoclub-stat-val{font-family:'Bebas Neue',Impact,sans-serif;font-size:16px;color:#fff;line-height:1.1;text-align:center;white-space:nowrap}
+.lm-infoclub-stat-top{display:flex;flex-direction:row;align-items:center;justify-content:center;gap:6px}
+.lm-infoclub-stat i{font-size:18px;color:var(--gold);flex-shrink:0;line-height:1}
+.lm-infoclub-stat-val{font-family:'Bebas Neue',Impact,sans-serif;font-size:16px;color:#fff;line-height:1.1;white-space:nowrap}
 .lm-infoclub-stat-label{font-size:9px;color:#888;letter-spacing:.5px;text-transform:uppercase;margin-top:1px;text-align:center}
 .lm-rasgo-icono{font-size:11px;color:var(--gold);margin-left:4px;vertical-align:middle;cursor:help}
 
@@ -3402,6 +3403,16 @@ body.liga-manager-screen .ranking-btn-label-lm{display:inline}
 @keyframes lmSobreFloat{
   0%,100%{ transform:translateY(0) rotate(-1.5deg); }
   50%{ transform:translateY(-14px) rotate(1.5deg); }
+}
+/* Estela amarilla que sigue al puntero mientras se arrastra el sobre —
+   una mota que aparece en la posición exacta y se desvanece agrandándose
+   suavemente, dando sensación de "rastro" luminoso. */
+.lm-sobre-estela-punto{
+  position:fixed;width:10px;height:10px;border-radius:50%;
+  background:radial-gradient(circle, rgba(255,225,140,1) 0%, rgba(255,205,60,.6) 45%, transparent 75%);
+  transform:translate(-50%,-50%);pointer-events:none;z-index:9999;
+  transition:opacity .45s ease, transform .45s ease;
+  box-shadow:0 0 10px 2px rgba(255,215,100,.6);
 }
 /* Franja de rasgado: se dibuja ENCIMA del propio sobre, en la zona
    exacta donde hay que arrastrar. Un brillo recorre la franja de
@@ -3744,7 +3755,7 @@ body.liga-manager-screen .ranking-btn-label-lm{display:inline}
 /* Todas las pantallas de tirada de dados (barajado + resultado) miden
    siempre lo mismo, para que la interfaz no cambie de ancho ni de alto
    entre ver los dados girando y ver si se ha acertado o fallado. */
-.lm-dice-roll-card{width:340px;max-width:92vw;height:400px;display:flex;flex-direction:column;justify-content:center;overflow-y:auto}
+.lm-dice-roll-card{width:340px;max-width:92vw;height:460px;display:flex;flex-direction:column;justify-content:center;overflow-y:auto}
 .lm-dice-reroll-info{font-size:10px;color:#888;margin:2px 0 8px}
 /* Botón X universal de cierre — esquina superior derecha de cualquier
    popup, además del cierre al hacer clic fuera de la tarjeta. */
