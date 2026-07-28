@@ -5013,7 +5013,7 @@
 
     root.innerHTML = `
       <div class="lm-app-grid ${acabaDeReordenarColumnas?'lm-col-reordering':''}">
-        <div class="lm-panel lm-left-panel" style="${columnaOrderStyle('left')}">${columnaControlesHTML('left')}<div class="lm-scroll-hint" data-scroll-hint title="Hay más contenido si bajas"><i class="ph ph-bold ph-caret-down"></i></div>
+        <div id="lmPanelEquipo" class="lm-panel lm-left-panel" style="${columnaOrderStyle('left')}">${columnaControlesHTML('left')}<div class="lm-scroll-hint" data-scroll-hint title="Hay más contenido si bajas"><i class="ph ph-bold ph-caret-down"></i></div>
           <div class="lm-header-team">
             ${crestHTML(state.escudo, 76)}
             <div style="flex:1;min-width:0">
@@ -5062,7 +5062,7 @@
           </div>
         </div>
 
-        <div class="lm-center-panel" style="${columnaOrderStyle('center')}">${columnaControlesHTML('center')}<div class="lm-scroll-hint" data-scroll-hint title="Hay más contenido si bajas"><i class="ph ph-bold ph-caret-down"></i></div>
+        <div id="lmPanelCampo" class="lm-center-panel" style="${columnaOrderStyle('center')}">${columnaControlesHTML('center')}<div class="lm-scroll-hint" data-scroll-hint title="Hay más contenido si bajas"><i class="ph ph-bold ph-caret-down"></i></div>
           <div id="lmPitchBox"><button type="button" id="lmInfoClubBtn" class="lm-pitch-lupa-btn" title="${t('lm.info_club_tooltip')}"><i class="ph ph-bold ph-magnifying-glass"></i></button>${PITCH_SVG}<div id="lmCampoLayer" style="opacity:${campoOpacidadDesgaste(state.estadio?state.estadio.campo:100)}"></div><div id="lmWeatherLayer"></div>${formacionActual().slots.map(def=>{
             const pid=state.alineacion&&state.alineacion[def.slot];
             const jugador=pid?state.plantilla.find(p=>p.id===pid):null;
@@ -5101,7 +5101,7 @@
           </div>
         </div>
 
-        <div class="lm-panel lm-right-panel" style="${columnaOrderStyle('right')}">${columnaControlesHTML('right')}<div class="lm-scroll-hint" data-scroll-hint title="Hay más contenido si bajas"><i class="ph ph-bold ph-caret-down"></i></div>
+        <div id="lmPanelRival" class="lm-panel lm-right-panel" style="${columnaOrderStyle('right')}">${columnaControlesHTML('right')}<div class="lm-scroll-hint" data-scroll-hint title="Hay más contenido si bajas"><i class="ph ph-bold ph-caret-down"></i></div>
           <div class="lm-nextmatch-box">
             ${rival ? `
               <div class="lm-rival-top-row">
@@ -5157,7 +5157,7 @@
           ${calendarioHTML()}
         </div>
 
-        <div class="lm-panel lm-staff-panel" style="${columnaOrderStyle('staff')}">${columnaControlesHTML('staff')}<div class="lm-scroll-hint" data-scroll-hint title="Hay más contenido si bajas"><i class="ph ph-bold ph-caret-down"></i></div>
+        <div id="lmPanelTecnicos" class="lm-panel lm-staff-panel" style="${columnaOrderStyle('staff')}">${columnaControlesHTML('staff')}<div class="lm-scroll-hint" data-scroll-hint title="Hay más contenido si bajas"><i class="ph ph-bold ph-caret-down"></i></div>
           <div class="lm-staff-bar-header">
             <div class="lm-staff-bar-title"><i class="ph ph-bold ph-users-three"></i> ${t("lm.cuerpo_tecnico")}</div>
             <div class="lm-staff-bar-capital" title="Dados y rerolls disponibles este partido">

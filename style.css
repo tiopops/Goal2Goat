@@ -1271,7 +1271,7 @@ body.dark-theme .settings-item:hover{background:var(--row-hover);color:var(--gol
     flex:1;background:none;border:none;color:#666;
     padding:10px 4px 8px;cursor:pointer;
     display:flex;flex-direction:column;align-items:center;gap:3px;
-    transition:.15s;position:relative;
+    transition:.15s;position:relative;text-decoration:none;
   }
   .mob-tab-icon{width:24px;height:24px;display:block;flex-shrink:0}
   .mob-tab-label{
@@ -2724,11 +2724,16 @@ body.liga-manager-screen .ranking-btn-label-lm{display:inline}
   .lm-panel,.lm-right-panel{border:none;border-bottom:1px solid #22282b}
   .lm-staff-panel .lm-staff-bar-row{flex-direction:row;flex-wrap:wrap}
   .lm-staff-panel .lm-staff-tile{flex:1 1 200px}
-  /* Pestañas reales, igual que Copa Leyendas: solo se ve UNA columna
-     cada vez, la que corresponda a la pestaña activa de #lmMobileTabBar. */
-  .lm-app-grid > .lm-panel, .lm-app-grid > .lm-center-panel{display:none!important}
-  .lm-app-grid > .lm-panel.mob-active, .lm-app-grid > .lm-center-panel.mob-active{display:block!important}
-  body.liga-manager-screen #ligaManagerScreen{padding-bottom:70px}
+  /* IMPORTANTE: nada de ocultar columnas con JavaScript — eso es lo que
+     fallaba. En móvil, las 4 columnas se apilan una debajo de otra,
+     visibles TODAS siempre (garantizado solo con CSS, sin depender de
+     que ninguna función JS se ejecute bien). Los botones de la barra
+     de abajo son enlaces normales de ancla (<a href="#id">) que solo
+     desplazan la vista hasta esa sección — el desplazamiento lo hace
+     el propio navegador, no un script nuestro. */
+  .lm-app-grid > .lm-panel, .lm-app-grid > .lm-center-panel{display:block!important}
+  html{scroll-behavior:smooth}
+  body.liga-manager-screen #ligaManagerScreen{padding-bottom:70px;scroll-behavior:smooth}
 }
 
 
