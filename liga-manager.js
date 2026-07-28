@@ -1170,11 +1170,11 @@
     const list=document.getElementById('lmUpgradesList');
     const pointsEl=document.getElementById('lmUpgradePointsDisplay');
     if(!list) return;
-    list.innerHTML=`<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:12px">Cargando...</div>`;
+    list.innerHTML=`<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:12px">${t('lm.cargando')}</div>`;
     await lmCargarUpgradeCache();
     const user=window._fbAuth && window._fbAuth.currentUser;
     if(!user){
-      list.innerHTML=`<div style="text-align:center;padding:20px;color:var(--text-muted)">Inicia sesión para ver las mejoras.</div>`;
+      list.innerHTML=`<div style="text-align:center;padding:20px;color:var(--text-muted)">${t('lm.inicia_sesion_mejoras')}</div>`;
       return;
     }
     let currentPts=window._lmScratchPoints||0;
@@ -1307,9 +1307,9 @@
   async function renderLigaManagerAchievementsTab(){
     const list=document.getElementById('lmAchievementsList');
     if(!list) return;
-    list.innerHTML=`<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:12px">Cargando...</div>`;
+    list.innerHTML=`<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:12px">${t('lm.cargando')}</div>`;
     const user=window._fbAuth && window._fbAuth.currentUser;
-    if(!user){ list.innerHTML=`<div style="text-align:center;padding:20px;color:var(--text-muted)">Inicia sesión para ver tus logros.</div>`; return; }
+    if(!user){ list.innerHTML=`<div style="text-align:center;padding:20px;color:var(--text-muted)">${t('lm.inicia_sesion_logros')}</div>`; return; }
     const snap=await window._fbDb.collection('users').doc(user.uid).get();
     const unlocked=new Set((snap.exists && snap.data().ligaManagerAchievements)||[]);
     window._lmAchievementsCache=unlocked;
@@ -1399,9 +1399,9 @@
     const list=document.getElementById('lmSkillsList');
     const pointsEl=document.getElementById('lmSkillPointsDisplay');
     if(!list) return;
-    if(!list.children.length) list.innerHTML=`<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:12px">Cargando...</div>`;
+    if(!list.children.length) list.innerHTML=`<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:12px">${t('lm.cargando')}</div>`;
     const user=window._fbAuth && window._fbAuth.currentUser;
-    if(!user){ list.innerHTML=`<div style="text-align:center;padding:20px;color:var(--text-muted)">Inicia sesión para ver las habilidades.</div>`; return; }
+    if(!user){ list.innerHTML=`<div style="text-align:center;padding:20px;color:var(--text-muted)">${t('lm.inicia_sesion_habilidades')}</div>`; return; }
     await lmCargarSkillsCache();
     let pts=window._lmScratchPoints;
     if(pts===undefined){
@@ -2473,7 +2473,7 @@
     overlay.innerHTML=`
       <div class="press-modal">
         <span class="press-icon">🎙</span>
-        <h3>RUEDA DE PRENSA · ANTES DEL PARTIDO</h3>
+        <h3>${t('lm.rueda_prensa')}</h3>
         <p class="press-question">${event.q}</p>
         <div class="press-answers">
           ${event.answers.map((a,i)=>`
@@ -2582,9 +2582,9 @@
             <div class="lm-resumen-stat"><i class="ph ph-bold ph-trend-up" style="color:#5dcaa5"></i><strong>${totalMejoras}</strong><span>mejoras</span></div>
             <div class="lm-resumen-stat"><i class="ph ph-bold ph-first-aid-kit" style="color:#e24b4a"></i><strong>${r.lesiones.length}</strong><span>lesiones</span></div>
           </div>
-          ${(filasMejoras||filasLesiones)?`<div class="lm-resumen-lista">${filasMejoras}${filasLesiones}</div>`:'<p class="lm-setup-desc" style="text-align:center">Semana sin incidencias reseñables.</p>'}
+          ${(filasMejoras||filasLesiones)?`<div class="lm-resumen-lista">${filasMejoras}${filasLesiones}</div>`:`<p class="lm-setup-desc" style="text-align:center">${t('lm.semana_sin_incidencias')}</p>`}
           <div class="lm-popup-actions" style="justify-content:center">
-            <button id="lmSemanaAceptarBtn" class="mode-card-btn mode-card-btn-gold" style="width:auto;padding:10px 30px">ACEPTAR</button>
+            <button id="lmSemanaAceptarBtn" class="mode-card-btn mode-card-btn-gold" style="width:auto;padding:10px 30px">${t('lm.aceptar')}</button>
           </div>
         </div>`;
       document.getElementById('lmSemanaAceptarBtn').addEventListener('click', ()=>{
@@ -2663,7 +2663,7 @@
         </div>
         <div id="lmLiveEvents" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;align-items:stretch;gap:2px;padding:4px 0;min-height:80px;max-height:260px"></div>
         <div id="lmPostMatchInfo"></div>
-        <button id="lmLiveContinuar" class="mode-card-btn mode-card-btn-gold" style="display:none;width:100%;padding:11px;margin-top:10px">CONTINUAR</button>
+        <button id="lmLiveContinuar" class="mode-card-btn mode-card-btn-gold" style="display:none;width:100%;padding:11px;margin-top:10px">${t('lm.continuar')}</button>
       </div>`;
     document.getElementById('ligaManagerScreen').appendChild(overlay);
 
@@ -3611,31 +3611,31 @@
         </div>
         <div class="lm-infoclub-stats-grid">
           <div class="lm-infoclub-stat">
-            <div class="lm-infoclub-stat-top"><i class="ph ph-bold ph-coins"></i><div class="lm-infoclub-stat-val">${formatoDinero(state.capital||0)}</div></div><div class="lm-infoclub-stat-label">CAPITAL</div>
+            <div class="lm-infoclub-stat-top"><i class="ph ph-bold ph-coins"></i><div class="lm-infoclub-stat-val">${formatoDinero(state.capital||0)}</div></div><div class="lm-infoclub-stat-label">${t('lm.capital')}</div>
           </div>
           <div class="lm-infoclub-stat">
-            <div class="lm-infoclub-stat-top"><i class="ph ph-bold ph-users"></i><div class="lm-infoclub-stat-val">${(estadio.aforoTotal||0).toLocaleString('es-ES')}</div></div><div class="lm-infoclub-stat-label">AFORO MÁXIMO</div>
+            <div class="lm-infoclub-stat-top"><i class="ph ph-bold ph-users"></i><div class="lm-infoclub-stat-val">${(estadio.aforoTotal||0).toLocaleString('es-ES')}</div></div><div class="lm-infoclub-stat-label">${t('lm.aforo_maximo')}</div>
           </div>
           <div class="lm-infoclub-stat">
-            <div class="lm-infoclub-stat-top"><i class="ph ph-bold ph-ticket"></i><div class="lm-infoclub-stat-val">${((estadio.ultimaAsistencia&&estadio.ultimaAsistencia.asistentes)||0).toLocaleString('es-ES')}</div></div><div class="lm-infoclub-stat-label">ÚLTIMA ASISTENCIA</div>
+            <div class="lm-infoclub-stat-top"><i class="ph ph-bold ph-ticket"></i><div class="lm-infoclub-stat-val">${((estadio.ultimaAsistencia&&estadio.ultimaAsistencia.asistentes)||0).toLocaleString('es-ES')}</div></div><div class="lm-infoclub-stat-label">${t('lm.ultima_asistencia')}</div>
           </div>
           <div class="lm-infoclub-stat">
-            <div class="lm-infoclub-stat-top"><i class="ph ph-bold ph-money"></i><div class="lm-infoclub-stat-val">${monedaInfo.symbol}${state.precioEntrada||0}</div></div><div class="lm-infoclub-stat-label">PRECIO ENTRADA</div>
+            <div class="lm-infoclub-stat-top"><i class="ph ph-bold ph-money"></i><div class="lm-infoclub-stat-val">${monedaInfo.symbol}${state.precioEntrada||0}</div></div><div class="lm-infoclub-stat-label">${t('lm.precio_entrada')}</div>
           </div>
           <div class="lm-infoclub-stat">
-            <div class="lm-infoclub-stat-top"><i class="ph ph-bold ph-smiley"></i><div class="lm-infoclub-stat-val">${estadio.satisfaccion||0}</div></div><div class="lm-infoclub-stat-label">SATISFACCIÓN AFICIÓN</div>
+            <div class="lm-infoclub-stat-top"><i class="ph ph-bold ph-smiley"></i><div class="lm-infoclub-stat-val">${estadio.satisfaccion||0}</div></div><div class="lm-infoclub-stat-label">${t('lm.satisfaccion_afición')}</div>
           </div>
           <div class="lm-infoclub-stat">
-            <div class="lm-infoclub-stat-top"><i class="ph ph-bold ph-heartbeat"></i><div class="lm-infoclub-stat-val">${state.moral||0}</div></div><div class="lm-infoclub-stat-label">MORAL DEL EQUIPO</div>
+            <div class="lm-infoclub-stat-top"><i class="ph ph-bold ph-heartbeat"></i><div class="lm-infoclub-stat-val">${state.moral||0}</div></div><div class="lm-infoclub-stat-label">${t('lm.moral_equipo')}</div>
           </div>
           <div class="lm-infoclub-stat">
-            <div class="lm-infoclub-stat-top"><i class="ph ph-bold ph-grass"></i><div class="lm-infoclub-stat-val">${estadio.campo||0}%</div></div><div class="lm-infoclub-stat-label">ESTADO DEL CÉSPED</div>
+            <div class="lm-infoclub-stat-top"><i class="ph ph-bold ph-grass"></i><div class="lm-infoclub-stat-val">${estadio.campo||0}%</div></div><div class="lm-infoclub-stat-label">${t('lm.estado_cesped')}</div>
           </div>
           <div class="lm-infoclub-stat">
-            <div class="lm-infoclub-stat-top"><i class="ph ph-bold ph-users-three"></i><div class="lm-infoclub-stat-val">${(state.plantilla||[]).length}</div></div><div class="lm-infoclub-stat-label">PLANTILLA</div>
+            <div class="lm-infoclub-stat-top"><i class="ph ph-bold ph-users-three"></i><div class="lm-infoclub-stat-val">${(state.plantilla||[]).length}</div></div><div class="lm-infoclub-stat-label">${t('lm.plantilla')}</div>
           </div>
         </div>
-        <div class="lm-popup-actions"><button id="lmInfoClubCerrar" class="mode-card-btn mode-card-btn-gold">CERRAR</button></div>
+        <div class="lm-popup-actions"><button id="lmInfoClubCerrar" class="mode-card-btn mode-card-btn-gold">${t('lm.cerrar')}</button></div>
       </div>`;
     document.getElementById('ligaManagerScreen').appendChild(overlay);
     habilitarCierreOverlay(overlay, ()=>overlay.remove());
@@ -3676,7 +3676,7 @@
           </table>
         </div>
         <div class="lm-popup-actions lm-popup-actions-compact">
-          <button id="lmOnceRivalCerrar" class="mode-card-btn mode-card-btn-gold">CERRAR</button>
+          <button id="lmOnceRivalCerrar" class="mode-card-btn mode-card-btn-gold">${t('lm.cerrar')}</button>
         </div>
       </div>`;
     document.getElementById('ligaManagerScreen').appendChild(overlay);
@@ -3696,7 +3696,7 @@
         <div class="lm-dilemma-title"><i class="ph ph-bold ph-warning-circle"></i>${titulo||'AVISO DEL CLUB'}</div>
         <div class="lm-dilemma-text" style="margin:10px 0 16px">${mensaje}</div>
         <div class="lm-popup-actions lm-popup-actions-compact">
-          <button id="lmAvisoCerrar" class="mode-card-btn mode-card-btn-gold">ENTENDIDO</button>
+          <button id="lmAvisoCerrar" class="mode-card-btn mode-card-btn-gold">${t('lm.entendido')}</button>
         </div>
       </div>`;
     document.getElementById('ligaManagerScreen').appendChild(overlay);
@@ -5050,7 +5050,7 @@
           </div>
 
           <div class="team-profile box" style="margin-top:14px">
-            <h3 id="lmPerfilEquipoHeader" class="lm-perfil-header"><i class="ph ph-bold ph-chart-bar" style="color:var(--gold);margin-right:6px"></i>PERFIL DEL EQUIPO <span class="lm-perfil-arrow ${perfilEquipoColapsado?'':'lm-perfil-arrow-open'}">▾</span></h3>
+            <h3 id="lmPerfilEquipoHeader" class="lm-perfil-header"><i class="ph ph-bold ph-chart-bar" style="color:var(--gold);margin-right:6px"></i>${t('lm.perfil_equipo')} <span class="lm-perfil-arrow ${perfilEquipoColapsado?'':'lm-perfil-arrow-open'}">▾</span></h3>
             <div class="lm-perfil-nota-grande">${statsEquipo.overall}</div>
             ${!perfilEquipoColapsado?`
             ${[['attack','ATAQUE'],['defense','DEFENSA'],['pace','RITMO'],['passing','PASE'],['technique','TÉCNICA']].map(([k,label])=>`
@@ -5088,7 +5088,7 @@
             return `<div class="${clases}" data-slot="${def.slot}" style="left:${def.x}%;top:${def.y}%" title="${jugador?jugador.name+' ('+efectivoOverall(jugador)+')':'Vacío'}">${inner}</div>`;
           }).join('')}</div>
 
-          <div class="bench-title" style="margin-top:14px"><span><i class="ph ph-bold ph-strategy" style="color:var(--gold);margin-right:6px"></i>FORMACIÓN</span><span>${state.formacionCode}</span></div>
+          <div class="bench-title" style="margin-top:14px"><span><i class="ph ph-bold ph-strategy" style="color:var(--gold);margin-right:6px"></i>${t('lm.formacion')}</span><span>${state.formacionCode}</span></div>
           <div class="formation-tabs">
             ${Object.keys(FORMATIONS).map(cat=>`<div class="formation-tab ${(formacionCategoriaVista||state.formacionCategoria)===cat?'active':''}" data-categoria="${cat}">${CAT_NAMES[cat]}</div>`).join('')}
           </div>
@@ -5128,7 +5128,7 @@
                       <tr><td>G (ganados)</td><td>${datos.pg}</td></tr>
                       <tr><td>E (empatados)</td><td>${datos.pe}</td></tr>
                       <tr><td>P (perdidos)</td><td>${datos.pp}</td></tr>
-                      <tr><td>Goles (F:C)</td><td>${datos.gf}:${datos.gc} <span style="color:${dg>=0?'#5dcaa5':'#e24b4a'}">(${dg>=0?'+':''}${dg})</span></td></tr>
+                      <tr><td>${t('lm.goles_fc')}</td><td>${datos.gf}:${datos.gc} <span style="color:${dg>=0?'#5dcaa5':'#e24b4a'}">(${dg>=0?'+':''}${dg})</span></td></tr>
                     </table>`;
                   })()}
                 </div>
@@ -5152,7 +5152,7 @@
                   <div class="stat-row"><span>${label}</span><span>${rival[k]}</span></div>
                   <div class="stat-bar-row"><div class="stat-bar"><div style="width:${Math.max(0,Math.min(100,rival[k]))}%"></div></div></div>
                 `).join('')}
-              </div>` : `<div class="lm-vs-label" style="text-align:center">Temporada finalizada</div>`}
+              </div>` : `<div class="lm-vs-label" style="text-align:center">${t('lm.temporada_finalizada')}</div>`}
           </div>
           ${calendarioHTML()}
         </div>
@@ -5186,12 +5186,12 @@
                   if(c.tipoEspecial==='oferta_jugador' && !c.resuelto && Array.isArray(c.ofertas)){
                     extra=`<div class="lm-correo-ofertas">
                       ${c.ofertas.map((o,i)=>`<button class="lm-correo-oferta-btn" data-aceptar-oferta="${c.id}" data-oferta-idx="${i}">${o.club} — ${formatoDinero(o.monto)}</button>`).join('')}
-                      ${c.ofertas.length?`<button class="lm-correo-oferta-rechazar" data-rechazar-oferta="${c.id}">Rechazar todas</button>`:''}
+                      ${c.ofertas.length?`<button class="lm-correo-oferta-rechazar" data-rechazar-oferta="${c.id}">${t('lm.rechazar_todas')}</button>`:''}
                     </div>`;
                   } else if(c.tipoEspecial==='oferta_jugador' && c.resuelto){
                     extra=`<div class="lm-correo-resultado">${c.resultadoTexto||''}</div>`;
                   } else if(c.tipoEspecial==='balance_mensual'){
-                    extra=`<div class="lm-correo-ofertas"><button class="lm-correo-oferta-btn" data-ver-finanzas="1">VER FINANZAS</button></div>`;
+                    extra=`<div class="lm-correo-ofertas"><button class="lm-correo-oferta-btn" data-ver-finanzas="1">${t('lm.ver_finanzas')}</button></div>`;
                   } else if(c.tipoEspecial==='sobre_listo' && !c.resuelto){
                     const sobrePendiente=(state.sobresFichajesPendientes||[]).find(s=>s.id===c.sobreId);
                     if(sobrePendiente){
@@ -5202,7 +5202,7 @@
                         </button>
                       </div>`;
                     } else {
-                      extra=`<div class="lm-correo-resultado">Este sobre ya se abrió.</div>`;
+                      extra=`<div class="lm-correo-resultado">${t('lm.sobre_ya_abierto')}</div>`;
                     }
                   } else if(c.tipoEspecial==='sobre_listo' && c.resuelto){
                     extra=`<div class="lm-correo-resultado">${c.resultadoTexto||'Sobre ya abierto.'}</div>`;
@@ -5234,12 +5234,12 @@
                   ${sinLeer?`<span class="lm-correo-badge">${sinLeer}</span>`:''}
                 </div>
                 <div class="lm-correo-list">
-                  ${filas||'<p class="lm-setup-desc" style="text-align:center;padding:10px 0">Bandeja vacía por ahora.</p>'}
+                  ${filas||`<p class="lm-setup-desc" style="text-align:center;padding:10px 0">${t('lm.bandeja_vacia')}</p>`}
                 </div>
               </div>`;
             }catch(e){
               console.error('Error pintando el correo interno:', e);
-              return `<div class="lm-correo-box"><div class="lm-correo-header"><span><i class="ph ph-bold ph-envelope"></i> ${t("lm.correo_interno")}</span></div><div class="lm-correo-list"><p class="lm-setup-desc" style="text-align:center;padding:10px 0">No se pudo cargar el correo. Prueba a recargar.</p></div></div>`;
+              return `<div class="lm-correo-box"><div class="lm-correo-header"><span><i class="ph ph-bold ph-envelope"></i> ${t("lm.correo_interno")}</span></div><div class="lm-correo-list"><p class="lm-setup-desc" style="text-align:center;padding:10px 0">${t('lm.correo_error_carga')}</p></div></div>`;
             }
           })()}
         </div>
@@ -5679,7 +5679,7 @@
           const jugadorReal = h.jugadorId ? state.plantilla.find(p=>p.id===h.jugadorId) : null;
           const restante = jugadorReal ? jugadorReal.injuryWeeks : h.semanasPrevistas;
           const tratado = jugadorReal && restante < h.semanasPrevistas;
-          estado=`<span style="color:#e24b4a">Todavía de baja</span> (le quedan ${restante} jornada${restante===1?'':'s'}${tratado?' — <span style="color:#5dcaa5">tratamiento aplicado, se ha adelantado</span>':''})`;
+          estado=`<span style="color:#e24b4a">${t('lm.todavia_de_baja')}</span> (le quedan ${restante} jornada${restante===1?'':'s'}${tratado?` — <span style="color:#5dcaa5">${t('lm.tratamiento_adelantado')}</span>`:''})`;
         }
         return `<div class="lm-hist-item">
           <i class="ph ph-bold ph-first-aid-kit" style="color:${h.resuelta?'#5dcaa5':'#e24b4a'}"></i>
@@ -5701,7 +5701,7 @@
             </div>
           </div>
           ${esModoMantener?'':`<div class="lm-popup-actions lm-popup-actions-compact">
-            <button id="lmHistorialCerrar" class="mode-card-btn mode-card-btn-gold">CERRAR</button>
+            <button id="lmHistorialCerrar" class="mode-card-btn mode-card-btn-gold">${t('lm.cerrar')}</button>
           </div>`}
         </div>`;
       overlay.querySelectorAll('[data-histtab]').forEach(el=>{
@@ -5804,7 +5804,7 @@
     }
     if(r.tipo==='nivel'){
       return r.exito
-        ? `Suma <strong>${r.suma}</strong> (necesitabas ${r.dificultad}+) — <span style="color:#5dcaa5">✔ ÉXITO</span> — ${r.nombre} sube a nivel ${r.nivelNuevo}/${NIVEL_MAXIMO_EQUIPO}${r.maxAlcanzado?' — <strong>nivel máximo alcanzado</strong>':''}`
+        ? `Suma <strong>${r.suma}</strong> (necesitabas ${r.dificultad}+) — <span style="color:#5dcaa5">✔ ÉXITO</span> — ${r.nombre} sube a nivel ${r.nivelNuevo}/${NIVEL_MAXIMO_EQUIPO}${r.maxAlcanzado?` — <strong>${t('lm.nivel_maximo_alcanzado')}</strong>`:''}`
         : `Suma <strong>${r.suma}</strong> (necesitabas ${r.dificultad}+) — <span style="color:#e24b4a">✘ FALLO</span> — ${r.texto}`;
     }
     // Forma de resolverDilemaMedico (dado urgente): {suma,dificultad,exito}
@@ -5826,7 +5826,7 @@
       zonaEl.innerHTML=`
         <div class="lm-dice-result-row">${tiradas.map((v,i)=>`<div class="lm-dice-face${puedeReroll?' lm-dice-face-reroll':''}" data-reroll-i="${i}" id="lmDiceResultFace${i}" ${puedeReroll?'title="Repetir este dado"':''}>${dadoPipsHTML(v)}</div>`).join('')}</div>
         <div class="lm-dice-suma-grande">${suma}</div>
-        ${puedeReroll?`<div class="lm-setup-desc">toca un dado para repetirlo · rerolls hoy: <strong>${state.dadoRerollsDisponibles}/${lmRerollsPorPartido()}</strong></div>`:''}
+        ${puedeReroll?`<div class="lm-setup-desc">${t('lm.toca_dado_repetirlo')} <strong>${state.dadoRerollsDisponibles}/${lmRerollsPorPartido()}</strong></div>`:''}
         ${resultado?`<div class="lm-dice-resultado-texto">${formatearResultadoDados(resultado)}</div>`:''}
         <div class="lm-popup-actions"><button id="lmDiceAccionBtn" class="mode-card-btn mode-card-btn-gold">${resultado?'CERRAR':'CONTINUAR'}</button></div>`;
       if(puedeReroll){
@@ -5946,7 +5946,7 @@
       <div class="lm-staff-tile-body">
         <div class="lm-staff-tile-rol">${o.rolLabel}</div>
         <div class="lm-staff-tile-nombre">${trab?trab.nombre:'VACANTE'}</div>
-        ${trab?`<div class="lm-staff-tile-estrellas">${estrellasNivel(trab.nivel, 3)}</div>`:'<div class="lm-staff-tile-vacante-txt">Contratar en TRABAJADORES</div>'}
+        ${trab?`<div class="lm-staff-tile-estrellas">${estrellasNivel(trab.nivel, 3)}</div>`:`<div class="lm-staff-tile-vacante-txt">${t('lm.contratar_en_trabajadores')}</div>`}
         <div class="lm-staff-tile-desc">${o.desc}</div>
       </div>
     </div>`;
@@ -6026,7 +6026,7 @@
           <div class="med-card-grid">${cartasHTML}</div>
           <div class="lm-popup-actions lm-popup-actions-compact">
             ${mostrarInfoHTML()}
-            <button id="lmMedicoCerrar" class="mode-card-btn mode-card-btn-secondary">CERRAR</button>
+            <button id="lmMedicoCerrar" class="mode-card-btn mode-card-btn-secondary">${t('lm.cerrar')}</button>
           </div>
         </div>`;
 
@@ -6108,7 +6108,7 @@
             <div class="lm-setup-desc">dados disponibles: ${state.diceAvailable}</div>
             <div class="lm-popup-actions">
               <button id="lmTirarBtn" class="mode-card-btn mode-card-btn-gold" ${state.diceAvailable<1?'disabled':''}>TIRAR ${dadosElegidos} DADO${dadosElegidos>1?'S':''}</button>
-              <button id="lmCancelarCartaBtn" class="lm-btn-cancelar">CANCELAR</button>
+              <button id="lmCancelarCartaBtn" class="lm-btn-cancelar">${t('lm.cancelar')}</button>
             </div>
           </div>`;
         const minus=document.getElementById('lmDiceMinus');
@@ -6164,7 +6164,7 @@
           <div class="lm-dilemma-card lm-dilemma-card-medico">
             ${xCerrarHTML()}
             <i class="ph ph-bold ph-first-aid-kit" style="font-size:26px;color:#e24b4a"></i>
-            <div class="lm-dilemma-title" style="justify-content:center;text-align:center">EL MÉDICO TE CONSULTA</div>
+            <div class="lm-dilemma-title" style="justify-content:center;text-align:center">${t('lm.medico_te_consulta')}</div>
             <div class="lm-dilemma-text">${jugador?jugador.name:'Un jugador'} tiene una lesión ${state.medicoNotificacion.severidad}. Necesitas sumar ${dificultad}+ para acelerar su recuperación.</div>
             <div class="lm-dice-selector">
               <button id="lmDiceMinus" class="lm-dice-stepper">−</button>
@@ -6267,7 +6267,7 @@
             }).join('')}
           </div>
           <div class="lm-setup-desc" style="text-align:center;margin-top:8px">${t('lm.zonas_sin_guardia_desc')}</div>
-          <div class="lm-popup-actions"><button id="lmSeguridadCerrarBtn" class="mode-card-btn mode-card-btn-gold">CERRAR</button></div>
+          <div class="lm-popup-actions"><button id="lmSeguridadCerrarBtn" class="mode-card-btn mode-card-btn-gold">${t('lm.cerrar')}</button></div>
         </div>`;
       document.getElementById('lmContratarGuardiaBtn').addEventListener('click', ()=>{
         if(typeof window.playSound==='function') window.playSound('select');
@@ -6360,7 +6360,7 @@
           <div class="med-card-grid">${cartasHTML}</div>
           <div class="lm-popup-actions lm-popup-actions-compact">
             ${mostrarInfoHTML()}
-            <button id="lmMantenimientoCerrar" class="mode-card-btn mode-card-btn-secondary">CERRAR</button>
+            <button id="lmMantenimientoCerrar" class="mode-card-btn mode-card-btn-secondary">${t('lm.cerrar')}</button>
           </div>
         </div>`;
         wireMostrarInfoHold(overlay, abrirEstadoEstadio, 'lmEstadoEstadioOverlay');
@@ -6416,7 +6416,7 @@
             <div class="lm-setup-desc">dados disponibles: ${state.diceAvailable}</div>
             <div class="lm-popup-actions">
               <button id="lmTirarBtn" class="mode-card-btn mode-card-btn-gold" ${state.diceAvailable<1?'disabled':''}>TIRAR ${dadosElegidos} DADO${dadosElegidos>1?'S':''}</button>
-              <button id="lmCancelarCartaBtn" class="lm-btn-cancelar">CANCELAR</button>
+              <button id="lmCancelarCartaBtn" class="lm-btn-cancelar">${t('lm.cancelar')}</button>
             </div>
           </div>`;
         const minus=document.getElementById('lmDiceMinus');
@@ -6481,22 +6481,22 @@
         <div class="lm-dilemma-title"><i class="ph ph-bold ph-stadium"></i> ESTADO DEL ESTADIO</div>
         <div class="lm-estadio-bars">
           <div>
-            <div class="lm-estadio-bar-label"><i class="ph ph-bold ph-plant"></i><span>ESTADO DEL CÉSPED</span><span>${Math.round(est.campo)}/100</span></div>
+            <div class="lm-estadio-bar-label"><i class="ph ph-bold ph-plant"></i><span>${t('lm.estado_cesped')}</span><span>${Math.round(est.campo)}/100</span></div>
             ${campoBarraHTML(est.campo)}
           </div>
           <div>
-            <div class="lm-estadio-bar-label"><i class="ph ph-bold ph-users-three"></i><span>SATISFACCIÓN DE LA AFICIÓN</span><span>${est.satisfaccion>0?'+':''}${est.satisfaccion}</span></div>
+            <div class="lm-estadio-bar-label"><i class="ph ph-bold ph-users-three"></i><span>${t('lm.satisfaccion_de_la_afición')}</span><span>${est.satisfaccion>0?'+':''}${est.satisfaccion}</span></div>
             ${satisfaccionBarraHTML(est.satisfaccion)}
           </div>
           <div>
-            <div class="lm-estadio-bar-label"><i class="ph ph-bold ph-trend-up"></i><span>MORAL DEL EQUIPO</span><span>${(state.moral||0)>0?'+':''}${state.moral||0}</span></div>
+            <div class="lm-estadio-bar-label"><i class="ph ph-bold ph-trend-up"></i><span>${t('lm.moral_equipo')}</span><span>${(state.moral||0)>0?'+':''}${state.moral||0}</span></div>
             ${moralBarraHTML(state.moral||0)}
           </div>
         </div>
         <div class="lm-aforo-box">
           <i class="ph ph-bold ph-ticket lm-aforo-icon"></i>
           <div class="lm-aforo-info">
-            <div class="lm-aforo-title"><span>AFORO DEL ESTADIO</span><strong>${est.aforoTotal.toLocaleString('es-ES')} asientos</strong></div>
+            <div class="lm-aforo-title"><span>${t('lm.aforo_estadio')}</span><strong>${est.aforoTotal.toLocaleString('es-ES')} asientos</strong></div>
             <div class="lm-aforo-bar-wrap"><div class="lm-aforo-bar-fill" style="width:${Math.round(prevista.pct*100)}%"></div></div>
             <div class="lm-aforo-nota">
               Previsión próximo partido en casa: <strong>${prevista.asistentes.toLocaleString('es-ES')}</strong> asientos (${Math.round(prevista.pct*100)}%)
@@ -6505,7 +6505,7 @@
           </div>
         </div>
         ${esModoMantener?'':`<div class="lm-popup-actions lm-popup-actions-compact">
-          <button id="lmEstadoEstadioCerrar" class="mode-card-btn mode-card-btn-gold">CERRAR</button>
+          <button id="lmEstadoEstadioCerrar" class="mode-card-btn mode-card-btn-gold">${t('lm.cerrar')}</button>
         </div>`}
       </div>`;
     document.getElementById('ligaManagerScreen').appendChild(overlay);
@@ -6571,12 +6571,12 @@
           <div class="lm-capital-box">
             <i class="ph ph-bold ph-coins lm-capital-icon"></i>
             <div class="lm-capital-info">
-              <div class="lm-capital-title"><span>CAPITAL DEL CLUB</span><strong class="${(state.capital||0)<0?'lm-capital-neg':''}">${formatoDinero(state.capital)}</strong></div>
+              <div class="lm-capital-title"><span>${t('lm.capital_del_club')}</span><strong class="${(state.capital||0)<0?'lm-capital-neg':''}">${formatoDinero(state.capital)}</strong></div>
               <div class="lm-aforo-nota">Próxima nómina en la jornada ${Math.max(1,(state.mesesPagados||0)*4+1)}</div>
             </div>
           </div>
           <div class="lm-precio-box">
-            <div class="lm-estadio-bar-label"><i class="ph ph-bold ph-ticket"></i><span>PRECIO DE LA ENTRADA</span><span>${formatoDinero(state.precioEntrada)}</span></div>
+            <div class="lm-estadio-bar-label"><i class="ph ph-bold ph-ticket"></i><span>${t('lm.precio_de_la_entrada')}</span><span>${formatoDinero(state.precioEntrada)}</span></div>
             <input type="range" id="lmPrecioEntradaSlider" min="5" max="60" step="1" value="${state.precioEntrada}" class="lm-precio-slider">
             <div class="lm-aforo-nota">Más caro = más ingreso por entrada, pero menos afición vendrá a verte (se nota menos cuanto más nivel tengas en Relaciones con la Afición).</div>
           </div>
@@ -6585,7 +6585,7 @@
           <div class="med-card-grid">${cartasHTML}</div>
           <div class="lm-popup-actions lm-popup-actions-compact">
             ${mostrarInfoHTML()}
-            <button id="lmDirectorGeneralCerrar" class="mode-card-btn mode-card-btn-secondary">CERRAR</button>
+            <button id="lmDirectorGeneralCerrar" class="mode-card-btn mode-card-btn-secondary">${t('lm.cerrar')}</button>
           </div>
         </div>`;
         wireMostrarInfoHold(overlay, abrirFinanzasDG, 'lmFinanzasOverlay');
@@ -6643,7 +6643,7 @@
             <div class="lm-setup-desc">dados disponibles: ${state.diceAvailable}</div>
             <div class="lm-popup-actions">
               <button id="lmTirarBtn" class="mode-card-btn mode-card-btn-gold" ${state.diceAvailable<1?'disabled':''}>TIRAR ${dadosElegidos} DADO${dadosElegidos>1?'S':''}</button>
-              <button id="lmCancelarCartaBtn" class="lm-btn-cancelar">CANCELAR</button>
+              <button id="lmCancelarCartaBtn" class="lm-btn-cancelar">${t('lm.cancelar')}</button>
             </div>
           </div>`;
         const minus=document.getElementById('lmDiceMinus');
@@ -6750,7 +6750,7 @@
     const mesesOrdenadosDesc=Object.keys(meses).map(Number).sort((a,b)=>b-a);
     const mesActual=mesesOrdenadosDesc[0];
     const mesesHistoricos=mesesOrdenadosDesc.slice(1).sort((a,b)=>a-b); // resto, de más antiguo a más reciente para el gráfico
-    let filaMesActual='<p class="lm-setup-desc" style="text-align:center">Todavía no hay movimientos este mes.</p>';
+    let filaMesActual=`<p class="lm-setup-desc" style="text-align:center">${t('lm.sin_movimientos_mes')}</p>`;
     if(mesActual!==undefined){
       const d=meses[mesActual];
       const neto=d.ingresos-d.gastos;
@@ -6763,7 +6763,7 @@
     }
     // Histórico de meses anteriores — gráfico de barras (neto por mes),
     // en vez de repetir la misma tabla detallada para cada mes.
-    let graficoHistorico='<p class="lm-setup-desc" style="text-align:center">Todavía no hay histórico de meses anteriores.</p>';
+    let graficoHistorico=`<p class="lm-setup-desc" style="text-align:center">${t('lm.sin_historico_meses')}</p>`;
     if(mesesHistoricos.length){
       const netos=mesesHistoricos.map(m=>meses[m].ingresos-meses[m].gastos);
       const maxAbs=Math.max(1, ...netos.map(n=>Math.abs(n)));
@@ -6789,14 +6789,14 @@
         <div class="lm-capital-box" style="margin-bottom:12px">
           <i class="ph ph-bold ph-coins lm-capital-icon"></i>
           <div class="lm-capital-info">
-            <div class="lm-capital-title"><span>CAPITAL ACTUAL</span><strong class="${(state.capital||0)<0?'lm-capital-neg':''}">${formatoDinero(state.capital)}</strong></div>
+            <div class="lm-capital-title"><span>${t('lm.capital_actual')}</span><strong class="${(state.capital||0)<0?'lm-capital-neg':''}">${formatoDinero(state.capital)}</strong></div>
           </div>
         </div>
         ${filaMesActual}
-        <p class="lm-setup-desc" style="text-align:left;margin:12px 0 4px">Histórico de meses anteriores (neto por mes)</p>
+        <p class="lm-setup-desc" style="text-align:left;margin:12px 0 4px">${t('lm.historico_meses_anteriores')}</p>
         ${graficoHistorico}
         ${esModoMantener?'':`<div class="lm-popup-actions lm-popup-actions-compact">
-          <button id="lmFinanzasCerrar" class="mode-card-btn mode-card-btn-gold">CERRAR</button>
+          <button id="lmFinanzasCerrar" class="mode-card-btn mode-card-btn-gold">${t('lm.cerrar')}</button>
         </div>`}
       </div>`;
     document.getElementById('ligaManagerScreen').appendChild(overlay);
@@ -6846,7 +6846,7 @@
           cuerpo=`<div class="med-card-dificultad">Dificultad ${Math.max(3, def.dificultad - bonusEstrellasTrabajador('directorDeportivo'))}+</div>`;
         }
         const botonAccion = bloqueada
-          ? (nivelMaximoYa ? '' : `<div class="med-card-bloqueada-label">Imposible con los dados que quedan</div>`)
+          ? (nivelMaximoYa ? '' : `<div class="med-card-bloqueada-label">${t('lm.imposible_dados')}</div>`)
           : `<button class="mode-card-btn mode-card-btn-gold med-card-btn" data-usar="${idx}" style="padding:7px;font-size:11px">USAR</button>`;
         return `
         <div class="med-card med-card-dd ${bloqueada&&!nivelMaximoYa?'med-card-bloqueada':''}" data-idx="${idx}">
@@ -6866,9 +6866,9 @@
           ${xCerrarHTML()}
           <div class="lm-dilemma-title"><i class="ph ph-bold ph-binoculars"></i> DIRECTOR DEPORTIVO</div>
           <div class="lm-precio-box">
-            <div class="lm-estadio-bar-label"><i class="ph ph-bold ph-magnifying-glass"></i><span>POSICIÓN OBJETIVO DE LOS OJEADORES</span></div>
+            <div class="lm-estadio-bar-label"><i class="ph ph-bold ph-magnifying-glass"></i><span>${t('lm.posicion_objetivo_ojeadores')}</span></div>
             <select id="lmPosicionOjeoSelect" class="lm-ojeo-select">
-              <option value="any" ${(!state.posicionObjetivoOjeo||state.posicionObjetivoOjeo==='any')?'selected':''}>Cualquiera (por defecto)</option>
+              <option value="any" ${(!state.posicionObjetivoOjeo||state.posicionObjetivoOjeo==='any')?'selected':''}>${t('lm.cualquiera_defecto')}</option>
               ${['POR','DFC','LI','LD','MC','EI','ED','DC'].map(p=>`<option value="${p}" ${state.posicionObjetivoOjeo===p?'selected':''}>${p}</option>`).join('')}
             </select>
             <div class="lm-aforo-nota">Los ojeadores se centrarán en esta posición para los próximos sobres que abras.</div>
@@ -6879,7 +6879,7 @@
           <div class="med-card-grid">${cartasHTML}</div>
           <div class="lm-popup-actions lm-popup-actions-compact">
             ${mostrarInfoHTML()}
-            <button id="lmDirectorDeportivoCerrar" class="mode-card-btn mode-card-btn-secondary">CERRAR</button>
+            <button id="lmDirectorDeportivoCerrar" class="mode-card-btn mode-card-btn-secondary">${t('lm.cerrar')}</button>
           </div>
         </div>`;
         wireMostrarInfoHold(overlay, abrirHistorialFichajesDD, 'lmHistorialFichajesDDOverlay');
@@ -6942,7 +6942,7 @@
             <div class="lm-setup-desc">dados disponibles: ${state.diceAvailable}</div>
             <div class="lm-popup-actions">
               <button id="lmTirarBtn" class="mode-card-btn mode-card-btn-gold" ${state.diceAvailable<1?'disabled':''}>TIRAR ${dadosElegidos} DADO${dadosElegidos>1?'S':''}</button>
-              <button id="lmCancelarCartaBtn" class="lm-btn-cancelar">CANCELAR</button>
+              <button id="lmCancelarCartaBtn" class="lm-btn-cancelar">${t('lm.cancelar')}</button>
             </div>
           </div>`;
         const minus=document.getElementById('lmDiceMinus');
@@ -7039,7 +7039,7 @@
               <div class="lm-sobre-salario">${formatoDinero(j.salario)}/mes</div>
               <button class="mode-card-btn mode-card-btn-gold lm-sobre-fichar" data-fichar="${i}">${t('lm.fichar_btn')}</button>
             </div>`).join('')}</div>
-            <div class="lm-popup-actions" style="margin-top:12px"><button id="lmSobreCerrar" class="mode-card-btn mode-card-btn-secondary">CERRAR SOBRE</button></div>`;
+            <div class="lm-popup-actions" style="margin-top:12px"><button id="lmSobreCerrar" class="mode-card-btn mode-card-btn-secondary">${t('lm.cerrar_sobre')}</button></div>`;
           zona.querySelectorAll('[data-fichar]').forEach(btn=>{
             btn.addEventListener('click', ()=>{
               const i=parseInt(btn.getAttribute('data-fichar'),10);
@@ -7083,8 +7083,8 @@
               </div>
               <span class="lm-historial-dd-jornada">J${h.jornada}</span>
             </div>`).join('')}
-        </div>` : `<div class="lm-historial-dd-vacio">Todavía no has fichado ni vendido a nadie esta temporada.</div>`}
-        ${esModoMantener?'':'<div class="lm-popup-actions lm-popup-actions-compact"><button id="lmHistorialFichajesDDCerrar" class="mode-card-btn mode-card-btn-gold">CERRAR</button></div>'}
+        </div>` : `<div class="lm-historial-dd-vacio">${t('lm.sin_fichajes_ventas')}</div>`}
+        ${esModoMantener?'':`<div class="lm-popup-actions lm-popup-actions-compact"><button id="lmHistorialFichajesDDCerrar" class="mode-card-btn mode-card-btn-gold">${t('lm.cerrar')}</button></div>`}
       </div>`;
     document.getElementById('ligaManagerScreen').appendChild(overlay);
     if(!esModoMantener){
@@ -7108,9 +7108,9 @@
         const chequeo=puedeVenderJugador(p.id);
         let accion;
         if(p.enVenta){
-          accion=`<span class="lm-venta-estado">EN VENTA (J${p.ventaResolverJornada})</span> <button class="lm-salario-btn lm-salario-btn-retirar" data-retirar-venta="${p.id}">RETIRAR</button>`;
+          accion=`<span class="lm-venta-estado">EN VENTA (J${p.ventaResolverJornada})</span> <button class="lm-salario-btn lm-salario-btn-retirar" data-retirar-venta="${p.id}">${t('lm.retirar')}</button>`;
         } else {
-          accion=`<button class="lm-salario-btn" data-venta="${p.id}" title="${chequeo.ok?'':chequeo.motivo}" ${chequeo.ok?'':'disabled'}>PONER EN VENTA</button>`;
+          accion=`<button class="lm-salario-btn" data-venta="${p.id}" title="${chequeo.ok?'':chequeo.motivo}" ${chequeo.ok?'':'disabled'}>${t('lm.poner_en_venta')}</button>`;
         }
         return `<tr>
           <td>${p.name}${p.injured?' <span class="cross" title="Lesionado">✚</span>':''}</td>
@@ -7124,15 +7124,15 @@
         <div class="lm-dilemma-card lm-dilemma-card-dd" style="max-width:640px;text-align:left">
           ${xCerrarHTML()}
           <div class="lm-dilemma-title"><i class="ph ph-bold ph-file-text"></i> SALARIOS DE LA PLANTILLA</div>
-          <div class="lm-setup-desc" style="text-align:center;margin-bottom:8px">Nómina total: <strong>${formatoDinero(totalNomina)}/mes</strong> · plantilla: <strong>${jugadores.length}</strong> · al poner en venta, el Director Deportivo avisará por correo en 1-3 jornadas con las ofertas que lleguen.</div>
+          <div class="lm-setup-desc" style="text-align:center;margin-bottom:8px">${t('lm.nomina_total')} <strong>${formatoDinero(totalNomina)}/mes</strong> · plantilla: <strong>${jugadores.length}</strong> · al poner en venta, el Director Deportivo avisará por correo en 1-3 jornadas con las ofertas que lleguen.</div>
           <div class="lm-salarios-tabla-wrap">
             <table class="lm-salarios-tabla">
               <thead><tr><th>Jugador</th><th>Pos</th><th>Punt.</th><th>Salario</th><th></th></tr></thead>
-              <tbody>${filas || '<tr><td colspan="5" style="text-align:center">No hay jugadores en la plantilla.</td></tr>'}</tbody>
+              <tbody>${filas || `<tr><td colspan="5" style="text-align:center">${t('lm.sin_jugadores_plantilla')}</td></tr>`}</tbody>
             </table>
           </div>
           <div class="lm-popup-actions lm-popup-actions-compact">
-            ${esModoMantener?'':'<button id="lmSalariosCerrar" class="mode-card-btn mode-card-btn-gold">CERRAR</button>'}
+            ${esModoMantener?'':`<button id="lmSalariosCerrar" class="mode-card-btn mode-card-btn-gold">${t('lm.cerrar')}</button>`}
           </div>
         </div>`;
       const xBtnSal=overlay.querySelector('[data-cerrar-x]');
@@ -7224,9 +7224,9 @@
     return `<div class="lm-plan-resumen">
       <div class="lm-plan-resumen-texto">
         <i class="ph ph-bold ph-clipboard-text"></i>
-        ${chips?`<div class="lm-plan-chips">${chips}</div>`:'<span>Todavía no has elegido a nadie para entrenar</span>'}
+        ${chips?`<div class="lm-plan-chips">${chips}</div>`:`<span>${t('lm.sin_elegido_entrenar')}</span>`}
       </div>
-      <button id="lmPlanEntrenoBtn" class="mode-card-btn mode-card-btn-gold" style="padding:9px 16px;font-size:13px;white-space:nowrap">PLAN DE ENTRENAMIENTO</button>
+      <button id="lmPlanEntrenoBtn" class="mode-card-btn mode-card-btn-gold" style="padding:9px 16px;font-size:13px;white-space:nowrap">${t('lm.plan_entrenamiento')}</button>
     </div>`;
   }
 
@@ -7270,7 +7270,7 @@
           <div class="med-card-divider"></div>
           <div class="med-card-desc">${tc('pf', def.id, 'desc', def.desc)}</div>
           ${cuerpo}
-          ${(bloqueada&&!nivelMaximoYa)?`<div class="med-card-bloqueada-label">Imposible con los dados que quedan</div>`:(nivelMaximoYa?'':`<button class="mode-card-btn mode-card-btn-gold med-card-btn" data-usar="${idx}" style="padding:7px;font-size:11px">USAR</button>`)}
+          ${(bloqueada&&!nivelMaximoYa)?`<div class="med-card-bloqueada-label">${t('lm.imposible_dados')}</div>`:(nivelMaximoYa?'':`<button class="mode-card-btn mode-card-btn-gold med-card-btn" data-usar="${idx}" style="padding:7px;font-size:11px">USAR</button>`)}
         </div>`;
       }).join('');
 
@@ -7284,7 +7284,7 @@
           <div class="med-card-grid">${cartasHTML}</div>
           <div class="lm-popup-actions lm-popup-actions-compact">
             ${mostrarInfoHTML()}
-            <button id="lmPreparadorFisicoCerrar" class="mode-card-btn mode-card-btn-secondary">CERRAR</button>
+            <button id="lmPreparadorFisicoCerrar" class="mode-card-btn mode-card-btn-secondary">${t('lm.cerrar')}</button>
           </div>
         </div>`;
         wireMostrarInfoHold(overlay, abrirHistorialPF, 'lmHistorialPFOverlay');
@@ -7332,11 +7332,11 @@
           if(!slot){
             return `<div class="lm-plan-slot lm-plan-slot-vacio" data-plan-slot-add="${i}">
               <i class="ph ph-bold ph-plus-circle"></i>
-              <span>Añadir jugador</span>
+              <span>${t('lm.anadir_jugador')}</span>
             </div>`;
           }
           const p=state.plantilla.find(x=>x.id===slot.jugadorId);
-          if(!p) return `<div class="lm-plan-slot lm-plan-slot-vacio" data-plan-slot-add="${i}"><i class="ph ph-bold ph-plus-circle"></i><span>Añadir jugador</span></div>`;
+          if(!p) return `<div class="lm-plan-slot lm-plan-slot-vacio" data-plan-slot-add="${i}"><i class="ph ph-bold ph-plus-circle"></i><span>${t('lm.anadir_jugador')}</span></div>`;
           return `<div class="lm-plan-slot">
             <div class="lm-plan-slot-top">
               <div class="lm-plan-slot-jugador">
@@ -7345,7 +7345,7 @@
               </div>
               <button class="lm-plan-slot-quitar" data-plan-slot-quitar="${i}" title="Quitar del plan"><i class="ph ph-bold ph-x"></i></button>
             </div>
-            <div class="lm-plan-slot-label">Enfoque de este entrenamiento:</div>
+            <div class="lm-plan-slot-label">${t('lm.enfoque_entrenamiento')}</div>
             <div class="lm-plan-stat-row">
               ${STATS_ENTRENO.map(s=>`<button class="lm-plan-stat-btn ${slot.stat===s.key?'lm-plan-stat-activo':''}" data-plan-slot-stat="${i}" data-plan-stat-key="${s.key}" title="${s.label}"><i class="ph ph-bold ${s.icon}"></i><span>${s.label}</span></button>`).join('')}
             </div>
@@ -7360,7 +7360,7 @@
             <div class="lm-plan-slots">${huecos}</div>
             <div class="lm-popup-actions">
               <button id="lmPlanGuardar" class="mode-card-btn mode-card-btn-gold">GUARDAR (${completos}/3)</button>
-              <button id="lmPlanCancelar" class="lm-btn-cancelar">CERRAR</button>
+              <button id="lmPlanCancelar" class="lm-btn-cancelar">${t('lm.cerrar')}</button>
             </div>
           </div>`;
         overlay.querySelectorAll('[data-plan-slot-add]').forEach(el=>{
@@ -7412,7 +7412,7 @@
             <div class="lm-dilemma-title"><i class="ph ph-bold ph-user-focus"></i> ELEGIR JUGADOR</div>
             <div class="lm-slot-list">${filas}</div>
             <div class="lm-popup-actions">
-              <button id="lmPlanVolver" class="lm-btn-cancelar">VOLVER</button>
+              <button id="lmPlanVolver" class="lm-btn-cancelar">${t('lm.volver')}</button>
             </div>
           </div>`;
         overlay.querySelectorAll('[data-plan-elegir-pid]').forEach(el=>{
@@ -7452,7 +7452,7 @@
             <div class="lm-setup-desc">dados disponibles: ${state.diceAvailable}</div>
             <div class="lm-popup-actions">
               <button id="lmTirarBtn" class="mode-card-btn mode-card-btn-gold" ${state.diceAvailable<1?'disabled':''}>TIRAR ${dadosElegidos} DADO${dadosElegidos>1?'S':''}</button>
-              <button id="lmCancelarCartaBtn" class="lm-btn-cancelar">CANCELAR</button>
+              <button id="lmCancelarCartaBtn" class="lm-btn-cancelar">${t('lm.cancelar')}</button>
             </div>
           </div>`;
         const minus=document.getElementById('lmDiceMinus');
@@ -7518,10 +7518,10 @@
       <div class="lm-dilemma-card lm-dilemma-card-pf" style="max-width:480px;text-align:left">
         ${xCerrarHTML()}
         <div class="lm-dilemma-title"><i class="ph ph-bold ph-clock-counter-clockwise"></i> HISTORIAL DE ENTRENAMIENTOS</div>
-        <p class="lm-setup-desc" style="text-align:left;margin:10px 0 4px">Mejoras individuales conseguidas</p>
-        <div class="lm-hist-list">${filas||'<p class="lm-setup-desc" style="text-align:center">Todavía no se ha entrenado a ningún jugador.</p>'}</div>
+        <p class="lm-setup-desc" style="text-align:left;margin:10px 0 4px">${t('lm.mejoras_individuales')}</p>
+        <div class="lm-hist-list">${filas||`<p class="lm-setup-desc" style="text-align:center">${t('lm.sin_entrenar_nadie')}</p>`}</div>
         ${esModoMantener?'':`<div class="lm-popup-actions lm-popup-actions-compact">
-          <button id="lmHistorialPFCerrar" class="mode-card-btn mode-card-btn-gold">CERRAR</button>
+          <button id="lmHistorialPFCerrar" class="mode-card-btn mode-card-btn-gold">${t('lm.cerrar')}</button>
         </div>`}
       </div>`;
     document.getElementById('ligaManagerScreen').appendChild(overlay);
@@ -7566,7 +7566,7 @@
           ${c.chollo?'<div class="lm-trab-chollo-badge"><i class="ph ph-bold ph-seal-percent"></i> OPORTUNIDAD</div>':''}
           <div class="lm-trab-chip-top"><span class="lm-trab-nombre">${c.nombre}</span><span class="lm-trab-estrellas">${estrellasNivel(c.nivel, 3)}</span></div>
           <div class="lm-trab-sueldo">${formatoDinero(c.sueldo)}/mes</div>
-          <button class="lm-trab-contratar" data-contratar="${c.id}" data-rol="${rol}">CONTRATAR</button>
+          <button class="lm-trab-contratar" data-contratar="${c.id}" data-rol="${rol}">${t('lm.contratar')}</button>
         </div>`).join('');
       // Siempre 3 huecos de candidato aunque falten (p.ej. tras contratar
       // a uno este mes) — una ficha genérica gris y desactivada en vez de
@@ -7575,7 +7575,7 @@
       const chipsGenericos=Array.from({length:huecos}).map(()=>`
         <div class="lm-trab-chip lm-trab-chip-generica">
           <div class="lm-trab-chip-top"><span class="lm-trab-nombre">—</span></div>
-          <div class="lm-trab-sueldo">Sin candidato</div>
+          <div class="lm-trab-sueldo">${t('lm.sin_candidato')}</div>
           <button class="lm-trab-generica-btn" disabled>—</button>
         </div>`).join('');
       return `
@@ -7591,12 +7591,12 @@
         <div class="lm-dilemma-card" style="width:960px;max-width:94vw;text-align:left">
           ${xCerrarHTML()}
           <div class="lm-dilemma-title"><i class="ph ph-bold ph-user-plus"></i> CONTRATAR${rolFiltrado?` — ${NOMBRE_ROL[rolFiltrado]}`:''}</div>
-          <p class="lm-setup-desc" style="text-align:center;margin-bottom:10px">Cada mes aparecen nuevos candidatos por puesto — compara nivel y sueldo antes de decidir si te compensa un cambio.${rolFiltrado?' <span id="lmTrabVerTodos" style="color:var(--gold);cursor:pointer;text-decoration:underline">Ver todos los puestos</span>':''}</p>
+          <p class="lm-setup-desc" style="text-align:center;margin-bottom:10px">Cada mes aparecen nuevos candidatos por puesto — compara nivel y sueldo antes de decidir si te compensa un cambio.${rolFiltrado?` <span id="lmTrabVerTodos" style="color:var(--gold);cursor:pointer;text-decoration:underline">${t('lm.ver_todos_puestos')}</span>`:''}</p>
           <div class="lm-trab-grid">
             ${roles.map(fichaTrabajadorHTML).join('')}
           </div>
           <div class="lm-popup-actions lm-popup-actions-compact">
-            <button id="lmTrabajadoresCerrar" class="mode-card-btn mode-card-btn-gold">CERRAR</button>
+            <button id="lmTrabajadoresCerrar" class="mode-card-btn mode-card-btn-gold">${t('lm.cerrar')}</button>
           </div>
         </div>`;
       const xBtnTrab=overlay.querySelector('[data-cerrar-x]');
@@ -7703,8 +7703,15 @@
   // switchMobileTab() de Copa Leyendas: solo una columna visible cada
   // vez, controlada por la pestaña activa.
   let mobileTabActivaLM='campo'; // pestaña móvil activa de Liga Manager, se conserva entre renders
+  // window.innerWidth puede dar valores poco fiables dentro de algunos
+  // WebView de Android (zoom, densidad de píxeles, etc.) — matchMedia
+  // consulta directamente el mismo punto de corte que usa el CSS de
+  // verdad, así que es la forma correcta de saber si estamos en móvil.
+  function esVistaMovilLM(){
+    return window.matchMedia && window.matchMedia('(max-width:1050px)').matches;
+  }
   window.switchMobileTabLM = function(tab){
-    if(window.innerWidth>1050) return;
+    if(!esVistaMovilLM()) return;
     if(tab!=='info') mobileTabActivaLM=tab;
     document.querySelectorAll('#lmMobileTabBar .mob-tab[data-lmtab]').forEach(btn=>{
       btn.classList.toggle('active', btn.dataset.lmtab===tab);
@@ -7728,7 +7735,7 @@
   // Tras cada render() la rejilla se regenera entera — hay que
   // reaplicar la pestaña móvil activa para que no "desaparezca" todo.
   function reaplicarPestanaMovilLM(){
-    if(window.innerWidth>1050) return;
+    if(!esVistaMovilLM()) return;
     window.switchMobileTabLM(mobileTabActivaLM);
   }
 
