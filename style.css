@@ -2732,6 +2732,21 @@ body.liga-manager-screen .ranking-btn-label-lm{display:inline}
      desplazan la vista hasta esa sección — el desplazamiento lo hace
      el propio navegador, no un script nuestro. */
   .lm-app-grid > .lm-panel, .lm-app-grid > .lm-center-panel{display:block!important}
+  /* CAUSA REAL DEL "TODO NEGRO" en móvil: el contenido de cada columna
+     se envuelve SIEMPRE (en cualquier tamaño de pantalla) en un div con
+     position:absolute;inset:0 (.lm-col-scroll-inner), pensado para
+     scrollear de forma fija en el escritorio. Esa técnica exige que su
+     contenedor tenga una altura definida — y en móvil forzamos esa
+     misma columna a height:auto, así que la cadena entera colapsaba a
+     0px de alto: el contenido estaba en el DOM, pero ocupando cero
+     espacio visible. Aquí se anula ese mecanismo por completo en móvil,
+     dejando que el contenido fluya de forma normal y empuje la altura
+     de la página, que es justo lo que hace falta para apilar. */
+  .lm-col-scroll-outer{overflow:visible!important;padding:34px 8px 12px!important}
+  .lm-col-scroll-inner{
+    position:static!important;inset:auto!important;
+    overflow:visible!important;padding:0!important;height:auto!important;
+  }
   html{scroll-behavior:smooth}
   body.liga-manager-screen #ligaManagerScreen{padding-bottom:70px;scroll-behavior:smooth}
 }

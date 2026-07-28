@@ -1770,6 +1770,12 @@ window.setLang = function(lang) {
   }
   // Re-renderizar la UI
   if (window.applyTranslations) window.applyTranslations();
+  // Liga Manager es 100% dinámico (nada de data-i18n estático) — sin
+  // esto, cambiar de idioma no tenía ningún efecto visible ahí hasta
+  // la siguiente acción que disparase un render() por su cuenta.
+  if (document.body.classList.contains('liga-manager-screen') && window.G2G_LigaManager && typeof window.G2G_LigaManager.init === 'function') {
+    if (typeof window.rerenderLigaManager === 'function') window.rerenderLigaManager();
+  }
 };
 
 /* ── Cargar idioma guardado ── */

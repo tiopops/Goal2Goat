@@ -7711,13 +7711,26 @@
   window.renderLigaManagerProfileStats = renderLigaManagerProfileStats;
 
   function init(){
-    state=cargarEstado();
-    setupStep=1;
-    formacionCategoriaVista=null;
-    seleccionJugador=null;
-    lmCargarUpgradeCache().then(()=>render());
-    lmCargarSkillsCache();
-    render();
+    try{
+      state=cargarEstado();
+      setupStep=1;
+      formacionCategoriaVista=null;
+      seleccionJugador=null;
+      lmCargarUpgradeCache().then(()=>render());
+      lmCargarSkillsCache();
+      render();
+    }catch(e){
+      console.error('Error en init() de Liga Manager:', e);
+      const root=document.getElementById('ligaManagerScreen');
+      if(root){
+        root.innerHTML=`
+          <div style="padding:24px;color:#fff;font-family:monospace;font-size:13px;line-height:1.6;max-width:100%;overflow-wrap:break-word">
+            <div style="color:#e24b4a;font-size:16px;font-weight:bold;margin-bottom:12px">⚠️ Error al iniciar Liga Manager</div>
+            <div style="color:#ccc;margin-bottom:12px">Copia este mensaje y envíaselo al desarrollador:</div>
+            <div style="background:#1a1a1a;border:1px solid #e24b4a;border-radius:6px;padding:12px;color:#ffb3b3;user-select:text">${(e && e.message) ? e.message : String(e)}${(e && e.stack) ? '<br><br>'+e.stack.replace(/\\n/g,'<br>') : ''}</div>
+          </div>`;
+      }
+    }
   }
 
   // Barra de pestañas móvil de Liga Manager — mismo patrón que
@@ -7760,6 +7773,11 @@
     window.switchMobileTabLM(mobileTabActivaLM);
   }
 
+  window.rerenderLigaManager = function(){
+    if(state && state.setupComplete){
+      try{ render(); }catch(e){ console.error('Error al redibujar Liga Manager:', e); }
+    }
+  };
   window.G2G_LigaManager={ init, abandonarLiga };
 
 })();
