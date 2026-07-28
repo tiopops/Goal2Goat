@@ -54,6 +54,39 @@
     const media=(rival.attack+rival.defense+rival.pace+rival.passing+rival.technique)/5;
     return Math.max(30, Math.min(95, Math.round((media-58)*1.8+35)));
   }
+  // Describe el estilo de juego real del rival a partir de su perfil de
+  // estadísticas — el mismo desequilibrio ataque/defensa que usa
+  // simularPartido() para dar ventaja o penalización según tu
+  // formación, así el texto es un reflejo fiel de la mecánica real, no
+  // solo ambientación.
+  function estiloDeJuegoRival(rival){
+    const desequilibrio=rival.attack-rival.defense;
+    const posesion=rival.passing+rival.technique;
+    let base, consejo;
+    if(desequilibrio>15){
+      base='Equipo muy ofensivo y vertical, se vuelca al ataque dejando muchos espacios atrás.';
+      consejo='Una formación defensiva aprovecha bien esos huecos al contragolpe.';
+    } else if(desequilibrio>8){
+      base='Prioriza el ataque sobre la solidez defensiva, le gusta ir a por el partido.';
+      consejo='Plantear un bloque defensivo puede darte ventaja en las transiciones.';
+    } else if(desequilibrio<-15){
+      base='Bloque muy defensivo y compacto, especialista en cerrar espacios y sufrir poco.';
+      consejo='Ir con una formación muy ofensiva contra ellos suele costar más de lo esperado.';
+    } else if(desequilibrio<-8){
+      base='Equipo sólido atrás, le cuesta generar peligro si no encuentra el gol pronto.';
+      consejo='Un planteamiento ofensivo choca con su principal virtud: la defensa.';
+    } else if(posesion>=175){
+      base='Conjunto de posesión, paciente con el balón y con mucha calidad técnica.';
+      consejo='Presionar arriba puede incomodarles más que esperar atrás.';
+    } else if(rival.pace>=85){
+      base='Equipo rápido y directo, busca la transición veloz nada más recuperar el balón.';
+      consejo='Una defensa bien colocada limita mucho su principal arma.';
+    } else {
+      base='Conjunto equilibrado entre ataque y defensa, sin un desequilibrio claro.';
+      consejo='Cualquier planteamiento razonable debería servir contra ellos.';
+    }
+    return {base, consejo};
+  }
 
   const LIGAS_DISPONIBLES = [
     {id:'es', nombre:'España — La Liga', flagImg:'assets/flags/1f1ea-1f1f8.png', activa:true},
@@ -651,15 +684,24 @@
       const misStats = miEsA ? statsA : statsB;
       const statsRival = miEsA ? statsB : statsA;
       const miFormacion = state.formacionCategoria;
+      const miFormacionCode = state.formacionCode;
       const desequilibrioRival = statsRival.attack - statsRival.defense; // positivo = ofensivo y flojo atrás
       let bonusPropio=0, penalizacionRival=0;
       if(miFormacion==='defensiva' && desequilibrioRival>8){
         bonusPropio=Math.min(0.35, (desequilibrioRival-8)*0.022);
+        // Dentro de las defensivas, el 5-2-2-1 (Contragolpe) es la
+        // formación perfecta contra un rival muy ofensivo y flojo
+        // atrás — aprovecha justo ese desequilibrio al máximo.
+        if(miFormacionCode==='5-2-2-1') bonusPropio+=0.10;
       } else if(miFormacion==='ofensiva' && desequilibrioRival<-8){
         // Rival muy defensivo y yo jugando ofensivo: cuesta más de lo
         // que la diferencia de nivel sugeriría, el rival está hecho para
         // encerrarse justo contra este tipo de planteamiento.
         penalizacionRival=Math.min(0.28, (-desequilibrioRival-8)*0.018);
+        // Dentro de las ofensivas, el 3-5-2 (Superioridad central) es la
+        // formación perfecta para romper un bloque bajo — el extra de
+        // pase compensa parte de esa penalización.
+        if(miFormacionCode==='3-5-2') penalizacionRival=Math.max(0, penalizacionRival-0.10);
       }
       if(miEsA){ lambdaA=Math.max(0.15,lambdaA+bonusPropio-penalizacionRival); }
       else { lambdaB=Math.max(0.15,lambdaB+bonusPropio-penalizacionRival); }
@@ -5084,6 +5126,13 @@
                 </div>
               </div>
               ${(()=>{
+                const estilo=estiloDeJuegoRival(rival);
+                return `<div class="lm-estilo-juego-box">
+                  <div class="lm-estilo-juego-titulo"><i class="ph ph-bold ph-strategy"></i> ESTILO DE JUEGO</div>
+                  <div class="lm-estilo-juego-texto">${estilo.base}</div>
+                </div>`;
+              })()}
+              ${(()=>{
                 const campoRival=campoRivalEstimado(rival);
                 return `<div style="margin-top:6px">
                   <div class="lm-estadio-bar-label" style="font-size:10px"><i class="ph ph-bold ph-plant" style="font-size:12px"></i><span>ESTADO DE SU CAMPO${esLocal?'':' (hoy juegas aquí)'}</span><span>${campoRival}/100</span></div>
@@ -5524,6 +5573,7 @@
         manejarClicJugador(el.getAttribute('data-pid'));
       });
     });
+    reaplicarPestanaMovilLM();
   }
 
   /* ---------- 12a. Selección unificada campo ↔ plantilla/banquillo,
@@ -6815,7 +6865,7 @@
             </select>
             <div class="lm-aforo-nota">Los ojeadores se centrarán en esta posición para los próximos sobres que abras.</div>
           </div>
-          <button type="button" class="mode-card-btn mode-card-btn-secondary" id="lmInfoPlantillaDDBtn" style="width:100%;margin:10px 0"><i class="ph ph-bold ph-scroll"></i> INFORMACIÓN DE LA PLANTILLA</button>
+          <button type="button" class="mode-card-btn mode-card-btn-gold" id="lmInfoPlantillaDDBtn" style="width:100%;margin:10px 0"><i class="ph ph-bold ph-scroll"></i> INFORMACIÓN DE LA PLANTILLA</button>
           ${renderNivelesDDHTML()}
           <div class="lm-staff-bar-capital" style="justify-content:center;margin:10px 0 8px"><span><i class="ph ph-bold ph-dice-five"></i> DADOS: <strong>${state.diceAvailable}</strong></span><span><i class="ph ph-bold ph-arrows-clockwise"></i> RERROLLS: <strong>${state.dadoRerollsDisponibles||0}</strong></span><span><i class="ph ph-bold ph-cards"></i> CAMBIOS: <strong>${Math.max(0,lmCambiosCartaPorPartido()-(state.directorDeportivoCambiosUsados||0))}/${lmCambiosCartaPorPartido()}</strong></span></div>
           <div class="med-card-grid">${cartasHTML}</div>
@@ -7639,6 +7689,39 @@
     lmCargarUpgradeCache().then(()=>render());
     lmCargarSkillsCache();
     render();
+  }
+
+  // Barra de pestañas móvil de Liga Manager — mismo patrón que
+  // switchMobileTab() de Copa Leyendas: solo una columna visible cada
+  // vez, controlada por la pestaña activa.
+  let mobileTabActivaLM='campo'; // pestaña móvil activa de Liga Manager, se conserva entre renders
+  window.switchMobileTabLM = function(tab){
+    if(window.innerWidth>1050) return;
+    if(tab!=='info') mobileTabActivaLM=tab;
+    document.querySelectorAll('#lmMobileTabBar .mob-tab[data-lmtab]').forEach(btn=>{
+      btn.classList.toggle('active', btn.dataset.lmtab===tab);
+    });
+    const mapa={equipo:'.lm-left-panel', campo:'.lm-center-panel', rival:'.lm-right-panel', tecnicos:'.lm-staff-panel'};
+    document.querySelectorAll('.lm-app-grid > .lm-panel, .lm-app-grid > .lm-center-panel').forEach(el=>el.classList.remove('mob-active'));
+    if(tab==='info'){
+      if(typeof window.playSound==='function') window.playSound('select');
+      alert('El tutorial de Liga Manager está en camino — todavía no está disponible.');
+      return;
+    }
+    const sel=mapa[tab];
+    const panel=sel && document.querySelector(sel);
+    if(panel){
+      panel.classList.add('mob-active');
+      const badge=document.getElementById('lmTecnicosBadge');
+      if(tab==='tecnicos' && badge) badge.style.display='none';
+      setTimeout(()=>{ panel.scrollIntoView({behavior:'smooth', block:'start'}); }, 50);
+    }
+  };
+  // Tras cada render() la rejilla se regenera entera — hay que
+  // reaplicar la pestaña móvil activa para que no "desaparezca" todo.
+  function reaplicarPestanaMovilLM(){
+    if(window.innerWidth>1050) return;
+    window.switchMobileTabLM(mobileTabActivaLM);
   }
 
   window.G2G_LigaManager={ init, abandonarLiga };

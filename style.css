@@ -1142,6 +1142,7 @@ body.dark-theme .settings-item:hover{background:var(--row-hover);color:var(--gol
 /* ================================================== */
 
 #mobileTabBar{display:none}
+#lmMobileTabBar{display:none}
 
 /* RANKING PANEL */
 .ranking-panel{display:none;width:100%;box-sizing:border-box;padding:10px;scroll-margin-top:70px}
@@ -1251,6 +1252,14 @@ body.dark-theme .settings-item:hover{background:var(--row-hover);color:var(--gol
 
   /* TAB BAR — fixed at bottom of viewport */
   #mobileTabBar{
+    display:flex!important;
+    position:fixed!important;bottom:0!important;left:0!important;right:0!important;
+    background:#111!important;
+    border-top:2px solid #333!important;
+    z-index:999!important;
+    padding-bottom:env(safe-area-inset-bottom,0px);
+  }
+  body.liga-manager-screen #lmMobileTabBar{
     display:flex!important;
     position:fixed!important;bottom:0!important;left:0!important;right:0!important;
     background:#111!important;
@@ -2704,13 +2713,22 @@ body.liga-manager-screen .ranking-btn-label-lm{display:inline}
 .lm-actionsrow{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:4px}
 
 @media(max-width:1050px){
-  #ligaManagerScreen{overflow-y:auto}
-  .lm-app-grid{grid-template-columns:1fr;justify-content:stretch;height:auto;min-height:0}
+  #ligaManagerScreen{overflow-y:auto;display:block!important;height:auto!important}
+  .lm-app-grid{
+    display:block!important;grid-template-columns:1fr;justify-content:stretch;
+    height:auto!important;min-height:0;
+  }
   .lm-panel,.lm-center-panel{height:auto;max-height:none;overflow-y:visible}
   .lm-panel,.lm-right-panel{border:none;border-bottom:1px solid #22282b}
   .lm-staff-panel .lm-staff-bar-row{flex-direction:row;flex-wrap:wrap}
   .lm-staff-panel .lm-staff-tile{flex:1 1 200px}
+  /* Pestañas reales, igual que Copa Leyendas: solo se ve UNA columna
+     cada vez, la que corresponda a la pestaña activa de #lmMobileTabBar. */
+  .lm-app-grid > .lm-panel, .lm-app-grid > .lm-center-panel{display:none!important}
+  .lm-app-grid > .lm-panel.mob-active, .lm-app-grid > .lm-center-panel.mob-active{display:block!important}
+  body.liga-manager-screen #ligaManagerScreen{padding-bottom:70px}
 }
+
 
 /* CUERPO TÉCNICO — ahora es su propia columna (4ª), no una franja
    horizontal: las fichas van en una pila vertical, con la foto grande a
@@ -3996,6 +4014,17 @@ body.light-theme.menu-screen{
   border-radius:6px;color:#eee;font-size:12px;
 }
 .lm-rasgo-select:disabled{opacity:.6}
+
+.lm-estilo-juego-box{
+  background:linear-gradient(160deg,#1c1c1c,#161616);border:1px solid #2a2a2a;
+  border-radius:8px;padding:8px 10px;margin-top:6px;
+}
+.lm-estilo-juego-titulo{
+  font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:1px;font-size:10px;
+  color:var(--gold);display:flex;align-items:center;gap:5px;margin-bottom:3px;
+}
+.lm-estilo-juego-texto{font-size:11px;color:#ddd;line-height:1.35}
+.lm-estilo-juego-consejo{font-size:10px;color:#888;line-height:1.35;margin-top:3px;font-style:italic}
 
 /* ============================================================
    SEGURIDAD DEL ESTADIO — mapa de las 12 zonas con guardias y
