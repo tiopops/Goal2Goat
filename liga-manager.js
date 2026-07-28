@@ -770,6 +770,14 @@
     const val=(typeof window.t==='function') ? window.t(key) : null;
     return (val && val!==key) ? val : fallback;
   }
+  // Traduce una clave de texto y sustituye marcadores {nombre} por los
+  // valores reales pasados en un objeto — usado sobre todo en los
+  // correos internos, que mezclan texto fijo con datos de la partida.
+  function tp(key, vars){
+    let texto=(typeof window.t==='function') ? window.t(key) : key;
+    if(vars) Object.keys(vars).forEach(k=>{ texto=texto.split('{'+k+'}').join(vars[k]); });
+    return texto;
+  }
   let clasifColapsada=false; // la clasificación empieza desplegada
   // ---- Rasgos de jugador ----
   // Se ganan a través de la quiniela (nunca se compran) y se quedan
@@ -781,20 +789,20 @@
   // sobre la imagen para poder pintar la insignia y los botones +/- en
   // el sitio correcto.
   const LM_ZONAS_ESTADIO=[
-    {id:'norte_1', label:'Tribuna Norte · Sector 1', left:26, top:12},
-    {id:'norte_2', label:'Tribuna Norte · Sector 2', left:49, top:9},
-    {id:'norte_3', label:'Tribuna Norte · Sector 3', left:72, top:12},
-    {id:'este_1',  label:'Fondo Este · Sector 1',    left:86, top:28},
-    {id:'este_2',  label:'Fondo Este · Sector 2',    left:89, top:46},
-    {id:'este_3',  label:'Fondo Este · Sector 3',    left:86, top:64},
-    {id:'sur_3',   label:'Tribuna Sur · Sector 3',   left:72, top:80},
-    {id:'sur_2',   label:'Tribuna Sur · Sector 2',   left:49, top:83},
-    {id:'sur_1',   label:'Tribuna Sur · Sector 1',   left:26, top:80},
-    {id:'oeste_3', label:'Fondo Oeste · Sector 3',   left:11, top:64},
-    {id:'oeste_2', label:'Fondo Oeste · Sector 2',   left:8,  top:46},
-    {id:'oeste_1', label:'Fondo Oeste · Sector 1',   left:11, top:28},
+    {id:'norte_1', get label(){return t('lm.zona_norte_1');}, left:26, top:12},
+    {id:'norte_2', get label(){return t('lm.zona_norte_2');}, left:49, top:9},
+    {id:'norte_3', get label(){return t('lm.zona_norte_3');}, left:72, top:12},
+    {id:'este_1',  get label(){return t('lm.zona_este_1');}, left:86, top:28},
+    {id:'este_2',  get label(){return t('lm.zona_este_2');}, left:89, top:46},
+    {id:'este_3',  get label(){return t('lm.zona_este_3');}, left:86, top:64},
+    {id:'sur_3',   get label(){return t('lm.zona_sur_3');}, left:72, top:80},
+    {id:'sur_2',   get label(){return t('lm.zona_sur_2');}, left:49, top:83},
+    {id:'sur_1',   get label(){return t('lm.zona_sur_1');}, left:26, top:80},
+    {id:'oeste_3', get label(){return t('lm.zona_oeste_3');}, left:11, top:64},
+    {id:'oeste_2', get label(){return t('lm.zona_oeste_2');}, left:8,  top:46},
+    {id:'oeste_1', get label(){return t('lm.zona_oeste_1');}, left:11, top:28},
   ];
-  const LM_DISTURBIO_LABEL={0:'SIN DISTURBIOS',1:'LEVE',2:'MEDIO',3:'GRAVE'};
+  const LM_DISTURBIO_LABEL={get 0(){return t('lm.disturbio_0');},get 1(){return t('lm.disturbio_1');},get 2(){return t('lm.disturbio_2');},get 3(){return t('lm.disturbio_3');}};
   const LM_DISTURBIO_COLOR={0:null,1:'#e6c94a',2:'#e88a2e',3:'#e24b4a'};
   // Coste base del guardia y descuento por trabajador de nivel alto —
   // igual que el resto del cuerpo técnico, 3 estrellas abarata las cosas.
@@ -871,17 +879,17 @@
     state.capital=(state.capital||0)-daño;
     registrarMovimientoFinanciero('Daños por disturbios en '+zona.label, -daño, state.jornadaActual);
     state.disturbiosZonas[zona.id]=1; // vuelve a leve tras el suceso, no a cero — el ambiente sigue algo caldeado
-    enviarCorreo('mantenimiento', 'Incidentes en '+zona.label,
-      `Hubo disturbios en ${zona.label} durante el partido. Los daños al estadio han costado ${formatoDinero(daño)}, ya descontados del capital del club. Conviene reforzar la zona con guardias de seguridad.`);
+    enviarCorreo('mantenimiento', tp('correo.incidentes_zona.asunto', {zona:zona.label}),
+      tp('correo.incidentes_zona.cuerpo', {zona:zona.label, dano:formatoDinero(daño)}));
   }
   const LM_RASGOS_DEFS=[
-    {id:'killer', icon:'ph-target', name:'Killer', stat:'attack', desc:'+5 de Ataque — un depredador dentro del área.'},
-    {id:'muro_defensivo', icon:'ph-shield', name:'Muro Defensivo', stat:'defense', desc:'+5 de Defensa — nadie pasa por su banda.'},
-    {id:'velocista', icon:'ph-lightning', name:'Velocista', stat:'pace', desc:'+5 de Ritmo — deja rivales atrás a la carrera.'},
-    {id:'lider', icon:'ph-brain', name:'Líder', stat:'passing', desc:'+5 de Pase — dirige el juego de todo el equipo.'},
-    {id:'especialista_balon_parado', icon:'ph-soccer-ball', name:'Especialista a Balón Parado', stat:'technique', desc:'+5 de Técnica — letal en cada córner y falta.'},
-    {id:'incansable', icon:'ph-battery-charging', name:'Incansable', stat:'pace', desc:'+5 de Ritmo — no baja el nivel ni en el minuto 90.'},
-    {id:'versatil', icon:'ph-arrows-out-cardinal', name:'Versátil', stat:null, desc:'No sufre penalización por jugar en una posición que no es la suya natural.'},
+    {id:'killer', icon:'ph-target', stat:'attack', get name(){return t('rasgo.killer.nombre');}, get desc(){return t('rasgo.killer.desc');}},
+    {id:'muro_defensivo', icon:'ph-shield', stat:'defense', get name(){return t('rasgo.muro_defensivo.nombre');}, get desc(){return t('rasgo.muro_defensivo.desc');}},
+    {id:'velocista', icon:'ph-lightning', stat:'pace', get name(){return t('rasgo.velocista.nombre');}, get desc(){return t('rasgo.velocista.desc');}},
+    {id:'lider', icon:'ph-brain', stat:'passing', get name(){return t('rasgo.lider.nombre');}, get desc(){return t('rasgo.lider.desc');}},
+    {id:'especialista_balon_parado', icon:'ph-soccer-ball', stat:'technique', get name(){return t('rasgo.especialista_balon_parado.nombre');}, get desc(){return t('rasgo.especialista_balon_parado.desc');}},
+    {id:'incansable', icon:'ph-battery-charging', stat:'pace', get name(){return t('rasgo.incansable.nombre');}, get desc(){return t('rasgo.incansable.desc');}},
+    {id:'versatil', icon:'ph-arrows-out-cardinal', stat:null, get name(){return t('rasgo.versatil.nombre');}, get desc(){return t('rasgo.versatil.desc');}},
   ];
   function rasgoDef(id){ return LM_RASGOS_DEFS.find(r=>r.id===id); }
   // Asigna un rasgo a un jugador de la plantilla — si ya lo tenía, no
@@ -941,8 +949,8 @@
         awayId:p.away.id, awayName:p.away.name, awayCrest:p.away.crestImg||null, awayEsMio:p.away.id==='lm_0'})),
       predicciones:{}, rellenado:false
     };
-    enviarCorreo('directorGeneral', '¡Tienes una quiniela esperando!',
-      'Tres victorias esta temporada merecen premio: el club te invita a rellenar una quiniela con los partidos de la próxima jornada. Acierta y llévate un buen pellizco — y si aciertas más de la mitad, hasta rasgos nuevos para tu plantilla.');
+    enviarCorreo('directorGeneral', t('lm.correo_quiniela_asunto'),
+      t('lm.correo_quiniela_cuerpo'));
     const ultimo=state.correoInterno && state.correoInterno[0];
     if(ultimo){ ultimo.tipoEspecial='quiniela_lista'; }
   }
@@ -1010,7 +1018,7 @@
           ${xCerrarHTML()}
           <div class="lm-quiniela-header">
             <i class="ph ph-bold ph-ticket"></i>
-            <div><div class="lm-quiniela-titulo">QUINIELA — JORNADA ${boleto.jornadaIndex+1}</div><div class="lm-quiniela-subtitulo">Elige 1 · X · 2 para cada partido</div></div>
+            <div><div class="lm-quiniela-titulo">${t('lm.quiniela_titulo')} ${boleto.jornadaIndex+1}</div><div class="lm-quiniela-subtitulo">${t('lm.quiniela_subtitulo')}</div></div>
           </div>
           <div class="lm-quiniela-lista">
             ${boleto.partidos.map((p,i)=>{
@@ -1027,7 +1035,7 @@
               </div>`;
             }).join('')}
           </div>
-          <div class="lm-popup-actions"><button id="lmQuinielaConfirmar" class="mode-card-btn mode-card-btn-gold" ${todasRellenas?'':'disabled'}>CONFIRMAR QUINIELA</button></div>
+          <div class="lm-popup-actions"><button id="lmQuinielaConfirmar" class="mode-card-btn mode-card-btn-gold" ${todasRellenas?'':'disabled'}>${t('lm.confirmar_quiniela')}</button></div>
         </div>`;
       overlay.querySelectorAll('[data-qk]').forEach(btn=>{
         btn.addEventListener('click', ()=>{
@@ -1067,12 +1075,12 @@
       <div class="lm-dilemma-card lm-quiniela-resultado-card">
         <div class="lm-quiniela-resultado-header ${exito?'lm-quiniela-resultado-exito':''}">
           <i class="ph ph-bold ph-ticket"></i>
-          <div class="lm-quiniela-resultado-titulo">RESULTADO DE LA QUINIELA</div>
-          <div class="lm-quiniela-resultado-aciertos">${r.aciertos}<span>/${r.total} ACIERTOS</span></div>
+          <div class="lm-quiniela-resultado-titulo">${t('lm.resultado_quiniela')}</div>
+          <div class="lm-quiniela-resultado-aciertos">${r.aciertos}<span>/${r.total} ${t('lm.aciertos')}</span></div>
         </div>
         <div class="lm-quiniela-premio-box">
           <i class="ph ph-bold ph-coins"></i>
-          <div><div class="lm-quiniela-premio-val">${formatoDinero(r.premio)}</div><div class="lm-quiniela-premio-label">PREMIO ECONÓMICO</div></div>
+          <div><div class="lm-quiniela-premio-val">${formatoDinero(r.premio)}</div><div class="lm-quiniela-premio-label">${t('lm.premio_economico')}</div></div>
         </div>
         <div class="lm-quiniela-detalle-lista">
           ${r.detalle.map(d=>`
@@ -1084,13 +1092,13 @@
                 <span class="lm-quiniela-detalle-equipo">${d.awayName}${quinielaEscudoHTML(d.awayEsMio, d.awayCrest, 22)}</span>
               </div>
               <div class="lm-quiniela-detalle-pronosticos">
-                <span class="lm-quiniela-detalle-tu">TU: <strong>${d.prediccion}</strong></span>
-                <span class="lm-quiniela-detalle-real">REAL: <strong>${d.real}</strong></span>
+                <span class="lm-quiniela-detalle-tu">${t('lm.quiniela_tu')}: <strong>${d.prediccion}</strong></span>
+                <span class="lm-quiniela-detalle-real">${t('lm.quiniela_real')}: <strong>${d.real}</strong></span>
               </div>
             </div>`).join('')}
         </div>
         ${r.rasgosGanados.length?`
-        <div class="lm-quiniela-rasgos-titulo"><i class="ph ph-bold ph-sparkle"></i> ¡MÁS DE LA MITAD ACERTADOS! HAS GANADO ${r.rasgosGanados.length} RASGO${r.rasgosGanados.length>1?'S':''}</div>
+        <div class="lm-quiniela-rasgos-titulo"><i class="ph ph-bold ph-sparkle"></i> ${t('lm.mas_mitad_acertados')} ${r.rasgosGanados.length} ${r.rasgosGanados.length>1?t('lm.rasgos_plural'):t('lm.rasgo_singular')}</div>
         <div class="lm-quiniela-rasgos-lista">
           ${r.rasgosGanados.map((rid,i)=>{
             const def=rasgoDef(rid);
@@ -1099,13 +1107,13 @@
               <div class="lm-rasgo-card-nombre">${def.name}</div>
               <div class="lm-rasgo-card-desc">${def.desc}</div>
               <select class="lm-rasgo-select" data-rasgo-idx="${i}" data-rasgo-id="${rid}">
-                <option value="">Elige jugador...</option>
-                ${jugadoresElegibles.map(p=>`<option value="${p.id}" ${p.rasgos&&p.rasgos.includes(rid)?'disabled':''}>${p.name}${p.rasgos&&p.rasgos.includes(rid)?' (ya lo tiene)':''}</option>`).join('')}
+                <option value="">${t('lm.elige_jugador')}</option>
+                ${jugadoresElegibles.map(p=>`<option value="${p.id}" ${p.rasgos&&p.rasgos.includes(rid)?'disabled':''}>${p.name}${p.rasgos&&p.rasgos.includes(rid)?' '+t('lm.ya_lo_tiene'):''}</option>`).join('')}
               </select>
             </div>`;
           }).join('')}
         </div>` : ''}
-        <div class="lm-popup-actions"><button id="lmQuinielaResultadoCerrar" class="mode-card-btn mode-card-btn-gold">CONTINUAR</button></div>
+        <div class="lm-popup-actions"><button id="lmQuinielaResultadoCerrar" class="mode-card-btn mode-card-btn-gold">${t('lm.continuar')}</button></div>
       </div>`;
     document.getElementById('ligaManagerScreen').appendChild(overlay);
     overlay.querySelectorAll('.lm-rasgo-select').forEach(sel=>{
@@ -1130,16 +1138,16 @@
   // separado (users/{uid}.ligaManagerUpgrades) — gastar puntos aquí no
   // añade ni quita niveles a las mejoras de Copa Leyendas, y viceversa.
   const LM_UPGRADE_DEFS=[
-    {id:'lm_bench', phIcon:'ph-users-three', name:'BANQUILLO', desc:'SUPLENTES DISPONIBLES POR PARTIDO',
-      baseCost:5, maxLevel:5, baseValue:5, tooltip:(lvl)=>`${5+lvl} suplentes disponibles`},
-    {id:'lm_dice', phIcon:'ph-dice-five', name:'DADO TÉCNICO EXTRA', desc:'DADOS DEL CUERPO TÉCNICO POR PARTIDO',
-      baseCost:5, maxLevel:5, baseValue:5, tooltip:(lvl)=>`${5+lvl} dados por partido`},
-    {id:'lm_rerolls', phIcon:'ph-arrows-clockwise', name:'RERROLLS EXTRA', desc:'REROLLS DE DADO POR PARTIDO',
-      baseCost:5, maxLevel:5, baseValue:1, tooltip:(lvl)=>`${1+lvl} rerroll${lvl?'s':''} por partido`},
-    {id:'lm_cardswap', phIcon:'ph-cards', name:'CAMBIO DE CARTA EXTRA', desc:'CAMBIOS DE CARTA POR DEPARTAMENTO Y PARTIDO',
-      baseCost:5, maxLevel:3, baseValue:1, tooltip:(lvl)=>`${1+lvl} cambio${lvl>0?'s':''} de carta por partido`},
-    {id:'lm_sobredescuento', phIcon:'ph-percent', name:'REBAJA DE SOBRES', desc:'DESCUENTO AL ABRIR CUALQUIER SOBRE DE FICHAJES',
-      baseCost:5, maxLevel:5, baseValue:0, tooltip:(lvl)=>lvl===0?'Sin descuento':`${lvl*10}% de descuento al abrir sobres`},
+    {id:'lm_bench', phIcon:'ph-users-three', get name(){return t('mejora.bench.nombre');}, get desc(){return t('mejora.bench.desc');},
+      baseCost:5, maxLevel:5, baseValue:5, tooltip:(lvl)=>t('mejora.bench.tooltip').replace('{n}', 5+lvl)},
+    {id:'lm_dice', phIcon:'ph-dice-five', get name(){return t('mejora.dice.nombre');}, get desc(){return t('mejora.dice.desc');},
+      baseCost:5, maxLevel:5, baseValue:5, tooltip:(lvl)=>t('mejora.dice.tooltip').replace('{n}', 5+lvl)},
+    {id:'lm_rerolls', phIcon:'ph-arrows-clockwise', get name(){return t('mejora.rerolls.nombre');}, get desc(){return t('mejora.rerolls.desc');},
+      baseCost:5, maxLevel:5, baseValue:1, tooltip:(lvl)=>t('mejora.rerolls.tooltip').replace('{n}', 1+lvl).replace('{s}', lvl?'s':'')},
+    {id:'lm_cardswap', phIcon:'ph-cards', get name(){return t('mejora.cardswap.nombre');}, get desc(){return t('mejora.cardswap.desc');},
+      baseCost:5, maxLevel:3, baseValue:1, tooltip:(lvl)=>t('mejora.cardswap.tooltip').replace('{n}', 1+lvl).replace('{s}', lvl>0?'s':'')},
+    {id:'lm_sobredescuento', phIcon:'ph-percent', get name(){return t('mejora.sobredescuento.nombre');}, get desc(){return t('mejora.sobredescuento.desc');},
+      baseCost:5, maxLevel:5, baseValue:0, tooltip:(lvl)=>lvl===0?t('mejora.sin_descuento'):t('mejora.sobredescuento.tooltip').replace('{n}', lvl*10)},
   ];
   function lmUpgradeLevelCost(def, toLevel){ return def.baseCost*Math.pow(2, toLevel-1); }
   function lmNivelMejora(id){ return (window._lmUpgradeCache && window._lmUpgradeCache[id]) || 0; }
@@ -1237,18 +1245,18 @@
   // pero desbloquearlos SÍ suma a los mismos GOAT Points compartidos.
   const LM_TIER_COLOR={'básico':'#7bbf7b','intermedio':'#5b9bd5','difícil':'#c9a227','mítico':'#e67e22'};
   const LM_ACHIEVEMENT_DEFS=[
-    {id:'lm_first_match',    tier:'básico', pts:1, icon:'ph-megaphone',      name:'PRIMER PARTIDO',      desc:'Juega tu primer partido de Liga Manager'},
-    {id:'lm_first_win',      tier:'básico', pts:1, icon:'ph-trophy',         name:'PRIMEROS TRES PUNTOS', desc:'Gana tu primer partido'},
-    {id:'lm_first_sobre',    tier:'básico', pts:1, icon:'ph-envelope-open',  name:'SOBRE ABIERTO',        desc:'Abre tu primer sobre de fichajes'},
-    {id:'lm_first_sale',     tier:'básico', pts:1, icon:'ph-handshake',      name:'PRIMER TRASPASO',      desc:'Vende a tu primer jugador'},
-    {id:'lm_first_worker',   tier:'básico', pts:1, icon:'ph-user-plus',      name:'CUERPO TÉCNICO COMPLETO', desc:'Contrata a los 5 puestos del cuerpo técnico'},
-    {id:'lm_clean_sheet',    tier:'básico', pts:1, icon:'ph-shield-check',   name:'PORTERÍA A CERO',      desc:'Gana un partido sin encajar ningún gol'},
-    {id:'lm_win_streak_3',   tier:'intermedio', pts:2, icon:'ph-trend-up',   name:'EN RACHA',             desc:'Gana 3 partidos seguidos'},
-    {id:'lm_star_signing',   tier:'intermedio', pts:2, icon:'ph-star',       name:'FICHAJE ESTRELLA',     desc:'Ficha a un jugador real de otro equipo desde un sobre'},
-    {id:'lm_top4',           tier:'intermedio', pts:2, icon:'ph-medal',      name:'ZONA EUROPEA',         desc:'Termina una jornada entre los 4 primeros'},
-    {id:'lm_win_10',         tier:'intermedio', pts:2, icon:'ph-soccer-ball', name:'DIEZ VICTORIAS',       desc:'Consigue 10 victorias en una misma temporada'},
-    {id:'lm_season_complete',tier:'difícil', pts:3, icon:'ph-flag-checkered', name:'TEMPORADA COMPLETA',  desc:'Llega a la jornada 38'},
-    {id:'lm_champion',       tier:'mítico', pts:5, icon:'ph-crown',          name:'CAMPEÓN DE LIGA',      desc:'Termina la temporada en 1ª posición'},
+    {id:'lm_first_match',    tier:'básico', pts:1, icon:'ph-megaphone',      get name(){return t('lmach.first_match.nombre');}, get desc(){return t('lmach.first_match.desc');}},
+    {id:'lm_first_win',      tier:'básico', pts:1, icon:'ph-trophy',         get name(){return t('lmach.first_win.nombre');}, get desc(){return t('lmach.first_win.desc');}},
+    {id:'lm_first_sobre',    tier:'básico', pts:1, icon:'ph-envelope-open',  get name(){return t('lmach.first_sobre.nombre');}, get desc(){return t('lmach.first_sobre.desc');}},
+    {id:'lm_first_sale',     tier:'básico', pts:1, icon:'ph-handshake',      get name(){return t('lmach.first_sale.nombre');}, get desc(){return t('lmach.first_sale.desc');}},
+    {id:'lm_first_worker',   tier:'básico', pts:1, icon:'ph-user-plus',      get name(){return t('lmach.first_worker.nombre');}, get desc(){return t('lmach.first_worker.desc');}},
+    {id:'lm_clean_sheet',    tier:'básico', pts:1, icon:'ph-shield-check',   get name(){return t('lmach.clean_sheet.nombre');}, get desc(){return t('lmach.clean_sheet.desc');}},
+    {id:'lm_win_streak_3',   tier:'intermedio', pts:2, icon:'ph-trend-up',   get name(){return t('lmach.win_streak_3.nombre');}, get desc(){return t('lmach.win_streak_3.desc');}},
+    {id:'lm_star_signing',   tier:'intermedio', pts:2, icon:'ph-star',       get name(){return t('lmach.star_signing.nombre');}, get desc(){return t('lmach.star_signing.desc');}},
+    {id:'lm_top4',           tier:'intermedio', pts:2, icon:'ph-medal',      get name(){return t('lmach.top4.nombre');}, get desc(){return t('lmach.top4.desc');}},
+    {id:'lm_win_10',         tier:'intermedio', pts:2, icon:'ph-soccer-ball', get name(){return t('lmach.win_10.nombre');}, get desc(){return t('lmach.win_10.desc');}},
+    {id:'lm_season_complete',tier:'difícil', pts:3, icon:'ph-flag-checkered', get name(){return t('lmach.season_complete.nombre');}, get desc(){return t('lmach.season_complete.desc');}},
+    {id:'lm_champion',       tier:'mítico', pts:5, icon:'ph-crown',          get name(){return t('lmach.champion.nombre');}, get desc(){return t('lmach.champion.desc');}},
   ];
   async function unlockLMAchievement(id, mostrarInmediatamente){
     if(mostrarInmediatamente===undefined) mostrarInmediatamente=true;
@@ -1349,7 +1357,7 @@
         '<div style="min-width:0;flex:1">'+
         '<div style="font-size:12px;letter-spacing:.8px;color:'+nameColor+';line-height:1.2;font-weight:700">'+def.name+'</div>'+
         '<div style="font-size:11px;color:'+descColor+';line-height:1.4;margin-top:2px">'+def.desc+'</div>'+
-        '<div style="font-size:9px;color:'+tierColor+';letter-spacing:1px;margin-top:3px">'+def.tier.toUpperCase()+'</div>'+
+        '<div style="font-size:9px;color:'+tierColor+';letter-spacing:1px;margin-top:3px">'+t('lmach.tier.'+def.tier)+'</div>'+
         '</div>';
       grid.appendChild(card);
     });
@@ -1364,18 +1372,18 @@
   // guardan en un campo propio (ligaManagerSkills) que no interfiere
   // con las habilidades de Copa Leyendas.
   const LM_SKILL_DEFS=[
-    {id:'lm_mentalidad_ganadora', category:'TÁCTICA', name:'MENTALIDAD GANADORA', cost:35, phIcon:'ph-trend-up',
-      tooltip:'Tras 3 victorias seguidas, tu equipo sale con un pequeño extra de ataque en el siguiente partido.'},
-    {id:'lm_revancha', category:'TÁCTICA', name:'REVANCHA', cost:35, phIcon:'ph-arrow-clockwise',
-      tooltip:'Tras perder el partido anterior, tu equipo sale con un pequeño extra de ataque para resarcirse.'},
-    {id:'lm_factor_campo', category:'TÁCTICA', name:'FACTOR CAMPO', cost:30, phIcon:'ph-house',
-      tooltip:'Jugando como local, tu equipo rinde ligeramente mejor.'},
-    {id:'lm_meteorologo', category:'GESTIÓN', name:'ESPECIALISTA EN CLIMA', cost:30, phIcon:'ph-cloud-sun',
-      tooltip:'Reduce a la mitad la penalización que sufre tu equipo por la lluvia, el viento, el calor o la nieve.'},
-    {id:'lm_temple_competitivo', category:'GESTIÓN', name:'TEMPLE COMPETITIVO', cost:30, phIcon:'ph-shield-star',
-      tooltip:'Pierdes menos moral cuando el partido se decide por la mínima.'},
-    {id:'lm_contraataque_letal', category:'GESTIÓN', name:'CONTRAATAQUE LETAL', cost:35, phIcon:'ph-lightning',
-      tooltip:'Jugando como visitante, tu equipo defiende ligeramente mejor.'},
+    {id:'lm_mentalidad_ganadora', get category(){return t('skill.categoria_tactica');}, get name(){return t('skill.mentalidad_ganadora.nombre');}, cost:35, phIcon:'ph-trend-up',
+      get tooltip(){return t('skill.mentalidad_ganadora.tooltip');}},
+    {id:'lm_revancha', get category(){return t('skill.categoria_tactica');}, get name(){return t('skill.revancha.nombre');}, cost:35, phIcon:'ph-arrow-clockwise',
+      get tooltip(){return t('skill.revancha.tooltip');}},
+    {id:'lm_factor_campo', get category(){return t('skill.categoria_tactica');}, get name(){return t('skill.factor_campo.nombre');}, cost:30, phIcon:'ph-house',
+      get tooltip(){return t('skill.factor_campo.tooltip');}},
+    {id:'lm_meteorologo', get category(){return t('skill.categoria_gestion');}, get name(){return t('skill.meteorologo.nombre');}, cost:30, phIcon:'ph-cloud-sun',
+      get tooltip(){return t('skill.meteorologo.tooltip');}},
+    {id:'lm_temple_competitivo', get category(){return t('skill.categoria_gestion');}, get name(){return t('skill.temple_competitivo.nombre');}, cost:30, phIcon:'ph-shield-star',
+      get tooltip(){return t('skill.temple_competitivo.tooltip');}},
+    {id:'lm_contraataque_letal', get category(){return t('skill.categoria_gestion');}, get name(){return t('skill.contraataque_letal.nombre');}, cost:35, phIcon:'ph-lightning',
+      get tooltip(){return t('skill.contraataque_letal.tooltip');}},
   ];
   async function lmCargarSkillsCache(){
     try{
@@ -1718,8 +1726,8 @@
     {
       const idRegalo='sobre_regalo_'+Date.now();
       state.sobresFichajesPendientes.push({id:idRegalo, nivel:1, jornadaGenerado:1, gratis:true});
-      enviarCorreo('directorDeportivo', '¡Bienvenido al club! Un sobre de regalo te espera',
-        'Como bienvenida a la temporada, la directiva te regala un sobre de fichajes — no te costará nada abrirlo. Cuando tengas un momento, ábrelo desde aquí mismo.');
+      enviarCorreo('directorDeportivo', t('correo.bienvenida_sobre.asunto'),
+        t('correo.bienvenida_sobre.cuerpo'));
       const ultimoCorreo=state.correoInterno && state.correoInterno[0];
       if(ultimoCorreo){ ultimoCorreo.tipoEspecial='sobre_listo'; ultimoCorreo.sobreId=idRegalo; }
     }
@@ -2099,8 +2107,8 @@
       }
       if(state.trabajadores && state.trabajadores.medico && typeof enviarCorreo==='function' &&
          (!state.correoUltimoEnviado || state.correoUltimoEnviado.medico!==state.jornadaActual)){
-        enviarCorreo('medico', `${p.name} agrava su lesión jugando`,
-          `${p.name} ha seguido jugando con la lesión a cuestas y se le ha agravado — ahora es ${severidadNueva} y le quedan ${p.injuryWeeks} jornada${p.injuryWeeks===1?'':'s'} de baja.`);
+        enviarCorreo('medico', tp('correo.agrava_lesion.asunto', {jugador:p.name}),
+          tp('correo.agrava_lesion.cuerpo', {jugador:p.name, severidad:severidadNueva, semanas:p.injuryWeeks+' '+t('lm.jornada').toLowerCase()+(p.injuryWeeks===1?'':'s')}));
       }
     });
     // Actualizar rachas de gol: quien marca suma, el resto de titulares que
@@ -2325,8 +2333,8 @@
     if(mesDeEstaJornada>(state.mesTrabajadoresGenerado||0)){
       regenerarCandidatosTrabajo();
       state.mesTrabajadoresGenerado=mesDeEstaJornada;
-      enviarCorreo('directorGeneral', 'Nuevos candidatos disponibles',
-        'Este mes hay nuevos candidatos disponibles para cubrir puestos del cuerpo técnico. Puedes revisarlos en cualquier momento desde CONTRATAR.');
+      enviarCorreo('directorGeneral', t('correo.nuevos_candidatos.asunto'),
+        t('correo.nuevos_candidatos.cuerpo'));
     }
 
     state.plantilla.forEach(p=>{
@@ -2806,8 +2814,8 @@
     // El médico avisa por correo de cualquier lesión nueva, no solo las
     // graves — así el aviso llega siempre, no solo en los casos más raros.
     if(state.trabajadores && state.trabajadores.medico && typeof enviarCorreo==='function'){
-      enviarCorreo('medico', `${jugador.name} se ha lesionado`,
-        `${jugador.name} sufre ${tipoLesion?tipoLesion.toLowerCase():'una lesión'} (${sev.label}). Previsión: ${sev.weeks} jornada${sev.weeks===1?'':'s'} de baja.`);
+      enviarCorreo('medico', tp('correo.se_lesiona.asunto', {jugador:jugador.name}),
+        tp('correo.se_lesiona.cuerpo', {jugador:jugador.name, tipo:tipoLesion?tipoLesion.toLowerCase():'una lesión', severidad:sev.label, semanas:sev.weeks+' '+t('lm.jornada').toLowerCase()+(sev.weeks===1?'':'s')}));
     }
     return id;
   }
@@ -2834,7 +2842,7 @@
     // aparece en jugadoresLesionadosPara al no estar "injured").
     if(state.trabajadores && state.trabajadores.medico && typeof enviarCorreo==='function' &&
        (!state.correoUltimoEnviado || state.correoUltimoEnviado.medico!==state.jornadaActual)){
-      enviarCorreo('medico', `${jugador.name} recupera la disponibilidad`, `Buenas noticias: ${jugador.name} ya está completamente recuperado y disponible para jugar.`);
+      enviarCorreo('medico', tp('correo.recupera_disponibilidad.asunto', {jugador:jugador.name}), tp('correo.recupera_disponibilidad.cuerpo', {jugador:jugador.name}));
     }
   }
   function registrarProgresoHistorial(texto){
@@ -3328,14 +3336,14 @@
     overlay.id='lmSobreCorreoOverlay';
     overlay.innerHTML=`
       <div class="lm-sobre-apertura-wrap">
-        <div class="lm-sobre-apertura-titulo">SOBRE DE FICHAJES</div>
+        <div class="lm-sobre-apertura-titulo">${t('lm.sobre_titulo')}</div>
         <div class="lm-sobre-apertura-stage">
           <img src="assets/sobres/sobre.png" class="lm-sobre-img-flotante" id="lmSobreImgArrastrable" draggable="false">
           <div class="lm-sobre-rasga-zona" id="lmSobreGrabZone">
             <span class="lm-sobre-rasga-barrido"></span>
           </div>
         </div>
-        <div class="lm-sobre-apertura-hint" id="lmSobreHint">ARRASTRA HACIA UN LADO POR LA FRANJA MARCADA</div>
+        <div class="lm-sobre-apertura-hint" id="lmSobreHint">${t('lm.sobre_arrastra')}</div>
       </div>`;
     document.getElementById('ligaManagerScreen').appendChild(overlay);
 
@@ -3415,7 +3423,7 @@
     const posicionesBarajado=['POR','DFC','LI','LD','MC','EI','ED','DC'];
     overlay.innerHTML=`
       <div class="lm-dilemma-card lm-dilemma-card-dd lm-sobre-popup-ancho" style="max-width:860px">
-        <div class="lm-dilemma-title"><i class="ph ph-bold ph-envelope-open"></i> SOBRE DE FICHAJES</div>
+        <div class="lm-dilemma-title"><i class="ph ph-bold ph-envelope-open"></i> ${t('lm.sobre_titulo')}</div>
         <div id="lmSobreReveloZoneCorreo" class="lm-sobre-cards">
           ${jugadores.map((j,i)=>`
           <div class="lm-sobre-card lm-sobre-card-barajando" id="lmSobreReelC${i}" style="animation-delay:${i*0.35}s">
@@ -3455,22 +3463,22 @@
         if(zonaReels) zonaReels.innerHTML='';
         const zona=document.getElementById('lmSobreResultadoCorreo');
         const caras=asignarCarasSobre(jugadores);
-        zona.innerHTML=`${hayEstrella?'<div class="lm-fichaje-estrella-banner"><i class="ph ph-bold ph-sparkle"></i> ¡HAY UN FICHAJE ESTRELLA EN ESTE SOBRE! <i class="ph ph-bold ph-sparkle"></i></div>':''}
+        zona.innerHTML=`${hayEstrella?`<div class="lm-fichaje-estrella-banner"><i class="ph ph-bold ph-sparkle"></i> ${t('lm.hay_fichaje_estrella')} <i class="ph ph-bold ph-sparkle"></i></div>`:''}
           <div class="lm-sobre-cards" id="lmSobreCardsRow">${jugadores.map((j,i)=>`
           <div class="lm-sobre-card ${j.esFichajeEstrella?'lm-sobre-card-estrella':''}" data-jugador="${i}" style="animation-delay:${i*0.35}s">
-            ${j.esFichajeEstrella?`<div class="lm-fichaje-estrella-tag"><i class="ph ph-bold ph-star"></i> FICHAJE ESTRELLA</div>`:''}
-            ${(!j.esFichajeEstrella && j.esOportunidad)?`<div class="lm-trab-chollo-badge lm-sobre-oportunidad-badge"><i class="ph ph-bold ph-seal-percent"></i> OPORTUNIDAD</div>`:''}
+            ${j.esFichajeEstrella?`<div class="lm-fichaje-estrella-tag"><i class="ph ph-bold ph-star"></i> ${t('lm.fichaje_estrella')}</div>`:''}
+            ${(!j.esFichajeEstrella && j.esOportunidad)?`<div class="lm-trab-chollo-badge lm-sobre-oportunidad-badge"><i class="ph ph-bold ph-seal-percent"></i> ${t('lm.oportunidad')}</div>`:''}
             <div class="lm-sobre-cara"><img src="${caras[i]}" alt="${j.position}"><span class="lm-sobre-pos-badge">${j.position}</span></div>
             <div class="lm-sobre-nombre">${j.numero?('#'+j.numero+' '):''}${j.name}</div>
-            ${j.esFichajeEstrella?`<div class="lm-sobre-procedencia">actualmente en ${j.equipoOrigenName}</div>`:''}
-            <div class="lm-sobre-overall">${j.overall} <span>puntuación</span></div>
+            ${j.esFichajeEstrella?`<div class="lm-sobre-procedencia">${t('lm.actualmente_en')} ${j.equipoOrigenName}</div>`:''}
+            <div class="lm-sobre-overall">${j.overall} <span>${t('lm.puntuacion')}</span></div>
             <div class="lm-sobre-stats-fila">
-              <span><b>${j.attack}</b>ATA</span><span><b>${j.defense}</b>DEF</span><span><b>${j.pace}</b>RIT</span><span><b>${j.passing}</b>PAS</span><span><b>${j.technique}</b>TEC</span>
+              <span><b>${j.attack}</b>${t('lm.stat_ata')}</span><span><b>${j.defense}</b>${t('lm.stat_def')}</span><span><b>${j.pace}</b>${t('lm.stat_rit')}</span><span><b>${j.passing}</b>${t('lm.stat_pas')}</span><span><b>${j.technique}</b>${t('lm.stat_tec')}</span>
             </div>
             <div class="lm-sobre-salario">${formatoDinero(j.salario)}/mes</div>
-            <button class="mode-card-btn mode-card-btn-gold lm-sobre-fichar" data-fichar="${i}">FICHAR</button>
+            <button class="mode-card-btn mode-card-btn-gold lm-sobre-fichar" data-fichar="${i}">${t('lm.fichar_btn')}</button>
           </div>`).join('')}</div>
-          <div class="lm-popup-actions" style="margin-top:12px"><button id="lmSobreCerrarCorreo" class="mode-card-btn lm-btn-rojo">CERRAR SOBRE</button></div>`;
+          <div class="lm-popup-actions" style="margin-top:12px"><button id="lmSobreCerrarCorreo" class="mode-card-btn lm-btn-rojo">${t('lm.cerrar_sobre')}</button></div>`;
         const filaCards=zona.querySelector('#lmSobreCardsRow');
         filaCards.querySelectorAll('.lm-sobre-card').forEach(carta=>{
           carta.addEventListener('click', (e)=>{
@@ -3520,27 +3528,27 @@
     overlay.innerHTML=`
       <div class="lm-dilemma-card lm-clasif-popup-card" style="max-width:600px">
         ${xCerrarHTML()}
-        <div class="lm-dilemma-title"><i class="ph ph-bold ph-ranking"></i> CLASIFICACIÓN</div>
+        <div class="lm-dilemma-title"><i class="ph ph-bold ph-ranking"></i> ${t('lm.clasificacion')}</div>
         <div class="lm-clasif-scroll-area">
           <div class="lm-table-wrap">
             <table class="lm-table lm-table-grande">
-              <thead><tr><th></th><th>#</th><th>Equipo</th><th>PJ</th><th>G</th><th>E</th><th>P</th><th>Pts</th></tr></thead>
+              <thead><tr><th></th><th>#</th><th>${t('lm.tabla_equipo')}</th><th>${t('lm.tabla_pj')}</th><th>${t('lm.tabla_g')}</th><th>${t('lm.tabla_e')}</th><th>${t('lm.tabla_p')}</th><th>${t('lm.tabla_pts')}</th></tr></thead>
               <tbody>
-                ${clasif.map((t,i)=>`<tr class="${t.id==='lm_0'?'lm-myteam':''} lm-zona-${zonaClasificacion(i+1)}">
-                  <td>${t.id==='lm_0'?crestHTML(state.escudo,20):rivalCrestHTML(20, t.crestImg)}</td>
-                  <td>${i+1}</td><td>${t.name}</td><td>${t.pj}</td><td>${t.pg}</td><td>${t.pe}</td><td>${t.pp}</td><td><strong>${t.pts}</strong></td>
+                ${clasif.map((t2,i)=>`<tr class="${t2.id==='lm_0'?'lm-myteam':''} lm-zona-${zonaClasificacion(i+1)}">
+                  <td>${t2.id==='lm_0'?crestHTML(state.escudo,20):rivalCrestHTML(20, t2.crestImg)}</td>
+                  <td>${i+1}</td><td>${t2.name}</td><td>${t2.pj}</td><td>${t2.pg}</td><td>${t2.pe}</td><td>${t2.pp}</td><td><strong>${t2.pts}</strong></td>
                 </tr>`).join('')}
               </tbody>
             </table>
           </div>
         </div>
         <div class="lm-legend">
-          <span><i class="lm-legend-dot lm-zona-champions"></i>Champions</span>
-          <span><i class="lm-legend-dot lm-zona-europa"></i>Europa Lg.</span>
-          <span><i class="lm-legend-dot lm-zona-conference"></i>Conference</span>
-          <span><i class="lm-legend-dot lm-zona-descenso"></i>Descenso</span>
+          <span><i class="lm-legend-dot lm-zona-champions"></i>${t('lm.zona_champions')}</span>
+          <span><i class="lm-legend-dot lm-zona-europa"></i>${t('lm.zona_europa')}</span>
+          <span><i class="lm-legend-dot lm-zona-conference"></i>${t('lm.zona_conference')}</span>
+          <span><i class="lm-legend-dot lm-zona-descenso"></i>${t('lm.zona_descenso')}</span>
         </div>
-        <div class="lm-popup-actions"><button id="lmClasifCerrarBtn" class="mode-card-btn mode-card-btn-gold">CERRAR</button></div>
+        <div class="lm-popup-actions"><button id="lmClasifCerrarBtn" class="mode-card-btn mode-card-btn-gold">${t('lm.cerrar')}</button></div>
       </div>`;
     document.getElementById('ligaManagerScreen').appendChild(overlay);
     habilitarCierreOverlay(overlay, ()=>overlay.remove());
@@ -3597,7 +3605,7 @@
         <div class="lm-dilemma-title"><i class="ph ph-bold ph-magnifying-glass"></i> INFORMACIÓN DEL CLUB</div>
         <div class="lm-infoclub-estadio">
           <img src="assets/estadio/estadio_nivel${nivelEstadio}.png" alt="Estadio nivel ${nivelEstadio}">
-          <div class="lm-infoclub-estadio-nivel"><i class="ph ph-bold ph-star"></i> NIVEL DE ESTADIO ${nivelEstadio}/5</div>
+          <div class="lm-infoclub-estadio-nivel"><i class="ph ph-bold ph-star"></i> ${t('lm.nivel_estadio')} ${nivelEstadio}/5</div>
           <div class="lm-infoclub-estrellas-bar"><div class="lm-infoclub-estrellas-fill" style="width:${Math.min(100,(total/max)*100)}%"></div></div>
           <div class="lm-infoclub-estrellas-txt">${total}/${max} estrellas de proyectos conseguidas</div>
         </div>
@@ -3815,8 +3823,8 @@
     // económico completo desde el propio correo.
     const netoMes=n.ingresoPatrocinio-nominaJugadores-nominaStaff;
     if(typeof enviarCorreo==='function'){
-      enviarCorreo('directorGeneral', 'Nóminas de este mes pagadas',
-        `Se han pagado las nóminas de este mes: ${formatoDinero(nominaJugadores)} de la plantilla y ${formatoDinero(nominaStaff)} del cuerpo técnico${n.ingresoPatrocinio>0?`, compensados con ${formatoDinero(n.ingresoPatrocinio)} de patrocinio`:''}. Balance neto del mes: ${netoMes>=0?'+':''}${formatoDinero(netoMes)}. Capital actual: ${formatoDinero(state.capital)}.`);
+      enviarCorreo('directorGeneral', t('correo.nominas_pagadas.asunto'),
+        tp('correo.nominas_pagadas.cuerpo', {jugadores:formatoDinero(nominaJugadores), staff:formatoDinero(nominaStaff), patrocinio:n.ingresoPatrocinio>0?tp('correo.nominas_patrocinio',{patrocinio:formatoDinero(n.ingresoPatrocinio)}):'', balance:(netoMes>=0?'+':'')+formatoDinero(netoMes), capital:formatoDinero(state.capital)}));
       const ultimo=state.correoInterno && state.correoInterno[0];
       if(ultimo) ultimo.tipoEspecial='balance_mensual';
     }
@@ -3918,33 +3926,33 @@
     if(trab.mantenimiento && !yaEnviado('mantenimiento')){
       const est=state.estadio||{};
       if(est.campo<40){
-        enviarCorreo('mantenimiento', 'El estado del césped es preocupante',
-          `El césped está en ${Math.round(est.campo)}/100. Como sigamos así, va a subir el riesgo de lesión y la afición lo va a notar. Convendría invertir en el terreno de juego pronto.`);
+        enviarCorreo('mantenimiento', t('correo.cesped_preocupante.asunto'),
+          tp('correo.cesped_preocupante.cuerpo', {n:Math.round(est.campo)}));
       } else if(est.satisfaccion<-30){
-        enviarCorreo('mantenimiento', 'La grada está muy descontenta',
-          `La satisfacción de la afición ha caído a ${est.satisfaccion}. Sería buena idea organizar algo para calmar los ánimos antes de que vaya a más.`);
+        enviarCorreo('mantenimiento', t('correo.grada_descontenta.asunto'),
+          tp('correo.grada_descontenta.cuerpo', {n:est.satisfaccion}));
       }
     }
     if(trab.medico && !yaEnviado('medico')){
       const lesionados=(state.plantilla||[]).filter(p=>p.injured);
       const graves=lesionados.filter(p=>p.injurySeverity==='grave');
       if(graves.length){
-        enviarCorreo('medico', `${graves[0].name} tiene una lesión grave`,
-          `${graves[0].name} se ha lesionado de gravedad y va a necesitar bastante tiempo de baja. Revisa las cartas del equipo médico por si podemos acelerar la recuperación.`);
+        enviarCorreo('medico', tp('correo.lesion_grave.asunto', {jugador:graves[0].name}),
+          tp('correo.lesion_grave.cuerpo', {jugador:graves[0].name}));
       } else if(lesionados.length>=3){
-        enviarCorreo('medico', `${lesionados.length} jugadores lesionados a la vez`,
-          `Tenemos ${lesionados.length} bajas en la enfermería al mismo tiempo. La plantilla puede ir justa para el próximo partido, échale un ojo.`);
+        enviarCorreo('medico', tp('correo.multiples_lesionados.asunto', {n:lesionados.length}),
+          tp('correo.multiples_lesionados.cuerpo', {n:lesionados.length}));
       }
     }
     if(trab.directorGeneral && !yaEnviado('directorGeneral')){
       if((state.capital||0)<0){
-        enviarCorreo('directorGeneral', 'Números rojos en las cuentas del club',
-          `El capital del club está en negativo (${formatoDinero(state.capital)}). Hay que generar ingresos o recortar gastos cuanto antes.`);
+        enviarCorreo('directorGeneral', t('correo.numeros_rojos.asunto'),
+          tp('correo.numeros_rojos.cuerpo', {n:formatoDinero(state.capital)}));
       } else {
         const nomina=calcularNominaMensual();
         if((state.capital||0)<nomina.total){
-          enviarCorreo('directorGeneral', 'La próxima nómina puede dar problemas',
-            `Con el capital actual (${formatoDinero(state.capital)}) no cubrimos la próxima nómina (${formatoDinero(nomina.total)}). Conviene reaccionar antes de que llegue el mes.`);
+          enviarCorreo('directorGeneral', t('correo.nomina_problema.asunto'),
+            tp('correo.nomina_problema.cuerpo', {capital:formatoDinero(state.capital), nomina:formatoDinero(nomina.total)}));
         }
       }
     }
@@ -3968,8 +3976,8 @@
       const nivelSobre=Math.max(1, nivel);
       const id='sobre'+Date.now()+Math.floor(Math.random()*100000);
       state.sobresFichajesPendientes.push({id, nivel:nivelSobre, jornadaGenerado:state.jornadaActual});
-      enviarCorreo('directorDeportivo', 'Sobre de fichajes listo para abrir',
-        `Tenemos un sobre de nivel ${nivelSobre} disponible. En cuanto tengas un momento, ábrelo directamente desde aquí para ver qué nos ha traído la red de ojeadores.`);
+      enviarCorreo('directorDeportivo', t('correo.sobre_listo.asunto'),
+        tp('correo.sobre_listo.cuerpo', {n:nivelSobre}));
       const ultimo=state.correoInterno && state.correoInterno[0];
       if(ultimo){ ultimo.tipoEspecial='sobre_listo'; ultimo.sobreId=id; }
     }
@@ -5055,7 +5063,7 @@
         </div>
 
         <div class="lm-center-panel" style="${columnaOrderStyle('center')}">${columnaControlesHTML('center')}<div class="lm-scroll-hint" data-scroll-hint title="Hay más contenido si bajas"><i class="ph ph-bold ph-caret-down"></i></div>
-          <div id="lmPitchBox"><button type="button" id="lmInfoClubBtn" class="lm-pitch-lupa-btn" title="Información del club"><i class="ph ph-bold ph-magnifying-glass"></i></button>${PITCH_SVG}<div id="lmCampoLayer" style="opacity:${campoOpacidadDesgaste(state.estadio?state.estadio.campo:100)}"></div><div id="lmWeatherLayer"></div>${formacionActual().slots.map(def=>{
+          <div id="lmPitchBox"><button type="button" id="lmInfoClubBtn" class="lm-pitch-lupa-btn" title="${t('lm.info_club_tooltip')}"><i class="ph ph-bold ph-magnifying-glass"></i></button>${PITCH_SVG}<div id="lmCampoLayer" style="opacity:${campoOpacidadDesgaste(state.estadio?state.estadio.campo:100)}"></div><div id="lmWeatherLayer"></div>${formacionActual().slots.map(def=>{
             const pid=state.alineacion&&state.alineacion[def.slot];
             const jugador=pid?state.plantilla.find(p=>p.id===pid):null;
             const vacio=!jugador;
@@ -5200,9 +5208,9 @@
                     extra=`<div class="lm-correo-resultado">${c.resultadoTexto||'Sobre ya abierto.'}</div>`;
                   } else if(c.tipoEspecial==='quiniela_lista'){
                     if(state.quinielaBoleto && !state.quinielaBoleto.rellenado){
-                      extra=`<div class="lm-correo-ofertas"><button class="lm-correo-oferta-btn" data-abrir-quiniela="1"><i class="ph ph-bold ph-ticket"></i> RELLENAR QUINIELA</button></div>`;
+                      extra=`<div class="lm-correo-ofertas"><button class="lm-correo-oferta-btn" data-abrir-quiniela="1"><i class="ph ph-bold ph-ticket"></i> ${t('lm.rellenar_quiniela')}</button></div>`;
                     } else {
-                      extra=`<div class="lm-correo-resultado">Esta quiniela ya se rellenó.</div>`;
+                      extra=`<div class="lm-correo-resultado">${t('lm.quiniela_ya_rellenada')}</div>`;
                     }
                   }
                   cuerpoExtra=`<div class="lm-correo-cuerpo">${c.cuerpo||''}${extra}</div>`;
@@ -6219,24 +6227,24 @@
       overlay.innerHTML=`
         <div class="lm-dilemma-card lm-seguridad-card">
           ${xCerrarHTML()}
-          <div class="lm-dilemma-title"><i class="ph ph-bold ph-shield-check"></i> SEGURIDAD DEL ESTADIO</div>
+          <div class="lm-dilemma-title"><i class="ph ph-bold ph-shield-check"></i> ${t('lm.seguridad_estadio')}</div>
           <div class="lm-seguridad-resumen">
             <div class="lm-seguridad-resumen-item">
               <i class="ph ph-bold ph-users-three"></i>
-              <div><div class="lm-seguridad-resumen-val">${contratados}</div><div class="lm-seguridad-resumen-label">GUARDIAS CONTRATADOS</div></div>
+              <div><div class="lm-seguridad-resumen-val">${contratados}</div><div class="lm-seguridad-resumen-label">${t('lm.guardias_contratados')}</div></div>
             </div>
             <div class="lm-seguridad-resumen-item">
               <i class="ph ph-bold ph-user-plus"></i>
-              <div><div class="lm-seguridad-resumen-val">${disponibles}</div><div class="lm-seguridad-resumen-label">SIN ASIGNAR</div></div>
+              <div><div class="lm-seguridad-resumen-val">${disponibles}</div><div class="lm-seguridad-resumen-label">${t('lm.sin_asignar')}</div></div>
             </div>
             <div class="lm-seguridad-resumen-item">
               <i class="ph ph-bold ph-coins"></i>
-              <div><div class="lm-seguridad-resumen-val">${formatoDinero(salario)}</div><div class="lm-seguridad-resumen-label">SUELDO/GUARDIA/MES</div></div>
+              <div><div class="lm-seguridad-resumen-val">${formatoDinero(salario)}</div><div class="lm-seguridad-resumen-label">${t('lm.sueldo_guardia_mes')}</div></div>
             </div>
           </div>
           <div class="lm-seguridad-contratar-row">
-            <button id="lmContratarGuardiaBtn" class="mode-card-btn mode-card-btn-gold"><i class="ph ph-bold ph-plus"></i> CONTRATAR GUARDIA</button>
-            <button id="lmDespedirGuardiaBtn" class="mode-card-btn mode-card-btn-secondary" ${disponibles<=0?'disabled':''}><i class="ph ph-bold ph-minus"></i> DESPEDIR UNO LIBRE</button>
+            <button id="lmContratarGuardiaBtn" class="mode-card-btn mode-card-btn-gold"><i class="ph ph-bold ph-plus"></i> ${t('lm.contratar_guardia')}</button>
+            <button id="lmDespedirGuardiaBtn" class="mode-card-btn mode-card-btn-secondary" ${disponibles<=0?'disabled':''}><i class="ph ph-bold ph-minus"></i> ${t('lm.despedir_uno_libre')}</button>
           </div>
           <div class="lm-seguridad-mapa-wrap">
             <img src="assets/estadio/gradas.png" alt="Estadio" class="lm-seguridad-mapa-img">
@@ -6258,7 +6266,7 @@
               </div>`;
             }).join('')}
           </div>
-          <div class="lm-setup-desc" style="text-align:center;margin-top:8px">Las zonas sin ningún guardia pueden ir acumulando disturbios si la afición está descontenta — más guardias en una zona ayudan a que se calme.</div>
+          <div class="lm-setup-desc" style="text-align:center;margin-top:8px">${t('lm.zonas_sin_guardia_desc')}</div>
           <div class="lm-popup-actions"><button id="lmSeguridadCerrarBtn" class="mode-card-btn mode-card-btn-gold">CERRAR</button></div>
         </div>`;
       document.getElementById('lmContratarGuardiaBtn').addEventListener('click', ()=>{
@@ -6334,9 +6342,9 @@
           <button class="med-card-swap" data-swap="${idx}" title="Cambiar carta" ${cambioDisponible?'':'disabled'}><i class="ph ph-bold ph-arrows-clockwise"></i></button>
           <div class="med-card-tag">${def.tipo==='nivel'?'PROYECTO':'MISIÓN'}</div>
           <i class="ph ph-bold ${def.icon} med-card-icon"></i>
-          <div class="med-card-title">${def.nombre}</div>
+          <div class="med-card-title">${tc('mant', def.id, 'nombre', def.nombre)}</div>
           <div class="med-card-divider"></div>
-          <div class="med-card-desc">${def.desc}</div>
+          <div class="med-card-desc">${tc('mant', def.id, 'desc', def.desc)}</div>
           ${cuerpo}
           ${bloqueada?`<div class="med-card-bloqueada-label">${bloqueadaPorEstado?'Necesitas una afición muy descontenta (≤ −50)':(nivelMaximoYa?'Especialidad al máximo nivel':'Imposible con los dados que quedan')}</div>`:`<button class="mode-card-btn mode-card-btn-gold med-card-btn" data-usar="${idx}" style="padding:7px;font-size:11px">USAR</button>`}
         </div>`;
@@ -6346,7 +6354,7 @@
         <div class="lm-dilemma-card lm-dilemma-card-mant" style="max-width:640px">
           ${xCerrarHTML()}
           <div class="lm-dilemma-title"><i class="ph ph-bold ph-flag-pennant"></i> MANTENIMIENTO Y SEGURIDAD</div>
-          <button type="button" class="mode-card-btn mode-card-btn-gold" id="lmSeguridadEstadioBtn" style="width:100%;margin-bottom:10px"><i class="ph ph-bold ph-shield-check"></i> SEGURIDAD DEL ESTADIO</button>
+          <button type="button" class="mode-card-btn mode-card-btn-gold" id="lmSeguridadEstadioBtn" style="width:100%;margin-bottom:10px"><i class="ph ph-bold ph-shield-check"></i> ${t('lm.seguridad_estadio')}</button>
           ${renderNivelesMantenimientoHTML()}
           <div class="lm-staff-bar-capital" style="justify-content:center;margin:10px 0 8px"><span><i class="ph ph-bold ph-dice-five"></i> DADOS: <strong>${state.diceAvailable}</strong></span><span><i class="ph ph-bold ph-arrows-clockwise"></i> RERROLLS: <strong>${state.dadoRerollsDisponibles||0}</strong></span><span><i class="ph ph-bold ph-cards"></i> CAMBIOS: <strong>${Math.max(0,lmCambiosCartaPorPartido()-(state.mantenimientoCambiosUsados||0))}/${lmCambiosCartaPorPartido()}</strong></span></div>
           <div class="med-card-grid">${cartasHTML}</div>
@@ -6398,8 +6406,8 @@
           <div class="lm-dilemma-card lm-dilemma-card-mant">
             ${xCerrarHTML()}
             <i class="ph ph-bold ${def.icon}" style="font-size:26px;color:#5dcaa5"></i>
-            <div class="lm-dilemma-title" style="justify-content:center;text-align:center">${def.nombre.toUpperCase()}</div>
-            <div class="lm-dilemma-text">${def.desc}${def.tipo==='directa'?` — necesitas sumar ${Math.max(3, def.dificultad - bonusEstrellasTrabajador('mantenimiento'))}+`:` — necesitas sumar ${dificultadActualNivelM(def)}+ para subir a nivel ${nivelDeM(def.track)+1}/${NIVEL_MAXIMO_EQUIPO}`}</div>
+            <div class="lm-dilemma-title" style="justify-content:center;text-align:center">${tc('mant', def.id, 'nombre', def.nombre).toUpperCase()}</div>
+            <div class="lm-dilemma-text">${tc('mant', def.id, 'desc', def.desc)}${def.tipo==='directa'?` — necesitas sumar ${Math.max(3, def.dificultad - bonusEstrellasTrabajador('mantenimiento'))}+`:` — necesitas sumar ${dificultadActualNivelM(def)}+ para subir a nivel ${nivelDeM(def.track)+1}/${NIVEL_MAXIMO_EQUIPO}`}</div>
             <div class="lm-dice-selector">
               <button id="lmDiceMinus" class="lm-dice-stepper">−</button>
               <span id="lmDiceCount">${dadosElegidos}</span>
@@ -6548,9 +6556,9 @@
           <button class="med-card-swap" data-swap="${idx}" title="Cambiar carta" ${cambioDisponible?'':'disabled'}><i class="ph ph-bold ph-arrows-clockwise"></i></button>
           <div class="med-card-tag">${def.tipo==='nivel'?'PROYECTO':'MISIÓN'}</div>
           <i class="ph ph-bold ${def.icon} med-card-icon"></i>
-          <div class="med-card-title">${def.nombre}</div>
+          <div class="med-card-title">${tc('dg', def.id, 'nombre', def.nombre)}</div>
           <div class="med-card-divider"></div>
-          <div class="med-card-desc">${def.desc}</div>
+          <div class="med-card-desc">${tc('dg', def.id, 'desc', def.desc)}</div>
           ${cuerpo}
           ${bloqueada?`<div class="med-card-bloqueada-label">${nivelMaximoYa?'Especialidad al máximo nivel':'Imposible con los dados que quedan'}</div>`:`<button class="mode-card-btn mode-card-btn-gold med-card-btn" data-usar="${idx}" style="padding:7px;font-size:11px">USAR</button>`}
         </div>`;
@@ -6625,8 +6633,8 @@
           <div class="lm-dilemma-card lm-dilemma-card-dg">
             ${xCerrarHTML()}
             <i class="ph ph-bold ${def.icon}" style="font-size:26px;color:#e6c94a"></i>
-            <div class="lm-dilemma-title" style="justify-content:center;text-align:center">${def.nombre.toUpperCase()}</div>
-            <div class="lm-dilemma-text">${def.desc}${def.tipo==='directa'?` — necesitas sumar ${Math.max(3, def.dificultad - bonusEstrellasTrabajador('directorGeneral'))}+`:` — necesitas sumar ${dificultadActualNivelDG(def)}+ para subir a nivel ${nivelDeDG(def.track)+1}/${NIVEL_MAXIMO_EQUIPO}`}</div>
+            <div class="lm-dilemma-title" style="justify-content:center;text-align:center">${tc('dg', def.id, 'nombre', def.nombre).toUpperCase()}</div>
+            <div class="lm-dilemma-text">${tc('dg', def.id, 'desc', def.desc)}${def.tipo==='directa'?` — necesitas sumar ${Math.max(3, def.dificultad - bonusEstrellasTrabajador('directorGeneral'))}+`:` — necesitas sumar ${dificultadActualNivelDG(def)}+ para subir a nivel ${nivelDeDG(def.track)+1}/${NIVEL_MAXIMO_EQUIPO}`}</div>
             <div class="lm-dice-selector">
               <button id="lmDiceMinus" class="lm-dice-stepper">−</button>
               <span id="lmDiceCount">${dadosElegidos}</span>
@@ -6845,9 +6853,9 @@
           <button class="med-card-swap" data-swap="${idx}" title="Cambiar carta" ${cambioDisponible?'':'disabled'}><i class="ph ph-bold ph-arrows-clockwise"></i></button>
           <div class="med-card-tag">${def.tipo==='nivel'?'PROYECTO':'MISIÓN'}</div>
           <i class="ph ph-bold ${def.icon} med-card-icon"></i>
-          <div class="med-card-title">${def.nombre}</div>
+          <div class="med-card-title">${tc('dd', def.id, 'nombre', def.nombre)}</div>
           <div class="med-card-divider"></div>
-          <div class="med-card-desc">${def.desc}</div>
+          <div class="med-card-desc">${tc('dd', def.id, 'desc', def.desc)}</div>
           ${cuerpo}
           ${botonAccion}
         </div>`;
@@ -6924,8 +6932,8 @@
           <div class="lm-dilemma-card lm-dilemma-card-dd">
             ${xCerrarHTML()}
             <i class="ph ph-bold ${def.icon}" style="font-size:26px;color:#c9c9c9"></i>
-            <div class="lm-dilemma-title" style="justify-content:center;text-align:center">${def.nombre.toUpperCase()}</div>
-            <div class="lm-dilemma-text">${def.desc}${def.tipo==='directa'?` — necesitas sumar ${Math.max(3, def.dificultad - bonusEstrellasTrabajador('directorDeportivo'))}+`:` — necesitas sumar ${dificultadActualNivelDD(def)}+ para subir a nivel ${nivelDeDD(def.track)+1}/${NIVEL_MAXIMO_EQUIPO}`}</div>
+            <div class="lm-dilemma-title" style="justify-content:center;text-align:center">${tc('dd', def.id, 'nombre', def.nombre).toUpperCase()}</div>
+            <div class="lm-dilemma-text">${tc('dd', def.id, 'desc', def.desc)}${def.tipo==='directa'?` — necesitas sumar ${Math.max(3, def.dificultad - bonusEstrellasTrabajador('directorDeportivo'))}+`:` — necesitas sumar ${dificultadActualNivelDD(def)}+ para subir a nivel ${nivelDeDD(def.track)+1}/${NIVEL_MAXIMO_EQUIPO}`}</div>
             <div class="lm-dice-selector">
               <button id="lmDiceMinus" class="lm-dice-stepper">−</button>
               <span id="lmDiceCount">${dadosElegidos}</span>
@@ -6991,7 +6999,7 @@
     function mostrarRevelacionSobre(jugadores, onCerrar){
       overlay.innerHTML=`
         <div class="lm-dilemma-card lm-dilemma-card-dd" style="max-width:640px">
-          <div class="lm-dilemma-title"><i class="ph ph-bold ph-envelope-open"></i> SOBRE DE FICHAJES</div>
+          <div class="lm-dilemma-title"><i class="ph ph-bold ph-envelope-open"></i> ${t('lm.sobre_titulo')}</div>
           <div id="lmSobreReveloZone" class="lm-sobre-grid">
             ${jugadores.map((j,i)=>`<div class="slot-reel lm-sobre-reel" id="lmSobreReel${i}"><div class="slot-strip lm-sobre-face">?</div></div>`).join('')}
           </div>
@@ -7023,13 +7031,13 @@
             <div class="lm-sobre-card" data-jugador="${i}">
               <div class="lm-sobre-pos">${j.position}</div>
               <div class="lm-sobre-nombre">${j.name}</div>
-              <div class="lm-sobre-overall">${j.overall} <span>puntuación</span></div>
+              <div class="lm-sobre-overall">${j.overall} <span>${t('lm.puntuacion')}</span></div>
               <div class="lm-sobre-stats">
                 <span>ATA ${j.attack}</span><span>DEF ${j.defense}</span><span>RIT ${j.pace}</span>
                 <span>PAS ${j.passing}</span><span>TEC ${j.technique}</span>
               </div>
               <div class="lm-sobre-salario">${formatoDinero(j.salario)}/mes</div>
-              <button class="mode-card-btn mode-card-btn-gold lm-sobre-fichar" data-fichar="${i}">FICHAR</button>
+              <button class="mode-card-btn mode-card-btn-gold lm-sobre-fichar" data-fichar="${i}">${t('lm.fichar_btn')}</button>
             </div>`).join('')}</div>
             <div class="lm-popup-actions" style="margin-top:12px"><button id="lmSobreCerrar" class="mode-card-btn mode-card-btn-secondary">CERRAR SOBRE</button></div>`;
           zona.querySelectorAll('[data-fichar]').forEach(btn=>{
@@ -7258,9 +7266,9 @@
           <button class="med-card-swap" data-swap="${idx}" title="Cambiar carta" ${cambioDisponible?'':'disabled'}><i class="ph ph-bold ph-arrows-clockwise"></i></button>
           <div class="med-card-tag">${def.tipo==='nivel'?'PROYECTO':'MISIÓN'}</div>
           <i class="ph ph-bold ${def.icon} med-card-icon"></i>
-          <div class="med-card-title">${def.nombre}</div>
+          <div class="med-card-title">${tc('pf', def.id, 'nombre', def.nombre)}</div>
           <div class="med-card-divider"></div>
-          <div class="med-card-desc">${def.desc}</div>
+          <div class="med-card-desc">${tc('pf', def.id, 'desc', def.desc)}</div>
           ${cuerpo}
           ${(bloqueada&&!nivelMaximoYa)?`<div class="med-card-bloqueada-label">Imposible con los dados que quedan</div>`:(nivelMaximoYa?'':`<button class="mode-card-btn mode-card-btn-gold med-card-btn" data-usar="${idx}" style="padding:7px;font-size:11px">USAR</button>`)}
         </div>`;
@@ -7434,8 +7442,8 @@
           <div class="lm-dilemma-card lm-dilemma-card-pf">
             ${xCerrarHTML()}
             <i class="ph ph-bold ${def.icon}" style="font-size:26px;color:#e08a3e"></i>
-            <div class="lm-dilemma-title" style="justify-content:center;text-align:center">${def.nombre.toUpperCase()}</div>
-            <div class="lm-dilemma-text">${def.desc}${def.tipo==='directa'?` — necesitas sumar ${Math.max(3, def.dificultad - bonusEstrellasTrabajador('preparadorFisico'))}+`:` — necesitas sumar ${dificultadActualNivelPF(def)}+ para subir a nivel ${nivelDePF(def.track)+1}/${NIVEL_MAXIMO_EQUIPO}`}</div>
+            <div class="lm-dilemma-title" style="justify-content:center;text-align:center">${tc('pf', def.id, 'nombre', def.nombre).toUpperCase()}</div>
+            <div class="lm-dilemma-text">${tc('pf', def.id, 'desc', def.desc)}${def.tipo==='directa'?` — necesitas sumar ${Math.max(3, def.dificultad - bonusEstrellasTrabajador('preparadorFisico'))}+`:` — necesitas sumar ${dificultadActualNivelPF(def)}+ para subir a nivel ${nivelDePF(def.track)+1}/${NIVEL_MAXIMO_EQUIPO}`}</div>
             <div class="lm-dice-selector">
               <button id="lmDiceMinus" class="lm-dice-stepper">−</button>
               <span id="lmDiceCount">${dadosElegidos}</span>
