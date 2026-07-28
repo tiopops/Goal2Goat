@@ -4847,7 +4847,7 @@
   }
 
   /* ---------- 12. Render: hub principal (una vez empezada la temporada) ---------- */
-  function render(){
+  function renderInner(){
     const root=document.getElementById('ligaManagerScreen');
     if(!root) return;
 
@@ -5582,6 +5582,27 @@
       });
     });
     reaplicarPestanaMovilLM();
+  }
+  // Envoltorio de seguridad: si renderInner() falla por CUALQUIER
+  // motivo, en vez de dejar la pantalla en negro en silencio, se
+  // muestra el error exacto directamente en pantalla — así se puede
+  // ver y copiar el problema real sin necesitar herramientas de
+  // desarrollador ni conexión USB.
+  function render(){
+    try{
+      renderInner();
+    }catch(e){
+      console.error('Error en render() de Liga Manager:', e);
+      const root=document.getElementById('ligaManagerScreen');
+      if(root){
+        root.innerHTML=`
+          <div style="padding:24px;color:#fff;font-family:monospace;font-size:13px;line-height:1.6;max-width:100%;overflow-wrap:break-word">
+            <div style="color:#e24b4a;font-size:16px;font-weight:bold;margin-bottom:12px">⚠️ Error al cargar Liga Manager</div>
+            <div style="color:#ccc;margin-bottom:12px">Copia este mensaje y envíaselo al desarrollador:</div>
+            <div style="background:#1a1a1a;border:1px solid #e24b4a;border-radius:6px;padding:12px;color:#ffb3b3;user-select:text">${(e && e.message) ? e.message : String(e)}${(e && e.stack) ? '<br><br>'+e.stack.replace(/\\n/g,'<br>') : ''}</div>
+          </div>`;
+      }
+    }
   }
 
   /* ---------- 12a. Selección unificada campo ↔ plantilla/banquillo,
