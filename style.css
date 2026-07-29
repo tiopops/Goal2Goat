@@ -4253,7 +4253,7 @@ body.light-theme.menu-screen{
   box-shadow:0 4px 10px rgba(0,0,0,.5);
 }
 .lm-zona-marcador[style*="--zona-color"] .lm-zona-etiqueta{border-color:var(--zona-color)}
-.lm-zona-nombre{font-size:11px;color:#eee;letter-spacing:.3px;line-height:1.25;font-weight:600}
+.lm-zona-nombre{font-size:11px;color:#eee;letter-spacing:.3px;line-height:1.25;font-weight:600;white-space:nowrap}
 .lm-zona-disturbio{font-family:'Bebas Neue',Impact,sans-serif;font-size:12px;letter-spacing:1px;margin-top:2px}
 .lm-zona-guardias-fila{display:flex;align-items:center;justify-content:center;gap:7px;margin-top:6px}
 .lm-zona-guardias-num{font-size:12px;color:#eee;display:flex;align-items:center;gap:3px;font-weight:700}
