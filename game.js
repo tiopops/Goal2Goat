@@ -6792,6 +6792,18 @@ window.closeTicketOverlay = function() {
   var ov = document.getElementById('ticketOverlay');
   if (ov) ov.style.display = 'none';
 };
+// Cerrar al pulsar fuera de la tarjeta del ticket, sobre el fondo oscuro
+// — se cablea una sola vez, ya que #ticketOverlay es un elemento fijo
+// que nunca se destruye, solo se oculta/muestra.
+(function(){
+  var ov = document.getElementById('ticketOverlay');
+  if (ov && !ov.dataset.outsideClickWired) {
+    ov.dataset.outsideClickWired = '1';
+    ov.addEventListener('click', function(e){
+      if (e.target === ov) window.closeTicketOverlay();
+    });
+  }
+})();
 
 /* ── Construir el boleto dentro del mount point ── */
 function buildTicketInMount(mount, ticketCount, lastRegen, currentScratchPts){

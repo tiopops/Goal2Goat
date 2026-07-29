@@ -4095,41 +4095,41 @@ body.light-theme.menu-screen{
   .lm-sobre-card .lm-fichaje-estrella-tag,.lm-sobre-card .lm-sobre-oportunidad-badge{position:static!important;transform:none!important;display:inline-block;margin-bottom:3px;grid-column:1/4}
   .lm-sobre-card{grid-template-rows:auto auto auto auto auto!important}
   /* Tarjetas de ACCIÓN/PROYECTO de cada departamento en móvil: todas
-     con la misma altura, con su descripción visible, y la etiqueta
-     ACCIÓN/PROYECTO como franja horizontal arriba de cada tarjeta
-     (no como distintivo lateral). */
-  .med-card-grid{grid-template-columns:1fr!important;gap:8px!important}
+     con la misma altura, con su descripción visible, contenido
+     centrado (igual que en escritorio) y texto más grande y legible. */
+  .med-card-grid{grid-template-columns:1fr!important;gap:10px!important}
   .med-card{
-    flex-direction:column!important;align-items:stretch!important;text-align:left!important;
-    padding:0 0 10px!important;height:168px;overflow:hidden;justify-content:flex-start;
+    flex-direction:column!important;align-items:center!important;text-align:center!important;
+    padding:0 14px 12px!important;height:210px;overflow:hidden;justify-content:flex-start;
   }
   .med-card-tag{
-    position:static!important;width:100%;text-align:center;
-    padding:4px 0!important;font-size:9px!important;letter-spacing:1.5px;
-    border-radius:11px 11px 0 0;margin-bottom:8px;order:-1;
+    position:static!important;width:auto;text-align:center;margin:0 -14px 10px!important;
+    padding:6px 0!important;font-size:12px!important;letter-spacing:1.8px;
+    border-radius:11px 11px 0 0;order:-1;
     background:rgba(46,204,113,.12);color:#3a8a5c!important;
   }
-  .med-card-icon{font-size:20px!important;margin:0 0 2px 12px}
-  .med-card-title{font-size:12px!important;margin:0 12px 4px!important;text-align:left!important}
-  .med-card-divider{display:none!important}
+  .med-card-icon{font-size:28px!important;margin:0 0 4px}
+  .med-card-title{font-size:15px!important;margin:0 0 6px!important;text-align:center!important}
+  .med-card-divider{display:block!important;margin:0 auto 6px!important}
   .med-card-desc{
     display:-webkit-box!important;-webkit-line-clamp:2;-webkit-box-orient:vertical;
-    overflow:hidden;font-size:10px!important;margin:0 12px 6px!important;
-    text-align:left!important;color:#999;line-height:1.35;
+    overflow:hidden;font-size:12px!important;margin:0 0 8px!important;
+    text-align:center!important;color:#aaa;line-height:1.4;
   }
-  .med-card-swap{top:6px!important;right:6px!important;width:22px!important;height:22px!important}
-  .med-card-dificultad,.med-card-progress-label{font-size:9px!important;margin:0 12px!important;text-align:left!important}
-  .med-card-progress{width:calc(100% - 24px);margin:4px 12px!important}
+  .med-card-swap{top:6px!important;right:6px!important;width:24px!important;height:24px!important}
+  .med-card-dificultad,.med-card-progress-label{font-size:12px!important;margin:0 0 6px!important;text-align:center!important}
+  .med-card-progress{width:100%;margin:4px 0!important}
   .med-card-btn,.med-card-bloqueada-label{
-    margin:auto 12px 0!important;padding:6px 10px!important;font-size:10px!important;
+    margin:auto 0 0!important;padding:8px 16px!important;font-size:12px!important;width:auto!important;
   }
+  .med-card-bloqueada-label{font-size:11px!important}
   /* SEGURIDAD DEL ESTADIO en móvil: el mapa con etiquetas superpuestas
      es ilegible y difícil de pulsar con precisión en pantallas
      pequeñas — se sustituye por una lista clara con botones grandes,
      dejando el mapa como imagen decorativa pequeña arriba. */
   .lm-seguridad-mapa-wrap{display:none!important}
   .lm-seguridad-mapa-mini-wrap{display:block!important;margin-bottom:10px}
-  .lm-seguridad-mapa-mini{width:100%;border-radius:10px;opacity:.9;display:block}
+  .lm-seguridad-mapa-mini{width:100%;border-radius:10px;opacity:.9;display:block!important}
   .lm-seguridad-lista-movil{display:flex!important;flex-direction:column;gap:6px}
   .lm-zona-fila-movil{
     display:grid;grid-template-columns:5px 1fr auto auto auto;align-items:center;gap:8px;
