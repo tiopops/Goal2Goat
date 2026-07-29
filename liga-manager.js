@@ -1660,6 +1660,7 @@
       // Los "disponibles" son contratados menos asignados.
       // disturbiosZonas: nivel de disturbios de cada zona del estadio.
       guardiasContratados:0,
+      modoVisualPartido:'auto',
       guardiasZonas:{norte_1:0,norte_2:0,norte_3:0,sur_1:0,sur_2:0,sur_3:0,oeste_1:0,oeste_2:0,oeste_3:0,este_1:0,este_2:0,este_3:0},
       disturbiosZonas:{norte_1:0,norte_2:0,norte_3:0,sur_1:0,sur_2:0,sur_3:0,oeste_1:0,oeste_2:0,oeste_3:0,este_1:0,este_2:0,este_3:0},
       dadoRerollsDisponibles:lmRerollsPorPartido(),
@@ -5021,6 +5022,10 @@
               <div class="lm-title">${state.nombreEquipo.toUpperCase()}</div>
               <div class="lm-sub">Jornada ${Math.min(state.jornadaActual,38)} de 38 · ${monedaInfo.symbol}</div>
             </div>
+            <div class="lm-modo-visual-toggle">
+              <button type="button" class="lm-modo-visual-btn ${(!state.modoVisualPartido||state.modoVisualPartido==='auto')?'lm-modo-visual-activo':''}" data-modo-visual="auto">${t('lm.modo_automatico')}</button>
+              <button type="button" class="lm-modo-visual-btn ${state.modoVisualPartido==='manager'?'lm-modo-visual-activo':''}" data-modo-visual="manager">${t('lm.modo_manager')}</button>
+            </div>
             <button id="lmJugarBtn" class="lm-btn-jugar-icon" ${state.jornadaActual>38?'disabled':''} title="${state.jornadaActual>38?'Temporada completa':(hayVacantes?'Te falta cuerpo técnico por contratar, pero puedes jugar igualmente':'Jugar jornada')}">
               <i class="ph ph-bold ph-play-circle"></i>
               <span>${state.jornadaActual>38?'FIN':(state.semanaResueltaParaJornada===state.jornadaActual?'JUGAR':'SEGUIR')}</span>
@@ -5303,6 +5308,15 @@
         state.formacionCode=code;
         state.formacionCategoria=formacionCategoriaVista||state.formacionCategoria;
         state.alineacion=alineacionAutomatica(state.plantilla, generarSlotsFormacion(code));
+        guardarEstado();
+        render();
+      });
+    });
+
+    root.querySelectorAll('[data-modo-visual]').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        if(typeof window.playSound==='function') window.playSound('select');
+        state.modoVisualPartido=btn.getAttribute('data-modo-visual');
         guardarEstado();
         render();
       });

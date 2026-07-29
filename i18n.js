@@ -294,6 +294,9 @@ window.TRANSLATIONS = {
   'nivel.pf.tecnico.desc': {es:'Técnica de equipo, de forma permanente', en:'Team technique, permanently', pt:'Técnica de equipa, de forma permanente', fr:'Technique de equipe, de facon permanente', de:'Team-Technik, dauerhaft', it:'Tecnica di squadra, in modo permanente'},
   'nivel.pf.fisico.label': {es:'Potencial Físico', en:'Physical Potential', pt:'Potencial Físico', fr:'Potentiel Physique', de:'Physisches Potenzial', it:'Potenziale Fisico'},
   'nivel.pf.fisico.desc': {es:'Ritmo de equipo, de forma permanente', en:'Team pace, permanently', pt:'Ritmo de equipa, de forma permanente', fr:'Rythme de equipe, de facon permanente', de:'Team-Tempo, dauerhaft', it:'Ritmo di squadra, in modo permanente'},
+  'lm.modo_automatico': {es:'MODO AUTOMÁTICO', en:'AUTO MODE', pt:'MODO AUTOMÁTICO', fr:'MODE AUTOMATIQUE', de:'AUTOMATIKMODUS', it:'MODALITA AUTOMATICA'},
+  'lm.modo_manager': {es:'MODO MANAGER', en:'MANAGER MODE', pt:'MODO MANAGER', fr:'MODE MANAGER', de:'MANAGER-MODUS', it:'MODALITA MANAGER'},
+  'lm.viendo_partido': {es:'SIMULANDO PARTIDO...', en:'SIMULATING MATCH...', pt:'A SIMULAR JOGO...', fr:'SIMULATION DU MATCH...', de:'SPIEL WIRD SIMULIERT...', it:'SIMULAZIONE PARTITA...'},
   'lm.nivel_n_de_x': {es:'Nivel', en:'Level', pt:'Nível', fr:'Niveau', de:'Stufe', it:'Livello'},
 
   /* Tablas de plantilla y clasificación */
