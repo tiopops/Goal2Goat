@@ -297,6 +297,11 @@ window.TRANSLATIONS = {
   'lm.modo_automatico': {es:'MODO AUTOMÁTICO', en:'AUTO MODE', pt:'MODO AUTOMÁTICO', fr:'MODE AUTOMATIQUE', de:'AUTOMATIKMODUS', it:'MODALITA AUTOMATICA'},
   'lm.modo_manager': {es:'MODO MANAGER', en:'MANAGER MODE', pt:'MODO MANAGER', fr:'MODE MANAGER', de:'MANAGER-MODUS', it:'MODALITA MANAGER'},
   'lm.viendo_partido': {es:'SIMULANDO PARTIDO...', en:'SIMULATING MATCH...', pt:'A SIMULAR JOGO...', fr:'SIMULATION DU MATCH...', de:'SPIEL WIRD SIMULIERT...', it:'SIMULAZIONE PARTITA...'},
+  'lm.visor_gol': {es:'¡GOL!', en:'GOAL!', pt:'GOLO!', fr:'BUT !', de:'TOR!', it:'GOL!'},
+  'lm.visor_construye': {es:'construye la jugada...', en:'building the play...', pt:'constrói a jogada...', fr:'construit action...', de:'baut den Spielzug auf...', it:'costruisce lazione...'},
+  'lm.visor_avanza': {es:'avanza con el balón...', en:'advances with the ball...', pt:'avança com a bola...', fr:'avance avec le ballon...', de:'lauft mit dem Ball vor...', it:'avanza con la palla...'},
+  'lm.visor_centra': {es:'busca el centro al área...', en:'looks for the cross into the box...', pt:'procura o cruzamento na área...', fr:'cherche le centre dans la surface...', de:'sucht die Flanke in den Strafraum...', it:'cerca il cross in area...'},
+  'lm.visor_termina': {es:'FINAL DEL PARTIDO', en:'FULL TIME', pt:'FIM DE JOGO', fr:'FIN DU MATCH', de:'SPIELENDE', it:'FINE PARTITA'},
   'lm.nivel_n_de_x': {es:'Nivel', en:'Level', pt:'Nível', fr:'Niveau', de:'Stufe', it:'Livello'},
 
   /* Tablas de plantilla y clasificación */

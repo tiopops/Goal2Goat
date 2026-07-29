@@ -4096,6 +4096,11 @@ body.light-theme.menu-screen{
   .lm-sobre-card .lm-sobre-fichar{grid-column:2/4;grid-row:5;width:auto!important;padding:7px 14px!important;margin:0!important;font-size:11px}
   .lm-sobre-card .lm-fichaje-estrella-tag,.lm-sobre-card .lm-sobre-oportunidad-badge{position:static!important;transform:none!important;display:inline-block;margin-bottom:3px;grid-column:1/4}
   .lm-sobre-card{grid-template-rows:auto auto auto auto auto!important}
+  /* Selector de modo: en móvil, cabecera del equipo apretada — se
+     reduce un poco el ancho mínimo sin perder la letra grande. */
+  .lm-modo-visual-toggle{min-width:110px!important;margin:0 6px!important}
+  .lm-modo-visual-btn{font-size:12px!important;padding:7px 8px!important;letter-spacing:.6px!important}
+  .lm-header-team{flex-wrap:wrap!important}
   /* Tarjetas de ACCIÓN/PROYECTO de cada departamento en móvil: todas
      con la misma altura, con su descripción visible, contenido
      centrado (igual que en escritorio) y texto más grande y legible. */
@@ -4254,15 +4259,58 @@ body.light-theme.menu-screen{
    mutuamente excluyentes, con el mismo lenguaje visual que el resto del
    header (borde fino, dorado al activarse). */
 .lm-modo-visual-toggle{
-  display:flex;flex-direction:column;gap:4px;flex-shrink:0;margin:0 10px;
+  display:flex;flex-direction:column;gap:6px;flex-shrink:0;margin:0 10px;min-width:140px;
 }
 .lm-modo-visual-btn{
-  background:transparent;border:1.5px solid #333;border-radius:6px;
-  color:#888;font-family:'Bebas Neue',Impact,sans-serif;font-size:11px;
-  letter-spacing:.8px;padding:6px 10px;cursor:pointer;transition:.15s;
+  background:transparent;border:2px solid #3a3a3a;border-radius:7px;
+  color:#999;font-family:'Bebas Neue',Impact,sans-serif;font-size:15px;
+  letter-spacing:1.2px;padding:9px 14px;cursor:pointer;transition:.15s;
   white-space:nowrap;
 }
-.lm-modo-visual-btn:hover{border-color:#555;color:#bbb}
+.lm-modo-visual-btn:hover{border-color:#666;color:#ddd}
 .lm-modo-visual-btn.lm-modo-visual-activo{
   background:var(--gold);border-color:var(--gold);color:#1a1400;font-weight:800;
+}
+
+/* ============================================================
+   VISOR DE PARTIDO — MODO MANAGER
+   ============================================================ */
+#lmVisorPartidoOverlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:260;
+  display:flex;align-items:center;justify-content:center;
+}
+.lm-visor-partido-card{
+  width:94vw;max-width:420px;max-height:92vh;display:flex;flex-direction:column;
+  background:#111;border:1px solid #2a2a2a;border-radius:14px;overflow:hidden;
+  box-shadow:0 20px 60px rgba(0,0,0,.7);
+}
+.lm-visor-marcador{
+  display:flex;align-items:center;justify-content:space-between;gap:8px;
+  padding:12px 16px;background:linear-gradient(160deg,#1c1c1c,#161616);
+  border-bottom:1px solid #2a2a2a;
+}
+.lm-visor-equipo{font-family:'Bebas Neue',Impact,sans-serif;font-size:12px;color:#ccc;letter-spacing:.5px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lm-visor-resultado{font-family:'Bebas Neue',Impact,sans-serif;font-size:24px;color:var(--gold);letter-spacing:2px;flex-shrink:0;padding:0 10px}
+.lm-visor-campo-wrap{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;background:#0a0c0a;padding:10px}
+.lm-visor-campo-svg{width:100%;height:auto;max-height:60vh}
+.lm-visor-punto{stroke:#111;stroke-width:.5}
+.lm-visor-punto-mio{fill:#3b82f6}
+.lm-visor-punto-rival{fill:#e24b4a}
+.lm-visor-balon{fill:#fff;stroke:#333;stroke-width:.3}
+.lm-visor-info-bar{
+  padding:10px 14px;background:#161616;border-top:1px solid #2a2a2a;
+  font-size:12px;color:#ccc;text-align:center;min-height:18px;
+}
+/* En escritorio, el mismo campo (siempre generado en coordenadas
+   verticales) se gira 90° para verse en horizontal, sin duplicar
+   ninguna coordenada de posición. */
+@media(min-width:900px){
+  .lm-visor-partido-card{max-width:680px}
+  .lm-visor-campo-wrap{padding:14px 0;height:56vh;position:relative;overflow:hidden}
+  .lm-visor-campo-svg{
+    position:absolute;top:50%;left:50%;
+    width:56vh;height:calc(56vh * 1.5);
+    transform:translate(-50%,-50%) rotate(-90deg);
+    max-height:none;
+  }
 }

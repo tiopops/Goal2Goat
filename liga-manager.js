@@ -2237,6 +2237,144 @@
     if(miEsLocal){ try{ procesarDisturbiosTrasPartido(); }catch(e){ console.error('procesarDisturbiosTrasPartido:', e); } }
   }
 
+  // ============================================================
+  // VISOR DE PARTIDO — MODO MANAGER (fase 1: campo + posiciones)
+  // Campo en coordenadas siempre verticales (0-100 ancho, 0-150 alto,
+  // mi equipo ataca hacia arriba desde la mitad inferior). En
+  // escritorio se gira 90° por CSS para verse en horizontal, sin
+  // tener que duplicar ninguna coordenada.
+  // ============================================================
+  function elegirFormacionRivalVisor(rival){
+    const desequilibrio=rival.attack-rival.defense;
+    if(desequilibrio>10) return '4-3-3';
+    if(desequilibrio<-10) return '5-3-2';
+    return '4-4-2';
+  }
+  function abrirVisorPartidoManager(info, onFinish){
+    const miEsLocal = info.home.id==='lm_0';
+    const rival = miEsLocal ? info.away : info.home;
+    const miNombre = miEsLocal ? info.home.name : info.away.name;
+    const rivalNombre = rival.name;
+    const misGoles = miEsLocal ? info.resultado.golesA : info.resultado.golesB;
+    const susGoles = miEsLocal ? info.resultado.golesB : info.resultado.golesA;
+
+    // Mis 11 — reutilizo la formación real elegida, remapeada a la
+    // mitad inferior del campo (ataco hacia arriba, y=150 es mi gol).
+    const misSlots = formacionActual().slots.map(s=>({
+      x:s.x, y:75+(s.y*0.75)
+    }));
+    // Los 11 del rival — formación razonable según su desequilibrio
+    // ataque/defensa real, en espejo en la mitad superior (su gol está
+    // en y=0, ataca hacia abajo).
+    const rivalSlots = generarSlotsFormacion(elegirFormacionRivalVisor(rival)).map(s=>({
+      x:100-s.x, y:75-(s.y*0.75)
+    }));
+
+    const overlay=document.createElement('div');
+    overlay.id='lmVisorPartidoOverlay';
+    overlay.innerHTML=`
+      <div class="lm-visor-partido-card">
+        <div class="lm-visor-marcador">
+          <span class="lm-visor-equipo">${miNombre}</span>
+          <span class="lm-visor-resultado" id="lmVisorResultado">0 - 0</span>
+          <span class="lm-visor-equipo">${rivalNombre}</span>
+        </div>
+        <div class="lm-visor-campo-wrap">
+          <svg class="lm-visor-campo-svg" viewBox="0 0 100 150" preserveAspectRatio="xMidYMid meet">
+            <rect x="0" y="0" width="100" height="150" fill="#2d7a34"/>
+            <rect x="2" y="2" width="96" height="146" fill="none" stroke="#eaf5ea" stroke-width="0.6" opacity="0.85"/>
+            <line x1="2" y1="75" x2="98" y2="75" stroke="#eaf5ea" stroke-width="0.6" opacity="0.85"/>
+            <circle cx="50" cy="75" r="12" fill="none" stroke="#eaf5ea" stroke-width="0.6" opacity="0.85"/>
+            <circle cx="50" cy="75" r="0.8" fill="#eaf5ea" opacity="0.85"/>
+            <rect x="24" y="2" width="52" height="18" fill="none" stroke="#eaf5ea" stroke-width="0.6" opacity="0.85"/>
+            <rect x="24" y="130" width="52" height="18" fill="none" stroke="#eaf5ea" stroke-width="0.6" opacity="0.85"/>
+            <rect x="38" y="2" width="24" height="7" fill="none" stroke="#eaf5ea" stroke-width="0.6" opacity="0.85"/>
+            <rect x="38" y="141" width="24" height="7" fill="none" stroke="#eaf5ea" stroke-width="0.6" opacity="0.85"/>
+            ${rivalSlots.map(s=>`<circle cx="${s.x}" cy="${s.y}" r="2.6" class="lm-visor-punto lm-visor-punto-rival"/>`).join('')}
+            ${misSlots.map(s=>`<circle cx="${s.x}" cy="${s.y}" r="2.6" class="lm-visor-punto lm-visor-punto-mio"/>`).join('')}
+            <circle cx="50" cy="75" r="1.1" class="lm-visor-balon" id="lmVisorBalon"/>
+          </svg>
+        </div>
+        <div class="lm-visor-info-bar" id="lmVisorInfoBar">${t('lm.viendo_partido')}</div>
+        <div class="lm-popup-actions"><button id="lmVisorCerrarBtn" class="mode-card-btn mode-card-btn-gold" disabled>${t('lm.continuar')}</button></div>
+      </div>`;
+    document.getElementById('ligaManagerScreen').appendChild(overlay);
+
+    const balon=overlay.querySelector('#lmVisorBalon');
+    const infoBar=overlay.querySelector('#lmVisorInfoBar');
+    const resEl=overlay.querySelector('#lmVisorResultado');
+    const cerrarBtn=overlay.querySelector('#lmVisorCerrarBtn');
+    const miLado = miEsLocal?'home':'away';
+    const DURACION_TOTAL=30000;
+
+    function moverBalon(x,y,durMs){
+      balon.style.transition=`cx ${durMs}ms ease-in-out, cy ${durMs}ms ease-in-out`;
+      balon.setAttribute('cx',x); balon.setAttribute('cy',y);
+    }
+
+    // Los goles reales (con minuto y goleador) marcan el ritmo de la
+    // simulación — se reparten de forma proporcional en los 30s. Entre
+    // gol y gol se rellena con jugadas de posesión alternada, para que
+    // el balón nunca deje de moverse.
+    const eventosGol=(info.eventos||[]).filter(e=>e.type==='goal').sort((a,b)=>a.minute-b.minute);
+    const pasos=[];
+    let tCursor=0, evIdx=0;
+    const PASO_MS=2300;
+    while(tCursor<DURACION_TOTAL){
+      const tProximoGol = evIdx<eventosGol.length ? (eventosGol[evIdx].minute/90)*DURACION_TOTAL : Infinity;
+      if(tProximoGol<=tCursor+PASO_MS){
+        pasos.push({tipo:'gol', evento:eventosGol[evIdx]});
+        evIdx++;
+        tCursor=tProximoGol+1400;
+      } else {
+        pasos.push({tipo:'pase', posesionMia: Math.random()<0.52});
+        tCursor+=PASO_MS;
+      }
+    }
+    // Cualquier gol que no encajara en el hueco (partido con muchos
+    // goles y poco tiempo) se añade igualmente al final, nunca se
+    // pierde ninguno respecto al resultado real.
+    while(evIdx<eventosGol.length){ pasos.push({tipo:'gol', evento:eventosGol[evIdx]}); evIdx++; }
+
+    let marcadorMio=0, marcadorRival=0;
+    let pasoIdx=0;
+    function ejecutarPaso(){
+      if(pasoIdx>=pasos.length){
+        infoBar.textContent=t('lm.visor_termina');
+        cerrarBtn.disabled=false;
+        return;
+      }
+      const p=pasos[pasoIdx]; pasoIdx++;
+      if(p.tipo==='gol'){
+        const esMio = p.evento.team===miLado;
+        moverBalon(50, esMio?7:143, 850);
+        setTimeout(()=>{
+          if(esMio) marcadorMio++; else marcadorRival++;
+          resEl.textContent=`${miEsLocal?marcadorMio:marcadorRival} - ${miEsLocal?marcadorRival:marcadorMio}`;
+          const nombreGoleador = p.evento.jugador ? p.evento.jugador.name : '';
+          infoBar.textContent=`⚽ ${t('lm.visor_gol')} ${nombreGoleador} (${esMio?miNombre:rivalNombre})`;
+          if(typeof window.playSound==='function') window.playSound('select');
+          setTimeout(()=>{ moverBalon(50,75,700); setTimeout(ejecutarPaso, 750); }, 1300);
+        }, 850);
+      } else {
+        const slots = p.posesionMia?misSlots:rivalSlots;
+        const jugador=slots[Math.floor(Math.random()*slots.length)];
+        moverBalon(jugador.x, jugador.y, PASO_MS*0.85);
+        const equipoTxt = p.posesionMia?miNombre:rivalNombre;
+        const frases=[t('lm.visor_construye'), t('lm.visor_avanza'), t('lm.visor_centra')];
+        infoBar.textContent=`${equipoTxt} ${frases[Math.floor(Math.random()*frases.length)]}`;
+        setTimeout(ejecutarPaso, PASO_MS);
+      }
+    }
+    setTimeout(ejecutarPaso, 600);
+
+    cerrarBtn.addEventListener('click', ()=>{
+      if(typeof window.playSound==='function') window.playSound('select');
+      overlay.remove();
+      if(onFinish) onFinish();
+    });
+  }
+
   function jugarJornada(){
     if(state.jornadaActual>38) return null;
     const j=state.jornadaActual-1;
@@ -5332,7 +5470,11 @@
           // este segundo SEGUIR juega directamente el partido.
           if(state.semanaResueltaParaJornada===state.jornadaActual){
             const info=jugarJornada();
-            if(info){ mostrarPartidoEnVivo(info, ()=>{ render(); mostrarLogrosPendientes(); mostrarResolucionQuinielaSiToca(); }); } else { render(); }
+            if(info){
+              const alTerminar=()=>{ render(); mostrarLogrosPendientes(); mostrarResolucionQuinielaSiToca(); };
+              if(state.modoVisualPartido==='manager'){ abrirVisorPartidoManager(info, alTerminar); }
+              else { mostrarPartidoEnVivo(info, alTerminar); }
+            } else { render(); }
             return;
           }
           const continuarSemana=()=>{
