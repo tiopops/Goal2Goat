@@ -789,12 +789,12 @@
   // sobre la imagen para poder pintar la insignia y los botones +/- en
   // el sitio correcto.
   const LM_ZONAS_ESTADIO=[
-    {id:'norte', get label(){return t('lm.zona_norte');}, left:49, top:11},
-    {id:'este_1',  get label(){return t('lm.zona_este_1');}, left:87, top:32},
-    {id:'este_2',  get label(){return t('lm.zona_este_2');}, left:87, top:60},
-    {id:'sur',   get label(){return t('lm.zona_sur');}, left:49, top:82},
-    {id:'oeste_2', get label(){return t('lm.zona_oeste_2');}, left:9,  top:60},
-    {id:'oeste_1', get label(){return t('lm.zona_oeste_1');}, left:9, top:32},
+    {id:'norte', get label(){return t('lm.zona_norte');}, left:49, top:13, w:64, h:20},
+    {id:'este_1',  get label(){return t('lm.zona_este_1');}, left:87, top:33, w:15, h:26},
+    {id:'este_2',  get label(){return t('lm.zona_este_2');}, left:87, top:60, w:15, h:26},
+    {id:'sur',   get label(){return t('lm.zona_sur');}, left:49, top:80, w:64, h:20},
+    {id:'oeste_2', get label(){return t('lm.zona_oeste_2');}, left:9,  top:60, w:15, h:26},
+    {id:'oeste_1', get label(){return t('lm.zona_oeste_1');}, left:9, top:33, w:15, h:26},
   ];
   const LM_DISTURBIO_LABEL={get 0(){return t('lm.disturbio_0');},get 1(){return t('lm.disturbio_1');},get 2(){return t('lm.disturbio_2');},get 3(){return t('lm.disturbio_3');}};
   const LM_DISTURBIO_COLOR={0:null,1:'#e6c94a',2:'#e88a2e',3:'#e24b4a'};
@@ -2933,7 +2933,7 @@
           <div class="med-nivel-label">${info.label}</div>
           <div class="med-nivel-desc">${info.desc}</div>
         </div>
-        <div class="med-nivel-stars" title="Nivel ${n}/${NIVEL_MAXIMO_EQUIPO}">${estrellasNivel(n)}</div>
+        <div class="med-nivel-stars" title="${t('lm.nivel_n_de_x')} ${n}/${NIVEL_MAXIMO_EQUIPO}">${estrellasNivel(n)}</div>
       </div>`;
     }).join('')}</div>`;
   }
@@ -3120,10 +3120,10 @@
   function dificultadActualNivelM(def){ return Math.max(3, def.dificultadBase + nivelDeM(def.track)*def.dificultadPaso - bonusEstrellasTrabajador('mantenimiento')); }
 
   const NIVELES_MANTENIMIENTO_INFO=[
-    {track:'prevencionDesgaste',     label:'Riego automático',      icon:'ph-drop-half-bottom', desc:'Desgaste del césped por el mal tiempo'},
-    {track:'recuperacionCesped',     label:'Greenkeeping',          icon:'ph-plant',            desc:'Recuperación natural del césped'},
-    {track:'boostSatisfaccion',      label:'Experiencia del socio', icon:'ph-ticket',           desc:'Satisfacción ganada al vencer'},
-    {track:'proteccionSatisfaccion', label:'Seguridad y grada',     icon:'ph-shield-star',      desc:'Descontento por derrota o césped descuidado'}
+    {track:'prevencionDesgaste',     get label(){return t('nivel.mant.riego.label');},      icon:'ph-drop-half-bottom', get desc(){return t('nivel.mant.riego.desc');}},
+    {track:'recuperacionCesped',     get label(){return t('nivel.mant.green.label');},          icon:'ph-plant',            get desc(){return t('nivel.mant.green.desc');}},
+    {track:'boostSatisfaccion',      get label(){return t('nivel.mant.experiencia.label');}, icon:'ph-ticket',           get desc(){return t('nivel.mant.experiencia.desc');}},
+    {track:'proteccionSatisfaccion', get label(){return t('nivel.mant.seguridad.label');},     icon:'ph-shield-star',      get desc(){return t('nivel.mant.seguridad.desc');}}
   ];
   function renderNivelesMantenimientoHTML(){
     return `<div class="med-niveles-grid">${NIVELES_MANTENIMIENTO_INFO.map(info=>{
@@ -3136,7 +3136,7 @@
           <div class="med-nivel-label">${info.label}</div>
           <div class="med-nivel-desc">${info.desc}</div>
         </div>
-        <div class="med-nivel-stars" title="Nivel ${n}/${NIVEL_MAXIMO_EQUIPO}">${estrellasNivel(n)}</div>
+        <div class="med-nivel-stars" title="${t('lm.nivel_n_de_x')} ${n}/${NIVEL_MAXIMO_EQUIPO}">${estrellasNivel(n)}</div>
       </div>`;
     }).join('')}</div>`;
   }
@@ -4163,10 +4163,12 @@
     const calidad=nivelDeDD('calidadOjeo');
     const canteraBonus=nivelDeDD('costeSobres')*3;
     const bonusInforme = (state.directorDeportivoBonos && state.directorDeportivoBonos.bonusCalidadSobre) ? 8 : 0;
-    // OPORTUNIDAD (7%, igual que con los candidatos del cuerpo técnico):
-    // el canterano sale con una nota algo superior a la habitual, pero
-    // pidiendo un sueldo más bajo del que le correspondería por esa nota.
-    const esOportunidad = Math.random()<0.07;
+    // OPORTUNIDAD: el canterano sale con una nota algo superior a la
+    // habitual, pero pidiendo un sueldo más bajo del que le
+    // correspondería por esa nota. Cuanto más subido esté "Red de
+    // Ojeadores", más fácil es que aparezca — de un 5% base a un 25%
+    // con la Red de Ojeadores al máximo.
+    const esOportunidad = Math.random()<(0.05+calidad*0.02);
     const overall=Math.max(45, Math.min(96, 50+nivelSobre*10+calidad*4+canteraBonus+bonusInforme+(esOportunidad?6:0)+Math.floor(Math.random()*8)));
     const posiciones=['POR','DFC','LI','LD','MC','EI','ED','DC'];
     const position = (posicionForzada && posiciones.includes(posicionForzada)) ? posicionForzada : posiciones[Math.floor(Math.random()*posiciones.length)];
@@ -5903,7 +5905,7 @@
       const rnd=catalogo[Math.floor(Math.random()*catalogo.length)];
       iconEl.className=`ph ph-bold ${rnd.icon} med-card-icon`;
       titleEl.textContent=rnd.nombre;
-      if(tagEl) tagEl.textContent = rnd.tipo==='nivel' ? 'PROYECTO' : (rnd.tipo==='sobre' ? 'PROYECTO ESPECIAL' : 'ACCIÓN');
+      if(tagEl) tagEl.textContent = rnd.tipo==='nivel' ? t('lm.tag_proyecto') : (rnd.tipo==='sobre' ? t('lm.tag_proyecto_especial') : t('lm.tag_accion'));
       if(descEl) descEl.textContent = rnd.desc;
       if(typeof window.playSound==='function') window.playSound('spin');
       ticks++;
@@ -6022,7 +6024,7 @@
         return `
         <div class="med-card med-card-medico ${bloqueada?'med-card-bloqueada':''}" data-idx="${idx}">
           <button class="med-card-swap" data-swap="${idx}" title="${t('lm.tt_cambiar_carta')}" ${cambioDisponible?'':'disabled'}><i class="ph ph-bold ph-arrows-clockwise"></i></button>
-          <div class="med-card-tag">${def.tipo==='nivel'?'PROYECTO':(def.tipo==='acumulacion'?'PROYECTO':'ACCIÓN')}</div>
+          <div class="med-card-tag">${def.tipo==='nivel'?t('lm.tag_proyecto'):(def.tipo==='acumulacion'?t('lm.tag_proyecto'):t('lm.tag_accion'))}</div>
           <i class="ph ph-bold ${def.icon} med-card-icon"></i>
           <div class="med-card-title">${tc('med', def.id, 'nombre', def.nombre)}</div>
           <div class="med-card-divider"></div>
@@ -6288,7 +6290,7 @@
           </div>
           <div class="lm-seguridad-mapa-mini-wrap">
             <img src="assets/estadio/gradas.png" alt="Estadio" class="lm-seguridad-mapa-mini">
-            ${LM_ZONAS_ESTADIO.map(z=>`<button type="button" class="lm-zona-hotspot" data-zona-jump="${z.id}" style="left:${z.left}%;top:${z.top}%" aria-label="${z.label}"></button>`).join('')}
+            ${LM_ZONAS_ESTADIO.map(z=>`<button type="button" class="lm-zona-hotspot" data-zona-jump="${z.id}" style="left:${z.left}%;top:${z.top}%;width:${z.w}%;height:${z.h}%" aria-label="${z.label}"></button>`).join('')}
           </div>
           <div class="lm-seguridad-lista-movil">
             ${LM_ZONAS_ESTADIO.map(z=>{
@@ -6392,7 +6394,7 @@
         return `
         <div class="med-card med-card-mantenimiento ${bloqueada?'med-card-bloqueada':''}" data-idx="${idx}">
           <button class="med-card-swap" data-swap="${idx}" title="${t('lm.tt_cambiar_carta')}" ${cambioDisponible?'':'disabled'}><i class="ph ph-bold ph-arrows-clockwise"></i></button>
-          <div class="med-card-tag">${def.tipo==='nivel'?'PROYECTO':'ACCIÓN'}</div>
+          <div class="med-card-tag">${def.tipo==='nivel'?t('lm.tag_proyecto'):t('lm.tag_accion')}</div>
           <i class="ph ph-bold ${def.icon} med-card-icon"></i>
           <div class="med-card-title">${tc('mant', def.id, 'nombre', def.nombre)}</div>
           <div class="med-card-divider"></div>
@@ -6606,7 +6608,7 @@
         return `
         <div class="med-card med-card-dg ${bloqueada?'med-card-bloqueada':''}" data-idx="${idx}">
           <button class="med-card-swap" data-swap="${idx}" title="${t('lm.tt_cambiar_carta')}" ${cambioDisponible?'':'disabled'}><i class="ph ph-bold ph-arrows-clockwise"></i></button>
-          <div class="med-card-tag">${def.tipo==='nivel'?'PROYECTO':'ACCIÓN'}</div>
+          <div class="med-card-tag">${def.tipo==='nivel'?t('lm.tag_proyecto'):t('lm.tag_accion')}</div>
           <i class="ph ph-bold ${def.icon} med-card-icon"></i>
           <div class="med-card-title">${tc('dg', def.id, 'nombre', def.nombre)}</div>
           <div class="med-card-divider"></div>
@@ -6744,10 +6746,10 @@
   }
 
   const NIVELES_DG_INFO=[
-    {track:'aforoExtra',          label:'Ampliación de grada',   icon:'ph-stairs',       desc:'Aforo permanente del estadio'},
-    {track:'ingresoPatrocinio',   label:'Patrocinadores',        icon:'ph-handshake',    desc:'Ingreso fijo mensual'},
-    {track:'ingresoMerchandising',label:'Tienda y merchandising',icon:'ph-t-shirt',      desc:'Ingreso por cada asistente'},
-    {track:'toleranciaPrecio',    label:'Relaciones con la afición',icon:'ph-users-three',desc:'Margen para subir el precio de entrada'}
+    {track:'aforoExtra',          get label(){return t('nivel.dg.grada.label');},   icon:'ph-stairs',       get desc(){return t('nivel.dg.grada.desc');}},
+    {track:'ingresoPatrocinio',   get label(){return t('nivel.dg.patrocinadores.label');},        icon:'ph-handshake',    get desc(){return t('nivel.dg.patrocinadores.desc');}},
+    {track:'ingresoMerchandising',get label(){return t('nivel.dg.tienda.label');},icon:'ph-t-shirt',      get desc(){return t('nivel.dg.tienda.desc');}},
+    {track:'toleranciaPrecio',    get label(){return t('nivel.dg.relaciones.label');},icon:'ph-users-three',get desc(){return t('nivel.dg.relaciones.desc');}}
   ];
   function renderNivelesDGHTML(){
     return `<div class="med-niveles-grid">${NIVELES_DG_INFO.map(info=>{
@@ -6760,16 +6762,16 @@
           <div class="med-nivel-label">${info.label}</div>
           <div class="med-nivel-desc">${info.desc}</div>
         </div>
-        <div class="med-nivel-stars" title="Nivel ${n}/${NIVEL_MAXIMO_EQUIPO}">${estrellasNivel(n)}</div>
+        <div class="med-nivel-stars" title="${t('lm.nivel_n_de_x')} ${n}/${NIVEL_MAXIMO_EQUIPO}">${estrellasNivel(n)}</div>
       </div>`;
     }).join('')}</div>`;
   }
 
   const NIVELES_DD_INFO=[
-    {track:'calidadOjeo',     label:'Red de Ojeadores',        icon:'ph-binoculars',      desc:'Calidad de los jugadores que salen en los sobres'},
-    {track:'ahorroSalarial',  label:'Negociación de Contratos',icon:'ph-handshake',       desc:'Ahorro en el salario de los jugadores fichados por sobre'},
-    {track:'sobresFichajes',  label:'Red de Ojeadores Activa', icon:'ph-envelope-open',   desc:'Acorta el tiempo entre sobres — Los recibirás por correo cuando estén disponibles'},
-    {track:'costeSobres',     label:'Formación de Cantera',    icon:'ph-graduation-cap',  desc:'Sube el nivel base de los canteranos que llegan por sobre'}
+    {track:'calidadOjeo',     get label(){return t('nivel.dd.red_ojeadores.label');},        icon:'ph-binoculars',      get desc(){return t('nivel.dd.red_ojeadores.desc');}},
+    {track:'ahorroSalarial',  get label(){return t('nivel.dd.negociacion.label');},icon:'ph-handshake',       get desc(){return t('nivel.dd.negociacion.desc');}},
+    {track:'sobresFichajes',  get label(){return t('nivel.dd.red_activa.label');}, icon:'ph-envelope-open',   get desc(){return t('nivel.dd.red_activa.desc');}},
+    {track:'costeSobres',     get label(){return t('nivel.dd.cantera.label');},    icon:'ph-graduation-cap',  get desc(){return t('nivel.dd.cantera.desc');}}
   ];
   function renderNivelesDDHTML(){
     return `<div class="med-niveles-grid">${NIVELES_DD_INFO.map(info=>{
@@ -6782,7 +6784,7 @@
           <div class="med-nivel-label">${info.label}</div>
           <div class="med-nivel-desc">${info.desc}</div>
         </div>
-        <div class="med-nivel-stars" title="Nivel ${n}/${NIVEL_MAXIMO_EQUIPO}">${estrellasNivel(n)}</div>
+        <div class="med-nivel-stars" title="${t('lm.nivel_n_de_x')} ${n}/${NIVEL_MAXIMO_EQUIPO}">${estrellasNivel(n)}</div>
       </div>`;
     }).join('')}</div>`;
   }
@@ -6903,7 +6905,7 @@
         return `
         <div class="med-card med-card-dd ${bloqueada&&!nivelMaximoYa?'med-card-bloqueada':''}" data-idx="${idx}">
           <button class="med-card-swap" data-swap="${idx}" title="${t('lm.tt_cambiar_carta')}" ${cambioDisponible?'':'disabled'}><i class="ph ph-bold ph-arrows-clockwise"></i></button>
-          <div class="med-card-tag">${def.tipo==='nivel'?'PROYECTO':'ACCIÓN'}</div>
+          <div class="med-card-tag">${def.tipo==='nivel'?t('lm.tag_proyecto'):t('lm.tag_accion')}</div>
           <i class="ph ph-bold ${def.icon} med-card-icon"></i>
           <div class="med-card-title">${tc('dd', def.id, 'nombre', def.nombre)}</div>
           <div class="med-card-divider"></div>
@@ -7227,10 +7229,10 @@
   }
 
   const NIVELES_PF_INFO=[
-    {track:'resistenciaBase',     label:'Programa de Resistencia', icon:'ph-heartbeat',       desc:'Resistencia que se pierde al jugar cada partido'},
-    {track:'recuperacionSemanal', label:'Recuperación Semanal',    icon:'ph-clock-clockwise', desc:'Recuperación extra de los titulares entre jornadas'},
-    {track:'potencialTecnico',    label:'Potencial Técnico',       icon:'ph-soccer-ball',     desc:'Técnica de equipo, de forma permanente'},
-    {track:'potencialFisico',     label:'Potencial Físico',        icon:'ph-lightning',       desc:'Ritmo de equipo, de forma permanente'}
+    {track:'resistenciaBase',     get label(){return t('nivel.pf.resistencia.label');}, icon:'ph-heartbeat',       get desc(){return t('nivel.pf.resistencia.desc');}},
+    {track:'recuperacionSemanal', get label(){return t('nivel.pf.recuperacion.label');},    icon:'ph-clock-clockwise', get desc(){return t('nivel.pf.recuperacion.desc');}},
+    {track:'potencialTecnico',    get label(){return t('nivel.pf.tecnico.label');},       icon:'ph-soccer-ball',     get desc(){return t('nivel.pf.tecnico.desc');}},
+    {track:'potencialFisico',     get label(){return t('nivel.pf.fisico.label');},        icon:'ph-lightning',       get desc(){return t('nivel.pf.fisico.desc');}}
   ];
   function renderNivelesPFHTML(){
     return `<div class="med-niveles-grid">${NIVELES_PF_INFO.map(info=>{
@@ -7243,7 +7245,7 @@
           <div class="med-nivel-label">${info.label}</div>
           <div class="med-nivel-desc">${info.desc}</div>
         </div>
-        <div class="med-nivel-stars" title="Nivel ${n}/${NIVEL_MAXIMO_EQUIPO}">${estrellasNivel(n)}</div>
+        <div class="med-nivel-stars" title="${t('lm.nivel_n_de_x')} ${n}/${NIVEL_MAXIMO_EQUIPO}">${estrellasNivel(n)}</div>
       </div>`;
     }).join('')}</div>`;
   }
@@ -7316,7 +7318,7 @@
         return `
         <div class="med-card med-card-pf ${bloqueada&&!nivelMaximoYa?'med-card-bloqueada':''}" data-idx="${idx}">
           <button class="med-card-swap" data-swap="${idx}" title="${t('lm.tt_cambiar_carta')}" ${cambioDisponible?'':'disabled'}><i class="ph ph-bold ph-arrows-clockwise"></i></button>
-          <div class="med-card-tag">${def.tipo==='nivel'?'PROYECTO':'ACCIÓN'}</div>
+          <div class="med-card-tag">${def.tipo==='nivel'?t('lm.tag_proyecto'):t('lm.tag_accion')}</div>
           <i class="ph ph-bold ${def.icon} med-card-icon"></i>
           <div class="med-card-title">${tc('pf', def.id, 'nombre', def.nombre)}</div>
           <div class="med-card-divider"></div>
@@ -7814,6 +7816,9 @@
         // Cierra cualquier popup de Liga Manager que estuviera abierto,
         // para que la navegación a la sección no se quede tapada detrás.
         document.querySelectorAll('#ligaManagerScreen [id$="Overlay"]').forEach(ov=>ov.remove());
+        // Y también el ticket, si estuviera abierto — vive fuera de
+        // Liga Manager, así que se cierra aparte.
+        if(typeof window.closeTicketOverlay==='function') window.closeTicketOverlay();
       });
     });
     // TICKETS y CLASIF. también cuentan como "pestaña" a efectos de
@@ -7823,6 +7828,7 @@
       if(btn) btn.addEventListener('click', ()=>{
         barra.querySelectorAll('.mob-tab').forEach(b=>b.classList.remove('active'));
         btn.classList.add('active');
+        if(id==='lmClasifTabBtn' && typeof window.closeTicketOverlay==='function') window.closeTicketOverlay();
       });
     });
   }

@@ -251,6 +251,50 @@ window.TRANSLATIONS = {
   'lm.tt_mover_derecha': {es:'Mover a la derecha', en:'Move right', pt:'Mover para a direita', fr:'Deplacer a droite', de:'Nach rechts verschieben', it:'Sposta a destra'},
   'lm.tt_cambiar_carta': {es:'Cambiar carta', en:'Change card', pt:'Mudar carta', fr:'Changer de carte', de:'Karte wechseln', it:'Cambia carta'},
   'lm.tt_quitar_del_plan': {es:'Quitar del plan', en:'Remove from plan', pt:'Remover do plano', fr:'Retirer du plan', de:'Aus dem Plan entfernen', it:'Rimuovi dal piano'},
+  'lm.tag_accion': {es:'ACCIÓN', en:'ACTION', pt:'AÇÃO', fr:'ACTION', de:'AKTION', it:'AZIONE'},
+  'lm.tag_proyecto': {es:'PROYECTO', en:'PROJECT', pt:'PROJETO', fr:'PROJET', de:'PROJEKT', it:'PROGETTO'},
+  'lm.tag_proyecto_especial': {es:'PROYECTO ESPECIAL', en:'SPECIAL PROJECT', pt:'PROJETO ESPECIAL', fr:'PROJET SPECIAL', de:'SONDERPROJEKT', it:'PROGETTO SPECIALE'},
+
+  /* Niveles de proyecto — Mantenimiento */
+  'nivel.mant.riego.label': {es:'Riego automático', en:'Automatic irrigation', pt:'Rega automática', fr:'Arrosage automatique', de:'Automatische Bewasserung', it:'Irrigazione automatica'},
+  'nivel.mant.riego.desc': {es:'Desgaste del césped por el mal tiempo', en:'Pitch wear from bad weather', pt:'Desgaste do relvado causado pelo mau tempo', fr:'Usure de la pelouse due au mauvais temps', de:'Rasenverschleiss durch schlechtes Wetter', it:'Usura del campo dovuta al maltempo'},
+  'nivel.mant.green.label': {es:'Greenkeeping', en:'Greenkeeping', pt:'Greenkeeping', fr:'Greenkeeping', de:'Greenkeeping', it:'Greenkeeping'},
+  'nivel.mant.green.desc': {es:'Recuperación natural del césped', en:'Natural pitch recovery', pt:'Recuperação natural do relvado', fr:'Recuperation naturelle de la pelouse', de:'Naturliche Rasenerholung', it:'Recupero naturale del campo'},
+  'nivel.mant.experiencia.label': {es:'Experiencia del socio', en:'Member experience', pt:'Experiência do sócio', fr:'Experience du membre', de:'Mitgliedererlebnis', it:'Esperienza del socio'},
+  'nivel.mant.experiencia.desc': {es:'Satisfacción ganada al vencer', en:'Satisfaction gained when winning', pt:'Satisfação ganha ao vencer', fr:'Satisfaction gagnee en gagnant', de:'Zufriedenheit durch Siege', it:'Soddisfazione guadagnata vincendo'},
+  'nivel.mant.seguridad.label': {es:'Seguridad y grada', en:'Security and stands', pt:'Segurança e bancada', fr:'Securite et tribune', de:'Sicherheit und Tribune', it:'Sicurezza e tribuna'},
+  'nivel.mant.seguridad.desc': {es:'Descontento por derrota o césped descuidado', en:'Discontent from losses or a neglected pitch', pt:'Descontentamento por derrota ou relvado descuidado', fr:'Mecontentement du a une defaite ou une pelouse negligee', de:'Unmut durch Niederlagen oder vernachlassigten Rasen', it:'Malcontento per sconfitta o campo trascurato'},
+
+  /* Niveles de proyecto — Director General */
+  'nivel.dg.grada.label': {es:'Ampliación de grada', en:'Stand expansion', pt:'Ampliação da bancada', fr:'Extension de tribune', de:'Tribunenerweiterung', it:'Ampliamento tribuna'},
+  'nivel.dg.grada.desc': {es:'Aforo permanente del estadio', en:'Permanent stadium capacity', pt:'Capacidade permanente do estádio', fr:'Capacite permanente du stade', de:'Dauerhafte Stadionkapazitat', it:'Capienza permanente dello stadio'},
+  'nivel.dg.patrocinadores.label': {es:'Patrocinadores', en:'Sponsors', pt:'Patrocinadores', fr:'Sponsors', de:'Sponsoren', it:'Sponsor'},
+  'nivel.dg.patrocinadores.desc': {es:'Ingreso fijo mensual', en:'Fixed monthly income', pt:'Rendimento fixo mensal', fr:'Revenu fixe mensuel', de:'Monatliches Fixeinkommen', it:'Entrata fissa mensile'},
+  'nivel.dg.tienda.label': {es:'Tienda y merchandising', en:'Shop and merchandise', pt:'Loja e merchandising', fr:'Boutique et produits derives', de:'Shop und Merchandise', it:'Negozio e merchandising'},
+  'nivel.dg.tienda.desc': {es:'Ingreso por cada asistente', en:'Income per attendee', pt:'Rendimento por cada espectador', fr:'Revenu par spectateur', de:'Einkommen pro Zuschauer', it:'Entrata per ogni spettatore'},
+  'nivel.dg.relaciones.label': {es:'Relaciones con la afición', en:'Fan relations', pt:'Relações com a torcida', fr:'Relations avec les supporters', de:'Fanbeziehungen', it:'Relazioni con i tifosi'},
+  'nivel.dg.relaciones.desc': {es:'Margen para subir el precio de entrada', en:'Room to raise the ticket price', pt:'Margem para subir o preço do ingresso', fr:'Marge pour augmenter le prix du billet', de:'Spielraum fur Ticketpreiserhohung', it:'Margine per aumentare il prezzo del biglietto'},
+
+  /* Niveles de proyecto — Director Deportivo */
+  'nivel.dd.red_ojeadores.label': {es:'Red de Ojeadores', en:'Scouting Network', pt:'Rede de Olheiros', fr:'Reseau de Recruteurs', de:'Scouting-Netzwerk', it:'Rete di Osservatori'},
+  'nivel.dd.red_ojeadores.desc': {es:'Calidad de los jugadores que salen en los sobres', en:'Quality of players that appear in envelopes', pt:'Qualidade dos jogadores que aparecem nos envelopes', fr:'Qualite des joueurs qui apparaissent dans les enveloppes', de:'Qualitat der Spieler in den Umschlagen', it:'Qualita dei giocatori che appaiono nelle buste'},
+  'nivel.dd.negociacion.label': {es:'Negociación de Contratos', en:'Contract Negotiation', pt:'Negociação de Contratos', fr:'Negociation de Contrats', de:'Vertragsverhandlung', it:'Negoziazione dei Contratti'},
+  'nivel.dd.negociacion.desc': {es:'Ahorro en el salario de los jugadores fichados por sobre', en:'Savings on the salary of players signed through envelopes', pt:'Poupança no salário dos jogadores contratados por envelope', fr:'Economies sur le salaire des joueurs recrutes par enveloppe', de:'Einsparungen beim Gehalt der uber Umschlage verpflichteten Spieler', it:'Risparmio sullo stipendio dei giocatori ingaggiati tramite busta'},
+  'nivel.dd.red_activa.label': {es:'Red de Ojeadores Activa', en:'Active Scouting Network', pt:'Rede de Olheiros Ativa', fr:'Reseau de Recruteurs Actif', de:'Aktives Scouting-Netzwerk', it:'Rete di Osservatori Attiva'},
+  'nivel.dd.red_activa.desc': {es:'Acorta el tiempo entre sobres — los recibirás por correo cuando estén disponibles', en:'Shortens time between envelopes — you will receive them by mail when available', pt:'Reduz o tempo entre envelopes — vai recebê-los por correio quando disponíveis', fr:'Reduit le temps entre les enveloppes, tu les recevras par courrier des qu elles seront disponibles', de:'Verkurzt die Zeit zwischen Umschlagen, du erhaltst sie per Post sobald verfugbar', it:'Riduce il tempo tra le buste, le riceverai per posta quando saranno disponibili'},
+  'nivel.dd.cantera.label': {es:'Formación de Cantera', en:'Youth Academy Training', pt:'Formação de Base', fr:'Formation du Centre de Formation', de:'Jugendakademie-Ausbildung', it:'Formazione del Settore Giovanile'},
+  'nivel.dd.cantera.desc': {es:'Sube el nivel base de los canteranos que llegan por sobre', en:'Raises the base level of youth players from envelopes', pt:'Aumenta o nível base dos jovens que chegam por envelope', fr:'Augmente le niveau de base des jeunes venus d une enveloppe', de:'Erhoht das Grundniveau der Nachwuchsspieler aus Umschlagen', it:'Aumenta il livello base dei giovani che arrivano da una busta'},
+
+  /* Niveles de proyecto — Preparador Físico */
+  'nivel.pf.resistencia.label': {es:'Programa de Resistencia', en:'Stamina Program', pt:'Programa de Resistência', fr:'Programme d Endurance', de:'Ausdauerprogramm', it:'Programma di Resistenza'},
+  'nivel.pf.resistencia.desc': {es:'Resistencia que se pierde al jugar cada partido', en:'Stamina lost from playing each match', pt:'Resistência perdida ao jogar cada jogo', fr:'Endurance perdue en jouant chaque match', de:'Ausdauerverlust bei jedem Spiel', it:'Resistenza persa giocando ogni partita'},
+  'nivel.pf.recuperacion.label': {es:'Recuperación Semanal', en:'Weekly Recovery', pt:'Recuperação Semanal', fr:'Recuperation Hebdomadaire', de:'Wochentliche Erholung', it:'Recupero Settimanale'},
+  'nivel.pf.recuperacion.desc': {es:'Recuperación extra de los titulares entre jornadas', en:'Extra recovery for starters between matchdays', pt:'Recuperação extra dos titulares entre jornadas', fr:'Recuperation supplementaire des titulaires entre journees', de:'Zusatzliche Erholung fur Stammspieler zwischen Spieltagen', it:'Recupero extra dei titolari tra le giornate'},
+  'nivel.pf.tecnico.label': {es:'Potencial Técnico', en:'Technical Potential', pt:'Potencial Técnico', fr:'Potentiel Technique', de:'Technisches Potenzial', it:'Potenziale Tecnico'},
+  'nivel.pf.tecnico.desc': {es:'Técnica de equipo, de forma permanente', en:'Team technique, permanently', pt:'Técnica de equipa, de forma permanente', fr:'Technique de equipe, de facon permanente', de:'Team-Technik, dauerhaft', it:'Tecnica di squadra, in modo permanente'},
+  'nivel.pf.fisico.label': {es:'Potencial Físico', en:'Physical Potential', pt:'Potencial Físico', fr:'Potentiel Physique', de:'Physisches Potenzial', it:'Potenziale Fisico'},
+  'nivel.pf.fisico.desc': {es:'Ritmo de equipo, de forma permanente', en:'Team pace, permanently', pt:'Ritmo de equipa, de forma permanente', fr:'Rythme de equipe, de facon permanente', de:'Team-Tempo, dauerhaft', it:'Ritmo di squadra, in modo permanente'},
+  'lm.nivel_n_de_x': {es:'Nivel', en:'Level', pt:'Nível', fr:'Niveau', de:'Stufe', it:'Livello'},
 
   /* Tablas de plantilla y clasificación */
   'lm.tabla_jugador': {es:'Jugador', en:'Player', pt:'Jogador', fr:'Joueur', de:'Spieler', it:'Giocatore'},

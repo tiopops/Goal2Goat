@@ -1250,13 +1250,15 @@ body.dark-theme .settings-item:hover{background:var(--row-hover);color:var(--gol
   .ranking-panel{display:none;width:100%;box-sizing:border-box;padding:10px;scroll-margin-top:70px}
   .ranking-panel.mob-active{display:block!important;min-height:calc(100vh - 64px)}
 
-  /* TAB BAR — fixed at bottom of viewport */
+  /* TAB BAR — fixed at bottom of viewport. Z-index por encima del
+     overlay del ticket (30000) para que la barra siga viéndose aunque
+     el ticket esté abierto encima. */
   #mobileTabBar{
     display:flex!important;
     position:fixed!important;bottom:0!important;left:0!important;right:0!important;
     background:#111!important;
     border-top:2px solid #333!important;
-    z-index:999!important;
+    z-index:30500!important;
     padding-bottom:env(safe-area-inset-bottom,0px);
   }
   body.liga-manager-screen #lmMobileTabBar{
@@ -1264,7 +1266,7 @@ body.dark-theme .settings-item:hover{background:var(--row-hover);color:var(--gol
     position:fixed!important;bottom:0!important;left:0!important;right:0!important;
     background:#111!important;
     border-top:2px solid #333!important;
-    z-index:999!important;
+    z-index:30500!important;
     padding-bottom:env(safe-area-inset-bottom,0px);
   }
   .mob-tab{
@@ -4100,13 +4102,14 @@ body.light-theme.menu-screen{
   .med-card-grid{grid-template-columns:1fr!important;gap:10px!important}
   .med-card{
     flex-direction:column!important;align-items:center!important;text-align:center!important;
-    padding:0 14px 12px!important;height:210px;overflow:hidden;justify-content:flex-start;
+    padding:0 14px 12px!important;height:220px;overflow:hidden;justify-content:flex-start;
+    border-radius:12px;
   }
   .med-card-tag{
-    position:static!important;width:auto;text-align:center;margin:0 -14px 10px!important;
-    padding:6px 0!important;font-size:12px!important;letter-spacing:1.8px;
-    border-radius:11px 11px 0 0;order:-1;
-    background:rgba(46,204,113,.12);color:#3a8a5c!important;
+    position:static!important;width:auto;text-align:center;margin:0 -14px 12px!important;
+    padding:9px 0!important;font-size:15px!important;font-weight:800;letter-spacing:2.2px;
+    border-radius:12px 12px 0 0;order:-1;
+    background:rgba(46,204,113,.16);color:#4fb87a!important;
   }
   .med-card-icon{font-size:28px!important;margin:0 0 4px}
   .med-card-title{font-size:15px!important;margin:0 0 6px!important;text-align:center!important}
@@ -4203,7 +4206,7 @@ body.light-theme.menu-screen{
 .lm-seguridad-mapa-mini-wrap{display:none;position:relative}
 .lm-zona-hotspot{
   position:absolute;transform:translate(-50%,-50%);
-  width:15%;height:13%;background:transparent;
+  background:transparent;
   border:1.5px dashed rgba(255,255,255,.75);border-radius:6px;
   padding:0;cursor:pointer;
 }
@@ -4229,19 +4232,19 @@ body.light-theme.menu-screen{
   50%{opacity:.65;transform:translate(-50%,-50%) scale(1.25)}
 }
 .lm-zona-etiqueta{
-  position:relative;background:rgba(10,12,10,.88);border:1px solid rgba(255,255,255,.15);
-  border-radius:8px;padding:5px 8px;min-width:104px;text-align:center;
+  position:relative;background:rgba(10,12,10,.92);border:1px solid rgba(255,255,255,.15);
+  border-radius:9px;padding:10px 14px;min-width:168px;text-align:center;
   box-shadow:0 4px 10px rgba(0,0,0,.5);
 }
 .lm-zona-marcador[style*="--zona-color"] .lm-zona-etiqueta{border-color:var(--zona-color)}
-.lm-zona-nombre{font-size:8px;color:#ddd;letter-spacing:.3px;line-height:1.2}
-.lm-zona-disturbio{font-family:'Bebas Neue',Impact,sans-serif;font-size:10px;letter-spacing:1px;margin-top:1px}
-.lm-zona-guardias-fila{display:flex;align-items:center;justify-content:center;gap:5px;margin-top:4px}
-.lm-zona-guardias-num{font-size:9px;color:#eee;display:flex;align-items:center;gap:2px}
-.lm-zona-guardias-num i{color:var(--gold);font-size:10px}
+.lm-zona-nombre{font-size:13px;color:#eee;letter-spacing:.3px;line-height:1.25;font-weight:600}
+.lm-zona-disturbio{font-family:'Bebas Neue',Impact,sans-serif;font-size:15px;letter-spacing:1px;margin-top:3px}
+.lm-zona-guardias-fila{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:8px}
+.lm-zona-guardias-num{font-size:15px;color:#eee;display:flex;align-items:center;gap:4px;font-weight:700}
+.lm-zona-guardias-num i{color:var(--gold);font-size:16px}
 .lm-zona-btn{
-  width:16px;height:16px;border-radius:4px;border:1px solid #333;background:#1e2326;
-  color:#ccc;font-size:8px;display:flex;align-items:center;justify-content:center;
+  width:34px;height:34px;border-radius:6px;border:1px solid #3a3a3a;background:#1e2326;
+  color:#ddd;font-size:16px;display:flex;align-items:center;justify-content:center;
   cursor:pointer;padding:0;
 }
 .lm-zona-btn:disabled{opacity:.35;cursor:default}

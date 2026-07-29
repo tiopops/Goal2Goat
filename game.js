@@ -6396,6 +6396,7 @@ function initFirebaseAuth(){
 /* ========= MOBILE TAB NAVIGATION ========= */
 function switchMobileTab(tab){
   if(window.innerWidth>1050) return;
+  if(typeof window.closeTicketOverlay==='function') window.closeTicketOverlay();
 
   document.querySelectorAll('.mob-tab').forEach(btn=>{
     btn.classList.toggle('active', btn.dataset.tab===tab);
