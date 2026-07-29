@@ -4232,6 +4232,12 @@ body.light-theme.menu-screen{
   position:absolute;transform:translate(-50%,-50%);display:flex;align-items:center;justify-content:center;
   z-index:2;
 }
+/* Las zonas muy pegadas al borde izquierdo/derecho del mapa se salían
+   de la pantalla porque la etiqueta se centraba igual que las demás —
+   aquí se desplaza hacia dentro, sin tocar el punto de anclaje real
+   de la zona (que sigue exactamente donde debe). */
+.lm-zona-marcador-izq .lm-zona-etiqueta{transform:translateX(38%)}
+.lm-zona-marcador-der .lm-zona-etiqueta{transform:translateX(-38%)}
 .lm-zona-tinte{
   position:absolute;top:50%;left:50%;width:130px;height:100px;border-radius:16px;
   transform:translate(-50%,-50%);opacity:.18;filter:blur(10px);pointer-events:none;
@@ -4304,7 +4310,37 @@ body.light-theme.menu-screen{
 .lm-visor-resultado{font-family:'Bebas Neue',Impact,sans-serif;font-size:26px;color:#fff;letter-spacing:3px;flex-shrink:0;padding:0 12px;text-shadow:0 0 12px rgba(230,201,74,.4)}
 .lm-visor-campo-wrap{
   flex:1;min-height:0;display:flex;align-items:center;justify-content:center;
-  background:#060806;padding:12px;
+  background:#060806;padding:12px;position:relative;overflow:hidden;
+}
+.lm-visor-clima-bar{
+  padding:6px 16px;background:#1a1a1a;border-bottom:1px solid #2a2a2a;
+  font-size:11px;color:#bbb;text-align:center;letter-spacing:.4px;
+}
+/* Tintes de ambiente según el clima real de la jornada — el mismo
+   clima que ya afecta a las estadísticas del partido. */
+.lm-visor-clima-sunny{filter:brightness(1.08) saturate(1.05)}
+.lm-visor-clima-cloudy{filter:brightness(.92) saturate(.85)}
+.lm-visor-clima-rain{filter:brightness(.82) saturate(.8) contrast(1.05)}
+.lm-visor-clima-wind{filter:saturate(.95)}
+.lm-visor-clima-hot{filter:brightness(1.05) sepia(.12) saturate(1.1)}
+.lm-visor-clima-snow{filter:brightness(.95) saturate(.7) contrast(.95)}
+.lm-visor-lluvia,.lm-visor-nieve{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.lm-visor-lluvia span{
+  position:absolute;top:-8%;width:1px;height:14px;background:rgba(200,220,255,.55);
+  animation-name:lmVisorCaeLluvia;animation-timing-function:linear;animation-iteration-count:infinite;
+}
+@keyframes lmVisorCaeLluvia{
+  0%{transform:translateY(0) translateX(0);opacity:.8}
+  100%{transform:translateY(115vh) translateX(-14px);opacity:.4}
+}
+.lm-visor-nieve span{
+  position:absolute;top:-6%;width:4px;height:4px;border-radius:50%;background:rgba(255,255,255,.85);
+  animation-name:lmVisorCaeNieve;animation-timing-function:linear;animation-iteration-count:infinite;
+}
+@keyframes lmVisorCaeNieve{
+  0%{transform:translateY(0) translateX(0);opacity:.9}
+  50%{transform:translateY(55vh) translateX(10px)}
+  100%{transform:translateY(115vh) translateX(-6px);opacity:.5}
 }
 .lm-visor-campo-svg{width:100%;height:auto;max-height:62vh;filter:drop-shadow(0 8px 20px rgba(0,0,0,.6))}
 .lm-visor-jugador-g{filter:drop-shadow(0 1px 2px rgba(0,0,0,.6))}

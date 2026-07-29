@@ -2325,6 +2325,9 @@
       </g>`;
     }
 
+    const clima = (typeof climaDelPartido==='function') ? climaDelPartido() : null;
+    const climaClase = clima ? `lm-visor-clima-${clima.id}` : '';
+
     const overlay=document.createElement('div');
     overlay.id='lmVisorPartidoOverlay';
     overlay.innerHTML=`
@@ -2334,7 +2337,8 @@
           <span class="lm-visor-resultado" id="lmVisorResultado">0 - 0</span>
           <span class="lm-visor-equipo lm-visor-equipo-rival">${rivalNombre}</span>
         </div>
-        <div class="lm-visor-campo-wrap">
+        ${clima?`<div class="lm-visor-clima-bar">${clima.label}</div>`:''}
+        <div class="lm-visor-campo-wrap ${climaClase}">
           <svg class="lm-visor-campo-svg" viewBox="0 0 ${ANCHO} ${ALTO}" preserveAspectRatio="xMidYMid meet">
             <defs>
               <radialGradient id="lmVisorCespedGrad" cx="50%" cy="50%" r="75%">
@@ -2351,6 +2355,8 @@
             <circle cx="${CENTRO_X}" cy="${CENTRO_Y}" r="1.3" class="lm-visor-balon" id="lmVisorBalon"/>
             <circle cx="${CENTRO_X}" cy="${CENTRO_Y}" r="3.6" class="lm-visor-resalte" id="lmVisorResalte" opacity="0"/>
           </svg>
+          ${(clima&&clima.id==='rain')?`<div class="lm-visor-lluvia">${Array.from({length:26}).map((_,i)=>`<span style="left:${Math.random()*100}%;animation-delay:${(Math.random()*1.4).toFixed(2)}s;animation-duration:${(0.55+Math.random()*0.35).toFixed(2)}s"></span>`).join('')}</div>`:''}
+          ${(clima&&clima.id==='snow')?`<div class="lm-visor-nieve">${Array.from({length:22}).map((_,i)=>`<span style="left:${Math.random()*100}%;animation-delay:${(Math.random()*3).toFixed(2)}s;animation-duration:${(2.4+Math.random()*1.6).toFixed(2)}s"></span>`).join('')}</div>`:''}
         </div>
         <div class="lm-visor-info-bar" id="lmVisorInfoBar">${t('lm.viendo_partido')}</div>
         <div class="lm-popup-actions"><button id="lmVisorCerrarBtn" class="mode-card-btn mode-card-btn-gold" disabled>${t('lm.continuar')}</button></div>
@@ -6527,7 +6533,8 @@
               const guardiasZona=state.guardiasZonas[z.id]||0;
               const nivel=state.disturbiosZonas[z.id]||0;
               const color=LM_DISTURBIO_COLOR[nivel];
-              return `<div class="lm-zona-marcador ${nivel===3?'lm-zona-marcador-grave':''}" style="left:${z.left}%;top:${z.top}%;${color?`--zona-color:${color}`:''}">
+              const claseLado = z.left<40 ? 'lm-zona-marcador-izq' : (z.left>60 ? 'lm-zona-marcador-der' : '');
+              return `<div class="lm-zona-marcador ${claseLado} ${nivel===3?'lm-zona-marcador-grave':''}" style="left:${z.left}%;top:${z.top}%;${color?`--zona-color:${color}`:''}">
                 ${color?`<div class="lm-zona-tinte" style="background:${color}"></div>`:''}
                 <div class="lm-zona-etiqueta">
                   <div class="lm-zona-nombre">${z.label}</div>
