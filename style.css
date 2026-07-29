@@ -3547,13 +3547,7 @@ body.liga-manager-screen .ranking-btn-label-lm{display:inline}
 .lm-sobre-salario{font-size:13px;color:#e6c94a;font-weight:700;margin-top:0}
 .lm-sobre-fichar{width:100%;padding:9px;font-size:12px;margin-top:8px}
 @media(max-width:1050px){
-  .lm-sobre-cards{
-    display:flex;flex-direction:row!important;align-items:stretch!important;
-    overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;
-    gap:10px;padding:4px 30px 8px 4px;scrollbar-width:none;
-  }
-  .lm-sobre-cards::-webkit-scrollbar{display:none}
-  .lm-sobre-cards > *{scroll-snap-align:start;flex:0 0 82vw;max-width:280px}
+  .lm-sobre-cards{display:flex;flex-direction:column;gap:8px}
 }
 /* FICHAJE ESTRELLA — cuando el sobre trae un jugador real de otro
    equipo en vez de un canterano inventado, se anuncia a lo grande: un
@@ -4080,26 +4074,78 @@ body.light-theme.menu-screen{
   .lm-quiniela-fila{grid-template-columns:1fr auto 1fr!important;gap:4px!important;padding:7px 6px!important}
   .lm-quiniela-equipo{font-size:10px!important}
   .lm-quiniela-btn{width:26px!important;height:26px!important}
-  /* Tarjetas del sobre de fichajes: carrusel horizontal deslizable en
-     vez de apiladas — así las 3 se intuyen de un vistazo sin scroll
-     vertical, con un asomo de la siguiente como pista visual. */
-  .lm-sobre-cards{
-    flex-direction:row!important;align-items:stretch!important;
-    overflow-x:auto!important;scroll-snap-type:x mandatory;
-    gap:10px!important;padding:4px 30px 8px 4px!important;flex-wrap:nowrap!important;
+  /* Tarjetas del sobre de fichajes en móvil: formato horizontal
+     compacto (foto a la izquierda, datos a la derecha) apiladas en
+     vertical — mucho más bajas que la tarjeta de escritorio, así las
+     3 caben en pantalla sin necesitar ningún scroll. */
+  .lm-sobre-cards{flex-direction:column!important;align-items:stretch!important;gap:8px!important}
+  .lm-sobre-card{
+    width:100%!important;max-width:none!important;
+    display:grid!important;grid-template-columns:64px 1fr auto;grid-template-rows:auto auto;
+    align-items:center;column-gap:10px;row-gap:2px;
+    padding:8px 10px!important;text-align:left!important;
   }
-  .lm-sobre-card{width:82vw!important;max-width:280px;flex:0 0 auto!important;scroll-snap-align:start}
-  /* Mismo carrusel horizontal para las tarjetas de candidato de cada
-     puesto del cuerpo técnico — se ven las 3 de un vistazo. */
-  .lm-trab-chips{
-    flex-wrap:nowrap!important;overflow-x:auto!important;scroll-snap-type:x mandatory;
-    padding-bottom:6px;
+  .lm-sobre-card .lm-sobre-cara{grid-row:1/4;grid-column:1;width:60px!important;height:60px!important;margin:0!important}
+  .lm-sobre-card .lm-sobre-nombre{grid-column:2/4;grid-row:1;font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .lm-sobre-card .lm-sobre-overall{grid-column:2;grid-row:2;font-size:15px;margin:0}
+  .lm-sobre-card .lm-sobre-procedencia{display:none}
+  .lm-sobre-card .lm-sobre-stats-fila{grid-column:1/4;grid-row:4;margin:4px 0 2px;font-size:9px}
+  .lm-sobre-card .lm-sobre-salario{grid-column:1;grid-row:5;font-size:11px}
+  .lm-sobre-card .lm-sobre-fichar{grid-column:2/4;grid-row:5;width:auto!important;padding:7px 14px!important;margin:0!important;font-size:11px}
+  .lm-sobre-card .lm-fichaje-estrella-tag,.lm-sobre-card .lm-sobre-oportunidad-badge{position:static!important;transform:none!important;display:inline-block;margin-bottom:3px;grid-column:1/4}
+  .lm-sobre-card{grid-template-rows:auto auto auto auto auto!important}
+  /* Tarjetas de misión/proyecto de cada departamento: formato
+     horizontal compacto en vez de la tarjeta vertical de escritorio —
+     así las 3 caben en pantalla sin necesitar scroll vertical. */
+  .med-card-grid{grid-template-columns:1fr!important;gap:8px!important}
+  .med-card{
+    flex-direction:row!important;align-items:center!important;text-align:left!important;
+    padding:10px 12px!important;gap:10px;
   }
-  .lm-trab-chip{flex:0 0 auto!important;width:78vw!important;max-width:260px;scroll-snap-align:start}
+  .med-card-icon{font-size:22px!important;flex-shrink:0}
+  .med-card-tag{position:static!important;order:-1;flex-shrink:0;writing-mode:vertical-rl;text-orientation:mixed;font-size:8px!important;padding:3px 2px!important;align-self:stretch;display:flex;align-items:center;justify-content:center}
+  .med-card-title{font-size:12px!important;margin:0!important}
+  .med-card-divider{display:none!important}
+  .med-card-desc{display:none!important}
+  .med-card-swap{top:4px!important;right:4px!important;width:22px!important;height:22px!important}
+  .med-card > .med-card-icon, .med-card > .med-card-title, .med-card > .med-card-dificultad, .med-card > .med-card-progress-label, .med-card > .med-card-progress, .med-card > .med-card-btn, .med-card > .med-card-bloqueada-label{
+    flex-shrink:0;
+  }
+  .med-card{flex-wrap:wrap!important}
+  .med-card-icon,.med-card-title{flex:0 0 auto}
+  .med-card-dificultad,.med-card-progress-label{font-size:9px!important;flex:1 1 auto;min-width:80px;text-align:left!important}
+  .med-card-progress{width:100%;order:5}
+  .med-card-btn,.med-card-bloqueada-label{flex:0 0 auto;margin-left:auto!important;padding:6px 10px!important;font-size:10px!important}
+  /* SEGURIDAD DEL ESTADIO en móvil: el mapa con etiquetas superpuestas
+     es ilegible y difícil de pulsar con precisión en pantallas
+     pequeñas — se sustituye por una lista clara con botones grandes,
+     dejando el mapa como imagen decorativa pequeña arriba. */
+  .lm-seguridad-mapa-wrap{display:none!important}
+  .lm-seguridad-mapa-mini{display:block!important;width:100%;border-radius:10px;margin-bottom:10px;opacity:.85}
+  .lm-seguridad-lista-movil{display:flex!important;flex-direction:column;gap:6px}
+  .lm-zona-fila-movil{
+    display:grid;grid-template-columns:5px 1fr auto auto auto;align-items:center;gap:8px;
+    background:#1c2023;border:1px solid #2a2f32;border-radius:8px;padding:8px 10px;
+  }
+  .lm-zona-fila-color{width:5px;align-self:stretch;border-radius:3px;min-height:32px}
+  .lm-zona-fila-color-grave{animation:lmZonaPulso 1.1s ease-in-out infinite}
+  .lm-zona-fila-info{min-width:0}
+  .lm-zona-fila-nombre{font-size:11px;color:#eee;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .lm-zona-fila-estado{font-family:'Bebas Neue',Impact,sans-serif;font-size:10px;letter-spacing:.5px;margin-top:1px}
+  .lm-zona-btn-movil{
+    width:34px;height:34px;border-radius:8px;border:1px solid #333;background:#1e2326;
+    color:#ccc;font-size:14px;display:flex;align-items:center;justify-content:center;
+    cursor:pointer;flex-shrink:0;
+  }
+  .lm-zona-btn-movil:disabled{opacity:.3}
+  .lm-zona-btn-movil:not(:disabled):active{border-color:var(--gold);color:var(--gold)}
+  .lm-zona-fila-num{font-size:11px;color:#eee;display:flex;align-items:center;gap:3px;flex-shrink:0;min-width:38px;justify-content:center}
+  .lm-zona-fila-num i{color:var(--gold)}
   /* Tarjetas de rasgo y de habilidades/mejoras: una columna */
   .lm-quiniela-rasgos-lista,.skill-grid,.upgrades-list .upgrade-row{
     grid-template-columns:1fr!important;
   }
+
   /* Botones de acción en pareja: apilados en vez de en fila si no caben */
   .lm-popup-actions{flex-wrap:wrap!important}
   .lm-popup-actions button{flex:1 1 100%!important}
@@ -4145,6 +4191,8 @@ body.light-theme.menu-screen{
 .lm-seguridad-contratar-row{display:flex;gap:8px;margin-bottom:14px}
 .lm-seguridad-contratar-row button{flex:1;padding:10px;font-size:12px}
 .lm-seguridad-mapa-wrap{position:relative;width:100%;border-radius:10px;overflow:hidden;background:#0a0c0a}
+.lm-seguridad-mapa-mini{display:none}
+.lm-seguridad-lista-movil{display:none}
 .lm-seguridad-mapa-img{width:100%;display:block}
 .lm-zona-marcador{
   position:absolute;transform:translate(-50%,-50%);display:flex;align-items:center;justify-content:center;

@@ -6287,6 +6287,24 @@
               </div>`;
             }).join('')}
           </div>
+          <img src="assets/estadio/gradas.png" alt="Estadio" class="lm-seguridad-mapa-mini">
+          <div class="lm-seguridad-lista-movil">
+            ${LM_ZONAS_ESTADIO.map(z=>{
+              const guardiasZona=state.guardiasZonas[z.id]||0;
+              const nivel=state.disturbiosZonas[z.id]||0;
+              const color=LM_DISTURBIO_COLOR[nivel];
+              return `<div class="lm-zona-fila-movil" ${color?`style="--zona-color:${color}"`:''}>
+                <div class="lm-zona-fila-color ${nivel===3?'lm-zona-fila-color-grave':''}" style="background:${color||'#333'}"></div>
+                <div class="lm-zona-fila-info">
+                  <div class="lm-zona-fila-nombre">${z.label}</div>
+                  <div class="lm-zona-fila-estado" style="color:${color||'#666'}">${nivel>0?LM_DISTURBIO_LABEL[nivel]:t('lm.disturbio_0')}</div>
+                </div>
+                <button class="lm-zona-btn-movil" data-zona-quitar="${z.id}" ${guardiasZona<=0?'disabled':''}><i class="ph ph-bold ph-minus"></i></button>
+                <span class="lm-zona-fila-num"><i class="ph ph-bold ph-shield"></i> ${guardiasZona}/3</span>
+                <button class="lm-zona-btn-movil" data-zona-anadir="${z.id}" ${(guardiasZona>=3||disponibles<=0)?'disabled':''}><i class="ph ph-bold ph-plus"></i></button>
+              </div>`;
+            }).join('')}
+          </div>
           <div class="lm-setup-desc" style="text-align:center;margin-top:8px">${t('lm.zonas_sin_guardia_desc')}</div>
           <div class="lm-popup-actions"><button id="lmSeguridadCerrarBtn" class="mode-card-btn mode-card-btn-gold">${t('lm.cerrar')}</button></div>
         </div>`;
