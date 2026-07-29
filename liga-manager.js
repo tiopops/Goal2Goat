@@ -2255,45 +2255,101 @@
     const rival = miEsLocal ? info.away : info.home;
     const miNombre = miEsLocal ? info.home.name : info.away.name;
     const rivalNombre = rival.name;
-    const misGoles = miEsLocal ? info.resultado.golesA : info.resultado.golesB;
-    const susGoles = miEsLocal ? info.resultado.golesB : info.resultado.golesA;
 
-    // Mis 11 — reutilizo la formación real elegida, remapeada a la
-    // mitad inferior del campo (ataco hacia arriba, y=150 es mi gol).
-    const misSlots = formacionActual().slots.map(s=>({
-      x:s.x, y:75+(s.y*0.75)
-    }));
-    // Los 11 del rival — formación razonable según su desequilibrio
-    // ataque/defensa real, en espejo en la mitad superior (su gol está
-    // en y=0, ataca hacia abajo).
-    const rivalSlots = generarSlotsFormacion(elegirFormacionRivalVisor(rival)).map(s=>({
-      x:100-s.x, y:75-(s.y*0.75)
-    }));
+    // En vez de rotar con CSS (frágil: el campo se veía cortado en
+    // escritorio), se generan las coordenadas ya en su orientación
+    // final según el dispositivo — vertical en móvil, horizontal en
+    // escritorio — usando siempre el mismo sistema de referencia base
+    // (formacionActual().slots, x/y de 0 a 100).
+    const esEscritorio = window.matchMedia && window.matchMedia('(min-width:900px)').matches;
+    const ANCHO = esEscritorio ? 150 : 100;
+    const ALTO = esEscritorio ? 100 : 150;
+    const CENTRO_X = ANCHO/2, CENTRO_Y = ALTO/2;
+
+    const misSlotsBase = formacionActual().slots;
+    const rivalSlotsBase = generarSlotsFormacion(elegirFormacionRivalVisor(rival));
+    let misSlots, rivalSlots, miGolXY, rivalGolXY, centroCampo;
+    if(esEscritorio){
+      // Horizontal: yo a la izquierda atacando a la derecha (mi
+      // portería en x≈4). s.y del slot original (0=línea rival,
+      // 100=mi portería) pasa a ser la distancia desde la izquierda.
+      misSlots = misSlotsBase.map(s=>({x:4+(s.y*0.68), y:s.x}));
+      rivalSlots = rivalSlotsBase.map(s=>({x:ANCHO-4-(s.y*0.68), y:100-s.x}));
+      miGolXY={x:3,y:CENTRO_Y}; rivalGolXY={x:ANCHO-3,y:CENTRO_Y};
+    } else {
+      // Vertical: yo abajo atacando hacia arriba.
+      misSlots = misSlotsBase.map(s=>({x:s.x, y:75+(s.y*0.75)}));
+      rivalSlots = rivalSlotsBase.map(s=>({x:100-s.x, y:75-(s.y*0.75)}));
+      miGolXY={x:CENTRO_X,y:147}; rivalGolXY={x:CENTRO_X,y:3};
+    }
+    centroCampo={x:CENTRO_X,y:CENTRO_Y};
+
+    // Franjas de siega del césped — alternadas, look profesional de
+    // retransmisión de televisión.
+    const NFRANJAS=9;
+    let franjasHTML='';
+    for(let i=0;i<NFRANJAS;i++){
+      const clara = i%2===0;
+      if(esEscritorio){
+        const w=ANCHO/NFRANJAS;
+        franjasHTML+=`<rect x="${i*w}" y="0" width="${w}" height="${ALTO}" fill="${clara?'#2f8a3a':'#2a7d34'}"/>`;
+      } else {
+        const h=ALTO/NFRANJAS;
+        franjasHTML+=`<rect x="0" y="${i*h}" width="${ANCHO}" height="${h}" fill="${clara?'#2f8a3a':'#2a7d34'}"/>`;
+      }
+    }
+    const lineasCampo = esEscritorio ? `
+            <rect x="2" y="2" width="${ANCHO-4}" height="${ALTO-4}" fill="none" stroke="#eaf5ea" stroke-width="0.5" opacity="0.9"/>
+            <line x1="${CENTRO_X}" y1="2" x2="${CENTRO_X}" y2="${ALTO-2}" stroke="#eaf5ea" stroke-width="0.5" opacity="0.9"/>
+            <circle cx="${CENTRO_X}" cy="${CENTRO_Y}" r="11" fill="none" stroke="#eaf5ea" stroke-width="0.5" opacity="0.9"/>
+            <rect x="2" y="24" width="15" height="52" fill="none" stroke="#eaf5ea" stroke-width="0.5" opacity="0.9"/>
+            <rect x="${ANCHO-17}" y="24" width="15" height="52" fill="none" stroke="#eaf5ea" stroke-width="0.5" opacity="0.9"/>
+            <rect x="2" y="38" width="6" height="24" fill="none" stroke="#eaf5ea" stroke-width="0.5" opacity="0.9"/>
+            <rect x="${ANCHO-8}" y="38" width="6" height="24" fill="none" stroke="#eaf5ea" stroke-width="0.5" opacity="0.9"/>
+    ` : `
+            <rect x="2" y="2" width="${ANCHO-4}" height="${ALTO-4}" fill="none" stroke="#eaf5ea" stroke-width="0.5" opacity="0.9"/>
+            <line x1="2" y1="${CENTRO_Y}" x2="${ANCHO-2}" y2="${CENTRO_Y}" stroke="#eaf5ea" stroke-width="0.5" opacity="0.9"/>
+            <circle cx="${CENTRO_X}" cy="${CENTRO_Y}" r="11" fill="none" stroke="#eaf5ea" stroke-width="0.5" opacity="0.9"/>
+            <rect x="24" y="2" width="52" height="15" fill="none" stroke="#eaf5ea" stroke-width="0.5" opacity="0.9"/>
+            <rect x="24" y="${ALTO-17}" width="52" height="15" fill="none" stroke="#eaf5ea" stroke-width="0.5" opacity="0.9"/>
+            <rect x="38" y="2" width="24" height="6" fill="none" stroke="#eaf5ea" stroke-width="0.5" opacity="0.9"/>
+            <rect x="38" y="${ALTO-8}" width="24" height="6" fill="none" stroke="#eaf5ea" stroke-width="0.5" opacity="0.9"/>
+    `;
+
+    function puntoJugadorHTML(s, esGK, esMio){
+      const claseEquipo = esMio ? 'lm-visor-punto-mio' : 'lm-visor-punto-rival';
+      const r = esGK ? 3.1 : 2.5;
+      return `<g class="lm-visor-jugador-g">
+        <circle cx="${s.x}" cy="${s.y}" r="${r+0.9}" class="lm-visor-punto-sombra"/>
+        <circle cx="${s.x}" cy="${s.y}" r="${r}" class="lm-visor-punto ${claseEquipo}${esGK?' lm-visor-punto-gk':''}"/>
+      </g>`;
+    }
 
     const overlay=document.createElement('div');
     overlay.id='lmVisorPartidoOverlay';
     overlay.innerHTML=`
       <div class="lm-visor-partido-card">
         <div class="lm-visor-marcador">
-          <span class="lm-visor-equipo">${miNombre}</span>
+          <span class="lm-visor-equipo lm-visor-equipo-mia">${miNombre}</span>
           <span class="lm-visor-resultado" id="lmVisorResultado">0 - 0</span>
-          <span class="lm-visor-equipo">${rivalNombre}</span>
+          <span class="lm-visor-equipo lm-visor-equipo-rival">${rivalNombre}</span>
         </div>
         <div class="lm-visor-campo-wrap">
-          <svg class="lm-visor-campo-svg" viewBox="0 0 100 150" preserveAspectRatio="xMidYMid meet">
-            <rect x="0" y="0" width="100" height="150" fill="#2d7a34"/>
-            <rect x="2" y="2" width="96" height="146" fill="none" stroke="#eaf5ea" stroke-width="0.6" opacity="0.85"/>
-            <line x1="2" y1="75" x2="98" y2="75" stroke="#eaf5ea" stroke-width="0.6" opacity="0.85"/>
-            <circle cx="50" cy="75" r="12" fill="none" stroke="#eaf5ea" stroke-width="0.6" opacity="0.85"/>
-            <circle cx="50" cy="75" r="0.8" fill="#eaf5ea" opacity="0.85"/>
-            <rect x="24" y="2" width="52" height="18" fill="none" stroke="#eaf5ea" stroke-width="0.6" opacity="0.85"/>
-            <rect x="24" y="130" width="52" height="18" fill="none" stroke="#eaf5ea" stroke-width="0.6" opacity="0.85"/>
-            <rect x="38" y="2" width="24" height="7" fill="none" stroke="#eaf5ea" stroke-width="0.6" opacity="0.85"/>
-            <rect x="38" y="141" width="24" height="7" fill="none" stroke="#eaf5ea" stroke-width="0.6" opacity="0.85"/>
-            <g id="lmVisorGrupoRival">${rivalSlots.map(s=>`<circle cx="${s.x}" cy="${s.y}" r="2.6" class="lm-visor-punto lm-visor-punto-rival"/>`).join('')}</g>
-            <g id="lmVisorGrupoMio">${misSlots.map(s=>`<circle cx="${s.x}" cy="${s.y}" r="2.6" class="lm-visor-punto lm-visor-punto-mio"/>`).join('')}</g>
-            <circle cx="50" cy="75" r="1.1" class="lm-visor-balon" id="lmVisorBalon"/>
-            <circle cx="50" cy="75" r="3.6" class="lm-visor-resalte" id="lmVisorResalte" opacity="0"/>
+          <svg class="lm-visor-campo-svg" viewBox="0 0 ${ANCHO} ${ALTO}" preserveAspectRatio="xMidYMid meet">
+            <defs>
+              <radialGradient id="lmVisorCespedGrad" cx="50%" cy="50%" r="75%">
+                <stop offset="0%" stop-color="#000" stop-opacity="0"/>
+                <stop offset="100%" stop-color="#000" stop-opacity="0.35"/>
+              </radialGradient>
+            </defs>
+            ${franjasHTML}
+            <rect x="0" y="0" width="${ANCHO}" height="${ALTO}" fill="url(#lmVisorCespedGrad)"/>
+            ${lineasCampo}
+            <circle cx="${CENTRO_X}" cy="${CENTRO_Y}" r="0.8" fill="#eaf5ea" opacity="0.9"/>
+            <g id="lmVisorGrupoRival">${rivalSlots.map((s,i)=>puntoJugadorHTML(s, i===0, false)).join('')}</g>
+            <g id="lmVisorGrupoMio">${misSlots.map((s,i)=>puntoJugadorHTML(s, i===0, true)).join('')}</g>
+            <circle cx="${CENTRO_X}" cy="${CENTRO_Y}" r="1.3" class="lm-visor-balon" id="lmVisorBalon"/>
+            <circle cx="${CENTRO_X}" cy="${CENTRO_Y}" r="3.6" class="lm-visor-resalte" id="lmVisorResalte" opacity="0"/>
           </svg>
         </div>
         <div class="lm-visor-info-bar" id="lmVisorInfoBar">${t('lm.viendo_partido')}</div>
@@ -2309,6 +2365,8 @@
     const grupoRival=overlay.querySelector('#lmVisorGrupoRival');
     const miLado = miEsLocal?'home':'away';
     const DURACION_TOTAL=30000;
+    const desplazamientoMio = esEscritorio ? 'translateX(6px)' : 'translateY(-6px)';
+    const desplazamientoRival = esEscritorio ? 'translateX(-6px)' : 'translateY(6px)';
 
     function moverBalon(x,y,durMs){
       balon.style.transition=`cx ${durMs}ms ease-in-out, cy ${durMs}ms ease-in-out`;
@@ -2335,14 +2393,14 @@
       grupoMio.style.transition='transform 1.1s ease-in-out';
       grupoRival.style.transition='transform 1.1s ease-in-out';
       if(posesionMia===true){
-        grupoMio.style.transform='translateY(-6px)';
-        grupoRival.style.transform='translateY(0)';
+        grupoMio.style.transform=desplazamientoMio;
+        grupoRival.style.transform='translate(0,0)';
       } else if(posesionMia===false){
-        grupoMio.style.transform='translateY(0)';
-        grupoRival.style.transform='translateY(6px)';
+        grupoMio.style.transform='translate(0,0)';
+        grupoRival.style.transform=desplazamientoRival;
       } else {
-        grupoMio.style.transform='translateY(0)';
-        grupoRival.style.transform='translateY(0)';
+        grupoMio.style.transform='translate(0,0)';
+        grupoRival.style.transform='translate(0,0)';
       }
     }
 
@@ -2383,14 +2441,15 @@
       if(p.tipo==='gol'){
         const esMio = p.evento.team===miLado;
         posicionarEquipos(esMio);
-        moverBalon(50, esMio?7:143, 850);
+        const destinoGol = esMio ? rivalGolXY : miGolXY;
+        moverBalon(destinoGol.x, destinoGol.y, 850);
         setTimeout(()=>{
           if(esMio) marcadorMio++; else marcadorRival++;
           resEl.textContent=`${miEsLocal?marcadorMio:marcadorRival} - ${miEsLocal?marcadorRival:marcadorMio}`;
           const nombreGoleador = p.evento.jugador ? p.evento.jugador.name : '';
           infoBar.textContent=`⚽ ${t('lm.visor_gol')} ${nombreGoleador} (${esMio?miNombre:rivalNombre})`;
           if(typeof window.playSound==='function') window.playSound('select');
-          setTimeout(()=>{ moverBalon(50,75,700); posicionarEquipos(null); setTimeout(ejecutarPaso, 750); }, 1300);
+          setTimeout(()=>{ moverBalon(centroCampo.x,centroCampo.y,700); posicionarEquipos(null); setTimeout(ejecutarPaso, 750); }, 1300);
         }, 850);
       } else {
         posicionarEquipos(p.posesionMia);

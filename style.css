@@ -4285,41 +4285,44 @@ body.light-theme.menu-screen{
    ============================================================ */
 #lmVisorPartidoOverlay{
   position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:260;
-  display:flex;align-items:center;justify-content:center;
+  display:flex;align-items:center;justify-content:center;padding:16px;
 }
 .lm-visor-partido-card{
   width:94vw;max-width:420px;max-height:92vh;display:flex;flex-direction:column;
-  background:#111;border:1px solid #2a2a2a;border-radius:14px;overflow:hidden;
-  box-shadow:0 20px 60px rgba(0,0,0,.7);
+  background:linear-gradient(160deg,#1c1c1c,#141414);border:1px solid rgba(201,162,39,.35);
+  border-radius:16px;overflow:hidden;
+  box-shadow:0 24px 70px rgba(0,0,0,.75);
 }
 .lm-visor-marcador{
   display:flex;align-items:center;justify-content:space-between;gap:8px;
-  padding:12px 16px;background:linear-gradient(160deg,#1c1c1c,#161616);
-  border-bottom:1px solid #2a2a2a;
+  padding:14px 18px;background:linear-gradient(160deg,#1c1c1c,#161616);
+  border-bottom:2px solid var(--gold);
 }
-.lm-visor-equipo{font-family:'Bebas Neue',Impact,sans-serif;font-size:12px;color:#ccc;letter-spacing:.5px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.lm-visor-resultado{font-family:'Bebas Neue',Impact,sans-serif;font-size:24px;color:var(--gold);letter-spacing:2px;flex-shrink:0;padding:0 10px}
-.lm-visor-campo-wrap{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;background:#0a0c0a;padding:10px}
-.lm-visor-campo-svg{width:100%;height:auto;max-height:60vh}
-.lm-visor-punto{stroke:#111;stroke-width:.5}
-.lm-visor-punto-mio{fill:#3b82f6}
-.lm-visor-punto-rival{fill:#e24b4a}
-.lm-visor-balon{fill:#fff;stroke:#333;stroke-width:.3}
-.lm-visor-resalte{fill:none;stroke:var(--gold);stroke-width:.6;pointer-events:none}
+.lm-visor-equipo{font-family:'Bebas Neue',Impact,sans-serif;font-size:13px;color:#ddd;letter-spacing:.6px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lm-visor-equipo-mia{color:var(--gold);text-align:left}
+.lm-visor-equipo-rival{text-align:right}
+.lm-visor-resultado{font-family:'Bebas Neue',Impact,sans-serif;font-size:26px;color:#fff;letter-spacing:3px;flex-shrink:0;padding:0 12px;text-shadow:0 0 12px rgba(230,201,74,.4)}
+.lm-visor-campo-wrap{
+  flex:1;min-height:0;display:flex;align-items:center;justify-content:center;
+  background:#060806;padding:12px;
+}
+.lm-visor-campo-svg{width:100%;height:auto;max-height:62vh;filter:drop-shadow(0 8px 20px rgba(0,0,0,.6))}
+.lm-visor-jugador-g{filter:drop-shadow(0 1px 2px rgba(0,0,0,.6))}
+.lm-visor-punto-sombra{fill:rgba(0,0,0,.35)}
+.lm-visor-punto{stroke-width:.6}
+.lm-visor-punto-mio{fill:var(--gold);stroke:#7a6217}
+.lm-visor-punto-rival{fill:#e24b4a;stroke:#7a2320}
+.lm-visor-punto-gk{fill:#fff;stroke:#888}
+.lm-visor-punto-gk.lm-visor-punto-mio{fill:#fff;stroke:var(--gold)}
+.lm-visor-punto-gk.lm-visor-punto-rival{fill:#fff;stroke:#e24b4a}
+.lm-visor-balon{fill:#fff;stroke:#333;stroke-width:.35;filter:drop-shadow(0 1px 1.5px rgba(0,0,0,.5))}
+.lm-visor-resalte{fill:none;stroke:var(--gold);stroke-width:.7;pointer-events:none}
 .lm-visor-info-bar{
-  padding:10px 14px;background:#161616;border-top:1px solid #2a2a2a;
-  font-size:12px;color:#ccc;text-align:center;min-height:18px;
+  padding:11px 16px;background:#161616;border-top:1px solid #2a2a2a;
+  font-size:12px;color:#ccc;text-align:center;min-height:18px;letter-spacing:.2px;
 }
-/* En escritorio, el mismo campo (siempre generado en coordenadas
-   verticales) se gira 90° para verse en horizontal, sin duplicar
-   ninguna coordenada de posición. */
 @media(min-width:900px){
-  .lm-visor-partido-card{max-width:680px}
-  .lm-visor-campo-wrap{padding:14px 0;height:56vh;position:relative;overflow:hidden}
-  .lm-visor-campo-svg{
-    position:absolute;top:50%;left:50%;
-    width:56vh;height:calc(56vh * 1.5);
-    transform:translate(-50%,-50%) rotate(-90deg);
-    max-height:none;
-  }
+  .lm-visor-partido-card{max-width:720px}
+  .lm-visor-campo-wrap{padding:16px}
+  .lm-visor-campo-svg{max-height:52vh}
 }
