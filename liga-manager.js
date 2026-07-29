@@ -5904,7 +5904,7 @@
       const rnd=catalogo[Math.floor(Math.random()*catalogo.length)];
       iconEl.className=`ph ph-bold ${rnd.icon} med-card-icon`;
       titleEl.textContent=rnd.nombre;
-      if(tagEl) tagEl.textContent = rnd.tipo==='nivel' ? 'PROYECTO' : (rnd.tipo==='sobre' ? 'PROYECTO ESPECIAL' : 'MISIÓN');
+      if(tagEl) tagEl.textContent = rnd.tipo==='nivel' ? 'PROYECTO' : (rnd.tipo==='sobre' ? 'PROYECTO ESPECIAL' : 'ACCIÓN');
       if(descEl) descEl.textContent = rnd.desc;
       if(typeof window.playSound==='function') window.playSound('spin');
       ticks++;
@@ -6023,7 +6023,7 @@
         return `
         <div class="med-card med-card-medico ${bloqueada?'med-card-bloqueada':''}" data-idx="${idx}">
           <button class="med-card-swap" data-swap="${idx}" title="Cambiar carta" ${cambioDisponible?'':'disabled'}><i class="ph ph-bold ph-arrows-clockwise"></i></button>
-          <div class="med-card-tag">${def.tipo==='nivel'?'PROYECTO':(def.tipo==='acumulacion'?'PROYECTO':'MISIÓN')}</div>
+          <div class="med-card-tag">${def.tipo==='nivel'?'PROYECTO':(def.tipo==='acumulacion'?'PROYECTO':'ACCIÓN')}</div>
           <i class="ph ph-bold ${def.icon} med-card-icon"></i>
           <div class="med-card-title">${tc('med', def.id, 'nombre', def.nombre)}</div>
           <div class="med-card-divider"></div>
@@ -6287,13 +6287,16 @@
               </div>`;
             }).join('')}
           </div>
-          <img src="assets/estadio/gradas.png" alt="Estadio" class="lm-seguridad-mapa-mini">
+          <div class="lm-seguridad-mapa-mini-wrap">
+            <img src="assets/estadio/gradas.png" alt="Estadio" class="lm-seguridad-mapa-mini">
+            ${LM_ZONAS_ESTADIO.map(z=>`<button type="button" class="lm-zona-hotspot" data-zona-jump="${z.id}" style="left:${z.left}%;top:${z.top}%" aria-label="${z.label}"></button>`).join('')}
+          </div>
           <div class="lm-seguridad-lista-movil">
             ${LM_ZONAS_ESTADIO.map(z=>{
               const guardiasZona=state.guardiasZonas[z.id]||0;
               const nivel=state.disturbiosZonas[z.id]||0;
               const color=LM_DISTURBIO_COLOR[nivel];
-              return `<div class="lm-zona-fila-movil" ${color?`style="--zona-color:${color}"`:''}>
+              return `<div class="lm-zona-fila-movil" id="lmZonaFila_${z.id}" ${color?`style="--zona-color:${color}"`:''}>
                 <div class="lm-zona-fila-color ${nivel===3?'lm-zona-fila-color-grave':''}" style="background:${color||'#333'}"></div>
                 <div class="lm-zona-fila-info">
                   <div class="lm-zona-fila-nombre">${z.label}</div>
@@ -6318,6 +6321,17 @@
         if(typeof window.playSound==='function') window.playSound('select');
         despedirGuardiaDisponible();
         pintar();
+      });
+      overlay.querySelectorAll('[data-zona-jump]').forEach(btn=>{
+        btn.addEventListener('click', ()=>{
+          if(typeof window.playSound==='function') window.playSound('select');
+          const fila=document.getElementById('lmZonaFila_'+btn.getAttribute('data-zona-jump'));
+          if(fila){
+            fila.scrollIntoView({behavior:'smooth', block:'center'});
+            fila.classList.add('lm-zona-fila-resaltada');
+            setTimeout(()=>fila.classList.remove('lm-zona-fila-resaltada'), 1600);
+          }
+        });
       });
       overlay.querySelectorAll('[data-zona-anadir]').forEach(btn=>{
         btn.addEventListener('click', ()=>{
@@ -6379,7 +6393,7 @@
         return `
         <div class="med-card med-card-mantenimiento ${bloqueada?'med-card-bloqueada':''}" data-idx="${idx}">
           <button class="med-card-swap" data-swap="${idx}" title="Cambiar carta" ${cambioDisponible?'':'disabled'}><i class="ph ph-bold ph-arrows-clockwise"></i></button>
-          <div class="med-card-tag">${def.tipo==='nivel'?'PROYECTO':'MISIÓN'}</div>
+          <div class="med-card-tag">${def.tipo==='nivel'?'PROYECTO':'ACCIÓN'}</div>
           <i class="ph ph-bold ${def.icon} med-card-icon"></i>
           <div class="med-card-title">${tc('mant', def.id, 'nombre', def.nombre)}</div>
           <div class="med-card-divider"></div>
@@ -6593,7 +6607,7 @@
         return `
         <div class="med-card med-card-dg ${bloqueada?'med-card-bloqueada':''}" data-idx="${idx}">
           <button class="med-card-swap" data-swap="${idx}" title="Cambiar carta" ${cambioDisponible?'':'disabled'}><i class="ph ph-bold ph-arrows-clockwise"></i></button>
-          <div class="med-card-tag">${def.tipo==='nivel'?'PROYECTO':'MISIÓN'}</div>
+          <div class="med-card-tag">${def.tipo==='nivel'?'PROYECTO':'ACCIÓN'}</div>
           <i class="ph ph-bold ${def.icon} med-card-icon"></i>
           <div class="med-card-title">${tc('dg', def.id, 'nombre', def.nombre)}</div>
           <div class="med-card-divider"></div>
@@ -6890,7 +6904,7 @@
         return `
         <div class="med-card med-card-dd ${bloqueada&&!nivelMaximoYa?'med-card-bloqueada':''}" data-idx="${idx}">
           <button class="med-card-swap" data-swap="${idx}" title="Cambiar carta" ${cambioDisponible?'':'disabled'}><i class="ph ph-bold ph-arrows-clockwise"></i></button>
-          <div class="med-card-tag">${def.tipo==='nivel'?'PROYECTO':'MISIÓN'}</div>
+          <div class="med-card-tag">${def.tipo==='nivel'?'PROYECTO':'ACCIÓN'}</div>
           <i class="ph ph-bold ${def.icon} med-card-icon"></i>
           <div class="med-card-title">${tc('dd', def.id, 'nombre', def.nombre)}</div>
           <div class="med-card-divider"></div>
@@ -7303,7 +7317,7 @@
         return `
         <div class="med-card med-card-pf ${bloqueada&&!nivelMaximoYa?'med-card-bloqueada':''}" data-idx="${idx}">
           <button class="med-card-swap" data-swap="${idx}" title="Cambiar carta" ${cambioDisponible?'':'disabled'}><i class="ph ph-bold ph-arrows-clockwise"></i></button>
-          <div class="med-card-tag">${def.tipo==='nivel'?'PROYECTO':'MISIÓN'}</div>
+          <div class="med-card-tag">${def.tipo==='nivel'?'PROYECTO':'ACCIÓN'}</div>
           <i class="ph ph-bold ${def.icon} med-card-icon"></i>
           <div class="med-card-title">${tc('pf', def.id, 'nombre', def.nombre)}</div>
           <div class="med-card-divider"></div>
@@ -7794,7 +7808,7 @@
           const badge=document.getElementById('lmTecnicosBadge');
           if(badge) badge.style.display='none';
         }
-        if(btn.dataset.lmtab==='campo'){
+        if(btn.dataset.lmtab==='equipo'){
           const badgeCampo=document.getElementById('lmCampoBadge');
           if(badgeCampo) badgeCampo.style.display='none';
         }
