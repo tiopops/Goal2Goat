@@ -3547,7 +3547,13 @@ body.liga-manager-screen .ranking-btn-label-lm{display:inline}
 .lm-sobre-salario{font-size:13px;color:#e6c94a;font-weight:700;margin-top:0}
 .lm-sobre-fichar{width:100%;padding:9px;font-size:12px;margin-top:8px}
 @media(max-width:1050px){
-  .lm-sobre-cards{flex-direction:column;align-items:center}
+  .lm-sobre-cards{
+    display:flex;flex-direction:row!important;align-items:stretch!important;
+    overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;
+    gap:10px;padding:4px 30px 8px 4px;scrollbar-width:none;
+  }
+  .lm-sobre-cards::-webkit-scrollbar{display:none}
+  .lm-sobre-cards > *{scroll-snap-align:start;flex:0 0 82vw;max-width:280px}
 }
 /* FICHAJE ESTRELLA — cuando el sobre trae un jugador real de otro
    equipo en vez de un canterano inventado, se anuncia a lo grande: un
@@ -4074,10 +4080,22 @@ body.light-theme.menu-screen{
   .lm-quiniela-fila{grid-template-columns:1fr auto 1fr!important;gap:4px!important;padding:7px 6px!important}
   .lm-quiniela-equipo{font-size:10px!important}
   .lm-quiniela-btn{width:26px!important;height:26px!important}
-  /* Tarjetas del sobre de fichajes: una debajo de otra en vez de en
-     fila, para que se lean bien sin necesitar zoom */
-  .lm-sobre-cards{flex-direction:column!important;align-items:center!important}
-  .lm-sobre-card{width:90vw!important;max-width:280px}
+  /* Tarjetas del sobre de fichajes: carrusel horizontal deslizable en
+     vez de apiladas — así las 3 se intuyen de un vistazo sin scroll
+     vertical, con un asomo de la siguiente como pista visual. */
+  .lm-sobre-cards{
+    flex-direction:row!important;align-items:stretch!important;
+    overflow-x:auto!important;scroll-snap-type:x mandatory;
+    gap:10px!important;padding:4px 30px 8px 4px!important;flex-wrap:nowrap!important;
+  }
+  .lm-sobre-card{width:82vw!important;max-width:280px;flex:0 0 auto!important;scroll-snap-align:start}
+  /* Mismo carrusel horizontal para las tarjetas de candidato de cada
+     puesto del cuerpo técnico — se ven las 3 de un vistazo. */
+  .lm-trab-chips{
+    flex-wrap:nowrap!important;overflow-x:auto!important;scroll-snap-type:x mandatory;
+    padding-bottom:6px;
+  }
+  .lm-trab-chip{flex:0 0 auto!important;width:78vw!important;max-width:260px;scroll-snap-align:start}
   /* Tarjetas de rasgo y de habilidades/mejoras: una columna */
   .lm-quiniela-rasgos-lista,.skill-grid,.upgrades-list .upgrade-row{
     grid-template-columns:1fr!important;
@@ -4086,6 +4104,13 @@ body.light-theme.menu-screen{
   .lm-popup-actions{flex-wrap:wrap!important}
   .lm-popup-actions button{flex:1 1 100%!important}
   .lm-seguridad-contratar-row{flex-direction:column!important}
+  /* Ventana de seguridad del estadio: el mapa depende de que la imagen
+     cargue con una relación de aspecto definida — en móvil se fuerza
+     una relación de aspecto explícita para que el espacio nunca
+     dependa de si la imagen ya ha terminado de cargar. */
+  #lmSeguridadEstadioOverlay .lm-seguridad-card{max-width:94vw!important;width:94vw!important;max-height:88vh!important;overflow-y:auto!important}
+  .lm-seguridad-mapa-wrap{aspect-ratio:1456/1080;min-height:200px}
+  .lm-zona-etiqueta{min-width:64px!important;padding:2px 4px!important}
 }
 
 

@@ -5581,7 +5581,7 @@
         manejarClicJugador(el.getAttribute('data-pid'));
       });
     });
-    reaplicarPestanaMovilLM();
+    if(typeof reiniciarAvisoInactividadCampo==='function') reiniciarAvisoInactividadCampo();
   }
   // Envoltorio de seguridad: si renderInner() falla por CUALQUIER
   // motivo, en vez de dejar la pantalla en negro en silencio, se
@@ -5871,7 +5871,7 @@
             resultado=resolverFn(tiradas);
           }catch(e){
             console.error('Error al resolver la tirada:', e);
-            resultado={tipo:'error', texto:'Hubo un problema al aplicar el resultado, pero tu tirada se ha registrado.'};
+            resultado={tipo:'error', texto:`Hubo un problema al aplicar el resultado, pero tu tirada se ha registrado. Detalle técnico (cópialo si vuelve a pasar): ${(e&&e.message)||e}`};
           }
           if(!resultado) resultado={tipo:'error', texto:'No se pudo aplicar el resultado.'};
           pintar();
@@ -6886,6 +6886,7 @@
         <div class="lm-dilemma-card lm-dilemma-card-dd" style="max-width:640px">
           ${xCerrarHTML()}
           <div class="lm-dilemma-title"><i class="ph ph-bold ph-binoculars"></i> DIRECTOR DEPORTIVO</div>
+          <button type="button" class="mode-card-btn mode-card-btn-gold" id="lmInfoPlantillaDDBtn" style="width:100%;margin:10px 0"><i class="ph ph-bold ph-scroll"></i> INFORMACIÓN DE LA PLANTILLA</button>
           <div class="lm-precio-box">
             <div class="lm-estadio-bar-label"><i class="ph ph-bold ph-magnifying-glass"></i><span>${t('lm.posicion_objetivo_ojeadores')}</span></div>
             <select id="lmPosicionOjeoSelect" class="lm-ojeo-select">
@@ -6894,7 +6895,6 @@
             </select>
             <div class="lm-aforo-nota">Los ojeadores se centrarán en esta posición para los próximos sobres que abras.</div>
           </div>
-          <button type="button" class="mode-card-btn mode-card-btn-gold" id="lmInfoPlantillaDDBtn" style="width:100%;margin:10px 0"><i class="ph ph-bold ph-scroll"></i> INFORMACIÓN DE LA PLANTILLA</button>
           ${renderNivelesDDHTML()}
           <div class="lm-staff-bar-capital" style="justify-content:center;margin:10px 0 8px"><span><i class="ph ph-bold ph-dice-five"></i> DADOS: <strong>${state.diceAvailable}</strong></span><span><i class="ph ph-bold ph-arrows-clockwise"></i> RERROLLS: <strong>${state.dadoRerollsDisponibles||0}</strong></span><span><i class="ph ph-bold ph-cards"></i> CAMBIOS: <strong>${Math.max(0,lmCambiosCartaPorPartido()-(state.directorDeportivoCambiosUsados||0))}/${lmCambiosCartaPorPartido()}</strong></span></div>
           <div class="med-card-grid">${cartasHTML}</div>
@@ -7719,6 +7719,7 @@
       lmCargarUpgradeCache().then(()=>render());
       lmCargarSkillsCache();
       render();
+      inicializarBarraMovilLM();
     }catch(e){
       console.error('Error en init() de Liga Manager:', e);
       const root=document.getElementById('ligaManagerScreen');
@@ -7733,44 +7734,66 @@
     }
   }
 
-  // Barra de pestañas móvil de Liga Manager — mismo patrón que
-  // switchMobileTab() de Copa Leyendas: solo una columna visible cada
-  // vez, controlada por la pestaña activa.
-  let mobileTabActivaLM='campo'; // pestaña móvil activa de Liga Manager, se conserva entre renders
-  // window.innerWidth puede dar valores poco fiables dentro de algunos
-  // WebView de Android (zoom, densidad de píxeles, etc.) — matchMedia
-  // consulta directamente el mismo punto de corte que usa el CSS de
-  // verdad, así que es la forma correcta de saber si estamos en móvil.
-  function esVistaMovilLM(){
-    return window.matchMedia && window.matchMedia('(max-width:1050px)').matches;
+  // Barra de pestañas móvil de Liga Manager. Los botones CAMPO/EQUIPO/
+  // RIVAL/TÉCNICOS son enlaces de ancla nativos (<a href="#id">) — el
+  // propio navegador hace el scroll, así que aquí NUNCA se fuerza ese
+  // scroll desde JavaScript (eso era lo que causaba que siempre
+  // "volviera a CAMPO" en cada actualización). Esta función solo se
+  // encarga de: 1) resaltar en amarillo la pestaña que se acaba de
+  // pulsar, 2) cerrar cualquier ventana emergente que estuviera
+  // abierta, para que no se quede tapando el contenido al navegar.
+  // Aviso de inactividad: si pasan 30s sin pulsar JUGAR/SEGUIR, se
+  // enciende una notificación roja sobre el icono CAMPO de la barra
+  // móvil, para que quede claro que hay una acción pendiente ahí.
+  let timerInactividadLM=null;
+  function reiniciarAvisoInactividadCampo(){
+    if(timerInactividadLM) clearTimeout(timerInactividadLM);
+    const badge=document.getElementById('lmCampoBadge');
+    if(badge) badge.style.display='none';
+    timerInactividadLM=setTimeout(()=>{
+      const b=document.getElementById('lmCampoBadge');
+      if(b) b.style.display='flex';
+    }, 30000);
   }
-  window.switchMobileTabLM = function(tab){
-    if(!esVistaMovilLM()) return;
-    if(tab!=='info') mobileTabActivaLM=tab;
-    document.querySelectorAll('#lmMobileTabBar .mob-tab[data-lmtab]').forEach(btn=>{
-      btn.classList.toggle('active', btn.dataset.lmtab===tab);
+  function inicializarBarraMovilLM(){
+    const barra=document.getElementById('lmMobileTabBar');
+    if(!barra || barra.dataset.wired) return; // solo una vez, la barra es HTML estático
+    barra.dataset.wired='1';
+    // JUGAR/SEGUIR se regenera en cada render() — se delega el evento
+    // sobre el contenedor fijo para no perder el cableado nunca.
+    const screen=document.getElementById('ligaManagerScreen');
+    if(screen) screen.addEventListener('click', (e)=>{
+      if(e.target.closest && (e.target.closest('#lmJugarBtn') || e.target.closest('#lmLiveContinuar'))){
+        reiniciarAvisoInactividadCampo();
+      }
     });
-    const mapa={equipo:'.lm-left-panel', campo:'.lm-center-panel', rival:'.lm-right-panel', tecnicos:'.lm-staff-panel'};
-    document.querySelectorAll('.lm-app-grid > .lm-panel, .lm-app-grid > .lm-center-panel').forEach(el=>el.classList.remove('mob-active'));
-    if(tab==='info'){
-      if(typeof window.playSound==='function') window.playSound('select');
-      alert('El tutorial de Liga Manager está en camino — todavía no está disponible.');
-      return;
-    }
-    const sel=mapa[tab];
-    const panel=sel && document.querySelector(sel);
-    if(panel){
-      panel.classList.add('mob-active');
-      const badge=document.getElementById('lmTecnicosBadge');
-      if(tab==='tecnicos' && badge) badge.style.display='none';
-      setTimeout(()=>{ panel.scrollIntoView({behavior:'smooth', block:'start'}); }, 50);
-    }
-  };
-  // Tras cada render() la rejilla se regenera entera — hay que
-  // reaplicar la pestaña móvil activa para que no "desaparezca" todo.
-  function reaplicarPestanaMovilLM(){
-    if(!esVistaMovilLM()) return;
-    window.switchMobileTabLM(mobileTabActivaLM);
+    barra.querySelectorAll('.mob-tab[data-lmtab]').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        if(typeof window.playSound==='function') window.playSound('select');
+        barra.querySelectorAll('.mob-tab').forEach(b=>b.classList.remove('active'));
+        btn.classList.add('active');
+        if(btn.dataset.lmtab==='tecnicos'){
+          const badge=document.getElementById('lmTecnicosBadge');
+          if(badge) badge.style.display='none';
+        }
+        if(btn.dataset.lmtab==='campo'){
+          const badgeCampo=document.getElementById('lmCampoBadge');
+          if(badgeCampo) badgeCampo.style.display='none';
+        }
+        // Cierra cualquier popup de Liga Manager que estuviera abierto,
+        // para que la navegación a la sección no se quede tapada detrás.
+        document.querySelectorAll('#ligaManagerScreen [id$="Overlay"]').forEach(ov=>ov.remove());
+      });
+    });
+    // TICKETS y CLASIF. también cuentan como "pestaña" a efectos de
+    // resaltado, aunque abran una ventana en vez de desplazar la vista.
+    ['lmTicketTabBtn','lmClasifTabBtn'].forEach(id=>{
+      const btn=document.getElementById(id);
+      if(btn) btn.addEventListener('click', ()=>{
+        barra.querySelectorAll('.mob-tab').forEach(b=>b.classList.remove('active'));
+        btn.classList.add('active');
+      });
+    });
   }
 
   window.rerenderLigaManager = function(){
