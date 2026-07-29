@@ -2290,9 +2290,10 @@
             <rect x="24" y="130" width="52" height="18" fill="none" stroke="#eaf5ea" stroke-width="0.6" opacity="0.85"/>
             <rect x="38" y="2" width="24" height="7" fill="none" stroke="#eaf5ea" stroke-width="0.6" opacity="0.85"/>
             <rect x="38" y="141" width="24" height="7" fill="none" stroke="#eaf5ea" stroke-width="0.6" opacity="0.85"/>
-            ${rivalSlots.map(s=>`<circle cx="${s.x}" cy="${s.y}" r="2.6" class="lm-visor-punto lm-visor-punto-rival"/>`).join('')}
-            ${misSlots.map(s=>`<circle cx="${s.x}" cy="${s.y}" r="2.6" class="lm-visor-punto lm-visor-punto-mio"/>`).join('')}
+            <g id="lmVisorGrupoRival">${rivalSlots.map(s=>`<circle cx="${s.x}" cy="${s.y}" r="2.6" class="lm-visor-punto lm-visor-punto-rival"/>`).join('')}</g>
+            <g id="lmVisorGrupoMio">${misSlots.map(s=>`<circle cx="${s.x}" cy="${s.y}" r="2.6" class="lm-visor-punto lm-visor-punto-mio"/>`).join('')}</g>
             <circle cx="50" cy="75" r="1.1" class="lm-visor-balon" id="lmVisorBalon"/>
+            <circle cx="50" cy="75" r="3.6" class="lm-visor-resalte" id="lmVisorResalte" opacity="0"/>
           </svg>
         </div>
         <div class="lm-visor-info-bar" id="lmVisorInfoBar">${t('lm.viendo_partido')}</div>
@@ -2304,12 +2305,45 @@
     const infoBar=overlay.querySelector('#lmVisorInfoBar');
     const resEl=overlay.querySelector('#lmVisorResultado');
     const cerrarBtn=overlay.querySelector('#lmVisorCerrarBtn');
+    const grupoMio=overlay.querySelector('#lmVisorGrupoMio');
+    const grupoRival=overlay.querySelector('#lmVisorGrupoRival');
     const miLado = miEsLocal?'home':'away';
     const DURACION_TOTAL=30000;
 
     function moverBalon(x,y,durMs){
       balon.style.transition=`cx ${durMs}ms ease-in-out, cy ${durMs}ms ease-in-out`;
       balon.setAttribute('cx',x); balon.setAttribute('cy',y);
+    }
+    // Anillo dorado que aparece un instante sobre el jugador que
+    // recibe el balón, justo cuando llega — ayuda a leer la jugada en
+    // vez de tener 22 puntos idénticos moviéndose sin foco visual.
+    const resalte=overlay.querySelector('#lmVisorResalte');
+    function resaltarReceptor(x,y,retrasoMs){
+      setTimeout(()=>{
+        resalte.setAttribute('cx',x); resalte.setAttribute('cy',y);
+        resalte.style.transition='none';
+        resalte.setAttribute('opacity','0.9');
+        resalte.style.transition='opacity .6s ease-out';
+        setTimeout(()=>resalte.setAttribute('opacity','0'), 30);
+      }, retrasoMs);
+    }
+    // Todo el bloque de un equipo se desplaza un poco hacia la portería
+    // rival mientras tiene el balón (sensación de avanzar en bloque, sin
+    // necesitar animar jugador a jugador), y vuelve a su sitio cuando
+    // pierde la posesión.
+    function posicionarEquipos(posesionMia){
+      grupoMio.style.transition='transform 1.1s ease-in-out';
+      grupoRival.style.transition='transform 1.1s ease-in-out';
+      if(posesionMia===true){
+        grupoMio.style.transform='translateY(-6px)';
+        grupoRival.style.transform='translateY(0)';
+      } else if(posesionMia===false){
+        grupoMio.style.transform='translateY(0)';
+        grupoRival.style.transform='translateY(6px)';
+      } else {
+        grupoMio.style.transform='translateY(0)';
+        grupoRival.style.transform='translateY(0)';
+      }
     }
 
     // Los goles reales (con minuto y goleador) marcan el ritmo de la
@@ -2319,7 +2353,8 @@
     const eventosGol=(info.eventos||[]).filter(e=>e.type==='goal').sort((a,b)=>a.minute-b.minute);
     const pasos=[];
     let tCursor=0, evIdx=0;
-    const PASO_MS=2300;
+    const PASO_MS=2300; // media de referencia para repartir los goles en el tiempo
+    function duracionPaseAleatoria(){ return 1600+Math.floor(Math.random()*1500); } // 1.6s a 3.1s, ritmo variable
     while(tCursor<DURACION_TOTAL){
       const tProximoGol = evIdx<eventosGol.length ? (eventosGol[evIdx].minute/90)*DURACION_TOTAL : Infinity;
       if(tProximoGol<=tCursor+PASO_MS){
@@ -2327,7 +2362,7 @@
         evIdx++;
         tCursor=tProximoGol+1400;
       } else {
-        pasos.push({tipo:'pase', posesionMia: Math.random()<0.52});
+        pasos.push({tipo:'pase', posesionMia: Math.random()<0.52, dur:duracionPaseAleatoria()});
         tCursor+=PASO_MS;
       }
     }
@@ -2347,6 +2382,7 @@
       const p=pasos[pasoIdx]; pasoIdx++;
       if(p.tipo==='gol'){
         const esMio = p.evento.team===miLado;
+        posicionarEquipos(esMio);
         moverBalon(50, esMio?7:143, 850);
         setTimeout(()=>{
           if(esMio) marcadorMio++; else marcadorRival++;
@@ -2354,16 +2390,18 @@
           const nombreGoleador = p.evento.jugador ? p.evento.jugador.name : '';
           infoBar.textContent=`⚽ ${t('lm.visor_gol')} ${nombreGoleador} (${esMio?miNombre:rivalNombre})`;
           if(typeof window.playSound==='function') window.playSound('select');
-          setTimeout(()=>{ moverBalon(50,75,700); setTimeout(ejecutarPaso, 750); }, 1300);
+          setTimeout(()=>{ moverBalon(50,75,700); posicionarEquipos(null); setTimeout(ejecutarPaso, 750); }, 1300);
         }, 850);
       } else {
+        posicionarEquipos(p.posesionMia);
         const slots = p.posesionMia?misSlots:rivalSlots;
         const jugador=slots[Math.floor(Math.random()*slots.length)];
-        moverBalon(jugador.x, jugador.y, PASO_MS*0.85);
+        moverBalon(jugador.x, jugador.y, p.dur*0.85);
+        resaltarReceptor(jugador.x, jugador.y, p.dur*0.85);
         const equipoTxt = p.posesionMia?miNombre:rivalNombre;
         const frases=[t('lm.visor_construye'), t('lm.visor_avanza'), t('lm.visor_centra')];
         infoBar.textContent=`${equipoTxt} ${frases[Math.floor(Math.random()*frases.length)]}`;
-        setTimeout(ejecutarPaso, PASO_MS);
+        setTimeout(ejecutarPaso, p.dur);
       }
     }
     setTimeout(ejecutarPaso, 600);
@@ -5161,8 +5199,8 @@
               <div class="lm-sub">Jornada ${Math.min(state.jornadaActual,38)} de 38 · ${monedaInfo.symbol}</div>
             </div>
             <div class="lm-modo-visual-toggle">
-              <button type="button" class="lm-modo-visual-btn ${(!state.modoVisualPartido||state.modoVisualPartido==='auto')?'lm-modo-visual-activo':''}" data-modo-visual="auto">${t('lm.modo_automatico')}</button>
-              <button type="button" class="lm-modo-visual-btn ${state.modoVisualPartido==='manager'?'lm-modo-visual-activo':''}" data-modo-visual="manager">${t('lm.modo_manager')}</button>
+              <button type="button" class="lm-modo-visual-btn ${(!state.modoVisualPartido||state.modoVisualPartido==='auto')?'lm-modo-visual-activo':''}" data-modo-visual="auto"><i class="ph ph-bold ph-fast-forward"></i>${t('lm.modo_automatico')}</button>
+              <button type="button" class="lm-modo-visual-btn ${state.modoVisualPartido==='manager'?'lm-modo-visual-activo':''}" data-modo-visual="manager"><i class="ph ph-bold ph-strategy"></i>${t('lm.modo_manager')}</button>
             </div>
             <button id="lmJugarBtn" class="lm-btn-jugar-icon" ${state.jornadaActual>38?'disabled':''} title="${state.jornadaActual>38?'Temporada completa':(hayVacantes?'Te falta cuerpo técnico por contratar, pero puedes jugar igualmente':'Jugar jornada')}">
               <i class="ph ph-bold ph-play-circle"></i>
