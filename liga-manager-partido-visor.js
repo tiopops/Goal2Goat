@@ -30,7 +30,7 @@
   }
 
   function abrirVisorPartidoManager(info, onFinish, deps){
-    const {state, t, formacionActual, generarSlotsFormacion, climaDelPartido, calcularStatsEquipo, plantillaEfectivaRival} = deps;
+    const {state, t, formacionActual, generarSlotsFormacion, climaDelPartido, calcularStatsEquipo, plantillaEfectivaRival, crestHTML, rivalCrestHTML} = deps;
     const miEsLocal = info.home.id==='lm_0';
     const rival = miEsLocal ? info.away : info.home;
     const miNombre = miEsLocal ? info.home.name : info.away.name;
@@ -152,10 +152,17 @@
     overlay.innerHTML=`
       <div class="lm-visor-partido-card">
         <div class="lm-visor-marcador">
-          <span class="lm-visor-equipo lm-visor-equipo-mia">${miNombre}</span>
+          <div class="lm-visor-equipo-bloque">
+            ${crestHTML ? crestHTML(state.escudo, 44) : ''}
+            <span class="lm-visor-equipo lm-visor-equipo-mia">${miNombre}</span>
+          </div>
           <span class="lm-visor-resultado" id="lmVisorResultado">0 - 0</span>
-          <span class="lm-visor-equipo lm-visor-equipo-rival">${rivalNombre}</span>
+          <div class="lm-visor-equipo-bloque">
+            ${rivalCrestHTML ? rivalCrestHTML(44, rival.crestImg) : ''}
+            <span class="lm-visor-equipo lm-visor-equipo-rival">${rivalNombre}</span>
+          </div>
         </div>
+        <div class="lm-visor-marcador-linea"></div>
         <div class="lm-visor-minutero" id="lmVisorMinutero">0'</div>
         ${clima?`<div class="lm-visor-clima-bar">${clima.label}</div>`:''}
         <div class="lm-visor-campo-wrap ${climaClase}">
@@ -414,7 +421,14 @@
     let marcadorMio=0, marcadorRival=0;
     let tiempoTranscurrido=0, golIdx=0;
     let posesionMia = Math.random()<probPosesionMia;
-    let idxConBalonMio=0, idxConBalonRival=0;
+    // El saque inicial lo pone en juego un centrocampista, nunca el
+    // portero — antes empezaba siempre en el índice 0 (el portero),
+    // sin ningún sentido para el saque de centro.
+    function primerMedioCentro(roles){
+      const idx=roles.findIndex(r=>r==='mid');
+      return idx>=0 ? idx : Math.floor(roles.length/2);
+    }
+    let idxConBalonMio=primerMedioCentro(rolesMios), idxConBalonRival=primerMedioCentro(rolesRival);
     const FRASES_PASE=[t('lm.visor_construye'), t('lm.visor_avanza')];
     let descansoMostrado=false;
 
@@ -425,6 +439,7 @@
         descansoMostrado=true;
         mostrarTextoGrande(t('lm.visor_descanso'), real(2400));
         infoBar.textContent=t('lm.visor_descanso');
+        if(typeof window.playSound==='function') window.playSound('whistle');
         setTimeout(tick, real(2400));
         return;
       }
@@ -454,7 +469,7 @@
           const nombreGoleador = evento.jugador ? evento.jugador.name : '';
           infoBar.textContent=`⚽ ${t('lm.visor_gol')} ${nombreGoleador} (${esMio?miNombre:rivalNombre})`;
           mostrarTextoGrande(t('lm.visor_gol'), real(1800));
-          if(typeof window.playSound==='function') window.playSound('select');
+          if(typeof window.playSound==='function') window.playSound('goal');
           setTimeout(()=>{
             moverBalon(centroCampo.x,centroCampo.y,700);
             posesionMia=!esMio; tiempoTranscurrido+=2750;
@@ -466,6 +481,7 @@
       if(tiempoTranscurrido>=DURACION_TOTAL && golIdx>=planGoles.length){
         infoBar.textContent=t('lm.visor_termina');
         mostrarTextoGrande(t('lm.visor_termina'), real(2600));
+        if(typeof window.playSound==='function') window.playSound('whistle');
         clearInterval(minuteroInterval);
         minuteroEl.textContent="90'";
         cerrarBtn.disabled=false;
@@ -514,6 +530,21 @@
           setTimeout(()=>moverJugador(porteroEsMio, 0, (porteroEsMio?miGolXY:rivalGolXY).x, (porteroEsMio?miGolXY:rivalGolXY).y, 600), real(dur*0.4));
         }, real(dur*0.5));
         const rebotaCorner = Math.random()<0.3;
+        // Tras el reinicio (córner o disparo fallado sin más), el
+        // balón NO puede quedarse "sin dueño" en el centro — se le
+        // asigna de verdad al jugador más cercano a ese punto, que
+        // además se desplaza físicamente hasta ahí. Sin esto, la
+        // siguiente jugada parecía salir de la nada.
+        function asignarBalonSuelto(px,py){
+          const dMio=jugadorMasCercano(posMia, px, py, -1);
+          const dRival=jugadorMasCercano(posRival, px, py, -1);
+          const distMio=Math.hypot(posMia[dMio].x-px, posMia[dMio].y-py);
+          const distRival=Math.hypot(posRival[dRival].x-px, posRival[dRival].y-py);
+          const esMio = distMio<=distRival;
+          posesionMia=esMio;
+          if(esMio){ idxConBalonMio=dMio; moverJugador(true, dMio, px, py, 500); }
+          else { idxConBalonRival=dRival; moverJugador(false, dRival, px, py, 500); }
+        }
         if(rebotaCorner){
           // Saque de esquina: el balón va a la esquina más cercana a
           // la portería rival, y desde ahí se centra al área — una
@@ -527,12 +558,26 @@
               const areaX = golObjetivo.x + (golObjetivo.x<CENTRO_X?8:-8);
               moverBalon(areaX, golObjetivo.y, 900);
               infoBar.textContent=`${nombreAtaca} centra desde el córner`;
-              setTimeout(()=>{ moverBalon(centroCampo.x, centroCampo.y, 700); }, real(900));
+              setTimeout(()=>{
+                moverBalon(centroCampo.x, centroCampo.y, 700);
+                asignarBalonSuelto(centroCampo.x, centroCampo.y);
+                tiempoTranscurrido+=dur+500+700+900+700+900;
+                setTimeout(tick, real(600));
+              }, real(900));
             }, real(700));
           }, real(dur*0.65));
         } else {
-          setTimeout(()=>{ moverBalon(centroCampo.x, centroCampo.y, 700); }, real(dur*0.65));
+          setTimeout(()=>{
+            moverBalon(centroCampo.x, centroCampo.y, 700);
+            asignarBalonSuelto(centroCampo.x, centroCampo.y);
+            tiempoTranscurrido+=dur+700;
+            setTimeout(tick, real(500));
+          }, real(dur*0.65));
         }
+        // Este disparo gestiona su propio final (arriba) — se corta
+        // aquí para que el cierre genérico de más abajo no pise la
+        // posesión/jugador que se acaba de asignar con datos viejos.
+        return;
       } else {
         // Pase: en el último tercio se busca el hueco por delante del
         // compañero (pase filtrado, simula la carrera); en el resto,
@@ -632,6 +677,12 @@
         tick();
       }, real(dur));
     }
+    // El balón empieza pegado de verdad al jugador que saca de centro,
+    // no flotando solo en el punto exacto del centro del campo.
+    const equipoInicial = posesionMia?posMia:posRival;
+    const idxInicial = posesionMia?idxConBalonMio:idxConBalonRival;
+    moverBalon(equipoInicial[idxInicial].x, equipoInicial[idxInicial].y, 1);
+    if(typeof window.playSound==='function') window.playSound('whistle');
     setTimeout(tick, real(600));
 
     const velocidadBtn=overlay.querySelector('#lmVisorVelocidadBtn');
