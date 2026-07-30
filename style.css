@@ -2930,6 +2930,11 @@ body.liga-manager-screen .ranking-btn-label-lm{display:inline}
 }
 .lm-correo-header i{color:var(--gold);margin-right:5px}
 .lm-correo-badge{background:#e24b4a;color:#fff;font-size:10px;min-width:18px;height:18px;border-radius:9px;padding:0 5px;display:inline-flex;align-items:center;justify-content:center}
+.lm-correo-borrar-todos{
+  margin-left:auto;background:none;border:1px solid #444;color:#999;
+  font-size:9px;letter-spacing:.5px;padding:3px 8px;border-radius:5px;cursor:pointer;
+}
+.lm-correo-borrar-todos:hover{border-color:#e24b4a;color:#e24b4a}
 .lm-correo-list{max-height:320px;overflow-y:auto}
 .lm-correo-list::-webkit-scrollbar{width:5px}
 .lm-correo-list::-webkit-scrollbar-thumb{background:#3a3f43;border-radius:3px}
@@ -3290,7 +3295,7 @@ body.liga-manager-screen .ranking-btn-label-lm{display:inline}
   text-align:center;
 }
 .med-card::before{
-  content:"";position:absolute;inset:5px;border:1px solid rgba(46,204,113,.35);
+  content:"";position:absolute;top:34px;right:5px;bottom:5px;left:5px;border:1px solid rgba(46,204,113,.35);
   border-radius:8px;pointer-events:none;
 }
 .med-card.med-card-bloqueada{opacity:.5}
@@ -3313,7 +3318,7 @@ body.liga-manager-screen .ranking-btn-label-lm{display:inline}
   color:#4fb87a;text-transform:uppercase;font-weight:700;
   width:100%;text-align:center;background:rgba(46,204,113,.14);
   padding:7px 0;margin:-12px -10px 10px;border-radius:12px 12px 0 0;
-  box-sizing:border-box;
+  box-sizing:border-box;position:relative;z-index:1;
 }
 .med-card-icon{font-size:44px;color:#2ecc71;margin-bottom:6px;filter:drop-shadow(0 0 6px rgba(46,204,113,.3))}
 .med-card-title{font-family:'Bebas Neue',Impact,sans-serif;font-size:12px;letter-spacing:.4px;color:#fff;margin-bottom:6px;line-height:1.15;min-height:28px}
@@ -4361,4 +4366,22 @@ body.light-theme.menu-screen{
   .lm-visor-partido-card{max-width:720px}
   .lm-visor-campo-wrap{padding:16px}
   .lm-visor-campo-svg{max-height:52vh}
+}
+
+/* Indicador de sobres/quiniela pendientes — esquina inferior izquierda
+   de los hubs de Director Deportivo/General, para poder recuperarlos
+   aunque se haya borrado el correo por accidente. */
+.lm-pendientes-indicador{
+  position:absolute;left:10px;bottom:10px;z-index:3;
+  display:flex;align-items:center;gap:6px;
+  background:#1c1c1c;border:1px solid var(--gold);border-radius:8px;
+  padding:6px 10px;color:var(--gold);font-family:'Bebas Neue',Impact,sans-serif;
+  font-size:10px;letter-spacing:.6px;cursor:pointer;
+  box-shadow:0 4px 12px rgba(0,0,0,.5);
+}
+.lm-pendientes-indicador:hover{background:#242424}
+.lm-pendientes-pulso{font-size:15px;animation:lmPendientesPulso 1.4s ease-in-out infinite}
+@keyframes lmPendientesPulso{
+  0%,100%{transform:scale(1);opacity:1}
+  50%{transform:scale(1.2);opacity:.7}
 }
