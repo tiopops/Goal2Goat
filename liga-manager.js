@@ -2256,6 +2256,13 @@
     const miNombre = miEsLocal ? info.home.name : info.away.name;
     const rivalNombre = rival.name;
 
+    // Estadísticas reales de ambos equipos — un equipo con mejor pase
+    // y técnica falla menos balones en la simulación, uno peor pierde
+    // el balón con más frecuencia sin necesitar que el rival presione.
+    const misStatsReales = (typeof calcularStatsEquipo==='function') ? calcularStatsEquipo() : {passing:60,technique:60};
+    const precisionMia = Math.max(0.25, Math.min(0.95, (misStatsReales.passing+misStatsReales.technique)/200));
+    const precisionRival = Math.max(0.25, Math.min(0.95, (rival.passing+rival.technique)/200));
+
     // En vez de rotar con CSS (frágil: el campo se veía cortado en
     // escritorio), se generan las coordenadas ya en su orientación
     // final según el dispositivo — vertical en móvil, horizontal en
@@ -2360,7 +2367,10 @@
           ${(clima&&clima.id==='snow')?`<div class="lm-visor-nieve">${Array.from({length:22}).map((_,i)=>`<span style="left:${Math.random()*100}%;animation-delay:${(Math.random()*3).toFixed(2)}s;animation-duration:${(2.4+Math.random()*1.6).toFixed(2)}s"></span>`).join('')}</div>`:''}
         </div>
         <div class="lm-visor-info-bar" id="lmVisorInfoBar">${t('lm.viendo_partido')}</div>
-        <div class="lm-popup-actions"><button id="lmVisorCerrarBtn" class="mode-card-btn mode-card-btn-gold" disabled>${t('lm.continuar')}</button></div>
+        <div class="lm-popup-actions">
+          <button id="lmVisorVelocidadBtn" class="mode-card-btn mode-card-btn-secondary"><i class="ph ph-bold ph-fast-forward"></i> ${t('lm.velocidad')} 1X</button>
+          <button id="lmVisorCerrarBtn" class="mode-card-btn mode-card-btn-gold" disabled>${t('lm.continuar')}</button>
+        </div>
       </div>`;
     document.getElementById('ligaManagerScreen').appendChild(overlay);
 
@@ -2371,12 +2381,19 @@
     const grupoMio=overlay.querySelector('#lmVisorGrupoMio');
     const grupoRival=overlay.querySelector('#lmVisorGrupoRival');
     const miLado = miEsLocal?'home':'away';
-    const DURACION_TOTAL=30000;
+    // 1x = el partido completo (90 minutos) se resuelve en 1 minuto
+    // real. 2x y 3x aceleran el tiempo REAL de reproducción (el botón
+    // de velocidad los cicla), pero el reparto de los goles reales
+    // sobre los 90 minutos no cambia — solo se ve más rápido.
+    let velocidadPartido=1;
+    const DURACION_TOTAL=60000;
+    function real(ms){ return ms/velocidadPartido; }
     const desplazamientoMio = esEscritorio ? 'translateX(6px)' : 'translateY(-6px)';
     const desplazamientoRival = esEscritorio ? 'translateX(-6px)' : 'translateY(6px)';
 
     function moverBalon(x,y,durMs){
-      balon.style.transition=`cx ${durMs}ms ease-in-out, cy ${durMs}ms ease-in-out`;
+      const durReal=real(durMs);
+      balon.style.transition=`cx ${durReal}ms ease-in-out, cy ${durReal}ms ease-in-out`;
       balon.setAttribute('cx',x); balon.setAttribute('cy',y);
     }
     // Anillo dorado que aparece un instante sobre el jugador que
@@ -2390,39 +2407,18 @@
         resalte.setAttribute('opacity','0.9');
         resalte.style.transition='opacity .6s ease-out';
         setTimeout(()=>resalte.setAttribute('opacity','0'), 30);
-      }, retrasoMs);
+      }, real(retrasoMs));
     }
-    // Todo el bloque de un equipo se desplaza un poco hacia la portería
-    // rival mientras tiene el balón (sensación de avanzar en bloque, sin
-    // necesitar animar jugador a jugador), y vuelve a su sitio cuando
-    // pierde la posesión.
-    function posicionarEquipos(posesionMia){
-      grupoMio.style.transition='transform 1.1s ease-in-out';
-      grupoRival.style.transition='transform 1.1s ease-in-out';
-      if(posesionMia===true){
-        grupoMio.style.transform=desplazamientoMio;
-        grupoRival.style.transform='translate(0,0)';
-      } else if(posesionMia===false){
-        grupoMio.style.transform='translate(0,0)';
-        grupoRival.style.transform=desplazamientoRival;
-      } else {
-        grupoMio.style.transform='translate(0,0)';
-        grupoRival.style.transform='translate(0,0)';
-      }
-    }
-
     // ========================================================
-    // MOTOR DE JUGADAS — cada jugador se mueve de forma individual,
-    // no todo el equipo como un bloque. Encapsulado en un catálogo de
-    // tipos de jugada real (pase corto, ataque por banda, contraataque,
-    // pared, regate, entrada defensiva, saque de banda, disparo
-    // lejano...), cada uno una función independiente y pequeña que
-    // recibe el mismo "contexto" con las herramientas que necesita.
-    // Fácil de ampliar: añadir un tipo más al catálogo JUGADAS.
+    // IA SENCILLA DEL PARTIDO — en vez de guionizar jugadas fijas, en
+    // cada instante el jugador con el balón decide qué hacer según 3
+    // datos reales: qué tan cerca está de la portería rival, si tiene
+    // un rival marcándole de cerca, y qué compañero está mejor situado
+    // (más adelantado y más libre) para recibir un pase. El resto de
+    // jugadores se reposicionan según su rol (más o menos adelantado)
+    // y si su equipo ataca o defiende — así el comportamiento nace de
+    // reglas simples, no de una animación escrita a mano por jugada.
     // ========================================================
-    // Copia mutable de las posiciones — se actualiza según se mueve
-    // cada jugador, para que la siguiente jugada sepa dónde está cada
-    // uno de verdad (no la posición original de la formación).
     let posMia = misSlots.map(s=>({...s}));
     let posRival = rivalSlots.map(s=>({...s}));
 
@@ -2431,7 +2427,8 @@
       const el=elJugador(esMio, idx);
       const arr = esMio?posMia:posRival;
       if(el){
-        el.style.transition=`cx ${dur}ms ease-in-out, cy ${dur}ms ease-in-out`;
+        const durReal=real(dur);
+        el.style.transition=`cx ${durReal}ms ease-in-out, cy ${durReal}ms ease-in-out`;
         el.setAttribute('cx',x); el.setAttribute('cy',y);
       }
       arr[idx]={x,y};
@@ -2445,162 +2442,152 @@
       });
       return mejor;
     }
-    // Punto ligeramente adelantado respecto al de ataque del equipo,
-    // para simular una progresión real hacia la portería contraria.
-    function avanceHacia(punto, golRival, factor){
-      return { x:punto.x+(golRival.x-punto.x)*factor, y:punto.y+(golRival.y-punto.y)*factor };
+    // "Avance" de cada jugador (0 a 1): qué tan cerca nace, en su
+    // posición de formación, de la portería contraria — un lateral
+    // vale poco, un delantero vale casi 1. Se usa para saber a quién
+    // conviene buscar con un pase y cuánto debe adelantarse cada uno
+    // al atacar.
+    function calcularAvance(slots, propioGol, rivalGol){
+      const dTotal=Math.hypot(rivalGol.x-propioGol.x, rivalGol.y-propioGol.y);
+      return slots.map(s=>{
+        const d=Math.hypot(s.x-propioGol.x, s.y-propioGol.y);
+        return Math.max(0.1, Math.min(1, d/dTotal));
+      });
+    }
+    const avanceMio=calcularAvance(misSlots, miGolXY, rivalGolXY);
+    const avanceRival=calcularAvance(rivalSlots, rivalGolXY, miGolXY);
+    // Rol por posición (no solo un número de avance): un defensa se
+    // comporta distinto a un delantero, no solo "se adelanta menos" —
+    // apenas participa en jugadas de ataque, y en la línea defensiva
+    // se mantiene disciplinado junto al resto de defensas.
+    function calcularRoles(avance){
+      return avance.map(a=> a<0.35?'def' : (a<0.65?'mid':'fwd'));
+    }
+    const rolesMios=calcularRoles(avanceMio);
+    const rolesRival=calcularRoles(avanceRival);
+    // Jugador de banda o de centro, según su posición lateral en la
+    // formación (perpendicular al eje de ataque) — un lateral o
+    // extremo se mantiene pegado a su carril, un central no se abre.
+    function calcularBanda(slots){
+      return slots.map(s=>{
+        const lateral = esEscritorio ? s.y : s.x; // coordenada perpendicular al eje de ataque
+        const distCentro = Math.abs(lateral-CENTRO_Y_LOCAL);
+        return distCentro>28 ? (lateral<CENTRO_Y_LOCAL?'banda1':'banda2') : 'centro';
+      });
+    }
+    const CENTRO_Y_LOCAL = esEscritorio ? ALTO/2 : ANCHO/2;
+    const bandaMia=calcularBanda(misSlots);
+    const bandaRival=calcularBanda(rivalSlots);
+    // La categoría táctica real que el jugador ha elegido para el
+    // partido (la misma que ya afecta al resultado) también cambia
+    // cómo se ve el equipo en la simulación: un planteamiento
+    // defensivo se repliega más y ataca a la contra; uno ofensivo
+    // empuja más líneas arriba y arriesga más.
+    const catTacticaMia = state.formacionCategoria;
+    const multEmpujeMio = catTacticaMia==='ofensiva' ? 1.35 : (catTacticaMia==='defensiva' ? 0.65 : 1);
+    const multRiesgoMio = catTacticaMia==='ofensiva' ? 1.25 : (catTacticaMia==='defensiva' ? 0.7 : 1);
+    // Sesgo real de posesión: un equipo claramente mejor (ataque+pase)
+    // tiende a monopolizar más el balón, uno claramente peor apenas lo
+    // toca — en vez de un reparto fijo cercano al 50%.
+    const calidadMia = (misStatsReales.attack+misStatsReales.passing)/2;
+    const calidadRival = (rival.attack+rival.passing)/2;
+    const probPosesionMia = Math.max(0.32, Math.min(0.68, 0.5+(calidadMia-calidadRival)/160));
+
+    // Reposiciona a todos los jugadores EXCEPTO el que lleva el balón
+    // en ese instante — cada uno según su propio rol (avance) y si su
+    // equipo ataca o defiende, con tiempos escalonados para que nunca
+    // se vea como un bloque.
+    function actualizarFormacionDinamica(atacaMio, idxExcluirMio, idxExcluirRival, balonPos){
+      function reubicarEquipo(esMio, idxExcluir){
+        const slots = esMio?misSlots:rivalSlots;
+        const pos = esMio?posMia:posRival;
+        const avance = esMio?avanceMio:avanceRival;
+        const roles = esMio?rolesMios:rolesRival;
+        const golRival = esMio?rivalGolXY:miGolXY;
+        const propioGol = esMio?miGolXY:rivalGolXY;
+        const yoAtaco = esMio===atacaMio;
+        const multEmpuje = esMio ? multEmpujeMio : 1;
+        const cercanos = yoAtaco ? [] : pos.map((p,i)=>({i,d:Math.hypot(p.x-balonPos.x,p.y-balonPos.y)}))
+          .filter(o=>o.i!==0 && o.i!==idxExcluir).sort((a,b)=>a.d-b.d).slice(0,2).map(o=>o.i);
+        const destinos=[]; // para la separación: no dejar que dos caigan en el mismo punto
+        for(let i=1;i<pos.length;i++){
+          if(i===idxExcluir) continue;
+          const base=slots[i];
+          // Al atacar, los más adelantados (avance alto) se lanzan más
+          // hacia arriba; al defender, todos se repliegan un poco hacia
+          // su propia portería. Un defensa apenas participa del ataque
+          // por mucho que "le tocara" adelantarse; un delantero sí.
+          const factorRol = roles[i]==='def' ? 0.35 : (roles[i]==='fwd' ? 1.3 : 1);
+          const empuje = yoAtaco ? (0.04+avance[i]*0.16)*factorRol*multEmpuje : 0.05;
+          const objetivo = yoAtaco ? golRival : propioGol;
+          let x=base.x+(objetivo.x-base.x)*empuje;
+          let y=base.y+(objetivo.y-base.y)*empuje;
+          if(cercanos.includes(i)){
+            // Presiona de verdad: se acerca al balón, no solo a su gol
+            x = x+(balonPos.x-x)*0.5;
+            y = y+(balonPos.y-y)*0.5;
+          }
+          // Separación: si el destino cae demasiado cerca de otro
+          // compañero que ya se ha colocado en este mismo instante, se
+          // aparta un poco — evita que dos jugadores acaben pegados.
+          destinos.forEach(d=>{
+            const dist=Math.hypot(x-d.x,y-d.y);
+            if(dist<9 && dist>0.01){
+              const empujeSep=(9-dist)/2;
+              x += (x-d.x)/dist*empujeSep;
+              y += (y-d.y)/dist*empujeSep;
+            }
+          });
+          x += (Math.random()-0.5)*2.2;
+          y += (Math.random()-0.5)*2.2;
+          destinos.push({x,y});
+          setTimeout(()=>moverJugador(esMio, i, x, y, 950+Math.random()*450), real(Math.random()*350));
+        }
+      }
+      reubicarEquipo(true, idxExcluirMio);
+      reubicarEquipo(false, idxExcluirRival);
     }
 
-    const JUGADAS = [
-      // 1. Pase corto entre dos compañeros cercanos
-      {id:'pase_corto', peso:5, ejecutar(ctx){
-        const dest=jugadorMasCercano(ctx.posArr, ctx.balonActual.x, ctx.balonActual.y, ctx.idxConBalon);
-        const p=ctx.posArr[dest];
-        const dur=1500+Math.random()*700;
-        ctx.moverBalon(p.x,p.y,dur);
-        ctx.texto(`${ctx.nombreEquipo} circula el balón con un pase corto`);
-        return {idxSiguiente:dest, dur};
-      }},
-      // 2. Pase largo / cambio de orientación al lado contrario
-      {id:'cambio_orientacion', peso:2, ejecutar(ctx){
-        const lejano = ctx.posArr.reduce((mejorIdx,p,i)=>{
-          if(i===ctx.idxConBalon) return mejorIdx;
-          const d=Math.hypot(p.x-ctx.balonActual.x,p.y-ctx.balonActual.y);
-          return (mejorIdx===-1||d>Math.hypot(ctx.posArr[mejorIdx].x-ctx.balonActual.x,ctx.posArr[mejorIdx].y-ctx.balonActual.y))?i:mejorIdx;
-        },-1);
-        const p=ctx.posArr[lejano];
-        const dur=1900+Math.random()*500;
-        ctx.moverBalon(p.x,p.y,dur);
-        ctx.texto(`${ctx.nombreEquipo} cambia de orientación con un pase largo`);
-        return {idxSiguiente:lejano, dur};
-      }},
-      // 3. Ataque por banda — un extremo avanza con el balón pegado a la línea
-      {id:'ataque_banda', peso:3, ejecutar(ctx){
-        const bandaY = ctx.posArr[ctx.idxConBalon].y < ctx.centro.y ? ctx.limiteBandaSup : ctx.limiteBandaInf;
-        const destino = ctx.esHorizontal
-          ? {x:avanceHacia(ctx.posArr[ctx.idxConBalon], ctx.golRival, 0.55).x, y:bandaY}
-          : {x:bandaY, y:avanceHacia(ctx.posArr[ctx.idxConBalon], ctx.golRival, 0.55).y};
-        const dur=1700+Math.random()*500;
-        ctx.moverJugadorConBalon(destino.x, destino.y, dur);
-        ctx.moverBalon(destino.x, destino.y, dur);
-        ctx.texto(`${ctx.nombreEquipo} se va por banda`);
-        return {idxSiguiente:ctx.idxConBalon, dur};
-      }},
-      // 4. Centro al área tras llegar a línea de fondo
-      {id:'centro_area', peso:2, ejecutar(ctx){
-        const destinoArea = avanceHacia(ctx.centro, ctx.golRival, 0.82);
-        const receptor = jugadorMasCercano(ctx.posArr, destinoArea.x, destinoArea.y, ctx.idxConBalon);
-        const dur=1300+Math.random()*400;
-        ctx.moverJugador(receptor, destinoArea.x, destinoArea.y, dur);
-        ctx.moverBalon(destinoArea.x, destinoArea.y, dur);
-        ctx.texto(`${ctx.nombreEquipo} busca el centro al área`);
-        return {idxSiguiente:receptor, dur};
-      }},
-      // 5. Contraataque — avance rápido de dos jugadores a la vez
-      {id:'contraataque', peso:2, ejecutar(ctx){
-        const compa=jugadorMasCercano(ctx.posArr, ctx.balonActual.x, ctx.balonActual.y, ctx.idxConBalon);
-        const destinoBalon=avanceHacia(ctx.posArr[ctx.idxConBalon], ctx.golRival, 0.5);
-        const destinoCompa=avanceHacia(ctx.posArr[compa], ctx.golRival, 0.4);
-        const dur=1200+Math.random()*300; // más rápido que una jugada normal
-        ctx.moverJugadorConBalon(destinoBalon.x, destinoBalon.y, dur);
-        ctx.moverJugador(compa, destinoCompa.x, destinoCompa.y, dur);
-        ctx.moverBalon(destinoBalon.x, destinoBalon.y, dur);
-        ctx.texto(`¡${ctx.nombreEquipo} sale al contraataque!`);
-        return {idxSiguiente:ctx.idxConBalon, dur};
-      }},
-      // 6. Combinación de pared (uno-dos)
-      {id:'pared', peso:2, ejecutar(ctx){
-        const compa=jugadorMasCercano(ctx.posArr, ctx.balonActual.x, ctx.balonActual.y, ctx.idxConBalon);
-        const posOrig={...ctx.posArr[ctx.idxConBalon]};
-        const dur1=900, dur2=1000;
-        ctx.moverBalon(ctx.posArr[compa].x, ctx.posArr[compa].y, dur1);
-        setTimeout(()=>{
-          const destino=avanceHacia(posOrig, ctx.golRival, 0.35);
-          ctx.moverJugador(ctx.idxConBalon, destino.x, destino.y, dur2);
-          ctx.moverBalon(destino.x, destino.y, dur2);
-        }, dur1);
-        ctx.texto(`${ctx.nombreEquipo} juega una pared`);
-        return {idxSiguiente:ctx.idxConBalon, dur:dur1+dur2};
-      }},
-      // 7. Regate — el jugador con balón esquiva a un rival cercano
-      {id:'regate', peso:2, ejecutar(ctx){
-        const p=ctx.posArr[ctx.idxConBalon];
-        const dur=1400+Math.random()*400;
-        const lateral = (Math.random()<0.5?-1:1)*5;
-        const mitad = ctx.esHorizontal ? {x:p.x+3, y:p.y+lateral} : {x:p.x+lateral, y:p.y+3};
-        ctx.moverJugadorConBalon(mitad.x, mitad.y, dur*0.45);
-        ctx.moverBalon(mitad.x, mitad.y, dur*0.45);
-        setTimeout(()=>{
-          const destino=avanceHacia(mitad, ctx.golRival, 0.3);
-          ctx.moverJugadorConBalon(destino.x, destino.y, dur*0.55);
-          ctx.moverBalon(destino.x, destino.y, dur*0.55);
-        }, dur*0.45);
-        ctx.texto(`${ctx.nombreEquipo} encara y se va del rival con un regate`);
-        return {idxSiguiente:ctx.idxConBalon, dur};
-      }},
-      // 8. Entrada defensiva — un rival cercano intercepta y roba el balón
-      {id:'entrada_defensiva', peso:3, ejecutar(ctx){
-        const ladronIdx=jugadorMasCercano(ctx.posArrRival, ctx.balonActual.x, ctx.balonActual.y, -1);
-        const dur=1000+Math.random()*300;
-        ctx.moverJugadorRival(ladronIdx, ctx.balonActual.x, ctx.balonActual.y, dur);
-        ctx.texto(`${ctx.nombreRival} recupera el balón con una entrada`);
-        return {cambiaPosesion:true, idxSiguienteRival:ladronIdx, dur};
-      }},
-      // 9. Saque de banda — reinicio corto tras salir el balón
-      {id:'saque_banda', peso:1, ejecutar(ctx){
-        const lateral = ctx.esHorizontal ? {x:ctx.posArr[ctx.idxConBalon].x, y:ctx.limiteBandaSup} : {x:ctx.limiteBandaSup, y:ctx.posArr[ctx.idxConBalon].y};
-        const receptor=jugadorMasCercano(ctx.posArr, lateral.x, lateral.y, ctx.idxConBalon);
-        const dur=1300;
-        ctx.moverBalon(ctx.posArr[receptor].x, ctx.posArr[receptor].y, dur);
-        ctx.texto(`${ctx.nombreEquipo} saca de banda`);
-        return {idxSiguiente:receptor, dur};
-      }},
-      // 10. Disparo lejano — intento sin gol, el balón vuelve al centro
-      {id:'disparo_lejano', peso:1, ejecutar(ctx){
-        const dur=1100;
-        ctx.moverBalon(ctx.golRival.x, ctx.golRival.y, dur);
-        ctx.texto(`¡${ctx.nombreEquipo} prueba fortuna desde lejos!`);
-        setTimeout(()=>{ ctx.moverBalon(ctx.centro.x, ctx.centro.y, 900); }, dur);
-        return {reiniciaEnCentro:true, dur:dur+900};
-      }},
-    ];
-
-    // Los goles reales (con minuto y goleador) marcan el ritmo de la
-    // simulación — se reparten de forma proporcional en los 30s. Entre
-    // gol y gol se ejecutan jugadas del catálogo de arriba, elegidas al
-    // azar según su peso (las más comunes en un partido real, como el
-    // pase corto, aparecen más veces que un disparo lejano).
     const eventosGol=(info.eventos||[]).filter(e=>e.type==='goal').sort((a,b)=>a.minute-b.minute);
     let tCursorPlan=0, evIdxPlan=0;
-    const PASO_MS=2300;
     const planGoles=[];
     while(tCursorPlan<DURACION_TOTAL){
       const tProximoGol = evIdxPlan<eventosGol.length ? (eventosGol[evIdxPlan].minute/90)*DURACION_TOTAL : Infinity;
-      if(tProximoGol<=tCursorPlan+PASO_MS){
-        planGoles.push(tProximoGol); evIdxPlan++;
-        tCursorPlan=tProximoGol+1400;
-      } else { tCursorPlan+=PASO_MS; }
+      if(tProximoGol<=tCursorPlan+1600){ planGoles.push(tProximoGol); evIdxPlan++; tCursorPlan=tProximoGol+1400; }
+      else { tCursorPlan+=1600; }
     }
     while(evIdxPlan<eventosGol.length){ planGoles.push(DURACION_TOTAL); evIdxPlan++; }
 
-    const pesoTotal=JUGADAS.reduce((a,j)=>a+j.peso,0);
-    function elegirJugada(){
-      let r=Math.random()*pesoTotal;
-      for(const j of JUGADAS){ r-=j.peso; if(r<=0) return j; }
-      return JUGADAS[0];
-    }
+    // Tarjetas reales del partido — se muestran en su momento
+    // proporcional, sin interrumpir la simulación como un gol.
+    const eventosTarjeta=(info.eventos||[]).filter(e=>e.type==='card').sort((a,b)=>a.minute-b.minute)
+      .map(e=>({...e, tMostrar:(e.minute/90)*DURACION_TOTAL, mostrado:false}));
 
     let marcadorMio=0, marcadorRival=0;
     let tiempoTranscurrido=0, golIdx=0;
-    let posesionMia = Math.random()<0.52;
-    let idxConBalonMio = 0, idxConBalonRival = 0; // arrancan con el portero, la primera jugada los saca
+    let posesionMia = Math.random()<probPosesionMia;
+    let idxConBalonMio=0, idxConBalonRival=0;
+    const FRASES_PASE=[t('lm.visor_construye'), t('lm.visor_avanza')];
 
-    function ejecutarPaso(){
-      // ¿Toca ya el siguiente gol real?
+    function tick(){
+      // Tarjeta real de este partido, si toca ya — se muestra un
+      // instante en la barra de información sin pausar la simulación.
+      const tarjetaAhora = eventosTarjeta.find(e=>!e.mostrado && tiempoTranscurrido>=e.tMostrar);
+      if(tarjetaAhora){
+        tarjetaAhora.mostrado=true;
+        const esMia = tarjetaAhora.team===miLado;
+        const emoji = tarjetaAhora.tarjeta==='roja' ? '🟥' : '🟨';
+        const nombreJ = tarjetaAhora.jugador ? tarjetaAhora.jugador.name : '';
+        infoBar.textContent=`${emoji} Tarjeta ${tarjetaAhora.tarjeta} para ${nombreJ} (${esMia?miNombre:rivalNombre})`;
+        tiempoTranscurrido+=1300;
+        setTimeout(tick, real(1300));
+        return;
+      }
       if(golIdx<planGoles.length && tiempoTranscurrido>=planGoles[golIdx]-200){
         const evento=eventosGol[golIdx]; golIdx++;
         const esMio = evento.team===miLado;
-        posicionarEquipos(esMio);
+        const balonPos0={x:parseFloat(balon.getAttribute('cx')), y:parseFloat(balon.getAttribute('cy'))};
+        actualizarFormacionDinamica(esMio, esMio?idxConBalonMio:undefined, esMio?undefined:idxConBalonRival, balonPos0);
         const destinoGol = esMio ? rivalGolXY : miGolXY;
         moverBalon(destinoGol.x, destinoGol.y, 850);
         setTimeout(()=>{
@@ -2610,11 +2597,11 @@
           infoBar.textContent=`⚽ ${t('lm.visor_gol')} ${nombreGoleador} (${esMio?miNombre:rivalNombre})`;
           if(typeof window.playSound==='function') window.playSound('select');
           setTimeout(()=>{
-            moverBalon(centroCampo.x,centroCampo.y,700); posicionarEquipos(null);
+            moverBalon(centroCampo.x,centroCampo.y,700);
             posesionMia=!esMio; tiempoTranscurrido+=2750;
-            setTimeout(ejecutarPaso, 750);
-          }, 1300);
-        }, 850);
+            setTimeout(tick, real(750));
+          }, real(1300));
+        }, real(850));
         return;
       }
       if(tiempoTranscurrido>=DURACION_TOTAL && golIdx>=planGoles.length){
@@ -2622,46 +2609,130 @@
         cerrarBtn.disabled=false;
         return;
       }
-      posicionarEquipos(posesionMia);
-      const jugada=elegirJugada();
-      const balonActual={x:parseFloat(balon.getAttribute('cx')), y:parseFloat(balon.getAttribute('cy'))};
-      const ctx={
-        posArr: posesionMia?posMia:posRival,
-        posArrRival: posesionMia?posRival:posMia,
-        idxConBalon: posesionMia?idxConBalonMio:idxConBalonRival,
-        balonActual, centro:centroCampo,
-        golRival: posesionMia?rivalGolXY:miGolXY,
-        nombreEquipo: posesionMia?miNombre:rivalNombre,
-        nombreRival: posesionMia?rivalNombre:miNombre,
-        esHorizontal: esEscritorio,
-        limiteBandaSup: esEscritorio?6:6, limiteBandaInf: esEscritorio?(ALTO-6):(ANCHO-6),
-        moverBalon, texto:(s)=>{ infoBar.textContent=s; },
-        moverJugador:(idx,x,y,dur)=>moverJugador(posesionMia,idx,x,y,dur),
-        moverJugadorRival:(idx,x,y,dur)=>moverJugador(!posesionMia,idx,x,y,dur),
-        moverJugadorConBalon:(x,y,dur)=>moverJugador(posesionMia, posesionMia?idxConBalonMio:idxConBalonRival, x, y, dur),
-      };
-      const resultado=jugada.ejecutar(ctx);
-      resaltarReceptor(
-        resultado.cambiaPosesion ? (posesionMia?posRival:posMia)[resultado.idxSiguienteRival].x : ctx.posArr[resultado.idxSiguiente!==undefined?resultado.idxSiguiente:ctx.idxConBalon].x,
-        resultado.cambiaPosesion ? (posesionMia?posRival:posMia)[resultado.idxSiguienteRival].y : ctx.posArr[resultado.idxSiguiente!==undefined?resultado.idxSiguiente:ctx.idxConBalon].y,
-        resultado.dur
-      );
-      setTimeout(()=>{
-        if(resultado.cambiaPosesion){
-          posesionMia=!posesionMia;
-          if(posesionMia) idxConBalonMio=resultado.idxSiguienteRival; else idxConBalonRival=resultado.idxSiguienteRival;
-        } else if(resultado.idxSiguiente!==undefined){
-          if(posesionMia) idxConBalonMio=resultado.idxSiguiente; else idxConBalonRival=resultado.idxSiguiente;
-        }
-        // De vez en cuando (jugada fallida/despeje) cambia la posesión de
-        // forma natural aunque no haya sido una entrada defensiva expresa.
-        if(!resultado.cambiaPosesion && Math.random()<0.14){ posesionMia=!posesionMia; }
-        tiempoTranscurrido+=resultado.dur;
-        ejecutarPaso();
-      }, resultado.dur);
-    }
-    setTimeout(ejecutarPaso, 600);
 
+      const equipoAtaca = posesionMia?posMia:posRival;
+      const equipoDefiende = posesionMia?posRival:posMia;
+      const avanceAtaca = posesionMia?avanceMio:avanceRival;
+      const idxConBalon = posesionMia?idxConBalonMio:idxConBalonRival;
+      const golObjetivo = posesionMia?rivalGolXY:miGolXY;
+      const propioGol = posesionMia?miGolXY:rivalGolXY;
+      const nombreAtaca = posesionMia?miNombre:rivalNombre;
+      const nombreDefiende = posesionMia?rivalNombre:miNombre;
+      const posActual = equipoAtaca[idxConBalon];
+      const distGol = Math.hypot(posActual.x-golObjetivo.x, posActual.y-golObjetivo.y);
+      const distTotal = Math.hypot(propioGol.x-golObjetivo.x, propioGol.y-golObjetivo.y);
+      // Zona del campo (0 = pegado a la portería rival, 1 = pegado a la
+      // propia): en el último tercio se arriesga más (regates, tiros,
+      // pases al espacio); en el propio tercio se prioriza un pase
+      // corto y seguro, como en un partido real.
+      const zona = distGol/distTotal;
+      const rivalCercanoIdx = jugadorMasCercano(equipoDefiende, posActual.x, posActual.y, -1);
+      const distRival = Math.hypot(equipoDefiende[rivalCercanoIdx].x-posActual.x, equipoDefiende[rivalCercanoIdx].y-posActual.y);
+      const dur=1100+Math.random()*900;
+      let siguientePosesionMia=posesionMia, siguienteIdxMio=idxConBalonMio, siguienteIdxRival=idxConBalonRival;
+
+      if(distRival<7 && Math.random()<(zona<0.35?0.38:0.28)){
+        // Presión de cerca: el rival se lleva el balón de verdad — más
+        // probable en el último tercio, donde la defensa aprieta más.
+        moverBalon(equipoDefiende[rivalCercanoIdx].x, equipoDefiende[rivalCercanoIdx].y, dur*0.7);
+        infoBar.textContent=`${nombreDefiende} recupera el balón con una entrada`;
+        siguientePosesionMia=!posesionMia;
+        if(siguientePosesionMia) siguienteIdxMio=rivalCercanoIdx; else siguienteIdxRival=rivalCercanoIdx;
+      } else if(zona<0.24 && Math.random()<0.38*(posesionMia?multRiesgoMio:1)){
+        // Cerca del área: intento de disparo (sin gol, salvo que
+        // coincida con un gol real programado, gestionado aparte). El
+        // portero contrario reacciona hacia el disparo.
+        moverBalon(golObjetivo.x, golObjetivo.y, dur*0.65);
+        infoBar.textContent=`¡${nombreAtaca} dispara a portería!`;
+        const portero = posesionMia?posRival:posMia;
+        const porteroEsMio = !posesionMia;
+        const desvio=(Math.random()-0.5)*7;
+        setTimeout(()=>{
+          moverJugador(porteroEsMio, 0, portero[0].x+desvio, portero[0].y, dur*0.4);
+          setTimeout(()=>moverJugador(porteroEsMio, 0, (porteroEsMio?miGolXY:rivalGolXY).x, (porteroEsMio?miGolXY:rivalGolXY).y, 600), real(dur*0.4));
+        }, real(dur*0.5));
+        const rebotaCorner = Math.random()<0.3;
+        if(rebotaCorner){
+          // Saque de esquina: el balón va a la esquina más cercana a
+          // la portería rival, y desde ahí se centra al área — una
+          // jugada a balón parado propia, no solo el reinicio genérico.
+          const cornerX = esEscritorio ? (golObjetivo.x<CENTRO_X?4:ANCHO-4) : (Math.random()<0.5?4:ANCHO-4);
+          const cornerY = esEscritorio ? (Math.random()<0.5?4:ALTO-4) : (golObjetivo.y<CENTRO_Y?4:ALTO-4);
+          setTimeout(()=>{
+            moverBalon(cornerX, cornerY, 500);
+            infoBar.textContent=`Saque de esquina para ${nombreAtaca}`;
+            setTimeout(()=>{
+              const areaX = golObjetivo.x + (golObjetivo.x<CENTRO_X?8:-8);
+              moverBalon(areaX, golObjetivo.y, 900);
+              infoBar.textContent=`${nombreAtaca} centra desde el córner`;
+              setTimeout(()=>{ moverBalon(centroCampo.x, centroCampo.y, 700); }, real(900));
+            }, real(700));
+          }, real(dur*0.65));
+        } else {
+          setTimeout(()=>{ moverBalon(centroCampo.x, centroCampo.y, 700); }, real(dur*0.65));
+        }
+      } else {
+        // Pase: en el último tercio se busca el hueco por delante del
+        // compañero (pase filtrado, simula la carrera); en el resto,
+        // a su posición actual. Se puntúa por avance, distancia
+        // razonable y lejanía de su marca.
+        let mejor=-1, mejorPunt=-Infinity;
+        equipoAtaca.forEach((p,i)=>{
+          if(i===idxConBalon) return;
+          const d=Math.hypot(p.x-posActual.x, p.y-posActual.y);
+          if(d>42) return;
+          const marcaIdx=jugadorMasCercano(equipoDefiende, p.x, p.y, -1);
+          const distMarca=Math.hypot(equipoDefiende[marcaIdx].x-p.x, equipoDefiende[marcaIdx].y-p.y);
+          const rolesAtaca = posesionMia?rolesMios:rolesRival;
+          const bonusRol = (zona<0.4 && rolesAtaca[i]==='fwd') ? 2.5 : 0;
+          const punt = avanceAtaca[i]*9 - d*0.12 + distMarca*0.35 + bonusRol + Math.random()*3;
+          if(punt>mejorPunt){ mejorPunt=punt; mejor=i; }
+        });
+        if(mejor===-1) mejor=jugadorMasCercano(equipoAtaca, posActual.x, posActual.y, idxConBalon);
+        const precisionEquipo = posesionMia?precisionMia:precisionRival;
+        const paseFallido = Math.random() > precisionEquipo && Math.random()<0.5;
+        if(paseFallido){
+          // Pase impreciso: no llega a nadie propio, el rival más
+          // cercano al punto de destino se queda con el balón — un
+          // equipo con peor pase/técnica falla más balones sin que
+          // haga falta que el rival presione para robarlo.
+          const destinoFallido=equipoAtaca[mejor];
+          const interceptorIdx=jugadorMasCercano(equipoDefiende, destinoFallido.x, destinoFallido.y, -1);
+          moverBalon(equipoDefiende[interceptorIdx].x, equipoDefiende[interceptorIdx].y, dur);
+          infoBar.textContent=`${nombreAtaca} pierde el balón con un pase impreciso`;
+          siguientePosesionMia=!posesionMia;
+          if(siguientePosesionMia) siguienteIdxMio=interceptorIdx; else siguienteIdxRival=interceptorIdx;
+        } else {
+        let destino=equipoAtaca[mejor];
+        if(zona<0.45){
+          // Pase filtrado: se envía un poco más adelantado que la
+          // posición actual del compañero, hacia la portería rival.
+          const factor=0.18;
+          destino={x:destino.x+(golObjetivo.x-destino.x)*factor, y:destino.y+(golObjetivo.y-destino.y)*factor};
+        }
+        moverBalon(destino.x, destino.y, dur);
+        resaltarReceptor(destino.x, destino.y, dur);
+        infoBar.textContent=`${nombreAtaca} ${FRASES_PASE[Math.floor(Math.random()*FRASES_PASE.length)]}`;
+        if(posesionMia) siguienteIdxMio=mejor; else siguienteIdxRival=mejor;
+        }
+      }
+
+      actualizarFormacionDinamica(posesionMia, posesionMia?idxConBalon:undefined, posesionMia?undefined:idxConBalon, posActual);
+
+      setTimeout(()=>{
+        posesionMia=siguientePosesionMia; idxConBalonMio=siguienteIdxMio; idxConBalonRival=siguienteIdxRival;
+        tiempoTranscurrido+=dur;
+        tick();
+      }, real(dur));
+    }
+    setTimeout(tick, real(600));
+
+    const velocidadBtn=overlay.querySelector('#lmVisorVelocidadBtn');
+    if(velocidadBtn) velocidadBtn.addEventListener('click', ()=>{
+      if(typeof window.playSound==='function') window.playSound('select');
+      velocidadPartido = velocidadPartido>=3 ? 1 : velocidadPartido+1;
+      velocidadBtn.innerHTML = `<i class="ph ph-bold ph-fast-forward"></i> ${t('lm.velocidad')} ${velocidadPartido}X`;
+    });
     cerrarBtn.addEventListener('click', ()=>{
       if(typeof window.playSound==='function') window.playSound('select');
       overlay.remove();
