@@ -4356,6 +4356,12 @@ body.light-theme.menu-screen{
 .lm-visor-punto-gk{fill:#fff;stroke:#888}
 .lm-visor-punto-gk.lm-visor-punto-mio{fill:#fff;stroke:var(--gold)}
 .lm-visor-punto-gk.lm-visor-punto-rival{fill:#fff;stroke:#e24b4a}
+.lm-visor-numero{
+  font-family:'Bebas Neue',Impact,sans-serif;font-size:2.6px;
+  fill:#1a1a1a;text-anchor:middle;dominant-baseline:central;
+  pointer-events:none;user-select:none;
+}
+.lm-visor-numero-gk{fill:#333}
 .lm-visor-balon{fill:#fff;stroke:#333;stroke-width:.35;filter:drop-shadow(0 1px 1.5px rgba(0,0,0,.5))}
 .lm-visor-resalte{fill:none;stroke:var(--gold);stroke-width:.7;pointer-events:none}
 .lm-visor-info-bar{
