@@ -307,6 +307,7 @@ window.TRANSLATIONS = {
   'lm.sobres_pendientes': {es:'SOBRES PENDIENTES', en:'PENDING ENVELOPES', pt:'ENVELOPES PENDENTES', fr:'ENVELOPPES EN ATTENTE', de:'AUSSTEHENDE UMSCHLAGE', it:'BUSTE IN SOSPESO'},
   'lm.quiniela_pendiente': {es:'QUINIELA PENDIENTE', en:'PENDING PREDICTIONS', pt:'BOLÃO PENDENTE', fr:'PRONOSTICS EN ATTENTE', de:'AUSSTEHENDES TIPPSPIEL', it:'SCHEDINA IN SOSPESO'},
   'lm.velocidad': {es:'VELOCIDAD', en:'SPEED', pt:'VELOCIDADE', fr:'VITESSE', de:'GESCHWINDIGKEIT', it:'VELOCITA'},
+  'lm.visor_descanso': {es:'FIN DE LA PRIMERA PARTE', en:'HALF TIME', pt:'FIM DA PRIMEIRA PARTE', fr:'FIN DE LA PREMIERE MI-TEMPS', de:'HALBZEITENDE', it:'FINE PRIMO TEMPO'},
   'lm.nivel_n_de_x': {es:'Nivel', en:'Level', pt:'Nível', fr:'Niveau', de:'Stufe', it:'Livello'},
 
   /* Tablas de plantilla y clasificación */

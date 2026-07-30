@@ -2244,7 +2244,7 @@
   function abrirVisorPartidoManager(info, onFinish){
     if(typeof window.G2G_abrirVisorPartidoManager!=='function') return;
     window.G2G_abrirVisorPartidoManager(info, onFinish, {
-      state, t, formacionActual, generarSlotsFormacion, climaDelPartido, calcularStatsEquipo
+      state, t, formacionActual, generarSlotsFormacion, climaDelPartido, calcularStatsEquipo, plantillaEfectivaRival
     });
   }
 

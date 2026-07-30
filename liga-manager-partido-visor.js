@@ -30,7 +30,7 @@
   }
 
   function abrirVisorPartidoManager(info, onFinish, deps){
-    const {state, t, formacionActual, generarSlotsFormacion, climaDelPartido, calcularStatsEquipo} = deps;
+    const {state, t, formacionActual, generarSlotsFormacion, climaDelPartido, calcularStatsEquipo, plantillaEfectivaRival} = deps;
     const miEsLocal = info.home.id==='lm_0';
     const rival = miEsLocal ? info.away : info.home;
     const miNombre = miEsLocal ? info.home.name : info.away.name;
@@ -71,6 +71,27 @@
     }
     centroCampo={x:CENTRO_X,y:CENTRO_Y};
 
+    // Dorsal y nombre real de cada titular: se cruza la posición de la
+    // formación (slot.slot, p.ej. "POR", "DFC1") con la alineación real
+    // guardada, y de ahí con la plantilla, para sacar sus datos de
+    // verdad — no un número ni un nombre inventado.
+    const misNumeros = misSlotsBase.map(s=>{
+      const pid = state.alineacion ? state.alineacion[s.slot] : null;
+      const jugador = pid ? (state.plantilla||[]).find(p=>p.id===pid) : null;
+      return (jugador && jugador.numero) ? jugador.numero : null;
+    });
+    const misNombres = misSlotsBase.map(s=>{
+      const pid = state.alineacion ? state.alineacion[s.slot] : null;
+      const jugador = pid ? (state.plantilla||[]).find(p=>p.id===pid) : null;
+      return jugador ? jugador.name : null;
+    });
+    // El rival sí tiene una plantilla real de verdad (equipo de LaLiga
+    // con sus jugadores reales) — se usa esa plantilla efectiva,
+    // emparejada por orden con las posiciones de su formación.
+    const rivalPlantillaEfectiva = (typeof plantillaEfectivaRival==='function') ? plantillaEfectivaRival(rival) : [];
+    const rivalNumeros = rivalSlotsBase.map((s,i)=>(rivalPlantillaEfectiva[i]&&rivalPlantillaEfectiva[i].n) ? rivalPlantillaEfectiva[i].n : i+1);
+    const rivalNombres = rivalSlotsBase.map((s,i)=>rivalPlantillaEfectiva[i] ? rivalPlantillaEfectiva[i].name : null);
+
     // Franjas de siega del césped — alternadas, look profesional de
     // retransmisión de televisión.
     const NFRANJAS=9;
@@ -103,14 +124,23 @@
             <rect x="38" y="${ALTO-8}" width="24" height="6" fill="none" stroke="#eaf5ea" stroke-width="0.5" opacity="0.9"/>
     `;
 
-    function puntoJugadorHTML(s, esGK, esMio, idx){
+    function puntoJugadorHTML(s, esGK, esMio, idx, numero, nombre){
       const claseEquipo = esMio ? 'lm-visor-punto-mio' : 'lm-visor-punto-rival';
       const r = esGK ? 3.1 : 2.5;
       const id = `lmVisorJ_${esMio?'m':'r'}${idx}`;
-      return `<g class="lm-visor-jugador-g">
-        <circle cx="${s.x}" cy="${s.y}" r="${r+0.9}" class="lm-visor-punto-sombra" id="${id}_sombra"/>
-        <circle cx="${s.x}" cy="${s.y}" r="${r}" class="lm-visor-punto ${claseEquipo}${esGK?' lm-visor-punto-gk':''}" id="${id}"/>
-        <text x="${s.x}" y="${s.y}" class="lm-visor-numero${esGK?' lm-visor-numero-gk':''}" id="${id}_num">${idx+1}</text>
+      const num = numero!=null ? numero : (idx+1);
+      // Se muestra solo la última palabra del nombre (normalmente el
+      // apellido) para que quepa sin solaparse con los jugadores de
+      // alrededor — igual que en la camiseta de un futbolista real.
+      const nombreCorto = nombre ? nombre.trim().split(' ').pop() : '';
+      // Círculo, número y nombre viven en el MISMO grupo, movido con
+      // un único transform — así nunca pueden desincronizarse entre
+      // sí (antes, al animar cx/cy y x/y por separado, el número
+      // podía llegar antes o después que el círculo).
+      return `<g class="lm-visor-jugador-g" id="${id}" transform="translate(${s.x},${s.y})">
+        <circle cx="0" cy="0" r="${r}" class="lm-visor-punto ${claseEquipo}${esGK?' lm-visor-punto-gk':''}"/>
+        <text x="0" y="0" class="lm-visor-numero${esGK?' lm-visor-numero-gk':''}">${num}</text>
+        ${nombreCorto?`<text x="0" y="${r+2.3}" class="lm-visor-nombre-jugador">${nombreCorto}</text>`:''}
       </g>`;
     }
 
@@ -126,6 +156,7 @@
           <span class="lm-visor-resultado" id="lmVisorResultado">0 - 0</span>
           <span class="lm-visor-equipo lm-visor-equipo-rival">${rivalNombre}</span>
         </div>
+        <div class="lm-visor-minutero" id="lmVisorMinutero">0'</div>
         ${clima?`<div class="lm-visor-clima-bar">${clima.label}</div>`:''}
         <div class="lm-visor-campo-wrap ${climaClase}">
           <svg class="lm-visor-campo-svg" viewBox="0 0 ${ANCHO} ${ALTO}" preserveAspectRatio="xMidYMid meet">
@@ -139,11 +170,12 @@
             <rect x="0" y="0" width="${ANCHO}" height="${ALTO}" fill="url(#lmVisorCespedGrad)"/>
             ${lineasCampo}
             <circle cx="${CENTRO_X}" cy="${CENTRO_Y}" r="0.8" fill="#eaf5ea" opacity="0.9"/>
-            <g id="lmVisorGrupoRival">${rivalSlots.map((s,i)=>puntoJugadorHTML(s, i===0, false, i)).join('')}</g>
-            <g id="lmVisorGrupoMio">${misSlots.map((s,i)=>puntoJugadorHTML(s, i===0, true, i)).join('')}</g>
+            <g id="lmVisorGrupoRival">${rivalSlots.map((s,i)=>puntoJugadorHTML(s, i===0, false, i, rivalNumeros[i], rivalNombres[i])).join('')}</g>
+            <g id="lmVisorGrupoMio">${misSlots.map((s,i)=>puntoJugadorHTML(s, i===0, true, i, misNumeros[i], misNombres[i])).join('')}</g>
             <circle cx="${CENTRO_X}" cy="${CENTRO_Y}" r="1.3" class="lm-visor-balon" id="lmVisorBalon"/>
             <circle cx="${CENTRO_X}" cy="${CENTRO_Y}" r="3.6" class="lm-visor-resalte" id="lmVisorResalte" opacity="0"/>
           </svg>
+          <div class="lm-visor-anuncio" id="lmVisorAnuncio"></div>
           ${(clima&&clima.id==='rain')?`<div class="lm-visor-lluvia">${Array.from({length:26}).map((_,i)=>`<span style="left:${Math.random()*100}%;animation-delay:${(Math.random()*1.4).toFixed(2)}s;animation-duration:${(0.55+Math.random()*0.35).toFixed(2)}s"></span>`).join('')}</div>`:''}
           ${(clima&&clima.id==='snow')?`<div class="lm-visor-nieve">${Array.from({length:22}).map((_,i)=>`<span style="left:${Math.random()*100}%;animation-delay:${(Math.random()*3).toFixed(2)}s;animation-duration:${(2.4+Math.random()*1.6).toFixed(2)}s"></span>`).join('')}</div>`:''}
         </div>
@@ -161,6 +193,8 @@
     const cerrarBtn=overlay.querySelector('#lmVisorCerrarBtn');
     const grupoMio=overlay.querySelector('#lmVisorGrupoMio');
     const grupoRival=overlay.querySelector('#lmVisorGrupoRival');
+    const anuncioEl=overlay.querySelector('#lmVisorAnuncio');
+    const minuteroEl=overlay.querySelector('#lmVisorMinutero');
     const miLado = miEsLocal?'home':'away';
     // 1x = el partido completo (90 minutos) se resuelve en 1 minuto
     // real. 2x y 3x aceleran el tiempo REAL de reproducción (el botón
@@ -169,6 +203,21 @@
     let velocidadPartido=1;
     const DURACION_TOTAL=60000;
     function real(ms){ return ms/velocidadPartido; }
+    // Texto grande centrado sobre el campo — GOL, descanso, final del
+    // partido. Aparece un instante y se desvanece solo.
+    function mostrarTextoGrande(texto, duracionMs){
+      anuncioEl.textContent=texto;
+      anuncioEl.classList.add('lm-visor-anuncio-activo');
+      setTimeout(()=>anuncioEl.classList.remove('lm-visor-anuncio-activo'), duracionMs);
+    }
+    // Minutero en tiempo real: se actualiza solo, a partir del tiempo
+    // de partido ya acumulado por la simulación (tiempoTranscurrido),
+    // así respeta las pausas de gol/descanso sin necesitar relojes
+    // aparte que se puedan desincronizar.
+    const minuteroInterval=setInterval(()=>{
+      const minuto=Math.max(0, Math.min(90, Math.floor((tiempoTranscurrido/DURACION_TOTAL)*90)));
+      minuteroEl.textContent=(minuto>=90?'90+':minuto)+"'";
+    }, 250);
     const desplazamientoMio = esEscritorio ? 'translateX(6px)' : 'translateY(-6px)';
     const desplazamientoRival = esEscritorio ? 'translateX(-6px)' : 'translateY(6px)';
 
@@ -206,16 +255,11 @@
     function elJugador(esMio, idx){ return overlay.querySelector(`#lmVisorJ_${esMio?'m':'r'}${idx}`); }
     function moverJugador(esMio, idx, x, y, dur){
       const el=elJugador(esMio, idx);
-      const num=overlay.querySelector(`#lmVisorJ_${esMio?'m':'r'}${idx}_num`);
       const arr = esMio?posMia:posRival;
       if(el){
         const durReal=real(dur);
-        el.style.transition=`cx ${durReal}ms ease-in-out, cy ${durReal}ms ease-in-out`;
-        el.setAttribute('cx',x); el.setAttribute('cy',y);
-        if(num){
-          num.style.transition=`x ${durReal}ms ease-in-out, y ${durReal}ms ease-in-out`;
-          num.setAttribute('x',x); num.setAttribute('y',y);
-        }
+        el.style.transition=`transform ${durReal}ms ease-in-out`;
+        el.setAttribute('transform', `translate(${x},${y})`);
       }
       arr[idx]={x,y};
     }
@@ -372,8 +416,18 @@
     let posesionMia = Math.random()<probPosesionMia;
     let idxConBalonMio=0, idxConBalonRival=0;
     const FRASES_PASE=[t('lm.visor_construye'), t('lm.visor_avanza')];
+    let descansoMostrado=false;
 
     function tick(){
+      // Descanso: al cruzar la mitad del partido, se pausa un
+      // instante con el aviso de "FIN DE LA PRIMERA PARTE" en grande.
+      if(!descansoMostrado && tiempoTranscurrido>=DURACION_TOTAL/2){
+        descansoMostrado=true;
+        mostrarTextoGrande(t('lm.visor_descanso'), real(2400));
+        infoBar.textContent=t('lm.visor_descanso');
+        setTimeout(tick, real(2400));
+        return;
+      }
       // Tarjeta real de este partido, si toca ya — se muestra un
       // instante en la barra de información sin pausar la simulación.
       const tarjetaAhora = eventosTarjeta.find(e=>!e.mostrado && tiempoTranscurrido>=e.tMostrar);
@@ -399,6 +453,7 @@
           resEl.textContent=`${miEsLocal?marcadorMio:marcadorRival} - ${miEsLocal?marcadorRival:marcadorMio}`;
           const nombreGoleador = evento.jugador ? evento.jugador.name : '';
           infoBar.textContent=`⚽ ${t('lm.visor_gol')} ${nombreGoleador} (${esMio?miNombre:rivalNombre})`;
+          mostrarTextoGrande(t('lm.visor_gol'), real(1800));
           if(typeof window.playSound==='function') window.playSound('select');
           setTimeout(()=>{
             moverBalon(centroCampo.x,centroCampo.y,700);
@@ -410,6 +465,9 @@
       }
       if(tiempoTranscurrido>=DURACION_TOTAL && golIdx>=planGoles.length){
         infoBar.textContent=t('lm.visor_termina');
+        mostrarTextoGrande(t('lm.visor_termina'), real(2600));
+        clearInterval(minuteroInterval);
+        minuteroEl.textContent="90'";
         cerrarBtn.disabled=false;
         return;
       }
@@ -584,6 +642,7 @@
     });
     cerrarBtn.addEventListener('click', ()=>{
       if(typeof window.playSound==='function') window.playSound('select');
+      clearInterval(minuteroInterval);
       overlay.remove();
       if(onFinish) onFinish();
     });
