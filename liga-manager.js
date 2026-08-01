@@ -526,7 +526,7 @@
       const entrenado=!!(state.calendarioEntrenamiento && state.calendarioEntrenamiento[iso]);
       let contenido='';
       if(partido){
-        contenido=`<div class="lm-cal-partido" title="Jornada ${partido.jornada} — ${partido.esLocal?'vs':'fuera vs'} ${partido.rival.name}">${rivalCrestHTML(40, partido.rival.crestImg)}</div>`;
+        contenido=`<div class="lm-cal-partido" title="${t('lm.cal_jornada_vs')} ${partido.jornada} — ${partido.esLocal?t('lm.cal_vs'):t('lm.cal_fuera_vs')} ${partido.rival.name}">${rivalCrestHTML(40, partido.rival.crestImg)}</div>`;
       } else if(entrenado){
         contenido=`<i class="ph ph-bold ph-barbell lm-cal-entreno-icon"></i>`;
       }
@@ -534,7 +534,7 @@
       if(partido) clases.push('lm-cal-dia-partido');
       if(editable) clases.push('lm-cal-editable');
       if(!editable) clases.push('lm-cal-bloqueado');
-      return `<div class="${clases.join(' ')}" ${editable?`data-cal-dia="${iso}"`:''} title="${editable?'Toca para marcar/quitar entrenamiento':''}">
+      return `<div class="${clases.join(' ')}" ${editable?`data-cal-dia="${iso}"`:''} title="${editable?t('lm.cal_tocar_entrenamiento'):''}">
         <span class="lm-cal-num">${d.getDate()}</span>
         ${contenido}
       </div>`;
@@ -550,11 +550,11 @@
       <div class="lm-cal-semana-dias"><span>L</span><span>M</span><span>X</span><span>J</span><span>V</span><span>S</span><span>D</span></div>
       <div class="lm-cal-grid">${celdas}</div>
       <div class="lm-cal-leyenda">
-        <span><i class="ph ph-bold ph-barbell"></i> Entrenamiento (${entreno})</span>
-        <span><i class="ph ph-bold ph-bed"></i> Descanso (${descanso})</span>
-        <span class="lm-cal-leyenda-escudo">${crestHTML(state.escudo||null,14)} Partido</span>
+        <span><i class="ph ph-bold ph-barbell"></i> ${t('lm.cal_entrenamiento')} (${entreno})</span>
+        <span><i class="ph ph-bold ph-bed"></i> ${t('lm.cal_descanso')} (${descanso})</span>
+        <span class="lm-cal-leyenda-escudo">${crestHTML(state.escudo||null,14)} ${t('lm.cal_partido')}</span>
       </div>
-      <p class="lm-setup-desc" style="text-align:center;margin-top:4px">Entrenar mejora un poco las estadísticas de esta semana, pero cansa — deja días en blanco para que la plantilla recupere resistencia.</p>
+      <p class="lm-setup-desc" style="text-align:center;margin-top:4px">${t('lm.cal_descripcion')}</p>
     </div>`;
   }
 
@@ -2577,17 +2577,17 @@
       const filasLesiones=r.lesiones.map(l=>`
         <div class="lm-resumen-fila">
           <i class="ph ph-bold ph-first-aid-kit" style="color:#e24b4a"></i>
-          <span><strong>${l.nombre}</strong> — sobrecarga ${l.familia==='muscular'?'muscular':'ósea'} (leve)</span>
+          <span><strong>${l.nombre}</strong> — ${l.familia==='muscular'?t('lm.sobrecarga_muscular'):t('lm.sobrecarga_osea')}</span>
         </div>`).join('');
       overlay.innerHTML=`
         <div class="lm-dilemma-card lm-semana-card-fija" style="width:420px;max-width:92vw;text-align:left">
-          <div class="lm-dilemma-title"><i class="ph ph-bold ph-flag-checkered"></i> SEMANA COMPLETADA</div>
-          ${rival?`<div class="lm-rival-crest-block" style="margin:6px auto 12px">${rivalCrestHTML(56, rival.crestImg)}<span class="lm-title" style="font-size:13px">Próximo: ${rival.name}</span></div>`:''}
+          <div class="lm-dilemma-title"><i class="ph ph-bold ph-flag-checkered"></i> ${t('lm.semana_completada')}</div>
+          ${rival?`<div class="lm-rival-crest-block" style="margin:6px auto 12px">${rivalCrestHTML(56, rival.crestImg)}<span class="lm-title" style="font-size:13px">${t('lm.proximo_rival')} ${rival.name}</span></div>`:''}
           <div class="lm-resumen-stats-row">
-            <div class="lm-resumen-stat"><i class="ph ph-bold ph-barbell" style="color:#e08a3e"></i><strong>${r.diasEntreno}</strong><span>entreno</span></div>
-            <div class="lm-resumen-stat"><i class="ph ph-bold ph-bed" style="color:#5dcaa5"></i><strong>${r.diasDescanso}</strong><span>descanso</span></div>
-            <div class="lm-resumen-stat"><i class="ph ph-bold ph-trend-up" style="color:#5dcaa5"></i><strong>${totalMejoras}</strong><span>mejoras</span></div>
-            <div class="lm-resumen-stat"><i class="ph ph-bold ph-first-aid-kit" style="color:#e24b4a"></i><strong>${r.lesiones.length}</strong><span>lesiones</span></div>
+            <div class="lm-resumen-stat"><i class="ph ph-bold ph-barbell" style="color:#e08a3e"></i><strong>${r.diasEntreno}</strong><span>${t('lm.resumen_entreno')}</span></div>
+            <div class="lm-resumen-stat"><i class="ph ph-bold ph-bed" style="color:#5dcaa5"></i><strong>${r.diasDescanso}</strong><span>${t('lm.resumen_descanso')}</span></div>
+            <div class="lm-resumen-stat"><i class="ph ph-bold ph-trend-up" style="color:#5dcaa5"></i><strong>${totalMejoras}</strong><span>${t('lm.resumen_mejoras')}</span></div>
+            <div class="lm-resumen-stat"><i class="ph ph-bold ph-first-aid-kit" style="color:#e24b4a"></i><strong>${r.lesiones.length}</strong><span>${t('lm.resumen_lesiones')}</span></div>
           </div>
           ${(filasMejoras||filasLesiones)?`<div class="lm-resumen-lista">${filasMejoras}${filasLesiones}</div>`:`<p class="lm-setup-desc" style="text-align:center">${t('lm.semana_sin_incidencias')}</p>`}
           <div class="lm-popup-actions" style="justify-content:center">
@@ -2625,9 +2625,9 @@
           <div class="lm-semana-dia-icono ${ev.tipo==='entreno'?'lm-semana-entreno':'lm-semana-descanso'}">
             <i class="ph ph-bold ${ev.tipo==='entreno'?'ph-barbell':'ph-bed'}"></i>
           </div>
-          <div class="lm-semana-dia-tag">${ev.tipo==='entreno'?'ENTRENAMIENTO':'DESCANSO'}</div>
+          <div class="lm-semana-dia-tag">${ev.tipo==='entreno'?t('lm.dia_entrenamiento'):t('lm.dia_descanso')}</div>
           <div class="lm-semana-dia-textos">
-            ${ev.textos.map(t=>`<p>${t}</p>`).join('')}
+            ${ev.textos.map(txt=>`<p>${txt}</p>`).join('')}
           </div>
           <div class="lm-semana-progreso">
             ${eventosDias.map((_,i)=>`<span class="lm-semana-punto ${i<=idx?'lm-semana-punto-activo':''}"></span>`).join('')}
@@ -3279,7 +3279,7 @@
   // de ventanas del juego). Cada función abrirInfoFn ya trae su propio
   // cierre completo cuando se le pasa "false" (modo normal, no efímero).
   function mostrarInfoHTML(){
-    return `<button type="button" class="mode-card-btn mode-card-btn-secondary lm-mostrar-info-btn" data-mostrar-info><i class="ph ph-bold ph-eye"></i> MOSTRAR INFORMACIÓN</button>`;
+    return `<button type="button" class="mode-card-btn mode-card-btn-secondary lm-mostrar-info-btn" data-mostrar-info><i class="ph ph-bold ph-eye"></i> ${t('lm.mostrar_informacion')}</button>`;
   }
   function wireMostrarInfoHold(container, abrirInfoFn){
     const btn=container.querySelector('[data-mostrar-info]');
@@ -5037,15 +5037,15 @@
             ${crestHTML(state.escudo, 76)}
             <div style="flex:1;min-width:0">
               <div class="lm-title">${state.nombreEquipo.toUpperCase()}</div>
-              <div class="lm-sub">Jornada ${Math.min(state.jornadaActual,38)} de 38 · ${monedaInfo.symbol}</div>
+              <div class="lm-sub">Jornada ${Math.min(state.jornadaActual,38)} de 38</div>
             </div>
             <div class="lm-modo-visual-toggle">
               <button type="button" class="lm-modo-visual-btn ${(!state.modoVisualPartido||state.modoVisualPartido==='auto')?'lm-modo-visual-activo':''}" data-modo-visual="auto"><i class="ph ph-bold ph-fast-forward"></i>${t('lm.modo_automatico')}</button>
               <button type="button" class="lm-modo-visual-btn ${state.modoVisualPartido==='manager'?'lm-modo-visual-activo':''}" data-modo-visual="manager"><i class="ph ph-bold ph-strategy"></i>${t('lm.modo_manager')}</button>
             </div>
-            <button id="lmJugarBtn" class="lm-btn-jugar-icon" ${state.jornadaActual>38?'disabled':''} title="${state.jornadaActual>38?'Temporada completa':(hayVacantes?'Te falta cuerpo técnico por contratar, pero puedes jugar igualmente':'Jugar jornada')}">
+            <button id="lmJugarBtn" class="lm-btn-jugar-icon" ${state.jornadaActual>38?'disabled':''} title="${state.jornadaActual>38?t('lm.tt_temporada_completa'):(hayVacantes?t('lm.tt_falta_cuerpo_tecnico'):t('lm.tt_jugar_jornada'))}">
               <i class="ph ph-bold ph-play-circle"></i>
-              <span>${state.jornadaActual>38?'FIN':(state.semanaResueltaParaJornada===state.jornadaActual?'JUGAR':'SEGUIR')}</span>
+              <span>${state.jornadaActual>38?t('lm.fin_btn'):(state.semanaResueltaParaJornada===state.jornadaActual?t('lm.jugar_btn'):t('lm.seguir_btn'))}</span>
             </button>
           </div>
           <div class="bench-title">
@@ -5189,7 +5189,7 @@
             </div>
           </div>
           ${hayVacantes?`<div class="lm-staff-warning"><i class="ph ph-bold ph-warning"></i> Todavía te falta cuerpo técnico por contratar — puedes jugar igualmente, pero conviene completarlo pronto.</div>`:''}
-          <button id="lmTrabajadoresBtn" class="lm-btn-trabajadores" style="width:100%;margin-bottom:10px"><i class="ph ph-bold ph-user-plus"></i> CONTRATAR</button>
+          <button id="lmTrabajadoresBtn" class="lm-btn-trabajadores" style="width:100%;margin-bottom:10px"><i class="ph ph-bold ph-user-plus"></i> ${t('lm.contratar_btn')}</button>
           <div class="lm-staff-bar-row">
             ${staffTileHTML('directorGeneral', {btnId:'lmDirectorGeneralBtn', infoId:'lmDirectorGeneralInfoBtn', infoTitle:t('lm.info_dg'), notif:notifDG, badgeTexto:'!', carpeta:'director_general', archivo:'director_general', alt:'Director General', icono:'ph-briefcase', rolLabel:t('lm.rol_dg'), acento:'lm-staff-tile-dg', desc:t('lm.desc_dg')})}
             ${staffTileHTML('directorDeportivo', {btnId:'lmDirectorDeportivoBtn', infoId:'lmDirectorDeportivoInfoBtn', infoTitle:t('lm.info_dd'), notif:notifDD, badgeTexto:'!', carpeta:'director_deportivo', archivo:'director_deportivo', alt:'Director Deportivo', icono:'ph-binoculars', rolLabel:t('lm.rol_dd'), acento:'lm-staff-tile-dd', desc:t('lm.desc_dd')})}
@@ -5386,7 +5386,7 @@
         if(faltaCuerpoTecnico && !state.avisoCuerpoTecnicoMostrado){
           state.avisoCuerpoTecnicoMostrado=true;
           guardarEstado();
-          mostrarAvisoJuego('La dirección deportiva le recuerda que el organigrama del club tiene puestos por cubrir en el cuerpo técnico. El equipo puede competir con normalidad, pero se recomienda completar la plantilla técnica cuanto antes desde CONTRATAR para no ceder ventaja frente al resto de clubes de la competición.', 'PLANTILLA TÉCNICA INCOMPLETA');
+          mostrarAvisoJuego(t('lm.plantilla_tecnica_incompleta_msg'), t('lm.plantilla_tecnica_incompleta_titulo'));
           return;
         }
         jugarAhora();
@@ -6084,7 +6084,7 @@
       overlay.innerHTML=`
         <div class="lm-dilemma-card lm-dilemma-card-medico" style="max-width:640px">
           ${xCerrarHTML()}
-          <div class="lm-dilemma-title"><i class="ph ph-bold ph-first-aid-kit"></i> EQUIPO MÉDICO</div>
+          <div class="lm-dilemma-title"><i class="ph ph-bold ph-first-aid-kit"></i> ${t('lm.titulo_medico')}</div>
           ${notif?`
           <div class="lm-urgente-row">
             <div class="lm-urgente-texto"><strong style="color:#e24b4a">${t('lm.urgente')}</strong> ${jugadorUrgente?jugadorUrgente.name:'Un jugador'} tiene una lesión ${notif.severidad}.</div>
@@ -6455,7 +6455,7 @@
       overlay.innerHTML=`
         <div class="lm-dilemma-card lm-dilemma-card-mant" style="max-width:640px">
           ${xCerrarHTML()}
-          <div class="lm-dilemma-title"><i class="ph ph-bold ph-flag-pennant"></i> MANTENIMIENTO Y SEGURIDAD</div>
+          <div class="lm-dilemma-title"><i class="ph ph-bold ph-flag-pennant"></i> ${t('lm.titulo_mantenimiento')}</div>
           <button type="button" class="mode-card-btn mode-card-btn-gold" id="lmSeguridadEstadioBtn" style="width:100%;margin-bottom:10px"><i class="ph ph-bold ph-shield-check"></i> ${t('lm.seguridad_estadio')}</button>
           ${renderNivelesMantenimientoHTML()}
           <div class="lm-staff-bar-capital" style="justify-content:center;margin:10px 0 8px"><span><i class="ph ph-bold ph-dice-five"></i> ${t('lm.dados')}: <strong>${state.diceAvailable}</strong></span><span><i class="ph ph-bold ph-arrows-clockwise"></i> ${t('lm.rerrolls')}: <strong>${state.dadoRerollsDisponibles||0}</strong></span><span><i class="ph ph-bold ph-cards"></i> ${t('lm.cambios')}: <strong>${Math.max(0,lmCambiosCartaPorPartido()-(state.mantenimientoCambiosUsados||0))}/${lmCambiosCartaPorPartido()}</strong></span></div>
@@ -6670,7 +6670,7 @@
         <div class="lm-dilemma-card lm-dilemma-card-dg" style="max-width:640px">
           ${xCerrarHTML()}
           ${(state.quinielaBoleto&&!state.quinielaBoleto.rellenado)?`<button type="button" class="lm-pendientes-indicador" id="lmQuinielaPendienteBtn"><i class="ph ph-bold ph-ticket lm-pendientes-pulso"></i> ${t('lm.quiniela_pendiente')}</button>`:''}
-          <div class="lm-dilemma-title"><i class="ph ph-bold ph-briefcase"></i> DIRECTOR GENERAL</div>
+          <div class="lm-dilemma-title"><i class="ph ph-bold ph-briefcase"></i> ${t('lm.titulo_dg')}</div>
           <div class="lm-capital-box">
             <i class="ph ph-bold ph-coins lm-capital-icon"></i>
             <div class="lm-capital-info">
@@ -6974,7 +6974,7 @@
         <div class="lm-dilemma-card lm-dilemma-card-dd" style="max-width:640px">
           ${xCerrarHTML()}
           ${(state.sobresFichajesPendientes&&state.sobresFichajesPendientes.length)?`<button type="button" class="lm-pendientes-indicador" id="lmSobresPendientesBtn"><i class="ph ph-bold ph-envelope-simple-open lm-pendientes-pulso"></i> ${t('lm.sobres_pendientes')} ${state.sobresFichajesPendientes.length}/3</button>`:''}
-          <div class="lm-dilemma-title"><i class="ph ph-bold ph-binoculars"></i> DIRECTOR DEPORTIVO</div>
+          <div class="lm-dilemma-title"><i class="ph ph-bold ph-binoculars"></i> ${t('lm.titulo_dd')}</div>
           <button type="button" class="mode-card-btn mode-card-btn-gold" id="lmInfoPlantillaDDBtn" style="width:100%;margin:10px 0"><i class="ph ph-bold ph-scroll"></i> INFORMACIÓN DE LA PLANTILLA</button>
           <div class="lm-precio-box">
             <div class="lm-estadio-bar-label"><i class="ph ph-bold ph-magnifying-glass"></i><span>${t('lm.posicion_objetivo_ojeadores')}</span></div>
@@ -7397,7 +7397,7 @@
       overlay.innerHTML=`
         <div class="lm-dilemma-card lm-dilemma-card-pf" style="max-width:640px">
           ${xCerrarHTML()}
-          <div class="lm-dilemma-title"><i class="ph ph-bold ph-barbell"></i> PREPARADOR FÍSICO</div>
+          <div class="lm-dilemma-title"><i class="ph ph-bold ph-barbell"></i> ${t('lm.titulo_pf')}</div>
           ${renderPlanEntrenamientoResumenHTML()}
           ${renderNivelesPFHTML()}
           <div class="lm-staff-bar-capital" style="justify-content:center;margin:10px 0 8px"><span><i class="ph ph-bold ph-dice-five"></i> ${t('lm.dados')}: <strong>${state.diceAvailable}</strong></span><span><i class="ph ph-bold ph-arrows-clockwise"></i> ${t('lm.rerrolls')}: <strong>${state.dadoRerollsDisponibles||0}</strong></span><span><i class="ph ph-bold ph-cards"></i> ${t('lm.cambios')}: <strong>${Math.max(0,lmCambiosCartaPorPartido()-(state.preparadorFisicoCambiosUsados||0))}/${lmCambiosCartaPorPartido()}</strong></span></div>
@@ -7710,7 +7710,7 @@
       overlay.innerHTML=`
         <div class="lm-dilemma-card" style="width:960px;max-width:94vw;text-align:left">
           ${xCerrarHTML()}
-          <div class="lm-dilemma-title"><i class="ph ph-bold ph-user-plus"></i> CONTRATAR${rolFiltrado?` — ${NOMBRE_ROL[rolFiltrado]}`:''}</div>
+          <div class="lm-dilemma-title"><i class="ph ph-bold ph-user-plus"></i> ${t('lm.contratar_btn')}${rolFiltrado?` — ${NOMBRE_ROL[rolFiltrado]}`:''}</div>
           <p class="lm-setup-desc" style="text-align:center;margin-bottom:10px">Cada mes aparecen nuevos candidatos por puesto — compara nivel y sueldo antes de decidir si te compensa un cambio.${rolFiltrado?` <span id="lmTrabVerTodos" style="color:var(--gold);cursor:pointer;text-decoration:underline">${t('lm.ver_todos_puestos')}</span>`:''}</p>
           <div class="lm-trab-grid">
             ${roles.map(fichaTrabajadorHTML).join('')}
@@ -7758,7 +7758,7 @@
           if(actual){
             const finiquito=calcularFiniquito(actual);
             if(typeof window.showConfirmPopup==='function'){
-              window.showConfirmPopup(`Ya tienes a ${actual.nombre} en este puesto. Al contratar a otra persona se le despedirá (finiquito de ${formatoDinero(finiquito)}). ¿Continuar?`, proceder, 'CONTRATAR');
+              window.showConfirmPopup(`Ya tienes a ${actual.nombre} en este puesto. Al contratar a otra persona se le despedirá (finiquito de ${formatoDinero(finiquito)}). ¿Continuar?`, proceder, t('lm.contratar_btn'));
             } else if(confirm(`¿Despedir a ${actual.nombre} (finiquito ${formatoDinero(finiquito)}) para contratar al nuevo candidato?`)){
               proceder();
             }
@@ -7880,8 +7880,16 @@
           if(badgeCampo) badgeCampo.style.display='none';
         }
         // Cierra cualquier popup de Liga Manager que estuviera abierto,
-        // para que la navegación a la sección no se quede tapada detrás.
-        document.querySelectorAll('#ligaManagerScreen [id$="Overlay"]').forEach(ov=>ov.remove());
+        // para que la navegación a la sección no se quede tapada detrás
+        // — EXCEPTO el partido en curso (modo automático o manager),
+        // que nunca se puede cerrar mientras se está reproduciendo.
+        document.querySelectorAll('#ligaManagerScreen [id$="Overlay"]').forEach(ov=>{
+          const liveContinuarBtn=document.getElementById('lmLiveContinuar');
+          const partidoAutoEnCurso = ov.id==='lmMatchOverlay' && liveContinuarBtn && liveContinuarBtn.style.display==='none';
+          const partidoManagerEnCurso = ov.id==='lmVisorPartidoOverlay' && document.getElementById('lmVisorCerrarBtn') && document.getElementById('lmVisorCerrarBtn').disabled;
+          if(partidoAutoEnCurso || partidoManagerEnCurso) return;
+          ov.remove();
+        });
         // Y también el ticket, si estuviera abierto — vive fuera de
         // Liga Manager, así que se cierra aparte.
         if(typeof window.closeTicketOverlay==='function') window.closeTicketOverlay();
