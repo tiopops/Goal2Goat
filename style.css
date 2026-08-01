@@ -2525,7 +2525,7 @@ body.liga-manager-screen .ranking-btn-label-lm{display:inline}
   align-items:stretch;
   justify-content:center;
   width:100%;
-  max-width:1900px;
+  max-width:2400px;
   margin:0 auto;
   gap:0;
   flex:1;
@@ -3316,11 +3316,10 @@ body.liga-manager-screen .ranking-btn-label-lm{display:inline}
 .med-card-tag{
   font-family:'Bebas Neue',Impact,sans-serif;font-size:13px;letter-spacing:1.8px;
   color:#4fb87a;text-transform:uppercase;font-weight:700;
-  width:100%;text-align:center;background:rgba(46,204,113,.14);
-  padding:7px 0;margin:-12px -10px 10px;border-radius:12px 12px 0 0;
-  box-sizing:border-box;position:relative;z-index:1;
+  position:absolute;top:0;left:0;right:0;text-align:center;background:rgba(46,204,113,.14);
+  padding:7px 0;border-radius:12px 12px 0 0;box-sizing:border-box;z-index:1;
 }
-.med-card-icon{font-size:44px;color:#2ecc71;margin-bottom:6px;filter:drop-shadow(0 0 6px rgba(46,204,113,.3))}
+.med-card-icon{font-size:44px;color:#2ecc71;margin-bottom:6px;margin-top:28px;filter:drop-shadow(0 0 6px rgba(46,204,113,.3))}
 .med-card-title{font-family:'Bebas Neue',Impact,sans-serif;font-size:12px;letter-spacing:.4px;color:#fff;margin-bottom:6px;line-height:1.15;min-height:28px}
 .med-card-divider{width:26px;height:2px;background:#3a8a5c;margin-bottom:6px;border-radius:2px}
 .med-card-desc{font-size:10px;color:#999;line-height:1.4;margin-bottom:8px;min-height:44px}
@@ -4117,14 +4116,14 @@ body.light-theme.menu-screen{
   .med-card-grid{grid-template-columns:1fr!important;gap:10px!important}
   .med-card{
     flex-direction:column!important;align-items:center!important;text-align:center!important;
-    padding:0 14px 12px!important;height:220px;overflow:hidden;justify-content:flex-start;
-    border-radius:12px;
+    padding:38px 14px 12px!important;height:220px;overflow:hidden;justify-content:flex-start;
+    border-radius:12px;box-sizing:border-box;
   }
   .med-card-tag{
-    position:static!important;width:auto;text-align:center;margin:0 -14px 12px!important;
-    padding:9px 0!important;font-size:15px!important;font-weight:800;letter-spacing:2.2px;
-    border-radius:12px 12px 0 0;order:-1;
-    background:rgba(46,204,113,.16);color:#4fb87a!important;
+    position:absolute!important;top:0!important;left:0!important;right:0!important;
+    text-align:center;padding:9px 0!important;font-size:15px!important;font-weight:800;
+    letter-spacing:2.2px;border-radius:12px 12px 0 0;
+    background:rgba(46,204,113,.16);color:#4fb87a!important;box-sizing:border-box;
   }
   .med-card-icon{font-size:28px!important;margin:0 0 4px}
   .med-card-title{font-size:15px!important;margin:0 0 6px!important;text-align:center!important}

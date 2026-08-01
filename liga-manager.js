@@ -6077,7 +6077,7 @@
           <div class="med-card-divider"></div>
           <div class="med-card-desc">${tc('med', def.id, 'desc', def.desc)}</div>
           ${cuerpo}
-          ${bloqueada?`<div class="med-card-bloqueada-label">${sinLesionNecesaria?'Necesitas una lesión activa':(nivelMaximoYa?'Especialidad al máximo nivel':'Imposible con los dados que quedan')}</div>`:`<button class="mode-card-btn mode-card-btn-gold med-card-btn" data-usar="${idx}" style="padding:7px;font-size:11px">USAR</button>`}
+          ${bloqueada?`<div class="med-card-bloqueada-label">${sinLesionNecesaria?t('lm.necesita_lesion_activa'):(nivelMaximoYa?t('lm.especialidad_maxima'):t('lm.imposible_dados'))}</div>`:`<button class="mode-card-btn mode-card-btn-gold med-card-btn" data-usar="${idx}" style="padding:7px;font-size:11px">${t('lm.usar_btn')}</button>`}
         </div>`;
       }).join('');
 
@@ -6448,7 +6448,7 @@
           <div class="med-card-divider"></div>
           <div class="med-card-desc">${tc('mant', def.id, 'desc', def.desc)}</div>
           ${cuerpo}
-          ${bloqueada?`<div class="med-card-bloqueada-label">${bloqueadaPorEstado?'Necesitas una afición muy descontenta (≤ −50)':(nivelMaximoYa?'Especialidad al máximo nivel':'Imposible con los dados que quedan')}</div>`:`<button class="mode-card-btn mode-card-btn-gold med-card-btn" data-usar="${idx}" style="padding:7px;font-size:11px">USAR</button>`}
+          ${bloqueada?`<div class="med-card-bloqueada-label">${bloqueadaPorEstado?t('lm.necesita_aficion_descontenta'):(nivelMaximoYa?t('lm.especialidad_maxima'):t('lm.imposible_dados'))}</div>`:`<button class="mode-card-btn mode-card-btn-gold med-card-btn" data-usar="${idx}" style="padding:7px;font-size:11px">${t('lm.usar_btn')}</button>`}
         </div>`;
       }).join('');
 
@@ -6662,7 +6662,7 @@
           <div class="med-card-divider"></div>
           <div class="med-card-desc">${tc('dg', def.id, 'desc', def.desc)}</div>
           ${cuerpo}
-          ${bloqueada?`<div class="med-card-bloqueada-label">${nivelMaximoYa?'Especialidad al máximo nivel':'Imposible con los dados que quedan'}</div>`:`<button class="mode-card-btn mode-card-btn-gold med-card-btn" data-usar="${idx}" style="padding:7px;font-size:11px">USAR</button>`}
+          ${bloqueada?`<div class="med-card-bloqueada-label">${nivelMaximoYa?t('lm.especialidad_maxima'):t('lm.imposible_dados')}</div>`:`<button class="mode-card-btn mode-card-btn-gold med-card-btn" data-usar="${idx}" style="padding:7px;font-size:11px">${t('lm.usar_btn')}</button>`}
         </div>`;
       }).join('');
 
@@ -6956,7 +6956,7 @@
         }
         const botonAccion = bloqueada
           ? (nivelMaximoYa ? '' : `<div class="med-card-bloqueada-label">${t('lm.imposible_dados')}</div>`)
-          : `<button class="mode-card-btn mode-card-btn-gold med-card-btn" data-usar="${idx}" style="padding:7px;font-size:11px">USAR</button>`;
+          : `<button class="mode-card-btn mode-card-btn-gold med-card-btn" data-usar="${idx}" style="padding:7px;font-size:11px">${t('lm.usar_btn')}</button>`;
         return `
         <div class="med-card med-card-dd ${bloqueada&&!nivelMaximoYa?'med-card-bloqueada':''}" data-idx="${idx}">
           <button class="med-card-swap" data-swap="${idx}" title="${t('lm.tt_cambiar_carta')}" ${cambioDisponible?'':'disabled'}><i class="ph ph-bold ph-arrows-clockwise"></i></button>
@@ -7390,7 +7390,7 @@
           <div class="med-card-divider"></div>
           <div class="med-card-desc">${tc('pf', def.id, 'desc', def.desc)}</div>
           ${cuerpo}
-          ${(bloqueada&&!nivelMaximoYa)?`<div class="med-card-bloqueada-label">${t('lm.imposible_dados')}</div>`:(nivelMaximoYa?'':`<button class="mode-card-btn mode-card-btn-gold med-card-btn" data-usar="${idx}" style="padding:7px;font-size:11px">USAR</button>`)}
+          ${(bloqueada&&!nivelMaximoYa)?`<div class="med-card-bloqueada-label">${t('lm.imposible_dados')}</div>`:(nivelMaximoYa?'':`<button class="mode-card-btn mode-card-btn-gold med-card-btn" data-usar="${idx}" style="padding:7px;font-size:11px">${t('lm.usar_btn')}</button>`)}
         </div>`;
       }).join('');
 

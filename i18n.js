@@ -308,6 +308,10 @@ window.TRANSLATIONS = {
   'lm.quiniela_pendiente': {es:'QUINIELA PENDIENTE', en:'PENDING PREDICTIONS', pt:'BOLÃO PENDENTE', fr:'PRONOSTICS EN ATTENTE', de:'AUSSTEHENDES TIPPSPIEL', it:'SCHEDINA IN SOSPESO'},
   'lm.velocidad': {es:'VELOCIDAD', en:'SPEED', pt:'VELOCIDADE', fr:'VITESSE', de:'GESCHWINDIGKEIT', it:'VELOCITA'},
   'lm.visor_descanso': {es:'FIN DE LA PRIMERA PARTE', en:'HALF TIME', pt:'FIM DA PRIMEIRA PARTE', fr:'FIN DE LA PREMIERE MI-TEMPS', de:'HALBZEITENDE', it:'FINE PRIMO TEMPO'},
+  'lm.usar_btn': {es:'USAR', en:'USE', pt:'USAR', fr:'UTILISER', de:'VERWENDEN', it:'USA'},
+  'lm.necesita_lesion_activa': {es:'Necesitas una lesión activa', en:'You need an active injury', pt:'Precisa de uma lesão ativa', fr:'Tu as besoin d une blessure active', de:'Du brauchst eine aktive Verletzung', it:'Hai bisogno di un infortunio attivo'},
+  'lm.especialidad_maxima': {es:'Especialidad al máximo nivel', en:'Specialty at max level', pt:'Especialidade no nível máximo', fr:'Specialite au niveau maximum', de:'Spezialisierung auf Hochststufe', it:'Specialita al livello massimo'},
+  'lm.necesita_aficion_descontenta': {es:'Necesitas una afición muy descontenta (≤ −50)', en:'You need very unhappy fans (≤ -50)', pt:'Precisa de uma torcida muito descontente (≤ -50)', fr:'Il te faut des supporters tres mecontents (≤ -50)', de:'Du brauchst sehr unzufriedene Fans (≤ -50)', it:'Hai bisogno di tifosi molto scontenti (≤ -50)'},
   'lm.nivel_n_de_x': {es:'Nivel', en:'Level', pt:'Nível', fr:'Niveau', de:'Stufe', it:'Livello'},
 
   /* Tablas de plantilla y clasificación */
