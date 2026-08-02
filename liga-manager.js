@@ -1256,6 +1256,31 @@
     {id:'lm_win_10',         tier:'intermedio', pts:2, icon:'ph-soccer-ball', get name(){return t('lmach.win_10.nombre');}, get desc(){return t('lmach.win_10.desc');}},
     {id:'lm_season_complete',tier:'difícil', pts:3, icon:'ph-flag-checkered', get name(){return t('lmach.season_complete.nombre');}, get desc(){return t('lmach.season_complete.desc');}},
     {id:'lm_champion',       tier:'mítico', pts:5, icon:'ph-crown',          get name(){return t('lmach.champion.nombre');}, get desc(){return t('lmach.champion.desc');}},
+    // --- Nuevos (esta ronda): 24 logros más, triplicando el total ---
+    {id:'lm_first_goal',     tier:'básico', pts:1, icon:'ph-soccer-ball',    get name(){return t('lmach.first_goal.nombre');}, get desc(){return t('lmach.first_goal.desc');}},
+    {id:'lm_first_defeat',   tier:'básico', pts:1, icon:'ph-thumbs-down',    get name(){return t('lmach.first_defeat.nombre');}, get desc(){return t('lmach.first_defeat.desc');}},
+    {id:'lm_first_draw',     tier:'básico', pts:1, icon:'ph-equals',         get name(){return t('lmach.first_draw.nombre');}, get desc(){return t('lmach.first_draw.desc');}},
+    {id:'lm_first_injury',   tier:'básico', pts:1, icon:'ph-first-aid-kit',  get name(){return t('lmach.first_injury.nombre');}, get desc(){return t('lmach.first_injury.desc');}},
+    {id:'lm_first_upgrade',  tier:'básico', pts:1, icon:'ph-trend-up',       get name(){return t('lmach.first_upgrade.nombre');}, get desc(){return t('lmach.first_upgrade.desc');}},
+    {id:'lm_first_training', tier:'básico', pts:1, icon:'ph-barbell',        get name(){return t('lmach.first_training.nombre');}, get desc(){return t('lmach.first_training.desc');}},
+    {id:'lm_first_quiniela', tier:'básico', pts:1, icon:'ph-ticket',         get name(){return t('lmach.first_quiniela.nombre');}, get desc(){return t('lmach.first_quiniela.desc');}},
+    {id:'lm_first_sponsor',  tier:'básico', pts:1, icon:'ph-handshake',      get name(){return t('lmach.first_sponsor.nombre');}, get desc(){return t('lmach.first_sponsor.desc');}},
+    {id:'lm_5_wins',         tier:'intermedio', pts:2, icon:'ph-fire',       get name(){return t('lmach.5_wins.nombre');}, get desc(){return t('lmach.5_wins.desc');}},
+    {id:'lm_10_goals',       tier:'intermedio', pts:2, icon:'ph-target',     get name(){return t('lmach.10_goals.nombre');}, get desc(){return t('lmach.10_goals.desc');}},
+    {id:'lm_no_injuries_month', tier:'intermedio', pts:2, icon:'ph-heart',   get name(){return t('lmach.no_injuries_month.nombre');}, get desc(){return t('lmach.no_injuries_month.desc');}},
+    {id:'lm_full_stadium',   tier:'intermedio', pts:2, icon:'ph-stadium',    get name(){return t('lmach.full_stadium.nombre');}, get desc(){return t('lmach.full_stadium.desc');}},
+    {id:'lm_quiniela_streak', tier:'intermedio', pts:2, icon:'ph-brain',     get name(){return t('lmach.quiniela_streak.nombre');}, get desc(){return t('lmach.quiniela_streak.desc');}},
+    {id:'lm_5_signings',     tier:'intermedio', pts:2, icon:'ph-arrows-left-right', get name(){return t('lmach.5_signings.nombre');}, get desc(){return t('lmach.5_signings.desc');}},
+    {id:'lm_max_level_dept', tier:'intermedio', pts:2, icon:'ph-graduation-cap', get name(){return t('lmach.max_level_dept.nombre');}, get desc(){return t('lmach.max_level_dept.desc');}},
+    {id:'lm_positive_balance', tier:'intermedio', pts:2, icon:'ph-bank',     get name(){return t('lmach.positive_balance.nombre');}, get desc(){return t('lmach.positive_balance.desc');}},
+    {id:'lm_undefeated_5',   tier:'difícil', pts:3, icon:'ph-shield-star',   get name(){return t('lmach.undefeated_5.nombre');}, get desc(){return t('lmach.undefeated_5.desc');}},
+    {id:'lm_all_departments', tier:'difícil', pts:3, icon:'ph-users-three',  get name(){return t('lmach.all_departments.nombre');}, get desc(){return t('lmach.all_departments.desc');}},
+    {id:'lm_stadium_max',    tier:'difícil', pts:3, icon:'ph-buildings',     get name(){return t('lmach.stadium_max.nombre');}, get desc(){return t('lmach.stadium_max.desc');}},
+    {id:'lm_20_wins',        tier:'difícil', pts:3, icon:'ph-trophy',        get name(){return t('lmach.20_wins.nombre');}, get desc(){return t('lmach.20_wins.desc');}},
+    {id:'lm_top_half',       tier:'difícil', pts:3, icon:'ph-chart-bar',     get name(){return t('lmach.top_half.nombre');}, get desc(){return t('lmach.top_half.desc');}},
+    {id:'lm_all_skills',     tier:'difícil', pts:3, icon:'ph-lightning',     get name(){return t('lmach.all_skills.nombre');}, get desc(){return t('lmach.all_skills.desc');}},
+    {id:'lm_perfect_season', tier:'mítico', pts:5, icon:'ph-sparkle',        get name(){return t('lmach.perfect_season.nombre');}, get desc(){return t('lmach.perfect_season.desc');}},
+    {id:'lm_dynasty',        tier:'mítico', pts:5, icon:'ph-crown-simple',   get name(){return t('lmach.dynasty.nombre');}, get desc(){return t('lmach.dynasty.desc');}},
   ];
   async function unlockLMAchievement(id, mostrarInmediatamente){
     if(mostrarInmediatamente===undefined) mostrarInmediatamente=true;
@@ -1383,6 +1408,22 @@
       get tooltip(){return t('skill.temple_competitivo.tooltip');}},
     {id:'lm_contraataque_letal', get category(){return t('skill.categoria_gestion');}, get name(){return t('skill.contraataque_letal.nombre');}, cost:35, phIcon:'ph-lightning',
       get tooltip(){return t('skill.contraataque_letal.tooltip');}},
+    // --- Nuevas (esta ronda): 6 habilidades más, doblando el total.
+    // Categoría propia "Apoyo al cuerpo técnico" — a propósito, para
+    // que quede claro que complementan a cada departamento, nunca lo
+    // sustituyen ni lo eclipsan.
+    {id:'lm_ojo_clinico', get category(){return t('skill.categoria_apoyo');}, get name(){return t('skill.ojo_clinico.nombre');}, cost:30, phIcon:'ph-binoculars',
+      get tooltip(){return t('skill.ojo_clinico.tooltip');}},
+    {id:'lm_negociador_nato', get category(){return t('skill.categoria_apoyo');}, get name(){return t('skill.negociador_nato.nombre');}, cost:30, phIcon:'ph-handshake',
+      get tooltip(){return t('skill.negociador_nato.tooltip');}},
+    {id:'lm_manos_de_seda', get category(){return t('skill.categoria_apoyo');}, get name(){return t('skill.manos_de_seda.nombre');}, cost:30, phIcon:'ph-first-aid-kit',
+      get tooltip(){return t('skill.manos_de_seda.tooltip');}},
+    {id:'lm_discurso_motivador', get category(){return t('skill.categoria_apoyo');}, get name(){return t('skill.discurso_motivador.nombre');}, cost:30, phIcon:'ph-megaphone',
+      get tooltip(){return t('skill.discurso_motivador.tooltip');}},
+    {id:'lm_vigilancia_extra', get category(){return t('skill.categoria_apoyo');}, get name(){return t('skill.vigilancia_extra.nombre');}, cost:25, phIcon:'ph-shield-checkered',
+      get tooltip(){return t('skill.vigilancia_extra.tooltip');}},
+    {id:'lm_gestion_vestuario', get category(){return t('skill.categoria_apoyo');}, get name(){return t('skill.gestion_del_vestuario.nombre');}, cost:35, phIcon:'ph-users-three',
+      get tooltip(){return t('skill.gestion_del_vestuario.tooltip');}},
   ];
   async function lmCargarSkillsCache(){
     try{
@@ -1612,7 +1653,16 @@
   function empezarTemporada(nombreEquipo, moneda, liga, escudo, equipoRealElegidoId){
     calendarioMesVisto=null; // nueva liga: el calendario debe volver a fijarse en el mes de inicio, no arrastrar el de una partida anterior
     calendarioJornadaSincronizada=null;
-    const miEquipo={id:'lm_0', name:nombreEquipo};
+    // Si el nombre elegido coincide EXACTO con el de uno de los 19
+    // rivales reales (p.ej. alguien escribe "Real Sociedad" a mano en
+    // vez de elegirlo como su equipo real), se añade un distintivo —
+    // sin esto, el calendario podía generar un partido "Real Sociedad
+    // vs Real Sociedad" con total sentido interno (son dos equipos de
+    // verdad con IDs distintos) pero sin ningún sentido visual.
+    const nombreNormalizado=(nombreEquipo||'').trim().toLowerCase();
+    const colisionConRival = !equipoRealElegidoId && LM_RIVALS.some(r=>r.name.trim().toLowerCase()===nombreNormalizado);
+    const nombreFinal = colisionConRival ? nombreEquipo.trim()+' FC' : nombreEquipo;
+    const miEquipo={id:'lm_0', name:nombreFinal};
     // Si el jugador ha elegido ser uno de los 19 equipos reales en vez de
     // crear el suyo propio, ese equipo se quita de la lista de rivales
     // (no te puedes enfrentar a ti mismo) y tu plantilla se genera con
@@ -1624,7 +1674,7 @@
     const plantilla = equipoRealElegido ? generarPlantillaDesdeEquipoReal(equipoRealElegido) : generarMiniPlantilla();
     state={
       setupComplete:true,
-      liga, moneda, nombreEquipo, escudo,
+      liga, moneda, nombreEquipo:nombreFinal, escudo,
       jornadaActual:1,
       calendario:generarCalendario(teams),
       fechaInicioLiga:fechaISO(proximoSabadoDesde(new Date())),
@@ -2396,12 +2446,35 @@
       try{
         const clasif=calcularClasificacion();
         const miPos=clasif.findIndex(t=>t.id==='lm_0')+1;
+        const misDatos=clasif.find(t=>t.id==='lm_0');
         if(miPos>0 && miPos<=4) window.unlockLMAchievement('lm_top4', false);
-        const misVictorias=clasif.find(t=>t.id==='lm_0');
-        if(misVictorias && misVictorias.pg>=10) window.unlockLMAchievement('lm_win_10', false);
+        if(misDatos && misDatos.pg>=10) window.unlockLMAchievement('lm_win_10', false);
+        if(misDatos && misDatos.pg>=5) window.unlockLMAchievement('lm_5_wins', false);
+        if(misDatos && misDatos.pg>=20) window.unlockLMAchievement('lm_20_wins', false);
+        if(misDatos && misDatos.gf>=10) window.unlockLMAchievement('lm_10_goals', false);
+        // Resultado del partido que se acaba de jugar — primer gol,
+        // primera derrota, primer empate.
+        if(miPartidoInfo){
+          const miEsLocalDeEste2 = miPartidoInfo.home.id==='lm_0';
+          const misGolesDeEste = miEsLocalDeEste2 ? miPartidoInfo.resultado.golesA : miPartidoInfo.resultado.golesB;
+          const rivalGolesDeEste = miEsLocalDeEste2 ? miPartidoInfo.resultado.golesB : miPartidoInfo.resultado.golesA;
+          if(misGolesDeEste>0) window.unlockLMAchievement('lm_first_goal', false);
+          if(misGolesDeEste<rivalGolesDeEste) window.unlockLMAchievement('lm_first_defeat', false);
+          if(misGolesDeEste===rivalGolesDeEste) window.unlockLMAchievement('lm_first_draw', false);
+        }
+        // Racha sin perder — reutiliza state.rachaResultados, que ya se
+        // actualiza en otro punto tras cada partido.
+        if(state.rachaResultados>=5) window.unlockLMAchievement('lm_undefeated_5', false);
+        // Cuerpo técnico y estadio — comprobables directamente desde el
+        // estado en cualquier momento, no solo tras jugar.
+        const rolesContratados=['medico','mantenimiento','directorGeneral','directorDeportivo','preparadorFisico'].filter(r=>state.trabajadores && state.trabajadores[r]);
+        if(rolesContratados.length>=5) window.unlockLMAchievement('lm_all_departments', false);
+        if(state.estadio && rolesContratados.length>=5){ /* estadio de nivel máximo: pendiente de una comprobación fiable, no bloquea el resto */ }
         if(state.jornadaActual>38){
           window.unlockLMAchievement('lm_season_complete', false);
           if(miPos===1) window.unlockLMAchievement('lm_champion', false);
+          if(miPos<=10) window.unlockLMAchievement('lm_top_half', false);
+          if(misDatos && misDatos.pp===0) window.unlockLMAchievement('lm_perfect_season', false);
         }
       }catch(e){}
     }

@@ -329,8 +329,20 @@
     // defensivo se repliega más y ataca a la contra; uno ofensivo
     // empuja más líneas arriba y arriesga más.
     const catTacticaMia = state.formacionCategoria;
-    const multEmpujeMio = catTacticaMia==='ofensiva' ? 1.35 : (catTacticaMia==='defensiva' ? 0.65 : 1);
-    const multRiesgoMio = catTacticaMia==='ofensiva' ? 1.25 : (catTacticaMia==='defensiva' ? 0.7 : 1);
+    const multEmpujeMioBase = catTacticaMia==='ofensiva' ? 1.35 : (catTacticaMia==='defensiva' ? 0.65 : 1);
+    const multRiesgoMioBase = catTacticaMia==='ofensiva' ? 1.25 : (catTacticaMia==='defensiva' ? 0.7 : 1);
+    // Urgencia por marcador y minuto: si vas perdiendo y el partido
+    // avanza, el equipo aprieta más de lo habitual — un equipo real no
+    // se comporta igual en el minuto 10 que en el 88 perdiendo 0-1.
+    // Si vas ganando o empatado, no hay urgencia extra.
+    function urgenciaPartido(){
+      const diferencia = marcadorRival - marcadorMio;
+      if(diferencia<=0) return 1;
+      const progreso = Math.min(1, tiempoTranscurrido/DURACION_TOTAL);
+      return 1 + Math.min(0.5, diferencia*0.18*progreso);
+    }
+    function multEmpujeMioActual(){ return multEmpujeMioBase * urgenciaPartido(); }
+    function multRiesgoMioActual(){ return multRiesgoMioBase * urgenciaPartido(); }
     // Sesgo real de posesión: un equipo claramente mejor (ataque+pase)
     // tiende a monopolizar más el balón, uno claramente peor apenas lo
     // toca — en vez de un reparto fijo cercano al 50%.
@@ -351,7 +363,7 @@
         const golRival = esMio?rivalGolXY:miGolXY;
         const propioGol = esMio?miGolXY:rivalGolXY;
         const yoAtaco = esMio===atacaMio;
-        const multEmpuje = esMio ? multEmpujeMio : 1;
+        const multEmpuje = esMio ? multEmpujeMioActual() : 1;
         const cercanos = yoAtaco ? [] : pos.map((p,i)=>({i,d:Math.hypot(p.x-balonPos.x,p.y-balonPos.y)}))
           .filter(o=>o.i!==0 && o.i!==idxExcluir).sort((a,b)=>a.d-b.d).slice(0,2).map(o=>o.i);
         // El portero se desplaza un poco hacia el lado donde está el
@@ -368,7 +380,13 @@
         const destinos=[]; // para la separación: no dejar que dos caigan en el mismo punto
         for(let i=1;i<pos.length;i++){
           if(i===idxExcluir) continue;
-          const base=slots[i];
+          // Al atacar, se parte de la posición ACTUAL del jugador (no
+          // de su casilla de formación original) — así cada recálculo
+          // avanza un poco MÁS, en vez de recalcular siempre desde el
+          // mismo punto de partida y dar la sensación de estar
+          // bailando sin moverse de verdad. Al defender, sí se usa la
+          // formación como referencia de vuelta a su sitio.
+          const base=yoAtaco ? pos[i] : slots[i];
           // Al atacar, TODO el equipo sube de línea para apoyar — los
           // delanteros más, pero defensas y centrocampistas también
           // acompañan de verdad (antes apenas se movían, dando la
@@ -376,7 +394,14 @@
           // resto se quedaba plantado atrás, algo sin sentido en un
           // equipo real). Al defender, si se repliega más disciplinado.
           const factorRol = roles[i]==='def' ? 0.75 : (roles[i]==='fwd' ? 1.25 : 1.05);
-          const empuje = yoAtaco ? (0.09+avance[i]*0.16)*factorRol*multEmpuje : 0.06;
+          // Altura de la línea al defender: depende de la categoría
+          // táctica elegida — un planteamiento defensivo se repliega
+          // más profundo (línea baja, clásica de bloque bajo), uno
+          // ofensivo mantiene una línea más alta y comprometida, con
+          // el riesgo de espacio a la espalda que eso conlleva en un
+          // partido real.
+          const replieguDefensivo = (esMio && catTacticaMia==='defensiva') ? 0.09 : ((esMio && catTacticaMia==='ofensiva') ? 0.035 : 0.06);
+          const empuje = yoAtaco ? (0.09+avance[i]*0.16)*factorRol*multEmpuje : replieguDefensivo;
           const objetivo = yoAtaco ? golRival : propioGol;
           let x=base.x+(objetivo.x-base.x)*empuje;
           let y=base.y+(objetivo.y-base.y)*empuje;
@@ -439,6 +464,11 @@
       return idx>=0 ? idx : Math.floor(roles.length/2);
     }
     let idxConBalonMio=primerMedioCentro(rolesMios), idxConBalonRival=primerMedioCentro(rolesRival);
+    // Pases seguidos de la jugada actual — le da memoria a la
+    // posesión: pocos pases = todavía construyendo (juego prudente),
+    // muchos pases seguidos en el último tercio = urgencia real por
+    // encontrar el hueco, no una jugada mecánica idéntica siempre.
+    let pasesJugadaActual=0;
     const FRASES_PASE=[t('lm.visor_construye'), t('lm.visor_avanza')];
     let descansoMostrado=false;
     let partidoDetenido=false; // se activa al pulsar "terminar y mostrar resultados"
@@ -485,7 +515,7 @@
           if(typeof window.playSound==='function') window.playSound('goal');
           setTimeout(()=>{
             moverBalon(centroCampo.x,centroCampo.y,700);
-            posesionMia=!esMio; tiempoTranscurrido+=2750;
+            posesionMia=!esMio; tiempoTranscurrido+=2750; pasesJugadaActual=0;
             setTimeout(tick, real(750));
           }, real(1300));
         }, real(850));
@@ -514,20 +544,35 @@
       const zona = distGol/distTotal;
       const rivalCercanoIdx = jugadorMasCercano(equipoDefiende, posActual.x, posActual.y, -1);
       const distRival = Math.hypot(equipoDefiende[rivalCercanoIdx].x-posActual.x, equipoDefiende[rivalCercanoIdx].y-posActual.y);
+      // Presión COORDINADA, no solo individual: cuenta cuántos rivales
+      // están cerca del balón a la vez (no solo el más próximo). Con 2
+      // o más apretando juntos, la probabilidad de robo sube mucho —
+      // así se nota una presión de bloque real, no un jugador aislado
+      // decidiendo por su cuenta si roba o no.
+      const presionadores = equipoDefiende.filter(rv=>Math.hypot(rv.x-posActual.x, rv.y-posActual.y)<14).length;
       const dur=1100+Math.random()*900;
       let siguientePosesionMia=posesionMia, siguienteIdxMio=idxConBalonMio, siguienteIdxRival=idxConBalonRival;
 
-      if(distRival<7 && Math.random()<(zona<0.35?0.38:0.28)){
+      const probBase = zona<0.35?0.48:0.36;
+      const probPresion = probBase + Math.max(0,presionadores-1)*0.16; // +16pp por cada presionador extra
+      if(distRival<9.5 && Math.random()<probPresion){
         // Presión de cerca: el rival se lleva el balón de verdad — más
-        // probable en el último tercio, donde la defensa aprieta más.
+        // probable en el último tercio, donde la defensa aprieta más,
+        // y mucho más probable si hay varios rivales presionando juntos.
         moverBalon(equipoDefiende[rivalCercanoIdx].x, equipoDefiende[rivalCercanoIdx].y, dur*0.7);
-        infoBar.textContent=`${nombreDefiende} recupera el balón con una entrada`;
+        infoBar.textContent = presionadores>=2
+          ? `${nombreDefiende} recupera el balón con una presión conjunta`
+          : `${nombreDefiende} recupera el balón con una entrada`;
         siguientePosesionMia=!posesionMia;
+        pasesJugadaActual=0;
         if(siguientePosesionMia) siguienteIdxMio=rivalCercanoIdx; else siguienteIdxRival=rivalCercanoIdx;
-      } else if(zona<0.24 && Math.random()<0.38*(posesionMia?multRiesgoMio:1)){
+      } else if(zona<0.24 && Math.random()<(0.38+Math.min(0.18,pasesJugadaActual*0.03))*(posesionMia?multRiesgoMioActual():1)){
         // Cerca del área: intento de disparo (sin gol, salvo que
         // coincida con un gol real programado, gestionado aparte). El
-        // portero contrario reacciona hacia el disparo.
+        // portero contrario reacciona hacia el disparo. Cuantos más
+        // pases lleve la jugada, más urgencia por probar suerte —
+        // hasta +18 puntos de probabilidad tras varios pases seguidos.
+        pasesJugadaActual=0;
         moverBalon(golObjetivo.x, golObjetivo.y, dur*0.65);
         infoBar.textContent=`¡${nombreAtaca} dispara a portería!`;
         const portero = posesionMia?posRival:posMia;
@@ -587,6 +632,41 @@
         // posesión/jugador que se acaba de asignar con datos viejos.
         return;
       } else {
+        // Regate 1 contra 1: si el que lleva el balón encara a UN SOLO
+        // defensa aislado (no hay presión coordinada de varios a la
+        // vez), puede intentar superarlo directamente en vez de pasar
+        // siempre — variedad real, no solo "pase o disparo".
+        const defensaAislado = jugadorMasCercano(equipoDefiende, posActual.x, posActual.y, -1);
+        const distDefensaAislado = Math.hypot(equipoDefiende[defensaAislado].x-posActual.x, equipoDefiende[defensaAislado].y-posActual.y);
+        const presionAquiAhora = equipoDefiende.filter(rv=>Math.hypot(rv.x-posActual.x, rv.y-posActual.y)<14).length;
+        const ritmoAtaca = posesionMia ? misStatsReales.pace : rival.pace;
+        if(distDefensaAislado<11 && presionAquiAhora===1 && zona>0.15 && Math.random()<(ritmoAtaca-40)/220){
+          const avanzaHacia = golObjetivo;
+          const destinoRegate={x:posActual.x+(avanzaHacia.x-posActual.x)*0.22, y:posActual.y+(avanzaHacia.y-posActual.y)*0.22};
+          const regateExitoso = Math.random()<0.62;
+          pasesJugadaActual=0;
+          if(regateExitoso){
+            moverBalon(destinoRegate.x, destinoRegate.y, dur*0.8);
+            infoBar.textContent=`${nombreAtaca} encara y supera a su marcador`;
+            actualizarFormacionDinamica(posesionMia, posesionMia?idxConBalon:undefined, posesionMia?undefined:idxConBalon, posActual);
+            setTimeout(()=>{
+              tiempoTranscurrido+=dur;
+              tick();
+            }, real(dur));
+          } else {
+            moverBalon(equipoDefiende[defensaAislado].x, equipoDefiende[defensaAislado].y, dur*0.7);
+            infoBar.textContent=`${nombreDefiende} para el regate y roba el balón`;
+            const posesionTrasRegate=!posesionMia;
+            if(posesionTrasRegate) idxConBalonMio=defensaAislado; else idxConBalonRival=defensaAislado;
+            actualizarFormacionDinamica(posesionMia, posesionMia?idxConBalon:undefined, posesionMia?undefined:idxConBalon, posActual);
+            setTimeout(()=>{
+              posesionMia=posesionTrasRegate;
+              tiempoTranscurrido+=dur;
+              tick();
+            }, real(dur));
+          }
+          return;
+        }
         // Pase: en el último tercio se busca el hueco por delante del
         // compañero (pase filtrado, simula la carrera); en el resto,
         // a su posición actual. Se puntúa por avance, distancia
@@ -635,7 +715,7 @@
           const interceptorLinea=jugadorMasCercano(equipoDefiende, (posActual.x+equipoAtaca[mejor].x)/2, (posActual.y+equipoAtaca[mejor].y)/2, -1);
           moverBalon(equipoDefiende[interceptorLinea].x, equipoDefiende[interceptorLinea].y, dur*0.6);
           infoBar.textContent=`${nombreDefiende} corta la línea de pase`;
-          siguientePosesionMia=!posesionMia;
+          siguientePosesionMia=!posesionMia; pasesJugadaActual=0;
           if(siguientePosesionMia) siguienteIdxMio=interceptorLinea; else siguienteIdxRival=interceptorLinea;
           actualizarFormacionDinamica(posesionMia, posesionMia?idxConBalon:undefined, posesionMia?undefined:idxConBalon, posActual);
           setTimeout(()=>{
@@ -660,7 +740,7 @@
           const interceptorIdx=jugadorMasCercano(equipoDefiende, destinoFallido.x, destinoFallido.y, -1);
           moverBalon(equipoDefiende[interceptorIdx].x, equipoDefiende[interceptorIdx].y, dur);
           infoBar.textContent=`${nombreAtaca} pierde el balón con un pase impreciso`;
-          siguientePosesionMia=!posesionMia;
+          siguientePosesionMia=!posesionMia; pasesJugadaActual=0;
           if(siguientePosesionMia) siguienteIdxMio=interceptorIdx; else siguienteIdxRival=interceptorIdx;
         } else {
         let destino=equipoAtaca[mejor];
@@ -673,6 +753,7 @@
         moverBalon(destino.x, destino.y, dur);
         resaltarReceptor(destino.x, destino.y, dur);
         infoBar.textContent=`${nombreAtaca} ${FRASES_PASE[Math.floor(Math.random()*FRASES_PASE.length)]}`;
+        pasesJugadaActual++;
         if(posesionMia) siguienteIdxMio=mejor; else siguienteIdxRival=mejor;
         }
       }
