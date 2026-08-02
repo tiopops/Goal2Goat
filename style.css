@@ -4407,6 +4407,21 @@ body.light-theme.menu-screen{
 .lm-visor-resumen-fila:last-child{border-bottom:none}
 .lm-visor-resumen-min{color:var(--gold);font-weight:700;min-width:28px}
 .lm-visor-resumen-equipo{color:#888;margin-left:auto}
+.lm-visor-resultado-banner{
+  font-family:'Bebas Neue',Impact,sans-serif;font-size:22px;letter-spacing:2px;
+  text-align:center;padding:8px 0 12px;
+}
+.lm-visor-resultado-victoria{color:#5dcaa5;text-shadow:0 0 14px rgba(93,202,165,.5)}
+.lm-visor-resultado-derrota{color:#e24b4a;text-shadow:0 0 14px rgba(226,75,74,.5)}
+.lm-visor-resultado-empate{color:#e6c94a;text-shadow:0 0 14px rgba(230,201,74,.5)}
+.lm-visor-resumen-gol .lm-visor-resumen-min{color:#5dcaa5}
+.lm-visor-resumen-roja{color:#ff9a99}
+.lm-visor-resumen-amarilla{color:#f0d878}
+.lm-visor-resumen-lesion{color:#ff9a99}
+.lm-visor-resumen-pie{
+  margin-top:8px;padding-top:8px;border-top:1px solid #2a2a2a;
+  text-align:center;font-size:11px;color:#999;letter-spacing:.3px;
+}
 @media(min-width:900px){
   .lm-visor-partido-card{max-width:720px}
   .lm-visor-campo-wrap{padding:16px}

@@ -182,7 +182,6 @@
             </defs>
             ${franjasHTML}
             <rect x="0" y="0" width="${ANCHO}" height="${ALTO}" fill="url(#lmVisorCespedGrad)"/>
-            <rect x="0" y="0" width="${ANCHO}" height="${ALTO}" fill="#8a6a35" style="mix-blend-mode:color;opacity:${Math.max(0,(100-(state.estadio?state.estadio.campo:100))/100*0.85).toFixed(2)}"/>
             ${lineasCampo}
             <circle cx="${CENTRO_X}" cy="${CENTRO_Y}" r="0.8" fill="#eaf5ea" opacity="0.9"/>
             <g id="lmVisorGrupoRival">${rivalSlots.map((s,i)=>puntoJugadorHTML(s, i===0, false, i, rivalNumeros[i], rivalNombres[i])).join('')}</g>
@@ -713,21 +712,40 @@
       resEl.textContent = `${misGolesFinal} - ${rivalGolesFinal}`;
 
       const eventosOrdenados = (info.eventos||[]).slice().sort((a,b)=>a.minute-b.minute);
+      let numGoles=0, numTarjetas=0, numLesiones=0;
       const filas = eventosOrdenados.map(ev=>{
         const esMio = ev.team===miLado;
         const equipo = esMio?miNombre:rivalNombre;
-        let icono='⚽', texto=t('lm.resumen_gol_minuto');
+        let icono='⚽', texto=t('lm.resumen_gol_minuto'), clase='lm-visor-resumen-gol';
         if(ev.type==='card'){
           icono = ev.tarjeta==='roja'?'🟥':'🟨';
           texto = ev.tarjeta==='roja'?t('lm.resumen_tarjeta_roja'):t('lm.resumen_tarjeta_amarilla');
+          clase = ev.tarjeta==='roja'?'lm-visor-resumen-roja':'lm-visor-resumen-amarilla';
+          numTarjetas++;
+        } else if(ev.type==='injury'){
+          icono='🩹'; texto=`${t('lm.resumen_lesion')} (${ev.sev?ev.sev.label:''})`; clase='lm-visor-resumen-lesion';
+          numLesiones++;
+        } else {
+          numGoles++;
         }
         const nombreJ = ev.jugador?ev.jugador.name:'';
-        return `<div class="lm-visor-resumen-fila"><span class="lm-visor-resumen-min">${ev.minute}'</span> ${icono} <strong>${nombreJ}</strong> <span class="lm-visor-resumen-equipo">(${equipo})</span></div>`;
+        return `<div class="lm-visor-resumen-fila ${clase}"><span class="lm-visor-resumen-min">${ev.minute}'</span> ${icono} <strong>${nombreJ}</strong> <span class="lm-visor-resumen-equipo">(${equipo})</span></div>`;
       }).join('');
+
+      const resultadoTexto = misGolesFinal>rivalGolesFinal ? t('lm.resultado_victoria') : (misGolesFinal<rivalGolesFinal ? t('lm.resultado_derrota') : t('lm.resultado_empate'));
+      const resultadoClase = misGolesFinal>rivalGolesFinal ? 'lm-visor-resultado-victoria' : (misGolesFinal<rivalGolesFinal ? 'lm-visor-resultado-derrota' : 'lm-visor-resultado-empate');
+      const partesResumen=[];
+      if(numGoles) partesResumen.push(`${numGoles} ${t('lm.resumen_goles_total')}`);
+      if(numTarjetas) partesResumen.push(`${numTarjetas} ${t('lm.resumen_tarjetas_total')}${numTarjetas!==1?'s':''}`);
+      if(numLesiones) partesResumen.push(`${numLesiones} ${t('lm.resumen_lesiones_total')}${numLesiones!==1?'es':''}`);
 
       const resumenBox = document.getElementById('lmVisorResumenBox');
       resumenBox.style.display='block';
-      resumenBox.innerHTML = `<div class="lm-visor-resumen-titulo">${t('lm.resumen_partido_titulo')}</div>${filas || ''}`;
+      resumenBox.innerHTML = `
+        <div class="lm-visor-resultado-banner ${resultadoClase}">${resultadoTexto}</div>
+        <div class="lm-visor-resumen-titulo">${t('lm.resumen_partido_titulo')}</div>
+        ${filas || ''}
+        ${partesResumen.length?`<div class="lm-visor-resumen-pie">${partesResumen.join(' · ')}</div>`:''}`;
 
       infoBar.textContent = t('lm.visor_termina');
       mostrarTextoGrande(t('lm.visor_termina'), real(2000));

@@ -382,7 +382,10 @@
     const v=ventanaEntrenoActual();
     const eventosDias=[];
     if(!v) return eventosDias;
-    const NOMBRE_STAT={attack:'ataque',defense:'defensa',pace:'ritmo',passing:'pase',technique:'técnica'};
+    const NOMBRE_STAT={
+      get attack(){return t('lm.stat_attack');}, get defense(){return t('lm.stat_defense');},
+      get pace(){return t('lm.stat_pace');}, get passing(){return t('lm.stat_passing');}, get technique(){return t('lm.stat_technique');}
+    };
     const plan=(state.pfPlanEntrenamiento||[])
       .map(entry=>{
         const jugador=state.plantilla.find(p=>p.id===entry.jugadorId);
@@ -2415,7 +2418,8 @@
   // (mismo espíritu que el minutero del partido en vivo, pero con los
   // días de la semana), mostrando qué ha pasado en cada uno según el
   // calendario. Al llegar al final, hay que pulsar para jugar el partido.
-  const DIAS_LARGO=['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+  const DIAS_LARGO_KEYS=['lm.dia_domingo','lm.dia_lunes','lm.dia_martes','lm.dia_miercoles','lm.dia_jueves','lm.dia_viernes','lm.dia_sabado'];
+  function diaLargo(idx){ return t(DIAS_LARGO_KEYS[idx]); }
   // Rueda de prensa de Liga Manager — MISMA mecánica e interfaz que Copa
   // Leyendas (mismas clases CSS .press-modal, mismo temporizador de 8s),
   // pero con preguntas reescritas para encajar en el contexto de una
@@ -2622,7 +2626,7 @@
         return;
       }
       const ev=eventosDias[idx];
-      const nombreDia=DIAS_LARGO[ev.fecha.getDay()];
+      const nombreDia=diaLargo(ev.fecha.getDay());
       if(typeof window.playSound==='function') window.playSound(ev.tipo==='entreno'?'training_day':'rest_day');
       overlay.innerHTML=`
         <div class="lm-dilemma-card lm-semana-card-fija" style="width:380px;max-width:92vw">
@@ -3854,7 +3858,13 @@
      pero también sin nadie al mando) hasta contratar a otra persona. ---------- */
   const ROLES_TRABAJO=['directorGeneral','directorDeportivo','medico','preparadorFisico','mantenimiento'];
   const SUELDO_BASE_ROL={medico:4000, mantenimiento:4000, directorGeneral:5000, directorDeportivo:5000, preparadorFisico:4200};
-  const NOMBRE_ROL={medico:'Equipo Médico', mantenimiento:'Mantenimiento y Seguridad', directorGeneral:'Director General', directorDeportivo:'Director Deportivo', preparadorFisico:'Preparador Físico'};
+  const NOMBRE_ROL={
+    get medico(){return t('lm.titulo_medico');},
+    get mantenimiento(){return t('lm.titulo_mantenimiento');},
+    get directorGeneral(){return t('lm.titulo_dg');},
+    get directorDeportivo(){return t('lm.titulo_dd');},
+    get preparadorFisico(){return t('lm.titulo_pf');}
+  };
   function nivelAleatorioTrabajador(){
     // 1★ es lo más común, 5★ muy raro — igual de espíritu que la rareza
     // de un sobre de fichajes.
@@ -4575,7 +4585,10 @@
     const jugador=elegibles[Math.floor(Math.random()*elegibles.length)];
     campos.forEach(campo=>{ jugador[campo]=Math.min(99, Math.round(jugador[campo]+cantidad)); });
     if(!state.preparadorFisicoHistorial) state.preparadorFisicoHistorial=[];
-    const NOMBRE_STAT={attack:'ataque',defense:'defensa',pace:'ritmo',passing:'pase',technique:'técnica'};
+    const NOMBRE_STAT={
+      get attack(){return t('lm.stat_attack');}, get defense(){return t('lm.stat_defense');},
+      get pace(){return t('lm.stat_pace');}, get passing(){return t('lm.stat_passing');}, get technique(){return t('lm.stat_technique');}
+    };
     const detalle=campos.map(c=>NOMBRE_STAT[c]||c).join(', ');
     state.preparadorFisicoHistorial.unshift({id:'ent'+Date.now()+Math.floor(Math.random()*10000), jugador:jugador.name, detalle, cantidad, jornada:state.jornadaActual});
     if(state.preparadorFisicoHistorial.length>30) state.preparadorFisicoHistorial=state.preparadorFisicoHistorial.slice(0,30);
@@ -5213,7 +5226,7 @@
               <span><i class="ph ph-bold ph-arrows-clockwise"></i> ${t('lm.rerrolls')}: <strong>${state.dadoRerollsDisponibles||0}</strong></span>
             </div>
           </div>
-          ${hayVacantes?`<div class="lm-staff-warning"><i class="ph ph-bold ph-warning"></i> Todavía te falta cuerpo técnico por contratar — puedes jugar igualmente, pero conviene completarlo pronto.</div>`:''}
+          ${hayVacantes?`<div class="lm-staff-warning"><i class="ph ph-bold ph-warning"></i> ${t('lm.falta_cuerpo_tecnico_msg')}</div>`:''}
           <button id="lmTrabajadoresBtn" class="lm-btn-trabajadores" style="width:100%;margin-bottom:10px"><i class="ph ph-bold ph-user-plus"></i> ${t('lm.contratar_btn')}</button>
           <div class="lm-staff-bar-row">
             ${staffTileHTML('directorGeneral', {btnId:'lmDirectorGeneralBtn', infoId:'lmDirectorGeneralInfoBtn', infoTitle:t('lm.info_dg'), notif:notifDG, badgeTexto:'!', carpeta:'director_general', archivo:'director_general', alt:'Director General', icono:'ph-briefcase', rolLabel:t('lm.rol_dg'), acento:'lm-staff-tile-dg', desc:t('lm.desc_dg')})}
@@ -6085,11 +6098,11 @@
         if(def.tipo==='nivel'){
           const n=nivelDe(def.track);
           cuerpo=`<div class="med-card-progress-label" style="text-align:center;letter-spacing:2px;color:var(--gold)">${estrellasNivel(n)}</div>
-                  <div class="med-card-dificultad">Dificultad ${dificultadEfectiva}+ para subir a nivel ${n+1}/${NIVEL_MAXIMO_EQUIPO}</div>`;
+                  <div class="med-card-dificultad">${t('lm.dificultad_lbl')} ${dificultadEfectiva}+ ${t('lm.para_subir_a_nivel')} ${n+1}/${NIVEL_MAXIMO_EQUIPO}</div>`;
         } else if(def.tipo==='acumulacion'){
           const umbral=def.niveles[instancia.nivelActual-1];
           cuerpo=`<div class="med-card-progress"><div class="med-card-progress-fill" style="width:${Math.min(100,100*instancia.progreso/umbral)}%"></div></div>
-                  <div class="med-card-progress-label">Nivel ${instancia.nivelActual}/${def.niveles.length} — ${instancia.progreso}/${umbral}</div>`;
+                  <div class="med-card-progress-label">${t('lm.nivel_n_de_x')} ${instancia.nivelActual}/${def.niveles.length} — ${instancia.progreso}/${umbral}</div>`;
         } else {
           cuerpo=`<div class="med-card-dificultad">Dificultad ${Math.max(3, def.dificultad - bonusEstrellasTrabajador('medico'))}+</div>`;
         }
@@ -6460,7 +6473,7 @@
         if(def.tipo==='nivel'){
           const n=nivelDeM(def.track);
           cuerpo=`<div class="med-card-progress-label" style="text-align:center;letter-spacing:2px;color:var(--gold)">${estrellasNivel(n)}</div>
-                  <div class="med-card-dificultad">Dificultad ${dificultadEfectiva}+ para subir a nivel ${n+1}/${NIVEL_MAXIMO_EQUIPO}</div>`;
+                  <div class="med-card-dificultad">${t('lm.dificultad_lbl')} ${dificultadEfectiva}+ ${t('lm.para_subir_a_nivel')} ${n+1}/${NIVEL_MAXIMO_EQUIPO}</div>`;
         } else {
           cuerpo=`<div class="med-card-dificultad">Dificultad ${Math.max(3, def.dificultad - bonusEstrellasTrabajador('mantenimiento'))}+</div>`;
         }
@@ -6605,7 +6618,7 @@
     overlay.innerHTML=`
       <div class="lm-dilemma-card lm-dilemma-card-mant" style="max-width:480px;text-align:left">
         ${xCerrarHTML()}
-        <div class="lm-dilemma-title"><i class="ph ph-bold ph-stadium"></i> ESTADO DEL ESTADIO</div>
+        <div class="lm-dilemma-title"><i class="ph ph-bold ph-stadium"></i> ${t('lm.estado_estadio_titulo')}</div>
         <div class="lm-estadio-bars">
           <div>
             <div class="lm-estadio-bar-label"><i class="ph ph-bold ph-plant"></i><span>${t('lm.estado_cesped')}</span><span>${Math.round(est.campo)}/100</span></div>
@@ -6674,7 +6687,7 @@
         if(def.tipo==='nivel'){
           const n=nivelDeDG(def.track);
           cuerpo=`<div class="med-card-progress-label" style="text-align:center;letter-spacing:2px;color:var(--gold)">${estrellasNivel(n)}</div>
-                  <div class="med-card-dificultad">Dificultad ${dificultadEfectiva}+ para subir a nivel ${n+1}/${NIVEL_MAXIMO_EQUIPO}</div>`;
+                  <div class="med-card-dificultad">${t('lm.dificultad_lbl')} ${dificultadEfectiva}+ ${t('lm.para_subir_a_nivel')} ${n+1}/${NIVEL_MAXIMO_EQUIPO}</div>`;
         } else {
           cuerpo=`<div class="med-card-dificultad">Dificultad ${Math.max(3, def.dificultad - bonusEstrellasTrabajador('directorGeneral'))}+</div>`;
         }
@@ -6919,7 +6932,7 @@
     overlay.innerHTML=`
       <div class="lm-dilemma-card lm-dilemma-card-dg" style="max-width:480px;text-align:left">
         ${xCerrarHTML()}
-        <div class="lm-dilemma-title"><i class="ph ph-bold ph-chart-line-up"></i> FINANZAS DEL CLUB</div>
+        <div class="lm-dilemma-title"><i class="ph ph-bold ph-chart-line-up"></i> ${t('lm.finanzas_club_titulo')}</div>
         <div class="lm-capital-box" style="margin-bottom:12px">
           <i class="ph ph-bold ph-coins lm-capital-icon"></i>
           <div class="lm-capital-info">
@@ -6975,7 +6988,7 @@
         let cuerpo;
         if(def.tipo==='nivel'||esSobre){
           cuerpo=`<div class="med-card-progress-label" style="text-align:center;letter-spacing:2px;color:var(--gold)">${estrellasNivel(nivelActualTrack)}</div>
-                  <div class="med-card-dificultad">${nivelMaximoYa?'Nivel máximo alcanzado':`Dificultad ${dificultadEfectiva}+ para subir a nivel ${nivelActualTrack+1}/${NIVEL_MAXIMO_EQUIPO}`}</div>`;
+                  <div class="med-card-dificultad">${nivelMaximoYa?t('lm.nivel_maximo_alcanzado'):`${t('lm.dificultad_lbl')} ${dificultadEfectiva}+ ${t('lm.para_subir_a_nivel')} ${nivelActualTrack+1}/${NIVEL_MAXIMO_EQUIPO}`}</div>`;
         } else {
           cuerpo=`<div class="med-card-dificultad">Dificultad ${Math.max(3, def.dificultad - bonusEstrellasTrabajador('directorDeportivo'))}+</div>`;
         }
@@ -7000,7 +7013,7 @@
           ${xCerrarHTML()}
           ${(state.sobresFichajesPendientes&&state.sobresFichajesPendientes.length)?`<button type="button" class="lm-pendientes-indicador" id="lmSobresPendientesBtn"><i class="ph ph-bold ph-envelope-simple-open lm-pendientes-pulso"></i> ${t('lm.sobres_pendientes')} ${state.sobresFichajesPendientes.length}/3</button>`:''}
           <div class="lm-dilemma-title"><i class="ph ph-bold ph-binoculars"></i> ${t('lm.titulo_dd')}</div>
-          <button type="button" class="mode-card-btn mode-card-btn-gold" id="lmInfoPlantillaDDBtn" style="width:100%;margin:10px 0"><i class="ph ph-bold ph-scroll"></i> INFORMACIÓN DE LA PLANTILLA</button>
+          <button type="button" class="mode-card-btn mode-card-btn-gold" id="lmInfoPlantillaDDBtn" style="width:100%;margin:10px 0"><i class="ph ph-bold ph-scroll"></i> ${t('lm.info_plantilla_btn')}</button>
           <div class="lm-precio-box">
             <div class="lm-estadio-bar-label"><i class="ph ph-bold ph-magnifying-glass"></i><span>${t('lm.posicion_objetivo_ojeadores')}</span></div>
             <select id="lmPosicionOjeoSelect" class="lm-ojeo-select">
@@ -7215,7 +7228,7 @@
     overlay.innerHTML=`
       <div class="lm-dilemma-card lm-dilemma-card-dd" style="max-width:520px;text-align:left">
         ${esModoMantener?'':xCerrarHTML()}
-        <div class="lm-dilemma-title"><i class="ph ph-bold ph-clock-counter-clockwise"></i> HISTÓRICO DE FICHAJES Y VENTAS</div>
+        <div class="lm-dilemma-title"><i class="ph ph-bold ph-clock-counter-clockwise"></i> ${t('lm.historico_fichajes_titulo')}</div>
         ${historial.length ? `
         <div class="lm-historial-dd-lista">
           ${historial.slice(0,12).map(h=>`
@@ -7402,7 +7415,7 @@
         if(def.tipo==='nivel'){
           const n=nivelDePF(def.track);
           cuerpo=`<div class="med-card-progress-label" style="text-align:center;letter-spacing:2px;color:var(--gold)">${estrellasNivel(n)}</div>
-                  <div class="med-card-dificultad">${nivelMaximoYa?'Nivel máximo alcanzado':`Dificultad ${dificultadEfectiva}+ para subir a nivel ${n+1}/${NIVEL_MAXIMO_EQUIPO}`}</div>`;
+                  <div class="med-card-dificultad">${nivelMaximoYa?t('lm.nivel_maximo_alcanzado'):`${t('lm.dificultad_lbl')} ${dificultadEfectiva}+ ${t('lm.para_subir_a_nivel')} ${n+1}/${NIVEL_MAXIMO_EQUIPO}`}</div>`;
         } else {
           cuerpo=`<div class="med-card-dificultad">Dificultad ${Math.max(3, def.dificultad - bonusEstrellasTrabajador('preparadorFisico'))}+</div>`;
         }
@@ -7500,7 +7513,7 @@
         overlay.innerHTML=`
           <div class="lm-dilemma-card lm-dilemma-card-pf" style="width:520px;max-width:92vw;text-align:left">
             ${xCerrarHTML()}
-            <div class="lm-dilemma-title"><i class="ph ph-bold ph-clipboard-text"></i> PLAN DE ENTRENAMIENTO</div>
+            <div class="lm-dilemma-title"><i class="ph ph-bold ph-clipboard-text"></i> ${t('lm.plan_entrenamiento_titulo')}</div>
             <p class="lm-setup-desc" style="text-align:center;margin-bottom:10px">Elige hasta 3 jugadores y, para cada uno, QUÉ estadística quieres mejorar — un delantero puede entrenar ataque, un central defensa, etc. Solo mejoran de verdad los días de entrenamiento marcados en el calendario.</p>
             <div class="lm-plan-slots">${huecos}</div>
             <div class="lm-popup-actions">
@@ -7662,7 +7675,7 @@
     overlay.innerHTML=`
       <div class="lm-dilemma-card lm-dilemma-card-pf" style="max-width:480px;text-align:left">
         ${xCerrarHTML()}
-        <div class="lm-dilemma-title"><i class="ph ph-bold ph-clock-counter-clockwise"></i> HISTORIAL DE ENTRENAMIENTOS</div>
+        <div class="lm-dilemma-title"><i class="ph ph-bold ph-clock-counter-clockwise"></i> ${t('lm.historial_entrenamientos_titulo')}</div>
         <p class="lm-setup-desc" style="text-align:left;margin:10px 0 4px">${t('lm.mejoras_individuales')}</p>
         <div class="lm-hist-list">${filas||`<p class="lm-setup-desc" style="text-align:center">${t('lm.sin_entrenar_nadie')}</p>`}</div>
         ${esModoMantener?'':`<div class="lm-popup-actions lm-popup-actions-compact">
@@ -7736,7 +7749,7 @@
         <div class="lm-dilemma-card" style="width:960px;max-width:94vw;text-align:left">
           ${xCerrarHTML()}
           <div class="lm-dilemma-title"><i class="ph ph-bold ph-user-plus"></i> ${t('lm.contratar_btn')}${rolFiltrado?` — ${NOMBRE_ROL[rolFiltrado]}`:''}</div>
-          <p class="lm-setup-desc" style="text-align:center;margin-bottom:10px">Cada mes aparecen nuevos candidatos por puesto — compara nivel y sueldo antes de decidir si te compensa un cambio.${rolFiltrado?` <span id="lmTrabVerTodos" style="color:var(--gold);cursor:pointer;text-decoration:underline">${t('lm.ver_todos_puestos')}</span>`:''}</p>
+          <p class="lm-setup-desc" style="text-align:center;margin-bottom:10px">${t('lm.candidatos_mensuales_msg')}${rolFiltrado?` <span id="lmTrabVerTodos" style="color:var(--gold);cursor:pointer;text-decoration:underline">${t('lm.ver_todos_puestos')}</span>`:''}</p>
           <div class="lm-trab-grid">
             ${roles.map(fichaTrabajadorHTML).join('')}
           </div>
