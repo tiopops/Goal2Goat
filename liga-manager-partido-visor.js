@@ -59,9 +59,11 @@
     if(esEscritorio){
       // Horizontal: yo a la izquierda atacando a la derecha (mi
       // portería en x≈4). s.y del slot original (0=línea rival,
-      // 100=mi portería) pasa a ser la distancia desde la izquierda.
-      misSlots = misSlotsBase.map(s=>({x:4+(s.y*0.68), y:s.x}));
-      rivalSlots = rivalSlotsBase.map(s=>({x:ANCHO-4-(s.y*0.68), y:100-s.x}));
+      // 100=mi portería) pasa a ser la distancia desde la izquierda —
+      // el portero (s.y alto) debe quedar CERCA de mi portería, no
+      // cerca del centro (fórmula antes invertida por error).
+      misSlots = misSlotsBase.map(s=>({x:4+((100-s.y)*0.71), y:s.x}));
+      rivalSlots = rivalSlotsBase.map(s=>({x:ANCHO-4-((100-s.y)*0.71), y:100-s.x}));
       miGolXY={x:3,y:CENTRO_Y}; rivalGolXY={x:ANCHO-3,y:CENTRO_Y};
     } else {
       // Vertical: yo abajo atacando hacia arriba.
@@ -174,14 +176,7 @@
         ${clima?`<div class="lm-visor-clima-bar">${clima.label}</div>`:''}
         <div class="lm-visor-campo-wrap ${climaClase}">
           <svg class="lm-visor-campo-svg" viewBox="0 0 ${ANCHO} ${ALTO}" preserveAspectRatio="xMidYMid meet">
-            <defs>
-              <radialGradient id="lmVisorCespedGrad" cx="50%" cy="50%" r="75%">
-                <stop offset="0%" stop-color="#000" stop-opacity="0"/>
-                <stop offset="100%" stop-color="#000" stop-opacity="0.35"/>
-              </radialGradient>
-            </defs>
             ${franjasHTML}
-            <rect x="0" y="0" width="${ANCHO}" height="${ALTO}" fill="url(#lmVisorCespedGrad)"/>
             ${lineasCampo}
             <circle cx="${CENTRO_X}" cy="${CENTRO_Y}" r="0.8" fill="#eaf5ea" opacity="0.9"/>
             <g id="lmVisorGrupoRival">${rivalSlots.map((s,i)=>puntoJugadorHTML(s, i===0, false, i, rivalNumeros[i], rivalNombres[i])).join('')}</g>
@@ -729,7 +724,11 @@
           numGoles++;
         }
         const nombreJ = ev.jugador?ev.jugador.name:'';
-        return `<div class="lm-visor-resumen-fila ${clase}"><span class="lm-visor-resumen-min">${ev.minute}'</span> ${icono} <strong>${nombreJ}</strong> <span class="lm-visor-resumen-equipo">(${equipo})</span></div>`;
+        const ladoClase = esMio ? 'lm-visor-resumen-mia' : 'lm-visor-resumen-rival';
+        return `<div class="lm-visor-resumen-fila ${clase} ${ladoClase}">
+          ${esMio?`<span class="lm-visor-resumen-contenido">${icono} <strong>${nombreJ}</strong></span><span class="lm-visor-resumen-min">${ev.minute}'</span><span class="lm-visor-resumen-hueco"></span>`
+                 :`<span class="lm-visor-resumen-hueco"></span><span class="lm-visor-resumen-min">${ev.minute}'</span><span class="lm-visor-resumen-contenido">${icono} <strong>${nombreJ}</strong></span>`}
+        </div>`;
       }).join('');
 
       const resultadoTexto = misGolesFinal>rivalGolesFinal ? t('lm.resultado_victoria') : (misGolesFinal<rivalGolesFinal ? t('lm.resultado_derrota') : t('lm.resultado_empate'));

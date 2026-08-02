@@ -4687,8 +4687,8 @@
       document.body.classList.add('menu-screen');
     }
     if(typeof window.showConfirmPopup==='function'){
-      window.showConfirmPopup('¿Abandonar la liga? Se perderá todo el progreso de esta temporada y volverás al menú principal.', proceder, 'ABANDONAR');
-    } else if(confirm('¿Seguro que quieres abandonar la liga? Se perderá todo el progreso de esta temporada y volverás al menú principal.')){
+      window.showConfirmPopup(t('lm.confirmar_abandonar_liga'), proceder, t('lm.abandonar_btn'));
+    } else if(confirm(t('lm.confirmar_abandonar_liga'))){
       proceder();
     }
   }
@@ -5412,7 +5412,7 @@
             state.avisoSinPlanMostrado=true;
             guardarEstado();
             if(typeof window.showConfirmPopup==='function'){
-              window.showConfirmPopup('Has marcado días de entrenamiento en el calendario, pero no tienes a nadie en el Plan de Entrenamiento del Preparador Físico — esos días no mejorarán a ningún jugador. Puedes cerrar este aviso e ir a configurarlo, o seguir igualmente.', continuarSemana, 'SEGUIR IGUALMENTE');
+              window.showConfirmPopup(t('lm.confirmar_seguir_sin_pf'), continuarSemana, t('lm.seguir_igualmente_btn'));
               return;
             }
           }

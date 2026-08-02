@@ -4405,7 +4405,11 @@ body.light-theme.menu-screen{
   padding:4px 0;border-bottom:1px solid #232323;
 }
 .lm-visor-resumen-fila:last-child{border-bottom:none}
-.lm-visor-resumen-min{color:var(--gold);font-weight:700;min-width:28px}
+.lm-visor-resumen-min{color:var(--gold);font-weight:700;min-width:28px;text-align:center;flex-shrink:0}
+.lm-visor-resumen-hueco{flex:1}
+.lm-visor-resumen-contenido{flex:1;display:flex;align-items:center;gap:5px;overflow:hidden}
+.lm-visor-resumen-mia .lm-visor-resumen-contenido{justify-content:flex-start}
+.lm-visor-resumen-rival .lm-visor-resumen-contenido{justify-content:flex-end;flex-direction:row-reverse}
 .lm-visor-resumen-equipo{color:#888;margin-left:auto}
 .lm-visor-resultado-banner{
   font-family:'Bebas Neue',Impact,sans-serif;font-size:22px;letter-spacing:2px;
