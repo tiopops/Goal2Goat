@@ -94,20 +94,23 @@
     const rivalNumeros = rivalSlotsBase.map((s,i)=>(rivalPlantillaEfectiva[i]&&rivalPlantillaEfectiva[i].n) ? rivalPlantillaEfectiva[i].n : i+1);
     const rivalNombres = rivalSlotsBase.map((s,i)=>rivalPlantillaEfectiva[i] ? rivalPlantillaEfectiva[i].name : null);
 
-    // Franjas de siega del césped — MISMOS colores y proporciones
-    // exactas que el campo real de Copa Leyendas/Liga Manager
-    // (PITCH_SVG: base #2f7c42, franjas #246f38, 8 franjas).
+    // Césped: un rectángulo de fondo cubre TODO el campo con el verde
+    // claro (antes se dibujaban solo 8 franjas finas sueltas, dejando
+    // huecos sin pintar entre ellas que mostraban el fondo oscuro de
+    // la página por detrás — de ahí las "franjas negras"). Ahora solo
+    // se dibujan encima las franjas oscuras, sobre una base ya
+    // completamente cubierta.
     const NFRANJAS=8;
-    let franjasHTML='';
+    let franjasHTML=`<rect x="0" y="0" width="${ANCHO}" height="${ALTO}" fill="#3e9853"/>`;
     const anchoLargo = esEscritorio ? ANCHO : ALTO; // dimensión a lo largo del eje de ataque
     for(let i=0;i<NFRANJAS;i++){
-      const clara = i%2===0;
+      if(i%2!==0) continue; // solo las franjas oscuras — el resto ya es el fondo base
       const pos = (5.9375 + i*11.71875)/100*anchoLargo;
       const grosor = 5.9375/100*anchoLargo;
       if(esEscritorio){
-        franjasHTML+=`<rect x="${pos}" y="0" width="${grosor}" height="${ALTO}" fill="${clara?'#246f38':'#2f7c42'}"/>`;
+        franjasHTML+=`<rect x="${pos}" y="0" width="${grosor}" height="${ALTO}" fill="#3a8f4d"/>`;
       } else {
-        franjasHTML+=`<rect x="0" y="${pos}" width="${ANCHO}" height="${grosor}" fill="${clara?'#246f38':'#2f7c42'}"/>`;
+        franjasHTML+=`<rect x="0" y="${pos}" width="${ANCHO}" height="${grosor}" fill="#3a8f4d"/>`;
       }
     }
     // Líneas del campo — mismo color y opacidad que el campo real
