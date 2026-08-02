@@ -187,6 +187,7 @@
           <div class="lm-visor-anuncio" id="lmVisorAnuncio"></div>
           ${(clima&&clima.id==='rain')?`<div class="lm-visor-lluvia">${Array.from({length:26}).map((_,i)=>`<span style="left:${Math.random()*100}%;animation-delay:${(Math.random()*1.4).toFixed(2)}s;animation-duration:${(0.55+Math.random()*0.35).toFixed(2)}s"></span>`).join('')}</div>`:''}
           ${(clima&&clima.id==='snow')?`<div class="lm-visor-nieve">${Array.from({length:22}).map((_,i)=>`<span style="left:${Math.random()*100}%;animation-delay:${(Math.random()*3).toFixed(2)}s;animation-duration:${(2.4+Math.random()*1.6).toFixed(2)}s"></span>`).join('')}</div>`:''}
+          ${(clima&&clima.id==='wind')?`<div class="lm-visor-viento">${Array.from({length:9}).map((_,i)=>`<span style="top:${Math.random()*100}%;animation-delay:${(Math.random()*2.2).toFixed(2)}s;animation-duration:${(1.1+Math.random()*0.6).toFixed(2)}s"></span>`).join('')}</div>`:''}
         </div>
         <div class="lm-visor-info-bar" id="lmVisorInfoBar">${t('lm.viendo_partido')}</div>
         <div id="lmVisorResumenBox" style="display:none"></div>

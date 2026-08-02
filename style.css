@@ -4342,12 +4342,12 @@ body.light-theme.menu-screen{
 }
 /* Tintes de ambiente según el clima real de la jornada — el mismo
    clima que ya afecta a las estadísticas del partido. */
-.lm-visor-clima-sunny{filter:brightness(1.08) saturate(1.05)}
-.lm-visor-clima-cloudy{filter:brightness(.92) saturate(.85)}
-.lm-visor-clima-rain{filter:brightness(.82) saturate(.8) contrast(1.05)}
-.lm-visor-clima-wind{filter:saturate(.95)}
-.lm-visor-clima-hot{filter:brightness(1.05) sepia(.12) saturate(1.1)}
-.lm-visor-clima-snow{filter:brightness(.95) saturate(.7) contrast(.95)}
+.lm-visor-clima-sunny{filter:brightness(1.04) saturate(1.02)}
+.lm-visor-clima-cloudy{filter:brightness(.97) saturate(.95)}
+.lm-visor-clima-rain{filter:brightness(.93) saturate(.92)}
+.lm-visor-clima-wind{filter:saturate(.98)}
+.lm-visor-clima-hot{filter:brightness(1.02) saturate(1.04)}
+.lm-visor-clima-snow{filter:brightness(.98) saturate(.9)}
 .lm-visor-lluvia,.lm-visor-nieve{position:absolute;inset:0;pointer-events:none;overflow:hidden}
 .lm-visor-lluvia span{
   position:absolute;top:-8%;width:1px;height:14px;background:rgba(200,220,255,.55);
@@ -4365,6 +4365,17 @@ body.light-theme.menu-screen{
   0%{transform:translateY(0) translateX(0);opacity:.9}
   50%{transform:translateY(55vh) translateX(10px)}
   100%{transform:translateY(115vh) translateX(-6px);opacity:.5}
+}
+.lm-visor-viento span{
+  position:absolute;left:-15%;width:22%;height:1.5px;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.35),transparent);
+  animation-name:lmVisorRachaViento;animation-timing-function:linear;animation-iteration-count:infinite;
+}
+@keyframes lmVisorRachaViento{
+  0%{transform:translateX(0);opacity:0}
+  15%{opacity:.7}
+  85%{opacity:.7}
+  100%{transform:translateX(550%);opacity:0}
 }
 .lm-visor-campo-svg{width:100%;height:auto;max-height:62vh;filter:drop-shadow(0 8px 20px rgba(0,0,0,.6))}
 .lm-visor-jugador-g{filter:drop-shadow(0 1px 2px rgba(0,0,0,.6))}
