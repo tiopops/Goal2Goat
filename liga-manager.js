@@ -1795,9 +1795,38 @@
   function cargarEstado(){
     try{
       const raw=localStorage.getItem(SAVE_KEY);
-      if(raw) return JSON.parse(raw);
+      if(raw){
+        const s=JSON.parse(raw);
+        repararColisionNombresCalendario(s);
+        return s;
+      }
     }catch(e){}
     return nuevoEstadoSinEmpezar();
+  }
+  // Reparación para partidas YA EXISTENTES (el arreglo en
+  // empezarTemporada solo protege ligas nuevas — esto cubre las que ya
+  // tenían el calendario generado con la colisión de nombres, como
+  // "Sevilla FC vs Sevilla FC"). Solo toca el NOMBRE mostrado, nunca
+  // los IDs ni los resultados/predicciones ya guardados, que se
+  // referencian por ID — así es 100% seguro aplicarlo con partidas en
+  // curso sin invalidar nada.
+  function repararColisionNombresCalendario(s){
+    if(!s || !s.calendario || !Array.isArray(s.calendario)) return;
+    let reparado=false;
+    s.calendario.forEach(jornada=>{
+      if(!Array.isArray(jornada)) return;
+      jornada.forEach(partido=>{
+        if(partido && partido.home && partido.away && partido.home.id!==partido.away.id
+           && partido.home.name && partido.away.name
+           && partido.home.name.trim().toLowerCase()===partido.away.name.trim().toLowerCase()){
+          const esMiaLaLocal = partido.home.id==='lm_0';
+          if(esMiaLaLocal) partido.away.name=partido.away.name.trim()+' (rival)';
+          else partido.home.name=partido.home.name.trim()+' (rival)';
+          reparado=true;
+        }
+      });
+    });
+    if(reparado){ try{ localStorage.setItem(SAVE_KEY, JSON.stringify(s)); }catch(e){} }
   }
   function guardarEstado(){ try{ localStorage.setItem(SAVE_KEY, JSON.stringify(state)); }catch(e){} }
   function borrarEstado(){ try{ localStorage.removeItem(SAVE_KEY); }catch(e){} }
@@ -5256,7 +5285,10 @@
                 </div>
                 <div class="lm-rival-info-col">
                   <h3 class="lm-nextrival-header" style="text-align:left;margin:0 0 4px"><i class="ph ph-bold ph-flag" style="color:var(--gold);margin-right:6px"></i>${t("lm.proximo_rival")}</h3>
-                  <div class="lm-vs-label" style="text-align:left;margin-bottom:6px">${esLocal?t('lm.juegas_en_casa'):t('lm.juegas_fuera')}</div>
+                  <div class="lm-vs-label" style="text-align:left;margin-bottom:6px;display:flex;align-items:center;justify-content:space-between;gap:8px">
+                    <span>${esLocal?t('lm.juegas_en_casa'):t('lm.juegas_fuera')}</span>
+                    ${(()=>{ const climaPartido=(typeof climaDelPartido==='function')?climaDelPartido():null; return climaPartido ? `<span style="font-size:11px;font-weight:400;color:#aaa;white-space:nowrap">${climaPartido.label}</span>` : ''; })()}
+                  </div>
                   ${(()=>{
                     const fila=calcularClasificacion();
                     const idx=fila.findIndex(t=>t.id===rival.id);

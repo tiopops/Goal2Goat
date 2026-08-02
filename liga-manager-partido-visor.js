@@ -508,7 +508,7 @@
         moverBalon(destinoGol.x, destinoGol.y, 850);
         setTimeout(()=>{
           if(esMio) marcadorMio++; else marcadorRival++;
-          resEl.textContent=`${miEsLocal?marcadorMio:marcadorRival} - ${miEsLocal?marcadorRival:marcadorMio}`;
+          resEl.textContent=`${marcadorMio} - ${marcadorRival}`;
           const nombreGoleador = evento.jugador ? evento.jugador.name : '';
           infoBar.textContent=`⚽ ${t('lm.visor_gol')} ${nombreGoleador} (${esMio?miNombre:rivalNombre})`;
           mostrarTextoGrande(t('lm.visor_gol'), real(1800));
@@ -602,22 +602,37 @@
           // Saque de esquina: el balón va a la esquina más cercana a
           // la portería rival, y desde ahí se centra al área — una
           // jugada a balón parado propia, no solo el reinicio genérico.
+          // El balón SIEMPRE parte de un jugador real: primero se
+          // desplaza al sacador hasta la bandera, y el balón va A SU
+          // POSICIÓN exacta, nunca a un punto vacío del campo.
           const cornerX = esEscritorio ? (golObjetivo.x<CENTRO_X?4:ANCHO-4) : (Math.random()<0.5?4:ANCHO-4);
           const cornerY = esEscritorio ? (Math.random()<0.5?4:ALTO-4) : (golObjetivo.y<CENTRO_Y?4:ALTO-4);
           setTimeout(()=>{
-            moverBalon(cornerX, cornerY, 500);
-            infoBar.textContent=`Saque de esquina para ${nombreAtaca}`;
+            const equipoSaca = posesionMia?posMia:posRival;
+            const sacadorIdx = jugadorMasCercano(equipoSaca, cornerX, cornerY, 0);
+            moverJugador(posesionMia, sacadorIdx, cornerX, cornerY, 450);
             setTimeout(()=>{
-              const areaX = golObjetivo.x + (golObjetivo.x<CENTRO_X?8:-8);
-              moverBalon(areaX, golObjetivo.y, 900);
-              infoBar.textContent=`${nombreAtaca} centra desde el córner`;
+              moverBalon(equipoSaca[sacadorIdx].x, equipoSaca[sacadorIdx].y, 350);
+              infoBar.textContent=`Saque de esquina para ${nombreAtaca}`;
               setTimeout(()=>{
-                moverBalon(centroCampo.x, centroCampo.y, 700);
-                asignarBalonSuelto(centroCampo.x, centroCampo.y);
-                tiempoTranscurrido+=dur+500+700+900+700+900;
-                setTimeout(tick, real(600));
-              }, real(900));
-            }, real(700));
+                // El balón centra hacia el área — al rematador, un
+                // jugador real que ya está (o se desplaza) por esa
+                // zona, no a un punto geométrico vacío.
+                const areaObjetivoX = golObjetivo.x + (golObjetivo.x<CENTRO_X?8:-8);
+                const rematadorIdx = jugadorMasCercano(equipoSaca, areaObjetivoX, golObjetivo.y, sacadorIdx);
+                moverJugador(posesionMia, rematadorIdx, areaObjetivoX, golObjetivo.y, 700);
+                setTimeout(()=>{
+                  moverBalon(equipoSaca[rematadorIdx].x, equipoSaca[rematadorIdx].y, 700);
+                  infoBar.textContent=`${nombreAtaca} centra desde el córner`;
+                  setTimeout(()=>{
+                    moverBalon(centroCampo.x, centroCampo.y, 700);
+                    asignarBalonSuelto(centroCampo.x, centroCampo.y);
+                    tiempoTranscurrido+=dur+500+350+700+700+700+900;
+                    setTimeout(tick, real(600));
+                  }, real(700));
+                }, real(120));
+              }, real(700));
+            }, real(450));
           }, real(dur*0.65));
         } else {
           setTimeout(()=>{
@@ -804,7 +819,7 @@
           clase = ev.tarjeta==='roja'?'lm-visor-resumen-roja':'lm-visor-resumen-amarilla';
           numTarjetas++;
         } else if(ev.type==='injury'){
-          icono='🩹'; texto=`${t('lm.resumen_lesion')} (${ev.sev?ev.sev.label:''})`; clase='lm-visor-resumen-lesion';
+          icono='✚'; texto=`${t('lm.resumen_lesion')} (${ev.sev?ev.sev.label:''})`; clase='lm-visor-resumen-lesion';
           numLesiones++;
         } else {
           numGoles++;
