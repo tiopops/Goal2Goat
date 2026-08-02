@@ -2296,7 +2296,7 @@
           const rivalDeEsta = partido.home.id==='lm_0' ? partido.away.name : partido.home.name;
           evInjury.jugador.lesionLogId=registrarLesionHistorial(evInjury.jugador, evInjury.sev, evInjury.tipoLesion, rivalDeEsta, evInjury.familia);
         }
-        miPartidoInfo={ home:partido.home, away:partido.away, resultado, eventos };
+        miPartidoInfo={ home:partido.home, away:partido.away, resultado, eventos, climaId: clima?clima.id:null };
         actualizarEstadioTrasPartido(miEsLocalDeEste, resultado, clima);
         const misGoles=miEsLocalDeEste?resultado.golesA:resultado.golesB, susGoles=miEsLocalDeEste?resultado.golesB:resultado.golesA;
         if(typeof window.unlockLMAchievement==='function'){
@@ -2427,58 +2427,64 @@
   // torneo de eliminatorias. check(r) se evalúa después del partido
   // contra {myGoals, oppGoals, draw}.
   const LM_PRESS_EVENTS=[
-    { q:'«¿Vais a mantener la portería a cero en este partido?»', answers:[
-      { text:'«Sí, vamos a por la portería a cero.»', stance:'positive', label:'Confiado', check:(r)=>r.oppGoals===0 },
-      { text:'«Es difícil de prometer, ya veremos.»', stance:'neutral', label:'Prudente', check:()=>null },
-      { text:'«Lo veo complicado, encajaremos.»', stance:'negative', label:'Pesimista', check:(r)=>r.oppGoals>0 },
+    { get q(){return t('lm.prensa.q1');}, answers:[
+      { get text(){return t('lm.prensa.q1.a1');}, stance:'positive', get label(){return t('lm.prensa.q1.a1_label');}, check:(r)=>r.oppGoals===0 },
+      { get text(){return t('lm.prensa.q1.a2');}, stance:'neutral', get label(){return t('lm.prensa.q1.a2_label');}, check:()=>null },
+      { get text(){return t('lm.prensa.q1.a3');}, stance:'negative', get label(){return t('lm.prensa.q1.a3_label');}, check:(r)=>r.oppGoals>0 },
     ]},
-    { q:'«¿Vais a ganar por tres goles o más esta jornada?»', answers:[
-      { text:'«Sí, vamos a golear.»', stance:'positive', label:'Ambicioso', check:(r)=>(r.myGoals-r.oppGoals)>=3 },
-      { text:'«No me atrevo a predecir el marcador.»', stance:'neutral', label:'Cauto', check:()=>null },
-      { text:'«No, será un partido ajustado.»', stance:'negative', label:'Realista', check:(r)=>(r.myGoals-r.oppGoals)<3 },
+    { get q(){return t('lm.prensa.q2');}, answers:[
+      { get text(){return t('lm.prensa.q2.a1');}, stance:'positive', get label(){return t('lm.prensa.q2.a1_label');}, check:(r)=>(r.myGoals-r.oppGoals)>=3 },
+      { get text(){return t('lm.prensa.q2.a2');}, stance:'neutral', get label(){return t('lm.prensa.q2.a2_label');}, check:()=>null },
+      { get text(){return t('lm.prensa.q2.a3');}, stance:'negative', get label(){return t('lm.prensa.q2.a3_label');}, check:(r)=>(r.myGoals-r.oppGoals)<3 },
     ]},
-    { q:'«¿Creéis que os llevaréis los tres puntos hoy?»', answers:[
-      { text:'«Sin duda, vamos a ganar.»', stance:'positive', label:'Contundente', check:(r)=>r.myGoals>r.oppGoals },
-      { text:'«Lo importante es sumar, como sea.»', stance:'neutral', label:'Pragmático', check:()=>null },
-      { text:'«Va a ser un partido muy igualado.»', stance:'negative', label:'Cauteloso', check:(r)=>r.myGoals<=r.oppGoals },
+    { get q(){return t('lm.prensa.q3');}, answers:[
+      { get text(){return t('lm.prensa.q3.a1');}, stance:'positive', get label(){return t('lm.prensa.q3.a1_label');}, check:(r)=>r.myGoals>r.oppGoals },
+      { get text(){return t('lm.prensa.q3.a2');}, stance:'neutral', get label(){return t('lm.prensa.q3.a2_label');}, check:()=>null },
+      { get text(){return t('lm.prensa.q3.a3');}, stance:'negative', get label(){return t('lm.prensa.q3.a3_label');}, check:(r)=>r.myGoals<=r.oppGoals },
     ]},
-    { q:'«¿Marcaréis gol en este partido?»', answers:[
-      { text:'«Sí, saldremos a por todas desde el inicio.»', stance:'positive', label:'Decidido', check:(r)=>r.myGoals>0 },
-      { text:'«El plan de partido lo decide el míster.»', stance:'neutral', label:'Diplomático', check:()=>null },
-      { text:'«Va a costarnos encontrar el gol hoy.»', stance:'negative', label:'Cauteloso', check:(r)=>r.myGoals===0 },
+    { get q(){return t('lm.prensa.q4');}, answers:[
+      { get text(){return t('lm.prensa.q4.a1');}, stance:'positive', get label(){return t('lm.prensa.q4.a1_label');}, check:(r)=>r.myGoals>0 },
+      { get text(){return t('lm.prensa.q4.a2');}, stance:'neutral', get label(){return t('lm.prensa.q4.a2_label');}, check:()=>null },
+      { get text(){return t('lm.prensa.q4.a3');}, stance:'negative', get label(){return t('lm.prensa.q4.a3_label');}, check:(r)=>r.myGoals===0 },
     ]},
-    { q:'«¿Va a generar más ocasiones el rival que vosotros?»', answers:[
-      { text:'«No, vamos a dominar nosotros el partido.»', stance:'positive', label:'Dominante', check:(r)=>r.myGoals>=r.oppGoals },
-      { text:'«Cada partido es distinto, lo veremos en el campo.»', stance:'neutral', label:'Flexible', check:()=>null },
-      { text:'«Es un rival fuerte, nos costará contenerlo.»', stance:'negative', label:'Respetuoso', check:(r)=>r.oppGoals>r.myGoals },
+    { get q(){return t('lm.prensa.q5');}, answers:[
+      { get text(){return t('lm.prensa.q5.a1');}, stance:'positive', get label(){return t('lm.prensa.q5.a1_label');}, check:(r)=>r.myGoals>=r.oppGoals },
+      { get text(){return t('lm.prensa.q5.a2');}, stance:'neutral', get label(){return t('lm.prensa.q5.a2_label');}, check:()=>null },
+      { get text(){return t('lm.prensa.q5.a3');}, stance:'negative', get label(){return t('lm.prensa.q5.a3_label');}, check:(r)=>r.oppGoals>r.myGoals },
     ]},
-    { q:'«¿Este resultado os va a acercar a vuestro objetivo en la clasificación?»', answers:[
-      { text:'«Sí, sumar hoy es clave para nuestra clasificación.»', stance:'positive', label:'Ambicioso', check:(r)=>r.myGoals>r.oppGoals },
-      { text:'«Cada jornada cuenta, veremos el resultado.»', stance:'neutral', label:'Prudente', check:()=>null },
-      { text:'«No siempre se puede ganar, hay que ser realistas.»', stance:'negative', label:'Realista', check:(r)=>r.myGoals<r.oppGoals },
+    { get q(){return t('lm.prensa.q6');}, answers:[
+      { get text(){return t('lm.prensa.q6.a1');}, stance:'positive', get label(){return t('lm.prensa.q6.a1_label');}, check:(r)=>r.myGoals>r.oppGoals },
+      { get text(){return t('lm.prensa.q6.a2');}, stance:'neutral', get label(){return t('lm.prensa.q6.a2_label');}, check:()=>null },
+      { get text(){return t('lm.prensa.q6.a3');}, stance:'negative', get label(){return t('lm.prensa.q6.a3_label');}, check:(r)=>r.myGoals<r.oppGoals },
     ]},
-    { q:'«¿Vais a marcar más de un gol en este partido?»', answers:[
-      { text:'«Sí, tenemos gol en las botas.»', stance:'positive', label:'Ofensivo', check:(r)=>r.myGoals>1 },
-      { text:'«Con uno nos conformamos si hace falta.»', stance:'neutral', label:'Pragmático', check:()=>null },
-      { text:'«Va a costarnos encontrar el gol hoy.»', stance:'negative', label:'Cauteloso', check:(r)=>r.myGoals<=1 },
+    { get q(){return t('lm.prensa.q7');}, answers:[
+      { get text(){return t('lm.prensa.q7.a1');}, stance:'positive', get label(){return t('lm.prensa.q7.a1_label');}, check:(r)=>r.myGoals>1 },
+      { get text(){return t('lm.prensa.q7.a2');}, stance:'neutral', get label(){return t('lm.prensa.q7.a2_label');}, check:()=>null },
+      { get text(){return t('lm.prensa.q7.a3');}, stance:'negative', get label(){return t('lm.prensa.q7.a3_label');}, check:(r)=>r.myGoals<=1 },
     ]},
-    { q:'«¿Encajaréis dos goles o más en este partido?»', answers:[
-      { text:'«No, vamos a estar sólidos atrás.»', stance:'positive', label:'Defensivo', check:(r)=>r.oppGoals<2 },
-      { text:'«El fútbol siempre da sorpresas.»', stance:'neutral', label:'Filosófico', check:()=>null },
-      { text:'«El rival tiene mucho gol, puede pasar.»', stance:'negative', label:'Realista', check:(r)=>r.oppGoals>=2 },
+    { get q(){return t('lm.prensa.q8');}, answers:[
+      { get text(){return t('lm.prensa.q8.a1');}, stance:'positive', get label(){return t('lm.prensa.q8.a1_label');}, check:(r)=>r.oppGoals<2 },
+      { get text(){return t('lm.prensa.q8.a2');}, stance:'neutral', get label(){return t('lm.prensa.q8.a2_label');}, check:()=>null },
+      { get text(){return t('lm.prensa.q8.a3');}, stance:'negative', get label(){return t('lm.prensa.q8.a3_label');}, check:(r)=>r.oppGoals>=2 },
     ]},
-    { q:'«¿Terminará el partido en empate?»', answers:[
-      { text:'«No, vamos a buscar la victoria hasta el final.»', stance:'positive', label:'Ambicioso', check:(r)=>!r.draw },
-      { text:'«Cualquier resultado es posible en esta liga.»', stance:'neutral', label:'Realista', check:()=>null },
-      { text:'«Puede quedarse en un empate, ambos equipos son sólidos.»', stance:'negative', label:'Cauteloso', check:(r)=>r.draw },
+    { get q(){return t('lm.prensa.q9');}, answers:[
+      { get text(){return t('lm.prensa.q9.a1');}, stance:'positive', get label(){return t('lm.prensa.q9.a1_label');}, check:(r)=>!r.draw },
+      { get text(){return t('lm.prensa.q9.a2');}, stance:'neutral', get label(){return t('lm.prensa.q9.a2_label');}, check:()=>null },
+      { get text(){return t('lm.prensa.q9.a3');}, stance:'negative', get label(){return t('lm.prensa.q9.a3_label');}, check:(r)=>r.draw },
     ]},
   ];
   // Devuelve una pregunta al azar, ya con el nombre del rival incrustado
   // donde corresponde, para que la entrevista se sienta específica de
   // ese partido concreto.
   function elegirPreguntaPrensaLM(rivalName){
-    const def=LM_PRESS_EVENTS[Math.floor(Math.random()*LM_PRESS_EVENTS.length)];
-    return {...def, q: def.q.replace('esta jornada','esta jornada ante '+(rivalName||'el rival'))};
+    const idx=Math.floor(Math.random()*LM_PRESS_EVENTS.length);
+    const def=LM_PRESS_EVENTS[idx];
+    // Solo la pregunta 2 (sobre ganar por tres goles) incrusta el
+    // nombre del rival — usa tp() con marcador {rival} en vez de
+    // buscar y sustituir texto en español, que dejaba de funcionar
+    // en cualquier otro idioma.
+    const q = idx===1 ? tp('lm.prensa.q2', {rival:rivalName||'el rival'}) : def.q;
+    return {...def, q};
   }
   // Muestra la rueda de prensa reutilizando literalmente las mismas
   // clases CSS que Copa Leyendas (.press-modal/.press-icon/...), con el
@@ -3370,7 +3376,7 @@
     const zona=overlay.querySelector('#lmSobreGrabZone');
     const hint=overlay.querySelector('#lmSobreHint');
     const UMBRAL_APERTURA=180; // px que hay que arrastrar — casi todo el recorrido de la franja, para que no se abra al mínimo roce
-    let arrastrando=false, startX=0, abierto=false, ultimaEstelaTs=0;
+    let arrastrando=false, startX=0, abierto=false, ultimaEstelaTs=0, ultimoSonidoTs=0;
 
     function posX(e){ return (e.touches && e.touches[0]) ? e.touches[0].clientX : e.clientX; }
     function posY(e){ return (e.touches && e.touches[0]) ? e.touches[0].clientY : e.clientY; }
@@ -3397,6 +3403,7 @@
       hint.style.opacity=String(1-progreso);
       const ahora=Date.now();
       if(ahora-ultimaEstelaTs>28){ ultimaEstelaTs=ahora; crearEstela(posX(e), posY(e)); }
+      if(ahora-ultimoSonidoTs>90){ ultimoSonidoTs=ahora; if(typeof window.playSound==='function') window.playSound('envelope_drag', progreso); }
       if(delta>=UMBRAL_APERTURA) completarApertura(deltaCrudo>0?1:-1);
     }
     function onUp(){

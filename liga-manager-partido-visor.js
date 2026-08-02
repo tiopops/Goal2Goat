@@ -104,7 +104,6 @@
     let franjasHTML=`<rect x="0" y="0" width="${ANCHO}" height="${ALTO}" fill="#3e9853"/>`;
     const anchoLargo = esEscritorio ? ANCHO : ALTO; // dimensión a lo largo del eje de ataque
     for(let i=0;i<NFRANJAS;i++){
-      if(i%2!==0) continue; // solo las franjas oscuras — el resto ya es el fondo base
       const pos = (5.9375 + i*11.71875)/100*anchoLargo;
       const grosor = 5.9375/100*anchoLargo;
       if(esEscritorio){
@@ -156,7 +155,9 @@
       </g>`;
     }
 
-    const clima = (typeof climaDelPartido==='function') ? climaDelPartido() : null;
+    const clima = (info.climaId && typeof WEATHER_TYPES!=='undefined')
+      ? WEATHER_TYPES.find(w=>w.id===info.climaId)
+      : ((typeof climaDelPartido==='function') ? climaDelPartido() : null);
     const climaClase = clima ? `lm-visor-clima-${clima.id}` : '';
 
     const overlay=document.createElement('div');

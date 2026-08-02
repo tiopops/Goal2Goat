@@ -335,6 +335,13 @@ function playSound(name, data){
     case 'rest_day': // día de descanso — un tono único, calmado y breve
       tone(ctx, 420, 0, 0.16, 'sine', 0.07, 0.0001);
       break;
+    case 'envelope_drag': // tensión creciente mientras se arrastra el
+      // sobre para abrirlo — el tono sube con el progreso (0 a 1
+      // recibido en data), generando anticipación hasta el momento
+      // de la apertura, como el "raspado" de un rasca satisfactorio.
+      { const prog=(typeof data==='number')?data:0;
+        tone(ctx, 260+prog*420, 0, 0.05, 'sine', 0.05+prog*0.04, 0.0001); }
+      break;
   }
 }
 
