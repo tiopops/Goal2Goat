@@ -92,36 +92,44 @@
     const rivalNumeros = rivalSlotsBase.map((s,i)=>(rivalPlantillaEfectiva[i]&&rivalPlantillaEfectiva[i].n) ? rivalPlantillaEfectiva[i].n : i+1);
     const rivalNombres = rivalSlotsBase.map((s,i)=>rivalPlantillaEfectiva[i] ? rivalPlantillaEfectiva[i].name : null);
 
-    // Franjas de siega del césped — alternadas, look profesional de
-    // retransmisión de televisión.
-    const NFRANJAS=9;
+    // Franjas de siega del césped — MISMOS colores y proporciones
+    // exactas que el campo real de Copa Leyendas/Liga Manager
+    // (PITCH_SVG: base #2f7c42, franjas #246f38, 8 franjas).
+    const NFRANJAS=8;
     let franjasHTML='';
+    const anchoLargo = esEscritorio ? ANCHO : ALTO; // dimensión a lo largo del eje de ataque
     for(let i=0;i<NFRANJAS;i++){
       const clara = i%2===0;
+      const pos = (5.9375 + i*11.71875)/100*anchoLargo;
+      const grosor = 5.9375/100*anchoLargo;
       if(esEscritorio){
-        const w=ANCHO/NFRANJAS;
-        franjasHTML+=`<rect x="${i*w}" y="0" width="${w}" height="${ALTO}" fill="${clara?'#2f8a3a':'#2a7d34'}"/>`;
+        franjasHTML+=`<rect x="${pos}" y="0" width="${grosor}" height="${ALTO}" fill="${clara?'#246f38':'#2f7c42'}"/>`;
       } else {
-        const h=ALTO/NFRANJAS;
-        franjasHTML+=`<rect x="0" y="${i*h}" width="${ANCHO}" height="${h}" fill="${clara?'#2f8a3a':'#2a7d34'}"/>`;
+        franjasHTML+=`<rect x="0" y="${pos}" width="${ANCHO}" height="${grosor}" fill="${clara?'#246f38':'#2f7c42'}"/>`;
       }
     }
+    // Líneas del campo — mismo color y opacidad que el campo real
+    // (rgba blanco, no un verde claro sólido), con las mismas
+    // proporciones relativas del área, el área pequeña y el círculo.
+    const COLOR_LINEA='rgba(255,255,255,.45)';
+    const COLOR_BORDE='rgba(255,255,255,.3)';
+    const areaAncho=58.3, areaProf=16.4, seisAncho=25, seisProf=7.03, radioCirculo=11.4, radioArco=4.7;
     const lineasCampo = esEscritorio ? `
-            <rect x="2" y="2" width="${ANCHO-4}" height="${ALTO-4}" fill="none" stroke="#eaf5ea" stroke-width="0.5" opacity="0.9"/>
-            <line x1="${CENTRO_X}" y1="2" x2="${CENTRO_X}" y2="${ALTO-2}" stroke="#eaf5ea" stroke-width="0.5" opacity="0.9"/>
-            <circle cx="${CENTRO_X}" cy="${CENTRO_Y}" r="11" fill="none" stroke="#eaf5ea" stroke-width="0.5" opacity="0.9"/>
-            <rect x="2" y="24" width="15" height="52" fill="none" stroke="#eaf5ea" stroke-width="0.5" opacity="0.9"/>
-            <rect x="${ANCHO-17}" y="24" width="15" height="52" fill="none" stroke="#eaf5ea" stroke-width="0.5" opacity="0.9"/>
-            <rect x="2" y="38" width="6" height="24" fill="none" stroke="#eaf5ea" stroke-width="0.5" opacity="0.9"/>
-            <rect x="${ANCHO-8}" y="38" width="6" height="24" fill="none" stroke="#eaf5ea" stroke-width="0.5" opacity="0.9"/>
+            <rect x="0" y="0" width="${ANCHO}" height="${ALTO}" fill="none" stroke="${COLOR_BORDE}" stroke-width="0.4"/>
+            <line x1="${CENTRO_X}" y1="0" x2="${CENTRO_X}" y2="${ALTO}" stroke="${COLOR_LINEA}" stroke-width="0.45"/>
+            <circle cx="${CENTRO_X}" cy="${CENTRO_Y}" r="${radioCirculo/100*ALTO}" fill="none" stroke="${COLOR_LINEA}" stroke-width="0.45"/>
+            <rect x="0" y="${(50-areaAncho/2)/100*ALTO}" width="${areaProf/100*ANCHO}" height="${areaAncho/100*ALTO}" fill="none" stroke="${COLOR_LINEA}" stroke-width="0.45"/>
+            <rect x="${ANCHO-areaProf/100*ANCHO}" y="${(50-areaAncho/2)/100*ALTO}" width="${areaProf/100*ANCHO}" height="${areaAncho/100*ALTO}" fill="none" stroke="${COLOR_LINEA}" stroke-width="0.45"/>
+            <rect x="0" y="${(50-seisAncho/2)/100*ALTO}" width="${seisProf/100*ANCHO}" height="${seisAncho/100*ALTO}" fill="none" stroke="${COLOR_LINEA}" stroke-width="0.45"/>
+            <rect x="${ANCHO-seisProf/100*ANCHO}" y="${(50-seisAncho/2)/100*ALTO}" width="${seisProf/100*ANCHO}" height="${seisAncho/100*ALTO}" fill="none" stroke="${COLOR_LINEA}" stroke-width="0.45"/>
     ` : `
-            <rect x="2" y="2" width="${ANCHO-4}" height="${ALTO-4}" fill="none" stroke="#eaf5ea" stroke-width="0.5" opacity="0.9"/>
-            <line x1="2" y1="${CENTRO_Y}" x2="${ANCHO-2}" y2="${CENTRO_Y}" stroke="#eaf5ea" stroke-width="0.5" opacity="0.9"/>
-            <circle cx="${CENTRO_X}" cy="${CENTRO_Y}" r="11" fill="none" stroke="#eaf5ea" stroke-width="0.5" opacity="0.9"/>
-            <rect x="24" y="2" width="52" height="15" fill="none" stroke="#eaf5ea" stroke-width="0.5" opacity="0.9"/>
-            <rect x="24" y="${ALTO-17}" width="52" height="15" fill="none" stroke="#eaf5ea" stroke-width="0.5" opacity="0.9"/>
-            <rect x="38" y="2" width="24" height="6" fill="none" stroke="#eaf5ea" stroke-width="0.5" opacity="0.9"/>
-            <rect x="38" y="${ALTO-8}" width="24" height="6" fill="none" stroke="#eaf5ea" stroke-width="0.5" opacity="0.9"/>
+            <rect x="0" y="0" width="${ANCHO}" height="${ALTO}" fill="none" stroke="${COLOR_BORDE}" stroke-width="0.4"/>
+            <line x1="0" y1="${CENTRO_Y}" x2="${ANCHO}" y2="${CENTRO_Y}" stroke="${COLOR_LINEA}" stroke-width="0.45"/>
+            <circle cx="${CENTRO_X}" cy="${CENTRO_Y}" r="${radioCirculo/100*ANCHO}" fill="none" stroke="${COLOR_LINEA}" stroke-width="0.45"/>
+            <rect x="${(50-areaAncho/2)/100*ANCHO}" y="0" width="${areaAncho/100*ANCHO}" height="${areaProf/100*ALTO}" fill="none" stroke="${COLOR_LINEA}" stroke-width="0.45"/>
+            <rect x="${(50-areaAncho/2)/100*ANCHO}" y="${ALTO-areaProf/100*ALTO}" width="${areaAncho/100*ANCHO}" height="${areaProf/100*ALTO}" fill="none" stroke="${COLOR_LINEA}" stroke-width="0.45"/>
+            <rect x="${(50-seisAncho/2)/100*ANCHO}" y="0" width="${seisAncho/100*ANCHO}" height="${seisProf/100*ALTO}" fill="none" stroke="${COLOR_LINEA}" stroke-width="0.45"/>
+            <rect x="${(50-seisAncho/2)/100*ANCHO}" y="${ALTO-seisProf/100*ALTO}" width="${seisAncho/100*ANCHO}" height="${seisProf/100*ALTO}" fill="none" stroke="${COLOR_LINEA}" stroke-width="0.45"/>
     `;
 
     function puntoJugadorHTML(s, esGK, esMio, idx, numero, nombre){
@@ -129,10 +137,9 @@
       const r = esGK ? 3.1 : 2.5;
       const id = `lmVisorJ_${esMio?'m':'r'}${idx}`;
       const num = numero!=null ? numero : (idx+1);
-      // Se muestra solo la última palabra del nombre (normalmente el
-      // apellido) para que quepa sin solaparse con los jugadores de
-      // alrededor — igual que en la camiseta de un futbolista real.
-      const nombreCorto = nombre ? nombre.trim().split(' ').pop() : '';
+      // Se muestra el nombre completo, igual que en el campo real de
+      // Copa Leyendas/Liga Manager (player.name se pinta entero ahí).
+      const nombreCompleto = nombre ? nombre.trim() : '';
       // Círculo, número y nombre viven en el MISMO grupo, movido con
       // un único transform — así nunca pueden desincronizarse entre
       // sí (antes, al animar cx/cy y x/y por separado, el número
@@ -140,7 +147,7 @@
       return `<g class="lm-visor-jugador-g" id="${id}" transform="translate(${s.x},${s.y})">
         <circle cx="0" cy="0" r="${r}" class="lm-visor-punto ${claseEquipo}${esGK?' lm-visor-punto-gk':''}"/>
         <text x="0" y="0" class="lm-visor-numero${esGK?' lm-visor-numero-gk':''}">${num}</text>
-        ${nombreCorto?`<text x="0" y="${r+2.3}" class="lm-visor-nombre-jugador">${nombreCorto}</text>`:''}
+        ${nombreCompleto?`<text x="0" y="${r+2.3}" class="lm-visor-nombre-jugador">${nombreCompleto}</text>`:''}
       </g>`;
     }
 
@@ -175,6 +182,7 @@
             </defs>
             ${franjasHTML}
             <rect x="0" y="0" width="${ANCHO}" height="${ALTO}" fill="url(#lmVisorCespedGrad)"/>
+            <rect x="0" y="0" width="${ANCHO}" height="${ALTO}" fill="#8a6a35" style="mix-blend-mode:color;opacity:${Math.max(0,(100-(state.estadio?state.estadio.campo:100))/100*0.85).toFixed(2)}"/>
             ${lineasCampo}
             <circle cx="${CENTRO_X}" cy="${CENTRO_Y}" r="0.8" fill="#eaf5ea" opacity="0.9"/>
             <g id="lmVisorGrupoRival">${rivalSlots.map((s,i)=>puntoJugadorHTML(s, i===0, false, i, rivalNumeros[i], rivalNombres[i])).join('')}</g>
@@ -187,9 +195,10 @@
           ${(clima&&clima.id==='snow')?`<div class="lm-visor-nieve">${Array.from({length:22}).map((_,i)=>`<span style="left:${Math.random()*100}%;animation-delay:${(Math.random()*3).toFixed(2)}s;animation-duration:${(2.4+Math.random()*1.6).toFixed(2)}s"></span>`).join('')}</div>`:''}
         </div>
         <div class="lm-visor-info-bar" id="lmVisorInfoBar">${t('lm.viendo_partido')}</div>
+        <div id="lmVisorResumenBox" style="display:none"></div>
         <div class="lm-popup-actions">
           <button id="lmVisorVelocidadBtn" class="mode-card-btn mode-card-btn-secondary"><i class="ph ph-bold ph-fast-forward"></i> ${t('lm.velocidad')} 1X</button>
-          <button id="lmVisorCerrarBtn" class="mode-card-btn mode-card-btn-gold" disabled>${t('lm.continuar')}</button>
+          <button id="lmVisorCerrarBtn" class="mode-card-btn mode-card-btn-gold">${t('lm.terminar_mostrar_resultados')}</button>
         </div>
       </div>`;
     document.getElementById('ligaManagerScreen').appendChild(overlay);
@@ -361,12 +370,14 @@
         for(let i=1;i<pos.length;i++){
           if(i===idxExcluir) continue;
           const base=slots[i];
-          // Al atacar, los más adelantados (avance alto) se lanzan más
-          // hacia arriba; al defender, todos se repliegan un poco hacia
-          // su propia portería. Un defensa apenas participa del ataque
-          // por mucho que "le tocara" adelantarse; un delantero sí.
-          const factorRol = roles[i]==='def' ? 0.35 : (roles[i]==='fwd' ? 1.3 : 1);
-          const empuje = yoAtaco ? (0.04+avance[i]*0.16)*factorRol*multEmpuje : 0.05;
+          // Al atacar, TODO el equipo sube de línea para apoyar — los
+          // delanteros más, pero defensas y centrocampistas también
+          // acompañan de verdad (antes apenas se movían, dando la
+          // sensación de que solo atacaban 2-3 jugadores mientras el
+          // resto se quedaba plantado atrás, algo sin sentido en un
+          // equipo real). Al defender, si se repliega más disciplinado.
+          const factorRol = roles[i]==='def' ? 0.75 : (roles[i]==='fwd' ? 1.25 : 1.05);
+          const empuje = yoAtaco ? (0.09+avance[i]*0.16)*factorRol*multEmpuje : 0.06;
           const objetivo = yoAtaco ? golRival : propioGol;
           let x=base.x+(objetivo.x-base.x)*empuje;
           let y=base.y+(objetivo.y-base.y)*empuje;
@@ -431,8 +442,11 @@
     let idxConBalonMio=primerMedioCentro(rolesMios), idxConBalonRival=primerMedioCentro(rolesRival);
     const FRASES_PASE=[t('lm.visor_construye'), t('lm.visor_avanza')];
     let descansoMostrado=false;
+    let partidoDetenido=false; // se activa al pulsar "terminar y mostrar resultados"
+    let partidoTerminado=false; // el partido llegó a su fin, ya sea jugado entero o forzado
 
     function tick(){
+      if(partidoDetenido) return; // el jugador ha forzado el final — no se programa nada más
       // Descanso: al cruzar la mitad del partido, se pausa un
       // instante con el aviso de "FIN DE LA PRIMERA PARTE" en grande.
       if(!descansoMostrado && tiempoTranscurrido>=DURACION_TOTAL/2){
@@ -479,12 +493,7 @@
         return;
       }
       if(tiempoTranscurrido>=DURACION_TOTAL && golIdx>=planGoles.length){
-        infoBar.textContent=t('lm.visor_termina');
-        mostrarTextoGrande(t('lm.visor_termina'), real(2600));
-        if(typeof window.playSound==='function') window.playSound('whistle');
-        clearInterval(minuteroInterval);
-        minuteroEl.textContent="90'";
-        cerrarBtn.disabled=false;
+        mostrarResumenFinal();
         return;
       }
 
@@ -688,11 +697,51 @@
     const velocidadBtn=overlay.querySelector('#lmVisorVelocidadBtn');
     if(velocidadBtn) velocidadBtn.addEventListener('click', ()=>{
       if(typeof window.playSound==='function') window.playSound('select');
-      velocidadPartido = velocidadPartido>=3 ? 1 : velocidadPartido+1;
+      velocidadPartido = velocidadPartido>=4 ? 1 : velocidadPartido+1;
       velocidadBtn.innerHTML = `<i class="ph ph-bold ph-fast-forward"></i> ${t('lm.velocidad')} ${velocidadPartido}X`;
     });
+    // Salta directamente al resultado real ya decidido de antes (el
+    // partido entero se calculó de golpe al principio; el visor solo
+    // lo está representando poco a poco) — y muestra un resumen igual
+    // que el del modo automático: goles, tarjetas, todo con su minuto.
+    function mostrarResumenFinal(){
+      partidoDetenido=true;
+      clearInterval(minuteroInterval);
+      minuteroEl.textContent="90'";
+      const misGolesFinal = miEsLocal ? info.resultado.golesA : info.resultado.golesB;
+      const rivalGolesFinal = miEsLocal ? info.resultado.golesB : info.resultado.golesA;
+      resEl.textContent = `${misGolesFinal} - ${rivalGolesFinal}`;
+
+      const eventosOrdenados = (info.eventos||[]).slice().sort((a,b)=>a.minute-b.minute);
+      const filas = eventosOrdenados.map(ev=>{
+        const esMio = ev.team===miLado;
+        const equipo = esMio?miNombre:rivalNombre;
+        let icono='⚽', texto=t('lm.resumen_gol_minuto');
+        if(ev.type==='card'){
+          icono = ev.tarjeta==='roja'?'🟥':'🟨';
+          texto = ev.tarjeta==='roja'?t('lm.resumen_tarjeta_roja'):t('lm.resumen_tarjeta_amarilla');
+        }
+        const nombreJ = ev.jugador?ev.jugador.name:'';
+        return `<div class="lm-visor-resumen-fila"><span class="lm-visor-resumen-min">${ev.minute}'</span> ${icono} <strong>${nombreJ}</strong> <span class="lm-visor-resumen-equipo">(${equipo})</span></div>`;
+      }).join('');
+
+      const resumenBox = document.getElementById('lmVisorResumenBox');
+      resumenBox.style.display='block';
+      resumenBox.innerHTML = `<div class="lm-visor-resumen-titulo">${t('lm.resumen_partido_titulo')}</div>${filas || ''}`;
+
+      infoBar.textContent = t('lm.visor_termina');
+      mostrarTextoGrande(t('lm.visor_termina'), real(2000));
+      if(typeof window.playSound==='function') window.playSound('whistle');
+
+      partidoTerminado=true;
+      cerrarBtn.textContent = t('lm.continuar');
+    }
     cerrarBtn.addEventListener('click', ()=>{
       if(typeof window.playSound==='function') window.playSound('select');
+      if(!partidoTerminado){
+        mostrarResumenFinal();
+        return;
+      }
       clearInterval(minuteroInterval);
       overlay.remove();
       if(onFinish) onFinish();

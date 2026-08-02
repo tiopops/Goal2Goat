@@ -64,25 +64,25 @@
     const posesion=rival.passing+rival.technique;
     let base, consejo;
     if(desequilibrio>15){
-      base='Equipo muy ofensivo y vertical, se vuelca al ataque dejando muchos espacios atrás.';
+      base=t('lm.estilo_muy_ofensivo');
       consejo='Una formación defensiva aprovecha bien esos huecos al contragolpe.';
     } else if(desequilibrio>8){
-      base='Prioriza el ataque sobre la solidez defensiva, le gusta ir a por el partido.';
+      base=t('lm.estilo_prioriza_ataque');
       consejo='Plantear un bloque defensivo puede darte ventaja en las transiciones.';
     } else if(desequilibrio<-15){
-      base='Bloque muy defensivo y compacto, especialista en cerrar espacios y sufrir poco.';
+      base=t('lm.estilo_muy_defensivo');
       consejo='Ir con una formación muy ofensiva contra ellos suele costar más de lo esperado.';
     } else if(desequilibrio<-8){
-      base='Equipo sólido atrás, le cuesta generar peligro si no encuentra el gol pronto.';
+      base=t('lm.estilo_solido_atras');
       consejo='Un planteamiento ofensivo choca con su principal virtud: la defensa.';
     } else if(posesion>=175){
-      base='Conjunto de posesión, paciente con el balón y con mucha calidad técnica.';
+      base=t('lm.estilo_posesion');
       consejo='Presionar arriba puede incomodarles más que esperar atrás.';
     } else if(rival.pace>=85){
-      base='Equipo rápido y directo, busca la transición veloz nada más recuperar el balón.';
+      base=t('lm.estilo_rapido_directo');
       consejo='Una defensa bien colocada limita mucho su principal arma.';
     } else {
-      base='Conjunto equilibrado entre ataque y defensa, sin un desequilibrio claro.';
+      base=t('lm.estilo_equilibrado');
       consejo='Cualquier planteamiento razonable debería servir contra ellos.';
     }
     return {base, consejo};
@@ -409,7 +409,7 @@
           if(!campo) return; // sin enfoque elegido, no entrena de verdad
           if(Math.random()<0.30*bonusPlanificacion){
             j[campo]=Math.min(99, Math.round((j[campo]||50)+1));
-            textos.push(`${j.name} mejora su ${NOMBRE_STAT[campo]} (+1)`);
+            textos.push(tp('lm.dia_mejora_stat', {nombre:j.name, stat:t('lm.stat_'+campo)}));
             if(!mejorasPorJugador[j.id]) mejorasPorJugador[j.id]={nombre:j.name, stats:{}};
             mejorasPorJugador[j.id].stats[campo]=(mejorasPorJugador[j.id].stats[campo]||0)+1;
           }
@@ -442,16 +442,16 @@
             if(!state.medicoNotificacion){
               state.medicoNotificacion={jugadorId:jugador.id, dificultad:sev.dificultad, severidad:sev.label};
             }
-            textos.push(`${jugador.name} se resiente por sobrecarga de entrenamiento (leve)`);
+            textos.push(tp('lm.dia_sobrecarga_entreno', {nombre:jugador.name}));
             lesionesSemana.push({nombre:jugador.name, familia});
           }
         }
-        if(!textos.length) textos.push('Entrenamiento sin incidencias');
+        if(!textos.length) textos.push(t('lm.dia_entreno_sin_incidencias'));
         state.plantilla.forEach(p=>{ p.fatigue=Math.max(0, Math.min(100, Math.round((p.fatigue===undefined?100:p.fatigue)-2.2))); });
       } else {
         diasDescanso++;
         seguidos=0;
-        textos.push('Día de descanso — la plantilla recupera resistencia');
+        textos.push(t('lm.dia_descanso_texto'));
         state.plantilla.forEach(p=>{ p.fatigue=Math.max(0, Math.min(100, Math.round((p.fatigue===undefined?100:p.fatigue)+4))); });
       }
       eventosDias.push({fecha:new Date(cur), iso, tipo:esEntreno?'entreno':'descanso', textos});
@@ -874,7 +874,8 @@
     registrarMovimientoFinanciero('Daños por disturbios en '+zona.label, -daño, state.jornadaActual);
     state.disturbiosZonas[zona.id]=1; // vuelve a leve tras el suceso, no a cero — el ambiente sigue algo caldeado
     enviarCorreo('mantenimiento', tp('correo.incidentes_zona.asunto', {zona:zona.label}),
-      tp('correo.incidentes_zona.cuerpo', {zona:zona.label, dano:formatoDinero(daño)}));
+      tp('correo.incidentes_zona.cuerpo', {zona:zona.label, dano:formatoDinero(daño)}),
+      {asunto:'correo.incidentes_zona.asunto', paramsAsunto:{zona:zona.label}, cuerpo:'correo.incidentes_zona.cuerpo', paramsCuerpo:{zona:zona.label, dano:formatoDinero(daño)}});
   }
   const LM_RASGOS_DEFS=[
     {id:'killer', icon:'ph-target', stat:'attack', get name(){return t('rasgo.killer.nombre');}, get desc(){return t('rasgo.killer.desc');}},
@@ -944,7 +945,8 @@
       predicciones:{}, rellenado:false
     };
     enviarCorreo('directorGeneral', t('lm.correo_quiniela_asunto'),
-      t('lm.correo_quiniela_cuerpo'));
+      t('lm.correo_quiniela_cuerpo'),
+      {asunto:'lm.correo_quiniela_asunto', cuerpo:'lm.correo_quiniela_cuerpo'});
     const ultimo=state.correoInterno && state.correoInterno[0];
     if(ultimo){ ultimo.tipoEspecial='quiniela_lista'; }
   }
@@ -1722,7 +1724,8 @@
       const idRegalo='sobre_regalo_'+Date.now();
       state.sobresFichajesPendientes.push({id:idRegalo, nivel:1, jornadaGenerado:1, gratis:true});
       enviarCorreo('directorDeportivo', t('correo.bienvenida_sobre.asunto'),
-        t('correo.bienvenida_sobre.cuerpo'));
+        t('correo.bienvenida_sobre.cuerpo'),
+        {asunto:'correo.bienvenida_sobre.asunto', cuerpo:'correo.bienvenida_sobre.cuerpo'});
       const ultimoCorreo=state.correoInterno && state.correoInterno[0];
       if(ultimoCorreo){ ultimoCorreo.tipoEspecial='sobre_listo'; ultimoCorreo.sobreId=idRegalo; }
     }
@@ -2103,7 +2106,8 @@
       if(state.trabajadores && state.trabajadores.medico && typeof enviarCorreo==='function' &&
          (!state.correoUltimoEnviado || state.correoUltimoEnviado.medico!==state.jornadaActual)){
         enviarCorreo('medico', tp('correo.agrava_lesion.asunto', {jugador:p.name}),
-          tp('correo.agrava_lesion.cuerpo', {jugador:p.name, severidad:severidadNueva, semanas:p.injuryWeeks+' '+t('lm.jornada').toLowerCase()+(p.injuryWeeks===1?'':'s')}));
+          tp('correo.agrava_lesion.cuerpo', {jugador:p.name, severidad:severidadNueva, semanas:p.injuryWeeks+' '+t('lm.jornada').toLowerCase()+(p.injuryWeeks===1?'':'s')}),
+          {asunto:'correo.agrava_lesion.asunto', paramsAsunto:{jugador:p.name}, cuerpo:'correo.agrava_lesion.cuerpo', paramsCuerpo:{jugador:p.name, severidad:severidadNueva, semanas:p.injuryWeeks+' '+t('lm.jornada').toLowerCase()+(p.injuryWeeks===1?'':'s')}});
       }
     });
     // Actualizar rachas de gol: quien marca suma, el resto de titulares que
@@ -2341,7 +2345,8 @@
       regenerarCandidatosTrabajo();
       state.mesTrabajadoresGenerado=mesDeEstaJornada;
       enviarCorreo('directorGeneral', t('correo.nuevos_candidatos.asunto'),
-        t('correo.nuevos_candidatos.cuerpo'));
+        t('correo.nuevos_candidatos.cuerpo'),
+        {asunto:'correo.nuevos_candidatos.asunto', cuerpo:'correo.nuevos_candidatos.cuerpo'});
     }
 
     state.plantilla.forEach(p=>{
@@ -2822,7 +2827,8 @@
     // graves — así el aviso llega siempre, no solo en los casos más raros.
     if(state.trabajadores && state.trabajadores.medico && typeof enviarCorreo==='function'){
       enviarCorreo('medico', tp('correo.se_lesiona.asunto', {jugador:jugador.name}),
-        tp('correo.se_lesiona.cuerpo', {jugador:jugador.name, tipo:tipoLesion?tipoLesion.toLowerCase():'una lesión', severidad:sev.label, semanas:sev.weeks+' '+t('lm.jornada').toLowerCase()+(sev.weeks===1?'':'s')}));
+        tp('correo.se_lesiona.cuerpo', {jugador:jugador.name, tipo:tipoLesion?tipoLesion.toLowerCase():'una lesión', severidad:sev.label, semanas:sev.weeks+' '+t('lm.jornada').toLowerCase()+(sev.weeks===1?'':'s')}),
+        {asunto:'correo.se_lesiona.asunto', paramsAsunto:{jugador:jugador.name}, cuerpo:'correo.se_lesiona.cuerpo', paramsCuerpo:{jugador:jugador.name, tipo:tipoLesion?tipoLesion.toLowerCase():'una lesión', severidad:sev.label, semanas:sev.weeks+' '+t('lm.jornada').toLowerCase()+(sev.weeks===1?'':'s')}});
     }
     return id;
   }
@@ -2849,7 +2855,7 @@
     // aparece en jugadoresLesionadosPara al no estar "injured").
     if(state.trabajadores && state.trabajadores.medico && typeof enviarCorreo==='function' &&
        (!state.correoUltimoEnviado || state.correoUltimoEnviado.medico!==state.jornadaActual)){
-      enviarCorreo('medico', tp('correo.recupera_disponibilidad.asunto', {jugador:jugador.name}), tp('correo.recupera_disponibilidad.cuerpo', {jugador:jugador.name}));
+      enviarCorreo('medico', tp('correo.recupera_disponibilidad.asunto', {jugador:jugador.name}), tp('correo.recupera_disponibilidad.cuerpo', {jugador:jugador.name}), {asunto:'correo.recupera_disponibilidad.asunto', paramsAsunto:{jugador:jugador.name}, cuerpo:'correo.recupera_disponibilidad.cuerpo', paramsCuerpo:{jugador:jugador.name}});
     }
   }
   function registrarProgresoHistorial(texto){
@@ -3833,7 +3839,8 @@
     const netoMes=n.ingresoPatrocinio-nominaJugadores-nominaStaff;
     if(typeof enviarCorreo==='function'){
       enviarCorreo('directorGeneral', t('correo.nominas_pagadas.asunto'),
-        tp('correo.nominas_pagadas.cuerpo', {jugadores:formatoDinero(nominaJugadores), staff:formatoDinero(nominaStaff), patrocinio:n.ingresoPatrocinio>0?tp('correo.nominas_patrocinio',{patrocinio:formatoDinero(n.ingresoPatrocinio)}):'', balance:(netoMes>=0?'+':'')+formatoDinero(netoMes), capital:formatoDinero(state.capital)}));
+        tp('correo.nominas_pagadas.cuerpo', {jugadores:formatoDinero(nominaJugadores), staff:formatoDinero(nominaStaff), patrocinio:n.ingresoPatrocinio>0?tp('correo.nominas_patrocinio',{patrocinio:formatoDinero(n.ingresoPatrocinio)}):'', balance:(netoMes>=0?'+':'')+formatoDinero(netoMes), capital:formatoDinero(state.capital)}),
+        {asunto:'correo.nominas_pagadas.asunto', cuerpo:'correo.nominas_pagadas.cuerpo', paramsCuerpo:{jugadores:formatoDinero(nominaJugadores), staff:formatoDinero(nominaStaff), patrocinio:n.ingresoPatrocinio>0?tp('correo.nominas_patrocinio',{patrocinio:formatoDinero(n.ingresoPatrocinio)}):'', balance:(netoMes>=0?'+':'')+formatoDinero(netoMes), capital:formatoDinero(state.capital)}});
       const ultimo=state.correoInterno && state.correoInterno[0];
       if(ultimo) ultimo.tipoEspecial='balance_mensual';
     }
@@ -3913,13 +3920,24 @@
      si de verdad hay algo que contar (no todas las jornadas). Textos
      cortos y directos, pensados para leerse de un vistazo. ---------- */
   const CORREO_ICONOS={medico:'ph-first-aid-kit', mantenimiento:'ph-flag-pennant', directorGeneral:'ph-briefcase', directorDeportivo:'ph-binoculars', preparadorFisico:'ph-barbell'};
-  function enviarCorreo(rol, asunto, cuerpo){
+  function enviarCorreo(rol, asunto, cuerpo, claves){
     if(!state.correoInterno) state.correoInterno=[];
     if(!state.correoUltimoEnviado) state.correoUltimoEnviado={};
-    state.correoInterno.unshift({id:'mail'+Date.now()+Math.floor(Math.random()*100000), rol, asunto, cuerpo, jornada:state.jornadaActual, leido:false});
+    const mail={id:'mail'+Date.now()+Math.floor(Math.random()*100000), rol, asunto, cuerpo, jornada:state.jornadaActual, leido:false};
+    // Si se pasan las claves de traducción originales, se guardan
+    // también — así el correo se puede volver a traducir al idioma
+    // que esté activo en el momento de leerlo, en vez de quedarse
+    // congelado para siempre en el idioma en que se envió.
+    if(claves){ mail.claveAsunto=claves.asunto; mail.paramsAsunto=claves.paramsAsunto; mail.claveCuerpo=claves.cuerpo; mail.paramsCuerpo=claves.paramsCuerpo; }
+    state.correoInterno.unshift(mail);
     state.correoUltimoEnviado[rol]=state.jornadaActual;
     if(state.correoInterno.length>40) state.correoInterno=state.correoInterno.slice(0,40);
   }
+  // Traduce un correo al idioma actual si se guardaron sus claves
+  // originales; si es un correo antiguo sin claves (de antes de este
+  // arreglo), usa el texto ya guardado tal cual.
+  function correoAsuntoActual(c){ return c.claveAsunto ? (c.paramsAsunto?tp(c.claveAsunto,c.paramsAsunto):t(c.claveAsunto)) : c.asunto; }
+  function correoCuerpoActual(c){ return c.claveCuerpo ? (c.paramsCuerpo?tp(c.claveCuerpo,c.paramsCuerpo):t(c.claveCuerpo)) : c.cuerpo; }
   function borrarCorreo(mailId){
     if(!state.correoInterno) return;
     state.correoInterno=state.correoInterno.filter(c=>c.id!==mailId);
@@ -3941,10 +3959,12 @@
       const est=state.estadio||{};
       if(est.campo<40){
         enviarCorreo('mantenimiento', t('correo.cesped_preocupante.asunto'),
-          tp('correo.cesped_preocupante.cuerpo', {n:Math.round(est.campo)}));
+          tp('correo.cesped_preocupante.cuerpo', {n:Math.round(est.campo)}),
+          {asunto:'correo.cesped_preocupante.asunto', cuerpo:'correo.cesped_preocupante.cuerpo', paramsCuerpo:{n:Math.round(est.campo)}});
       } else if(est.satisfaccion<-30){
         enviarCorreo('mantenimiento', t('correo.grada_descontenta.asunto'),
-          tp('correo.grada_descontenta.cuerpo', {n:est.satisfaccion}));
+          tp('correo.grada_descontenta.cuerpo', {n:est.satisfaccion}),
+          {asunto:'correo.grada_descontenta.asunto', cuerpo:'correo.grada_descontenta.cuerpo', paramsCuerpo:{n:est.satisfaccion}});
       }
     }
     if(trab.medico && !yaEnviado('medico')){
@@ -3952,21 +3972,25 @@
       const graves=lesionados.filter(p=>p.injurySeverity==='grave');
       if(graves.length){
         enviarCorreo('medico', tp('correo.lesion_grave.asunto', {jugador:graves[0].name}),
-          tp('correo.lesion_grave.cuerpo', {jugador:graves[0].name}));
+          tp('correo.lesion_grave.cuerpo', {jugador:graves[0].name}),
+          {asunto:'correo.lesion_grave.asunto', paramsAsunto:{jugador:graves[0].name}, cuerpo:'correo.lesion_grave.cuerpo', paramsCuerpo:{jugador:graves[0].name}});
       } else if(lesionados.length>=3){
         enviarCorreo('medico', tp('correo.multiples_lesionados.asunto', {n:lesionados.length}),
-          tp('correo.multiples_lesionados.cuerpo', {n:lesionados.length}));
+          tp('correo.multiples_lesionados.cuerpo', {n:lesionados.length}),
+          {asunto:'correo.multiples_lesionados.asunto', paramsAsunto:{n:lesionados.length}, cuerpo:'correo.multiples_lesionados.cuerpo', paramsCuerpo:{n:lesionados.length}});
       }
     }
     if(trab.directorGeneral && !yaEnviado('directorGeneral')){
       if((state.capital||0)<0){
         enviarCorreo('directorGeneral', t('correo.numeros_rojos.asunto'),
-          tp('correo.numeros_rojos.cuerpo', {n:formatoDinero(state.capital)}));
+          tp('correo.numeros_rojos.cuerpo', {n:formatoDinero(state.capital)}),
+          {asunto:'correo.numeros_rojos.asunto', cuerpo:'correo.numeros_rojos.cuerpo', paramsCuerpo:{n:formatoDinero(state.capital)}});
       } else {
         const nomina=calcularNominaMensual();
         if((state.capital||0)<nomina.total){
           enviarCorreo('directorGeneral', t('correo.nomina_problema.asunto'),
-            tp('correo.nomina_problema.cuerpo', {capital:formatoDinero(state.capital), nomina:formatoDinero(nomina.total)}));
+            tp('correo.nomina_problema.cuerpo', {capital:formatoDinero(state.capital), nomina:formatoDinero(nomina.total)}),
+            {asunto:'correo.nomina_problema.asunto', cuerpo:'correo.nomina_problema.cuerpo', paramsCuerpo:{capital:formatoDinero(state.capital), nomina:formatoDinero(nomina.total)}});
         }
       }
     }
@@ -3991,7 +4015,8 @@
       const id='sobre'+Date.now()+Math.floor(Math.random()*100000);
       state.sobresFichajesPendientes.push({id, nivel:nivelSobre, jornadaGenerado:state.jornadaActual});
       enviarCorreo('directorDeportivo', t('correo.sobre_listo.asunto'),
-        tp('correo.sobre_listo.cuerpo', {n:nivelSobre}));
+        tp('correo.sobre_listo.cuerpo', {n:nivelSobre}),
+        {asunto:'correo.sobre_listo.asunto', cuerpo:'correo.sobre_listo.cuerpo', paramsCuerpo:{n:nivelSobre}});
       const ultimo=state.correoInterno && state.correoInterno[0];
       if(ultimo){ ultimo.tipoEspecial='sobre_listo'; ultimo.sobreId=id; }
     }
@@ -5138,7 +5163,7 @@
                 </div>
                 <div class="lm-rival-info-col">
                   <h3 class="lm-nextrival-header" style="text-align:left;margin:0 0 4px"><i class="ph ph-bold ph-flag" style="color:var(--gold);margin-right:6px"></i>${t("lm.proximo_rival")}</h3>
-                  <div class="lm-vs-label" style="text-align:left;margin-bottom:6px">${esLocal?'JUEGAS EN CASA':'JUEGAS FUERA'}</div>
+                  <div class="lm-vs-label" style="text-align:left;margin-bottom:6px">${esLocal?t('lm.juegas_en_casa'):t('lm.juegas_fuera')}</div>
                   ${(()=>{
                     const fila=calcularClasificacion();
                     const idx=fila.findIndex(t=>t.id===rival.id);
@@ -5159,19 +5184,19 @@
               ${(()=>{
                 const estilo=estiloDeJuegoRival(rival);
                 return `<div class="lm-estilo-juego-box">
-                  <div class="lm-estilo-juego-titulo"><i class="ph ph-bold ph-strategy"></i> ESTILO DE JUEGO</div>
+                  <div class="lm-estilo-juego-titulo"><i class="ph ph-bold ph-strategy"></i> ${t('lm.estilo_de_juego')}</div>
                   <div class="lm-estilo-juego-texto">${estilo.base}</div>
                 </div>`;
               })()}
               ${(()=>{
                 const campoRival=campoRivalEstimado(rival);
                 return `<div style="margin-top:6px">
-                  <div class="lm-estadio-bar-label" style="font-size:10px"><i class="ph ph-bold ph-plant" style="font-size:12px"></i><span>ESTADO DE SU CAMPO${esLocal?'':' (hoy juegas aquí)'}</span><span>${campoRival}/100</span></div>
+                  <div class="lm-estadio-bar-label" style="font-size:10px"><i class="ph ph-bold ph-plant" style="font-size:12px"></i><span>${t('lm.estado_su_campo')}${esLocal?'':' '+t('lm.hoy_juegas_aqui')}</span><span>${campoRival}/100</span></div>
                   ${campoBarraHTML(campoRival, true)}
                 </div>`;
               })()}
               <div class="lm-rival-profile">
-                ${[['ATAQUE','attack'],['DEFENSA','defense'],['RITMO','pace'],['PASE','passing'],['TÉCNICA','technique']].map(([label,k])=>`
+                ${[[t('lm.stat_ataque_lbl'),'attack'],[t('lm.stat_defensa_lbl'),'defense'],[t('lm.stat_ritmo_lbl'),'pace'],[t('lm.stat_pase_lbl'),'passing'],[t('lm.stat_tecnica_lbl'),'technique']].map(([label,k])=>`
                   <div class="stat-row"><span>${label}</span><span>${rival[k]}</span></div>
                   <div class="stat-bar-row"><div class="stat-bar"><div style="width:${Math.max(0,Math.min(100,rival[k]))}%"></div></div></div>
                 `).join('')}
@@ -5236,14 +5261,14 @@
                       extra=`<div class="lm-correo-resultado">${t('lm.quiniela_ya_rellenada')}</div>`;
                     }
                   }
-                  cuerpoExtra=`<div class="lm-correo-cuerpo">${c.cuerpo||''}${extra}</div>`;
+                  cuerpoExtra=`<div class="lm-correo-cuerpo">${correoCuerpoActual(c)||''}${extra}</div>`;
                 }
                 return `<div class="lm-correo-item ${c.leido?'':'lm-correo-no-leido'} ${correoExpandido===c.id?'lm-correo-expandido':''}" data-correo="${c.id}">
                   <div class="lm-correo-item-top">
                     <i class="ph ph-bold ${CORREO_ICONOS[c.rol]||'ph-envelope'}"></i>
                     <div class="lm-correo-item-info">
                       <div class="lm-correo-remitente">${NOMBRE_ROL[c.rol]||t('lm.club_generico')}</div>
-                      <div class="lm-correo-asunto">${c.asunto||''}</div>
+                      <div class="lm-correo-asunto">${correoAsuntoActual(c)||''}</div>
                     </div>
                     <button class="lm-correo-borrar" data-borrar-correo="${c.id}" title="${t('lm.borrar_mensaje')}"><i class="ph ph-bold ph-trash"></i></button>
                   </div>
@@ -7886,7 +7911,8 @@
         document.querySelectorAll('#ligaManagerScreen [id$="Overlay"]').forEach(ov=>{
           const liveContinuarBtn=document.getElementById('lmLiveContinuar');
           const partidoAutoEnCurso = ov.id==='lmMatchOverlay' && liveContinuarBtn && liveContinuarBtn.style.display==='none';
-          const partidoManagerEnCurso = ov.id==='lmVisorPartidoOverlay' && document.getElementById('lmVisorCerrarBtn') && document.getElementById('lmVisorCerrarBtn').disabled;
+          const resumenBoxLM=document.getElementById('lmVisorResumenBox');
+          const partidoManagerEnCurso = ov.id==='lmVisorPartidoOverlay' && resumenBoxLM && resumenBoxLM.style.display==='none';
           if(partidoAutoEnCurso || partidoManagerEnCurso) return;
           ov.remove();
         });
