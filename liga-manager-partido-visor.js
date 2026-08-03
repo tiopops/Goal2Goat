@@ -248,9 +248,16 @@
       const cxActual=parseFloat(balon.getAttribute('cx'))||0;
       const cyActual=parseFloat(balon.getAttribute('cy'))||0;
       const distanciaRecorrida=Math.hypot(x-cxActual, y-cyActual);
-      if(distanciaRecorrida>22){
+      // Factor gradual, no un interruptor todo-o-nada: por debajo de
+      // 16 unidades no pasa nada (pase raso normal), y a partir de ahí
+      // el tamaño crece PROGRESIVAMENTE con la distancia real hasta un
+      // máximo hacia los 46+ — así dos pases de longitud parecida se
+      // ven parecidos entre sí, sin ningún salto brusco de "ahora sí,
+      // ahora no" entre uno de 21 unidades y otro de 23.
+      const factorAltura = Math.max(0, Math.min(1, (distanciaRecorrida-16)/30));
+      if(factorAltura>0.04){
         const radioBase=1.3;
-        const radioAlto=radioBase*1.55;
+        const radioAlto=radioBase*(1+factorAltura*0.5);
         const mitadReal=(durReal/2).toFixed(0);
         // Sube como si venciera la gravedad (empieza rápido, llega
         // despacio al punto más alto) y baja acelerando (como caer),
@@ -574,6 +581,23 @@
         mostrarTextoGrande(t('lm.visor_descanso'), real(2400));
         infoBar.textContent=t('lm.visor_descanso');
         if(typeof window.playSound==='function') window.playSound('whistle');
+        // Reorganización real de la segunda parte: todo el mundo
+        // vuelve a su posición de formación, igual que en el saque
+        // inicial — antes el partido seguía desde donde estaban los
+        // 22 jugadores en ese instante, sin ningún reinicio, cuando en
+        // la vida real ambos equipos se colocan de nuevo en su sitio.
+        // El equipo que NO sacó en la primera parte saca ahora.
+        misSlots.forEach((s,i)=>moverJugador(true, i, s.x, s.y, 900));
+        rivalSlots.forEach((s,i)=>moverJugador(false, i, s.x, s.y, 900));
+        posesionMia=!posesionMia;
+        idxConBalonMio=primerMedioCentro(rolesMios);
+        idxConBalonRival=primerMedioCentro(rolesRival);
+        pasesJugadaActual=0; historialMio=[]; historialRival=[];
+        const equipoSaca2P = posesionMia?posMia:posRival;
+        const idxSaca2P = posesionMia?idxConBalonMio:idxConBalonRival;
+        setTimeout(()=>{
+          moverBalon(equipoSaca2P[idxSaca2P].x, equipoSaca2P[idxSaca2P].y, 400);
+        }, real(950));
         setTimeout(tick, real(2400));
         return;
       }
@@ -616,8 +640,21 @@
             mostrarTextoGrande(t('lm.visor_gol'), real(1800));
             if(typeof window.playSound==='function') window.playSound('goal');
             setTimeout(()=>{
-              moverBalon(centroCampo.x,centroCampo.y,700);
+              // Reorganización real tras el gol: todos los jugadores
+              // vuelven a su posición de formación de saque, igual que
+              // al empezar el partido o la segunda parte — antes solo
+              // se movía el balón al centro, y los 22 jugadores se
+              // quedaban donde estuvieran en el momento del gol.
+              misSlots.forEach((s,i)=>moverJugador(true, i, s.x, s.y, 900));
+              rivalSlots.forEach((s,i)=>moverJugador(false, i, s.x, s.y, 900));
               posesionMia=!esMio; tiempoTranscurrido+=2750+esperaExtra; pasesJugadaActual=0; historialMio=[]; historialRival=[];
+              idxConBalonMio=primerMedioCentro(rolesMios);
+              idxConBalonRival=primerMedioCentro(rolesRival);
+              const equipoSacaGol = posesionMia?posMia:posRival;
+              const idxSacaGol = posesionMia?idxConBalonMio:idxConBalonRival;
+              setTimeout(()=>{
+                moverBalon(equipoSacaGol[idxSacaGol].x, equipoSacaGol[idxSacaGol].y, 400);
+              }, real(950));
               setTimeout(tick, real(750));
             }, real(1300));
           }, real(850));

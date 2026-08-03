@@ -1030,7 +1030,7 @@
               // enseñar "X vs X", pase lo que pase con el dato de
               // origen o con cualquier reparación anterior.
               let nombreLocalMostrado=p.homeName, nombreVisitanteMostrado=p.awayName;
-              if(p.homeId!==p.awayId && p.homeName && p.awayName
+              if(p.homeName && p.awayName
                  && p.homeName.trim().toLowerCase()===p.awayName.trim().toLowerCase()){
                 if(p.homeEsMio) nombreVisitanteMostrado=p.awayName.trim()+' (2)';
                 else nombreLocalMostrado=p.homeName.trim()+' (2)';
@@ -1681,11 +1681,21 @@
     const colisionConRival = !equipoRealElegidoId && LM_RIVALS.some(r=>r.name.trim().toLowerCase()===nombreNormalizado);
     const nombreFinal = colisionConRival ? nombreEquipo.trim()+' FC' : nombreEquipo;
     const miEquipo={id:'lm_0', name:nombreFinal};
-    // Si el jugador ha elegido ser uno de los 19 equipos reales en vez de
-    // crear el suyo propio, ese equipo se quita de la lista de rivales
-    // (no te puedes enfrentar a ti mismo) y tu plantilla se genera con
-    // sus jugadores reales en vez de nombres inventados.
-    const rivalesBarajados=LM_RIVALS.filter(r=>r.id!==equipoRealElegidoId).slice();
+    // Si el jugador ha elegido ser uno de los 19 equipos reales en vez
+    // de crear el suyo propio, su plantilla se genera con los
+    // jugadores reales de ese equipo. IMPORTANTE: el equipo elegido NO
+    // se quita de la lista de rivales — se queda una COPIA suya con el
+    // nombre distinguido. Quitarlo del todo dejaba 19 equipos en total
+    // (número impar), y el generador de calendario NECESITA un número
+    // par para funcionar — con 19, producía un fallo real: cada
+    // jornada, un equipo distinto se emparejaba consigo mismo (esto
+    // era la causa de "Real Sociedad vs Real Sociedad", "Sevilla FC vs
+    // Sevilla FC", etc. — no un caso aislado, sino un fallo matemático
+    // que ocurría siempre que se elegía un equipo real ya existente).
+    const rivalesBarajados=LM_RIVALS.map(r=>{
+      if(r.id===equipoRealElegidoId) return {...r, name:r.name.trim()+' (2)'};
+      return r;
+    }).slice();
     if(typeof shuffle==='function') shuffle(rivalesBarajados); // shuffle() muta en el sitio, no devuelve nada
     const teams=[miEquipo, ...rivalesBarajados];
     const equipoRealElegido = equipoRealElegidoId ? LM_RIVALS.find(r=>r.id===equipoRealElegidoId) : null;
