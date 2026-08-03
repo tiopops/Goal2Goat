@@ -1266,10 +1266,18 @@
 
       const resumenBox = document.getElementById('lmVisorResumenBox');
       resumenBox.style.display='block';
+      const posMioFinal = info.resultado.posesionA!=null ? (miEsLocal?info.resultado.posesionA:info.resultado.posesionB) : null;
+      const barraPosesion = posMioFinal!=null ? `
+        <div class="lm-visor-posesion-titulo">${t('lm.posesion_titulo')}</div>
+        <div class="lm-visor-posesion-barra">
+          <div class="lm-visor-posesion-mia" style="width:${posMioFinal}%">${posMioFinal}%</div>
+          <div class="lm-visor-posesion-rival" style="width:${100-posMioFinal}%">${100-posMioFinal}%</div>
+        </div>` : '';
       resumenBox.innerHTML = `
         <div class="lm-visor-resultado-banner ${resultadoClase}">${resultadoTexto}</div>
         <div class="lm-visor-resumen-titulo">${t('lm.resumen_partido_titulo')}</div>
         ${filas || ''}
+        ${barraPosesion}
         ${partesResumen.length?`<div class="lm-visor-resumen-pie">${partesResumen.join(' · ')}</div>`:''}`;
 
       infoBar.textContent = t('lm.visor_termina');

@@ -749,7 +749,14 @@
     }
     const golesA=window.poissonSample(lambdaA);
     const golesB=window.poissonSample(lambdaB);
-    return {golesA,golesB};
+    // Posesión del partido — mismo criterio que ya usa el visor
+    // manager para decidir quién tiene más el balón: un equipo con
+    // mejor pase y técnica controla más el partido. Se guarda como
+    // parte del resultado para poder mostrarla y mencionarla luego,
+    // tanto en modo automático como en modo manager.
+    const calidadA=(statsA.passing+statsA.technique)/2, calidadB=(statsB.passing+statsB.technique)/2;
+    const posesionA=Math.max(32, Math.min(68, Math.round(50+(calidadA-calidadB)/1.6)));
+    return {golesA,golesB,posesionA,posesionB:100-posesionA};
   }
 
   /* ---------- 5. Estado persistente (localStorage, prototipo) ---------- */
@@ -1913,12 +1920,32 @@
     const goles = eventos.filter(e=>e.type==='goal');
     const tarjetas = eventos.filter(e=>e.type==='card');
     const lesiones = eventos.filter(e=>e.type==='injury');
+    const posMio = info.resultado.posesionA!=null ? (miEsLocal?info.resultado.posesionA:info.resultado.posesionB) : null;
+    const posRival = posMio!=null ? 100-posMio : null;
 
     const partes=[];
     // Apertura: resultado en una frase, en lenguaje natural.
     if(golesMio>golesRival) partes.push(tp('lm.hist_gano', {miNombre, rivalNombre, golesMio, golesRival}));
     else if(golesMio<golesRival) partes.push(tp('lm.hist_perdio', {miNombre, rivalNombre, golesMio, golesRival}));
     else partes.push(tp('lm.hist_empato', {miNombre, rivalNombre, golesMio}));
+
+    // Posesión — una frase que da color y contexto a lo que se vio.
+    if(posMio!=null){
+      if(Math.abs(posMio-posRival)>=8){
+        const dominador = posMio>posRival ? miNombre : rivalNombre;
+        const domPos = posMio>posRival ? posMio : posRival;
+        const domPosRival = posMio>posRival ? posRival : posMio;
+        const dominadoRival = posMio>posRival ? rivalNombre : miNombre;
+        partes.push(tp('lm.hist_posesion_dominio', {equipo:dominador, pos:domPos, posRival:domPosRival, rivalEquipo:dominadoRival}));
+      } else {
+        partes.push(tp('lm.hist_posesion_equilibrada', {pos:posMio, posRival}));
+      }
+    }
+
+    // Clima — solo si tuvo algo de protagonismo real en el partido.
+    const climaId = info.climaId;
+    const claveClima = {rain:'lm.hist_clima_lluvia', wind:'lm.hist_clima_viento', hot:'lm.hist_clima_calor', snow:'lm.hist_clima_nieve'}[climaId];
+    if(claveClima) partes.push(t(claveClima));
 
     // Goles, contados como una pequeña crónica.
     if(goles.length){
@@ -1955,12 +1982,24 @@
       partes.push(`**${t('lm.hist_lesiones_titulo')}**\n${frasesLesiones.join('. ')}.`);
     }
 
+    // Rueda de prensa — si hubo una promesa hecha antes del partido,
+    // se menciona si se cumplió o no.
+    const prensa = state.ultimaPrensaResuelta;
+    if(prensa && prensa.outcome!=='neutral'){
+      partes.push(tp(prensa.outcome==='correct' ? 'lm.hist_prensa_cumplida' : 'lm.hist_prensa_incumplida', {label:prensa.label}));
+    }
+
     // Cierre breve.
     partes.push(Math.abs(golesMio-golesRival)<=1 ? t('lm.hist_cierre_ajustado') : t('lm.hist_cierre_claro'));
 
     return partes.join('\n\n');
   }
   function mostrarHistoricoPartido(info, miEsLocal){
+    // Evita que se acumulen varias ventanas si se pulsa el botón más
+    // de una vez — se quita cualquier histórico ya abierto antes de
+    // crear uno nuevo.
+    const existente=document.getElementById('lmHistoricoOverlay');
+    if(existente) existente.remove();
     const texto = generarHistoricoPartidoTexto(info, miEsLocal);
     const htmlTexto = texto.split('\n\n').map(p=>{
       if(p.startsWith('**')){
@@ -1970,7 +2009,6 @@
       return `<p class="lm-historico-parrafo">${p}</p>`;
     }).join('');
     const overlay=document.createElement('div');
-    overlay.className='overlay';
     overlay.id='lmHistoricoOverlay';
     overlay.innerHTML=`
       <div class="lm-dilemma-card" style="width:480px;max-width:92vw;text-align:left;max-height:80vh;display:flex;flex-direction:column">
@@ -1978,10 +2016,12 @@
         <div style="overflow-y:auto;flex:1;padding-right:4px">${htmlTexto}</div>
         <div class="lm-popup-actions" style="margin-top:12px"><button id="lmHistoricoCerrar" class="mode-card-btn mode-card-btn-gold">${t('lm.continuar')}</button></div>
       </div>`;
-    document.body.appendChild(overlay);
-    document.getElementById('lmHistoricoCerrar').addEventListener('click', ()=>{
+    document.getElementById('ligaManagerScreen').appendChild(overlay);
+    const cerrar=()=>overlay.remove();
+    if(typeof habilitarCierreOverlay==='function') habilitarCierreOverlay(overlay, cerrar);
+    overlay.querySelector('#lmHistoricoCerrar').addEventListener('click', ()=>{
       if(typeof window.playSound==='function') window.playSound('select');
-      overlay.remove();
+      cerrar();
     });
   }
 
@@ -2780,17 +2820,24 @@
     const {answer}=state.lmPendingPrediction;
     state.lmPendingPrediction=null;
     if(answer.stance==='neutral'){
-      return {label:answer.label, outcome:'neutral', delta:0, texto:'🎙 Respuesta neutral: la moral no se ve afectada.'};
+      const r={label:answer.label, outcome:'neutral', delta:0, texto:'🎙 Respuesta neutral: la moral no se ve afectada.'};
+      state.ultimaPrensaResuelta=r;
+      return r;
     }
     const correcto=answer.check({myGoals:miGoles, oppGoals:suGoles, draw:miGoles===suGoles});
     const delta=correcto?8:-8;
     state.moral=Math.max(-50,Math.min(50,(state.moral||0)+delta));
-    return {
+    const r={
       label:answer.label, outcome:correcto?'correct':'wrong', delta,
       texto: correcto
         ? `🎙 Promesa cumplida ("${answer.label}"): +${delta} moral.`
         : `🎙 Promesa incumplida ("${answer.label}"): ${delta} moral.`
     };
+    // Se guarda aparte (no solo se devuelve), para que el histórico
+    // del partido pueda mencionarlo aunque se abra más tarde, cuando
+    // state.lmPendingPrediction ya se haya vaciado.
+    state.ultimaPrensaResuelta=r;
+    return r;
   }
 
   function mostrarSemanaEnVivo(eventosDias, onAceptar){
@@ -3028,12 +3075,20 @@
         const lesionA=info.eventos.find(e=>e.type==='injury');
         const prensaResuelta=resolverPrensaLM(miGoles, suGoles);
         if(prensaResuelta) guardarEstado();
+        const posMioFinal2 = info.resultado.posesionA!=null ? (miEsLocal?info.resultado.posesionA:info.resultado.posesionB) : null;
+        const barraPosesion2 = posMioFinal2!=null ? `
+          <div class="lm-visor-posesion-titulo">${t('lm.posesion_titulo')}</div>
+          <div class="lm-visor-posesion-barra">
+            <div class="lm-visor-posesion-mia" style="width:${posMioFinal2}%">${posMioFinal2}%</div>
+            <div class="lm-visor-posesion-rival" style="width:${100-posMioFinal2}%">${100-posMioFinal2}%</div>
+          </div>` : '';
         document.getElementById('lmPostMatchInfo').innerHTML=`
           <div class="match-result-tag ${resultClass}">${resultText}</div>
           <div class="match-summary">
             <strong>${state.nombreEquipo}</strong> ${miGoles} – ${suGoles} <strong>${info.home.id==='lm_0'?info.away.name:info.home.name}</strong><br>
             ${golesA} gol${golesA===1?'':'es'} en total · ${tarjetasA} tarjeta${tarjetasA===1?'':'s'}${lesionA?` · 1 lesión (${lesionA.jugador.name})`:''}
           </div>
+          ${barraPosesion2}
           ${prensaResuelta?`<div class="press-prediction-section ${prensaResuelta.outcome==='correct'?'press-prediction-good':prensaResuelta.outcome==='wrong'?'press-prediction-bad':'press-prediction-neutral'}">${prensaResuelta.texto}</div>`:''}`;
 
         document.getElementById('lmLiveContinuar').style.display='block';

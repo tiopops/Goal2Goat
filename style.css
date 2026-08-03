@@ -3801,6 +3801,10 @@ body.liga-manager-screen .ranking-btn-label-lm{display:inline}
   position:fixed;inset:0;background:rgba(0,0,0,.7);
   display:flex;align-items:center;justify-content:center;z-index:30;
 }
+#lmHistoricoOverlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.75);
+  display:flex;align-items:center;justify-content:center;z-index:31000;
+}
 .lm-dilemma-card{
   background:#1e2326;border:1px solid #c9a227;border-radius:0;
   padding:22px 26px;max-width:340px;text-align:center;
@@ -4447,6 +4451,21 @@ body.light-theme.menu-screen{
 }
 .lm-historico-parrafo{
   font-size:13px;line-height:1.55;color:#ddd;margin:0 0 4px;
+}
+.lm-visor-posesion-titulo{
+  font-family:'Bebas Neue',Impact,sans-serif;font-size:11px;color:#999;
+  letter-spacing:1px;text-align:center;margin:10px 0 4px;
+}
+.lm-visor-posesion-barra{
+  display:flex;height:20px;border-radius:4px;overflow:hidden;margin-bottom:4px;
+}
+.lm-visor-posesion-mia{
+  background:var(--gold);color:#1a1a1a;font-size:11px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;transition:width .4s ease;
+}
+.lm-visor-posesion-rival{
+  background:#c0392b;color:#fff;font-size:11px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;transition:width .4s ease;
 }
 @media(min-width:900px){
   .lm-visor-partido-card{max-width:720px}
