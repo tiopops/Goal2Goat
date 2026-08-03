@@ -706,6 +706,7 @@ window.TRANSLATIONS = {
   'lm.cancelar': {es:'CANCELAR', en:'CANCEL', pt:'CANCELAR', fr:'ANNULER', de:'ABBRECHEN', it:'ANNULLA'},
   'lm.entendido': {es:'ENTENDIDO', en:'GOT IT', pt:'ENTENDI', fr:'COMPRIS', de:'VERSTANDEN', it:'CAPITO'},
   'lm.volver': {es:'VOLVER', en:'BACK', pt:'VOLTAR', fr:'RETOUR', de:'ZURUCK', it:'INDIETRO'},
+  'lm.atras': {es:'ATRÁS', en:'BACK', pt:'VOLTAR', fr:'RETOUR', de:'ZURUCK', it:'INDIETRO'},
   'lm.ultima_asistencia': {es:'ÚLTIMA ASISTENCIA', en:'LAST ATTENDANCE', pt:'ÚLTIMA ASSISTÊNCIA', fr:'DERNIERE AFFLUENCE', de:'LETZTE ZUSCHAUERZAHL', it:'ULTIMA AFFLUENZA'},
   'lm.precio_entrada': {es:'PRECIO ENTRADA', en:'TICKET PRICE', pt:'PREÇO DO INGRESSO', fr:'PRIX DU BILLET', de:'TICKETPREIS', it:'PREZZO BIGLIETTO'},
   'lm.satisfaccion_afición': {es:'SATISFACCIÓN AFICIÓN', en:'FAN SATISFACTION', pt:'SATISFAÇÃO DA TORCIDA', fr:'SATISFACTION DES SUPPORTERS', de:'FANZUFRIEDENHEIT', it:'SODDISFAZIONE TIFOSI'},

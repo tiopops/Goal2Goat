@@ -501,6 +501,13 @@
     // muchos pases seguidos en el último tercio = urgencia real por
     // encontrar el hueco, no una jugada mecánica idéntica siempre.
     let pasesJugadaActual=0;
+    // Historial de los últimos portadores del balón (por equipo) — se
+    // usa para detectar bucles de pases repetidos entre los mismos
+    // dos jugadores (típicamente portero↔defensa) y penalizar
+    // devolver el balón a quien te lo acaba de dar, rompiendo el
+    // bucle en vez de quedarse "pillado" pasando de un lado a otro
+    // indefinidamente.
+    let historialMio=[], historialRival=[];
     const FRASES_PASE=[t('lm.visor_construye'), t('lm.visor_avanza')];
     let descansoMostrado=false;
     let partidoDetenido=false; // se activa al pulsar "terminar y mostrar resultados"
@@ -558,7 +565,7 @@
             if(typeof window.playSound==='function') window.playSound('goal');
             setTimeout(()=>{
               moverBalon(centroCampo.x,centroCampo.y,700);
-              posesionMia=!esMio; tiempoTranscurrido+=2750+esperaExtra; pasesJugadaActual=0;
+              posesionMia=!esMio; tiempoTranscurrido+=2750+esperaExtra; pasesJugadaActual=0; historialMio=[]; historialRival=[];
               setTimeout(tick, real(750));
             }, real(1300));
           }, real(850));
@@ -805,7 +812,26 @@
             : (zona>0.55 && rolesAtaca[i]==='mid') ? 1.8 : 0;
           const bloqueo=lineaBloqueada(p.x,p.y);
           const penalizBloqueo = bloqueo<4 ? (4-bloqueo)*4.5 : 0;
-          const punt = avanceAtaca[i]*9 - d*0.12 + distMarca*0.35 + bonusRol - penalizBloqueo + Math.random()*3;
+          // Penalización real por distancia — antes era tan baja que
+          // un pase muy largo podía ganar solo por el avance del
+          // receptor, dando pases de un lado a otro del campo con
+          // demasiada frecuencia. En un partido real el balón avanza
+          // POCO A POCO, no de un extremo al otro.
+          const penalizDistancia = d*0.34 + (d>26 ? (d-26)*0.5 : 0);
+          // Balón largo de defensa a delantero: un defensa metiendo un
+          // pase directo al delantero en campo contrario debe ser la
+          // excepción, no la norma — se penaliza fuerte cuando la
+          // distancia es grande de verdad.
+          const penalizBalonLargoDef = (rolesAtaca[idxConBalon]==='def' && rolesAtaca[i]==='fwd' && d>30) ? (d-30)*0.9 : 0;
+          // Anti-bucle: si el receptor candidato es quien le acaba de
+          // dar el balón al portador actual (típico bucle
+          // portero↔defensa), se penaliza fuerte — así el equipo
+          // busca otra opción en vez de quedarse pasando el balón de
+          // un lado a otro sin avanzar nunca.
+          const historialAtaca = posesionMia?historialMio:historialRival;
+          const esDevolucionInmediata = historialAtaca.length && historialAtaca[historialAtaca.length-1]===i;
+          const penalizBucle = esDevolucionInmediata ? 7 : 0;
+          const punt = avanceAtaca[i]*9 - penalizDistancia + distMarca*0.35 + bonusRol - penalizBloqueo - penalizBalonLargoDef - penalizBucle + Math.random()*3;
           if(punt>mejorPunt){ mejorPunt=punt; mejor=i; }
         });
         if(mejor===-1) mejor=jugadorMasCercano(equipoAtaca, posActual.x, posActual.y, idxConBalon);
@@ -819,7 +845,7 @@
           const interceptorLinea=jugadorMasCercano(equipoDefiende, (posActual.x+equipoAtaca[mejor].x)/2, (posActual.y+equipoAtaca[mejor].y)/2, -1);
           moverBalon(equipoDefiende[interceptorLinea].x, equipoDefiende[interceptorLinea].y, dur*0.6);
           infoBar.textContent=`${nombreDefiende} corta la línea de pase`;
-          siguientePosesionMia=!posesionMia; pasesJugadaActual=0;
+          siguientePosesionMia=!posesionMia; pasesJugadaActual=0; historialMio=[]; historialRival=[];
           if(siguientePosesionMia) siguienteIdxMio=interceptorLinea; else siguienteIdxRival=interceptorLinea;
           actualizarFormacionDinamica(posesionMia, posesionMia?idxConBalon:undefined, posesionMia?undefined:idxConBalon, posActual);
           setTimeout(()=>{
@@ -844,7 +870,7 @@
           const interceptorIdx=jugadorMasCercano(equipoDefiende, destinoFallido.x, destinoFallido.y, -1);
           moverBalon(equipoDefiende[interceptorIdx].x, equipoDefiende[interceptorIdx].y, dur);
           infoBar.textContent=`${nombreAtaca} pierde el balón con un pase impreciso`;
-          siguientePosesionMia=!posesionMia; pasesJugadaActual=0;
+          siguientePosesionMia=!posesionMia; pasesJugadaActual=0; historialMio=[]; historialRival=[];
           if(siguientePosesionMia) siguienteIdxMio=interceptorIdx; else siguienteIdxRival=interceptorIdx;
         } else {
         let destino=equipoAtaca[mejor];
@@ -859,6 +885,8 @@
         infoBar.textContent=`${nombreAtaca} ${FRASES_PASE[Math.floor(Math.random()*FRASES_PASE.length)]}`;
         pasesJugadaActual++;
         receptorPaseIdx=mejor;
+        (posesionMia?historialMio:historialRival).push(idxConBalon);
+        if((posesionMia?historialMio:historialRival).length>3) (posesionMia?historialMio:historialRival).shift();
         if(posesionMia) siguienteIdxMio=mejor; else siguienteIdxRival=mejor;
         }
       }

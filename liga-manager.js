@@ -4897,6 +4897,7 @@
             </div>`).join('')}
         </div>
         <div class="lm-popup-actions"><button id="lmSetupNext" class="mode-card-btn mode-card-btn-gold" ${setupData.equipoElegidoId?'':'disabled'}>${t('lm.empezar_temporada')}</button></div>
+        <div class="lm-popup-actions" style="margin-top:8px"><button id="lmSetupAtras" class="mode-card-btn mode-card-btn-secondary">${t('lm.atras')}</button></div>
       `;
     } else if(setupStep===3.5){
       inner=`
@@ -4995,7 +4996,15 @@
         el.addEventListener('click', ()=>{
           setupData.equipoElegidoId=el.getAttribute('data-equipo');
           if(typeof window.playSound==='function') window.playSound('select');
+          // renderSetup() reemplaza TODO root.innerHTML (la pantalla
+          // #ligaManagerScreen entera, no solo la lista) — por eso el
+          // scroll que hay que guardar y restaurar es el de root, no
+          // el de la lista interna. Guardar el de la lista (como se
+          // hacía antes) no arreglaba nada, porque no era root quien
+          // saltaba arriba.
+          const scrollGuardado=root.scrollTop;
           renderSetup();
+          root.scrollTop=scrollGuardado;
         });
       });
       const next=document.getElementById('lmSetupNext');
@@ -5007,6 +5016,12 @@
         const escudo={type:'image', data:equipo.crestImg};
         empezarTemporada(equipo.name, setupData.moneda, setupData.liga, escudo, equipo.id);
         render();
+      });
+      const atras=document.getElementById('lmSetupAtras');
+      if(atras) atras.addEventListener('click', ()=>{
+        if(typeof window.playSound==='function') window.playSound('select');
+        setupStep=2.5;
+        renderSetup();
       });
     } else if(setupStep===3.5){
       const confirmBtn=document.getElementById('lmSetupConfirm');
