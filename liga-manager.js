@@ -1023,18 +1023,31 @@
             ${boleto.partidos.map((p,i)=>{
               const key=boleto.jornadaIndex+'-'+p.homeId+'-'+p.awayId;
               const elegido=boleto.predicciones[key];
+              // Blindaje final, en el propio pintado: si por lo que
+              // sea los dos nombres coinciden exactos (con IDs
+              // distintos), se distingue aquí mismo, en el momento de
+              // mostrarlo — así es imposible que la interfaz llegue a
+              // enseñar "X vs X", pase lo que pase con el dato de
+              // origen o con cualquier reparación anterior.
+              let nombreLocalMostrado=p.homeName, nombreVisitanteMostrado=p.awayName;
+              if(p.homeId!==p.awayId && p.homeName && p.awayName
+                 && p.homeName.trim().toLowerCase()===p.awayName.trim().toLowerCase()){
+                if(p.homeEsMio) nombreVisitanteMostrado=p.awayName.trim()+' (2)';
+                else nombreLocalMostrado=p.homeName.trim()+' (2)';
+              }
               return `<div class="lm-quiniela-fila">
-                <div class="lm-quiniela-equipo lm-quiniela-equipo-local">${quinielaEscudoHTML(p.homeEsMio, p.homeCrest, 26)}<span>${p.homeName}</span></div>
+                <div class="lm-quiniela-equipo lm-quiniela-equipo-local">${quinielaEscudoHTML(p.homeEsMio, p.homeCrest, 26)}<span>${nombreLocalMostrado}</span></div>
                 <div class="lm-quiniela-opciones">
                   <button class="lm-quiniela-btn ${elegido==='1'?'lm-quiniela-btn-activa':''}" data-qk="${key}" data-qv="1">1</button>
                   <button class="lm-quiniela-btn ${elegido==='X'?'lm-quiniela-btn-activa':''}" data-qk="${key}" data-qv="X">X</button>
                   <button class="lm-quiniela-btn ${elegido==='2'?'lm-quiniela-btn-activa':''}" data-qk="${key}" data-qv="2">2</button>
                 </div>
-                <div class="lm-quiniela-equipo lm-quiniela-equipo-visitante"><span>${p.awayName}</span>${quinielaEscudoHTML(p.awayEsMio, p.awayCrest, 26)}</div>
+                <div class="lm-quiniela-equipo lm-quiniela-equipo-visitante"><span>${nombreVisitanteMostrado}</span>${quinielaEscudoHTML(p.awayEsMio, p.awayCrest, 26)}</div>
               </div>`;
             }).join('')}
           </div>
-          <div class="lm-popup-actions"><button id="lmQuinielaConfirmar" class="mode-card-btn mode-card-btn-gold" ${todasRellenas?'':'disabled'}>${t('lm.confirmar_quiniela')}</button></div>
+          <div id="lmQuinielaAviso" class="lm-quiniela-aviso" style="display:none">${t('lm.quiniela_incompleta')}</div>
+          <div class="lm-popup-actions"><button id="lmQuinielaConfirmar" class="mode-card-btn mode-card-btn-gold">${t('lm.confirmar_quiniela')}</button></div>
         </div>`;
       overlay.querySelectorAll('[data-qk]').forEach(btn=>{
         btn.addEventListener('click', ()=>{
@@ -1046,6 +1059,11 @@
       const confirmar=document.getElementById('lmQuinielaConfirmar');
       if(confirmar) confirmar.addEventListener('click', ()=>{
         if(typeof window.playSound==='function') window.playSound('select');
+        if(!todasRellenas){
+          const aviso=document.getElementById('lmQuinielaAviso');
+          if(aviso) aviso.style.display='block';
+          return;
+        }
         boleto.rellenado=true;
         guardarEstado();
         overlay.remove();
@@ -2723,7 +2741,7 @@
       overlay.innerHTML=`
         <div class="lm-dilemma-card lm-semana-card-fija" style="width:420px;max-width:92vw;text-align:left">
           <div class="lm-dilemma-title"><i class="ph ph-bold ph-flag-checkered"></i> ${t('lm.semana_completada')}</div>
-          ${rival?`<div class="lm-rival-crest-block" style="margin:6px auto 12px">${rivalCrestHTML(56, rival.crestImg)}<span class="lm-title" style="font-size:13px">${t('lm.proximo_rival')} ${rival.name}</span></div>`:''}
+          ${rival?`<div class="lm-rival-crest-block" style="margin:6px auto 12px">${rivalCrestHTML(56, rival.crestImg)}<span class="lm-title" style="font-size:13px">${t('lm.proximo_corto')} ${rival.name}</span></div>`:''}
           <div class="lm-resumen-stats-row">
             <div class="lm-resumen-stat"><i class="ph ph-bold ph-barbell" style="color:#e08a3e"></i><strong>${r.diasEntreno}</strong><span>${t('lm.resumen_entreno')}</span></div>
             <div class="lm-resumen-stat"><i class="ph ph-bold ph-bed" style="color:#5dcaa5"></i><strong>${r.diasDescanso}</strong><span>${t('lm.resumen_descanso')}</span></div>
@@ -5311,7 +5329,7 @@
                   <h3 class="lm-nextrival-header" style="text-align:left;margin:0 0 4px"><i class="ph ph-bold ph-flag" style="color:var(--gold);margin-right:6px"></i>${t("lm.proximo_rival")}</h3>
                   <div class="lm-vs-label" style="text-align:left;margin-bottom:6px;display:flex;align-items:center;justify-content:space-between;gap:8px">
                     <span>${esLocal?t('lm.juegas_en_casa'):t('lm.juegas_fuera')}</span>
-                    ${(()=>{ const climaPartido=(typeof climaDelPartido==='function')?climaDelPartido():null; return climaPartido ? `<span style="font-size:11px;font-weight:400;color:#aaa;white-space:nowrap">${climaPartido.label}</span>` : ''; })()}
+                    ${(()=>{ const climaPartido=(typeof climaDelPartido==='function')?climaDelPartido():null; return climaPartido ? `<span style="font-size:13px;font-weight:600;color:#ccc;white-space:nowrap">${climaPartido.label}</span>` : ''; })()}
                   </div>
                   ${(()=>{
                     const fila=calcularClasificacion();

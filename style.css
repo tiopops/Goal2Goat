@@ -3968,6 +3968,10 @@ body.light-theme.menu-screen{
 .lm-quiniela-titulo{font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:1.5px;font-size:19px;color:#fff}
 .lm-quiniela-subtitulo{font-size:11px;color:#999;margin-top:2px}
 .lm-quiniela-lista{overflow-y:auto;flex:1;display:flex;flex-direction:column;gap:7px;padding-right:4px;margin-bottom:12px}
+.lm-quiniela-aviso{
+  color:#e24b4a;font-size:12.5px;text-align:center;margin-bottom:10px;
+  padding:8px 10px;background:rgba(226,75,74,.12);border-radius:6px;
+}
 .lm-quiniela-fila{
   display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;
   background:linear-gradient(160deg,#1c1c1c,#161616);border:1px solid #2a2a2a;

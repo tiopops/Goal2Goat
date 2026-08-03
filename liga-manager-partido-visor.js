@@ -354,8 +354,8 @@
     // en ese instante — cada uno según su propio rol (avance) y si su
     // equipo ataca o defiende, con tiempos escalonados para que nunca
     // se vea como un bloque.
-    function actualizarFormacionDinamica(atacaMio, idxExcluirMio, idxExcluirRival, balonPos){
-      function reubicarEquipo(esMio, idxExcluir){
+    function actualizarFormacionDinamica(atacaMio, idxExcluirMio, idxExcluirRival, balonPos, idxExcluirMio2, idxExcluirRival2){
+      function reubicarEquipo(esMio, idxExcluir, idxExcluir2){
         const slots = esMio?misSlots:rivalSlots;
         const pos = esMio?posMia:posRival;
         const avance = esMio?avanceMio:avanceRival;
@@ -379,7 +379,7 @@
 
         const destinos=[]; // para la separación: no dejar que dos caigan en el mismo punto
         for(let i=1;i<pos.length;i++){
-          if(i===idxExcluir) continue;
+          if(i===idxExcluir || i===idxExcluir2) continue;
           // Al atacar, se parte de la posición ACTUAL del jugador (no
           // de su casilla de formación original) — así cada recálculo
           // avanza un poco MÁS, en vez de recalcular siempre desde el
@@ -466,8 +466,8 @@
           setTimeout(()=>moverJugador(esMio, i, x, y, (950+Math.random()*450)*fatigaMov), real(Math.random()*350));
         }
       }
-      reubicarEquipo(true, idxExcluirMio);
-      reubicarEquipo(false, idxExcluirRival);
+      reubicarEquipo(true, idxExcluirMio, idxExcluirMio2);
+      reubicarEquipo(false, idxExcluirRival, idxExcluirRival2);
     }
 
     const eventosGol=(info.eventos||[]).filter(e=>e.type==='goal').sort((a,b)=>a.minute-b.minute);
@@ -527,6 +527,7 @@
         const emoji = tarjetaAhora.tarjeta==='roja' ? '🟥' : '🟨';
         const nombreJ = tarjetaAhora.jugador ? tarjetaAhora.jugador.name : '';
         infoBar.textContent=`${emoji} Tarjeta ${tarjetaAhora.tarjeta} para ${nombreJ} (${esMia?miNombre:rivalNombre})`;
+        if(typeof window.playSound==='function') window.playSound('whistle_short');
         tiempoTranscurrido+=1300;
         setTimeout(tick, real(1300));
         return;
@@ -535,22 +536,53 @@
         const evento=eventosGol[golIdx]; golIdx++;
         const esMio = evento.team===miLado;
         const balonPos0={x:parseFloat(balon.getAttribute('cx')), y:parseFloat(balon.getAttribute('cy'))};
-        actualizarFormacionDinamica(esMio, esMio?idxConBalonMio:undefined, esMio?undefined:idxConBalonRival, balonPos0);
-        const destinoGol = esMio ? rivalGolXY : miGolXY;
-        moverBalon(destinoGol.x, destinoGol.y, 850);
-        setTimeout(()=>{
-          if(esMio) marcadorMio++; else marcadorRival++;
-          resEl.textContent=`${marcadorMio} - ${marcadorRival}`;
-          const nombreGoleador = evento.jugador ? evento.jugador.name : '';
-          infoBar.textContent=`⚽ ${t('lm.visor_gol')} ${nombreGoleador} (${esMio?miNombre:rivalNombre})`;
-          mostrarTextoGrande(t('lm.visor_gol'), real(1800));
-          if(typeof window.playSound==='function') window.playSound('goal');
+        const equipoAnotaPos = esMio?posMia:posRival;
+        const objetivoGol = esMio ? rivalGolXY : miGolXY;
+        // El gol SIEMPRE debe salir desde cerca del área rival, nunca
+        // desde donde estuviera el balón por casualidad al llegar el
+        // minuto programado (a veces medio campo, o incluso más
+        // atrás) — si el balón no está ya cerca, primero se acerca un
+        // delantero real + el balón a una posición de remate creíble,
+        // y SOLO ENTONCES se dispara a portería.
+        const distAlGolYa = Math.hypot(balonPos0.x-objetivoGol.x, balonPos0.y-objetivoGol.y);
+        const distanciaCerca = Math.hypot(ANCHO,ALTO)*0.16; // ~16% de la diagonal del campo
+        function dispararAGol(origenX, origenY, esperaExtra){
+          const destinoGol = objetivoGol;
+          moverBalon(destinoGol.x, destinoGol.y, 850);
           setTimeout(()=>{
-            moverBalon(centroCampo.x,centroCampo.y,700);
-            posesionMia=!esMio; tiempoTranscurrido+=2750; pasesJugadaActual=0;
-            setTimeout(tick, real(750));
-          }, real(1300));
-        }, real(850));
+            if(esMio) marcadorMio++; else marcadorRival++;
+            resEl.textContent=`${marcadorMio} - ${marcadorRival}`;
+            const nombreGoleador = evento.jugador ? evento.jugador.name : '';
+            infoBar.textContent=`⚽ ${t('lm.visor_gol')} ${nombreGoleador} (${esMio?miNombre:rivalNombre})`;
+            mostrarTextoGrande(t('lm.visor_gol'), real(1800));
+            if(typeof window.playSound==='function') window.playSound('goal');
+            setTimeout(()=>{
+              moverBalon(centroCampo.x,centroCampo.y,700);
+              posesionMia=!esMio; tiempoTranscurrido+=2750+esperaExtra; pasesJugadaActual=0;
+              setTimeout(tick, real(750));
+            }, real(1300));
+          }, real(850));
+        }
+        if(distAlGolYa>distanciaCerca){
+          // Acercamiento previo: un delantero real corre hacia una
+          // posición de remate cerca del área, el balón le llega, y
+          // desde ahí se dispara — nunca directo desde lejos.
+          const rolesAtaca2 = esMio?rolesMios:rolesRival;
+          let delanteroIdx = rolesAtaca2.findIndex(r=>r==='fwd');
+          if(delanteroIdx<0) delanteroIdx = jugadorMasCercano(equipoAnotaPos, objetivoGol.x, objetivoGol.y, 0);
+          const posRemate = { x: objetivoGol.x + (objetivoGol.x<CENTRO_X?12:-12), y: objetivoGol.y + (Math.random()-0.5)*14 };
+          actualizarFormacionDinamica(esMio, esMio?idxConBalonMio:undefined, esMio?undefined:idxConBalonRival, balonPos0,
+            esMio?delanteroIdx:undefined, esMio?undefined:delanteroIdx);
+          moverJugador(esMio, delanteroIdx, posRemate.x, posRemate.y, 900);
+          setTimeout(()=>{
+            moverBalon(posRemate.x, posRemate.y, 650);
+            infoBar.textContent=`${esMio?miNombre:rivalNombre} llega con peligro al área`;
+            setTimeout(()=>dispararAGol(posRemate.x, posRemate.y, 900+650), real(650));
+          }, real(900));
+          return;
+        }
+        actualizarFormacionDinamica(esMio, esMio?idxConBalonMio:undefined, esMio?undefined:idxConBalonRival, balonPos0);
+        dispararAGol(balonPos0.x, balonPos0.y, 0);
         return;
       }
       if(tiempoTranscurrido>=DURACION_TOTAL && golIdx>=planGoles.length){
@@ -584,6 +616,14 @@
       const presionadores = equipoDefiende.filter(rv=>Math.hypot(rv.x-posActual.x, rv.y-posActual.y)<14).length;
       const dur=1100+Math.random()*900;
       let siguientePosesionMia=posesionMia, siguienteIdxMio=idxConBalonMio, siguienteIdxRival=idxConBalonRival;
+      // Receptor del pase decidido en este tick, si lo hay — se
+      // excluye del recálculo de formación de más abajo para que NO
+      // se mueva mientras el balón viaja hacia él. Antes el receptor
+      // arrancaba a moverse a la vez que el balón, así que cuando el
+      // balón llegaba a su destino, el jugador ya se había desplazado
+      // a otro sitio — de ahí la sensación de "el balón cae donde no
+      // hay nadie" y el flujo a golpes del partido.
+      let receptorPaseIdx=-1;
 
       const probBase = zona<0.35?0.48:0.36;
       const probPresion = probBase + Math.max(0,presionadores-1)*0.16; // +16pp por cada presionador extra
@@ -818,11 +858,13 @@
         resaltarReceptor(destino.x, destino.y, dur);
         infoBar.textContent=`${nombreAtaca} ${FRASES_PASE[Math.floor(Math.random()*FRASES_PASE.length)]}`;
         pasesJugadaActual++;
+        receptorPaseIdx=mejor;
         if(posesionMia) siguienteIdxMio=mejor; else siguienteIdxRival=mejor;
         }
       }
 
-      actualizarFormacionDinamica(posesionMia, posesionMia?idxConBalon:undefined, posesionMia?undefined:idxConBalon, posActual);
+      actualizarFormacionDinamica(posesionMia, posesionMia?idxConBalon:undefined, posesionMia?undefined:idxConBalon, posActual,
+        posesionMia?receptorPaseIdx:undefined, posesionMia?undefined:receptorPaseIdx);
 
       setTimeout(()=>{
         posesionMia=siguientePosesionMia; idxConBalonMio=siguienteIdxMio; idxConBalonRival=siguienteIdxRival;
@@ -898,7 +940,7 @@
 
       infoBar.textContent = t('lm.visor_termina');
       mostrarTextoGrande(t('lm.visor_termina'), real(2000));
-      if(typeof window.playSound==='function') window.playSound('whistle');
+      if(typeof window.playSound==='function') window.playSound('whistle_final');
 
       partidoTerminado=true;
       cerrarBtn.textContent = t('lm.continuar');

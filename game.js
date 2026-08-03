@@ -307,9 +307,25 @@ function playSound(name, data){
       [392,349,294,196].forEach((f,i)=>tone(ctx, f, i*0.16, 0.35, 'sawtooth', 0.10, 0.0001));
       tone(ctx, 80, 0.5, 0.4, 'sine', 0.18, 0.0001);
       break;
-    case 'whistle': // referee whistle for match start/end accents
-      tone(ctx, 1800, 0, 0.18, 'square', 0.06, 0.0001);
-      tone(ctx, 2000, 0.16, 0.16, 'square', 0.06, 0.0001);
+    case 'whistle': // silbato de árbitro — inicio/final de partido.
+      // Un silbato real suena agudo (~2900-3200Hz) y tiene un ligero
+      // trino/vibrato por la bolita de dentro — se simula con varios
+      // tonos muy cercanos en frecuencia y tiempo, no un tono limpio.
+      [0,0.02,0.04,0.06,0.08,0.10,0.12,0.14].forEach((t,i)=>{
+        tone(ctx, 2950+(i%2===0?60:-40), t, 0.045, 'square', 0.09, 0.0001);
+      });
+      break;
+    case 'whistle_short': // pitido corto — falta o pequeña interrupción
+      [0,0.02,0.04].forEach((t,i)=>{
+        tone(ctx, 2950+(i%2===0?60:-40), t, 0.04, 'square', 0.08, 0.0001);
+      });
+      break;
+    case 'whistle_final': // final de partido — tres pitidos largos seguidos
+      [0, 0.32, 0.64].forEach(base=>{
+        [0,0.02,0.04,0.06,0.08,0.10].forEach((t,i)=>{
+          tone(ctx, 2950+(i%2===0?60:-40), base+t, 0.045, 'square', 0.09, 0.0001);
+        });
+      });
       break;
     case 'scratch_good': // casilla buena al rascar — pitch pasado como data
       tone(ctx, 520, 0, 0.06, 'sine', 0.10, 0.0001);
