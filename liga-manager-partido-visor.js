@@ -409,6 +409,23 @@
             // Presiona de verdad: se acerca al balón, no solo a su gol
             x = x+(balonPos.x-x)*0.5;
             y = y+(balonPos.y-y)*0.5;
+          } else if(!yoAtaco && roles[i]==='def'){
+            // Marcaje real: un defensa que no está presionando el
+            // balón directamente, se acerca un poco al atacante rival
+            // más cercano a su propia zona — "coge a su hombre", en
+            // vez de plantarse siempre en el mismo punto fijo de la
+            // formación pase lo que pase en el campo.
+            const equipoRivalRef = esMio?posRival:posMia;
+            let atacanteMasCercano=-1, distMin=Infinity;
+            equipoRivalRef.forEach((rv,ri)=>{
+              if(ri===0) return; // nunca marca al portero rival
+              const dd=Math.hypot(rv.x-x, rv.y-y);
+              if(dd<distMin){ distMin=dd; atacanteMasCercano=ri; }
+            });
+            if(atacanteMasCercano>=0 && distMin<28){
+              x = x+(equipoRivalRef[atacanteMasCercano].x-x)*0.22;
+              y = y+(equipoRivalRef[atacanteMasCercano].y-y)*0.22;
+            }
           }
           // Separación: si el destino cae demasiado cerca de otro
           // compañero que ya se ha colocado en este mismo instante, se
@@ -421,6 +438,20 @@
               y += (y-d.y)/dist*empujeSep;
             }
           });
+          // Separación también respecto al equipo CONTRARIO — estar
+          // cerca de un rival es normal (marcaje, presión), pero
+          // solaparse literalmente con él no lo es. Umbral más
+          // pequeño que con los compañeros, para no estorbar el
+          // marcaje real.
+          const equipoContrario = esMio?posRival:posMia;
+          equipoContrario.forEach(rv=>{
+            const dist=Math.hypot(x-rv.x,y-rv.y);
+            if(dist<3.5 && dist>0.01){
+              const empujeSep=(3.5-dist)/2;
+              x += (x-rv.x)/dist*empujeSep;
+              y += (y-rv.y)/dist*empujeSep;
+            }
+          });
           // Línea defensiva: un defensa que está defendiendo tiembla
           // mucho menos en el eje de profundidad (hacia/desde su
           // propia portería) que en el lateral — así la línea de
@@ -431,7 +462,8 @@
           if(esEscritorio){ x+=(Math.random()-0.5)*jitterProfundidad*2; y+=(Math.random()-0.5)*2.2; }
           else { y+=(Math.random()-0.5)*jitterProfundidad*2; x+=(Math.random()-0.5)*2.2; }
           destinos.push({x,y});
-          setTimeout(()=>moverJugador(esMio, i, x, y, 950+Math.random()*450), real(Math.random()*350));
+          const fatigaMov = 1 + Math.min(0.15, (tiempoTranscurrido/DURACION_TOTAL)*0.15);
+          setTimeout(()=>moverJugador(esMio, i, x, y, (950+Math.random()*450)*fatigaMov), real(Math.random()*350));
         }
       }
       reubicarEquipo(true, idxExcluirMio);
@@ -566,7 +598,17 @@
         siguientePosesionMia=!posesionMia;
         pasesJugadaActual=0;
         if(siguientePosesionMia) siguienteIdxMio=rivalCercanoIdx; else siguienteIdxRival=rivalCercanoIdx;
-      } else if(zona<0.24 && Math.random()<(0.38+Math.min(0.18,pasesJugadaActual*0.03))*(posesionMia?multRiesgoMioActual():1)){
+      } else if(zona<0.24 && (()=>{
+        // El rol del que lleva el balón importa de verdad: un
+        // delantero cerca del área dispara mucho más que un defensa
+        // que haya llegado hasta ahí de forma puntual — en la vida
+        // real son los delanteros quienes generan la mayoría de las
+        // ocasiones de gol, no cualquier jugador que pase por la zona.
+        const rolesEnAtaque = posesionMia?rolesMios:rolesRival;
+        const rolPortador = rolesEnAtaque[idxConBalon];
+        const factorRolDisparo = rolPortador==='fwd' ? 1.35 : (rolPortador==='def' ? 0.45 : 0.9);
+        return Math.random()<(0.38+Math.min(0.18,pasesJugadaActual*0.03))*(posesionMia?multRiesgoMioActual():1)*factorRolDisparo;
+      })()){
         // Cerca del área: intento de disparo (sin gol, salvo que
         // coincida con un gol real programado, gestionado aparte). El
         // portero contrario reacciona hacia el disparo. Cuantos más
@@ -713,7 +755,14 @@
           const marcaIdx=jugadorMasCercano(equipoDefiende, p.x, p.y, -1);
           const distMarca=Math.hypot(equipoDefiende[marcaIdx].x-p.x, equipoDefiende[marcaIdx].y-p.y);
           const rolesAtaca = posesionMia?rolesMios:rolesRival;
-          const bonusRol = (zona<0.4 && rolesAtaca[i]==='fwd') ? 2.5 : 0;
+          // Bono por rol según la fase del juego: en el último tercio,
+          // el balón busca al delantero para rematar; en la
+          // construcción (todavía en campo propio o medio campo), el
+          // balón busca al mediocentro para dirigir la jugada — así
+          // se nota la diferencia real entre "quien construye" y
+          // "quien remata", en vez de un reparto de pases uniforme.
+          const bonusRol = (zona<0.4 && rolesAtaca[i]==='fwd') ? 2.5
+            : (zona>0.55 && rolesAtaca[i]==='mid') ? 1.8 : 0;
           const bloqueo=lineaBloqueada(p.x,p.y);
           const penalizBloqueo = bloqueo<4 ? (4-bloqueo)*4.5 : 0;
           const punt = avanceAtaca[i]*9 - d*0.12 + distMarca*0.35 + bonusRol - penalizBloqueo + Math.random()*3;

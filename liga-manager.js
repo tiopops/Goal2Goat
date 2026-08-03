@@ -1811,21 +1811,38 @@
   // referencian por ID — así es 100% seguro aplicarlo con partidas en
   // curso sin invalidar nada.
   function repararColisionNombresCalendario(s){
-    if(!s || !s.calendario || !Array.isArray(s.calendario)) return;
+    if(!s) return;
     let reparado=false;
-    s.calendario.forEach(jornada=>{
-      if(!Array.isArray(jornada)) return;
-      jornada.forEach(partido=>{
-        if(partido && partido.home && partido.away && partido.home.id!==partido.away.id
-           && partido.home.name && partido.away.name
-           && partido.home.name.trim().toLowerCase()===partido.away.name.trim().toLowerCase()){
-          const esMiaLaLocal = partido.home.id==='lm_0';
-          if(esMiaLaLocal) partido.away.name=partido.away.name.trim()+' (rival)';
-          else partido.home.name=partido.home.name.trim()+' (rival)';
+    if(s.calendario && Array.isArray(s.calendario)){
+      s.calendario.forEach(jornada=>{
+        if(!Array.isArray(jornada)) return;
+        jornada.forEach(partido=>{
+          if(partido && partido.home && partido.away && partido.home.id!==partido.away.id
+             && partido.home.name && partido.away.name
+             && partido.home.name.trim().toLowerCase()===partido.away.name.trim().toLowerCase()){
+            const esMiaLaLocal = partido.home.id==='lm_0';
+            if(esMiaLaLocal) partido.away.name=partido.away.name.trim()+' (rival)';
+            else partido.home.name=partido.home.name.trim()+' (rival)';
+            reparado=true;
+          }
+        });
+      });
+    }
+    // La quiniela guarda su PROPIA copia de los nombres (homeName/
+    // awayName), tomada en el momento de generar el boleto — separada
+    // por completo del calendario. Sin repararla aquí también, el
+    // arreglo de arriba no llegaba nunca a lo que se ve en pantalla en
+    // la quiniela, que es justo donde seguía fallando.
+    if(s.quinielaBoleto && Array.isArray(s.quinielaBoleto.partidos)){
+      s.quinielaBoleto.partidos.forEach(p=>{
+        if(p && p.homeId!==p.awayId && p.homeName && p.awayName
+           && p.homeName.trim().toLowerCase()===p.awayName.trim().toLowerCase()){
+          if(p.homeEsMio) p.awayName=p.awayName.trim()+' (rival)';
+          else p.homeName=p.homeName.trim()+' (rival)';
           reparado=true;
         }
       });
-    });
+    }
     if(reparado){ try{ localStorage.setItem(SAVE_KEY, JSON.stringify(s)); }catch(e){} }
   }
   function guardarEstado(){ try{ localStorage.setItem(SAVE_KEY, JSON.stringify(state)); }catch(e){} }
@@ -2061,8 +2078,9 @@
     const idsAlineados=Object.values(state.alineacion||{}).filter(Boolean);
     const titulares=idsAlineados.map(id=>state.plantilla.find(p=>p.id===id)).filter(p=>p && !p.injured);
     if(!titulares.length) return null;
-    const ofensivos=titulares.filter(p=>['DC','EI','ED','MC'].includes(p.position));
-    const pool = ofensivos.length ? ofensivos : titulares;
+    const sinPortero=titulares.filter(p=>p.position!=='POR');
+    const ofensivos=sinPortero.filter(p=>['DC','EI','ED','MC'].includes(p.position));
+    const pool = ofensivos.length ? ofensivos : (sinPortero.length ? sinPortero : titulares);
     return pool[Math.floor(Math.random()*pool.length)];
   }
 
@@ -2088,7 +2106,13 @@
     function jugadorRivalAleatorio(){
       if(rival && rival.plantilla && rival.plantilla.length){
         const disponibles = plantillaEfectivaRival(rival);
-        const pool = disponibles.length ? disponibles : rival.plantilla;
+        // Nunca el portero, y con preferencia clara por posiciones
+        // ofensivas — antes se elegía entre los 11 sin ningún filtro,
+        // así que el portero rival podía "marcar" con la misma
+        // probabilidad que un delantero. Nada realista.
+        const sinPortero = disponibles.filter(j=>j.pos!=='POR');
+        const ofensivos = sinPortero.filter(j=>['DC','EI','ED','MC'].includes(j.pos));
+        const pool = ofensivos.length ? ofensivos : (sinPortero.length ? sinPortero : disponibles);
         const elegido=pool[Math.floor(Math.random()*pool.length)];
         return {name: elegido.name||elegido, numero: elegido.n};
       }
