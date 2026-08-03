@@ -158,7 +158,7 @@
     const clima = (info.climaId && typeof WEATHER_TYPES!=='undefined')
       ? WEATHER_TYPES.find(w=>w.id===info.climaId)
       : ((typeof climaDelPartido==='function') ? climaDelPartido() : null);
-    const climaClase = clima ? `lm-visor-clima-${clima.id}` : '';
+    const climaClase = clima ? `lm-visor-clima-${clima.id} weather-fx-${clima.id}` : '';
 
     const overlay=document.createElement('div');
     overlay.id='lmVisorPartidoOverlay';
@@ -189,9 +189,24 @@
             <circle cx="${CENTRO_X}" cy="${CENTRO_Y}" r="3.6" class="lm-visor-resalte" id="lmVisorResalte" opacity="0"/>
           </svg>
           <div class="lm-visor-anuncio" id="lmVisorAnuncio"></div>
-          ${(clima&&clima.id==='rain')?`<div class="lm-visor-lluvia">${Array.from({length:26}).map((_,i)=>`<span style="left:${Math.random()*100}%;animation-delay:${(Math.random()*1.4).toFixed(2)}s;animation-duration:${(0.55+Math.random()*0.35).toFixed(2)}s"></span>`).join('')}</div>`:''}
-          ${(clima&&clima.id==='snow')?`<div class="lm-visor-nieve">${Array.from({length:22}).map((_,i)=>`<span style="left:${Math.random()*100}%;animation-delay:${(Math.random()*3).toFixed(2)}s;animation-duration:${(2.4+Math.random()*1.6).toFixed(2)}s"></span>`).join('')}</div>`:''}
-          ${(clima&&clima.id==='wind')?`<div class="lm-visor-viento">${Array.from({length:9}).map((_,i)=>`<span style="top:${Math.random()*100}%;animation-delay:${(Math.random()*2.2).toFixed(2)}s;animation-duration:${(1.1+Math.random()*0.6).toFixed(2)}s"></span>`).join('')}</div>`:''}
+          ${(clima&&clima.id==='rain')?`<div class="lm-visor-lluvia">${Array.from({length:40}).map(()=>{
+            const left=Math.random()*100, duration=(0.5+Math.random()*0.4).toFixed(2);
+            const negDelay=(-Math.random()*duration).toFixed(2);
+            const opacity=(0.4+Math.random()*0.4).toFixed(2);
+            return `<div class="weather-drop" style="left:${left}%;animation-duration:${duration}s;animation-delay:${negDelay}s;opacity:${opacity}"></div>`;
+          }).join('')}${Array.from({length:40}).map(()=>{
+            const left=Math.random()*100, top=10+Math.random()*82;
+            const duration=(0.9+Math.random()*0.8).toFixed(2), delay=(-Math.random()*1.6).toFixed(2);
+            return `<div class="weather-splash" style="left:${left}%;top:${top}%;animation-duration:${duration}s;animation-delay:${delay}s"></div>`;
+          }).join('')}</div>`:''}
+          ${(clima&&clima.id==='snow')?`<div class="lm-visor-nieve">${Array.from({length:28}).map(()=>{
+            const left=Math.random()*100, duration=(3+Math.random()*3).toFixed(2), size=(6+Math.random()*7).toFixed(1);
+            const negDelay=(-Math.random()*duration).toFixed(2);
+            const opacity=(0.55+Math.random()*0.4).toFixed(2);
+            return `<div class="weather-flake" style="left:${left}%;font-size:${size}px;animation-duration:${duration}s;animation-delay:${negDelay}s;opacity:${opacity}">❄</div>`;
+          }).join('')}</div>`:''}
+          ${(clima&&clima.id==='wind')?`<div class="lm-visor-viento">${Array.from({length:3}).map((_,i)=>`<div class="weather-gust" style="animation-delay:${(i*1.1).toFixed(1)}s"></div>`).join('')}</div>`:''}
+          ${(clima&&(clima.id==='rain'||clima.id==='hot'||clima.id==='sunny'))?`<div class="weather-sheen"></div>`:''}
         </div>
         <div class="lm-visor-info-bar" id="lmVisorInfoBar">${t('lm.viendo_partido')}</div>
         <div id="lmVisorResumenBox" style="display:none"></div>
@@ -1028,7 +1043,7 @@
         // siempre en el mismo tiempo fijo — un pase corto es rápido,
         // uno largo tarda de verdad más, como un balón real.
         const distanciaPaseReal=Math.hypot(destino.x-posActual.x, destino.y-posActual.y);
-        duracionEfectiva=Math.max(260, Math.min(1450, distanciaPaseReal*23));
+        duracionEfectiva=Math.max(340, Math.min(1500, distanciaPaseReal*24));
         moverBalon(destino.x, destino.y, duracionEfectiva);
         resaltarReceptor(destino.x, destino.y, duracionEfectiva);
         infoBar.textContent=`${nombreAtaca} ${FRASES_PASE[Math.floor(Math.random()*FRASES_PASE.length)]}`;

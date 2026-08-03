@@ -1671,38 +1671,26 @@
   function empezarTemporada(nombreEquipo, moneda, liga, escudo, equipoRealElegidoId){
     calendarioMesVisto=null; // nueva liga: el calendario debe volver a fijarse en el mes de inicio, no arrastrar el de una partida anterior
     calendarioJornadaSincronizada=null;
-    // Si el nombre elegido coincide EXACTO con el de uno de los 19
-    // rivales reales (p.ej. alguien escribe "Real Sociedad" a mano en
-    // vez de elegirlo como su equipo real), se añade un distintivo —
-    // sin esto, el calendario podía generar un partido "Real Sociedad
-    // vs Real Sociedad" con total sentido interno (son dos equipos de
-    // verdad con IDs distintos) pero sin ningún sentido visual.
-    const nombreNormalizado=(nombreEquipo||'').trim().toLowerCase();
-    const colisionConRival = !equipoRealElegidoId && LM_RIVALS.some(r=>r.name.trim().toLowerCase()===nombreNormalizado);
-    const nombreFinal = colisionConRival ? nombreEquipo.trim()+' FC' : nombreEquipo;
-    const miEquipo={id:'lm_0', name:nombreFinal};
-    // Si el jugador ha elegido ser uno de los 19 equipos reales en vez
-    // de crear el suyo propio, su plantilla se genera con los
-    // jugadores reales de ese equipo. IMPORTANTE: el equipo elegido NO
-    // se quita de la lista de rivales — se queda una COPIA suya con el
-    // nombre distinguido. Quitarlo del todo dejaba 19 equipos en total
-    // (número impar), y el generador de calendario NECESITA un número
-    // par para funcionar — con 19, producía un fallo real: cada
-    // jornada, un equipo distinto se emparejaba consigo mismo (esto
-    // era la causa de "Real Sociedad vs Real Sociedad", "Sevilla FC vs
-    // Sevilla FC", etc. — no un caso aislado, sino un fallo matemático
-    // que ocurría siempre que se elegía un equipo real ya existente).
-    const rivalesBarajados=LM_RIVALS.map(r=>{
-      if(r.id===equipoRealElegidoId) return {...r, name:r.name.trim()+' (2)'};
-      return r;
-    }).slice();
+    const miEquipo={id:'lm_0', name:nombreEquipo};
+    // LaLiga tiene 20 equipos — LM_RIVALS ya contiene los 20 reales de
+    // la temporada. Tu equipo ocupa SIEMPRE una de esas 20 plazas:
+    // - Si eliges ser un club real, se quita ESE club de la lista de
+    //   rivales (te conviertes en él) — quedan 19 rivales + tú = 20.
+    // - Si creas un club inventado, se sortea al azar UNO de los 20
+    //   reales para cederte su plaza en la tabla — quedan 19 rivales +
+    //   tú = 20. Nunca se duplica ningún nombre ni se deja un número
+    //   impar de equipos, que es lo que rompía el calendario antes
+    //   (con 19 equipos, el generador no podía funcionar y acababa
+    //   emparejando a un equipo consigo mismo, jornada tras jornada).
+    const idAExcluir = equipoRealElegidoId || LM_RIVALS[Math.floor(Math.random()*LM_RIVALS.length)].id;
+    const rivalesBarajados=LM_RIVALS.filter(r=>r.id!==idAExcluir).slice();
     if(typeof shuffle==='function') shuffle(rivalesBarajados); // shuffle() muta en el sitio, no devuelve nada
     const teams=[miEquipo, ...rivalesBarajados];
     const equipoRealElegido = equipoRealElegidoId ? LM_RIVALS.find(r=>r.id===equipoRealElegidoId) : null;
     const plantilla = equipoRealElegido ? generarPlantillaDesdeEquipoReal(equipoRealElegido) : generarMiniPlantilla();
     state={
       setupComplete:true,
-      liga, moneda, nombreEquipo:nombreFinal, escudo,
+      liga, moneda, nombreEquipo, escudo,
       jornadaActual:1,
       calendario:generarCalendario(teams),
       fechaInicioLiga:fechaISO(proximoSabadoDesde(new Date())),

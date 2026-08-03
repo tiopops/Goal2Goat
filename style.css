@@ -4346,12 +4346,12 @@ body.light-theme.menu-screen{
 }
 /* Tintes de ambiente según el clima real de la jornada — el mismo
    clima que ya afecta a las estadísticas del partido. */
-.lm-visor-clima-sunny{filter:brightness(1.04) saturate(1.02)}
-.lm-visor-clima-cloudy{filter:brightness(.97) saturate(.95)}
-.lm-visor-clima-rain{filter:brightness(.93) saturate(.92)}
-.lm-visor-clima-wind{filter:saturate(.98)}
-.lm-visor-clima-hot{filter:brightness(1.02) saturate(1.04)}
-.lm-visor-clima-snow{filter:brightness(.98) saturate(.9)}
+.lm-visor-clima-sunny{filter:brightness(1.12) saturate(1.18)}
+.lm-visor-clima-cloudy{filter:none}
+.lm-visor-clima-rain{filter:brightness(0.78) saturate(0.78)}
+.lm-visor-clima-wind{filter:saturate(0.9) contrast(1.03)}
+.lm-visor-clima-hot{filter:saturate(0.72) sepia(0.20)}
+.lm-visor-clima-snow{filter:brightness(1.10) saturate(0.58)}
 .lm-visor-lluvia,.lm-visor-nieve{position:absolute;inset:0;pointer-events:none;overflow:hidden}
 .lm-visor-lluvia span{
   position:absolute;top:-8%;width:1px;height:14px;background:rgba(200,220,255,.55);
