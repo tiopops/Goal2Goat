@@ -281,7 +281,7 @@
         balon.style.transition=`cx ${durReal}ms ease-in-out, cy ${durReal}ms ease-in-out, r ${mitadReal}ms ease-out`;
         balon.setAttribute('r', radioAlto);
         setTimeout(()=>{
-          balon.style.transition=`r ${mitadReal}ms ease-in`;
+          balon.style.transition=`r ${mitadReal}ms ease-out`;
           balon.setAttribute('r', radioBase);
         }, real(durMs/2));
       }
@@ -295,9 +295,17 @@
       setTimeout(()=>{
         resalte.setAttribute('cx',x); resalte.setAttribute('cy',y);
         resalte.style.transition='none';
+        resalte.setAttribute('opacity','0');
+        // Aparece con una transición suave (antes saltaba directo a
+        // opacidad 0.9 sin transición, creando un "flash" brusco justo
+        // cuando el balón llegaba al receptor).
+        void resalte.offsetWidth; // fuerza el repintado antes de animar
+        resalte.style.transition='opacity .35s ease-out';
         resalte.setAttribute('opacity','0.9');
-        resalte.style.transition='opacity .6s ease-out';
-        setTimeout(()=>resalte.setAttribute('opacity','0'), 30);
+        setTimeout(()=>{
+          resalte.style.transition='opacity .6s ease-out';
+          resalte.setAttribute('opacity','0');
+        }, 220);
       }, real(retrasoMs));
     }
     // ========================================================
@@ -596,6 +604,19 @@
         mostrarTextoGrande(t('lm.visor_descanso'), real(2400));
         infoBar.textContent=t('lm.visor_descanso');
         if(typeof window.playSound==='function') window.playSound('whistle');
+        // Cambio de campo real: en un partido de verdad, los equipos
+        // cambian de mitad al descanso — antes esto no se tenía en
+        // cuenta, y el equipo seguía atacando en la misma dirección
+        // toda la segunda parte. Se refleja toda la formación al otro
+        // lado del campo y se intercambian las porterías.
+        const golTemp=miGolXY; miGolXY=rivalGolXY; rivalGolXY=golTemp;
+        if(esEscritorio){
+          misSlots=misSlots.map(s=>({x:ANCHO-s.x, y:s.y}));
+          rivalSlots=rivalSlots.map(s=>({x:ANCHO-s.x, y:s.y}));
+        } else {
+          misSlots=misSlots.map(s=>({x:s.x, y:ALTO-s.y}));
+          rivalSlots=rivalSlots.map(s=>({x:s.x, y:ALTO-s.y}));
+        }
         // Reorganización real de la segunda parte: todo el mundo
         // vuelve a su posición de formación, igual que en el saque
         // inicial — antes el partido seguía desde donde estaban los
