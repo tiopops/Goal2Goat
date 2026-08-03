@@ -253,7 +253,7 @@
 
     function moverBalon(x,y,durMs){
       const durReal=real(durMs);
-      balon.style.transition=`cx ${durReal}ms ease-in-out, cy ${durReal}ms ease-in-out`;
+      balon.style.transition=`cx ${durReal}ms ease-out, cy ${durReal}ms ease-out`;
       // Simula un pase alto sin animar ningún giro (mucho más simple
       // y seguro): en un trayecto largo, el balón crece en la primera
       // mitad del recorrido y encoge en la segunda — una parábola de
@@ -278,7 +278,7 @@
         // despacio al punto más alto) y baja acelerando (como caer),
         // igual que un balón real en el aire — no un simple ida y
         // vuelta lineal.
-        balon.style.transition=`cx ${durReal}ms ease-in-out, cy ${durReal}ms ease-in-out, r ${mitadReal}ms ease-out`;
+        balon.style.transition=`cx ${durReal}ms ease-out, cy ${durReal}ms ease-out, r ${mitadReal}ms ease-out`;
         balon.setAttribute('r', radioAlto);
         setTimeout(()=>{
           balon.style.transition=`r ${mitadReal}ms ease-out`;
@@ -539,25 +539,27 @@
           }
           // Separación: si el destino cae demasiado cerca de otro
           // compañero que ya se ha colocado en este mismo instante, se
-          // aparta un poco — evita que dos jugadores acaben pegados.
+          // aparta — evita que dos jugadores acaben pegados. Reforzada
+          // de forma notable (radio y fuerza mayores) tras comprobar
+          // que la versión anterior no bastaba para evitar que los 22
+          // jugadores acabaran amontonados en la misma zona.
           destinos.forEach(d=>{
             const dist=Math.hypot(x-d.x,y-d.y);
-            if(dist<9 && dist>0.01){
-              const empujeSep=(9-dist)/2;
+            if(dist<11 && dist>0.01){
+              const empujeSep=(11-dist)*0.7;
               x += (x-d.x)/dist*empujeSep;
               y += (y-d.y)/dist*empujeSep;
             }
           });
           // Separación también respecto al equipo CONTRARIO — estar
           // cerca de un rival es normal (marcaje, presión), pero
-          // solaparse literalmente con él no lo es. Umbral más
-          // pequeño que con los compañeros, para no estorbar el
-          // marcaje real.
+          // amontonarse encima de él no lo es. Radio y fuerza también
+          // reforzados de forma notable por el mismo motivo.
           const equipoContrario = esMio?posRival:posMia;
           equipoContrario.forEach(rv=>{
             const dist=Math.hypot(x-rv.x,y-rv.y);
-            if(dist<3.5 && dist>0.01){
-              const empujeSep=(3.5-dist)/2;
+            if(dist<7 && dist>0.01){
+              const empujeSep=(7-dist)*0.65;
               x += (x-rv.x)/dist*empujeSep;
               y += (y-rv.y)/dist*empujeSep;
             }
