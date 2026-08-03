@@ -435,6 +435,13 @@
         const multEmpuje = esMio ? multEmpujeMioActual() : urgenciaPartidoRival();
         const cercanos = yoAtaco ? [] : pos.map((p,i)=>({i,d:Math.hypot(p.x-balonPos.x,p.y-balonPos.y)}))
           .filter(o=>o.i!==0 && o.i!==idxExcluir).sort((a,b)=>a.d-b.d).slice(0,2).map(o=>o.i);
+        // Reparto de marcaje: sin esto, cada defensa buscaba
+        // independientemente "el atacante más cercano" sin saber si
+        // OTRO defensa ya lo estaba marcando — varios podían converger
+        // sobre el mismo rival a la vez, contribuyendo al
+        // amontonamiento. Se recuerda qué atacantes ya tienen marcador
+        // en esta misma pasada, para repartir sobre distintos rivales.
+        const atacantesYaMarcados=new Set();
         // El portero se desplaza un poco hacia el lado donde está el
         // balón (cerrar el ángulo), sin salir apenas de su portería —
         // antes se quedaba siempre clavado en el centro.
@@ -481,10 +488,21 @@
           // casi sin desplazar si es ofensiva) — vuelta gradual a su
           // sitio, nunca un salto directo a la portería.
           const desplazamientoProfundidad = (esMio && catTacticaMia==='defensiva') ? 0.22 : ((esMio && catTacticaMia==='ofensiva') ? 0.04 : 0.12);
-          const objetivo = yoAtaco ? golRival : {
-            x: slots[i].x+(propioGol.x-slots[i].x)*desplazamientoProfundidad,
-            y: slots[i].y+(propioGol.y-slots[i].y)*desplazamientoProfundidad
-          };
+          // Al atacar, el objetivo avanza en PROFUNDIDAD hacia la
+          // portería rival, pero mantiene la anchura natural de cada
+          // jugador (su posición lateral de formación) — antes el
+          // objetivo era literalmente el punto exacto de la portería
+          // (incluida su coordenada central), así que TODO el equipo
+          // convergía hacia el centro del campo al atacar, quedando
+          // los 22 jugadores amontonados en una columna estrecha sin
+          // anchura ni táctica real. Al defender, el objetivo sigue
+          // siendo la casilla de formación (ya con su propia anchura).
+          const objetivo = yoAtaco
+            ? (esEscritorio ? {x: golRival.x, y: slots[i].y} : {x: slots[i].x, y: golRival.y})
+            : {
+              x: slots[i].x+(propioGol.x-slots[i].x)*desplazamientoProfundidad,
+              y: slots[i].y+(propioGol.y-slots[i].y)*desplazamientoProfundidad
+            };
           let x=base.x+(objetivo.x-base.x)*empuje;
           let y=base.y+(objetivo.y-base.y)*empuje;
           if(cercanos.includes(i)){
@@ -496,17 +514,27 @@
             // balón directamente, se acerca un poco al atacante rival
             // más cercano a su propia zona — "coge a su hombre", en
             // vez de plantarse siempre en el mismo punto fijo de la
-            // formación pase lo que pase en el campo.
+            // formación pase lo que pase en el campo. Prioriza a los
+            // que NADIE está marcando todavía, para repartirse entre
+            // distintos rivales en vez de amontonarse sobre el mismo.
             const equipoRivalRef = esMio?posRival:posMia;
             let atacanteMasCercano=-1, distMin=Infinity;
+            let atacanteLibreMasCercano=-1, distMinLibre=Infinity;
             equipoRivalRef.forEach((rv,ri)=>{
               if(ri===0) return; // nunca marca al portero rival
               const dd=Math.hypot(rv.x-x, rv.y-y);
               if(dd<distMin){ distMin=dd; atacanteMasCercano=ri; }
+              if(!atacantesYaMarcados.has(ri) && dd<distMinLibre){ distMinLibre=dd; atacanteLibreMasCercano=ri; }
             });
-            if(atacanteMasCercano>=0 && distMin<28){
-              x = x+(equipoRivalRef[atacanteMasCercano].x-x)*0.22;
-              y = y+(equipoRivalRef[atacanteMasCercano].y-y)*0.22;
+            // Si hay un rival libre razonablemente cerca (no mucho más
+            // lejos que el más cercano de todos), se marca a ese en
+            // vez de al ya vigilado por otro compañero.
+            const objetivoMarcaje = (atacanteLibreMasCercano>=0 && distMinLibre<distMin+10) ? atacanteLibreMasCercano : atacanteMasCercano;
+            const distObjetivoMarcaje = objetivoMarcaje===atacanteLibreMasCercano ? distMinLibre : distMin;
+            if(objetivoMarcaje>=0 && distObjetivoMarcaje<28){
+              atacantesYaMarcados.add(objetivoMarcaje);
+              x = x+(equipoRivalRef[objetivoMarcaje].x-x)*0.22;
+              y = y+(equipoRivalRef[objetivoMarcaje].y-y)*0.22;
             }
           }
           // Separación: si el destino cae demasiado cerca de otro
@@ -667,7 +695,16 @@
         const distanciaCerca = Math.hypot(ANCHO,ALTO)*0.16; // ~16% de la diagonal del campo
         function dispararAGol(origenX, origenY, esperaExtra){
           const destinoGol = objetivoGol;
-          moverBalon(destinoGol.x, destinoGol.y, 850);
+          const duracionVueloGol=850;
+          moverBalon(destinoGol.x, destinoGol.y, duracionVueloGol);
+          // Margen de seguridad: el aviso del gol espera un poco MÁS
+          // que el vuelo visual del balón, nunca el mismo número exacto
+          // — la transición CSS y el setTimeout son dos mecanismos de
+          // temporización distintos, sin garantía de terminar en el
+          // mismo instante exacto (sobre todo a velocidades altas,
+          // donde 850ms reales pueden ser menos de 250ms). Sin este
+          // margen, a veces se anunciaba el gol un instante antes de
+          // que el balón hubiera llegado de verdad a la portería.
           setTimeout(()=>{
             if(esMio) marcadorMio++; else marcadorRival++;
             resEl.textContent=`${marcadorMio} - ${marcadorRival}`;
@@ -693,7 +730,7 @@
               }, real(950));
               setTimeout(tick, real(750));
             }, real(1300));
-          }, real(850));
+          }, real(duracionVueloGol+120));
         }
         if(distAlGolYa>distanciaCerca){
           // Acercamiento previo: un delantero real corre hacia una
@@ -996,6 +1033,19 @@
           // excepción, no la norma — se penaliza fuerte cuando la
           // distancia es grande de verdad.
           const penalizBalonLargoDef = (rolesAtaca[idxConBalon]==='def' && rolesAtaca[i]==='fwd' && d>30) ? (d-30)*0.9 : 0;
+          // Fuera de juego real: se calcula la línea del último
+          // defensa rival (el más retrasado, sin contar al portero) y
+          // se penaliza fuerte pasar a un compañero que esté
+          // claramente por delante de esa línea — antes no existía
+          // ningún concepto de fuera de juego, así que se veían goles
+          // con pinta clara de estarlo.
+          const ultimoDefensorProf = equipoDefiende.reduce((max,rv,ri)=>{
+            if(ri===0) return max; // el portero no cuenta como último defensa
+            const prof = esEscritorio ? (posesionMia?rv.x:ANCHO-rv.x) : (posesionMia?ALTO-rv.y:rv.y);
+            return Math.max(max, prof);
+          }, -Infinity);
+          const profReceptor = esEscritorio ? (posesionMia?p.x:ANCHO-p.x) : (posesionMia?ALTO-p.y:p.y);
+          const penalizFueraJuego = (profReceptor>ultimoDefensorProf+3) ? (profReceptor-ultimoDefensorProf)*1.1 : 0;
           // Distribución segura del portero: cuando quien tiene el
           // balón es el propio portero, se prioriza mucho más la
           // opción cercana y sin marca — un portero real casi nunca
@@ -1011,7 +1061,7 @@
           const historialAtaca = posesionMia?historialMio:historialRival;
           const esDevolucionInmediata = historialAtaca.length && historialAtaca[historialAtaca.length-1]===i;
           const penalizBucle = esDevolucionInmediata ? 7 : 0;
-          const punt = avanceAtaca[i]*9 - penalizDistancia + distMarca*0.35 + bonusRol - penalizBloqueo - penalizBalonLargoDef - penalizBucle + bonusPorteroSeguro - penalizPorteroArriesgado + Math.random()*3;
+          const punt = avanceAtaca[i]*9 - penalizDistancia + distMarca*0.35 + bonusRol - penalizBloqueo - penalizBalonLargoDef - penalizBucle + bonusPorteroSeguro - penalizPorteroArriesgado - penalizFueraJuego + Math.random()*3;
           if(punt>mejorPunt){ mejorPunt=punt; mejor=i; }
         });
         if(mejor===-1) mejor=jugadorMasCercano(equipoAtaca, posActual.x, posActual.y, idxConBalon);
@@ -1054,18 +1104,45 @@
           if(siguientePosesionMia) siguienteIdxMio=interceptorIdx; else siguienteIdxRival=interceptorIdx;
         } else {
         let destino=equipoAtaca[mejor];
-        if(zona<0.45){
-          // Pase filtrado: se envía un poco más adelantado que la
-          // posición actual del compañero, hacia la portería rival.
-          const factor=0.18;
-          destino={x:destino.x+(golObjetivo.x-destino.x)*factor, y:destino.y+(golObjetivo.y-destino.y)*factor};
-        }
+        // Balón predictivo de verdad: en vez de un adelanto fijo
+        // siempre igual, se calcula primero una duración aproximada
+        // del pase, se usa ESE tiempo para predecir cuánto se habrá
+        // desplazado el receptor de verdad cuando el balón llegue
+        // (según su rol: un delantero busca el hueco de forma mucho
+        // más agresiva que un central), y el balón se envía a esa
+        // posición FUTURA prevista — no a donde el jugador está ahora
+        // mismo ni a un adelanto fijo arbitrario.
+        const distanciaAproximada=Math.hypot(destino.x-posActual.x, destino.y-posActual.y);
+        const duracionAproximada=Math.max(480, Math.min(1900, distanciaAproximada*32));
+        const segundosVuelo=duracionAproximada/1000;
+        const rolReceptor=(posesionMia?rolesMios:rolesRival)[mejor];
+        const velocidadDesmarque = rolReceptor==='fwd' ? 11 : (rolReceptor==='mid' ? 7 : 3.5); // unidades de campo por segundo aprox
+        const distanciaCarrera = segundosVuelo*velocidadDesmarque;
+        // La carrera prevista va hacia la portería rival — un jugador
+        // que va a recibir no se queda quieto, sigue avanzando hacia
+        // el hueco mientras el balón viaja hacia él.
+        const dirX=golObjetivo.x-destino.x, dirY=golObjetivo.y-destino.y;
+        const dirLen=Math.hypot(dirX,dirY)||1;
+        destino={
+          x: destino.x+(dirX/dirLen)*Math.min(distanciaCarrera, dirLen*0.6),
+          y: destino.y+(dirY/dirLen)*Math.min(distanciaCarrera, dirLen*0.6)
+        };
         // El balón viaja a una velocidad más o menos constante, no
         // siempre en el mismo tiempo fijo — un pase corto es rápido,
-        // uno largo tarda de verdad más, como un balón real.
+        // uno largo tarda de verdad más, como un balón real. Se
+        // recalcula con la distancia FINAL (ya con la previsión de
+        // carrera incluida), para que la duración visual coincida de
+        // verdad con el recorrido real del balón.
         const distanciaPaseReal=Math.hypot(destino.x-posActual.x, destino.y-posActual.y);
-        duracionEfectiva=Math.max(340, Math.min(1500, distanciaPaseReal*24));
+        duracionEfectiva=Math.max(480, Math.min(1900, distanciaPaseReal*32));
         moverBalon(destino.x, destino.y, duracionEfectiva);
+        // El receptor corre de verdad hacia la posición prevista, con
+        // la misma duración que el balón — sin esto, el balón iría a
+        // un punto por delante del jugador mientras él se queda quieto
+        // en su sitio antiguo, recreando el mismo fallo que se quería
+        // arreglar (el balón "cae donde no hay nadie"), solo que más
+        // lejos de lo que estaba antes.
+        moverJugador(posesionMia, mejor, destino.x, destino.y, duracionEfectiva);
         resaltarReceptor(destino.x, destino.y, duracionEfectiva);
         infoBar.textContent=`${nombreAtaca} ${FRASES_PASE[Math.floor(Math.random()*FRASES_PASE.length)]}`;
         pasesJugadaActual++;
