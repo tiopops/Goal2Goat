@@ -380,13 +380,16 @@
         const destinos=[]; // para la separación: no dejar que dos caigan en el mismo punto
         for(let i=1;i<pos.length;i++){
           if(i===idxExcluir || i===idxExcluir2) continue;
-          // Al atacar, se parte de la posición ACTUAL del jugador (no
-          // de su casilla de formación original) — así cada recálculo
-          // avanza un poco MÁS, en vez de recalcular siempre desde el
-          // mismo punto de partida y dar la sensación de estar
-          // bailando sin moverse de verdad. Al defender, sí se usa la
-          // formación como referencia de vuelta a su sitio.
-          const base=yoAtaco ? pos[i] : slots[i];
+          // Tanto al atacar como al defender, se parte SIEMPRE de la
+          // posición ACTUAL del jugador, nunca de su casilla de
+          // formación original — así el movimiento es siempre
+          // gradual en ambos sentidos. Antes, al defender se saltaba
+          // directo a una posición calculada desde la formación
+          // original, lo que causaba un salto instantáneo visible
+          // cada vez que el equipo pasaba de atacar a defender (por
+          // ejemplo, justo después de marcar un gol, todo el equipo
+          // "se reiniciaba" de golpe a su formación de inicio).
+          const base=pos[i];
           // Al atacar, TODO el equipo sube de línea para apoyar — los
           // delanteros más, pero defensas y centrocampistas también
           // acompañan de verdad (antes apenas se movían, dando la
@@ -402,7 +405,17 @@
           // partido real.
           const replieguDefensivo = (esMio && catTacticaMia==='defensiva') ? 0.09 : ((esMio && catTacticaMia==='ofensiva') ? 0.035 : 0.06);
           const empuje = yoAtaco ? (0.09+avance[i]*0.16)*factorRol*multEmpuje : replieguDefensivo;
-          const objetivo = yoAtaco ? golRival : propioGol;
+          // Al atacar, el objetivo es la portería rival (avance real);
+          // al defender, el objetivo es su propia casilla de
+          // formación, ligeramente desplazada hacia la portería propia
+          // según la categoría táctica (más profunda si es defensiva,
+          // casi sin desplazar si es ofensiva) — vuelta gradual a su
+          // sitio, nunca un salto directo a la portería.
+          const desplazamientoProfundidad = (esMio && catTacticaMia==='defensiva') ? 0.22 : ((esMio && catTacticaMia==='ofensiva') ? 0.04 : 0.12);
+          const objetivo = yoAtaco ? golRival : {
+            x: slots[i].x+(propioGol.x-slots[i].x)*desplazamientoProfundidad,
+            y: slots[i].y+(propioGol.y-slots[i].y)*desplazamientoProfundidad
+          };
           let x=base.x+(objetivo.x-base.x)*empuje;
           let y=base.y+(objetivo.y-base.y)*empuje;
           if(cercanos.includes(i)){

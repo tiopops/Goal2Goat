@@ -1286,19 +1286,19 @@
     {id:'lm_5_wins',         tier:'intermedio', pts:2, icon:'ph-fire',       get name(){return t('lmach.5_wins.nombre');}, get desc(){return t('lmach.5_wins.desc');}},
     {id:'lm_10_goals',       tier:'intermedio', pts:2, icon:'ph-target',     get name(){return t('lmach.10_goals.nombre');}, get desc(){return t('lmach.10_goals.desc');}},
     {id:'lm_no_injuries_month', tier:'intermedio', pts:2, icon:'ph-heart',   get name(){return t('lmach.no_injuries_month.nombre');}, get desc(){return t('lmach.no_injuries_month.desc');}},
-    {id:'lm_full_stadium',   tier:'intermedio', pts:2, icon:'ph-stadium',    get name(){return t('lmach.full_stadium.nombre');}, get desc(){return t('lmach.full_stadium.desc');}},
+    {id:'lm_full_stadium',   tier:'intermedio', pts:2, icon:'ph-users-three',    get name(){return t('lmach.full_stadium.nombre');}, get desc(){return t('lmach.full_stadium.desc');}},
     {id:'lm_quiniela_streak', tier:'intermedio', pts:2, icon:'ph-brain',     get name(){return t('lmach.quiniela_streak.nombre');}, get desc(){return t('lmach.quiniela_streak.desc');}},
     {id:'lm_5_signings',     tier:'intermedio', pts:2, icon:'ph-arrows-left-right', get name(){return t('lmach.5_signings.nombre');}, get desc(){return t('lmach.5_signings.desc');}},
     {id:'lm_max_level_dept', tier:'intermedio', pts:2, icon:'ph-graduation-cap', get name(){return t('lmach.max_level_dept.nombre');}, get desc(){return t('lmach.max_level_dept.desc');}},
     {id:'lm_positive_balance', tier:'intermedio', pts:2, icon:'ph-bank',     get name(){return t('lmach.positive_balance.nombre');}, get desc(){return t('lmach.positive_balance.desc');}},
-    {id:'lm_undefeated_5',   tier:'difícil', pts:3, icon:'ph-shield-star',   get name(){return t('lmach.undefeated_5.nombre');}, get desc(){return t('lmach.undefeated_5.desc');}},
+    {id:'lm_undefeated_5',   tier:'difícil', pts:3, icon:'ph-shield-check',   get name(){return t('lmach.undefeated_5.nombre');}, get desc(){return t('lmach.undefeated_5.desc');}},
     {id:'lm_all_departments', tier:'difícil', pts:3, icon:'ph-users-three',  get name(){return t('lmach.all_departments.nombre');}, get desc(){return t('lmach.all_departments.desc');}},
     {id:'lm_stadium_max',    tier:'difícil', pts:3, icon:'ph-buildings',     get name(){return t('lmach.stadium_max.nombre');}, get desc(){return t('lmach.stadium_max.desc');}},
     {id:'lm_20_wins',        tier:'difícil', pts:3, icon:'ph-trophy',        get name(){return t('lmach.20_wins.nombre');}, get desc(){return t('lmach.20_wins.desc');}},
     {id:'lm_top_half',       tier:'difícil', pts:3, icon:'ph-chart-bar',     get name(){return t('lmach.top_half.nombre');}, get desc(){return t('lmach.top_half.desc');}},
     {id:'lm_all_skills',     tier:'difícil', pts:3, icon:'ph-lightning',     get name(){return t('lmach.all_skills.nombre');}, get desc(){return t('lmach.all_skills.desc');}},
     {id:'lm_perfect_season', tier:'mítico', pts:5, icon:'ph-sparkle',        get name(){return t('lmach.perfect_season.nombre');}, get desc(){return t('lmach.perfect_season.desc');}},
-    {id:'lm_dynasty',        tier:'mítico', pts:5, icon:'ph-crown-simple',   get name(){return t('lmach.dynasty.nombre');}, get desc(){return t('lmach.dynasty.desc');}},
+    {id:'lm_dynasty',        tier:'mítico', pts:5, icon:'ph-medal-military',   get name(){return t('lmach.dynasty.nombre');}, get desc(){return t('lmach.dynasty.desc');}},
   ];
   async function unlockLMAchievement(id, mostrarInmediatamente){
     if(mostrarInmediatamente===undefined) mostrarInmediatamente=true;
@@ -4996,15 +4996,15 @@
         el.addEventListener('click', ()=>{
           setupData.equipoElegidoId=el.getAttribute('data-equipo');
           if(typeof window.playSound==='function') window.playSound('select');
-          // renderSetup() reemplaza TODO root.innerHTML (la pantalla
-          // #ligaManagerScreen entera, no solo la lista) — por eso el
-          // scroll que hay que guardar y restaurar es el de root, no
-          // el de la lista interna. Guardar el de la lista (como se
-          // hacía antes) no arreglaba nada, porque no era root quien
-          // saltaba arriba.
-          const scrollGuardado=root.scrollTop;
-          renderSetup();
-          root.scrollTop=scrollGuardado;
+          // FIX real del salto de scroll: en vez de volver a construir
+          // todo el HTML de la pantalla (innerHTML=...), que siempre
+          // reinicia el scroll al recrear el contenido, se cambia la
+          // clase "selected" directamente sobre los elementos que ya
+          // existen en el DOM — cero repintado, cero salto posible.
+          root.querySelectorAll('[data-equipo].selected').forEach(s=>s.classList.remove('selected'));
+          el.classList.add('selected');
+          const nextBtn=document.getElementById('lmSetupNext');
+          if(nextBtn) nextBtn.disabled=false;
         });
       });
       const next=document.getElementById('lmSetupNext');
