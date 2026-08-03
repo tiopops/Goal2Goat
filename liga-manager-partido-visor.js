@@ -177,6 +177,10 @@
         </div>
         <div class="lm-visor-marcador-linea"></div>
         <div class="lm-visor-minutero" id="lmVisorMinutero">0'</div>
+        <div class="lm-visor-posesion-directo">
+          <div class="lm-visor-posesion-directo-mia" id="lmVisorPosesionMia" style="width:50%">50%</div>
+          <div class="lm-visor-posesion-directo-rival" id="lmVisorPosesionRival" style="width:50%">50%</div>
+        </div>
         ${clima?`<div class="lm-visor-clima-bar">${clima.label}</div>`:''}
         <div class="lm-visor-campo-wrap ${climaClase}">
           <svg class="lm-visor-campo-svg" viewBox="0 0 ${ANCHO} ${ALTO}" preserveAspectRatio="xMidYMid meet">
@@ -245,9 +249,28 @@
     // de partido ya acumulado por la simulación (tiempoTranscurrido),
     // así respeta las pausas de gol/descanso sin necesitar relojes
     // aparte que se puedan desincronizar.
+    // Posesión en directo: se muestrea el estado actual (quién tiene
+    // el balón) en cada uno de estos mismos ticks — con el partido
+    // entero muestreado cada 250ms, el porcentaje acumulado converge
+    // de forma fiable hacia la posesión real del partido, sin
+    // necesitar ningún reloj ni contador aparte.
+    let muestrasPosesionMia=0, muestrasPosesionTotal=0;
+    const posesionMiaEl=overlay.querySelector('#lmVisorPosesionMia');
+    const posesionRivalEl=overlay.querySelector('#lmVisorPosesionRival');
     const minuteroInterval=setInterval(()=>{
       const minuto=Math.max(0, Math.min(90, Math.floor((tiempoTranscurrido/DURACION_TOTAL)*90)));
       minuteroEl.textContent=(minuto>=90?'90+':minuto)+"'";
+      if(!partidoDetenido){
+        muestrasPosesionTotal++;
+        if(posesionMia) muestrasPosesionMia++;
+        if(muestrasPosesionTotal>4 && posesionMiaEl && posesionRivalEl){
+          const pctMia=Math.round((muestrasPosesionMia/muestrasPosesionTotal)*100);
+          posesionMiaEl.style.width=pctMia+'%';
+          posesionMiaEl.textContent=pctMia+'%';
+          posesionRivalEl.style.width=(100-pctMia)+'%';
+          posesionRivalEl.textContent=(100-pctMia)+'%';
+        }
+      }
     }, 250);
     const desplazamientoMio = esEscritorio ? 'translateX(6px)' : 'translateY(-6px)';
     const desplazamientoRival = esEscritorio ? 'translateX(-6px)' : 'translateY(6px)';

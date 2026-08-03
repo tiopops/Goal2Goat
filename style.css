@@ -4328,6 +4328,19 @@ body.light-theme.menu-screen{
   color:var(--gold);letter-spacing:1.5px;padding:6px 0 4px;background:#161616;
   border-bottom:1px solid #2a2a2a;
 }
+.lm-visor-posesion-directo{
+  display:flex;height:14px;background:#161616;border-bottom:1px solid #2a2a2a;
+}
+.lm-visor-posesion-directo-mia{
+  background:var(--gold);color:#1a1a1a;font-size:9px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;
+  transition:width .5s ease;white-space:nowrap;overflow:hidden;
+}
+.lm-visor-posesion-directo-rival{
+  background:#7a2b28;color:#fff;font-size:9px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;
+  transition:width .5s ease;white-space:nowrap;overflow:hidden;
+}
 .lm-visor-anuncio{
   position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) scale(.7);
   font-family:'Bebas Neue',Impact,sans-serif;font-size:6.75vw;color:#fff;
