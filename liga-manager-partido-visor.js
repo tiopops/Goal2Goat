@@ -239,6 +239,30 @@
     function moverBalon(x,y,durMs){
       const durReal=real(durMs);
       balon.style.transition=`cx ${durReal}ms ease-in-out, cy ${durReal}ms ease-in-out`;
+      // Simula un pase alto sin animar ningún giro (mucho más simple
+      // y seguro): en un trayecto largo, el balón crece en la primera
+      // mitad del recorrido y encoge en la segunda — una parábola de
+      // verdad, con el punto más grande justo en el centro del
+      // trayecto, no una meseta que se queda grande un rato y luego
+      // encoge de golpe.
+      const cxActual=parseFloat(balon.getAttribute('cx'))||0;
+      const cyActual=parseFloat(balon.getAttribute('cy'))||0;
+      const distanciaRecorrida=Math.hypot(x-cxActual, y-cyActual);
+      if(distanciaRecorrida>22){
+        const radioBase=1.3;
+        const radioAlto=radioBase*1.55;
+        const mitadReal=(durReal/2).toFixed(0);
+        // Sube como si venciera la gravedad (empieza rápido, llega
+        // despacio al punto más alto) y baja acelerando (como caer),
+        // igual que un balón real en el aire — no un simple ida y
+        // vuelta lineal.
+        balon.style.transition=`cx ${durReal}ms ease-in-out, cy ${durReal}ms ease-in-out, r ${mitadReal}ms ease-out`;
+        balon.setAttribute('r', radioAlto);
+        setTimeout(()=>{
+          balon.style.transition=`r ${mitadReal}ms ease-in`;
+          balon.setAttribute('r', radioBase);
+        }, real(durMs/2));
+      }
       balon.setAttribute('cx',x); balon.setAttribute('cy',y);
     }
     // Anillo dorado que aparece un instante sobre el jugador que
@@ -334,15 +358,30 @@
     // Urgencia por marcador y minuto: si vas perdiendo y el partido
     // avanza, el equipo aprieta más de lo habitual — un equipo real no
     // se comporta igual en el minuto 10 que en el 88 perdiendo 0-1.
-    // Si vas ganando o empatado, no hay urgencia extra.
+    // Y al revés: si vas ganando cómodo hacia el final, el equipo se
+    // vuelve más conservador — protege el resultado en vez de seguir
+    // arriesgando igual que en el minuto 10 con el marcador a cero.
     function urgenciaPartido(){
-      const diferencia = marcadorRival - marcadorMio;
-      if(diferencia<=0) return 1;
+      const diferencia = marcadorRival - marcadorMio; // positivo = voy perdiendo
       const progreso = Math.min(1, tiempoTranscurrido/DURACION_TOTAL);
-      return 1 + Math.min(0.5, diferencia*0.18*progreso);
+      if(diferencia>0) return 1 + Math.min(0.5, diferencia*0.18*progreso);
+      if(diferencia<0) return 1 - Math.min(0.32, Math.abs(diferencia)*0.13*progreso);
+      return 1;
     }
     function multEmpujeMioActual(){ return multEmpujeMioBase * urgenciaPartido(); }
     function multRiesgoMioActual(){ return multRiesgoMioBase * urgenciaPartido(); }
+    // Espejo de la urgencia para el rival — antes solo mi equipo
+    // respondía al marcador (más presión perdiendo, más conservador
+    // ganando); el rival se comportaba siempre igual sin importar el
+    // resultado, algo asimétrico y poco realista. Ahora el rival
+    // también aprieta si va perdiendo y se guarda si va ganando.
+    function urgenciaPartidoRival(){
+      const diferencia = marcadorMio - marcadorRival; // positivo = el rival va perdiendo
+      const progreso = Math.min(1, tiempoTranscurrido/DURACION_TOTAL);
+      if(diferencia>0) return 1 + Math.min(0.5, diferencia*0.18*progreso);
+      if(diferencia<0) return 1 - Math.min(0.32, Math.abs(diferencia)*0.13*progreso);
+      return 1;
+    }
     // Sesgo real de posesión: un equipo claramente mejor (ataque+pase)
     // tiende a monopolizar más el balón, uno claramente peor apenas lo
     // toca — en vez de un reparto fijo cercano al 50%.
@@ -363,7 +402,7 @@
         const golRival = esMio?rivalGolXY:miGolXY;
         const propioGol = esMio?miGolXY:rivalGolXY;
         const yoAtaco = esMio===atacaMio;
-        const multEmpuje = esMio ? multEmpujeMioActual() : 1;
+        const multEmpuje = esMio ? multEmpujeMioActual() : urgenciaPartidoRival();
         const cercanos = yoAtaco ? [] : pos.map((p,i)=>({i,d:Math.hypot(p.x-balonPos.x,p.y-balonPos.y)}))
           .filter(o=>o.i!==0 && o.i!==idxExcluir).sort((a,b)=>a.d-b.d).slice(0,2).map(o=>o.i);
         // El portero se desplaza un poco hacia el lado donde está el
@@ -635,7 +674,49 @@
       // decidiendo por su cuenta si roba o no.
       const presionadores = equipoDefiende.filter(rv=>Math.hypot(rv.x-posActual.x, rv.y-posActual.y)<14).length;
       const dur=1100+Math.random()*900;
+      // Duración real de ESTA acción concreta — empieza igual que dur,
+      // pero se ajusta según la distancia real del pase más abajo. El
+      // resto del código sigue usando "dur" igual que siempre (para no
+      // arriesgar nada de lo que ya funciona); solo la animación del
+      // balón y el ritmo de la siguiente decisión usan esta duración
+      // ajustada.
+      let duracionEfectiva=dur;
       let siguientePosesionMia=posesionMia, siguienteIdxMio=idxConBalonMio, siguienteIdxRival=idxConBalonRival;
+      // Despeje de emergencia: un defensa muy presionado cerca de su
+      // propia área no siempre intenta un pase calculado y preciso —
+      // a veces simplemente despeja el peligro sin pensarlo mucho,
+      // como haría un central real con el rival encima cerca de su
+      // portería. El balón sale largo y sin destino calculado, y
+      // cualquiera de los dos equipos puede quedarse con él después.
+      if(zona>0.85 && (posesionMia?rolesMios:rolesRival)[idxConBalon]==='def' && distRival<10 && Math.random()<0.3){
+        const anguloDespeje=(Math.random()-0.5)*1.2;
+        const dirX=(golObjetivo.x-posActual.x), dirY=(golObjetivo.y-posActual.y);
+        const dirLen=Math.hypot(dirX,dirY)||1;
+        const rotX=dirX/dirLen*Math.cos(anguloDespeje)-dirY/dirLen*Math.sin(anguloDespeje);
+        const rotY=dirX/dirLen*Math.sin(anguloDespeje)+dirY/dirLen*Math.cos(anguloDespeje);
+        const alcance=28+Math.random()*16;
+        const destinoDespeje={
+          x: Math.max(2, Math.min(ANCHO-2, posActual.x+rotX*alcance)),
+          y: Math.max(2, Math.min(ALTO-2, posActual.y+rotY*alcance))
+        };
+        duracionEfectiva=Math.max(400, Math.min(1100, Math.hypot(destinoDespeje.x-posActual.x, destinoDespeje.y-posActual.y)*17));
+        moverBalon(destinoDespeje.x, destinoDespeje.y, duracionEfectiva);
+        infoBar.textContent=`${nombreAtaca} despeja el peligro`;
+        pasesJugadaActual=0; historialMio=[]; historialRival=[];
+        actualizarFormacionDinamica(posesionMia, posesionMia?idxConBalon:undefined, posesionMia?undefined:idxConBalon, posActual);
+        setTimeout(()=>{
+          const dMioD=jugadorMasCercano(posMia, destinoDespeje.x, destinoDespeje.y, -1);
+          const dRivalD=jugadorMasCercano(posRival, destinoDespeje.x, destinoDespeje.y, -1);
+          const distMioD=Math.hypot(posMia[dMioD].x-destinoDespeje.x, posMia[dMioD].y-destinoDespeje.y);
+          const distRivalD=Math.hypot(posRival[dRivalD].x-destinoDespeje.x, posRival[dRivalD].y-destinoDespeje.y);
+          posesionMia = distMioD<=distRivalD;
+          if(posesionMia){ idxConBalonMio=dMioD; moverJugador(true, dMioD, destinoDespeje.x, destinoDespeje.y, 500); }
+          else { idxConBalonRival=dRivalD; moverJugador(false, dRivalD, destinoDespeje.x, destinoDespeje.y, 500); }
+          tiempoTranscurrido+=duracionEfectiva+400;
+          setTimeout(tick, real(500));
+        }, real(duracionEfectiva));
+        return;
+      }
       // Receptor del pase decidido en este tick, si lo hay — se
       // excluye del recálculo de formación de más abajo para que NO
       // se mueva mientras el balón viaja hacia él. Antes el receptor
@@ -667,7 +748,7 @@
         const rolesEnAtaque = posesionMia?rolesMios:rolesRival;
         const rolPortador = rolesEnAtaque[idxConBalon];
         const factorRolDisparo = rolPortador==='fwd' ? 1.35 : (rolPortador==='def' ? 0.45 : 0.9);
-        return Math.random()<(0.38+Math.min(0.18,pasesJugadaActual*0.03))*(posesionMia?multRiesgoMioActual():1)*factorRolDisparo;
+        return Math.random()<(0.38+Math.min(0.18,pasesJugadaActual*0.03))*(posesionMia?multRiesgoMioActual():urgenciaPartidoRival())*factorRolDisparo;
       })()){
         // Cerca del área: intento de disparo (sin gol, salvo que
         // coincida con un gol real programado, gestionado aparte). El
@@ -675,15 +756,21 @@
         // pases lleve la jugada, más urgencia por probar suerte —
         // hasta +18 puntos de probabilidad tras varios pases seguidos.
         pasesJugadaActual=0;
-        moverBalon(golObjetivo.x, golObjetivo.y, dur*0.65);
+        // El disparo viaja más rápido que un pase normal (más
+        // potencia), pero también proporcional a la distancia real —
+        // un remate desde dentro del área es casi instantáneo, uno
+        // desde fuera tarda algo más, nunca el mismo tiempo fijo.
+        const distanciaDisparo=Math.hypot(golObjetivo.x-posActual.x, golObjetivo.y-posActual.y);
+        duracionEfectiva=Math.max(220, Math.min(950, distanciaDisparo*15));
+        moverBalon(golObjetivo.x, golObjetivo.y, duracionEfectiva);
         infoBar.textContent=`¡${nombreAtaca} dispara a portería!`;
         const portero = posesionMia?posRival:posMia;
         const porteroEsMio = !posesionMia;
         const desvio=(Math.random()-0.5)*7;
         setTimeout(()=>{
-          moverJugador(porteroEsMio, 0, portero[0].x+desvio, portero[0].y, dur*0.4);
-          setTimeout(()=>moverJugador(porteroEsMio, 0, (porteroEsMio?miGolXY:rivalGolXY).x, (porteroEsMio?miGolXY:rivalGolXY).y, 600), real(dur*0.4));
-        }, real(dur*0.5));
+          moverJugador(porteroEsMio, 0, portero[0].x+desvio, portero[0].y, duracionEfectiva*0.55);
+          setTimeout(()=>moverJugador(porteroEsMio, 0, (porteroEsMio?miGolXY:rivalGolXY).x, (porteroEsMio?miGolXY:rivalGolXY).y, 600), real(duracionEfectiva*0.55));
+        }, real(duracionEfectiva*0.45));
         const rebotaCorner = Math.random()<0.3;
         // Tras el reinicio (córner o disparo fallado sin más), el
         // balón NO puede quedarse "sin dueño" en el centro — se le
@@ -836,6 +923,13 @@
           // excepción, no la norma — se penaliza fuerte cuando la
           // distancia es grande de verdad.
           const penalizBalonLargoDef = (rolesAtaca[idxConBalon]==='def' && rolesAtaca[i]==='fwd' && d>30) ? (d-30)*0.9 : 0;
+          // Distribución segura del portero: cuando quien tiene el
+          // balón es el propio portero, se prioriza mucho más la
+          // opción cercana y sin marca — un portero real casi nunca
+          // arriesga con un balón largo si tiene un compañero cerca y
+          // libre, prefiere construir seguro desde atrás.
+          const bonusPorteroSeguro = (idxConBalon===0 && d<20) ? (20-d)*0.4 + distMarca*0.25 : 0;
+          const penalizPorteroArriesgado = (idxConBalon===0 && d>34) ? (d-34)*0.6 : 0;
           // Anti-bucle: si el receptor candidato es quien le acaba de
           // dar el balón al portador actual (típico bucle
           // portero↔defensa), se penaliza fuerte — así el equipo
@@ -844,7 +938,7 @@
           const historialAtaca = posesionMia?historialMio:historialRival;
           const esDevolucionInmediata = historialAtaca.length && historialAtaca[historialAtaca.length-1]===i;
           const penalizBucle = esDevolucionInmediata ? 7 : 0;
-          const punt = avanceAtaca[i]*9 - penalizDistancia + distMarca*0.35 + bonusRol - penalizBloqueo - penalizBalonLargoDef - penalizBucle + Math.random()*3;
+          const punt = avanceAtaca[i]*9 - penalizDistancia + distMarca*0.35 + bonusRol - penalizBloqueo - penalizBalonLargoDef - penalizBucle + bonusPorteroSeguro - penalizPorteroArriesgado + Math.random()*3;
           if(punt>mejorPunt){ mejorPunt=punt; mejor=i; }
         });
         if(mejor===-1) mejor=jugadorMasCercano(equipoAtaca, posActual.x, posActual.y, idxConBalon);
@@ -893,14 +987,42 @@
           const factor=0.18;
           destino={x:destino.x+(golObjetivo.x-destino.x)*factor, y:destino.y+(golObjetivo.y-destino.y)*factor};
         }
-        moverBalon(destino.x, destino.y, dur);
-        resaltarReceptor(destino.x, destino.y, dur);
+        // El balón viaja a una velocidad más o menos constante, no
+        // siempre en el mismo tiempo fijo — un pase corto es rápido,
+        // uno largo tarda de verdad más, como un balón real.
+        const distanciaPaseReal=Math.hypot(destino.x-posActual.x, destino.y-posActual.y);
+        duracionEfectiva=Math.max(260, Math.min(1450, distanciaPaseReal*23));
+        moverBalon(destino.x, destino.y, duracionEfectiva);
+        resaltarReceptor(destino.x, destino.y, duracionEfectiva);
         infoBar.textContent=`${nombreAtaca} ${FRASES_PASE[Math.floor(Math.random()*FRASES_PASE.length)]}`;
         pasesJugadaActual++;
         receptorPaseIdx=mejor;
         (posesionMia?historialMio:historialRival).push(idxConBalon);
         if((posesionMia?historialMio:historialRival).length>3) (posesionMia?historialMio:historialRival).shift();
         if(posesionMia) siguienteIdxMio=mejor; else siguienteIdxRival=mejor;
+        // Anticipación real: mientras el balón todavía está en el
+        // aire, se calcula ya (con una versión ligera de la misma
+        // puntuación) quién sería el mejor apoyo desde la posición
+        // FUTURA del receptor — y ese compañero ya empieza a moverse
+        // hacia una posición de apoyo ahora mismo, no cuando el balón
+        // llegue. Así se ve al equipo "leer" la jugada por delante,
+        // como un jugador real que ya sabe dónde va a recibir su
+        // compañero y se mueve para ayudar antes de que llegue.
+        let mejorApoyo=-1, mejorPuntApoyo=-Infinity;
+        equipoAtaca.forEach((p2,i2)=>{
+          if(i2===mejor || i2===idxConBalon || i2===0) return;
+          const d2=Math.hypot(p2.x-destino.x, p2.y-destino.y);
+          if(d2>34) return;
+          const puntApoyo=avanceAtaca[i2]*6 - d2*0.25 + Math.random()*2;
+          if(puntApoyo>mejorPuntApoyo){ mejorPuntApoyo=puntApoyo; mejorApoyo=i2; }
+        });
+        if(mejorApoyo>=0){
+          const objetivoApoyo=golObjetivo;
+          const posApoyoActual=equipoAtaca[mejorApoyo];
+          const xApoyo=posApoyoActual.x+(objetivoApoyo.x-posApoyoActual.x)*0.14;
+          const yApoyo=posApoyoActual.y+(objetivoApoyo.y-posApoyoActual.y)*0.14;
+          moverJugador(posesionMia, mejorApoyo, xApoyo, yApoyo, dur*1.1);
+        }
         }
       }
 
@@ -909,9 +1031,9 @@
 
       setTimeout(()=>{
         posesionMia=siguientePosesionMia; idxConBalonMio=siguienteIdxMio; idxConBalonRival=siguienteIdxRival;
-        tiempoTranscurrido+=dur;
+        tiempoTranscurrido+=duracionEfectiva;
         tick();
-      }, real(dur));
+      }, real(duracionEfectiva));
     }
     // El balón empieza pegado de verdad al jugador que saca de centro,
     // no flotando solo en el punto exacto del centro del campo.
@@ -920,6 +1042,23 @@
     moverBalon(equipoInicial[idxInicial].x, equipoInicial[idxInicial].y, 1);
     if(typeof window.playSound==='function') window.playSound('whistle');
     setTimeout(tick, real(600));
+
+    // Flujo continuo: el bucle de DECISIONES (tick) sigue corriendo
+    // cada 1-2 segundos, porque ahí es donde se decide pase/disparo/
+    // robo — tocar esa cadencia significaría rehacer toda la lógica
+    // de juego, con mucho riesgo de romper algo que ya funciona. Pero
+    // el MOVIMIENTO VISUAL de los jugadores sin balón no tiene por
+    // qué esperar a cada decisión: este bucle aparte, mucho más
+    // frecuente, va corrigiendo su posición constantemente entre
+    // medias, así el partido se ve fluido en vez de a golpes, sin
+    // tocar ni un ápice de cómo se deciden los pases o los disparos.
+    const flujoContinuoInterval=setInterval(()=>{
+      if(partidoDetenido || partidoTerminado) return;
+      const idxBalonAhora = posesionMia?idxConBalonMio:idxConBalonRival;
+      const balonPosAhora={x:parseFloat(balon.getAttribute('cx')), y:parseFloat(balon.getAttribute('cy'))};
+      actualizarFormacionDinamica(posesionMia, posesionMia?idxBalonAhora:undefined, posesionMia?undefined:idxBalonAhora, balonPosAhora,
+        posesionMia?receptorPaseIdx:undefined, posesionMia?undefined:receptorPaseIdx);
+    }, real(420));
 
     const velocidadBtn=overlay.querySelector('#lmVisorVelocidadBtn');
     if(velocidadBtn) velocidadBtn.addEventListener('click', ()=>{
@@ -934,6 +1073,7 @@
     function mostrarResumenFinal(){
       partidoDetenido=true;
       clearInterval(minuteroInterval);
+      clearInterval(flujoContinuoInterval);
       minuteroEl.textContent="90'";
       const misGolesFinal = miEsLocal ? info.resultado.golesA : info.resultado.golesB;
       const rivalGolesFinal = miEsLocal ? info.resultado.golesB : info.resultado.golesA;
@@ -993,6 +1133,7 @@
         return;
       }
       clearInterval(minuteroInterval);
+      clearInterval(flujoContinuoInterval);
       overlay.remove();
       if(onFinish) onFinish();
     });
