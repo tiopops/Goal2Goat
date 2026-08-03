@@ -1899,6 +1899,92 @@
   // (buildCrestSVGInner vía renderCrestThumb), tanto para el escudo por
   // capas como para una imagen subida. Nunca toca window._myCrestData
   // (eso es de Copa Leyendas) — aquí solo se LEE con datos propios.
+  // Texto narrativo del histórico del partido — en lenguaje claro y
+  // ameno, a partir de los eventos REALES de ese partido concreto
+  // (nunca inventado). Compartida entre modo automático y modo
+  // manager, para que ambos muestren exactamente el mismo resumen.
+  function generarHistoricoPartidoTexto(info, miEsLocal){
+    const miNombre = state.nombreEquipo || state.escudo && state.escudo.nombre || 'Tu equipo';
+    const rivalNombre = miEsLocal ? info.away.name : info.home.name;
+    const golesMio = miEsLocal ? info.resultado.golesA : info.resultado.golesB;
+    const golesRival = miEsLocal ? info.resultado.golesB : info.resultado.golesA;
+    const miLado = miEsLocal ? 'home' : 'away';
+    const eventos = (info.eventos||[]).slice().sort((a,b)=>a.minute-b.minute);
+    const goles = eventos.filter(e=>e.type==='goal');
+    const tarjetas = eventos.filter(e=>e.type==='card');
+    const lesiones = eventos.filter(e=>e.type==='injury');
+
+    const partes=[];
+    // Apertura: resultado en una frase, en lenguaje natural.
+    if(golesMio>golesRival) partes.push(tp('lm.hist_gano', {miNombre, rivalNombre, golesMio, golesRival}));
+    else if(golesMio<golesRival) partes.push(tp('lm.hist_perdio', {miNombre, rivalNombre, golesMio, golesRival}));
+    else partes.push(tp('lm.hist_empato', {miNombre, rivalNombre, golesMio}));
+
+    // Goles, contados como una pequeña crónica.
+    if(goles.length){
+      const frasesGoles = goles.map(g=>{
+        const equipo = g.team===miLado ? miNombre : rivalNombre;
+        const nombreJ = g.jugador ? g.jugador.name : equipo;
+        return `${nombreJ} (${equipo}) ${tp('lm.hist_gol_de',{min:g.minute})}`;
+      });
+      partes.push(`**${t('lm.hist_goles_titulo')}**\n${frasesGoles.join('. ')}.`);
+    } else {
+      partes.push(t('lm.hist_sin_goles'));
+    }
+
+    // Tarjetas.
+    if(tarjetas.length){
+      const frasesTarjetas = tarjetas.map(c=>{
+        const equipo = c.team===miLado ? miNombre : rivalNombre;
+        const nombreJ = c.jugador ? c.jugador.name : equipo;
+        const claveT = c.tarjeta==='roja' ? 'lm.hist_roja_de' : 'lm.hist_amarilla_de';
+        return `${nombreJ} (${equipo}) ${tp(claveT,{min:c.minute})}`;
+      });
+      partes.push(`**${t('lm.hist_tarjetas_titulo')}**\n${frasesTarjetas.join('. ')}.`);
+    } else {
+      partes.push(t('lm.hist_sin_tarjetas'));
+    }
+
+    // Lesiones, solo si hubo alguna — no hace falta un párrafo vacío.
+    if(lesiones.length){
+      const frasesLesiones = lesiones.map(l=>{
+        const equipo = l.team===miLado ? miNombre : rivalNombre;
+        const nombreJ = l.jugador ? l.jugador.name : equipo;
+        return `${nombreJ} (${equipo}) ${tp('lm.hist_lesion_de',{min:l.minute})}`;
+      });
+      partes.push(`**${t('lm.hist_lesiones_titulo')}**\n${frasesLesiones.join('. ')}.`);
+    }
+
+    // Cierre breve.
+    partes.push(Math.abs(golesMio-golesRival)<=1 ? t('lm.hist_cierre_ajustado') : t('lm.hist_cierre_claro'));
+
+    return partes.join('\n\n');
+  }
+  function mostrarHistoricoPartido(info, miEsLocal){
+    const texto = generarHistoricoPartidoTexto(info, miEsLocal);
+    const htmlTexto = texto.split('\n\n').map(p=>{
+      if(p.startsWith('**')){
+        const [titulo, ...resto] = p.split('\n');
+        return `<div class="lm-historico-subtitulo">${titulo.replace(/\*\*/g,'')}</div><p class="lm-historico-parrafo">${resto.join(' ')}</p>`;
+      }
+      return `<p class="lm-historico-parrafo">${p}</p>`;
+    }).join('');
+    const overlay=document.createElement('div');
+    overlay.className='overlay';
+    overlay.id='lmHistoricoOverlay';
+    overlay.innerHTML=`
+      <div class="lm-dilemma-card" style="width:480px;max-width:92vw;text-align:left;max-height:80vh;display:flex;flex-direction:column">
+        <div class="lm-dilemma-title"><i class="ph ph-bold ph-notebook"></i> ${t('lm.historico_partido_btn')}</div>
+        <div style="overflow-y:auto;flex:1;padding-right:4px">${htmlTexto}</div>
+        <div class="lm-popup-actions" style="margin-top:12px"><button id="lmHistoricoCerrar" class="mode-card-btn mode-card-btn-gold">${t('lm.continuar')}</button></div>
+      </div>`;
+    document.body.appendChild(overlay);
+    document.getElementById('lmHistoricoCerrar').addEventListener('click', ()=>{
+      if(typeof window.playSound==='function') window.playSound('select');
+      overlay.remove();
+    });
+  }
+
   function crestHTML(crest, sizePx){
     sizePx=sizePx||28;
     if(!crest) return `<i class="ph ph-bold ph-shield" style="font-size:${sizePx*0.6}px;color:#888"></i>`;
@@ -2370,7 +2456,7 @@
   function abrirVisorPartidoManager(info, onFinish){
     if(typeof window.G2G_abrirVisorPartidoManager!=='function') return;
     window.G2G_abrirVisorPartidoManager(info, onFinish, {
-      state, t, formacionActual, generarSlotsFormacion, climaDelPartido, calcularStatsEquipo, plantillaEfectivaRival, crestHTML, rivalCrestHTML
+      state, t, formacionActual, generarSlotsFormacion, climaDelPartido, calcularStatsEquipo, plantillaEfectivaRival, crestHTML, rivalCrestHTML, mostrarHistoricoPartido
     });
   }
 
@@ -2827,6 +2913,7 @@
         </div>
         <div id="lmLiveEvents" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;align-items:stretch;gap:2px;padding:4px 0;min-height:80px;max-height:260px"></div>
         <div id="lmPostMatchInfo"></div>
+        <button id="lmHistoricoBtn" class="mode-card-btn mode-card-btn-secondary" style="display:none;width:100%;margin-top:8px"><i class="ph ph-bold ph-notebook"></i> ${t('lm.historico_partido_btn')}</button>
         <button id="lmLiveContinuar" class="mode-card-btn mode-card-btn-gold" style="display:none;width:100%;padding:11px;margin-top:10px">${t('lm.continuar')}</button>
       </div>`;
     document.getElementById('ligaManagerScreen').appendChild(overlay);
@@ -2950,10 +3037,15 @@
           ${prensaResuelta?`<div class="press-prediction-section ${prensaResuelta.outcome==='correct'?'press-prediction-good':prensaResuelta.outcome==='wrong'?'press-prediction-bad':'press-prediction-neutral'}">${prensaResuelta.texto}</div>`:''}`;
 
         document.getElementById('lmLiveContinuar').style.display='block';
+        document.getElementById('lmHistoricoBtn').style.display='block';
       }
     }
     requestAnimationFrame(tick);
 
+    document.getElementById('lmHistoricoBtn').addEventListener('click', ()=>{
+      if(typeof window.playSound==='function') window.playSound('select');
+      mostrarHistoricoPartido(info, miEsLocal);
+    });
     document.getElementById('lmLiveContinuar').addEventListener('click', ()=>{
       if(typeof window.playSound==='function') window.playSound('select');
       overlay.remove();

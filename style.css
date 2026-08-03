@@ -4441,6 +4441,13 @@ body.light-theme.menu-screen{
   margin-top:8px;padding-top:8px;border-top:1px solid #2a2a2a;
   text-align:center;font-size:11px;color:#999;letter-spacing:.3px;
 }
+.lm-historico-subtitulo{
+  font-family:'Bebas Neue',Impact,sans-serif;font-size:14px;color:var(--gold);
+  letter-spacing:1px;margin:14px 0 4px;
+}
+.lm-historico-parrafo{
+  font-size:13px;line-height:1.55;color:#ddd;margin:0 0 4px;
+}
 @media(min-width:900px){
   .lm-visor-partido-card{max-width:720px}
   .lm-visor-campo-wrap{padding:16px}

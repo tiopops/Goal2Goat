@@ -30,7 +30,7 @@
   }
 
   function abrirVisorPartidoManager(info, onFinish, deps){
-    const {state, t, formacionActual, generarSlotsFormacion, climaDelPartido, calcularStatsEquipo, plantillaEfectivaRival, crestHTML, rivalCrestHTML} = deps;
+    const {state, t, formacionActual, generarSlotsFormacion, climaDelPartido, calcularStatsEquipo, plantillaEfectivaRival, crestHTML, rivalCrestHTML, mostrarHistoricoPartido} = deps;
     const miEsLocal = info.home.id==='lm_0';
     const rival = miEsLocal ? info.away : info.home;
     const miNombre = miEsLocal ? info.home.name : info.away.name;
@@ -210,6 +210,7 @@
         </div>
         <div class="lm-visor-info-bar" id="lmVisorInfoBar">${t('lm.viendo_partido')}</div>
         <div id="lmVisorResumenBox" style="display:none"></div>
+        <button id="lmVisorHistoricoBtn" class="mode-card-btn mode-card-btn-secondary" style="display:none;width:calc(100% - 32px);margin:0 16px 8px"><i class="ph ph-bold ph-notebook"></i> ${t('lm.historico_partido_btn')}</button>
         <div class="lm-popup-actions">
           <button id="lmVisorVelocidadBtn" class="mode-card-btn mode-card-btn-secondary"><i class="ph ph-bold ph-fast-forward"></i> ${t('lm.velocidad')} 1X</button>
           <button id="lmVisorCerrarBtn" class="mode-card-btn mode-card-btn-gold">${t('lm.terminar_mostrar_resultados')}</button>
@@ -1277,6 +1278,14 @@
 
       partidoTerminado=true;
       cerrarBtn.textContent = t('lm.continuar');
+      const historicoBtn=overlay.querySelector('#lmVisorHistoricoBtn');
+      if(historicoBtn){
+        historicoBtn.style.display='block';
+        historicoBtn.addEventListener('click', ()=>{
+          if(typeof window.playSound==='function') window.playSound('select');
+          if(typeof mostrarHistoricoPartido==='function') mostrarHistoricoPartido(info, miEsLocal);
+        });
+      }
     }
     cerrarBtn.addEventListener('click', ()=>{
       if(typeof window.playSound==='function') window.playSound('select');
