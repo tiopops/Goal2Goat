@@ -1459,11 +1459,19 @@
           <div class="lm-visor-posesion-mia" style="width:${posMioFinal}%">${posMioFinal}%</div>
           <div class="lm-visor-posesion-rival" style="width:${100-posMioFinal}%">${100-posMioFinal}%</div>
         </div>` : '';
+      // La predicción de la rueda de prensa (si hubo alguna esta
+      // jornada) antes solo se mostraba en el resumen del modo
+      // automático — el modo manager no la mostraba en absoluto,
+      // aunque el partido fuera exactamente el mismo.
+      const prensaResueltaVisor = state.ultimaPrensaResuelta;
+      const bloquePrensaVisor = (prensaResueltaVisor && prensaResueltaVisor.outcome!=='neutral') ? `
+        <div class="press-prediction-section ${prensaResueltaVisor.outcome==='correct'?'press-prediction-good':'press-prediction-bad'}">${prensaResueltaVisor.texto}</div>` : '';
       resumenBox.innerHTML = `
         <div class="lm-visor-resultado-banner ${resultadoClase}">${resultadoTexto}</div>
         <div class="lm-visor-resumen-titulo">${t('lm.resumen_partido_titulo')}</div>
         ${filas || ''}
         ${barraPosesion}
+        ${bloquePrensaVisor}
         ${partesResumen.length?`<div class="lm-visor-resumen-pie">${partesResumen.join(' · ')}</div>`:''}`;
 
       infoBar.textContent = t('lm.visor_termina');

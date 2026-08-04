@@ -2555,6 +2555,15 @@
         miPartidoInfo={ home:partido.home, away:partido.away, resultado, eventos, climaId: clima?clima.id:null };
         actualizarEstadioTrasPartido(miEsLocalDeEste, resultado, clima);
         const misGoles=miEsLocalDeEste?resultado.golesA:resultado.golesB, susGoles=miEsLocalDeEste?resultado.golesB:resultado.golesA;
+        // Se resuelve aquí, en el origen común de los dos modos de
+        // visualización — antes solo se resolvía dentro del código
+        // específico del modo automático, así que en modo manager la
+        // predicción de la rueda de prensa nunca se comprobaba: ni
+        // afectaba a la moral, ni aparecía en el resumen ni en el
+        // histórico del partido. Llamarla aquí también es segura para
+        // el modo automático (que la vuelve a llamar más abajo), ya
+        // que resolverPrensaLM no hace nada si ya se había resuelto.
+        resolverPrensaLM(misGoles, susGoles);
         if(typeof window.unlockLMAchievement==='function'){
           window.unlockLMAchievement('lm_first_match', false);
           if(misGoles>susGoles){
