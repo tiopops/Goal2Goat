@@ -294,7 +294,12 @@
         startTutorial();
       }
     }, 500);
-    setTimeout(()=>clearInterval(check), 120000);
+    // 10 minutos de margen — la configuración de una liga nueva
+    // (elegir equipo, editor de escudo, confirmar) puede llevar más
+    // de los 2 minutos que había antes si el jugador se lo toma con
+    // calma; el propio chequeo es ligero, así que no hay coste real en
+    // dejarlo activo más tiempo.
+    setTimeout(()=>clearInterval(check), 600000);
   }
 
   maybeAutoStart();

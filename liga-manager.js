@@ -5656,7 +5656,7 @@
             <h3 class="collapsible-header" onclick="toggleCollapsible('lmGlossaryBox')"><span>${t('lm.glosario_titulo')}</span> <span class="collapse-arrow">▾</span></h3>
             <div class="howto-content">
               <table class="glossary-table"><tbody>
-                ${['jornada','quiniela','cuerpo_tecnico','proyectos','moral','fichajes','sobres','ajuste_tactico','rueda_prensa','estadio','sancion','entrenamiento'].map(k=>`<tr><td class="glossary-term">${t('lm.gloss_'+k+'_term')}</td><td class="glossary-desc">${t('lm.gloss_'+k)}</td></tr>`).join('')}
+                ${['jornada','quiniela','cuerpo_tecnico','proyectos','moral','fichajes','sobres','traspasos','capital','rasgos','mejoras_habilidades','guardias','rueda_prensa','estadio','sancion','entrenamiento'].map(k=>`<tr><td class="glossary-term">${t('lm.gloss_'+k+'_term')}</td><td class="glossary-desc">${t('lm.gloss_'+k)}</td></tr>`).join('')}
               </tbody></table>
             </div>
           </div>
