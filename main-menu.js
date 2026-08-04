@@ -121,7 +121,7 @@
     if(unlocked){
       btn.classList.remove('mode-card-btn-disabled');
       btn.classList.add('mode-card-btn-gold');
-      btn.innerHTML = '<span data-i18n="menu.liga_play_beta">ENTRAR (BETA)</span>';
+      btn.innerHTML = '<span data-i18n="menu.liga_play_beta">ENTRAR</span>';
       if(badge) badge.setAttribute('data-i18n','menu.liga_badge_beta');
     }else{
       btn.classList.add('mode-card-btn-disabled');

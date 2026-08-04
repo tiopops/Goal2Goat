@@ -457,10 +457,8 @@ let swapsUsedThisMatch = 0;
 let teamMorale = 0;
 window.CHEATS_ACTIVE = false;
 const CHEAT_USERS = ['jesuslor85@gmail.com', 'silviaenfoque@gmail.com'];
-// Liga Manager está en construcción: acceso restringido solo a tiopops
-// mientras se define/desarrolla. Lista separada de CHEAT_USERS a propósito
-// (aquí NO se incluye silviaenfoque).
-const LIGA_MANAGER_BETA_USERS = ['jesuslor85@gmail.com', 'adrian.quart@gmail.com'];
+// Liga Manager ya está disponible para todos los jugadores — dejó de
+// ser beta a partir de la v0.6.
 // Scorer streaks: map playerName -> consecutive matches scored
 let scorerStreaks = {};
 // Current match weather
@@ -5999,7 +5997,7 @@ function initFirebaseAuth(){
       // para que ningún fallo posterior en este callback (crest, idioma,
       // etc.) pueda dejar esto a medias.
       try{
-        window.LIGA_MANAGER_UNLOCKED = LIGA_MANAGER_BETA_USERS.includes((data.email||user.email||'').toLowerCase().trim());
+        window.LIGA_MANAGER_UNLOCKED = true; // Liga Manager liberado para todos desde la v0.6
         if(window.G2G_applyLigaManagerAccess) window.G2G_applyLigaManagerAccess(window.LIGA_MANAGER_UNLOCKED);
       }catch(e){ console.error('Liga Manager access check failed:', e); }
       window.preferredTeamName=data.preferredTeamName||"";
@@ -6130,7 +6128,7 @@ function initFirebaseAuth(){
       // chequeo de onAuthStateChanged no llegó a aplicarse (p.ej. el menú
       // aún no había cargado en ese momento), lo repetimos aquí, que es un
       // punto donde "data.email" ya se ha demostrado fiable (ver CHEAT_USERS).
-      window.LIGA_MANAGER_UNLOCKED = LIGA_MANAGER_BETA_USERS.includes((data.email||user.email||'').toLowerCase().trim());
+      window.LIGA_MANAGER_UNLOCKED = true; // Liga Manager liberado para todos desde la v0.6
       if(window.G2G_applyLigaManagerAccess) window.G2G_applyLigaManagerAccess(window.LIGA_MANAGER_UNLOCKED);
       if(cheatsSection) cheatsSection.style.display=isCheatUser?"block":"none";
       if(isCheatUser){

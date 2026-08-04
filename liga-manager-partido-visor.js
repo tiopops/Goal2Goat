@@ -1289,7 +1289,13 @@
 
       const resumenBox = document.getElementById('lmVisorResumenBox');
       resumenBox.style.display='block';
-      const posMioFinal = info.resultado.posesionA!=null ? (miEsLocal?info.resultado.posesionA:info.resultado.posesionB) : null;
+      // Usa el MISMO dato que la barra en directo (muestreado tick a
+      // tick durante la simulación real), no la fórmula aparte basada
+      // en estadísticas de info.resultado — antes podían no coincidir
+      // porque eran dos cálculos completamente independientes entre
+      // sí, dando dos porcentajes de posesión distintos para el mismo
+      // partido.
+      const posMioFinal = muestrasPosesionTotal>4 ? Math.round((muestrasPosesionMia/muestrasPosesionTotal)*100) : 50;
       const barraPosesion = posMioFinal!=null ? `
         <div class="lm-visor-posesion-titulo">${t('lm.posesion_titulo')}</div>
         <div class="lm-visor-posesion-barra">
@@ -1314,7 +1320,10 @@
         historicoBtn.style.display='block';
         historicoBtn.addEventListener('click', ()=>{
           if(typeof window.playSound==='function') window.playSound('select');
-          if(typeof mostrarHistoricoPartido==='function') mostrarHistoricoPartido(info, miEsLocal);
+          if(typeof mostrarHistoricoPartido==='function'){
+            const posesionRealActual = muestrasPosesionTotal>4 ? Math.round((muestrasPosesionMia/muestrasPosesionTotal)*100) : null;
+            mostrarHistoricoPartido(info, miEsLocal, posesionRealActual);
+          }
         });
       }
     }

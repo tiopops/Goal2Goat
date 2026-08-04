@@ -1910,7 +1910,7 @@
   // ameno, a partir de los eventos REALES de ese partido concreto
   // (nunca inventado). Compartida entre modo automático y modo
   // manager, para que ambos muestren exactamente el mismo resumen.
-  function generarHistoricoPartidoTexto(info, miEsLocal){
+  function generarHistoricoPartidoTexto(info, miEsLocal, posesionRealMia){
     const miNombre = state.nombreEquipo || state.escudo && state.escudo.nombre || 'Tu equipo';
     const rivalNombre = miEsLocal ? info.away.name : info.home.name;
     const golesMio = miEsLocal ? info.resultado.golesA : info.resultado.golesB;
@@ -1920,14 +1920,17 @@
     const goles = eventos.filter(e=>e.type==='goal');
     const tarjetas = eventos.filter(e=>e.type==='card');
     const lesiones = eventos.filter(e=>e.type==='injury');
-    const posMio = info.resultado.posesionA!=null ? (miEsLocal?info.resultado.posesionA:info.resultado.posesionB) : null;
+    const posMio = posesionRealMia!=null ? posesionRealMia : (info.resultado.posesionA!=null ? (miEsLocal?info.resultado.posesionA:info.resultado.posesionB) : null);
     const posRival = posMio!=null ? 100-posMio : null;
 
     const partes=[];
-    // Apertura: resultado en una frase, en lenguaje natural.
-    if(golesMio>golesRival) partes.push(tp('lm.hist_gano', {miNombre, rivalNombre, golesMio, golesRival}));
-    else if(golesMio<golesRival) partes.push(tp('lm.hist_perdio', {miNombre, rivalNombre, golesMio, golesRival}));
-    else partes.push(tp('lm.hist_empato', {miNombre, rivalNombre, golesMio}));
+    // Apertura: resultado en una frase, elegida al azar entre varias
+    // formas distintas de contarlo — así la crónica no suena siempre
+    // exactamente igual, como un periodista que varía su redacción.
+    function elegir(...claves){ return claves[Math.floor(Math.random()*claves.length)]; }
+    if(golesMio>golesRival) partes.push(tp(elegir('lm.hist_gano','lm.hist_gano2','lm.hist_gano3'), {miNombre, rivalNombre, golesMio, golesRival}));
+    else if(golesMio<golesRival) partes.push(tp(elegir('lm.hist_perdio','lm.hist_perdio2'), {miNombre, rivalNombre, golesMio, golesRival}));
+    else partes.push(tp(elegir('lm.hist_empato','lm.hist_empato2'), {miNombre, rivalNombre, golesMio}));
 
     // Posesión — una frase que da color y contexto a lo que se vio.
     if(posMio!=null){
@@ -1952,7 +1955,8 @@
       const frasesGoles = goles.map(g=>{
         const equipo = g.team===miLado ? miNombre : rivalNombre;
         const nombreJ = g.jugador ? g.jugador.name : equipo;
-        return `${nombreJ} (${equipo}) ${tp('lm.hist_gol_de',{min:g.minute})}`;
+        const claveConector = elegir('lm.hist_gol_de','lm.hist_gol_de2','lm.hist_gol_de3','lm.hist_gol_de4');
+        return `${nombreJ} (${equipo}) ${tp(claveConector,{min:g.minute})}`;
       });
       partes.push(`**${t('lm.hist_goles_titulo')}**\n${frasesGoles.join('. ')}.`);
     } else {
@@ -1994,13 +1998,13 @@
 
     return partes.join('\n\n');
   }
-  function mostrarHistoricoPartido(info, miEsLocal){
+  function mostrarHistoricoPartido(info, miEsLocal, posesionRealMia){
     // Evita que se acumulen varias ventanas si se pulsa el botón más
     // de una vez — se quita cualquier histórico ya abierto antes de
     // crear uno nuevo.
     const existente=document.getElementById('lmHistoricoOverlay');
     if(existente) existente.remove();
-    const texto = generarHistoricoPartidoTexto(info, miEsLocal);
+    const texto = generarHistoricoPartidoTexto(info, miEsLocal, posesionRealMia);
     const htmlTexto = texto.split('\n\n').map(p=>{
       if(p.startsWith('**')){
         const [titulo, ...resto] = p.split('\n');
