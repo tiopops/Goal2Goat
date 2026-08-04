@@ -706,8 +706,34 @@
         return;
       }
       if(golIdx<planGoles.length && tiempoTranscurrido>=planGoles[golIdx]-200){
-        const evento=eventosGol[golIdx]; golIdx++;
+        const evento=eventosGol[golIdx];
         const esMio = evento.team===miLado;
+        // Si el equipo que tiene el balón AHORA MISMO en la simulación
+        // visual no es el que le toca marcar, primero se muestra una
+        // recuperación real de balón (una entrada/intercepción, igual
+        // que en el juego normal) antes de construir la jugada de gol
+        // — sin esto, el balón "saltaba" de golpe de un equipo a otro
+        // sin ninguna jugada visible de por medio, dando la sensación
+        // de que el pase lo daba el equipo contrario, o de un balón
+        // que aparece imantado en los pies de otro jugador.
+        if(posesionMia!==esMio){
+          const equipoRecupera = esMio?posMia:posRival;
+          const nombreRecupera = esMio?miNombre:rivalNombre;
+          const balonPosAntes={x:parseFloat(balon.getAttribute('cx')), y:parseFloat(balon.getAttribute('cy'))};
+          const recuperadorIdx = jugadorMasCercano(equipoRecupera, balonPosAntes.x, balonPosAntes.y, 0);
+          moverBalon(equipoRecupera[recuperadorIdx].x, equipoRecupera[recuperadorIdx].y, 550);
+          infoBar.textContent=`${nombreRecupera} recupera el balón`;
+          posesionMia=esMio;
+          if(esMio) idxConBalonMio=recuperadorIdx; else idxConBalonRival=recuperadorIdx;
+          pasesJugadaActual=0; historialMio=[]; historialRival=[];
+          actualizarFormacionDinamica(posesionMia, undefined, undefined, balonPosAntes);
+          setTimeout(()=>{
+            tiempoTranscurrido+=550;
+            tick();
+          }, real(550));
+          return;
+        }
+        golIdx++;
         const balonPos0={x:parseFloat(balon.getAttribute('cx')), y:parseFloat(balon.getAttribute('cy'))};
         const equipoAnotaPos = esMio?posMia:posRival;
         const objetivoGol = esMio ? rivalGolXY : miGolXY;
@@ -902,7 +928,13 @@
             const dRivalS=jugadorMasCercano(posRival, puntoDisputa.x, puntoDisputa.y, -1);
             const distMioS=Math.hypot(posMia[dMioS].x-puntoDisputa.x, posMia[dMioS].y-puntoDisputa.y);
             const distRivalS=Math.hypot(posRival[dRivalS].x-puntoDisputa.x, posRival[dRivalS].y-puntoDisputa.y);
-            posesionMia = distMioS<=distRivalS;
+            // Ventaja real por técnica: la disputa no se resuelve solo
+            // por cercanía pura — el equipo con más técnica tiene una
+            // ventaja real (no decisiva del todo) para llevarse el
+            // balón suelto, como en un forcejeo real donde el control
+            // del balón importa tanto como quién llega antes.
+            const ventajaTecnicaMia = (misStatsReales.technique-rival.technique)*0.045;
+            posesionMia = (distMioS-ventajaTecnicaMia) <= distRivalS;
             if(posesionMia){ idxConBalonMio=dMioS; moverJugador(true, dMioS, puntoDisputa.x, puntoDisputa.y, 420); }
             else { idxConBalonRival=dRivalS; moverJugador(false, dRivalS, puntoDisputa.x, puntoDisputa.y, 420); }
             tiempoTranscurrido+=dur*0.45+400;
@@ -934,7 +966,7 @@
         // cualquier otro disparo cercano, y a veces el jugador se
         // quedaba solo frente al portero sin definir la jugada.
         const defensorMasCercanoDisparo = equipoDefiende.filter((rv,ri)=>ri!==0).reduce((min,rv)=>Math.min(min,Math.hypot(rv.x-posActual.x,rv.y-posActual.y)),Infinity);
-        if(zona<0.14 && defensorMasCercanoDisparo>12) return Math.random()<0.88;
+        if(zona<0.17 && defensorMasCercanoDisparo>10) return Math.random()<0.94;
         return Math.random()<(0.38+Math.min(0.18,pasesJugadaActual*0.03))*(posesionMia?multRiesgoMioActual():urgenciaPartidoRival())*factorRolDisparo;
       })()){
         // Cerca del área: intento de disparo (sin gol, salvo que
@@ -1180,6 +1212,13 @@
           // ajustado y penalización más fuerte — antes dejaba pasar
           // situaciones demasiado adelantadas con facilidad.
           const penalizFueraJuego = (profReceptor>ultimoDefensorProf+1.5) ? (profReceptor-ultimoDefensorProf)*1.9 : 0;
+          // Penalización real por retroceder: si el propio portador ya
+          // está en zona de ataque prometedora (cerca del área rival) y
+          // el receptor candidato está claramente MÁS ATRÁS que él, se
+          // penaliza — antes solo se premiaba avanzar, pero nada
+          // desincentivaba específicamente ceder terreno ya ganado
+          // pasando hacia atrás sin necesidad real.
+          const penalizRetroceso = (zona<0.35 && avanceAtaca[i]<avanceAtaca[idxConBalon]-0.12) ? (avanceAtaca[idxConBalon]-avanceAtaca[i])*8 : 0;
           // Distribución segura del portero: cuando quien tiene el
           // balón es el propio portero, se prioriza mucho más la
           // opción cercana y sin marca — un portero real casi nunca
@@ -1204,7 +1243,7 @@
           // recuperar el balón no se traducía en ningún incentivo
           // extra para atacar rápido, solo en la puntuación normal.
           const bonusContraataque = (historialAtaca.length===0 && avanceAtaca[i]>0.55) ? (avanceAtaca[i]-0.55)*14 : 0;
-          const punt = avanceAtaca[i]*9 - penalizDistancia + distMarca*0.35 + bonusRol - penalizBloqueo - penalizBalonLargoDef - penalizBucle + bonusPorteroSeguro - penalizPorteroArriesgado - penalizFueraJuego + bonusContraataque + Math.random()*3;
+          const punt = avanceAtaca[i]*9 - penalizDistancia + distMarca*0.35 + bonusRol - penalizBloqueo - penalizBalonLargoDef - penalizBucle + bonusPorteroSeguro - penalizPorteroArriesgado - penalizFueraJuego - penalizRetroceso + bonusContraataque + Math.random()*3;
           if(punt>mejorPunt){ mejorPunt=punt; mejor=i; }
         });
         if(mejor===-1) mejor=jugadorMasCercano(equipoAtaca, posActual.x, posActual.y, idxConBalon);

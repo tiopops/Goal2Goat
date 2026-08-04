@@ -31,7 +31,7 @@
         text: 'Puedes crear un club totalmente personalizado o convertirte en uno de los 20 equipos reales de LaLiga, con sus jugadores reales. Esta elección define tu identidad para toda la temporada.'
       },
       {
-        selector: '#pitchBox, .lm-panel',
+        selector: '#lmPitchBox, .lm-panel',
         title: '2 · Completa tu plantilla y formación',
         text: 'Coloca a cada jugador en su <strong>posición</strong> para que rinda al máximo. Puedes cambiar la formación antes de cada partido — hay 21 formaciones reales entre las que elegir.'
       },
@@ -293,7 +293,7 @@
       try{ esLigaNueva = sessionStorage.getItem('g2g_tut_lm_new_league') === '1'; }catch(e){}
       if(!esLigaNueva) return; // todavía no se ha creado ninguna liga nueva pendiente
 
-      const pitchBox = document.getElementById('pitchBox');
+      const pitchBox = document.getElementById('lmPitchBox');
       const ligaScreen = document.getElementById('ligaManagerScreen');
       const enLigaManagerVisible = ligaScreen && getComputedStyle(ligaScreen).display !== 'none';
       const pitchVisible = enLigaManagerVisible && pitchBox && pitchBox.offsetParent !== null;
