@@ -279,27 +279,29 @@
     // al crear la liga. Si el jugador pulsa "Saltar" o termina el
     // tutorial, la marca se borra y no vuelve a aparecer hasta que
     // cree otra liga nueva de verdad.
-    const check = setInterval(()=>{
+    //
+    // IMPORTANTE: esta comprobación es PERMANENTE, nunca se detiene
+    // del todo — antes se paraba tras la primera vez que se disparaba
+    // (o a los 10 minutos), así que si el jugador abandonaba su liga y
+    // creaba OTRA nueva más tarde en la misma sesión, ya no quedaba
+    // ninguna comprobación activa esperando esa segunda oportunidad.
+    // El coste de comprobar sessionStorage + un elemento cada 500ms es
+    // insignificante, así que no hay problema en dejarlo para siempre.
+    setInterval(()=>{
+      if(overlayEl) return; // el tutorial ya está abierto ahora mismo, no interferir
       let esLigaNueva = false;
       try{ esLigaNueva = sessionStorage.getItem('g2g_tut_lm_new_league') === '1'; }catch(e){}
-      if(!esLigaNueva){ return; } // todavía no se ha creado ninguna liga en esta sesión
+      if(!esLigaNueva) return; // todavía no se ha creado ninguna liga nueva pendiente
 
       const pitchBox = document.getElementById('pitchBox');
       const ligaScreen = document.getElementById('ligaManagerScreen');
       const enLigaManagerVisible = ligaScreen && getComputedStyle(ligaScreen).display !== 'none';
       const pitchVisible = enLigaManagerVisible && pitchBox && pitchBox.offsetParent !== null;
       if(pitchVisible){
-        clearInterval(check);
         try{ sessionStorage.removeItem('g2g_tut_lm_new_league'); }catch(e){}
         startTutorial();
       }
     }, 500);
-    // 10 minutos de margen — la configuración de una liga nueva
-    // (elegir equipo, editor de escudo, confirmar) puede llevar más
-    // de los 2 minutos que había antes si el jugador se lo toma con
-    // calma; el propio chequeo es ligero, así que no hay coste real en
-    // dejarlo activo más tiempo.
-    setTimeout(()=>clearInterval(check), 600000);
   }
 
   maybeAutoStart();

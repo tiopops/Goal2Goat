@@ -4033,6 +4033,41 @@
       cerrar();
     });
   }
+  // Aviso de quiniela pendiente justo antes de jugar el partido — la
+  // quiniela se entrega para usarse en ESA jornada, así que si el
+  // jugador intenta jugar sin haberla rellenado, se le da la opción de
+  // rellenarla ahí mismo o seguir jugando (perdiéndola).
+  function mostrarAvisoQuinielaPendienteAntesDeJugar(continuarCallback){
+    const overlay=document.createElement('div');
+    overlay.id='lmAvisoQuinielaOverlay';
+    overlay.innerHTML=`
+      <div class="lm-dilemma-card" style="max-width:400px">
+        <div class="lm-dilemma-title"><i class="ph ph-bold ph-ticket"></i>${t('lm.quiniela_pendiente_titulo')}</div>
+        <div class="lm-dilemma-text" style="margin:10px 0 16px">${t('lm.quiniela_pendiente_aviso')}</div>
+        <div class="lm-popup-actions lm-popup-actions-compact">
+          <button id="lmAvisoQuinielaSeguir" class="mode-card-btn mode-card-btn-secondary">${t('lm.seguir_sin_quiniela_btn')}</button>
+          <button id="lmAvisoQuinielaRellenar" class="mode-card-btn mode-card-btn-gold">${t('lm.rellenar_quiniela_btn')}</button>
+        </div>
+      </div>`;
+    document.getElementById('ligaManagerScreen').appendChild(overlay);
+    const cerrar=()=>overlay.remove();
+    habilitarCierreOverlay(overlay, cerrar);
+    document.getElementById('lmAvisoQuinielaRellenar').addEventListener('click', ()=>{
+      if(typeof window.playSound==='function') window.playSound('select');
+      cerrar();
+      abrirBoletoQuiniela();
+    });
+    document.getElementById('lmAvisoQuinielaSeguir').addEventListener('click', ()=>{
+      if(typeof window.playSound==='function') window.playSound('select');
+      // Se pierde de verdad: se borra del correo interno y del estado,
+      // no tiene sentido conservar una quiniela para una jornada que
+      // ya se ha jugado.
+      state.quinielaBoleto=null;
+      guardarEstado();
+      cerrar();
+      continuarCallback();
+    });
+  }
   // Si has despedido a quien ocupaba un puesto (o todavía no lo has
   // cubierto), en vez de un aviso genérico abrimos directamente
   // TRABAJADORES ya filtrado a ese puesto concreto.
@@ -5784,6 +5819,17 @@
           mostrarAvisoJuego(t('lm.plantilla_tecnica_incompleta_msg'), t('lm.plantilla_tecnica_incompleta_titulo'));
           return;
         }
+        // Aviso de quiniela pendiente: la quiniela se entrega para
+        // usarse en ESA jornada concreta — si el jugador intenta jugar
+        // el partido sin haberla rellenado, se le avisa y se le da la
+        // opción de rellenarla ahí mismo, o seguir jugando (en cuyo
+        // caso la quiniela se pierde y se borra del correo interno,
+        // ya que no tiene sentido conservarla para una jornada que ya
+        // ha pasado).
+        if(state.quinielaBoleto && !state.quinielaBoleto.rellenado){
+          mostrarAvisoQuinielaPendienteAntesDeJugar(jugarAhora);
+          return;
+        }
         jugarAhora();
       });
       jugarBtn.addEventListener('mouseenter', marcarInteraccionJugarBtn);
@@ -7064,7 +7110,6 @@
       overlay.innerHTML=`
         <div class="lm-dilemma-card lm-dilemma-card-dg" style="max-width:640px">
           ${xCerrarHTML()}
-          ${(state.quinielaBoleto&&!state.quinielaBoleto.rellenado)?`<button type="button" class="lm-pendientes-indicador" id="lmQuinielaPendienteBtn"><i class="ph ph-bold ph-ticket lm-pendientes-pulso"></i> ${t('lm.quiniela_pendiente')}</button>`:''}
           <div class="lm-dilemma-title"><i class="ph ph-bold ph-briefcase"></i> ${t('lm.titulo_dg')}</div>
           <div class="lm-capital-box">
             <i class="ph ph-bold ph-coins lm-capital-icon"></i>
@@ -7082,6 +7127,7 @@
           <div class="lm-staff-bar-capital" style="justify-content:center;margin:10px 0 8px"><span><i class="ph ph-bold ph-dice-five"></i> ${t('lm.dados')}: <strong>${state.diceAvailable}</strong></span><span><i class="ph ph-bold ph-arrows-clockwise"></i> ${t('lm.rerrolls')}: <strong>${state.dadoRerollsDisponibles||0}</strong></span><span><i class="ph ph-bold ph-cards"></i> ${t('lm.cambios')}: <strong>${Math.max(0,lmCambiosCartaPorPartido()-(state.directorGeneralCambiosUsados||0))}/${lmCambiosCartaPorPartido()}</strong></span></div>
           <div class="med-card-grid">${cartasHTML}</div>
           <div class="lm-popup-actions lm-popup-actions-compact">
+            ${(state.quinielaBoleto&&!state.quinielaBoleto.rellenado)?`<button type="button" class="mode-card-btn mode-card-btn-secondary lm-pendientes-indicador" id="lmQuinielaPendienteBtn"><i class="ph ph-bold ph-ticket lm-pendientes-pulso"></i> ${t('lm.quiniela_pendiente')}</button>`:''}
             ${mostrarInfoHTML()}
             <button id="lmDirectorGeneralCerrar" class="mode-card-btn mode-card-btn-secondary">${t('lm.cerrar')}</button>
           </div>
@@ -7368,7 +7414,6 @@
       overlay.innerHTML=`
         <div class="lm-dilemma-card lm-dilemma-card-dd" style="max-width:640px">
           ${xCerrarHTML()}
-          ${(state.sobresFichajesPendientes&&state.sobresFichajesPendientes.length)?`<button type="button" class="lm-pendientes-indicador" id="lmSobresPendientesBtn"><i class="ph ph-bold ph-envelope-simple-open lm-pendientes-pulso"></i> ${t('lm.sobres_pendientes')} ${state.sobresFichajesPendientes.length}/3</button>`:''}
           <div class="lm-dilemma-title"><i class="ph ph-bold ph-binoculars"></i> ${t('lm.titulo_dd')}</div>
           <button type="button" class="mode-card-btn mode-card-btn-gold" id="lmInfoPlantillaDDBtn" style="width:100%;margin:10px 0"><i class="ph ph-bold ph-scroll"></i> ${t('lm.info_plantilla_btn')}</button>
           <div class="lm-precio-box">
@@ -7383,6 +7428,7 @@
           <div class="lm-staff-bar-capital" style="justify-content:center;margin:10px 0 8px"><span><i class="ph ph-bold ph-dice-five"></i> ${t('lm.dados')}: <strong>${state.diceAvailable}</strong></span><span><i class="ph ph-bold ph-arrows-clockwise"></i> ${t('lm.rerrolls')}: <strong>${state.dadoRerollsDisponibles||0}</strong></span><span><i class="ph ph-bold ph-cards"></i> ${t('lm.cambios')}: <strong>${Math.max(0,lmCambiosCartaPorPartido()-(state.directorDeportivoCambiosUsados||0))}/${lmCambiosCartaPorPartido()}</strong></span></div>
           <div class="med-card-grid">${cartasHTML}</div>
           <div class="lm-popup-actions lm-popup-actions-compact">
+            ${(state.sobresFichajesPendientes&&state.sobresFichajesPendientes.length)?`<button type="button" class="mode-card-btn mode-card-btn-secondary lm-pendientes-indicador" id="lmSobresPendientesBtn"><i class="ph ph-bold ph-envelope-simple-open lm-pendientes-pulso"></i> ${t('lm.sobres_pendientes')} ${state.sobresFichajesPendientes.length}/3</button>`:''}
             ${mostrarInfoHTML()}
             <button id="lmDirectorDeportivoCerrar" class="mode-card-btn mode-card-btn-secondary">${t('lm.cerrar')}</button>
           </div>

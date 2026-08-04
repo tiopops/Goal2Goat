@@ -3805,6 +3805,10 @@ body.liga-manager-screen .ranking-btn-label-lm{display:inline}
   position:fixed;inset:0;background:rgba(0,0,0,.75);
   display:flex;align-items:center;justify-content:center;z-index:31000;
 }
+#lmAvisoQuinielaOverlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.72);
+  display:flex;align-items:center;justify-content:center;z-index:250;
+}
 .lm-dilemma-card{
   background:#1e2326;border:1px solid #c9a227;border-radius:0;
   padding:22px 26px;max-width:340px;text-align:center;
@@ -3864,7 +3868,8 @@ body.liga-manager-screen .ranking-btn-label-lm{display:inline}
 .mode-card-liga-unlocked .mode-card-bgimg{filter:none}
 .mode-card-liga-unlocked .mode-card-desc{color:#c9c9c9}
 .mode-card-liga-unlocked .mode-card-badge{
-  background:rgba(201,162,39,.15);border-color:var(--gold);color:var(--gold);
+  background:rgba(20,24,28,.82);border-color:var(--gold);color:var(--gold);
+  text-shadow:0 1px 3px rgba(0,0,0,.9);
 }
 
 /* Pestañas del perfil exclusivas de un modo de juego (Estadísticas, Mejoras,
@@ -4490,12 +4495,7 @@ body.light-theme.menu-screen{
    de los hubs de Director Deportivo/General, para poder recuperarlos
    aunque se haya borrado el correo por accidente. */
 .lm-pendientes-indicador{
-  position:absolute;left:10px;bottom:10px;z-index:3;
-  display:flex;align-items:center;gap:6px;
-  background:#1c1c1c;border:1px solid var(--gold);border-radius:8px;
-  padding:6px 10px;color:var(--gold);font-family:'Bebas Neue',Impact,sans-serif;
-  font-size:10px;letter-spacing:.6px;cursor:pointer;
-  box-shadow:0 4px 12px rgba(0,0,0,.5);
+  color:var(--gold)!important;border-color:var(--gold)!important;
 }
 .lm-pendientes-indicador:hover{background:#242424}
 .lm-pendientes-pulso{font-size:15px;animation:lmPendientesPulso 1.4s ease-in-out infinite}

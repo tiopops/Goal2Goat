@@ -447,8 +447,8 @@
     // en ese instante — cada uno según su propio rol (avance) y si su
     // equipo ataca o defiende, con tiempos escalonados para que nunca
     // se vea como un bloque.
-    function actualizarFormacionDinamica(atacaMio, idxExcluirMio, idxExcluirRival, balonPos, idxExcluirMio2, idxExcluirRival2){
-      function reubicarEquipo(esMio, idxExcluir, idxExcluir2){
+    function actualizarFormacionDinamica(atacaMio, idxExcluirMio, idxExcluirRival, balonPos, idxExcluirMio2, idxExcluirRival2, idxExcluirMio3, idxExcluirRival3){
+      function reubicarEquipo(esMio, idxExcluir, idxExcluir2, idxExcluir3){
         const slots = esMio?misSlots:rivalSlots;
         const pos = esMio?posMia:posRival;
         const avance = esMio?avanceMio:avanceRival;
@@ -479,7 +479,7 @@
 
         const destinos=[]; // para la separación: no dejar que dos caigan en el mismo punto
         for(let i=1;i<pos.length;i++){
-          if(i===idxExcluir || i===idxExcluir2) continue;
+          if(i===idxExcluir || i===idxExcluir2 || i===idxExcluir3) continue;
           // Tanto al atacar como al defender, se parte SIEMPRE de la
           // posición ACTUAL del jugador, nunca de su casilla de
           // formación original — así el movimiento es siempre
@@ -602,8 +602,8 @@
           setTimeout(()=>moverJugador(esMio, i, x, y, (950+Math.random()*450)*fatigaMov), real(Math.random()*350));
         }
       }
-      reubicarEquipo(true, idxExcluirMio, idxExcluirMio2);
-      reubicarEquipo(false, idxExcluirRival, idxExcluirRival2);
+      reubicarEquipo(true, idxExcluirMio, idxExcluirMio2, idxExcluirMio3);
+      reubicarEquipo(false, idxExcluirRival, idxExcluirRival2, idxExcluirRival3);
     }
 
     const eventosGol=(info.eventos||[]).filter(e=>e.type==='goal').sort((a,b)=>a.minute-b.minute);
@@ -818,13 +818,19 @@
       // ajustada.
       let duracionEfectiva=dur;
       let siguientePosesionMia=posesionMia, siguienteIdxMio=idxConBalonMio, siguienteIdxRival=idxConBalonRival;
-      // Despeje de emergencia: un defensa muy presionado cerca de su
-      // propia área no siempre intenta un pase calculado y preciso —
-      // a veces simplemente despeja el peligro sin pensarlo mucho,
-      // como haría un central real con el rival encima cerca de su
-      // portería. El balón sale largo y sin destino calculado, y
-      // cualquiera de los dos equipos puede quedarse con él después.
-      if(zona>0.85 && (posesionMia?rolesMios:rolesRival)[idxConBalon]==='def' && distRival<10 && Math.random()<0.3){
+      // Despeje de emergencia: un jugador muy presionado cerca de su
+      // propia área, o que se encuentra en clara inferioridad numérica
+      // (más rivales que compañeros cerca), no siempre intenta un pase
+      // calculado y preciso — a veces simplemente se quita el balón de
+      // encima con un pelotazo hacia el campo contrario, como haría
+      // cualquier jugador real bajo esa presión, no solo un central.
+      // El balón sale largo y sin destino calculado, y cualquiera de
+      // los dos equipos puede quedarse con él después.
+      const companerosCercaDespeje = equipoAtaca.filter((p2,i2)=>i2!==idxConBalon && i2!==0 && Math.hypot(p2.x-posActual.x,p2.y-posActual.y)<16).length;
+      const rivalesCercaDespeje = equipoDefiende.filter(rv=>Math.hypot(rv.x-posActual.x,rv.y-posActual.y)<16).length;
+      const superioridadRivalDespeje = rivalesCercaDespeje>=companerosCercaDespeje+2 && rivalesCercaDespeje>=2;
+      const muyCercaPropiaArea = zona>0.85 && distRival<10;
+      if((muyCercaPropiaArea || (superioridadRivalDespeje && zona>0.6)) && Math.random()<0.3){
         const anguloDespeje=(Math.random()-0.5)*1.2;
         const dirX=(golObjetivo.x-posActual.x), dirY=(golObjetivo.y-posActual.y);
         const dirLen=Math.hypot(dirX,dirY)||1;
@@ -861,6 +867,14 @@
       // a otro sitio — de ahí la sensación de "el balón cae donde no
       // hay nadie" y el flujo a golpes del partido.
       let receptorPaseIdx=-1;
+      // Igual que con el receptor de un pase, el jugador que INTERCEPTA
+      // el balón (entrada, presión) también debe quedarse quieto en el
+      // sitio donde lo recibe — antes solo el receptor de un pase tenía
+      // este blindaje, así que un jugador que ganaba el balón con una
+      // entrada podía moverse a la vez que el balón viajaba hacia su
+      // posición, y el balón acababa "cayendo" en un punto vacío que el
+      // jugador ocupaba solo un instante después.
+      let interceptorPendienteIdx=-1;
 
       const probBase = zona<0.35?0.48:0.36;
       const probPresion = probBase + Math.max(0,presionadores-1)*0.16; // +16pp por cada presionador extra
@@ -903,6 +917,7 @@
         siguientePosesionMia=!posesionMia;
         pasesJugadaActual=0;
         if(siguientePosesionMia) siguienteIdxMio=rivalCercanoIdx; else siguienteIdxRival=rivalCercanoIdx;
+        interceptorPendienteIdx=rivalCercanoIdx;
       } else if(zona<0.24 && (()=>{
         // El rol del que lleva el balón importa de verdad: un
         // delantero cerca del área dispara mucho más que un defensa
@@ -912,6 +927,14 @@
         const rolesEnAtaque = posesionMia?rolesMios:rolesRival;
         const rolPortador = rolesEnAtaque[idxConBalon];
         const factorRolDisparo = rolPortador==='fwd' ? 1.35 : (rolPortador==='def' ? 0.45 : 0.9);
+        // Solo ante el portero: si no hay NINGÚN defensa de campo cerca
+        // (solo el guardameta), la decisión real es clarísima —
+        // rematar, no dudar con un pase. Antes esta situación tan
+        // evidente se resolvía con la misma probabilidad que
+        // cualquier otro disparo cercano, y a veces el jugador se
+        // quedaba solo frente al portero sin definir la jugada.
+        const defensorMasCercanoDisparo = equipoDefiende.filter((rv,ri)=>ri!==0).reduce((min,rv)=>Math.min(min,Math.hypot(rv.x-posActual.x,rv.y-posActual.y)),Infinity);
+        if(zona<0.14 && defensorMasCercanoDisparo>12) return Math.random()<0.88;
         return Math.random()<(0.38+Math.min(0.18,pasesJugadaActual*0.03))*(posesionMia?multRiesgoMioActual():urgenciaPartidoRival())*factorRolDisparo;
       })()){
         // Cerca del área: intento de disparo (sin gol, salvo que
@@ -1297,7 +1320,8 @@
       }
 
       actualizarFormacionDinamica(posesionMia, posesionMia?idxConBalon:undefined, posesionMia?undefined:idxConBalon, posActual,
-        posesionMia?receptorPaseIdx:undefined, posesionMia?undefined:receptorPaseIdx);
+        posesionMia?receptorPaseIdx:undefined, posesionMia?undefined:receptorPaseIdx,
+        posesionMia?undefined:interceptorPendienteIdx, posesionMia?interceptorPendienteIdx:undefined);
 
       setTimeout(()=>{
         posesionMia=siguientePosesionMia; idxConBalonMio=siguienteIdxMio; idxConBalonRival=siguienteIdxRival;
