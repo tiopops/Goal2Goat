@@ -275,15 +275,53 @@
     const desplazamientoMio = esEscritorio ? 'translateX(6px)' : 'translateY(-6px)';
     const desplazamientoRival = esEscritorio ? 'translateX(-6px)' : 'translateY(6px)';
 
+    // ── Animación continua del balón, por fotograma ──
+    // Antes el balón se movía con una transición CSS: el navegador
+    // interpolaba visualmente, pero el ATRIBUTO cx/cy del SVG pasaba a
+    // valer el DESTINO final al instante, no la posición real en
+    // pantalla durante el trayecto. Como el resto del código consulta
+    // esa posición con getAttribute('cx'/'cy') para decidir dónde está
+    // el balón "ahora mismo" (recuperaciones, disputas, golden rule),
+    // en la práctica siempre se leía el destino, nunca la posición
+    // visual real — de ahí buena parte de la sensación de "balón en
+    // tierra de nadie" o "imán": el código pensaba que el balón ya
+    // había llegado antes de que se viera llegar.
+    // Con este cambio, el balón se anima con requestAnimationFrame,
+    // recalculando su posición real cada fotograma (~60 veces por
+    // segundo) y escribiéndola en cx/cy — así getAttribute siempre
+    // devuelve la posición REAL en pantalla en ese instante, no un
+    // destino adelantado. La curva de movimiento (easeOutCubic) imita
+    // la misma física de "sale rápido, frena progresivamente" que ya
+    // teníamos con CSS, así que el aspecto visual no cambia — lo que
+    // cambia es que ahora es de verdad, fotograma a fotograma, no una
+    // ilusión del navegador.
+    let ballAnim = {startX:CENTRO_X, startY:CENTRO_Y, targetX:CENTRO_X, targetY:CENTRO_Y, startTime:0, duration:1, active:false};
+    function easeOutCubic(t){ return 1-Math.pow(1-t,3); }
+    let ballAnimFrameId=null;
+    function ballAnimFrame(now){
+      if(ballAnim.active){
+        const elapsed=now-ballAnim.startTime;
+        const t=Math.min(1, elapsed/ballAnim.duration);
+        const eased=easeOutCubic(t);
+        const curX=ballAnim.startX+(ballAnim.targetX-ballAnim.startX)*eased;
+        const curY=ballAnim.startY+(ballAnim.targetY-ballAnim.startY)*eased;
+        balon.setAttribute('cx', curX);
+        balon.setAttribute('cy', curY);
+        if(t>=1) ballAnim.active=false;
+      }
+      ballAnimFrameId=requestAnimationFrame(ballAnimFrame);
+    }
+    ballAnimFrameId=requestAnimationFrame(ballAnimFrame);
+
     function moverBalon(x,y,durMs){
       const durReal=real(durMs);
-      balon.style.transition=`cx ${durReal}ms ease-out, cy ${durReal}ms ease-out`;
       // Simula un pase alto sin animar ningún giro (mucho más simple
       // y seguro): en un trayecto largo, el balón crece en la primera
       // mitad del recorrido y encoge en la segunda — una parábola de
       // verdad, con el punto más grande justo en el centro del
       // trayecto, no una meseta que se queda grande un rato y luego
-      // encoge de golpe.
+      // encoge de golpe. Esto sigue usando CSS porque es un atributo
+      // aparte (r, el radio) que no interfiere con la posición.
       const cxActual=parseFloat(balon.getAttribute('cx'))||0;
       const cyActual=parseFloat(balon.getAttribute('cy'))||0;
       const distanciaRecorrida=Math.hypot(x-cxActual, y-cyActual);
@@ -302,14 +340,18 @@
         // despacio al punto más alto) y baja acelerando (como caer),
         // igual que un balón real en el aire — no un simple ida y
         // vuelta lineal.
-        balon.style.transition=`cx ${durReal}ms ease-out, cy ${durReal}ms ease-out, r ${mitadReal}ms ease-out`;
+        balon.style.transition=`r ${mitadReal}ms ease-out`;
         balon.setAttribute('r', radioAlto);
         setTimeout(()=>{
           balon.style.transition=`r ${mitadReal}ms ease-out`;
           balon.setAttribute('r', radioBase);
         }, real(durMs/2));
       }
-      balon.setAttribute('cx',x); balon.setAttribute('cy',y);
+      ballAnim.startX=cxActual; ballAnim.startY=cyActual;
+      ballAnim.targetX=x; ballAnim.targetY=y;
+      ballAnim.startTime=performance.now();
+      ballAnim.duration=Math.max(1, durReal);
+      ballAnim.active=true;
     }
     // Anillo dorado que aparece un instante sobre el jugador que
     // recibe el balón, justo cuando llega — ayuda a leer la jugada en
@@ -878,8 +920,10 @@
           const distMioD=Math.hypot(posMia[dMioD].x-destinoDespeje.x, posMia[dMioD].y-destinoDespeje.y);
           const distRivalD=Math.hypot(posRival[dRivalD].x-destinoDespeje.x, posRival[dRivalD].y-destinoDespeje.y);
           posesionMia = distMioD<=distRivalD;
-          if(posesionMia){ idxConBalonMio=dMioD; moverJugador(true, dMioD, destinoDespeje.x, destinoDespeje.y, 500); }
-          else { idxConBalonRival=dRivalD; moverJugador(false, dRivalD, destinoDespeje.x, destinoDespeje.y, 500); }
+          const distCorredorD = posesionMia?distMioD:distRivalD;
+          const duracionCorredorD = Math.max(400, Math.min(1500, distCorredorD*26));
+          if(posesionMia){ idxConBalonMio=dMioD; moverJugador(true, dMioD, destinoDespeje.x, destinoDespeje.y, duracionCorredorD); }
+          else { idxConBalonRival=dRivalD; moverJugador(false, dRivalD, destinoDespeje.x, destinoDespeje.y, duracionCorredorD); }
           tiempoTranscurrido+=duracionEfectiva+400;
           setTimeout(tick, real(500));
         }, real(duracionEfectiva));
@@ -1003,8 +1047,15 @@
           const distRival=Math.hypot(posRival[dRival].x-px, posRival[dRival].y-py);
           const esMio = distMio<=distRival;
           posesionMia=esMio;
-          if(esMio){ idxConBalonMio=dMio; moverJugador(true, dMio, px, py, 500); }
-          else { idxConBalonRival=dRival; moverJugador(false, dRival, px, py, 500); }
+          // Duración de la carrera proporcional a la distancia real —
+          // antes era un tiempo fijo (500ms) sin importar si el
+          // jugador estaba a 2 unidades o a 40 de un balón suelto, así
+          // que un jugador lejano parecía aparecer por arte de magia
+          // en vez de correr de verdad a por él.
+          const distCorredor = esMio?distMio:distRival;
+          const duracionCorredor = Math.max(400, Math.min(1500, distCorredor*26));
+          if(esMio){ idxConBalonMio=dMio; moverJugador(true, dMio, px, py, duracionCorredor); }
+          else { idxConBalonRival=dRival; moverJugador(false, dRival, px, py, duracionCorredor); }
         }
         if(rebotaCorner){
           // Saque de esquina: el balón va a la esquina más cercana a
@@ -1391,7 +1442,7 @@
       const balonPosAhora={x:parseFloat(balon.getAttribute('cx')), y:parseFloat(balon.getAttribute('cy'))};
       actualizarFormacionDinamica(posesionMia, posesionMia?idxBalonAhora:undefined, posesionMia?undefined:idxBalonAhora, balonPosAhora,
         posesionMia?receptorPaseIdx:undefined, posesionMia?undefined:receptorPaseIdx);
-    }, real(420));
+    }, real(300));
 
     const velocidadBtn=overlay.querySelector('#lmVisorVelocidadBtn');
     if(velocidadBtn) velocidadBtn.addEventListener('click', ()=>{
@@ -1407,6 +1458,7 @@
       partidoDetenido=true;
       clearInterval(minuteroInterval);
       clearInterval(flujoContinuoInterval);
+      if(ballAnimFrameId!==null) cancelAnimationFrame(ballAnimFrameId);
       minuteroEl.textContent="90'";
       const misGolesFinal = miEsLocal ? info.resultado.golesA : info.resultado.golesB;
       const rivalGolesFinal = miEsLocal ? info.resultado.golesB : info.resultado.golesA;
@@ -1500,6 +1552,7 @@
       }
       clearInterval(minuteroInterval);
       clearInterval(flujoContinuoInterval);
+      if(ballAnimFrameId!==null) cancelAnimationFrame(ballAnimFrameId);
       overlay.remove();
       if(onFinish) onFinish();
     });
