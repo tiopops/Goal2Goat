@@ -388,13 +388,54 @@
     let posRival = rivalSlots.map(s=>({...s}));
 
     function elJugador(esMio, idx){ return overlay.querySelector(`#lmVisorJ_${esMio?'m':'r'}${idx}`); }
+    // ── Animación continua de los jugadores, por fotograma ──
+    // Misma idea que con el balón, pero con una diferencia deliberada
+    // y muy importante: aquí SOLO se hace continuo el aspecto VISUAL
+    // (cómo se ve moverse el jugador en el campo). La posición LÓGICA
+    // (arr[idx], la que usa toda la lógica de decisiones — marcaje,
+    // distancias, fuera de juego, elegir a quién pasar) se sigue
+    // actualizando al instante, exactamente igual que antes. Cambiar
+    // también eso habría alterado sutilmente el comportamiento de
+    // decisiones ya probado y ajustado durante muchas rondas — un
+    // riesgo que no merece la pena para lo que se pidió, que es que
+    // el MOVIMIENTO se vea fluido, no rehacer cómo deciden los
+    // jugadores.
+    const jugadorAnims = {}; // clave: "mio-3" / "rival-7" → {startX,startY,targetX,targetY,startTime,duration,active,el}
+    let jugadorAnimFrameId=null;
+    function jugadorAnimFrame(now){
+      for(const key in jugadorAnims){
+        const a=jugadorAnims[key];
+        if(!a.active) continue;
+        const elapsed=now-a.startTime;
+        const t=Math.min(1, elapsed/a.duration);
+        // easeInOutCubic — misma sensación que la transición CSS
+        // "ease-in-out" que había antes, pero calculada fotograma a
+        // fotograma en vez de dejada en manos del navegador.
+        const eased = t<0.5 ? 4*t*t*t : 1-Math.pow(-2*t+2,3)/2;
+        const curX=a.startX+(a.targetX-a.startX)*eased;
+        const curY=a.startY+(a.targetY-a.startY)*eased;
+        if(a.el) a.el.setAttribute('transform', `translate(${curX},${curY})`);
+        if(t>=1) a.active=false;
+      }
+      jugadorAnimFrameId=requestAnimationFrame(jugadorAnimFrame);
+    }
+    jugadorAnimFrameId=requestAnimationFrame(jugadorAnimFrame);
+
     function moverJugador(esMio, idx, x, y, dur){
       const el=elJugador(esMio, idx);
       const arr = esMio?posMia:posRival;
       if(el){
         const durReal=real(dur);
-        el.style.transition=`transform ${durReal}ms ease-in-out`;
-        el.setAttribute('transform', `translate(${x},${y})`);
+        const key=(esMio?'mio-':'rival-')+idx;
+        const actual=jugadorAnims[key];
+        // Parte SIEMPRE desde la posición visual real en la que esté
+        // en ESTE instante (si ya estaba a mitad de otro movimiento,
+        // continúa desde ahí, no desde el destino de la animación
+        // anterior) — así los cambios de dirección se ven naturales,
+        // sin saltos.
+        const startX = (actual && actual.active) ? (actual.startX+(actual.targetX-actual.startX)*Math.min(1,(performance.now()-actual.startTime)/actual.duration)) : arr[idx].x;
+        const startY = (actual && actual.active) ? (actual.startY+(actual.targetY-actual.startY)*Math.min(1,(performance.now()-actual.startTime)/actual.duration)) : arr[idx].y;
+        jugadorAnims[key] = {startX, startY, targetX:x, targetY:y, startTime:performance.now(), duration:Math.max(1,durReal), active:true, el};
       }
       arr[idx]={x,y};
     }
@@ -1459,6 +1500,7 @@
       clearInterval(minuteroInterval);
       clearInterval(flujoContinuoInterval);
       if(ballAnimFrameId!==null) cancelAnimationFrame(ballAnimFrameId);
+      if(jugadorAnimFrameId!==null) cancelAnimationFrame(jugadorAnimFrameId);
       minuteroEl.textContent="90'";
       const misGolesFinal = miEsLocal ? info.resultado.golesA : info.resultado.golesB;
       const rivalGolesFinal = miEsLocal ? info.resultado.golesB : info.resultado.golesA;
@@ -1553,6 +1595,7 @@
       clearInterval(minuteroInterval);
       clearInterval(flujoContinuoInterval);
       if(ballAnimFrameId!==null) cancelAnimationFrame(ballAnimFrameId);
+      if(jugadorAnimFrameId!==null) cancelAnimationFrame(jugadorAnimFrameId);
       overlay.remove();
       if(onFinish) onFinish();
     });
