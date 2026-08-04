@@ -1678,6 +1678,13 @@
   function empezarTemporada(nombreEquipo, moneda, liga, escudo, equipoRealElegidoId){
     calendarioMesVisto=null; // nueva liga: el calendario debe volver a fijarse en el mes de inicio, no arrastrar el de una partida anterior
     calendarioJornadaSincronizada=null;
+    // Marca que se acaba de crear una liga nueva, para que el
+    // tutorial de Liga Manager se reproduzca de nuevo — a diferencia
+    // de un simple "visto una vez", el jugador debe verlo cada vez
+    // que empieza una liga desde cero, aunque ya hubiera jugado otras
+    // antes. sessionStorage (no localStorage) porque solo debe
+    // disparar en ESTA sesión, justo tras crear la liga.
+    try{ sessionStorage.setItem('g2g_tut_lm_new_league','1'); }catch(e){}
     const miEquipo={id:'lm_0', name:nombreEquipo};
     // LaLiga tiene 20 equipos — LM_RIVALS ya contiene los 20 reales de
     // la temporada. Tu equipo ocupa SIEMPRE una de esas 20 plazas:
@@ -5622,7 +5629,39 @@
               return `<div class="lm-correo-box"><div class="lm-correo-header"><span><i class="ph ph-bold ph-envelope"></i> ${t("lm.correo_interno")}</span></div><div class="lm-correo-list"><p class="lm-setup-desc" style="text-align:center;padding:10px 0">${t('lm.correo_error_carga')}</p></div></div>`;
             }
           })()}
+          <div class="box collapsible-box collapsed" id="lmHowToPlayBox">
+            <h3 class="collapsible-header" onclick="toggleCollapsible('lmHowToPlayBox')"><span>${t('lm.howto_titulo')}</span> <span class="collapse-arrow">▾</span></h3>
+            <div class="howto-content">
+              <div class="howto-step"><span class="howto-num">1</span><div>${t('lm.howto_paso1')}</div></div>
+              <div class="howto-step"><span class="howto-num">2</span><div>${t('lm.howto_paso2')}</div></div>
+              <div class="howto-step"><span class="howto-num">3</span><div>${t('lm.howto_paso3')}</div></div>
+              <div class="howto-step"><span class="howto-num">4</span><div>${t('lm.howto_paso4')}</div></div>
+              <div class="howto-step"><span class="howto-num">5</span><div>${t('lm.howto_paso5')}</div></div>
+              <button id="lmReplayTutorialBtn" style="width:100%;margin-top:12px;font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:1px;font-size:16px;background:none;border:1px solid var(--gold);color:var(--gold);border-radius:6px;padding:9px 14px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px">
+                <i class="ph ph-bold ph-play-circle" style="font-size:20px"></i> ${t('lm.howto_ver_tutorial')}
+              </button>
+            </div>
+          </div>
+          <div class="box collapsible-box collapsed" id="lmStatsGuideBox">
+            <h3 class="collapsible-header" onclick="toggleCollapsible('lmStatsGuideBox')"><span>${t('lm.stats_guide_titulo')}</span> <span class="collapse-arrow">▾</span></h3>
+            <div class="howto-content">
+              <div class="howto-step"><span class="howto-num stat-num stat-attack">A</span><div><strong>${t('lm.stat_ataque_lbl')}</strong> — ${t('lm.stat_ataque_desc')}</div></div>
+              <div class="howto-step"><span class="howto-num stat-num stat-defense">D</span><div><strong>${t('lm.stat_defensa_lbl')}</strong> — ${t('lm.stat_defensa_desc')}</div></div>
+              <div class="howto-step"><span class="howto-num stat-num stat-pace">R</span><div><strong>${t('lm.stat_ritmo_lbl')}</strong> — ${t('lm.stat_ritmo_desc')}</div></div>
+              <div class="howto-step"><span class="howto-num stat-num stat-passing">P</span><div><strong>${t('lm.stat_pase_lbl')}</strong> — ${t('lm.stat_pase_desc')}</div></div>
+              <div class="howto-step"><span class="howto-num stat-num stat-technique">T</span><div><strong>${t('lm.stat_tecnica_lbl')}</strong> — ${t('lm.stat_tecnica_desc')}</div></div>
+            </div>
+          </div>
+          <div class="box collapsible-box collapsed" id="lmGlossaryBox">
+            <h3 class="collapsible-header" onclick="toggleCollapsible('lmGlossaryBox')"><span>${t('lm.glosario_titulo')}</span> <span class="collapse-arrow">▾</span></h3>
+            <div class="howto-content">
+              <table class="glossary-table"><tbody>
+                ${['jornada','quiniela','cuerpo_tecnico','proyectos','moral','fichajes','sobres','ajuste_tactico','rueda_prensa','estadio','sancion','entrenamiento'].map(k=>`<tr><td class="glossary-term">${t('lm.gloss_'+k+'_term')}</td><td class="glossary-desc">${t('lm.gloss_'+k)}</td></tr>`).join('')}
+              </tbody></table>
+            </div>
+          </div>
         </div>
+
       </div>
     `;
 
@@ -8143,7 +8182,7 @@
         if(!res) return;
         pj++;
         const esLocal=partido.home.id==='lm_0';
-        const misGoles=esLocal?res.home:res.away, susGoles=esLocal?res.away:res.home;
+        const misGoles=esLocal?res.golesA:res.golesB, susGoles=esLocal?res.golesB:res.golesA;
         gf+=misGoles; gc+=susGoles;
         if(misGoles>susGoles) pg++; else if(misGoles===susGoles) pe++; else pp++;
       });

@@ -715,17 +715,16 @@
         </div>
       </div>
 
-      <!-- LIGA MANAGER — modo por implementar, deshabilitado -->
-      <div class="mode-card mode-card-liga mode-card-disabled" id="modeCardLiga" aria-disabled="true" aria-label="Liga Manager">
-        <span class="mode-card-badge" data-i18n="menu.liga_badge">PRÓXIMAMENTE</span>
+      <!-- LIGA MANAGER — ya disponible para todos -->
+      <div class="mode-card mode-card-liga mode-card-liga-unlocked" id="modeCardLiga" aria-label="Liga Manager">
         <div class="mode-card-bgimg" style="background-image:url('assets/images/liga_manager_button.png')"></div>
         <div class="mode-card-body">
           <span class="mode-card-tag mode-card-tag-blue" data-i18n="menu.mode_label">MODO</span>
           <h2 class="mode-card-title mode-card-title-blue" data-i18n="menu.liga_title">LIGA MANAGER</h2>
           <div class="mode-card-stars mode-card-stars-blue">★★★★★</div>
           <p class="mode-card-desc" data-i18n="menu.liga_desc">Gestiona tu club. Controla los fichajes, perfecciona tu táctica, entrena a tus jugadores y lleva a tu equipo hasta la gloria.</p>
-          <button class="mode-card-btn mode-card-btn-disabled" id="modeCardLigaBtn" type="button" aria-disabled="true">
-            <span data-i18n="menu.liga_badge">PRÓXIMAMENTE</span>
+          <button class="mode-card-btn mode-card-btn-gold" id="modeCardLigaBtn" type="button">
+            <span data-i18n="menu.copa_play">JUGAR AHORA</span> <i class="ph ph-bold ph-arrow-right"></i>
           </button>
         </div>
       </div>
@@ -1153,6 +1152,7 @@
   document.write('<script src="multiplayer.js?v=' + Date.now() + '"><\/script>');
   document.write('<script src="crest-editor.js?v=' + Date.now() + '"><\/script>');
   document.write('<script src="tutorial.js?v=' + Date.now() + '"><\/script>');
+  document.write('<script src="tutorial_ligamanager.js?v=' + Date.now() + '"><\/script>');
 </script>
 <!-- Firebase loads AFTER game.js so it never blocks the game -->
 <script>

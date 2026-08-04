@@ -868,6 +868,34 @@
         // Presión de cerca: el rival se lleva el balón de verdad — más
         // probable en el último tercio, donde la defensa aprieta más,
         // y mucho más probable si hay varios rivales presionando juntos.
+        // Disputa real: no siempre el balón va limpio al presionador —
+        // en un porcentaje real de los casos queda SUELTO un instante
+        // (rechace, disputa físca) y se lo puede llevar cualquiera de
+        // los dos equipos, el que llegue antes — como una pelea de
+        // balón de verdad, no una recuperación perfecta siempre.
+        const esDisputaSuelta = Math.random()<0.3;
+        if(esDisputaSuelta){
+          const puntoDisputa={
+            x: (posActual.x+equipoDefiende[rivalCercanoIdx].x)/2 + (Math.random()-0.5)*6,
+            y: (posActual.y+equipoDefiende[rivalCercanoIdx].y)/2 + (Math.random()-0.5)*6
+          };
+          moverBalon(puntoDisputa.x, puntoDisputa.y, dur*0.45);
+          infoBar.textContent=`Disputa de balón entre ${nombreAtaca} y ${nombreDefiende}`;
+          pasesJugadaActual=0; historialMio=[]; historialRival=[];
+          actualizarFormacionDinamica(posesionMia, posesionMia?idxConBalon:undefined, posesionMia?undefined:idxConBalon, posActual);
+          setTimeout(()=>{
+            const dMioS=jugadorMasCercano(posMia, puntoDisputa.x, puntoDisputa.y, -1);
+            const dRivalS=jugadorMasCercano(posRival, puntoDisputa.x, puntoDisputa.y, -1);
+            const distMioS=Math.hypot(posMia[dMioS].x-puntoDisputa.x, posMia[dMioS].y-puntoDisputa.y);
+            const distRivalS=Math.hypot(posRival[dRivalS].x-puntoDisputa.x, posRival[dRivalS].y-puntoDisputa.y);
+            posesionMia = distMioS<=distRivalS;
+            if(posesionMia){ idxConBalonMio=dMioS; moverJugador(true, dMioS, puntoDisputa.x, puntoDisputa.y, 420); }
+            else { idxConBalonRival=dRivalS; moverJugador(false, dRivalS, puntoDisputa.x, puntoDisputa.y, 420); }
+            tiempoTranscurrido+=dur*0.45+400;
+            setTimeout(tick, real(450));
+          }, real(dur*0.45));
+          return;
+        }
         moverBalon(equipoDefiende[rivalCercanoIdx].x, equipoDefiende[rivalCercanoIdx].y, dur*0.7);
         infoBar.textContent = presionadores>=2
           ? `${nombreDefiende} recupera el balón con una presión conjunta`
@@ -950,6 +978,34 @@
                   moverBalon(equipoSaca[rematadorIdx].x, equipoSaca[rematadorIdx].y, 700);
                   infoBar.textContent=`${nombreAtaca} centra desde el córner`;
                   setTimeout(()=>{
+                    // Remate real de cabeza: antes el córner siempre
+                    // se reiniciaba sin más tras el centro, cuando en
+                    // la vida real es una fuente real de goles. Ahora
+                    // hay una probabilidad genuina de rematar a
+                    // puerta, mayor si quien remata es un rematador
+                    // aéreo natural (defensa central o delantero).
+                    const rolRematador = (posesionMia?rolesMios:rolesRival)[rematadorIdx];
+                    const probRemate = rolRematador==='def' ? 0.42 : (rolRematador==='fwd' ? 0.48 : 0.3);
+                    if(Math.random()<probRemate){
+                      infoBar.textContent=`¡${nombreAtaca} remata de cabeza!`;
+                      const destinoRemateGol = golObjetivo;
+                      const duracionRemate=380;
+                      moverBalon(destinoRemateGol.x, destinoRemateGol.y, duracionRemate);
+                      const porteroRemate = posesionMia?posRival:posMia;
+                      const porteroRemateEsMio = !posesionMia;
+                      const desvioRemate=(Math.random()-0.5)*7;
+                      setTimeout(()=>{
+                        moverJugador(porteroRemateEsMio, 0, porteroRemate[0].x+desvioRemate, porteroRemate[0].y, 350);
+                        setTimeout(()=>moverJugador(porteroRemateEsMio, 0, (porteroRemateEsMio?miGolXY:rivalGolXY).x, (porteroRemateEsMio?miGolXY:rivalGolXY).y, 600), real(350));
+                      }, real(180));
+                      setTimeout(()=>{
+                        moverBalon(centroCampo.x, centroCampo.y, 700);
+                        asignarBalonSuelto(centroCampo.x, centroCampo.y);
+                        tiempoTranscurrido+=dur+500+350+700+700+700+900+duracionRemate;
+                        setTimeout(tick, real(600));
+                      }, real(duracionRemate+400));
+                      return;
+                    }
                     moverBalon(centroCampo.x, centroCampo.y, 700);
                     asignarBalonSuelto(centroCampo.x, centroCampo.y);
                     tiempoTranscurrido+=dur+500+350+700+700+700+900;
@@ -972,6 +1028,32 @@
         // posesión/jugador que se acaba de asignar con datos viejos.
         return;
       } else {
+        // Conducción libre: si no hay NINGÚN rival cerca, el jugador
+        // no tiene por qué pasar de inmediato — en la vida real,
+        // cuando encuentras espacio libre por delante, sigues
+        // corriendo con el balón en los pies para ganar terreno, y
+        // solo decides pasar cuando un defensa empieza a acercarse.
+        // Antes, incluso con todo el campo libre por delante, el
+        // jugador siempre pasaba o intentaba un regate forzado contra
+        // un marcador — nunca "simplemente avanzaba".
+        const presionLejana = equipoDefiende.filter(rv=>Math.hypot(rv.x-posActual.x, rv.y-posActual.y)<16).length;
+        const rolPortadorLibre = (posesionMia?rolesMios:rolesRival)[idxConBalon];
+        if(presionLejana===0 && zona>0.2 && rolPortadorLibre!=='def' && Math.random()<0.6){
+          const avanceLibre = Math.min(0.30, 0.14+((posesionMia?misStatsReales.pace:rival.pace)-50)/300);
+          const destinoConduccion={
+            x: posActual.x+(golObjetivo.x-posActual.x)*avanceLibre,
+            y: posActual.y+(golObjetivo.y-posActual.y)*avanceLibre
+          };
+          pasesJugadaActual=Math.max(0,pasesJugadaActual-1); // conducir no es lo mismo que pasar, no cuenta para la urgencia de disparo
+          moverBalon(destinoConduccion.x, destinoConduccion.y, dur*0.75);
+          infoBar.textContent=`${nombreAtaca} avanza con el balón, sin oposición cerca`;
+          actualizarFormacionDinamica(posesionMia, posesionMia?idxConBalon:undefined, posesionMia?undefined:idxConBalon, posActual);
+          setTimeout(()=>{
+            tiempoTranscurrido+=dur*0.75;
+            tick();
+          }, real(dur*0.75));
+          return;
+        }
         // Regate 1 contra 1: si el que lleva el balón encara a UN SOLO
         // defensa aislado (no hay presión coordinada de varios a la
         // vez), puede intentar superarlo directamente en vez de pasar
@@ -1071,7 +1153,10 @@
             return Math.max(max, prof);
           }, -Infinity);
           const profReceptor = esEscritorio ? (posesionMia?p.x:ANCHO-p.x) : (posesionMia?ALTO-p.y:p.y);
-          const penalizFueraJuego = (profReceptor>ultimoDefensorProf+3) ? (profReceptor-ultimoDefensorProf)*1.1 : 0;
+          // Fuera de juego reforzado: margen de tolerancia más
+          // ajustado y penalización más fuerte — antes dejaba pasar
+          // situaciones demasiado adelantadas con facilidad.
+          const penalizFueraJuego = (profReceptor>ultimoDefensorProf+1.5) ? (profReceptor-ultimoDefensorProf)*1.9 : 0;
           // Distribución segura del portero: cuando quien tiene el
           // balón es el propio portero, se prioriza mucho más la
           // opción cercana y sin marca — un portero real casi nunca
@@ -1087,7 +1172,16 @@
           const historialAtaca = posesionMia?historialMio:historialRival;
           const esDevolucionInmediata = historialAtaca.length && historialAtaca[historialAtaca.length-1]===i;
           const penalizBucle = esDevolucionInmediata ? 7 : 0;
-          const punt = avanceAtaca[i]*9 - penalizDistancia + distMarca*0.35 + bonusRol - penalizBloqueo - penalizBalonLargoDef - penalizBucle + bonusPorteroSeguro - penalizPorteroArriesgado - penalizFueraJuego + Math.random()*3;
+          // Contraataque real: justo tras recuperar el balón (el
+          // historial de esta posesión está vacío, la primera
+          // decisión), se prioriza mucho más avanzar hacia delante —
+          // el rival todavía está descolocado tras perder el balón, y
+          // un equipo real busca aprovechar ese instante en vez de
+          // simplemente evitar el pase hacia atrás. Sin este bono,
+          // recuperar el balón no se traducía en ningún incentivo
+          // extra para atacar rápido, solo en la puntuación normal.
+          const bonusContraataque = (historialAtaca.length===0 && avanceAtaca[i]>0.55) ? (avanceAtaca[i]-0.55)*14 : 0;
+          const punt = avanceAtaca[i]*9 - penalizDistancia + distMarca*0.35 + bonusRol - penalizBloqueo - penalizBalonLargoDef - penalizBucle + bonusPorteroSeguro - penalizPorteroArriesgado - penalizFueraJuego + bonusContraataque + Math.random()*3;
           if(punt>mejorPunt){ mejorPunt=punt; mejor=i; }
         });
         if(mejor===-1) mejor=jugadorMasCercano(equipoAtaca, posActual.x, posActual.y, idxConBalon);
