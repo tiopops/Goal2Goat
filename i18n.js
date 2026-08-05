@@ -981,7 +981,7 @@ window.TRANSLATIONS = {
   'settings.always_use_hint': {es:'Si lo activas, no se te preguntará el nombre del equipo al formarlo — se usará este automáticamente.', en:'If enabled, you won\'t be asked for a team name when building — this name will be used automatically.', pt:'Se ativado, o nome não será pedido ao formar o time — será usado automaticamente.', fr:'Si activé, le nom ne sera pas demandé lors de la création — il sera utilisé automatiquement.', de:'Wenn aktiviert, wird beim Erstellen nicht nach einem Teamnamen gefragt — dieser Name wird automatisch verwendet.', it:'Se attivato, non verrà chiesto il nome squadra durante la creazione — questo nome verrà usato automaticamente.'},
   'settings.customize_crest': {es:'PERSONALIZAR EQUIPO', en:'CUSTOMIZE TEAM', pt:'PERSONALIZAR TIME', fr:'PERSONNALISER L\'ÉQUIPE', de:'TEAM ANPASSEN', it:'PERSONALIZZA SQUADRA'},
   'settings.save': {es:'GUARDAR', en:'SAVE', pt:'SALVAR', fr:'ENREGISTRER', de:'SPEICHERN', it:'SALVA'},
-  'settings.patch_notes': {es:'NOTAS v0.55', en:'PATCH NOTES v0.55', pt:'NOTAS v0.55', fr:'NOTES v0.55', de:'PATCH-NOTES v0.55', it:'NOTE v0.55'},
+  'settings.patch_notes': {es:'NOTAS v0.6', en:'PATCH NOTES v0.6', pt:'NOTAS v0.6', fr:'NOTES v0.6', de:'PATCH-NOTES v0.6', it:'NOTE v0.6'},
   'settings.language': {es:'IDIOMA', en:'LANGUAGE', pt:'IDIOMA', fr:'LANGUE', de:'SPRACHE', it:'LINGUA'},
   'settings.lang_es': {es:'Español', en:'Spanish', pt:'Espanhol', fr:'Espagnol', de:'Spanisch', it:'Spagnolo'},
   'settings.lang_en': {es:'English', en:'English', pt:'Inglês', fr:'Anglais', de:'Englisch', it:'Inglese'},

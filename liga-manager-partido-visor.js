@@ -255,6 +255,14 @@
     // de forma fiable hacia la posesión real del partido, sin
     // necesitar ningún reloj ni contador aparte.
     let muestrasPosesionMia=0, muestrasPosesionTotal=0;
+    // Vigilante anti-cuelgue: guarda cuándo entró tick() por última
+    // vez de verdad. Si el partido se queda colgado por cualquier
+    // motivo (un camino de código que no programa el siguiente
+    // setTimeout, por ejemplo), este vigilante lo detecta y reactiva
+    // el partido — no soluciona la causa de fondo si la hay, pero
+    // evita que el jugador se quede con un partido roto sin ninguna
+    // forma de continuar.
+    let ultimoTickReal = performance.now();
     const posesionMiaEl=overlay.querySelector('#lmVisorPosesionMia');
     const posesionRivalEl=overlay.querySelector('#lmVisorPosesionRival');
     const minuteroInterval=setInterval(()=>{
@@ -272,6 +280,21 @@
         }
       }
     }, 250);
+    // Vigilante anti-cuelgue: comprueba cada 3 segundos si tick() lleva
+    // demasiado tiempo sin entrar de nuevo (más de 15 segundos reales,
+    // un margen generoso que nunca debería alcanzarse con una pausa
+    // legítima, ni siquiera a la velocidad más lenta). Si detecta que
+    // el partido está atascado sin haberse detenido ni terminado a
+    // propósito, fuerza que continúe — no arregla la causa de fondo si
+    // la hubiera, pero garantiza que el jugador nunca se quede con un
+    // partido roto sin ninguna forma de seguir.
+    const vigilanteInterval=setInterval(()=>{
+      if(partidoDetenido || partidoTerminado) return;
+      if(performance.now()-ultimoTickReal>15000){
+        console.warn('[Liga Manager] El partido llevaba más de 15s sin avanzar — reactivado por el vigilante.');
+        tick();
+      }
+    }, 3000);
     const desplazamientoMio = esEscritorio ? 'translateX(6px)' : 'translateY(-6px)';
     const desplazamientoRival = esEscritorio ? 'translateX(-6px)' : 'translateY(6px)';
 
@@ -422,8 +445,20 @@
     jugadorAnimFrameId=requestAnimationFrame(jugadorAnimFrame);
 
     function moverJugador(esMio, idx, x, y, dur){
-      const el=elJugador(esMio, idx);
       const arr = esMio?posMia:posRival;
+      // Blindaje real: si por lo que sea idx llega inválido (-1 u
+      // otro fuera de rango — puede pasar en algún caso límite de las
+      // jugadas más elaboradas, con varias exclusiones de jugador
+      // encadenadas), esta función antes lanzaba un error real al
+      // intentar leer arr[idx].x sobre "undefined". Ese error,
+      // ocurriendo dentro de un setTimeout, detenía silenciosamente
+      // TODO el bucle del partido sin ningún aviso — el reloj y el
+      // partido se quedaban "colgados" para siempre, sin ningún
+      // mensaje de fallo visible. Ahora, si el índice no es válido,
+      // simplemente no se hace nada (en vez de reventar todo el
+      // partido por un único cálculo puntual mal resuelto).
+      if(idx<0 || idx>=arr.length || !arr[idx]) return;
+      const el=elJugador(esMio, idx);
       if(el){
         const durReal=real(dur);
         const key=(esMio?'mio-':'rival-')+idx;
@@ -612,6 +647,26 @@
             };
           let x=base.x+(objetivo.x-base.x)*empuje;
           let y=base.y+(objetivo.y-base.y)*empuje;
+          // Los delanteros evitan activamente el fuera de juego: si su
+          // posición calculada quedaría por delante del último defensa
+          // rival, se retrasan un poco para quedarse en línea — como
+          // haría un delantero real que vigila constantemente dónde
+          // está el linier, en vez de correr sin más hacia la
+          // portería sin importarle la posición de la defensa.
+          if(yoAtaco && roles[i]==='fwd'){
+            const equipoRivalOffside = esMio?posRival:posMia;
+            const ultimoDefensorOffside = equipoRivalOffside.reduce((max,rv,ri)=>{
+              if(ri===0) return max;
+              const prof = esEscritorio ? (esMio?rv.x:ANCHO-rv.x) : (esMio?ALTO-rv.y:rv.y);
+              return Math.max(max, prof);
+            }, -Infinity);
+            const profJugador = esEscritorio ? (esMio?x:ANCHO-x) : (esMio?ALTO-y:y);
+            if(profJugador>ultimoDefensorOffside-1.5){
+              const profCorregida=ultimoDefensorOffside-1.5-Math.random()*3; // un margen variable, no todos en la misma línea exacta
+              if(esEscritorio) x = esMio?profCorregida:ANCHO-profCorregida;
+              else y = esMio?ALTO-profCorregida:profCorregida;
+            }
+          }
           if(cercanos.includes(i)){
             // Presiona de verdad: se acerca al balón, no solo a su gol
             x = x+(balonPos.x-x)*0.5;
@@ -733,6 +788,29 @@
     let partidoTerminado=false; // el partido llegó a su fin, ya sea jugado entero o forzado
 
     function tick(){
+      try{
+        tickInner();
+      }catch(err){
+        // Red de seguridad definitiva: si CUALQUIER error inesperado
+        // ocurriera aquí dentro (no solo los que ya se han encontrado
+        // y arreglado), antes se perdía TODO el bucle del partido sin
+        // ningún aviso — el reloj y el partido se quedaban colgados
+        // para siempre. Ahora se registra el error en la consola (para
+        // poder diagnosticarlo si se repite) y el partido se recupera
+        // solo con un reinicio seguro tipo saque de centro, en vez de
+        // quedarse roto sin ninguna forma de continuar.
+        console.error('[Liga Manager] Error inesperado en tick(), recuperando con saque de centro:', err);
+        try{
+          moverBalon(centroCampo.x, centroCampo.y, 500);
+          tiempoTranscurrido+=900;
+          setTimeout(tick, real(900));
+        }catch(errRecuperacion){
+          console.error('[Liga Manager] Fallo también en la recuperación de emergencia:', errRecuperacion);
+        }
+      }
+    }
+    function tickInner(){
+      ultimoTickReal = performance.now();
       if(partidoDetenido) return; // el jugador ha forzado el final — no se programa nada más
       // Descanso: al cruzar la mitad del partido, se pausa un
       // instante con el aviso de "FIN DE LA PRIMERA PARTE" en grande.
@@ -1560,6 +1638,26 @@
           x: destino.x+(dirX/dirLen)*Math.min(distanciaCarrera, dirLen*0.6),
           y: destino.y+(dirY/dirLen)*Math.min(distanciaCarrera, dirLen*0.6)
         };
+        // El desmarque se cronometra de verdad: la carrera prevista
+        // busca el hueco de forma agresiva, pero sin pasarse de la
+        // línea del último defensa rival — como haría un delantero
+        // real que calcula el momento exacto de arrancar la carrera
+        // para no quedarse en fuera de juego. Antes esta carrera no
+        // comprobaba nada, así que un receptor elegido en posición
+        // legal podía terminar adelantado solo por la propia
+        // previsión de desmarque.
+        const equipoDefiendePredictivo = posesionMia?posRival:posMia;
+        const ultimoDefensorPredictivo = equipoDefiendePredictivo.reduce((max,rv,ri)=>{
+          if(ri===0) return max;
+          const prof = esEscritorio ? (posesionMia?rv.x:ANCHO-rv.x) : (posesionMia?ALTO-rv.y:rv.y);
+          return Math.max(max, prof);
+        }, -Infinity);
+        const profDestinoPredictivo = esEscritorio ? (posesionMia?destino.x:ANCHO-destino.x) : (posesionMia?ALTO-destino.y:destino.y);
+        if(profDestinoPredictivo>ultimoDefensorPredictivo-1.5){
+          const profCorregidaPredictiva=ultimoDefensorPredictivo-1.5;
+          if(esEscritorio) destino={x: posesionMia?profCorregidaPredictiva:ANCHO-profCorregidaPredictiva, y:destino.y};
+          else destino={x:destino.x, y: posesionMia?ALTO-profCorregidaPredictiva:profCorregidaPredictiva};
+        }
         // El balón viaja a una velocidad más o menos constante, no
         // siempre en el mismo tiempo fijo — un pase corto es rápido,
         // uno largo tarda de verdad más, como un balón real. Se
@@ -1657,6 +1755,7 @@
     function mostrarResumenFinal(){
       partidoDetenido=true;
       clearInterval(minuteroInterval);
+      clearInterval(vigilanteInterval);
       clearInterval(flujoContinuoInterval);
       if(ballAnimFrameId!==null) cancelAnimationFrame(ballAnimFrameId);
       if(jugadorAnimFrameId!==null) cancelAnimationFrame(jugadorAnimFrameId);
@@ -1752,6 +1851,7 @@
         return;
       }
       clearInterval(minuteroInterval);
+      clearInterval(vigilanteInterval);
       clearInterval(flujoContinuoInterval);
       if(ballAnimFrameId!==null) cancelAnimationFrame(ballAnimFrameId);
       if(jugadorAnimFrameId!==null) cancelAnimationFrame(jugadorAnimFrameId);
