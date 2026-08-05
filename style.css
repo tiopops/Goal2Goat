@@ -4411,7 +4411,7 @@ body.light-theme.menu-screen{
   85%{opacity:.7}
   100%{transform:translateX(550%);opacity:0}
 }
-.lm-visor-campo-svg{width:100%;height:auto;max-height:62vh;filter:drop-shadow(0 8px 20px rgba(0,0,0,.6))}
+.lm-visor-campo-svg{width:100%;height:100%;max-width:100%;max-height:100%;display:block;filter:drop-shadow(0 8px 20px rgba(0,0,0,.6))}
 .lm-visor-jugador-g{filter:drop-shadow(0 1px 2px rgba(0,0,0,.6))}
 .lm-visor-punto{stroke-width:.6}
 .lm-visor-punto-mio{fill:var(--gold);stroke:#7a6217}
@@ -4497,7 +4497,7 @@ body.light-theme.menu-screen{
 @media(min-width:900px){
   .lm-visor-partido-card{max-width:720px}
   .lm-visor-campo-wrap{padding:16px}
-  .lm-visor-campo-svg{max-height:52vh}
+  .lm-visor-campo-svg{}
 }
 
 /* Indicador de sobres/quiniela pendientes — esquina inferior izquierda

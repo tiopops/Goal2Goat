@@ -814,8 +814,15 @@
     // portero — antes empezaba siempre en el índice 0 (el portero),
     // sin ningún sentido para el saque de centro.
     function primerMedioCentro(roles){
-      const idx=roles.findIndex(r=>r==='mid');
-      return idx>=0 ? idx : Math.floor(roles.length/2);
+      // A pesar del nombre de la función (histórico), ahora elige a un
+      // DELANTERO para el saque de centro — en la vida real son los
+      // delanteros quienes se sitúan en el círculo central para
+      // sacar, y luego tocan el balón hacia atrás a un compañero
+      // (esto último ya lo hace sacarDeCentro).
+      const idxFwd=roles.findIndex(r=>r==='fwd');
+      if(idxFwd>=0) return idxFwd;
+      const idxMid=roles.findIndex(r=>r==='mid');
+      return idxMid>=0 ? idxMid : Math.floor(roles.length/2);
     }
     let idxConBalonMio=primerMedioCentro(rolesMios), idxConBalonRival=primerMedioCentro(rolesRival);
     // Pases seguidos de la jugada actual — le da memoria a la
@@ -1498,7 +1505,7 @@
         const distDefensaAislado = Math.hypot(equipoDefiende[defensaAislado].x-posActual.x, equipoDefiende[defensaAislado].y-posActual.y);
         const presionAquiAhora = equipoDefiende.filter(rv=>Math.hypot(rv.x-posActual.x, rv.y-posActual.y)<14).length;
         const ritmoAtaca = posesionMia ? misStatsReales.pace : rival.pace;
-        if(distDefensaAislado<11 && presionAquiAhora===1 && zona>0.15 && Math.random()<(ritmoAtaca-40)/220){
+        if(distDefensaAislado<11 && presionAquiAhora===1 && zona>0.15 && Math.random()<(ritmoAtaca-40)/140){
           const avanzaHacia = golObjetivo;
           const destinoRegate={x:posActual.x+(avanzaHacia.x-posActual.x)*0.22, y:posActual.y+(avanzaHacia.y-posActual.y)*0.22};
           const regateExitoso = Math.random()<0.62;
@@ -1829,7 +1836,7 @@
       const balonPosAhora={x:parseFloat(balon.getAttribute('cx')), y:parseFloat(balon.getAttribute('cy'))};
       actualizarFormacionDinamica(posesionMia, posesionMia?idxBalonAhora:undefined, posesionMia?undefined:idxBalonAhora, balonPosAhora,
         posesionMia?receptorPaseIdx:undefined, posesionMia?undefined:receptorPaseIdx);
-    }, real(300));
+    }, real(230));
 
     const velocidadBtn=overlay.querySelector('#lmVisorVelocidadBtn');
     if(velocidadBtn) velocidadBtn.addEventListener('click', ()=>{
