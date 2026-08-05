@@ -72,6 +72,21 @@
       miGolXY={x:CENTRO_X,y:147}; rivalGolXY={x:CENTRO_X,y:3};
     }
     centroCampo={x:CENTRO_X,y:CENTRO_Y};
+    // Margen de seguridad: ningún jugador (sobre todo el portero, que
+    // se coloca más cerca del borde que nadie) debe quedar tan pegado
+    // al límite del campo que su círculo o su nombre se salgan del
+    // lienzo visible. Se aplica DESPUÉS de las fórmulas de arriba,
+    // igual en las dos orientaciones, así cubre cualquier jugador,
+    // no solo el portero.
+    const MARGEN_BORDE = 8.5;
+    function aplicarMargenBorde(slots){
+      return slots.map(s=>({
+        x: Math.max(MARGEN_BORDE, Math.min(ANCHO-MARGEN_BORDE, s.x)),
+        y: Math.max(MARGEN_BORDE, Math.min(ALTO-MARGEN_BORDE, s.y))
+      }));
+    }
+    misSlots = aplicarMargenBorde(misSlots);
+    rivalSlots = aplicarMargenBorde(rivalSlots);
 
     // Dorsal y nombre real de cada titular: se cruza la posición de la
     // formación (slot.slot, p.ej. "POR", "DFC1") con la alineación real
