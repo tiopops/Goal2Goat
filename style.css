@@ -1261,6 +1261,10 @@ body.dark-theme .settings-item:hover{background:var(--row-hover);color:var(--gol
     z-index:30500!important;
     padding-bottom:env(safe-area-inset-bottom,0px);
   }
+  #mobileTabBar::after{
+    content:'';position:absolute;top:100%;left:0;right:0;height:14px;
+    background:#111;
+  }
   body.liga-manager-screen #lmMobileTabBar{
     display:flex!important;
     position:fixed!important;bottom:10px!important;left:0!important;right:0!important;
@@ -1268,6 +1272,10 @@ body.dark-theme .settings-item:hover{background:var(--row-hover);color:var(--gol
     border-top:2px solid #333!important;
     z-index:30500!important;
     padding-bottom:env(safe-area-inset-bottom,0px);
+  }
+  body.liga-manager-screen #lmMobileTabBar::after{
+    content:'';position:absolute;top:100%;left:0;right:0;height:14px;
+    background:#111;
   }
   .mob-tab{
     flex:1;background:none;border:none;color:#666;

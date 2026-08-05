@@ -343,6 +343,25 @@ function playSound(name, data){
       [0,1,2,3,4].forEach((i)=>tone(ctx, 180+Math.random()*90, i*0.085, 0.05, 'square', 0.10, 0.0001));
       tone(ctx, 140, 0.46, 0.09, 'triangle', 0.13, 0.0001);
       break;
+    case 'tackle_thud': // disputa de balón entre dos jugadores — un
+      // golpe físico corto y seco, dos impactos muy próximos entre sí
+      // (el forcejeo), nada musical ni triunfal.
+      tone(ctx, 95, 0, 0.07, 'square', 0.11, 0.0001);
+      tone(ctx, 80, 0.05, 0.06, 'square', 0.08, 0.0001);
+      break;
+    case 'save_catch': // parada del portero — un impacto amortiguado
+      // (el golpe del balón contra los guantes) seguido de un tono
+      // muy breve y contenido, sin nada triunfal — es una parada, no
+      // un gol.
+      tone(ctx, 140, 0, 0.05, 'square', 0.10, 0.0001);
+      tone(ctx, 320, 0.04, 0.09, 'sine', 0.06, 0.0001);
+      break;
+    case 'dribble_flick': // regate exitoso — un toque rápido y ágil,
+      // dos notas cortas ascendentes, transmitiendo agilidad sin ser
+      // triunfal (no es un gol, solo una jugada resuelta con calidad).
+      tone(ctx, 480, 0, 0.045, 'triangle', 0.08, 0.0001);
+      tone(ctx, 700, 0.035, 0.06, 'triangle', 0.09, 0.0001);
+      break;
     case 'training_day': // día de entrenamiento en el calendario de Liga
       // Manager — un par de notas suaves y ascendentes, nada percusivo.
       tone(ctx, 500, 0, 0.11, 'sine', 0.09, 0.0001);

@@ -192,10 +192,10 @@
             <circle cx="${CENTRO_X}" cy="${CENTRO_Y}" r="1.3" class="lm-visor-balon" id="lmVisorBalon"/>
             <circle cx="${CENTRO_X}" cy="${CENTRO_Y}" r="3.6" class="lm-visor-resalte" id="lmVisorResalte" opacity="0"/>
             <g id="lmVisorAlerta" opacity="0" style="pointer-events:none">
-              <circle cx="0" cy="0" r="3.4" fill="#e6362f" stroke="#fff" stroke-width="0.4"/>
-              <foreignObject x="-2.6" y="-2.6" width="5.2" height="5.2">
+              <circle id="lmVisorAlertaFondo" cx="0" cy="0" r="4.8" fill="#e6362f" stroke="#fff" stroke-width="0.45"/>
+              <foreignObject x="-3.6" y="-3.6" width="7.2" height="7.2">
                 <div xmlns="http://www.w3.org/1999/xhtml" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center">
-                  <i id="lmVisorAlertaIcono" class="ph ph-bold ph-hand-fist" style="font-size:3.6px;color:#fff;line-height:1"></i>
+                  <i id="lmVisorAlertaIcono" class="ph ph-bold ph-hand-fist" style="font-size:4.2px;color:#fff;line-height:1"></i>
                 </div>
               </foreignObject>
             </g>
@@ -415,15 +415,20 @@
     // Phosphor reales (nunca texto suelto).
     const alertaEl = overlay.querySelector('#lmVisorAlerta');
     const alertaIconoEl = overlay.querySelector('#lmVisorAlertaIcono');
-    function mostrarAlertaEvento(x,y,iconoClase){
+    const alertaFondoEl = overlay.querySelector('#lmVisorAlertaFondo');
+    function mostrarAlertaEvento(x,y,iconoClase,colorFondo,colorIcono){
       if(!alertaEl) return;
-      if(alertaIconoEl) alertaIconoEl.setAttribute('class', `ph ph-bold ${iconoClase}`);
+      if(alertaIconoEl){
+        alertaIconoEl.setAttribute('class', `ph ph-bold ${iconoClase}`);
+        alertaIconoEl.style.color = colorIcono || '#fff';
+      }
+      if(alertaFondoEl) alertaFondoEl.setAttribute('fill', colorFondo || '#e6362f');
       alertaEl.style.transition='none';
-      alertaEl.setAttribute('transform', `translate(${x},${y-5.5}) scale(0.4)`);
+      alertaEl.setAttribute('transform', `translate(${x},${y-6.8}) scale(0.4)`);
       alertaEl.setAttribute('opacity','0');
       void alertaEl.getBoundingClientRect(); // fuerza el repintado antes de animar
       alertaEl.style.transition='transform .18s cubic-bezier(.34,1.56,.64,1), opacity .12s ease-out';
-      alertaEl.setAttribute('transform', `translate(${x},${y-6.5}) scale(1)`);
+      alertaEl.setAttribute('transform', `translate(${x},${y-8}) scale(1)`);
       alertaEl.setAttribute('opacity','1');
       setTimeout(()=>{
         alertaEl.style.transition='opacity .45s ease-in';
@@ -431,11 +436,15 @@
       }, 550);
     }
     // Alias por tipo de evento — nombres claros en cada punto donde se
-    // usan, en vez de tener que recordar qué icono corresponde a cada
-    // situación cada vez que se llama.
-    function mostrarAlertaDisputa(x,y){ mostrarAlertaEvento(x,y,'ph-hand-fist'); }
-    function mostrarAlertaFalta(x,y){ mostrarAlertaEvento(x,y,'ph-warning'); }
-    function mostrarAlertaParada(x,y){ mostrarAlertaEvento(x,y,'ph-hands-clapping'); }
+    // usan, en vez de tener que recordar qué icono y qué color
+    // corresponde a cada situación cada vez que se llama. No todos los
+    // eventos son igual de "graves": la disputa y la falta son rojas
+    // (contacto/físico), el regate es una jugada positiva (amarillo,
+    // icono negro) y la parada es más neutra (gris claro, icono negro).
+    function mostrarAlertaDisputa(x,y){ mostrarAlertaEvento(x,y,'ph-hand-fist','#e6362f','#fff'); if(typeof window.playSound==='function') window.playSound('tackle_thud'); }
+    function mostrarAlertaFalta(x,y){ mostrarAlertaEvento(x,y,'ph-warning','#e6362f','#fff'); }
+    function mostrarAlertaParada(x,y){ mostrarAlertaEvento(x,y,'ph-hands-clapping','#d8d8d8','#1a1a1a'); if(typeof window.playSound==='function') window.playSound('save_catch'); }
+    function mostrarAlertaRegate(x,y){ mostrarAlertaEvento(x,y,'ph-sneaker-move','#f0c419','#1a1a1a'); if(typeof window.playSound==='function') window.playSound('dribble_flick'); }
     // ========================================================
     // IA SENCILLA DEL PARTIDO — en vez de guionizar jugadas fijas, en
     // cada instante el jugador con el balón decide qué hacer según 3
@@ -888,7 +897,7 @@
         setTimeout(()=>{
           moverBalon(equipoSaca2P[idxSaca2P].x, equipoSaca2P[idxSaca2P].y, 400);
         }, real(950));
-        setTimeout(tick, real(2400));
+        setTimeout(()=>sacarDeCentro(posesionMia, idxSaca2P), real(2400));
         return;
       }
       // Tarjeta real de este partido, si toca ya — se muestra un
@@ -981,8 +990,8 @@
               const idxSacaGol = posesionMia?idxConBalonMio:idxConBalonRival;
               setTimeout(()=>{
                 moverBalon(equipoSacaGol[idxSacaGol].x, equipoSacaGol[idxSacaGol].y, 400);
+                setTimeout(()=>sacarDeCentro(posesionMia, idxSacaGol), real(450));
               }, real(950));
-              setTimeout(tick, real(750));
             }, real(1300));
           }, real(duracionVueloGol+120));
         }
@@ -1497,6 +1506,7 @@
           if(regateExitoso){
             moverBalon(destinoRegate.x, destinoRegate.y, dur*0.8);
             infoBar.textContent=`${nombreAtaca} encara y supera a su marcador`;
+            mostrarAlertaRegate(destinoRegate.x, destinoRegate.y);
             actualizarFormacionDinamica(posesionMia, posesionMia?idxConBalon:undefined, posesionMia?undefined:idxConBalon, posActual);
             setTimeout(()=>{
               tiempoTranscurrido+=dur;
@@ -1760,13 +1770,49 @@
         tick();
       }, real(duracionEfectiva));
     }
+    // Saque de centro realista: en la vida real, quien saca de centro
+    // SIEMPRE toca el balón hacia atrás o hacia un lado a un
+    // compañero cercano — nunca hacia delante, porque los rivales
+    // deben quedarse fuera del círculo central hasta que el balón se
+    // mueve, y el equipo que saca busca una posición estable antes de
+    // construir el ataque. Antes, tras el pitido, se dejaba que la IA
+    // normal decidiera el primer pase, que podía perfectamente elegir
+    // una opción hacia delante — algo que no ocurre nunca en un saque
+    // de centro real.
+    function sacarDeCentro(esMioQueSaca, idxQueSaca){
+      const equipoQueSaca = esMioQueSaca?posMia:posRival;
+      const rolesQueSaca = esMioQueSaca?rolesMios:rolesRival;
+      const nombreQueSaca = esMioQueSaca?miNombre:rivalNombre;
+      // Compañero cercano al centro para el toque inicial: otro
+      // mediocentro si lo hay, o el más cercano al punto de saque que
+      // no sea el propio sacador ni el portero.
+      let companeroIdx = rolesQueSaca.findIndex((r,ri)=>r==='mid' && ri!==idxQueSaca);
+      if(companeroIdx<0) companeroIdx = jugadorMasCercano(equipoQueSaca, centroCampo.x, centroCampo.y, idxQueSaca);
+      if(companeroIdx===0 || companeroIdx<0 || companeroIdx===idxQueSaca){
+        // Sin compañero válido cerca (caso extremo) — se deja pasar
+        // directamente a la IA normal, sin forzar nada raro.
+        tick();
+        return;
+      }
+      const posSlotCompanero = (esMioQueSaca?misSlots:rivalSlots)[companeroIdx];
+      // El toque va hacia la posición de formación del compañero, casi
+      // siempre detrás o al lado del punto de centro, nunca hacia la
+      // portería rival.
+      moverBalon(posSlotCompanero.x, posSlotCompanero.y, 500);
+      infoBar.textContent=`${nombreQueSaca} pone el balón en juego`;
+      setTimeout(()=>{
+        if(esMioQueSaca){ idxConBalonMio=companeroIdx; } else { idxConBalonRival=companeroIdx; }
+        tiempoTranscurrido+=650;
+        setTimeout(tick, real(150));
+      }, real(500));
+    }
     // El balón empieza pegado de verdad al jugador que saca de centro,
     // no flotando solo en el punto exacto del centro del campo.
     const equipoInicial = posesionMia?posMia:posRival;
     const idxInicial = posesionMia?idxConBalonMio:idxConBalonRival;
     moverBalon(equipoInicial[idxInicial].x, equipoInicial[idxInicial].y, 1);
     if(typeof window.playSound==='function') window.playSound('whistle');
-    setTimeout(tick, real(600));
+    setTimeout(()=>sacarDeCentro(posesionMia, idxInicial), real(600));
 
     // Flujo continuo: el bucle de DECISIONES (tick) sigue corriendo
     // cada 1-2 segundos, porque ahí es donde se decide pase/disparo/
