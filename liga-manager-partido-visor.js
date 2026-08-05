@@ -1000,7 +1000,7 @@
         // delantero real + el balón a una posición de remate creíble,
         // y SOLO ENTONCES se dispara a portería.
         const distAlGolYa = Math.hypot(balonPos0.x-objetivoGol.x, balonPos0.y-objetivoGol.y);
-        const distanciaCerca = Math.hypot(ANCHO,ALTO)*0.16; // ~16% de la diagonal del campo
+        const distanciaCerca = Math.hypot(ANCHO,ALTO)*0.07; // ~7% de la diagonal del campo — de verdad cerca del área, no una zona amplia
         function dispararAGol(origenX, origenY, esperaExtra){
           const destinoGol = objetivoGol;
           const duracionVueloGol=850;
@@ -1319,7 +1319,7 @@
       // jugador ocupaba solo un instante después.
       let interceptorPendienteIdx=-1;
 
-      const probBase = zona<0.35?0.48:0.36;
+      const probBase = zona<0.35?0.34:0.24;
       const probPresion = probBase + Math.max(0,presionadores-1)*0.16; // +16pp por cada presionador extra
       if(distRival<9.5 && Math.random()<probPresion){
         // Presión de cerca: el rival se lleva el balón de verdad — más
@@ -1330,7 +1330,7 @@
         // (rechace, disputa físca) y se lo puede llevar cualquiera de
         // los dos equipos, el que llegue antes — como una pelea de
         // balón de verdad, no una recuperación perfecta siempre.
-        const esDisputaSuelta = disputasConsecutivas<2 && Math.random()<0.3;
+        const esDisputaSuelta = disputasConsecutivas<2 && Math.random()<0.16;
         if(esDisputaSuelta){
           disputasConsecutivas++;
           const puntoDisputa={
