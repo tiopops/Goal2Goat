@@ -3285,12 +3285,12 @@ body.liga-manager-screen .ranking-btn-label-lm{display:inline}
    todo lo ancho quedaría absurdo, ej. CERRAR en el equipo médico), en
    cuyo caso queda compacto y alineado a la derecha. */
 .lm-popup-actions{display:flex;gap:10px;width:100%;margin-top:14px;justify-content:center}
-/* Fila de velocidad/continuar del visor del partido: SIEMPRE visible,
-   fija en la parte de abajo de la tarjeta — así el usuario nunca
-   depende de que el gesto de scroll funcione bien para alcanzarla,
-   pase lo que pase con el resto del contenido de la tarjeta. */
+/* Fila de velocidad/continuar del visor del partido: al estar fuera
+   de .lm-visor-scroll-mid por estructura, ya es una parte fija normal
+   de la tarjeta — siempre visible, sin necesitar ningún truco de
+   scroll ni de posicionamiento especial. */
 .lm-visor-partido-card .lm-popup-actions{
-  position:sticky;bottom:0;left:0;right:0;z-index:8;
+  flex-shrink:0;
   background:linear-gradient(160deg,#1c1c1c,#141414);
   padding:10px 16px;margin-top:0;
   border-top:1px solid rgba(201,162,39,.25);
@@ -4336,11 +4336,21 @@ body.light-theme.menu-screen{
 .lm-visor-partido-card{
   width:94vw;max-width:420px;max-height:92vh;display:flex;flex-direction:column;
   background:linear-gradient(160deg,#1c1c1c,#141414);border:1px solid rgba(201,162,39,.35);
-  border-radius:16px;overflow-y:auto;overflow-x:hidden;
+  border-radius:16px;overflow:hidden;
   box-shadow:0 24px 70px rgba(0,0,0,.75);
-  touch-action:pan-y;
 }
-.lm-visor-partido-card *{touch-action:pan-y}
+/* Zona de scroll interna: cabecera (marcador) y botones quedan FUERA
+   de aquí, como partes fijas normales del diseño — el mismo patrón de
+   "cabecera fija + contenido que se desplaza + pie fijo" que usan
+   miles de scrolls que ya funcionan bien en el resto del juego. Antes
+   se intentaba que la tarjeta ENTERA hiciera scroll, cabecera y
+   botones incluidos, lo cual no se comportaba igual que el resto de
+   popups del proyecto. */
+.lm-visor-scroll-mid{
+  flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;
+  display:flex;flex-direction:column;
+  touch-action:pan-y;-webkit-overflow-scrolling:touch;
+}
 .lm-visor-marcador{
   display:flex;align-items:center;justify-content:space-between;gap:8px;
   padding:16px 18px 10px;background:linear-gradient(160deg,#1c1c1c,#161616);

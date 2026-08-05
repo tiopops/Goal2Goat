@@ -195,6 +195,7 @@
             <span class="lm-visor-equipo lm-visor-equipo-rival">${rivalNombre}</span>
           </div>
         </div>
+        <div class="lm-visor-scroll-mid">
         <div class="lm-visor-marcador-linea"></div>
         <div class="lm-visor-minutero" id="lmVisorMinutero">0'</div>
         <div class="lm-visor-posesion-directo">
@@ -243,6 +244,7 @@
         <div class="lm-visor-info-bar" id="lmVisorInfoBar">${t('lm.viendo_partido')}</div>
         <div id="lmVisorResumenBox" style="display:none"></div>
         <button id="lmVisorHistoricoBtn" class="mode-card-btn mode-card-btn-secondary" style="display:none;width:calc(100% - 32px);margin:0 16px 8px"><i class="ph ph-bold ph-notebook"></i> ${t('lm.historico_partido_btn')}</button>
+        </div>
         <div class="lm-popup-actions">
           <button id="lmVisorVelocidadBtn" class="mode-card-btn mode-card-btn-secondary"><i class="ph ph-bold ph-fast-forward"></i> ${t('lm.velocidad')} 1X</button>
           <button id="lmVisorCerrarBtn" class="mode-card-btn mode-card-btn-gold">${t('lm.terminar_mostrar_resultados')}</button>
