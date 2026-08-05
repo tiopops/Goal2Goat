@@ -427,6 +427,7 @@ window.TRANSLATIONS = {
   'lm.dia_viernes': {es:'viernes', en:'Friday', pt:'sexta-feira', fr:'vendredi', de:'Freitag', it:'venerdi'},
   'lm.dia_sabado': {es:'sábado', en:'Saturday', pt:'sábado', fr:'samedi', de:'Samstag', it:'sabato'},
   'lm.visor_descanso': {es:'FIN DE LA PRIMERA PARTE', en:'HALF TIME', pt:'FIM DA PRIMEIRA PARTE', fr:'FIN DE LA PREMIERE MI-TEMPS', de:'HALBZEITENDE', it:'FINE PRIMO TEMPO'},
+  'lm.visor_saque_banda': {es:'Saque de banda', en:'Throw-in', pt:'Lançamento lateral', fr:'Touche', de:'Einwurf', it:'Rimessa laterale'},
   'lm.usar_btn': {es:'USAR', en:'USE', pt:'USAR', fr:'UTILISER', de:'VERWENDEN', it:'USA'},
   'lm.necesita_lesion_activa': {es:'Necesitas una lesión activa', en:'You need an active injury', pt:'Precisa de uma lesão ativa', fr:'Tu as besoin d une blessure active', de:'Du brauchst eine aktive Verletzung', it:'Hai bisogno di un infortunio attivo'},
   'lm.especialidad_maxima': {es:'Especialidad al máximo nivel', en:'Specialty at max level', pt:'Especialidade no nível máximo', fr:'Specialite au niveau maximum', de:'Spezialisierung auf Hochststufe', it:'Specialita al livello massimo'},

@@ -868,21 +868,147 @@
           }, real(duracionVueloGol+120));
         }
         if(distAlGolYa>distanciaCerca){
-          // Acercamiento previo: un delantero real corre hacia una
-          // posición de remate cerca del área, el balón le llega, y
-          // desde ahí se dispara — nunca directo desde lejos.
           const rolesAtaca2 = esMio?rolesMios:rolesRival;
-          let delanteroIdx = rolesAtaca2.findIndex(r=>r==='fwd');
-          if(delanteroIdx<0) delanteroIdx = jugadorMasCercano(equipoAnotaPos, objetivoGol.x, objetivoGol.y, 0);
-          const posRemate = { x: objetivoGol.x + (objetivoGol.x<CENTRO_X?12:-12), y: objetivoGol.y + (Math.random()-0.5)*14 };
+          const equipoDefiendeGol = esMio?posRival:posMia;
+          // Comprueba y corrige el fuera de juego de una posición de
+          // remate concreta, retrasándola hasta la línea del último
+          // defensa si hiciera falta — se reutiliza en TODOS los tipos
+          // de jugada, para que ninguno pueda producir un remate
+          // adelantado, sea cual sea el camino que tome la jugada.
+          function corregirFueraJuego(pos){
+            const ultimoDefensorGol = equipoDefiendeGol.reduce((max,rv,ri)=>{
+              if(ri===0) return max;
+              const prof = esEscritorio ? (esMio?rv.x:ANCHO-rv.x) : (esMio?ALTO-rv.y:rv.y);
+              return Math.max(max, prof);
+            }, -Infinity);
+            const prof = esEscritorio ? (esMio?pos.x:ANCHO-pos.x) : (esMio?ALTO-pos.y:pos.y);
+            if(prof>ultimoDefensorGol-2){
+              const profCorregida=ultimoDefensorGol-2;
+              return esEscritorio
+                ? {x: esMio?profCorregida:ANCHO-profCorregida, y:pos.y}
+                : {x:pos.x, y: esMio?ALTO-profCorregida:profCorregida};
+            }
+            return pos;
+          }
+          // Variedad real de jugadas de gol: antes SIEMPRE era la misma
+          // secuencia (un delantero corre, recibe, dispara) — ahora se
+          // elige al azar entre 5 tipos de jugada distintos, cada uno
+          // con su propia lógica y su propio texto, para que dos goles
+          // seguidos no se vean nunca calcados el uno del otro.
+          const tipoJugada = Math.floor(Math.random()*5);
+
+          if(tipoJugada===0){
+            // 1) Carrera individual: un delantero se desmarca y recibe
+            // directamente cerca del área.
+            let delanteroIdx = rolesAtaca2.findIndex(r=>r==='fwd');
+            if(delanteroIdx<0) delanteroIdx = jugadorMasCercano(equipoAnotaPos, objetivoGol.x, objetivoGol.y, 0);
+            const posRemate = corregirFueraJuego({ x: objetivoGol.x + (objetivoGol.x<CENTRO_X?12:-12), y: objetivoGol.y + (Math.random()-0.5)*14 });
+            actualizarFormacionDinamica(esMio, esMio?idxConBalonMio:undefined, esMio?undefined:idxConBalonRival, balonPos0,
+              esMio?delanteroIdx:undefined, esMio?undefined:delanteroIdx);
+            moverJugador(esMio, delanteroIdx, posRemate.x, posRemate.y, 900);
+            setTimeout(()=>{
+              moverBalon(posRemate.x, posRemate.y, 650);
+              infoBar.textContent=`${esMio?miNombre:rivalNombre} se escapa y llega con peligro al área`;
+              setTimeout(()=>dispararAGol(posRemate.x, posRemate.y, 900+650), real(650));
+            }, real(900));
+            return;
+          }
+
+          if(tipoJugada===1){
+            // 2) Pase al hueco: un mediocentro lanza un pase filtrado a
+            // la carrera del delantero, que llega a rematar de primeras.
+            let medioIdx = rolesAtaca2.findIndex(r=>r==='mid');
+            if(medioIdx<0) medioIdx = jugadorMasCercano(equipoAnotaPos, balonPos0.x, balonPos0.y, 0);
+            let delanteroIdx = rolesAtaca2.findIndex((r,ri)=>r==='fwd' && ri!==medioIdx);
+            if(delanteroIdx<0) delanteroIdx = jugadorMasCercano(equipoAnotaPos, objetivoGol.x, objetivoGol.y, medioIdx);
+            const posRemate = corregirFueraJuego({ x: objetivoGol.x + (objetivoGol.x<CENTRO_X?9:-9), y: objetivoGol.y + (Math.random()-0.5)*18 });
+            infoBar.textContent=`${esMio?miNombre:rivalNombre} busca el pase al hueco`;
+            actualizarFormacionDinamica(esMio, esMio?idxConBalonMio:undefined, esMio?undefined:idxConBalonRival, balonPos0,
+              esMio?delanteroIdx:undefined, esMio?undefined:delanteroIdx);
+            moverJugador(esMio, delanteroIdx, posRemate.x, posRemate.y, 750);
+            setTimeout(()=>{
+              moverBalon(posRemate.x, posRemate.y, 550);
+              infoBar.textContent=`¡Pase filtrado! ${esMio?miNombre:rivalNombre} se planta solo`;
+              setTimeout(()=>dispararAGol(posRemate.x, posRemate.y, 750+550), real(550));
+            }, real(750));
+            return;
+          }
+
+          if(tipoJugada===2){
+            // 3) Centro desde banda: el balón se abre a una zona ancha
+            // antes de centrar al área, donde espera un rematador.
+            const bandaY = esEscritorio ? (Math.random()<0.5?8:ALTO-8) : posActual.y;
+            const bandaX = esEscritorio ? posActual.x : (Math.random()<0.5?8:ANCHO-8);
+            const puntoBanda={x:bandaX, y:bandaY};
+            let extremoIdx = jugadorMasCercano(equipoAnotaPos, puntoBanda.x, puntoBanda.y, 0);
+            const posRemate = corregirFueraJuego({ x: objetivoGol.x + (objetivoGol.x<CENTRO_X?10:-10), y: objetivoGol.y + (Math.random()-0.5)*10 });
+            let rematadorIdx = rolesAtaca2.findIndex((r,ri)=>r==='fwd' && ri!==extremoIdx);
+            if(rematadorIdx<0) rematadorIdx = jugadorMasCercano(equipoAnotaPos, posRemate.x, posRemate.y, extremoIdx);
+            infoBar.textContent=`${esMio?miNombre:rivalNombre} se abre hacia la banda`;
+            moverJugador(esMio, extremoIdx, puntoBanda.x, puntoBanda.y, 700);
+            setTimeout(()=>{
+              moverBalon(puntoBanda.x, puntoBanda.y, 500);
+              setTimeout(()=>{
+                actualizarFormacionDinamica(esMio, esMio?extremoIdx:undefined, esMio?undefined:extremoIdx, puntoBanda,
+                  esMio?rematadorIdx:undefined, esMio?undefined:rematadorIdx);
+                moverJugador(esMio, rematadorIdx, posRemate.x, posRemate.y, 650);
+                infoBar.textContent=`${esMio?miNombre:rivalNombre} centra desde la banda`;
+                setTimeout(()=>{
+                  moverBalon(posRemate.x, posRemate.y, 480);
+                  setTimeout(()=>dispararAGol(posRemate.x, posRemate.y, 700+500+650+480), real(480));
+                }, real(650));
+              }, real(500));
+            }, real(700));
+            return;
+          }
+
+          if(tipoJugada===3){
+            // 4) Contraataque rápido: 2 pases seguidos avanzando por el
+            // centro del campo antes de llegar al área.
+            let medioIdx = rolesAtaca2.findIndex(r=>r==='mid');
+            if(medioIdx<0) medioIdx = jugadorMasCercano(equipoAnotaPos, balonPos0.x, balonPos0.y, 0);
+            const puntoIntermedio = { x: balonPos0.x+(objetivoGol.x-balonPos0.x)*0.55, y: balonPos0.y+(objetivoGol.y-balonPos0.y)*0.55 };
+            let delanteroIdx = rolesAtaca2.findIndex((r,ri)=>r==='fwd' && ri!==medioIdx);
+            if(delanteroIdx<0) delanteroIdx = jugadorMasCercano(equipoAnotaPos, objetivoGol.x, objetivoGol.y, medioIdx);
+            const posRemate = corregirFueraJuego({ x: objetivoGol.x + (objetivoGol.x<CENTRO_X?11:-11), y: objetivoGol.y + (Math.random()-0.5)*16 });
+            infoBar.textContent=`¡Contraataque de ${esMio?miNombre:rivalNombre}!`;
+            moverJugador(esMio, medioIdx, puntoIntermedio.x, puntoIntermedio.y, 600);
+            setTimeout(()=>{
+              moverBalon(puntoIntermedio.x, puntoIntermedio.y, 450);
+              setTimeout(()=>{
+                actualizarFormacionDinamica(esMio, esMio?medioIdx:undefined, esMio?undefined:medioIdx, puntoIntermedio,
+                  esMio?delanteroIdx:undefined, esMio?undefined:delanteroIdx);
+                moverJugador(esMio, delanteroIdx, posRemate.x, posRemate.y, 650);
+                infoBar.textContent=`${esMio?miNombre:rivalNombre} tira del contraataque`;
+                setTimeout(()=>{
+                  moverBalon(posRemate.x, posRemate.y, 480);
+                  setTimeout(()=>dispararAGol(posRemate.x, posRemate.y, 600+450+650+480), real(480));
+                }, real(650));
+              }, real(450));
+            }, real(600));
+            return;
+          }
+
+          // 5) Rechace / segunda jugada: un primer remate se topa con un
+          // rechace, y un segundo jugador llega para empujarla dentro.
+          let rematador1Idx = rolesAtaca2.findIndex(r=>r==='fwd');
+          if(rematador1Idx<0) rematador1Idx = jugadorMasCercano(equipoAnotaPos, objetivoGol.x, objetivoGol.y, 0);
+          const posRemate1 = corregirFueraJuego({ x: objetivoGol.x + (objetivoGol.x<CENTRO_X?15:-15), y: objetivoGol.y + (Math.random()-0.5)*12 });
+          let rematador2Idx = rolesAtaca2.findIndex((r,ri)=>ri!==rematador1Idx && (r==='fwd'||r==='mid'));
+          if(rematador2Idx<0) rematador2Idx = jugadorMasCercano(equipoAnotaPos, posRemate1.x, posRemate1.y, rematador1Idx);
+          const posRemate2 = corregirFueraJuego({ x: posRemate1.x + (posRemate1.x<CENTRO_X?6:-6), y: posRemate1.y + (Math.random()-0.5)*10 });
           actualizarFormacionDinamica(esMio, esMio?idxConBalonMio:undefined, esMio?undefined:idxConBalonRival, balonPos0,
-            esMio?delanteroIdx:undefined, esMio?undefined:delanteroIdx);
-          moverJugador(esMio, delanteroIdx, posRemate.x, posRemate.y, 900);
+            esMio?rematador1Idx:undefined, esMio?undefined:rematador1Idx);
+          moverJugador(esMio, rematador1Idx, posRemate1.x, posRemate1.y, 850);
+          moverJugador(esMio, rematador2Idx, posRemate2.x, posRemate2.y, 950);
           setTimeout(()=>{
-            moverBalon(posRemate.x, posRemate.y, 650);
-            infoBar.textContent=`${esMio?miNombre:rivalNombre} llega con peligro al área`;
-            setTimeout(()=>dispararAGol(posRemate.x, posRemate.y, 900+650), real(650));
-          }, real(900));
+            moverBalon(posRemate1.x, posRemate1.y, 600);
+            infoBar.textContent=`${esMio?miNombre:rivalNombre} remata... ¡y el rechace queda suelto en el área!`;
+            setTimeout(()=>{
+              moverBalon(posRemate2.x, posRemate2.y, 380);
+              setTimeout(()=>dispararAGol(posRemate2.x, posRemate2.y, 850+600+380), real(380));
+            }, real(600));
+          }, real(850));
           return;
         }
         actualizarFormacionDinamica(esMio, esMio?idxConBalonMio:undefined, esMio?undefined:idxConBalonRival, balonPos0);
@@ -946,9 +1072,42 @@
         const rotX=dirX/dirLen*Math.cos(anguloDespeje)-dirY/dirLen*Math.sin(anguloDespeje);
         const rotY=dirX/dirLen*Math.sin(anguloDespeje)+dirY/dirLen*Math.cos(anguloDespeje);
         const alcance=28+Math.random()*16;
+        // Coordenada SIN recortar, para saber de verdad si el despeje
+        // se iría fuera por la banda — antes siempre se recortaba a la
+        // fuerza para quedarse dentro del campo, así que el balón
+        // nunca salía de verdad por banda, algo que en un partido real
+        // pasa constantemente (es de hecho la interrupción más
+        // habitual, más que los córners).
+        const destinoDespejeCrudo={x: posActual.x+rotX*alcance, y: posActual.y+rotY*alcance};
+        const anchoCoord = esEscritorio ? destinoDespejeCrudo.y : destinoDespejeCrudo.x;
+        const anchoLimite = esEscritorio ? ALTO : ANCHO;
+        const seVaFuera = anchoCoord<-3 || anchoCoord>anchoLimite+3;
+        if(seVaFuera){
+          // Saque de banda real: posesión para el equipo que NO ha
+          // sacado el balón, desde el punto de la línea de banda por
+          // donde salió.
+          const puntoBanda = esEscritorio
+            ? {x: Math.max(4, Math.min(ANCHO-4, destinoDespejeCrudo.x)), y: anchoCoord<0?2:ALTO-2}
+            : {x: anchoCoord<0?2:ANCHO-2, y: Math.max(4, Math.min(ALTO-4, destinoDespejeCrudo.y))};
+          moverBalon(puntoBanda.x, puntoBanda.y, 500);
+          infoBar.textContent=`${nombreAtaca} despeja y el balón sale por banda`;
+          pasesJugadaActual=0; historialMio=[]; historialRival=[];
+          actualizarFormacionDinamica(posesionMia, posesionMia?idxConBalon:undefined, posesionMia?undefined:idxConBalon, posActual);
+          setTimeout(()=>{
+            const equipoSaqueBanda = posesionMia?posRival:posMia; // saca el equipo contrario a quien despejó
+            const idxSaqueBanda = jugadorMasCercano(equipoSaqueBanda, puntoBanda.x, puntoBanda.y, 0);
+            posesionMia = !posesionMia;
+            if(posesionMia) idxConBalonMio=idxSaqueBanda; else idxConBalonRival=idxSaqueBanda;
+            moverJugador(posesionMia, idxSaqueBanda, puntoBanda.x, puntoBanda.y, 550);
+            infoBar.textContent=`${t('lm.visor_saque_banda')||'Saque de banda'} (${posesionMia?miNombre:rivalNombre})`;
+            tiempoTranscurrido+=900;
+            setTimeout(tick, real(650));
+          }, real(500));
+          return;
+        }
         const destinoDespeje={
-          x: Math.max(2, Math.min(ANCHO-2, posActual.x+rotX*alcance)),
-          y: Math.max(2, Math.min(ALTO-2, posActual.y+rotY*alcance))
+          x: Math.max(2, Math.min(ANCHO-2, destinoDespejeCrudo.x)),
+          y: Math.max(2, Math.min(ALTO-2, destinoDespejeCrudo.y))
         };
         duracionEfectiva=Math.max(400, Math.min(1100, Math.hypot(destinoDespeje.x-posActual.x, destinoDespeje.y-posActual.y)*17));
         moverBalon(destinoDespeje.x, destinoDespeje.y, duracionEfectiva);

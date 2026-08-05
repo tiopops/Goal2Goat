@@ -51,7 +51,7 @@
         text: 'Tu cuerpo técnico (Director Deportivo, Médico, Preparador Físico y más) te escribe aquí con avisos importantes: lesiones, fichajes, sobres disponibles y decisiones que requieren tu atención.'
       },
       {
-        selector: () => isMobileLayout() ? '#mobileTabBar' : '.app',
+        selector: () => isMobileLayout() ? '#lmMobileTabBar, #mobileTabBar' : '.app',
         title: '6 · Tu centro de mando',
         text: () => (isMobileLayout()
           ? 'En el móvil, las pestañas de abajo cambian entre el campo, tu plantilla, el rival y el correo — todo a un toque.'
@@ -131,7 +131,7 @@
   // ───────── Paso actual ─────────
   function positionBox(box, targetEl){
     const SAFE_TOP = 34;
-    const SAFE_BOTTOM = 12;
+    const SAFE_BOTTOM = 68; // deja hueco de sobra para la barra móvil, aunque no se encuentre el elemento a señalar
     const viewportH = window.innerHeight;
 
     if(!targetEl){
