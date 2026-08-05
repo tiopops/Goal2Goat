@@ -837,6 +837,13 @@
     // bucle en vez de quedarse "pillado" pasando de un lado a otro
     // indefinidamente.
     let historialMio=[], historialRival=[];
+    // Cuenta cuántas disputas de balón seguidas han ocurrido sin que
+    // nadie se haga con el control claro — un forcejeo real no dura
+    // eternamente, así que a partir de la segunda disputa consecutiva
+    // (unos 3 segundos) se fuerza una resolución definitiva basada en
+    // la técnica de los implicados, en vez de dejar que el azar siga
+    // alargando el forcejeo indefinidamente.
+    let disputasConsecutivas=0;
     const FRASES_PASE=[t('lm.visor_construye'), t('lm.visor_avanza')];
     let descansoMostrado=false;
     let partidoDetenido=false; // se activa al pulsar "terminar y mostrar resultados"
@@ -1292,8 +1299,9 @@
         // (rechace, disputa físca) y se lo puede llevar cualquiera de
         // los dos equipos, el que llegue antes — como una pelea de
         // balón de verdad, no una recuperación perfecta siempre.
-        const esDisputaSuelta = Math.random()<0.3;
+        const esDisputaSuelta = disputasConsecutivas<2 && Math.random()<0.3;
         if(esDisputaSuelta){
+          disputasConsecutivas++;
           const puntoDisputa={
             x: (posActual.x+equipoDefiende[rivalCercanoIdx].x)/2 + (Math.random()-0.5)*6,
             y: (posActual.y+equipoDefiende[rivalCercanoIdx].y)/2 + (Math.random()-0.5)*6
@@ -1315,6 +1323,7 @@
             // del balón importa tanto como quién llega antes.
             const ventajaTecnicaMia = (misStatsReales.technique-rival.technique)*0.045;
             posesionMia = (distMioS-ventajaTecnicaMia) <= distRivalS;
+            disputasConsecutivas=0; // se ha resuelto con claridad, la cuenta se reinicia para la próxima vez
             if(posesionMia){ idxConBalonMio=dMioS; moverJugador(true, dMioS, puntoDisputa.x, puntoDisputa.y, 420); }
             else { idxConBalonRival=dRivalS; moverJugador(false, dRivalS, puntoDisputa.x, puntoDisputa.y, 420); }
             tiempoTranscurrido+=dur*0.45+400;

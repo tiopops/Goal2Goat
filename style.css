@@ -4321,7 +4321,7 @@ body.light-theme.menu-screen{
 .lm-visor-partido-card{
   width:94vw;max-width:420px;max-height:92vh;display:flex;flex-direction:column;
   background:linear-gradient(160deg,#1c1c1c,#141414);border:1px solid rgba(201,162,39,.35);
-  border-radius:16px;overflow:hidden;
+  border-radius:16px;overflow-y:auto;overflow-x:hidden;
   box-shadow:0 24px 70px rgba(0,0,0,.75);
 }
 .lm-visor-marcador{
