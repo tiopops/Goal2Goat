@@ -191,6 +191,10 @@
             <g id="lmVisorGrupoMio">${misSlots.map((s,i)=>puntoJugadorHTML(s, i===0, true, i, misNumeros[i], misNombres[i])).join('')}</g>
             <circle cx="${CENTRO_X}" cy="${CENTRO_Y}" r="1.3" class="lm-visor-balon" id="lmVisorBalon"/>
             <circle cx="${CENTRO_X}" cy="${CENTRO_Y}" r="3.6" class="lm-visor-resalte" id="lmVisorResalte" opacity="0"/>
+            <g id="lmVisorAlerta" opacity="0" style="pointer-events:none">
+              <circle cx="0" cy="0" r="3.4" fill="#e6362f" stroke="#fff" stroke-width="0.4"/>
+              <text x="0" y="1.6" text-anchor="middle" font-family="Impact, 'Bebas Neue', sans-serif" font-size="5.5" fill="#fff">!</text>
+            </g>
           </svg>
           <div class="lm-visor-anuncio" id="lmVisorAnuncio"></div>
           ${(clima&&clima.id==='rain')?`<div class="lm-visor-lluvia">${Array.from({length:40}).map(()=>{
@@ -396,6 +400,27 @@
           resalte.setAttribute('opacity','0');
         }, 220);
       }, real(retrasoMs));
+    }
+    // Exclamación roja tipo "alerta" (Metal Gear Solid): un único
+    // pulso, aparece de golpe (sin transición de entrada, para que se
+    // note el sobresalto) justo encima del punto de la disputa, se
+    // mantiene un instante, y se desvanece — para leer visualmente el
+    // momento exacto en que dos jugadores se juegan el balón, sin
+    // depender solo del texto de la barra de información.
+    const alertaEl = overlay.querySelector('#lmVisorAlerta');
+    function mostrarAlertaDisputa(x,y){
+      if(!alertaEl) return;
+      alertaEl.style.transition='none';
+      alertaEl.setAttribute('transform', `translate(${x},${y-5.5}) scale(0.4)`);
+      alertaEl.setAttribute('opacity','0');
+      void alertaEl.getBoundingClientRect(); // fuerza el repintado antes de animar
+      alertaEl.style.transition='transform .18s cubic-bezier(.34,1.56,.64,1), opacity .12s ease-out';
+      alertaEl.setAttribute('transform', `translate(${x},${y-6.5}) scale(1)`);
+      alertaEl.setAttribute('opacity','1');
+      setTimeout(()=>{
+        alertaEl.style.transition='opacity .45s ease-in';
+        alertaEl.setAttribute('opacity','0');
+      }, 550);
     }
     // ========================================================
     // IA SENCILLA DEL PARTIDO — en vez de guionizar jugadas fijas, en
@@ -662,7 +687,7 @@
             }, -Infinity);
             const profJugador = esEscritorio ? (esMio?x:ANCHO-x) : (esMio?ALTO-y:y);
             if(profJugador>ultimoDefensorOffside-1.5){
-              const profCorregida=ultimoDefensorOffside-1.5-Math.random()*3; // un margen variable, no todos en la misma línea exacta
+              const profCorregida=ultimoDefensorOffside-1.5-((i*37)%10)/10*3; // margen fijo por jugador (no aleatorio en cada refresco, para no generar temblor), pero variado entre ellos
               if(esEscritorio) x = esMio?profCorregida:ANCHO-profCorregida;
               else y = esMio?ALTO-profCorregida:profCorregida;
             }
@@ -1243,6 +1268,7 @@
           };
           moverBalon(puntoDisputa.x, puntoDisputa.y, dur*0.45);
           infoBar.textContent=`Disputa de balón entre ${nombreAtaca} y ${nombreDefiende}`;
+          mostrarAlertaDisputa(puntoDisputa.x, puntoDisputa.y);
           pasesJugadaActual=0; historialMio=[]; historialRival=[];
           actualizarFormacionDinamica(posesionMia, posesionMia?idxConBalon:undefined, posesionMia?undefined:idxConBalon, posActual);
           setTimeout(()=>{

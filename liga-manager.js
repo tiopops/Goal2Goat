@@ -1967,7 +1967,7 @@
       });
       partes.push(`**${t('lm.hist_goles_titulo')}**\n${frasesGoles.join('. ')}.`);
     } else {
-      partes.push(t('lm.hist_sin_goles'));
+      partes.push(`**${t('lm.hist_goles_titulo')}**\n${t('lm.hist_sin_goles')}`);
     }
 
     // Tarjetas.
@@ -1980,7 +1980,7 @@
       });
       partes.push(`**${t('lm.hist_tarjetas_titulo')}**\n${frasesTarjetas.join('. ')}.`);
     } else {
-      partes.push(t('lm.hist_sin_tarjetas'));
+      partes.push(`**${t('lm.hist_tarjetas_titulo')}**\n${t('lm.hist_sin_tarjetas')}`);
     }
 
     // Lesiones, solo si hubo alguna — no hace falta un párrafo vacío.
