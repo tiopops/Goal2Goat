@@ -79,10 +79,15 @@
     // igual en las dos orientaciones, así cubre cualquier jugador,
     // no solo el portero.
     const MARGEN_BORDE = 8.5;
+    // El nombre del jugador se dibuja siempre HACIA ABAJO del círculo
+    // (nunca hacia arriba ni a los lados por igual), así que el borde
+    // inferior necesita más margen que los demás — si no, aunque el
+    // círculo quepa bien, el nombre se sale por abajo.
+    const MARGEN_BORDE_INFERIOR = 13;
     function aplicarMargenBorde(slots){
       return slots.map(s=>({
         x: Math.max(MARGEN_BORDE, Math.min(ANCHO-MARGEN_BORDE, s.x)),
-        y: Math.max(MARGEN_BORDE, Math.min(ALTO-MARGEN_BORDE, s.y))
+        y: Math.max(MARGEN_BORDE, Math.min(ALTO-MARGEN_BORDE_INFERIOR, s.y))
       }));
     }
     misSlots = aplicarMargenBorde(misSlots);
@@ -684,7 +689,18 @@
           // ofensivo mantiene una línea más alta y comprometida, con
           // el riesgo de espacio a la espalda que eso conlleva en un
           // partido real.
-          const replieguDefensivo = (esMio && catTacticaMia==='defensiva') ? 0.09 : ((esMio && catTacticaMia==='ofensiva') ? 0.035 : 0.06);
+          const replieguDefensivoBase = (esMio && catTacticaMia==='defensiva') ? 0.09 : ((esMio && catTacticaMia==='ofensiva') ? 0.035 : 0.06);
+          // Urgencia del repliegue: cuanto más cerca esté el balón de
+          // la propia portería, más rápido reacciona TODO el equipo
+          // replegándose — antes se replegaba siempre a la misma
+          // velocidad fija, sin importar si el rival estaba
+          // construyendo tranquilamente en su campo o ya encarando el
+          // área. Un equipo real no reacciona igual en ambos casos.
+          const propioGolRef = esMio?miGolXY:rivalGolXY;
+          const distBalonPropiaPorteria = Math.hypot(balonPos.x-propioGolRef.x, balonPos.y-propioGolRef.y);
+          const diagonalCampo = Math.hypot(ANCHO, ALTO);
+          const urgenciaRepliegue = 1 + Math.max(0, (1-(distBalonPropiaPorteria/diagonalCampo))*1.3);
+          const replieguDefensivo = replieguDefensivoBase*urgenciaRepliegue;
           const empuje = yoAtaco ? (0.09+avance[i]*0.16)*factorRol*multEmpuje : replieguDefensivo;
           // Al atacar, el objetivo es la portería rival (avance real);
           // al defender, el objetivo es su propia casilla de

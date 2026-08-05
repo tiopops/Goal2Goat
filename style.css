@@ -4374,7 +4374,9 @@ body.light-theme.menu-screen{
 .lm-visor-campo-wrap{
   flex:1;min-height:0;display:flex;align-items:center;justify-content:center;
   background:#060806;padding:12px;position:relative;overflow:hidden;
+  touch-action:pan-y;
 }
+.lm-visor-campo-svg{touch-action:pan-y}
 .lm-visor-clima-bar{
   padding:7px 16px;background:#1a1a1a;border-bottom:1px solid #2a2a2a;
   font-size:14px;color:#ccc;text-align:center;letter-spacing:.4px;font-weight:500;
