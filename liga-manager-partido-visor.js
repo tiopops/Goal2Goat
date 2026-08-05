@@ -193,7 +193,11 @@
             <circle cx="${CENTRO_X}" cy="${CENTRO_Y}" r="3.6" class="lm-visor-resalte" id="lmVisorResalte" opacity="0"/>
             <g id="lmVisorAlerta" opacity="0" style="pointer-events:none">
               <circle cx="0" cy="0" r="3.4" fill="#e6362f" stroke="#fff" stroke-width="0.4"/>
-              <text x="0" y="1.6" text-anchor="middle" font-family="Impact, 'Bebas Neue', sans-serif" font-size="5.5" fill="#fff">!</text>
+              <foreignObject x="-2.6" y="-2.6" width="5.2" height="5.2">
+                <div xmlns="http://www.w3.org/1999/xhtml" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center">
+                  <i id="lmVisorAlertaIcono" class="ph ph-bold ph-hand-fist" style="font-size:3.6px;color:#fff;line-height:1"></i>
+                </div>
+              </foreignObject>
             </g>
           </svg>
           <div class="lm-visor-anuncio" id="lmVisorAnuncio"></div>
@@ -403,13 +407,17 @@
     }
     // Exclamación roja tipo "alerta" (Metal Gear Solid): un único
     // pulso, aparece de golpe (sin transición de entrada, para que se
-    // note el sobresalto) justo encima del punto de la disputa, se
+    // note el sobresalto) justo encima del punto del evento, se
     // mantiene un instante, y se desvanece — para leer visualmente el
-    // momento exacto en que dos jugadores se juegan el balón, sin
-    // depender solo del texto de la barra de información.
+    // momento exacto de una disputa de balón, una falta o una parada,
+    // sin depender solo del texto de la barra de información. El
+    // icono cambia según el tipo de evento, siempre con iconos
+    // Phosphor reales (nunca texto suelto).
     const alertaEl = overlay.querySelector('#lmVisorAlerta');
-    function mostrarAlertaDisputa(x,y){
+    const alertaIconoEl = overlay.querySelector('#lmVisorAlertaIcono');
+    function mostrarAlertaEvento(x,y,iconoClase){
       if(!alertaEl) return;
+      if(alertaIconoEl) alertaIconoEl.setAttribute('class', `ph ph-bold ${iconoClase}`);
       alertaEl.style.transition='none';
       alertaEl.setAttribute('transform', `translate(${x},${y-5.5}) scale(0.4)`);
       alertaEl.setAttribute('opacity','0');
@@ -422,6 +430,12 @@
         alertaEl.setAttribute('opacity','0');
       }, 550);
     }
+    // Alias por tipo de evento — nombres claros en cada punto donde se
+    // usan, en vez de tener que recordar qué icono corresponde a cada
+    // situación cada vez que se llama.
+    function mostrarAlertaDisputa(x,y){ mostrarAlertaEvento(x,y,'ph-hand-fist'); }
+    function mostrarAlertaFalta(x,y){ mostrarAlertaEvento(x,y,'ph-warning'); }
+    function mostrarAlertaParada(x,y){ mostrarAlertaEvento(x,y,'ph-hands-clapping'); }
     // ========================================================
     // IA SENCILLA DEL PARTIDO — en vez de guionizar jugadas fijas, en
     // cada instante el jugador con el balón decide qué hacer según 3
@@ -886,6 +900,8 @@
         const emoji = tarjetaAhora.tarjeta==='roja' ? '🟥' : '🟨';
         const nombreJ = tarjetaAhora.jugador ? tarjetaAhora.jugador.name : '';
         infoBar.textContent=`${emoji} Tarjeta ${tarjetaAhora.tarjeta} para ${nombreJ} (${esMia?miNombre:rivalNombre})`;
+        const posAlertaFalta={x:parseFloat(balon.getAttribute('cx')), y:parseFloat(balon.getAttribute('cy'))};
+        mostrarAlertaFalta(posAlertaFalta.x, posAlertaFalta.y);
         if(typeof window.playSound==='function') window.playSound('whistle_short');
         tiempoTranscurrido+=1300;
         setTimeout(tick, real(1300));
@@ -1336,6 +1352,7 @@
         const desvio=(Math.random()-0.5)*7;
         setTimeout(()=>{
           moverJugador(porteroEsMio, 0, portero[0].x+desvio, portero[0].y, duracionEfectiva*0.55);
+          mostrarAlertaParada(portero[0].x+desvio, portero[0].y);
           setTimeout(()=>moverJugador(porteroEsMio, 0, (porteroEsMio?miGolXY:rivalGolXY).x, (porteroEsMio?miGolXY:rivalGolXY).y, 600), real(duracionEfectiva*0.55));
         }, real(duracionEfectiva*0.45));
         const rebotaCorner = Math.random()<0.3;
