@@ -4565,3 +4565,72 @@ body.light-theme.menu-screen{
   0%,100%{transform:scale(1);opacity:1}
   50%{transform:scale(1.2);opacity:.7}
 }
+
+/* ===================== CONTACTO Y SUGERENCIAS ===================== */
+.contact-popup-card{
+  position:relative;width:100%;max-width:420px;
+  background:linear-gradient(165deg,var(--card-bg),var(--panel));
+  border:1px solid var(--gold);border-radius:14px;
+  padding:32px 28px 26px;box-shadow:0 28px 70px rgba(0,0,0,.6);
+  animation:contactPopupIn .28s cubic-bezier(.22,1,.36,1);
+}
+@keyframes contactPopupIn{
+  0%{opacity:0;transform:translateY(14px) scale(.97)}
+  100%{opacity:1;transform:translateY(0) scale(1)}
+}
+.contact-popup-close{
+  position:absolute;top:14px;right:14px;width:30px;height:30px;border-radius:50%;
+  background:rgba(255,255,255,.06);border:1px solid var(--line);color:var(--text-muted);
+  cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px;
+  transition:background .15s ease,color .15s ease;
+}
+.contact-popup-close:hover{background:rgba(255,255,255,.12);color:var(--text)}
+.contact-popup-icon{
+  width:58px;height:58px;border-radius:50%;margin:0 auto 16px;
+  background:radial-gradient(circle,rgba(201,162,39,.18),rgba(201,162,39,.03));
+  border:1px solid rgba(201,162,39,.4);
+  display:flex;align-items:center;justify-content:center;font-size:26px;color:var(--gold);
+}
+.contact-popup-icon-success{
+  background:radial-gradient(circle,rgba(46,204,113,.2),rgba(46,204,113,.03));
+  border-color:rgba(46,204,113,.45);color:#2ecc71;
+}
+.contact-popup-title{
+  font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:1.5px;font-size:21px;
+  color:var(--text);text-align:center;margin-bottom:6px;
+}
+.contact-popup-subtitle{
+  font-size:12.5px;color:var(--text-soft);text-align:center;line-height:1.5;
+  margin-bottom:22px;
+}
+.contact-popup-label{
+  display:block;font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:1px;
+  font-size:11px;color:var(--text-muted);margin:14px 0 6px;
+}
+.contact-popup-input,.contact-popup-textarea{
+  width:100%;background:rgba(0,0,0,.22);border:1px solid var(--line);border-radius:8px;
+  padding:11px 13px;color:var(--text);font-size:13.5px;font-family:inherit;
+  transition:border-color .15s ease,background .15s ease;resize:vertical;
+}
+.contact-popup-input:focus,.contact-popup-textarea:focus{
+  outline:none;border-color:var(--gold);background:rgba(0,0,0,.3);
+}
+.contact-popup-counter{
+  text-align:right;font-size:10.5px;color:var(--text-muted);margin-top:4px;
+}
+.contact-popup-error{
+  color:#e6564f;font-size:12px;text-align:center;margin-top:10px;
+  padding:8px 10px;background:rgba(230,86,79,.1);border-radius:6px;
+}
+.contact-popup-send-btn{
+  width:100%;margin-top:20px;font-family:'Bebas Neue',Impact,sans-serif;
+  letter-spacing:1.5px;font-size:15px;background:linear-gradient(160deg,#e0bd3f,var(--gold));
+  border:none;color:#1a1a1a;border-radius:8px;padding:13px 14px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:9px;
+  box-shadow:0 6px 18px rgba(201,162,39,.28);
+  transition:transform .12s ease,box-shadow .12s ease,opacity .12s ease;
+}
+.contact-popup-send-btn:hover{transform:translateY(-1px);box-shadow:0 8px 22px rgba(201,162,39,.4)}
+.contact-popup-send-btn:active{transform:translateY(0)}
+.contact-popup-send-btn:disabled{opacity:.55;cursor:default;transform:none;box-shadow:none}
+

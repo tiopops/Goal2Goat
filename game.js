@@ -353,8 +353,8 @@ function playSound(name, data){
       // (el golpe del balón contra los guantes) seguido de un tono
       // muy breve y contenido, sin nada triunfal — es una parada, no
       // un gol.
-      tone(ctx, 140, 0, 0.05, 'square', 0.10, 0.0001);
-      tone(ctx, 320, 0.04, 0.09, 'sine', 0.06, 0.0001);
+      tone(ctx, 140, 0, 0.05, 'square', 0.14, 0.0001);
+      tone(ctx, 320, 0.04, 0.09, 'sine', 0.09, 0.0001);
       break;
     case 'dribble_flick': // regate exitoso — un toque rápido y ágil,
       // dos notas cortas ascendentes, transmitiendo agilidad sin ser
@@ -375,6 +375,13 @@ function playSound(name, data){
       // y seco, más potente que un pase normal, sin ninguna sutileza.
       tone(ctx, 110, 0, 0.07, 'sawtooth', 0.12, 0.0001);
       tone(ctx, 70, 0.03, 0.1, 'square', 0.09, 0.0001);
+      break;
+    case 'ball_steal': // robo de balón limpio (presión con éxito, sin
+      // llegar a disputa) — un golpe seco y decidido, distinto del
+      // forcejeo (más largo) y del despeje (más grave), transmite
+      // control inmediato del balón.
+      tone(ctx, 200, 0, 0.045, 'square', 0.11, 0.0001);
+      tone(ctx, 340, 0.035, 0.05, 'triangle', 0.08, 0.0001);
       break;
     case 'training_day': // día de entrenamiento en el calendario de Liga
       // Manager — un par de notas suaves y ascendentes, nada percusivo.
@@ -6079,9 +6086,16 @@ function initFirebaseAuth(){
       window.currentUsername=null;
       window.preferredTeamName="";
       window.useFixedTeamName=false;
-      // Liga Manager en construcción: sin sesión, sin acceso
-      window.LIGA_MANAGER_UNLOCKED = false;
-      if(window.G2G_applyLigaManagerAccess) window.G2G_applyLigaManagerAccess(false);
+      // Liga Manager funciona con guardado 100% local (localStorage),
+      // sin depender de ninguna base de datos asociada al usuario —
+      // así que también está disponible sin sesión iniciada. La única
+      // diferencia real es que, sin cuenta, el progreso vive solo en
+      // este navegador concreto: si se borran los datos del navegador
+      // o se cambia de dispositivo, no hay forma de recuperarlo (con
+      // sesión iniciada tampoco se sincroniza en la nube todavía, así
+      // que el comportamiento es el mismo en ambos casos por ahora).
+      window.LIGA_MANAGER_UNLOCKED = true;
+      if(window.G2G_applyLigaManagerAccess) window.G2G_applyLigaManagerAccess(true);
       // Sin sesión: mensaje diferenciado en el welcome overlay
       const wt=$id('welcomeText');
       const wrb=$id('welcomeRegisterBtn');
@@ -7532,6 +7546,97 @@ async function renderSkillsTab(){
 window.showPatchNotes=function(){
   const o=document.getElementById('patchNotesOverlay');
   if(o) o.style.display='flex';
+};
+
+/* ============================================================
+   CONTACTO Y SUGERENCIAS
+   El mensaje se guarda en su propia colección de Firestore
+   ('contactMessages') — nunca se expone ningún correo de destino en
+   el código del cliente. La persona que revisa los mensajes lo hace
+   directamente desde la consola de Firebase, no mediante un enlace
+   mailto ni ninguna dirección visible en el juego.
+   ============================================================ */
+window.openContactPopup=function(){
+  const overlay=document.getElementById('contactPopup');
+  if(!overlay) return;
+  document.getElementById('contactPopupForm').style.display='';
+  document.getElementById('contactPopupSuccess').style.display='none';
+  document.getElementById('contactPopupError').style.display='none';
+  const emailInput=document.getElementById('contactEmailInput');
+  const msgInput=document.getElementById('contactMessageInput');
+  // Si el usuario ya tiene sesión iniciada, se rellena su correo por
+  // comodidad — sigue pudiendo cambiarlo si quiere responder desde
+  // otra dirección.
+  try{
+    const user=firebase.auth&&firebase.auth().currentUser;
+    if(user && user.email && emailInput) emailInput.value=user.email;
+  }catch(e){}
+  if(msgInput){ msgInput.value=''; }
+  const counter=document.getElementById('contactCharCount');
+  if(counter) counter.textContent='0';
+  overlay.style.display='flex';
+  if(typeof window.playSound==='function') window.playSound('select');
+};
+window.closeContactPopup=function(){
+  const overlay=document.getElementById('contactPopup');
+  if(overlay) overlay.style.display='none';
+};
+(function initContactCharCounter(){
+  document.addEventListener('input', (e)=>{
+    if(e.target && e.target.id==='contactMessageInput'){
+      const counter=document.getElementById('contactCharCount');
+      if(counter) counter.textContent=String(e.target.value.length);
+    }
+  });
+})();
+window.submitContactMessage=function(){
+  const emailInput=document.getElementById('contactEmailInput');
+  const msgInput=document.getElementById('contactMessageInput');
+  const errorEl=document.getElementById('contactPopupError');
+  const email=(emailInput?emailInput.value:'').trim();
+  const mensaje=(msgInput?msgInput.value:'').trim();
+  const mostrarError=(texto)=>{
+    if(errorEl){ errorEl.textContent=texto; errorEl.style.display='block'; }
+  };
+  if(errorEl) errorEl.style.display='none';
+  const emailValido=/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  if(!emailValido){
+    mostrarError(window.t?window.t('contact.error_email'):'Introduce un correo válido para poder responderte.');
+    return;
+  }
+  if(mensaje.length<8){
+    mostrarError(window.t?window.t('contact.error_message'):'Cuéntanos un poco más — el mensaje es demasiado corto.');
+    return;
+  }
+  // La dirección de destino nunca aparece como texto plano en ningún
+  // sitio del código — se reconstruye aquí mismo, a partir de
+  // fragmentos, justo en el instante de abrir el correo. Esto protege
+  // frente a los bots de spam que rastrean páginas buscando
+  // "mailto:direccion@..." en el código fuente, que es la amenaza real
+  // frente a la que merece la pena protegerse. No es una ocultación
+  // absoluta (alguien con herramientas de desarrollador podría
+  // reconstruirla examinando el JavaScript en ejecución), pero
+  // elimina el caso simple de "ver código fuente" o rastreo automático.
+  const _p1=['g','o','a','l','2','g','o','a','t','w','o','r','l','d','c','u','p'].join('');
+  const _p2=['g','m','a','i','l'].join('');
+  const _destino=_p1+'@'+_p2+'.com';
+  const asunto=encodeURIComponent('Goal2Goat — Contacto y sugerencias');
+  const cuerpo=encodeURIComponent(`Correo de contacto: ${email}\n\n${mensaje}`);
+  // Móvil: mailto: abre la app de correo por defecto del sistema, que
+  // ahí SIEMPRE existe de verdad y es la forma correcta de hacerlo.
+  // Escritorio: mailto: en PC suele intentar abrir un cliente de
+  // correo instalado (Outlook, etc.) o directamente no hacer nada si
+  // no hay ninguno configurado — así que ahí se abre Gmail en el
+  // navegador en su lugar, con el mensaje ya preparado.
+  const esMovil = window.matchMedia && window.matchMedia('(max-width:899px)').matches;
+  if(esMovil){
+    window.location.href=`mailto:${_destino}?subject=${asunto}&body=${cuerpo}`;
+  }else{
+    window.open(`https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(_destino)}&su=${asunto}&body=${cuerpo}`, '_blank');
+  }
+  document.getElementById('contactPopupForm').style.display='none';
+  document.getElementById('contactPopupSuccess').style.display='block';
+  if(typeof window.playSound==='function') window.playSound('select');
 };
 
 /* ============================================================

@@ -763,6 +763,17 @@
           // casi sin desplazar si es ofensiva) — vuelta gradual a su
           // sitio, nunca un salto directo a la portería.
           const desplazamientoProfundidad = (esMio && catTacticaMia==='defensiva') ? 0.22 : ((esMio && catTacticaMia==='ofensiva') ? 0.04 : 0.12);
+          // Compactación real entre líneas: un equipo bien organizado
+          // no solo repliega uniformemente a todos por igual — los
+          // mediocentros se cierran ALGO MÁS hacia la línea defensiva
+          // de lo que marcaría su propia casilla de formación, para no
+          // dejar espacio explotable entre líneas. Antes cada jugador
+          // solo volvía a su propia casilla proporcionalmente, sin
+          // ninguna relación entre la profundidad de unos y otros —
+          // así podían quedar huecos grandes entre defensa y medio
+          // campo, algo que un equipo real jamás permite a propósito.
+          const compactacionExtra = (!yoAtaco && roles[i]==='mid') ? desplazamientoProfundidad*0.55*urgenciaRepliegue : 0;
+          const desplazamientoProfundidadFinal = Math.min(0.5, desplazamientoProfundidad+compactacionExtra);
           // Al atacar, el objetivo avanza en PROFUNDIDAD hacia la
           // portería rival, pero mantiene la anchura natural de cada
           // jugador (su posición lateral de formación) — antes el
@@ -775,8 +786,8 @@
           const objetivo = yoAtaco
             ? (esEscritorio ? {x: golRival.x, y: slots[i].y} : {x: slots[i].x, y: golRival.y})
             : {
-              x: slots[i].x+(propioGol.x-slots[i].x)*desplazamientoProfundidad,
-              y: slots[i].y+(propioGol.y-slots[i].y)*desplazamientoProfundidad
+              x: slots[i].x+(propioGol.x-slots[i].x)*desplazamientoProfundidadFinal,
+              y: slots[i].y+(propioGol.y-slots[i].y)*desplazamientoProfundidadFinal
             };
           let x=base.x+(objetivo.x-base.x)*empuje;
           let y=base.y+(objetivo.y-base.y)*empuje;
@@ -828,8 +839,25 @@
             const distObjetivoMarcaje = objetivoMarcaje===atacanteLibreMasCercano ? distMinLibre : distMin;
             if(objetivoMarcaje>=0 && distObjetivoMarcaje<28){
               atacantesYaMarcados.add(objetivoMarcaje);
-              x = x+(equipoRivalRef[objetivoMarcaje].x-x)*0.22;
-              y = y+(equipoRivalRef[objetivoMarcaje].y-y)*0.22;
+              const posAtacanteMarcado = equipoRivalRef[objetivoMarcaje];
+              // Marcaje inteligente de verdad: no se va directo a la
+              // posición del rival — se coloca EN LA LÍNEA entre el
+              // balón y el rival, ligeramente sesgado hacia el propio
+              // lado de la portería, para cortar la línea de pase de
+              // verdad (goal-side marking). Un defensa real nunca se
+              // queda "delante" del rival respecto a su propia
+              // portería, ni tampoco solo "al lado" sin más — se mete
+              // entre el peligro (el balón) y su hombre.
+              const puntoIntermedio = {
+                x: posAtacanteMarcado.x + (balonPos.x-posAtacanteMarcado.x)*0.32,
+                y: posAtacanteMarcado.y + (balonPos.y-posAtacanteMarcado.y)*0.32
+              };
+              const puntoMarcajeReal = {
+                x: puntoIntermedio.x + (propioGol.x-puntoIntermedio.x)*0.16,
+                y: puntoIntermedio.y + (propioGol.y-puntoIntermedio.y)*0.16
+              };
+              x = x+(puntoMarcajeReal.x-x)*0.22;
+              y = y+(puntoMarcajeReal.y-y)*0.22;
             }
           }
           // Separación: si el destino cae demasiado cerca de otro
@@ -1459,6 +1487,26 @@
         const rolesEnAtaque = posesionMia?rolesMios:rolesRival;
         const rolPortador = rolesEnAtaque[idxConBalon];
         const factorRolDisparo = rolPortador==='fwd' ? 1.35 : (rolPortador==='def' ? 0.45 : 0.9);
+        // Ángulo de disparo real: antes solo se tenía en cuenta la
+        // distancia a portería, nunca el ángulo — un disparo desde
+        // una posición central y abierta hacia el gol es muy distinto
+        // de uno desde cerca de la línea de fondo con un ángulo
+        // cerrado, aunque la distancia en línea recta sea parecida.
+        // Se calcula cuánto se desvía el jugador del centro de la
+        // portería en relación a lo cerca que está de la línea de
+        // fondo — cuanto más cerca de la línea de fondo Y más
+        // desviado del centro, peor el ángulo.
+        const anchoCoordDisparo = esEscritorio ? posActual.y : posActual.x;
+        const centroPorteriaCoord = esEscritorio ? CENTRO_Y : CENTRO_X;
+        const desvioCentroDisparo = Math.abs(anchoCoordDisparo-centroPorteriaCoord);
+        const profundidadRestanteDisparo = esEscritorio
+          ? Math.abs(posActual.x-golObjetivo.x)
+          : Math.abs(posActual.y-golObjetivo.y);
+        // Solo penaliza de verdad cuando el desvío lateral es grande Y
+        // encima se está ya muy cerca de la línea de fondo (el caso
+        // clásico del ángulo cerrado) — un desvío moderado con
+        // distancia normal apenas se nota, como en la vida real.
+        const factorAngulo = 1-Math.max(0, Math.min(0.55, (desvioCentroDisparo-14)/26)*Math.max(0, 1-(profundidadRestanteDisparo/12)));
         // Solo ante el portero: si no hay NINGÚN defensa de campo cerca
         // (solo el guardameta), la decisión real es clarísima —
         // rematar, no dudar con un pase. Antes esta situación tan
@@ -1466,12 +1514,12 @@
         // cualquier otro disparo cercano, y a veces el jugador se
         // quedaba solo frente al portero sin definir la jugada.
         const defensorMasCercanoDisparo = equipoDefiende.filter((rv,ri)=>ri!==0).reduce((min,rv)=>Math.min(min,Math.hypot(rv.x-posActual.x,rv.y-posActual.y)),Infinity);
-        if(zona<0.17 && defensorMasCercanoDisparo>10) return Math.random()<0.94;
+        if(zona<0.17 && defensorMasCercanoDisparo>10) return Math.random()<0.94*Math.max(0.55,factorAngulo);
         // Cerca del área, sin rivales DEMASIADO cerca (aunque no esté
         // completamente solo): también debe disparar con mucha más
         // decisión que un disparo genérico con marca encima.
-        if(zona<0.24 && defensorMasCercanoDisparo>6) return Math.random()<0.7;
-        return Math.random()<(0.38+Math.min(0.18,pasesJugadaActual*0.03))*(posesionMia?multRiesgoMioActual():urgenciaPartidoRival())*factorRolDisparo;
+        if(zona<0.24 && defensorMasCercanoDisparo>6) return Math.random()<0.7*Math.max(0.55,factorAngulo);
+        return Math.random()<(0.38+Math.min(0.18,pasesJugadaActual*0.03))*(posesionMia?multRiesgoMioActual():urgenciaPartidoRival())*factorRolDisparo*factorAngulo;
       })()){
         // Cerca del área: intento de disparo (sin gol, salvo que
         // coincida con un gol real programado, gestionado aparte). El
@@ -1584,10 +1632,26 @@
           }, real(dur*0.65));
         } else {
           setTimeout(()=>{
-            moverBalon(centroCampo.x, centroCampo.y, 700);
-            asignarBalonSuelto(centroCampo.x, centroCampo.y);
-            tiempoTranscurrido+=dur+700;
-            setTimeout(tick, real(500));
+            // El portero SE QUEDA con el balón tras una parada normal
+            // — antes se reiniciaba como un balón suelto en el centro
+            // del campo, que cualquiera de los dos equipos podía ganar
+            // por cercanía, algo que no tiene ningún sentido: un
+            // portero que para el balón limpiamente lo controla, no lo
+            // suelta al aire para que se dispute. Ahora distribuye de
+            // verdad a un defensa cercano, con la misma prudencia que
+            // ya tiene el resto de la distribución del portero.
+            const equipoPortero = porteroEsMio?posMia:posRival;
+            const rolesPortero = porteroEsMio?rolesMios:rolesRival;
+            let receptorDistribucion = rolesPortero.findIndex((r,ri)=>ri!==0 && r==='def');
+            if(receptorDistribucion<0) receptorDistribucion = jugadorMasCercano(equipoPortero, equipoPortero[0].x, equipoPortero[0].y, 0);
+            posesionMia = porteroEsMio;
+            if(porteroEsMio){ idxConBalonMio=receptorDistribucion; } else { idxConBalonRival=receptorDistribucion; }
+            infoBar.textContent=`${porteroEsMio?miNombre:rivalNombre} saca desde atrás con el balón controlado`;
+            moverBalon(equipoPortero[receptorDistribucion].x, equipoPortero[receptorDistribucion].y, 750);
+            moverJugador(porteroEsMio, receptorDistribucion, equipoPortero[receptorDistribucion].x, equipoPortero[receptorDistribucion].y, 750);
+            pasesJugadaActual=0; historialMio=[]; historialRival=[];
+            tiempoTranscurrido+=dur+750;
+            setTimeout(tick, real(750));
           }, real(dur*0.65));
         }
         // Este disparo gestiona su propio final (arriba) — se corta
@@ -1865,6 +1929,53 @@
         // verdad con el recorrido real del balón.
         const distanciaPaseReal=Math.hypot(destino.x-posActual.x, destino.y-posActual.y);
         duracionEfectiva=Math.max(480, Math.min(1900, distanciaPaseReal*32));
+        // Pase impreciso bajo presión: antes, una vez decidido, un
+        // pase SIEMPRE llegaba perfecto a su destino, sin importar si
+        // quien lo daba tenía un rival encima respirándole en la nuca.
+        // En un partido real, un pase bajo presión se puede desviar,
+        // quedarse corto o irse directo al rival — no es solo el
+        // rival quien puede "fallar" la jugada interceptando, el
+        // propio pasador también puede errar el pase. La probabilidad
+        // depende de la presión real (distancia al rival más cercano)
+        // y de la calidad de pase del equipo — un equipo con mejor
+        // pase falla mucho menos bajo la misma presión.
+        const rivalMasCercanoPasador = jugadorMasCercano(equipoDefiende, posActual.x, posActual.y, -1);
+        const distPresionPasador = Math.hypot(equipoDefiende[rivalMasCercanoPasador].x-posActual.x, equipoDefiende[rivalMasCercanoPasador].y-posActual.y);
+        const calidadPaseEquipo = posesionMia ? misStatsReales.passing : rival.passing;
+        const probImprecision = distPresionPasador<9 ? Math.max(0, (9-distPresionPasador)/9)*Math.max(0.08, (78-calidadPaseEquipo)/220) : 0;
+        if(Math.random()<probImprecision){
+          const anguloError=(Math.random()-0.5)*2.2;
+          const dirErrX=(destino.x-posActual.x), dirErrY=(destino.y-posActual.y);
+          const dirErrLen=Math.hypot(dirErrX,dirErrY)||1;
+          const alcanceError=dirErrLen*(0.35+Math.random()*0.4);
+          const destinoImpreciso={
+            x: posActual.x+(dirErrX/dirErrLen*Math.cos(anguloError)-dirErrY/dirErrLen*Math.sin(anguloError))*alcanceError,
+            y: posActual.y+(dirErrX/dirErrLen*Math.sin(anguloError)+dirErrY/dirErrLen*Math.cos(anguloError))*alcanceError
+          };
+          // Un pase impreciso de verdad ya NO es un pase normal que el
+          // receptor persigue perfectamente — se convierte en un
+          // balón suelto real, que cualquiera de los dos equipos
+          // puede ganar según quién llegue antes, cortando aquí el
+          // flujo normal en vez de seguir como si el pase hubiera
+          // salido bien.
+          const duracionImprecision=Math.max(350, Math.min(1200, alcanceError*30));
+          moverBalon(destinoImpreciso.x, destinoImpreciso.y, duracionImprecision);
+          infoBar.textContent=`${nombreAtaca} pierde precisión en el pase, presionado`;
+          pasesJugadaActual=0; historialMio=[]; historialRival=[];
+          actualizarFormacionDinamica(posesionMia, posesionMia?idxConBalon:undefined, posesionMia?undefined:idxConBalon, posActual);
+          setTimeout(()=>{
+            const dMioImp=jugadorMasCercano(posMia, destinoImpreciso.x, destinoImpreciso.y, -1);
+            const dRivalImp=jugadorMasCercano(posRival, destinoImpreciso.x, destinoImpreciso.y, -1);
+            const distMioImp=Math.hypot(posMia[dMioImp].x-destinoImpreciso.x, posMia[dMioImp].y-destinoImpreciso.y);
+            const distRivalImp=Math.hypot(posRival[dRivalImp].x-destinoImpreciso.x, posRival[dRivalImp].y-destinoImpreciso.y);
+            posesionMia = distMioImp<=distRivalImp;
+            if(posesionMia){ idxConBalonMio=dMioImp; moverJugador(true, dMioImp, destinoImpreciso.x, destinoImpreciso.y, 420); }
+            else { idxConBalonRival=dRivalImp; moverJugador(false, dRivalImp, destinoImpreciso.x, destinoImpreciso.y, 420); }
+            tiempoTranscurrido+=duracionImprecision+400;
+            setTimeout(tick, real(420));
+          }, real(duracionImprecision));
+          return;
+        }
         moverBalon(destino.x, destino.y, duracionEfectiva);
         // El receptor corre de verdad hacia la posición prevista, con
         // la misma duración que el balón — sin esto, el balón iría a

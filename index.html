@@ -117,6 +117,9 @@
         <button class="settings-item" onclick="toggleSettingsMenu();document.getElementById('langPopup').style.display='flex'">
           <span class="topbar-dot" style="background:transparent;border:1.5px solid var(--text-muted);display:inline-flex;align-items:center;justify-content:center;font-size:8px">🌐</span><span class="topbar-label" data-i18n="settings.language">IDIOMA</span>
         </button>
+        <button class="settings-item" onclick="toggleSettingsMenu();window.openContactPopup()">
+          <span class="topbar-dot" style="background:transparent;border:1.5px solid var(--text-muted);display:inline-flex;align-items:center;justify-content:center;font-size:8px"><i class="ph ph-bold ph-envelope-simple" style="font-size:9px"></i></span><span class="topbar-label" data-i18n="settings.contact">CONTACTO</span>
+        </button>
       </div>
     </div>
   </div>
@@ -144,6 +147,41 @@
       </button>
       <button id="langItBtn2" onclick="window.setLang('it');document.getElementById('langPopup').style.display='none'" style="padding:12px 8px;font-family:'Bebas Neue',Impact,sans-serif;font-size:15px;letter-spacing:1px;border:2px solid var(--line);background:var(--panel);color:var(--text);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px">
         <img src="https://flagcdn.com/w40/it.png" style="height:18px;width:auto;border-radius:2px;box-shadow:0 0 0 1px rgba(0,0,0,.15)" alt="IT"> ITALIANO
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- CONTACT / SUGGESTIONS POPUP -->
+<div id="contactPopup" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:65000;align-items:center;justify-content:center;padding:20px" onclick="if(event.target===this)window.closeContactPopup()">
+  <div class="contact-popup-card">
+    <button class="contact-popup-close" onclick="window.closeContactPopup()" aria-label="Cerrar"><i class="ph ph-bold ph-x"></i></button>
+
+    <div id="contactPopupForm">
+      <div class="contact-popup-icon"><i class="ph ph-bold ph-envelope-simple-open"></i></div>
+      <h2 class="contact-popup-title" data-i18n="contact.title">CONTACTO Y SUGERENCIAS</h2>
+      <p class="contact-popup-subtitle" data-i18n="contact.subtitle">¿Encontraste un fallo o tienes una idea? Cuéntanoslo — leemos todos los mensajes.</p>
+
+      <label class="contact-popup-label" for="contactEmailInput" data-i18n="contact.email_label">TU CORREO</label>
+      <input type="email" id="contactEmailInput" class="contact-popup-input" placeholder="tucorreo@ejemplo.com" data-i18n-placeholder="contact.email_placeholder" autocomplete="email">
+
+      <label class="contact-popup-label" for="contactMessageInput" data-i18n="contact.message_label">MENSAJE</label>
+      <textarea id="contactMessageInput" class="contact-popup-textarea" maxlength="1000" rows="5" placeholder="Cuéntanos qué ha pasado o qué te gustaría ver en el juego..." data-i18n-placeholder="contact.message_placeholder"></textarea>
+      <div class="contact-popup-counter"><span id="contactCharCount">0</span>/1000</div>
+
+      <p id="contactPopupError" class="contact-popup-error" style="display:none"></p>
+
+      <button id="contactPopupSendBtn" class="contact-popup-send-btn" onclick="window.submitContactMessage()">
+        <i class="ph ph-bold ph-paper-plane-tilt"></i> <span data-i18n="contact.send_btn">ENVIAR MENSAJE</span>
+      </button>
+    </div>
+
+    <div id="contactPopupSuccess" style="display:none;text-align:center">
+      <div class="contact-popup-icon contact-popup-icon-success"><i class="ph ph-bold ph-check-circle"></i></div>
+      <h2 class="contact-popup-title" data-i18n="contact.sent_title">¡MENSAJE ENVIADO!</h2>
+      <p class="contact-popup-subtitle" data-i18n="contact.sent_subtitle">Gracias por escribirnos — lo revisaremos lo antes posible.</p>
+      <button class="contact-popup-send-btn" onclick="window.closeContactPopup()">
+        <span data-i18n="lm.continuar">CONTINUAR</span>
       </button>
     </div>
   </div>
@@ -329,6 +367,10 @@
             <button id="langItBtn" onclick="window.setLang('it')" style="padding:8px 4px;font-family:'Bebas Neue',Impact,sans-serif;font-size:13px;letter-spacing:1px;border:2px solid var(--line);background:var(--panel);color:var(--text);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px"><img src="https://flagcdn.com/w40/it.png" style="height:14px;width:auto;border-radius:2px;box-shadow:0 0 0 1px rgba(0,0,0,.15)" alt="IT"> ITALIANO</button>
           </div>
         </div>
+
+        <button id="contactSettingsBtn" onclick="window.openContactPopup()" style="width:100%;margin-top:10px;font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:1px;font-size:14px;background:none;border:1px solid var(--line);color:var(--text-muted);border-radius:6px;padding:9px 14px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px">
+          <i class="ph ph-bold ph-envelope-simple"></i> <span data-i18n="settings.contact">CONTACTO Y SUGERENCIAS</span>
+        </button>
 
         <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;align-items:center">
           <button onclick="window.showPatchNotes()" style="background:none;border:none;cursor:pointer;font-family:'Bebas Neue',Impact,sans-serif;font-size:13px;letter-spacing:1px;color:var(--gold);padding:0;text-decoration:underline" data-i18n="settings.patch_notes">NOTAS v0.6</button>
