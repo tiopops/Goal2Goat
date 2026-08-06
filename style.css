@@ -4330,7 +4330,7 @@ body.light-theme.menu-screen{
    VISOR DE PARTIDO — MODO MANAGER
    ============================================================ */
 #lmVisorPartidoOverlay{
-  position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:260;
+  position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:31000;
   display:flex;align-items:center;justify-content:center;padding:16px;
 }
 .lm-visor-partido-card{
@@ -4460,7 +4460,29 @@ body.light-theme.menu-screen{
   pointer-events:none;user-select:none;
   paint-order:stroke;stroke:#000;stroke-width:.4px;stroke-linejoin:round;
 }
-.lm-visor-balon{fill:#fff;stroke:#333;stroke-width:.35;filter:drop-shadow(0 1px 1.5px rgba(0,0,0,.5))}
+.lm-visor-balon{
+  fill:#fff;stroke:#333;stroke-width:.35;
+  filter:drop-shadow(0 1px 1.5px rgba(0,0,0,.5)) drop-shadow(0 0 1.4px rgba(240,196,25,.55));
+}
+.lm-visor-alerta-pulso{
+  animation:lmVisorAlertaPulso 0.85s ease-out 2;
+  transform-origin:center;transform-box:fill-box;
+}
+@keyframes lmVisorAlertaPulso{
+  0%{ transform:scale(0.75); opacity:0.9; }
+  100%{ transform:scale(2.1); opacity:0; }
+}
+/* Explosión de anillos al marcar gol — el momento de más dopamina del
+   partido, se lo merece un refuerzo visual a la altura. */
+.lm-visor-gol-anillo{
+  fill:none;stroke:var(--gold);stroke-width:.5;
+  animation:lmVisorGolAnillo 0.9s ease-out forwards;
+  transform-origin:center;transform-box:fill-box;pointer-events:none;
+}
+@keyframes lmVisorGolAnillo{
+  0%{ transform:scale(0.3); opacity:1; }
+  100%{ transform:scale(5.5); opacity:0; }
+}
 .lm-visor-resalte{fill:none;stroke:var(--gold);stroke-width:.7;pointer-events:none}
 .lm-visor-info-bar{
   padding:12px 16px;background:#161616;border-top:1px solid #2a2a2a;

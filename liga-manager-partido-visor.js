@@ -168,10 +168,18 @@
       // un único transform — así nunca pueden desincronizarse entre
       // sí (antes, al animar cx/cy y x/y por separado, el número
       // podía llegar antes o después que el círculo).
+      // El nombre normalmente se dibuja hacia abajo del círculo, pero
+      // el portero de mi equipo en móvil (orientación vertical) está
+      // situado abajo del todo del campo — ahí, dibujar el nombre
+      // hacia abajo lo sacaría del lienzo visible. En ese caso
+      // concreto (y solo ese), el nombre se dibuja hacia ARRIBA en su
+      // lugar.
+      const nombreHaciaArriba = !esEscritorio && esGK && esMio;
+      const nombreY = nombreHaciaArriba ? -(r+2.3) : (r+2.3);
       return `<g class="lm-visor-jugador-g" id="${id}" transform="translate(${s.x},${s.y})">
         <circle cx="0" cy="0" r="${r}" class="lm-visor-punto ${claseEquipo}${esGK?' lm-visor-punto-gk':''}"/>
         <text x="0" y="0" class="lm-visor-numero${esGK?' lm-visor-numero-gk':''}">${num}</text>
-        ${nombreCompleto?`<text x="0" y="${r+2.3}" class="lm-visor-nombre-jugador">${nombreCompleto}</text>`:''}
+        ${nombreCompleto?`<text x="0" y="${nombreY}" class="lm-visor-nombre-jugador">${nombreCompleto}</text>`:''}
       </g>`;
     }
 
@@ -213,6 +221,7 @@
             <circle cx="${CENTRO_X}" cy="${CENTRO_Y}" r="1.3" class="lm-visor-balon" id="lmVisorBalon"/>
             <circle cx="${CENTRO_X}" cy="${CENTRO_Y}" r="3.6" class="lm-visor-resalte" id="lmVisorResalte" opacity="0"/>
             <g id="lmVisorAlerta" opacity="0" style="pointer-events:none">
+              <circle id="lmVisorAlertaPulso" cx="0" cy="0" r="4.8" fill="none" stroke="#e6362f" stroke-width="0.4" class="lm-visor-alerta-pulso"/>
               <circle id="lmVisorAlertaFondo" cx="0" cy="0" r="4.8" fill="#e6362f" stroke="#fff" stroke-width="0.45"/>
               <foreignObject x="-3.6" y="-3.6" width="7.2" height="7.2">
                 <div xmlns="http://www.w3.org/1999/xhtml" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center">
@@ -438,6 +447,7 @@
     const alertaEl = overlay.querySelector('#lmVisorAlerta');
     const alertaIconoEl = overlay.querySelector('#lmVisorAlertaIcono');
     const alertaFondoEl = overlay.querySelector('#lmVisorAlertaFondo');
+    const alertaPulsoEl = overlay.querySelector('#lmVisorAlertaPulso');
     function mostrarAlertaEvento(x,y,iconoClase,colorFondo,colorIcono){
       if(!alertaEl) return;
       if(alertaIconoEl){
@@ -445,12 +455,30 @@
         alertaIconoEl.style.color = colorIcono || '#fff';
       }
       if(alertaFondoEl) alertaFondoEl.setAttribute('fill', colorFondo || '#e6362f');
+      if(alertaPulsoEl) alertaPulsoEl.setAttribute('stroke', colorFondo || '#e6362f');
+      // Consciente del borde superior: si el punto está cerca de
+      // arriba (por ejemplo, el portero situado arriba en la
+      // orientación móvil), colocar la alerta por ENCIMA la sacaría
+      // del lienzo visible — en ese caso aparece por DEBAJO en su
+      // lugar, nunca al revés.
+      const cercaBordeSuperior = y<18;
+      const desplazamiento = cercaBordeSuperior ? 8 : -8;
+      const desplazamientoInicial = cercaBordeSuperior ? 6.8 : -6.8;
       alertaEl.style.transition='none';
-      alertaEl.setAttribute('transform', `translate(${x},${y-6.8}) scale(0.4)`);
+      alertaEl.setAttribute('transform', `translate(${x},${y+desplazamientoInicial}) scale(0.4)`);
       alertaEl.setAttribute('opacity','0');
+      // Reinicia la animación de pulso del anillo — quitando y
+      // volviendo a poner la clase se fuerza a que arranque desde
+      // cero cada vez, en vez de quedarse "congelada" a mitad si ya
+      // estaba corriendo de un evento anterior.
+      if(alertaPulsoEl){
+        alertaPulsoEl.style.animation='none';
+        void alertaPulsoEl.getBoundingClientRect();
+        alertaPulsoEl.style.animation='';
+      }
       void alertaEl.getBoundingClientRect(); // fuerza el repintado antes de animar
       alertaEl.style.transition='transform .18s cubic-bezier(.34,1.56,.64,1), opacity .12s ease-out';
-      alertaEl.setAttribute('transform', `translate(${x},${y-8}) scale(1)`);
+      alertaEl.setAttribute('transform', `translate(${x},${y+desplazamiento}) scale(1)`);
       alertaEl.setAttribute('opacity','1');
       setTimeout(()=>{
         alertaEl.style.transition='opacity .45s ease-in';
@@ -466,6 +494,29 @@
     function mostrarAlertaDisputa(x,y){ mostrarAlertaEvento(x,y,'ph-hand-fist','#e6362f','#fff'); if(typeof window.playSound==='function') window.playSound('tackle_thud'); }
     function mostrarAlertaFalta(x,y){ mostrarAlertaEvento(x,y,'ph-warning','#e6362f','#fff'); }
     function mostrarAlertaParada(x,y){ mostrarAlertaEvento(x,y,'ph-hands-clapping','#d8d8d8','#1a1a1a'); if(typeof window.playSound==='function') window.playSound('save_catch'); }
+    function mostrarAlertaLesion(x,y){ mostrarAlertaEvento(x,y,'ph-first-aid-kit','#e6362f','#fff'); if(typeof window.playSound==='function') window.playSound('injury_alert'); }
+    function mostrarAlertaSaqueBanda(x,y){ mostrarAlertaEvento(x,y,'ph-arrow-bend-up-right','#4a4a4a','#fff'); if(typeof window.playSound==='function') window.playSound('throwin_short'); }
+    function mostrarAlertaFueraDeJuego(x,y){ mostrarAlertaEvento(x,y,'ph-flag-pennant','#3a6bd8','#fff'); if(typeof window.playSound==='function') window.playSound('whistle_short'); }
+    function mostrarAlertaDespeje(x,y){ mostrarAlertaEvento(x,y,'ph-boot','#4a4a4a','#fff'); if(typeof window.playSound==='function') window.playSound('clearance_boot'); }
+    function mostrarAlertaGolCelebracion(x,y){ mostrarAlertaEvento(x,y,'ph-confetti','#f0c419','#1a1a1a'); }
+    // Explosión de anillos dorados en el momento del gol — el
+    // instante de más impacto de todo el partido, se lo merece un
+    // refuerzo visual a la altura. Tres anillos con un pequeño retraso
+    // entre sí, se crean y se destruyen solos (no dejan rastro en el
+    // DOM una vez terminada la animación).
+    const svgVisor = overlay.querySelector('.lm-visor-campo-svg');
+    function mostrarExplosionGol(x,y){
+      if(!svgVisor) return;
+      [0,120,240].forEach(delay=>{
+        setTimeout(()=>{
+          const anillo=document.createElementNS('http://www.w3.org/2000/svg','circle');
+          anillo.setAttribute('cx',x); anillo.setAttribute('cy',y); anillo.setAttribute('r','2.2');
+          anillo.setAttribute('class','lm-visor-gol-anillo');
+          svgVisor.appendChild(anillo);
+          setTimeout(()=>anillo.remove(), 950);
+        }, real(delay));
+      });
+    }
     function mostrarAlertaRegate(x,y){ mostrarAlertaEvento(x,y,'ph-sneaker-move','#f0c419','#1a1a1a'); if(typeof window.playSound==='function') window.playSound('dribble_flick'); }
     // ========================================================
     // IA SENCILLA DEL PARTIDO — en vez de guionizar jugadas fijas, en
@@ -839,6 +890,12 @@
     // proporcional, sin interrumpir la simulación como un gol.
     const eventosTarjeta=(info.eventos||[]).filter(e=>e.type==='card').sort((a,b)=>a.minute-b.minute)
       .map(e=>({...e, tMostrar:(e.minute/90)*DURACION_TOTAL, mostrado:false}));
+    // Lesiones reales del partido — antes solo se mostraban en el
+    // resumen final, nunca en directo durante el partido. Mismo
+    // patrón que las tarjetas: se muestran en su momento proporcional,
+    // sin interrumpir la simulación.
+    const eventosLesionVisor=(info.eventos||[]).filter(e=>e.type==='injury').sort((a,b)=>a.minute-b.minute)
+      .map(e=>({...e, tMostrar:(e.minute/90)*DURACION_TOTAL, mostrado:false}));
 
     let marcadorMio=0, marcadorRival=0;
     let tiempoTranscurrido=0, golIdx=0;
@@ -963,6 +1020,22 @@
         setTimeout(tick, real(1300));
         return;
       }
+      // Lesión real de este partido, si toca ya — mismo patrón que la
+      // tarjeta: se muestra un instante sin pausar la simulación.
+      // Antes las lesiones solo aparecían en el resumen final, sin
+      // ningún momento visible durante el partido en sí.
+      const lesionAhora = eventosLesionVisor.find(e=>!e.mostrado && tiempoTranscurrido>=e.tMostrar);
+      if(lesionAhora){
+        lesionAhora.mostrado=true;
+        const esMiaLesion = lesionAhora.team===miLado;
+        const nombreJLesion = lesionAhora.jugador ? lesionAhora.jugador.name : '';
+        infoBar.textContent=`✚ ${nombreJLesion} se duele en el suelo (${esMiaLesion?miNombre:rivalNombre})`;
+        const posAlertaLesion={x:parseFloat(balon.getAttribute('cx')), y:parseFloat(balon.getAttribute('cy'))};
+        mostrarAlertaLesion(posAlertaLesion.x, posAlertaLesion.y);
+        tiempoTranscurrido+=1300;
+        setTimeout(tick, real(1300));
+        return;
+      }
       if(golIdx<planGoles.length && tiempoTranscurrido>=planGoles[golIdx]-200){
         const evento=eventosGol[golIdx];
         const esMio = evento.team===miLado;
@@ -1021,6 +1094,7 @@
             const nombreGoleador = evento.jugador ? evento.jugador.name : '';
             infoBar.textContent=`⚽ ${t('lm.visor_gol')} ${nombreGoleador} (${esMio?miNombre:rivalNombre})`;
             mostrarTextoGrande(t('lm.visor_gol'), real(1800));
+            mostrarExplosionGol(objetivoGol.x, objetivoGol.y);
             if(typeof window.playSound==='function') window.playSound('goal');
             setTimeout(()=>{
               // Reorganización real tras el gol: todos los jugadores
@@ -1275,6 +1349,7 @@
             if(posesionMia) idxConBalonMio=idxSaqueBanda; else idxConBalonRival=idxSaqueBanda;
             moverJugador(posesionMia, idxSaqueBanda, puntoBanda.x, puntoBanda.y, 550);
             infoBar.textContent=`${t('lm.visor_saque_banda')||'Saque de banda'} (${posesionMia?miNombre:rivalNombre})`;
+            mostrarAlertaSaqueBanda(puntoBanda.x, puntoBanda.y);
             tiempoTranscurrido+=900;
             setTimeout(tick, real(650));
           }, real(500));
@@ -1287,6 +1362,7 @@
         duracionEfectiva=Math.max(400, Math.min(1100, Math.hypot(destinoDespeje.x-posActual.x, destinoDespeje.y-posActual.y)*17));
         moverBalon(destinoDespeje.x, destinoDespeje.y, duracionEfectiva);
         infoBar.textContent=`${nombreAtaca} despeja el peligro`;
+        mostrarAlertaDespeje(posActual.x, posActual.y);
         pasesJugadaActual=0; historialMio=[]; historialRival=[];
         actualizarFormacionDinamica(posesionMia, posesionMia?idxConBalon:undefined, posesionMia?undefined:idxConBalon, posActual);
         setTimeout(()=>{
