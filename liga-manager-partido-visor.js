@@ -497,6 +497,7 @@
     function mostrarAlertaLesion(x,y){ mostrarAlertaEvento(x,y,'ph-first-aid-kit','#e6362f','#fff'); if(typeof window.playSound==='function') window.playSound('injury_alert'); }
     function mostrarAlertaSaqueBanda(x,y){ mostrarAlertaEvento(x,y,'ph-arrow-bend-up-right','#4a4a4a','#fff'); if(typeof window.playSound==='function') window.playSound('throwin_short'); }
     function mostrarAlertaFueraDeJuego(x,y){ mostrarAlertaEvento(x,y,'ph-flag-pennant','#3a6bd8','#fff'); if(typeof window.playSound==='function') window.playSound('whistle_short'); }
+    function mostrarAlertaRobo(x,y){ mostrarAlertaEvento(x,y,'ph-hand-palm','#2d9c6f','#fff'); if(typeof window.playSound==='function') window.playSound('ball_steal'); }
     function mostrarAlertaDespeje(x,y){ mostrarAlertaEvento(x,y,'ph-boot','#4a4a4a','#fff'); if(typeof window.playSound==='function') window.playSound('clearance_boot'); }
     function mostrarAlertaGolCelebracion(x,y){ mostrarAlertaEvento(x,y,'ph-confetti','#f0c419','#1a1a1a'); }
     // Explosión de anillos dorados en el momento del gol — el
@@ -1444,6 +1445,7 @@
         infoBar.textContent = presionadores>=2
           ? `${nombreDefiende} recupera el balón con una presión conjunta`
           : `${nombreDefiende} recupera el balón con una entrada`;
+        mostrarAlertaRobo(equipoDefiende[rivalCercanoIdx].x, equipoDefiende[rivalCercanoIdx].y);
         siguientePosesionMia=!posesionMia;
         pasesJugadaActual=0;
         if(siguientePosesionMia) siguienteIdxMio=rivalCercanoIdx; else siguienteIdxRival=rivalCercanoIdx;
@@ -1465,6 +1467,10 @@
         // quedaba solo frente al portero sin definir la jugada.
         const defensorMasCercanoDisparo = equipoDefiende.filter((rv,ri)=>ri!==0).reduce((min,rv)=>Math.min(min,Math.hypot(rv.x-posActual.x,rv.y-posActual.y)),Infinity);
         if(zona<0.17 && defensorMasCercanoDisparo>10) return Math.random()<0.94;
+        // Cerca del área, sin rivales DEMASIADO cerca (aunque no esté
+        // completamente solo): también debe disparar con mucha más
+        // decisión que un disparo genérico con marca encima.
+        if(zona<0.24 && defensorMasCercanoDisparo>6) return Math.random()<0.7;
         return Math.random()<(0.38+Math.min(0.18,pasesJugadaActual*0.03))*(posesionMia?multRiesgoMioActual():urgenciaPartidoRival())*factorRolDisparo;
       })()){
         // Cerca del área: intento de disparo (sin gol, salvo que
@@ -1589,17 +1595,32 @@
         // posesión/jugador que se acaba de asignar con datos viejos.
         return;
       } else {
-        // Conducción libre: si no hay NINGÚN rival cerca, el jugador
-        // no tiene por qué pasar de inmediato — en la vida real,
-        // cuando encuentras espacio libre por delante, sigues
-        // corriendo con el balón en los pies para ganar terreno, y
-        // solo decides pasar cuando un defensa empieza a acercarse.
-        // Antes, incluso con todo el campo libre por delante, el
-        // jugador siempre pasaba o intentaba un regate forzado contra
-        // un marcador — nunca "simplemente avanzaba".
-        const presionLejana = equipoDefiende.filter(rv=>Math.hypot(rv.x-posActual.x, rv.y-posActual.y)<16).length;
+        // Conducción libre: si el CAMINO hacia la portería está
+        // despejado, el jugador no tiene por qué pasar de inmediato —
+        // en la vida real, cuando encuentras espacio libre por
+        // delante, sigues corriendo con el balón en los pies para
+        // ganar terreno, y solo decides pasar cuando un defensa
+        // empieza a interponerse de verdad. Antes se exigía que NO
+        // hubiera NINGÚN rival cerca en cualquier dirección — muy
+        // restrictivo, porque con 11 rivales en el campo casi siempre
+        // hay alguno cerca en algún lado, aunque no esté bloqueando el
+        // camino real hacia portería. Ahora se comprueba de verdad si
+        // hay algún defensa interponiéndose en la línea directa hacia
+        // el gol, no solo "cerca en general".
+        const dirCaminoX = golObjetivo.x-posActual.x, dirCaminoY = golObjetivo.y-posActual.y;
+        const dirCaminoLen = Math.hypot(dirCaminoX, dirCaminoY)||1;
+        const defensorEnCamino = equipoDefiende.some((rv,ri)=>{
+          if(ri===0) return false; // el portero no cuenta como obstáculo hasta el remate final
+          // Proyección del rival sobre la línea directa al gol: cuánto
+          // se ha adelantado en esa dirección, y cuánto se desvía a
+          // los lados de esa línea recta.
+          const relX=rv.x-posActual.x, relY=rv.y-posActual.y;
+          const avanceProyectado = (relX*dirCaminoX+relY*dirCaminoY)/dirCaminoLen;
+          const desvioLateral = Math.abs(relX*dirCaminoY-relY*dirCaminoX)/dirCaminoLen;
+          return avanceProyectado>0 && avanceProyectado<dirCaminoLen*0.85 && desvioLateral<9;
+        });
         const rolPortadorLibre = (posesionMia?rolesMios:rolesRival)[idxConBalon];
-        if(presionLejana===0 && zona>0.2 && rolPortadorLibre!=='def' && Math.random()<0.6){
+        if(!defensorEnCamino && zona>0.15 && rolPortadorLibre!=='def' && Math.random()<0.72){
           const avanceLibre = Math.min(0.30, 0.14+((posesionMia?misStatsReales.pace:rival.pace)-50)/300);
           const destinoConduccion={
             x: posActual.x+(golObjetivo.x-posActual.x)*avanceLibre,
