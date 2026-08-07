@@ -218,6 +218,7 @@
             <circle cx="${CENTRO_X}" cy="${CENTRO_Y}" r="0.8" fill="#eaf5ea" opacity="0.9"/>
             <g id="lmVisorGrupoRival">${rivalSlots.map((s,i)=>puntoJugadorHTML(s, i===0, false, i, rivalNumeros[i], rivalNombres[i])).join('')}</g>
             <g id="lmVisorGrupoMio">${misSlots.map((s,i)=>puntoJugadorHTML(s, i===0, true, i, misNumeros[i], misNombres[i])).join('')}</g>
+            <ellipse cx="${CENTRO_X}" cy="${CENTRO_Y}" rx="1.3" ry="0.55" id="lmVisorBalonSombra" fill="rgba(0,0,0,.38)" style="filter:blur(.4px)"/>
             <circle cx="${CENTRO_X}" cy="${CENTRO_Y}" r="1.3" class="lm-visor-balon" id="lmVisorBalon"/>
             <circle cx="${CENTRO_X}" cy="${CENTRO_Y}" r="3.6" class="lm-visor-resalte" id="lmVisorResalte" opacity="0"/>
             <g id="lmVisorAlerta" opacity="0" style="pointer-events:none">
@@ -360,6 +361,7 @@
     let ballAnim = {startX:CENTRO_X, startY:CENTRO_Y, targetX:CENTRO_X, targetY:CENTRO_Y, startTime:0, duration:1, active:false};
     function easeOutCubic(t){ return 1-Math.pow(1-t,3); }
     let ballAnimFrameId=null;
+    const balonSombra = overlay.querySelector('#lmVisorBalonSombra');
     function ballAnimFrame(now){
       if(ballAnim.active){
         const elapsed=now-ballAnim.startTime;
@@ -369,6 +371,7 @@
         const curY=ballAnim.startY+(ballAnim.targetY-ballAnim.startY)*eased;
         balon.setAttribute('cx', curX);
         balon.setAttribute('cy', curY);
+        if(balonSombra){ balonSombra.setAttribute('cx', curX); balonSombra.setAttribute('cy', curY); }
         if(t>=1) ballAnim.active=false;
       }
       ballAnimFrameId=requestAnimationFrame(ballAnimFrame);
@@ -404,9 +407,26 @@
         // vuelta lineal.
         balon.style.transition=`r ${mitadReal}ms ease-out`;
         balon.setAttribute('r', radioAlto);
+        // La sombra en el suelo crece y se difumina a la vez que el
+        // balón "sube" — en la vida real, cuanto más alto vuela un
+        // balón, más grande y más tenue se ve su sombra proyectada.
+        // Al aterrizar, sombra y balón vuelven a coincidir en tamaño y
+        // opacidad, dando la sensación de que ha tocado el suelo de
+        // verdad.
+        if(balonSombra){
+          balonSombra.style.transition=`rx ${mitadReal}ms ease-out, ry ${mitadReal}ms ease-out, opacity ${mitadReal}ms ease-out`;
+          balonSombra.setAttribute('rx', (1.3+factorAltura*1.4).toFixed(2));
+          balonSombra.setAttribute('ry', (0.55+factorAltura*0.35).toFixed(2));
+          balonSombra.style.opacity = (0.38-factorAltura*0.22).toFixed(2);
+        }
         setTimeout(()=>{
           balon.style.transition=`r ${mitadReal}ms ease-out`;
           balon.setAttribute('r', radioBase);
+          if(balonSombra){
+            balonSombra.style.transition=`rx ${mitadReal}ms ease-out, ry ${mitadReal}ms ease-out, opacity ${mitadReal}ms ease-out`;
+            balonSombra.setAttribute('rx','1.3'); balonSombra.setAttribute('ry','0.55');
+            balonSombra.style.opacity='0.38';
+          }
         }, real(durMs/2));
       }
       ballAnim.startX=cxActual; ballAnim.startY=cyActual;
@@ -713,8 +733,21 @@
         const desvioLateralGK = esEscritorio
           ? Math.max(-6,Math.min(6,(balonPos.y-golPropioGK.y)*0.18))
           : Math.max(-6,Math.min(6,(balonPos.x-golPropioGK.x)*0.18));
-        const gkX = esEscritorio ? golPropioGK.x : golPropioGK.x+desvioLateralGK;
-        const gkY = esEscritorio ? golPropioGK.y+desvioLateralGK : golPropioGK.y;
+        // Adelanto real de línea (portero-líbero moderno): cuando el
+        // propio equipo ataca a fondo en campo contrario, sin peligro
+        // inmediato sobre la propia portería, el portero se adelanta
+        // unos pasos de su línea para cubrir el espacio de detrás de
+        // la defensa — antes se quedaba siempre clavado en su sitio,
+        // sin importar lo lejos que estuviera el balón. El avance es
+        // deliberadamente modesto y siempre vuelve a la línea en
+        // cuanto el propio equipo pierde la posesión.
+        const distBalonPropiaGK = Math.hypot(balonPos.x-golPropioGK.x, balonPos.y-golPropioGK.y);
+        const diagonalCampoGK = Math.hypot(ANCHO, ALTO);
+        const adelantoGK = (yoAtaco && distBalonPropiaGK>diagonalCampoGK*0.55) ? Math.min(9, (distBalonPropiaGK/diagonalCampoGK-0.55)*22) : 0;
+        const dirAdelantoX = esEscritorio ? (esMio?1:-1) : 0;
+        const dirAdelantoY = esEscritorio ? 0 : (esMio?-1:1);
+        const gkX = (esEscritorio ? golPropioGK.x : golPropioGK.x+desvioLateralGK) + dirAdelantoX*adelantoGK;
+        const gkY = (esEscritorio ? golPropioGK.y+desvioLateralGK : golPropioGK.y) + dirAdelantoY*adelantoGK;
         if(idxExcluir!==0) setTimeout(()=>moverJugador(esMio, 0, gkX, gkY, 900), real(200));
 
         const destinos=[]; // para la separación: no dejar que dos caigan en el mismo punto
@@ -1426,7 +1459,7 @@
       // jugador ocupaba solo un instante después.
       let interceptorPendienteIdx=-1;
 
-      const probBase = zona<0.35?0.34:0.24;
+      const probBase = zona<0.35?0.26:0.18;
       const probPresion = probBase + Math.max(0,presionadores-1)*0.16; // +16pp por cada presionador extra
       if(distRival<9.5 && Math.random()<probPresion){
         // Presión de cerca: el rival se lleva el balón de verdad — más
@@ -1437,7 +1470,7 @@
         // (rechace, disputa físca) y se lo puede llevar cualquiera de
         // los dos equipos, el que llegue antes — como una pelea de
         // balón de verdad, no una recuperación perfecta siempre.
-        const esDisputaSuelta = disputasConsecutivas<2 && Math.random()<0.16;
+        const esDisputaSuelta = disputasConsecutivas<2 && Math.random()<0.10;
         if(esDisputaSuelta){
           disputasConsecutivas++;
           const puntoDisputa={
@@ -1681,10 +1714,10 @@
           const relX=rv.x-posActual.x, relY=rv.y-posActual.y;
           const avanceProyectado = (relX*dirCaminoX+relY*dirCaminoY)/dirCaminoLen;
           const desvioLateral = Math.abs(relX*dirCaminoY-relY*dirCaminoX)/dirCaminoLen;
-          return avanceProyectado>0 && avanceProyectado<dirCaminoLen*0.85 && desvioLateral<9;
+          return avanceProyectado>0 && avanceProyectado<dirCaminoLen*0.85 && desvioLateral<7.5;
         });
         const rolPortadorLibre = (posesionMia?rolesMios:rolesRival)[idxConBalon];
-        if(!defensorEnCamino && zona>0.15 && rolPortadorLibre!=='def' && Math.random()<0.72){
+        if(!defensorEnCamino && zona>0.15 && rolPortadorLibre!=='def' && Math.random()<0.85){
           const avanceLibre = Math.min(0.30, 0.14+((posesionMia?misStatsReales.pace:rival.pace)-50)/300);
           const destinoConduccion={
             x: posActual.x+(golObjetivo.x-posActual.x)*avanceLibre,
@@ -1708,10 +1741,10 @@
         const distDefensaAislado = Math.hypot(equipoDefiende[defensaAislado].x-posActual.x, equipoDefiende[defensaAislado].y-posActual.y);
         const presionAquiAhora = equipoDefiende.filter(rv=>Math.hypot(rv.x-posActual.x, rv.y-posActual.y)<14).length;
         const ritmoAtaca = posesionMia ? misStatsReales.pace : rival.pace;
-        if(distDefensaAislado<11 && presionAquiAhora===1 && zona>0.15 && Math.random()<(ritmoAtaca-40)/140){
+        if(distDefensaAislado<13 && presionAquiAhora===1 && zona>0.15 && Math.random()<(ritmoAtaca-30)/90){
           const avanzaHacia = golObjetivo;
           const destinoRegate={x:posActual.x+(avanzaHacia.x-posActual.x)*0.22, y:posActual.y+(avanzaHacia.y-posActual.y)*0.22};
-          const regateExitoso = Math.random()<0.62;
+          const regateExitoso = Math.random()<0.68;
           pasesJugadaActual=0;
           if(regateExitoso){
             moverBalon(destinoRegate.x, destinoRegate.y, dur*0.8);
@@ -1928,7 +1961,20 @@
         // carrera incluida), para que la duración visual coincida de
         // verdad con el recorrido real del balón.
         const distanciaPaseReal=Math.hypot(destino.x-posActual.x, destino.y-posActual.y);
-        duracionEfectiva=Math.max(480, Math.min(1900, distanciaPaseReal*32));
+        // Velocidad de pase variable según el contexto real: antes
+        // siempre era la misma velocidad relativa a la distancia, sin
+        // importar si el pasador tenía un rival encima o si el equipo
+        // estaba lanzado en una transición rápida — en la vida real,
+        // un pase bajo presión o en un contraataque sale mucho más
+        // directo y rápido que uno de construcción tranquila sin
+        // oposición cerca.
+        const rivalMasCercanoVelocidad = jugadorMasCercano(equipoDefiende, posActual.x, posActual.y, -1);
+        const distPresionVelocidad = Math.hypot(equipoDefiende[rivalMasCercanoVelocidad].x-posActual.x, equipoDefiende[rivalMasCercanoVelocidad].y-posActual.y);
+        const esContraataqueVelocidad = (posesionMia?historialMio:historialRival).length===0;
+        let factorVelocidadPase = 1;
+        if(distPresionVelocidad<8) factorVelocidadPase *= 0.72; // presión encima, pase rápido y directo
+        if(esContraataqueVelocidad) factorVelocidadPase *= 0.85; // primera decisión tras robar, urgencia real
+        duracionEfectiva=Math.max(340, Math.min(1900, distanciaPaseReal*32*factorVelocidadPase));
         // Pase impreciso bajo presión: antes, una vez decidido, un
         // pase SIEMPRE llegaba perfecto a su destino, sin importar si
         // quien lo daba tenía un rival encima respirándole en la nuca.
