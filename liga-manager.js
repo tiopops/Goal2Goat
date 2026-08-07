@@ -7637,7 +7637,7 @@
           },
           (resultado)=>{
             if(resultado && resultado.sobreAbierto && resultado.sobreAbierto.length){
-              mostrarRevelacionSobre(resultado.sobreAbierto, renderHub);
+              mostrarRevelacionSobreDesdeCorreo(resultado.sobreAbierto, renderHub);
             } else {
               renderHub();
             }

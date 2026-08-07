@@ -232,6 +232,7 @@
             </g>
           </svg>
           <div class="lm-visor-anuncio" id="lmVisorAnuncio"></div>
+          <button id="lmVisorLeyendaBtn" class="lm-visor-leyenda-btn" title="${t('lm.leyenda_iconos_titulo')}" type="button"><i class="ph ph-bold ph-question"></i></button>
           ${(clima&&clima.id==='rain')?`<div class="lm-visor-lluvia">${Array.from({length:40}).map(()=>{
             const left=Math.random()*100, duration=(0.5+Math.random()*0.4).toFixed(2);
             const negDelay=(-Math.random()*duration).toFixed(2);
@@ -476,16 +477,22 @@
       }
       if(alertaFondoEl) alertaFondoEl.setAttribute('fill', colorFondo || '#e6362f');
       if(alertaPulsoEl) alertaPulsoEl.setAttribute('stroke', colorFondo || '#e6362f');
-      // Consciente del borde superior: si el punto está cerca de
-      // arriba (por ejemplo, el portero situado arriba en la
-      // orientación móvil), colocar la alerta por ENCIMA la sacaría
-      // del lienzo visible — en ese caso aparece por DEBAJO en su
-      // lugar, nunca al revés.
-      const cercaBordeSuperior = y<18;
+      // Consciente de los 4 bordes del campo, no solo el superior: si
+      // el punto está cerca de cualquier borde (por ejemplo, junto al
+      // área o junto a la banda), la alerta se desplaza hacia el
+      // CENTRO del campo en la dirección que haga falta para quedar
+      // siempre completamente visible, en vez de arriesgarse a salir
+      // del lienzo por cualquiera de los cuatro lados.
+      const RADIO_ALERTA=4.8, MARGEN_ALERTA=RADIO_ALERTA+2.2;
+      const cercaBordeSuperior = y<MARGEN_ALERTA+6.8;
       const desplazamiento = cercaBordeSuperior ? 8 : -8;
       const desplazamientoInicial = cercaBordeSuperior ? 6.8 : -6.8;
+      const xClamp = Math.max(MARGEN_ALERTA, Math.min(ANCHO-MARGEN_ALERTA, x));
+      const yFinal = y+desplazamiento;
+      const yFinalClamp = Math.max(MARGEN_ALERTA, Math.min(ALTO-MARGEN_ALERTA, yFinal));
+      const yInicialClamp = Math.max(MARGEN_ALERTA, Math.min(ALTO-MARGEN_ALERTA, y+desplazamientoInicial));
       alertaEl.style.transition='none';
-      alertaEl.setAttribute('transform', `translate(${x},${y+desplazamientoInicial}) scale(0.4)`);
+      alertaEl.setAttribute('transform', `translate(${xClamp},${yInicialClamp}) scale(0.4)`);
       alertaEl.setAttribute('opacity','0');
       // Reinicia la animación de pulso del anillo — quitando y
       // volviendo a poner la clase se fuerza a que arranque desde
@@ -498,7 +505,7 @@
       }
       void alertaEl.getBoundingClientRect(); // fuerza el repintado antes de animar
       alertaEl.style.transition='transform .18s cubic-bezier(.34,1.56,.64,1), opacity .12s ease-out';
-      alertaEl.setAttribute('transform', `translate(${x},${y+desplazamiento}) scale(1)`);
+      alertaEl.setAttribute('transform', `translate(${xClamp},${yFinalClamp}) scale(1)`);
       alertaEl.setAttribute('opacity','1');
       setTimeout(()=>{
         alertaEl.style.transition='opacity .45s ease-in';
@@ -520,6 +527,48 @@
     function mostrarAlertaRobo(x,y){ mostrarAlertaEvento(x,y,'ph-hand-palm','#2d9c6f','#fff'); if(typeof window.playSound==='function') window.playSound('ball_steal'); }
     function mostrarAlertaDespeje(x,y){ mostrarAlertaEvento(x,y,'ph-boot','#4a4a4a','#fff'); if(typeof window.playSound==='function') window.playSound('clearance_boot'); }
     function mostrarAlertaGolCelebracion(x,y){ mostrarAlertaEvento(x,y,'ph-confetti','#f0c419','#1a1a1a'); }
+    // Leyenda de iconos del HUD — consultable en cualquier momento del
+    // partido sin pausar ni interrumpir nada, tal como haría un juego
+    // deportivo serio con su glosario de HUD. Un botón fijo y discreto
+    // en la esquina del campo abre un panel compacto con los 10
+    // iconos, su color y su significado.
+    const LEYENDA_ICONOS=[
+      {icono:'ph-hand-fist', color:'#e6362f', nombre:t('lm.leyenda_disputa_nombre'), desc:t('lm.leyenda_disputa_desc')},
+      {icono:'ph-warning', color:'#e6362f', nombre:t('lm.leyenda_falta_nombre'), desc:t('lm.leyenda_falta_desc')},
+      {icono:'ph-hands-clapping', color:'#d8d8d8', colorIcono:'#1a1a1a', nombre:t('lm.leyenda_parada_nombre'), desc:t('lm.leyenda_parada_desc')},
+      {icono:'ph-first-aid-kit', color:'#e6362f', nombre:t('lm.leyenda_lesion_nombre'), desc:t('lm.leyenda_lesion_desc')},
+      {icono:'ph-arrow-bend-up-right', color:'#4a4a4a', nombre:t('lm.leyenda_banda_nombre'), desc:t('lm.leyenda_banda_desc')},
+      {icono:'ph-flag-pennant', color:'#3a6bd8', nombre:t('lm.leyenda_fuerajuego_nombre'), desc:t('lm.leyenda_fuerajuego_desc')},
+      {icono:'ph-hand-palm', color:'#2d9c6f', nombre:t('lm.leyenda_robo_nombre'), desc:t('lm.leyenda_robo_desc')},
+      {icono:'ph-boot', color:'#4a4a4a', nombre:t('lm.leyenda_despeje_nombre'), desc:t('lm.leyenda_despeje_desc')},
+      {icono:'ph-confetti', color:'#f0c419', colorIcono:'#1a1a1a', nombre:t('lm.leyenda_gol_nombre'), desc:t('lm.leyenda_gol_desc')},
+      {icono:'ph-sneaker-move', color:'#f0c419', colorIcono:'#1a1a1a', nombre:t('lm.leyenda_regate_nombre'), desc:t('lm.leyenda_regate_desc')}
+    ];
+    function mostrarLeyendaIconos(){
+      const existente=document.getElementById('lmVisorLeyendaOverlay');
+      if(existente){ existente.remove(); return; }
+      const leyendaOverlay=document.createElement('div');
+      leyendaOverlay.id='lmVisorLeyendaOverlay';
+      leyendaOverlay.innerHTML=`
+        <div class="lm-visor-leyenda-card">
+          <div class="lm-visor-leyenda-titulo">${t('lm.leyenda_iconos_titulo')}</div>
+          <div class="lm-visor-leyenda-lista">
+            ${LEYENDA_ICONOS.map(it=>`
+              <div class="lm-visor-leyenda-fila">
+                <span class="lm-visor-leyenda-icono" style="background:${it.color};color:${it.colorIcono||'#fff'}"><i class="ph ph-bold ${it.icono}"></i></span>
+                <div class="lm-visor-leyenda-texto"><strong>${it.nombre}</strong><span>${it.desc}</span></div>
+              </div>`).join('')}
+          </div>
+        </div>`;
+      overlay.appendChild(leyendaOverlay);
+      leyendaOverlay.addEventListener('click', (e)=>{ if(e.target===leyendaOverlay) leyendaOverlay.remove(); });
+    }
+    const leyendaBtn = overlay.querySelector('#lmVisorLeyendaBtn');
+    if(leyendaBtn) leyendaBtn.addEventListener('click', (e)=>{
+      e.stopPropagation();
+      if(typeof window.playSound==='function') window.playSound('select');
+      mostrarLeyendaIconos();
+    });
     // Explosión de anillos dorados en el momento del gol — el
     // instante de más impacto de todo el partido, se lo merece un
     // refuerzo visual a la altura. Tres anillos con un pequeño retraso
@@ -1175,6 +1224,7 @@
             infoBar.textContent=`⚽ ${t('lm.visor_gol')} ${nombreGoleador} (${esMio?miNombre:rivalNombre})`;
             mostrarTextoGrande(t('lm.visor_gol'), real(1800));
             mostrarExplosionGol(objetivoGol.x, objetivoGol.y);
+            mostrarAlertaGolCelebracion(objetivoGol.x, objetivoGol.y);
             if(typeof window.playSound==='function') window.playSound('goal');
             setTimeout(()=>{
               // Reorganización real tras el gol: todos los jugadores
@@ -1263,9 +1313,15 @@
             const prof = esEscritorio ? (esMio?pos.x:ANCHO-pos.x) : (esMio?ALTO-pos.y:pos.y);
             if(prof>ultimoDefensorGol-2){
               const profCorregida=ultimoDefensorGol-2;
-              return esEscritorio
+              const posCorregida = esEscritorio
                 ? {x: esMio?profCorregida:ANCHO-profCorregida, y:pos.y}
                 : {x:pos.x, y: esMio?ALTO-profCorregida:profCorregida};
+              // Se avisa de verdad cuando la corrección es apreciable
+              // (no un simple redondeo de medio metro) — la jugada
+              // estuvo a punto de anularse por fuera de juego, y el
+              // jugador se frena justo a tiempo en la línea legal.
+              if(Math.abs(prof-profCorregida)>1.5) mostrarAlertaFueraDeJuego(posCorregida.x, posCorregida.y);
+              return posCorregida;
             }
             return pos;
           }

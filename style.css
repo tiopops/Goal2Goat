@@ -4644,3 +4644,40 @@ body.light-theme.menu-screen{
 .contact-popup-send-btn:active{transform:translateY(0)}
 .contact-popup-send-btn:disabled{opacity:.55;cursor:default;transform:none;box-shadow:none}
 
+/* ===================== LEYENDA DE ICONOS DEL PARTIDO ===================== */
+.lm-visor-leyenda-btn{
+  position:absolute;bottom:8px;right:8px;z-index:20;
+  width:26px;height:26px;border-radius:50%;
+  background:rgba(15,15,15,.72);border:1px solid rgba(255,255,255,.25);
+  color:#ddd;font-size:13px;display:flex;align-items:center;justify-content:center;
+  cursor:pointer;backdrop-filter:blur(2px);
+  transition:background .15s ease,transform .12s ease;
+}
+.lm-visor-leyenda-btn:hover{background:rgba(201,162,39,.35);transform:scale(1.08)}
+#lmVisorLeyendaOverlay{
+  position:absolute;inset:0;z-index:40;
+  background:rgba(0,0,0,.62);display:flex;align-items:center;justify-content:center;
+  padding:14px;
+}
+.lm-visor-leyenda-card{
+  width:100%;max-width:340px;max-height:92%;overflow-y:auto;
+  background:linear-gradient(165deg,#1c1c1c,#141414);border:1px solid rgba(201,162,39,.4);
+  border-radius:12px;padding:16px 14px;
+  box-shadow:0 18px 50px rgba(0,0,0,.6);
+  animation:contactPopupIn .2s cubic-bezier(.22,1,.36,1);
+}
+.lm-visor-leyenda-titulo{
+  font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:1.2px;font-size:15px;
+  color:var(--gold);text-align:center;margin-bottom:12px;
+}
+.lm-visor-leyenda-lista{display:flex;flex-direction:column;gap:10px}
+.lm-visor-leyenda-fila{display:flex;align-items:flex-start;gap:10px}
+.lm-visor-leyenda-icono{
+  flex-shrink:0;width:26px;height:26px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;font-size:13px;
+  border:1px solid rgba(255,255,255,.3);
+}
+.lm-visor-leyenda-texto{display:flex;flex-direction:column;gap:2px}
+.lm-visor-leyenda-texto strong{font-size:11.5px;color:#eee;letter-spacing:.2px}
+.lm-visor-leyenda-texto span{font-size:10.5px;color:#999;line-height:1.35}
+
