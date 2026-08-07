@@ -667,6 +667,16 @@
     // defensivo se repliega más y ataca a la contra; uno ofensivo
     // empuja más líneas arriba y arriesga más.
     const catTacticaMia = state.formacionCategoria;
+    // Categoría táctica del RIVAL, derivada de sus propias
+    // estadísticas (mismo criterio que ya usa el panel de "estilo de
+    // juego" que se le muestra al jugador antes del partido) — antes
+    // esta categoría solo existía para el equipo del jugador, así que
+    // el rival SIEMPRE se comportaba de forma neutra en la
+    // simulación, sin importar si el panel decía que jugaba "muy
+    // ofensivo" o "muy defensivo". Ahora ese estilo mostrado se
+    // refleja de verdad en cómo presiona, empuja y se repliega.
+    const desequilibrioRival = rival.attack-rival.defense;
+    const catTacticaRival = desequilibrioRival>8 ? 'ofensiva' : (desequilibrioRival<-8 ? 'defensiva' : 'equilibrada');
     const multEmpujeMioBase = catTacticaMia==='ofensiva' ? 1.35 : (catTacticaMia==='defensiva' ? 0.65 : 1);
     const multRiesgoMioBase = catTacticaMia==='ofensiva' ? 1.25 : (catTacticaMia==='defensiva' ? 0.7 : 1);
     // Urgencia por marcador y minuto: si vas perdiendo y el partido
@@ -689,12 +699,19 @@
     // ganando); el rival se comportaba siempre igual sin importar el
     // resultado, algo asimétrico y poco realista. Ahora el rival
     // también aprieta si va perdiendo y se guarda si va ganando.
+    // Multiplicador base según la categoría táctica del rival — igual
+    // que multEmpujeMioBase/multRiesgoMioBase para el jugador, pero
+    // derivado de las estadísticas reales del rival en vez de una
+    // formación elegida a mano.
+    const multEmpujeRivalBase = catTacticaRival==='ofensiva' ? 1.35 : (catTacticaRival==='defensiva' ? 0.65 : 1);
+    const multRiesgoRivalBase = catTacticaRival==='ofensiva' ? 1.25 : (catTacticaRival==='defensiva' ? 0.7 : 1);
     function urgenciaPartidoRival(){
       const diferencia = marcadorMio - marcadorRival; // positivo = el rival va perdiendo
       const progreso = Math.min(1, tiempoTranscurrido/DURACION_TOTAL);
-      if(diferencia>0) return 1 + Math.min(0.5, diferencia*0.18*progreso);
-      if(diferencia<0) return 1 - Math.min(0.32, Math.abs(diferencia)*0.13*progreso);
-      return 1;
+      let base = 1;
+      if(diferencia>0) base = 1 + Math.min(0.5, diferencia*0.18*progreso);
+      else if(diferencia<0) base = 1 - Math.min(0.32, Math.abs(diferencia)*0.13*progreso);
+      return base*multEmpujeRivalBase;
     }
     // Sesgo real de posesión: un equipo claramente mejor (ataque+pase)
     // tiende a monopolizar más el balón, uno claramente peor apenas lo
@@ -776,7 +793,8 @@
           // ofensivo mantiene una línea más alta y comprometida, con
           // el riesgo de espacio a la espalda que eso conlleva en un
           // partido real.
-          const replieguDefensivoBase = (esMio && catTacticaMia==='defensiva') ? 0.09 : ((esMio && catTacticaMia==='ofensiva') ? 0.035 : 0.06);
+          const catTacticaAqui = esMio ? catTacticaMia : catTacticaRival;
+          const replieguDefensivoBase = catTacticaAqui==='defensiva' ? 0.09 : (catTacticaAqui==='ofensiva' ? 0.035 : 0.06);
           // Urgencia del repliegue: cuanto más cerca esté el balón de
           // la propia portería, más rápido reacciona TODO el equipo
           // replegándose — antes se replegaba siempre a la misma
@@ -795,7 +813,7 @@
           // según la categoría táctica (más profunda si es defensiva,
           // casi sin desplazar si es ofensiva) — vuelta gradual a su
           // sitio, nunca un salto directo a la portería.
-          const desplazamientoProfundidad = (esMio && catTacticaMia==='defensiva') ? 0.22 : ((esMio && catTacticaMia==='ofensiva') ? 0.04 : 0.12);
+          const desplazamientoProfundidad = catTacticaAqui==='defensiva' ? 0.22 : (catTacticaAqui==='ofensiva' ? 0.04 : 0.12);
           // Compactación real entre líneas: un equipo bien organizado
           // no solo repliega uniformemente a todos por igual — los
           // mediocentros se cierran ALGO MÁS hacia la línea defensiva
@@ -1181,6 +1199,56 @@
         if(distAlGolYa>distanciaCerca){
           const rolesAtaca2 = esMio?rolesMios:rolesRival;
           const equipoDefiendeGol = esMio?posRival:posMia;
+          // Construcción gradual real: si el balón está todavía lejos
+          // de la portería rival (en el propio campo o en el centro),
+          // antes de repartir entre los 5 tipos de jugada de remate se
+          // juegan 2-3 pases cortos de construcción de verdad,
+          // avanzando progresivamente por el centro del campo — antes
+          // el balón podía saltar directamente desde el propio campo
+          // hasta cerca del área rival en un único pase larguísimo,
+          // algo que casi nunca pasa en un partido real. Un equipo de
+          // verdad hace circular el balón hasta ganar terreno, no
+          // lanza balonazos de 60 metros en cada jugada de gol.
+          const profundidadActual = esEscritorio
+            ? (esMio ? balonPos0.x/ANCHO : 1-balonPos0.x/ANCHO)
+            : (esMio ? 1-balonPos0.y/ALTO : balonPos0.y/ALTO);
+          if(profundidadActual<0.55){
+            const numPasesConstruccion = profundidadActual<0.3 ? 3 : 2;
+            let jugadorAnteriorIdx = idxConBalon;
+            let posActualConstruccion = {x:balonPos0.x, y:balonPos0.y};
+            let retrasoAcumulado = 0;
+            for(let pc=1; pc<=numPasesConstruccion; pc++){
+              const objetivoProgreso = pc/(numPasesConstruccion+1); // avanza gradualmente, sin llegar aún al remate
+              const puntoConstruccion = {
+                x: balonPos0.x+(objetivoGol.x-balonPos0.x)*objetivoProgreso*0.75+(Math.random()-0.5)*10,
+                y: balonPos0.y+(objetivoGol.y-balonPos0.y)*objetivoProgreso*0.75+(Math.random()-0.5)*10
+              };
+              let jugadorConstruccionIdx = jugadorMasCercano(equipoAnotaPos, puntoConstruccion.x, puntoConstruccion.y, jugadorAnteriorIdx);
+              const duracionPaseConstruccion = 550+Math.random()*200;
+              retrasoAcumulado += (pc===1?0:duracionPaseConstruccion);
+              const jaCapturado=jugadorAnteriorIdx, jcCapturado=jugadorConstruccionIdx, pcCapturado={...posActualConstruccion};
+              setTimeout(()=>{
+                actualizarFormacionDinamica(esMio, esMio?jaCapturado:undefined, esMio?undefined:jaCapturado, pcCapturado,
+                  esMio?jcCapturado:undefined, esMio?undefined:jcCapturado);
+                moverJugador(esMio, jcCapturado, puntoConstruccion.x, puntoConstruccion.y, duracionPaseConstruccion);
+                moverBalon(puntoConstruccion.x, puntoConstruccion.y, duracionPaseConstruccion);
+                infoBar.textContent=`${esMio?miNombre:rivalNombre} hace circular el balón`;
+              }, real(retrasoAcumulado));
+              jugadorAnteriorIdx = jugadorConstruccionIdx;
+              posActualConstruccion = puntoConstruccion;
+            }
+            retrasoAcumulado += 550;
+            setTimeout(()=>{
+              idxConBalon = jugadorAnteriorIdx;
+              if(esMio) idxConBalonMio=jugadorAnteriorIdx; else idxConBalonRival=jugadorAnteriorIdx;
+              lanzarJugadaDeGol(posActualConstruccion, jugadorAnteriorIdx);
+            }, real(retrasoAcumulado));
+            return;
+          }
+          lanzarJugadaDeGol(balonPos0, idxConBalon);
+          return;
+        }
+        function lanzarJugadaDeGol(balonPos0, idxConBalon){
           // Comprueba y corrige el fuera de juego de una posición de
           // remate concreta, retrasándola hasta la línea del último
           // defensa si hiciera falta — se reutiliza en TODOS los tipos
@@ -2098,10 +2166,30 @@
         return;
       }
       const posSlotCompanero = (esMioQueSaca?misSlots:rivalSlots)[companeroIdx];
+      // Garantía real de la regla actual (IFAB): solo el jugador que
+      // saca puede estar dentro del círculo central en el momento del
+      // saque — antiguamente hacían falta dos, pero esa regla cambió
+      // hace años. Si la casilla de formación del compañero cayera
+      // por casualidad dentro del radio del círculo (9.15 unidades),
+      // se aparta un poco hacia su propia portería para quedar fuera
+      // de verdad, en vez de confiar en que su posición normal ya
+      // caiga fuera por sí sola.
+      const distCompaneroCentro = Math.hypot(posSlotCompanero.x-centroCampo.x, posSlotCompanero.y-centroCampo.y);
+      const RADIO_CIRCULO_CENTRAL = 9.5;
+      let posCompaneroReal = posSlotCompanero;
+      if(distCompaneroCentro<RADIO_CIRCULO_CENTRAL){
+        const propioGolQueSaca = esMioQueSaca?miGolXY:rivalGolXY;
+        const dirFueraX=(propioGolQueSaca.x-centroCampo.x), dirFueraY=(propioGolQueSaca.y-centroCampo.y);
+        const dirFueraLen=Math.hypot(dirFueraX,dirFueraY)||1;
+        posCompaneroReal = {
+          x: centroCampo.x+(dirFueraX/dirFueraLen)*RADIO_CIRCULO_CENTRAL,
+          y: centroCampo.y+(dirFueraY/dirFueraLen)*RADIO_CIRCULO_CENTRAL
+        };
+      }
       // El toque va hacia la posición de formación del compañero, casi
       // siempre detrás o al lado del punto de centro, nunca hacia la
       // portería rival.
-      moverBalon(posSlotCompanero.x, posSlotCompanero.y, 500);
+      moverBalon(posCompaneroReal.x, posCompaneroReal.y, 500);
       infoBar.textContent=`${nombreQueSaca} pone el balón en juego`;
       setTimeout(()=>{
         if(esMioQueSaca){ idxConBalonMio=companeroIdx; } else { idxConBalonRival=companeroIdx; }

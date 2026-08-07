@@ -3297,6 +3297,16 @@ body.liga-manager-screen .ranking-btn-label-lm{display:inline}
 }
 .lm-popup-actions button{flex:1;min-width:0}
 .lm-popup-actions.lm-popup-actions-compact{justify-content:flex-end}
+/* Estos dos popups concretos (plantilla técnica incompleta y quiniela
+   pendiente) mantienen homogeneidad entre sí: botones centrados y del
+   mismo ancho, en vez del alineado a la derecha que usa el resto de
+   popups compactos del juego. */
+#lmAvisoPlantillaTecnicaOverlay .lm-popup-actions,
+#lmAvisoQuinielaOverlay .lm-popup-actions,
+#lmAvisoEntrenamientoSinPlanOverlay .lm-popup-actions{justify-content:center}
+#lmAvisoPlantillaTecnicaOverlay .lm-popup-actions button,
+#lmAvisoQuinielaOverlay .lm-popup-actions button,
+#lmAvisoEntrenamientoSinPlanOverlay .lm-popup-actions button{flex:1;max-width:190px}
 .lm-popup-actions.lm-popup-actions-compact button{flex:0 0 auto;width:auto;padding:9px 22px}
 .lm-mostrar-info-btn{user-select:none;-webkit-user-select:none;touch-action:none}
 .lm-btn-cancelar{

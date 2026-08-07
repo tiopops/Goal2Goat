@@ -275,8 +275,23 @@ function mpDetachStickyBarScroll(barId){
 
 function playSound(name, data){
   if(!audioEnabled) return;
-  const ctx=getAudioCtx();
-  if(!ctx) return;
+  if(!audioCtx){
+    try{ audioCtx=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ audioCtx=null; }
+  }
+  if(!audioCtx) return;
+  if(audioCtx.state==='suspended'){
+    // El navegador puede suspender el audio tras un rato de
+    // inactividad de la pestaña (política habitual de los
+    // navegadores) — resume() es asíncrono, así que antes se llamaba
+    // sin esperar a que terminara, y cualquier sonido programado justo
+    // en ese instante podía perderse en silencio, sin ningún error
+    // visible. Ahora se espera de verdad a que la reanudación se
+    // confirme antes de reintentar reproducirlo, así ningún sonido se
+    // pierde por esta causa.
+    audioCtx.resume().then(()=>{ if(audioCtx.state==='running') playSound(name, data); }).catch(()=>{});
+    return;
+  }
+  const ctx=audioCtx;
   switch(name){
     case 'countdown_tick': { // aviso de cuenta atrás — más agudo cada segundo (5..1)
       const secLeft=(typeof data==='number')?data:1;

@@ -412,6 +412,13 @@
           if(!campo) return; // sin enfoque elegido, no entrena de verdad
           if(Math.random()<0.30*bonusPlanificacion){
             j[campo]=Math.min(99, Math.round((j[campo]||50)+1));
+            // Recalcular el overall del jugador cada vez que mejora una
+            // estadística — antes la estadística subía pero la
+            // puntuación general se quedaba con el valor antiguo, y por
+            // extensión también la media del equipo (que se calcula a
+            // partir del overall de cada jugador) hasta que algo más
+            // la refrescara por otro motivo.
+            j.overall=Math.round((j.attack+j.defense+j.pace+j.passing+j.technique)/5);
             textos.push(tp('lm.dia_mejora_stat', {nombre:j.name, stat:t('lm.stat_'+campo)}));
             if(!mejorasPorJugador[j.id]) mejorasPorJugador[j.id]={nombre:j.name, stats:{}};
             mejorasPorJugador[j.id].stats[campo]=(mejorasPorJugador[j.id].stats[campo]||0)+1;
@@ -1997,7 +2004,7 @@
     // se menciona si se cumplió o no.
     const prensa = state.ultimaPrensaResuelta;
     if(prensa && prensa.outcome!=='neutral'){
-      partes.push(tp(prensa.outcome==='correct' ? 'lm.hist_prensa_cumplida' : 'lm.hist_prensa_incumplida', {label:prensa.label}));
+      partes.push(tp(prensa.outcome==='correct' ? 'lm.hist_prensa_cumplida' : 'lm.hist_prensa_incumplida', {label:prensa.label, delta:prensa.delta}));
     }
 
     // Cierre breve.
@@ -2563,6 +2570,7 @@
         // histórico del partido. Llamarla aquí también es segura para
         // el modo automático (que la vuelve a llamar más abajo), ya
         // que resolverPrensaLM no hace nada si ya se había resuelto.
+        state._prensaResueltaEstePartido=false;
         resolverPrensaLM(misGoles, susGoles);
         if(typeof window.unlockLMAchievement==='function'){
           window.unlockLMAchievement('lm_first_match', false);
@@ -2836,7 +2844,22 @@
   // Resuelve la promesa pendiente contra el resultado real del partido
   // — mismo efecto que Copa Leyendas: ±8 de moral, o 0 si fue neutral.
   function resolverPrensaLM(miGoles, suGoles){
-    if(!state.lmPendingPrediction) return null;
+    // Esta función puede llamarse más de una vez en el mismo partido
+    // (una desde el origen común, otra de forma redundante en el
+    // código específico del modo automático) — la marca evita que la
+    // segunda llamada, al encontrar lmPendingPrediction ya vacío por
+    // la primera, borre por error el resultado que la primera ya
+    // había guardado correctamente.
+    if(state._prensaResueltaEstePartido) return null;
+    if(!state.lmPendingPrediction){
+      // Sin rueda de prensa en este partido concreto — se limpia el
+      // resultado guardado, para que el histórico de ESTE partido
+      // nunca muestre por error la promesa de una jornada anterior.
+      state.ultimaPrensaResuelta=null;
+      state._prensaResueltaEstePartido=true;
+      return null;
+    }
+    state._prensaResueltaEstePartido=true;
     const {answer}=state.lmPendingPrediction;
     state.lmPendingPrediction=null;
     if(answer.stance==='neutral'){
@@ -4021,6 +4044,66 @@
     document.getElementById('lmOnceRivalCerrar').addEventListener('click', ()=>{
       if(typeof window.playSound==='function') window.playSound('select');
       overlay.remove();
+    });
+  }
+  // Aviso de plantilla técnica incompleta — a diferencia del aviso
+  // genérico de un solo botón, este tiene dos opciones reales:
+  // decidirlo más tarde (sigue jugando sin más) o ir directo a
+  // contratar. Mismo patrón visual que el aviso de quiniela pendiente,
+  // para que ambos popups mantengan homogeneidad entre sí.
+  function mostrarAvisoPlantillaTecnicaIncompleta(){
+    const overlay=document.createElement('div');
+    overlay.id='lmAvisoPlantillaTecnicaOverlay';
+    overlay.innerHTML=`
+      <div class="lm-dilemma-card" style="max-width:400px">
+        <div class="lm-dilemma-title"><i class="ph ph-bold ph-warning-circle"></i>${t('lm.plantilla_tecnica_incompleta_titulo')}</div>
+        <div class="lm-dilemma-text" style="margin:10px 0 16px">${t('lm.plantilla_tecnica_incompleta_msg')}</div>
+        <div class="lm-popup-actions lm-popup-actions-compact">
+          <button id="lmAvisoPlantillaTecnicaMasTarde" class="mode-card-btn mode-card-btn-secondary">${t('lm.decidir_mas_tarde_btn')}</button>
+          <button id="lmAvisoPlantillaTecnicaContratar" class="mode-card-btn mode-card-btn-gold">${t('lm.contratar_ahora_btn')}</button>
+        </div>
+      </div>`;
+    document.getElementById('ligaManagerScreen').appendChild(overlay);
+    const cerrar=()=>overlay.remove();
+    habilitarCierreOverlay(overlay, cerrar);
+    document.getElementById('lmAvisoPlantillaTecnicaContratar').addEventListener('click', ()=>{
+      if(typeof window.playSound==='function') window.playSound('select');
+      cerrar();
+      abrirTrabajadores();
+    });
+    document.getElementById('lmAvisoPlantillaTecnicaMasTarde').addEventListener('click', ()=>{
+      if(typeof window.playSound==='function') window.playSound('select');
+      cerrar();
+    });
+  }
+  // Aviso de entrenamiento sin plan asignado — mismo patrón visual que
+  // los otros dos popups (plantilla técnica incompleta y quiniela
+  // pendiente): decidirlo más tarde (sigue la semana sin más) o ir
+  // directo a planificar el entrenamiento.
+  function mostrarAvisoEntrenamientoSinPlan(continuarCallback){
+    const overlay=document.createElement('div');
+    overlay.id='lmAvisoEntrenamientoSinPlanOverlay';
+    overlay.innerHTML=`
+      <div class="lm-dilemma-card" style="max-width:400px">
+        <div class="lm-dilemma-title"><i class="ph ph-bold ph-barbell"></i>${t('lm.plan_entrenamiento_titulo')}</div>
+        <div class="lm-dilemma-text" style="margin:10px 0 16px">${t('lm.confirmar_seguir_sin_pf')}</div>
+        <div class="lm-popup-actions lm-popup-actions-compact">
+          <button id="lmAvisoEntrenamientoMasTarde" class="mode-card-btn mode-card-btn-secondary">${t('lm.decidir_mas_tarde_btn')}</button>
+          <button id="lmAvisoEntrenamientoPlanificar" class="mode-card-btn mode-card-btn-gold">${t('lm.planificar_entrenamiento_btn')}</button>
+        </div>
+      </div>`;
+    document.getElementById('ligaManagerScreen').appendChild(overlay);
+    const cerrar=()=>overlay.remove();
+    habilitarCierreOverlay(overlay, cerrar);
+    document.getElementById('lmAvisoEntrenamientoPlanificar').addEventListener('click', ()=>{
+      if(typeof window.playSound==='function') window.playSound('select');
+      cerrar();
+      abrirPreparadorFisico();
+    });
+    document.getElementById('lmAvisoEntrenamientoMasTarde').addEventListener('click', ()=>{
+      if(typeof window.playSound==='function') window.playSound('select');
+      cerrar();
+      continuarCallback();
     });
   }
   function mostrarAvisoJuego(mensaje, titulo){
@@ -5812,10 +5895,8 @@
           if(entreno>0 && sinPlan && !state.avisoSinPlanMostrado){
             state.avisoSinPlanMostrado=true;
             guardarEstado();
-            if(typeof window.showConfirmPopup==='function'){
-              window.showConfirmPopup(t('lm.confirmar_seguir_sin_pf'), continuarSemana, t('lm.seguir_igualmente_btn'));
-              return;
-            }
+            mostrarAvisoEntrenamientoSinPlan(continuarSemana);
+            return;
           }
           continuarSemana();
         };
@@ -5825,7 +5906,7 @@
         if(faltaCuerpoTecnico && !state.avisoCuerpoTecnicoMostrado){
           state.avisoCuerpoTecnicoMostrado=true;
           guardarEstado();
-          mostrarAvisoJuego(t('lm.plantilla_tecnica_incompleta_msg'), t('lm.plantilla_tecnica_incompleta_titulo'));
+          mostrarAvisoPlantillaTecnicaIncompleta();
           return;
         }
         // Aviso de quiniela pendiente: la quiniela se entrega para
@@ -6538,7 +6619,9 @@
           ${notif?`
           <div class="lm-urgente-row">
             <div class="lm-urgente-texto"><strong style="color:#e24b4a">${t('lm.urgente')}</strong> ${jugadorUrgente?jugadorUrgente.name:'Un jugador'} tiene una lesión ${notif.severidad}.</div>
-            <button id="lmAtenderUrgente" class="mode-card-btn mode-card-btn-gold">ATENDER (sumar ${notif.dificultad}+)</button>
+            ${(state.diceAvailable*6 < notif.dificultad)
+              ? `<div class="med-card-bloqueada-label" style="margin:0">${t('lm.imposible_dados')}</div>`
+              : `<button id="lmAtenderUrgente" class="mode-card-btn mode-card-btn-gold">ATENDER (sumar ${notif.dificultad}+)</button>`}
           </div>` : ''}
           ${renderNivelesEquipoHTML()}
           <div class="lm-staff-bar-capital" style="justify-content:center;margin:10px 0 8px"><span><i class="ph ph-bold ph-dice-five"></i> ${t('lm.dados')}: <strong>${state.diceAvailable}</strong></span><span><i class="ph ph-bold ph-arrows-clockwise"></i> ${t('lm.rerrolls')}: <strong>${state.dadoRerollsDisponibles||0}</strong></span><span><i class="ph ph-bold ph-cards"></i> ${t('lm.cambios')}: <strong>${Math.max(0,lmCambiosCartaPorPartido()-(state.medicoCambiosUsados||0))}/${lmCambiosCartaPorPartido()}</strong></span></div>
