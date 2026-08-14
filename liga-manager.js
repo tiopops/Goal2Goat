@@ -2705,6 +2705,49 @@
     return miPartidoInfo;
   }
 
+  /* ---------- 8a. Herramienta de desarrollo (SOLO cuenta jesuslor85@gmail.com):
+     simula al instante, sin ninguna interfaz de partido, todas las jornadas
+     que quedan hasta dejar la liga justo en la ÚLTIMA jornada (38) sin
+     jugar todavía. Todos los partidos de todos los equipos se resuelven al
+     azar con el mismo motor (simularPartido), EXCEPTO los de mi equipo,
+     cuyo resultado se fuerza a victoria o derrota (marcador aleatorio
+     dentro de ese resultado forzado). No reproduce el resto de sistemas
+     de una jornada normal (fichas médicas, nómina, correo, fatiga...) —
+     es una herramienta de depuración, no una simulación fiel jornada a
+     jornada. ---------- */
+  function lmDevSimularHastaUltimaJornada(forzar){
+    // forzar: 'ganar' | 'perder'
+    const ULTIMA_SIN_JUGAR = 38; // se deja esta jornada sin resolver
+    for(let j=state.jornadaActual-1; j<ULTIMA_SIN_JUGAR-1; j++){
+      const jornada=state.calendario[j];
+      if(!jornada) break;
+      jornada.forEach(partido=>{
+        const key=j+'-'+partido.home.id+'-'+partido.away.id;
+        if(state.resultados[key]) return;
+        const miEsLocal = partido.home.id==='lm_0';
+        const esMiPartido = miEsLocal || partido.away.id==='lm_0';
+        let resultado;
+        if(esMiPartido){
+          let misGoles, susGoles;
+          if(forzar==='ganar'){
+            misGoles=1+Math.floor(Math.random()*4);
+            susGoles=Math.floor(Math.random()*misGoles);
+          }else{
+            susGoles=1+Math.floor(Math.random()*4);
+            misGoles=Math.floor(Math.random()*susGoles);
+          }
+          resultado = miEsLocal ? {golesA:misGoles,golesB:susGoles,posesionA:50,posesionB:50} : {golesA:susGoles,golesB:misGoles,posesionA:50,posesionB:50};
+        }else{
+          resultado = simularPartido(partido.home, partido.away, null);
+        }
+        state.resultados[key]=resultado;
+      });
+    }
+    state.jornadaActual = ULTIMA_SIN_JUGAR;
+    guardarEstado();
+    render();
+  }
+
   /* ---------- 8b. Partido en vivo — CALCO exacto de Copa Leyendas: mismas
      clases CSS (.match-modal/.match-header/.match-side/.match-team-name/
      .match-scoreline), dos tiempos claramente separados con descanso,
@@ -5436,6 +5479,12 @@
     if(!state.mantenimientoBonos) state.mantenimientoBonos={};
     if(state.dadoRerollsDisponibles===undefined) state.dadoRerollsDisponibles=1;
 
+    // Botones de simulación instantánea de temporada — SOLO visibles para
+    // la cuenta de desarrollo (jesuslor85@gmail.com), nunca para el resto
+    // de usuarios. Llevan la liga hasta la última jornada (38) dejándola
+    // sin jugar, con todas las jornadas anteriores resueltas al azar y el
+    // resultado de MI equipo forzado a victoria (verde) o derrota (roja).
+    const esCuentaDevCheat = !!(window._fbAuth && window._fbAuth.currentUser && window._fbAuth.currentUser.email==='jesuslor85@gmail.com');
     const clasif=calcularClasificacion();
     const j=state.jornadaActual-1;
     const proximaJornada= j<38 ? state.calendario[j] : null;
@@ -5534,6 +5583,15 @@
               <i class="ph ph-bold ph-play-circle"></i>
               <span>${state.jornadaActual>38?t('lm.fin_btn'):(state.semanaResueltaParaJornada===state.jornadaActual?t('lm.jugar_btn'):t('lm.seguir_btn'))}</span>
             </button>
+            ${esCuentaDevCheat && state.jornadaActual<38 ? `
+            <div class="lm-cheat-dev-wrap">
+              <button id="lmCheatPerderBtn" type="button" class="lm-cheat-dev-btn lm-cheat-dev-btn-rojo" title="DEV: simular hasta la última jornada, todo perdido">
+                <i class="ph ph-bold ph-skull"></i>
+              </button>
+              <button id="lmCheatGanarBtn" type="button" class="lm-cheat-dev-btn lm-cheat-dev-btn-verde" title="DEV: simular hasta la última jornada, todo ganado">
+                <i class="ph ph-bold ph-trophy"></i>
+              </button>
+            </div>` : ''}
           </div>
           <div class="bench-title">
             <span><i class="ph ph-bold ph-t-shirt" style="color:var(--gold);margin-right:6px"></i>${t("lm.once_titular")}</span>
@@ -5927,6 +5985,18 @@
       if(Date.now()-jugarBtnUltimaInteraccion>60000) jugarBtn.classList.add('lm-btn-jugar-pulse');
       iniciarPulseJugarBtn();
     }
+    // Botones DEV (solo jesuslor85@gmail.com) — simulan al instante hasta
+    // la última jornada, forzando todos mis partidos ganados o perdidos.
+    const cheatPerderBtn=document.getElementById('lmCheatPerderBtn');
+    if(cheatPerderBtn) cheatPerderBtn.addEventListener('click', ()=>{
+      if(typeof window.playSound==='function') window.playSound('select');
+      lmDevSimularHastaUltimaJornada('perder');
+    });
+    const cheatGanarBtn=document.getElementById('lmCheatGanarBtn');
+    if(cheatGanarBtn) cheatGanarBtn.addEventListener('click', ()=>{
+      if(typeof window.playSound==='function') window.playSound('select');
+      lmDevSimularHastaUltimaJornada('ganar');
+    });
     const trabajadoresBtn=document.getElementById('lmTrabajadoresBtn');
     if(trabajadoresBtn) trabajadoresBtn.addEventListener('click', ()=>{
       if(typeof window.playSound==='function') window.playSound('select');
