@@ -1181,16 +1181,37 @@
           const nombreRecupera = esMio?miNombre:rivalNombre;
           const balonPosAntes={x:parseFloat(balon.getAttribute('cx')), y:parseFloat(balon.getAttribute('cy'))};
           const recuperadorIdx = jugadorMasCercano(equipoRecupera, balonPosAntes.x, balonPosAntes.y, 0);
-          moverBalon(equipoRecupera[recuperadorIdx].x, equipoRecupera[recuperadorIdx].y, 550);
-          infoBar.textContent=`${nombreRecupera} recupera el balón`;
-          posesionMia=esMio;
-          if(esMio) idxConBalonMio=recuperadorIdx; else idxConBalonRival=recuperadorIdx;
-          pasesJugadaActual=0; historialMio=[]; historialRival=[];
-          actualizarFormacionDinamica(posesionMia, undefined, undefined, balonPosAntes);
-          setTimeout(()=>{
-            tiempoTranscurrido+=550;
-            tick();
-          }, real(550));
+          // Para que "recuperar el balón" signifique de verdad estar AL
+          // LADO del balón (nunca robarlo a distancia), se comprueba lo
+          // lejos que está de verdad el jugador más cercano del equipo
+          // que va a recuperarlo. Si ya está cerca, se resuelve directo
+          // (igual que antes). Si está lejos, primero CORRE de verdad
+          // hasta la posición del balón — el balón no se mueve hasta que
+          // el jugador ha llegado, en vez de teletransportarse a sus pies.
+          const distRecuperador = Math.hypot(equipoRecupera[recuperadorIdx].x-balonPosAntes.x, equipoRecupera[recuperadorIdx].y-balonPosAntes.y);
+          const UMBRAL_RECUPERACION_CERCA = 14; // misma idea que la presión normal en juego abierto (9.5), algo más generosa porque aquí la recuperación siempre tiene que resolverse a favor de quien va a marcar
+          const completarRecuperacion=(esperaExtra)=>{
+            posesionMia=esMio;
+            if(esMio) idxConBalonMio=recuperadorIdx; else idxConBalonRival=recuperadorIdx;
+            pasesJugadaActual=0; historialMio=[]; historialRival=[];
+            actualizarFormacionDinamica(posesionMia, undefined, undefined, balonPosAntes);
+            setTimeout(()=>{
+              tiempoTranscurrido+=550+esperaExtra;
+              tick();
+            }, real(550));
+          };
+          if(distRecuperador<=UMBRAL_RECUPERACION_CERCA){
+            moverBalon(equipoRecupera[recuperadorIdx].x, equipoRecupera[recuperadorIdx].y, 550);
+            infoBar.textContent=`${nombreRecupera} recupera el balón`;
+            completarRecuperacion(0);
+          } else {
+            infoBar.textContent=`${nombreRecupera} presiona para recuperar el balón`;
+            moverJugador(esMio, recuperadorIdx, balonPosAntes.x, balonPosAntes.y, 700);
+            setTimeout(()=>{
+              infoBar.textContent=`${nombreRecupera} recupera el balón`;
+              completarRecuperacion(150);
+            }, real(700));
+          }
           return;
         }
         golIdx++;
@@ -1206,6 +1227,23 @@
         // — por eso nunca se veía ningún gol en directo aunque el
         // resultado final sí los contara todos correctamente).
         const idxConBalonGol = esMio ? idxConBalonMio : idxConBalonRival;
+        // Roles y equipo defensor del gol — declarados aquí, a nivel de
+        // todo el bloque de gol (antes vivían SOLO dentro del if de
+        // "distAlGolYa>distanciaCerca", como const de bloque), porque
+        // lanzarJugadaDeGol() y su corregirFueraJuego() interno los usan
+        // SIEMPRE, sea cual sea el camino que lleve hasta ellos —
+        // incluida la llamada directa (cuando el balón ya está cerca) y
+        // la llamada retrasada dentro de un setTimeout tras los pases de
+        // construcción. Al estar fuera de su scope, cada intento de
+        // marcar lanzaba un ReferenceError: en la llamada directa
+        // (síncrona) el try/catch de tick() lo capturaba en silencio,
+        // así que el gol nunca se veía; en la llamada retrasada (dentro
+        // de un setTimeout, fuera de ese try/catch) el error quedaba
+        // TOTALMENTE sin capturar y detenía el partido entero para
+        // siempre — el jugador se quedaba congelado donde estuviera y
+        // el reloj dejaba de avanzar, exactamente el síntoma reportado.
+        const rolesAtaca2 = esMio?rolesMios:rolesRival;
+        const equipoDefiendeGol = esMio?posRival:posMia;
         // El gol SIEMPRE debe salir desde cerca del área rival, nunca
         // desde donde estuviera el balón por casualidad al llegar el
         // minuto programado (a veces medio campo, o incluso más
@@ -1256,8 +1294,6 @@
           }, real(duracionVueloGol+120));
         }
         if(distAlGolYa>distanciaCerca){
-          const rolesAtaca2 = esMio?rolesMios:rolesRival;
-          const equipoDefiendeGol = esMio?posRival:posMia;
           // Construcción gradual real: si el balón está todavía lejos
           // de la portería rival (en el propio campo o en el centro),
           // antes de repartir entre los 5 tipos de jugada de remate se
@@ -1380,8 +1416,8 @@
           if(tipoJugada===2){
             // 3) Centro desde banda: el balón se abre a una zona ancha
             // antes de centrar al área, donde espera un rematador.
-            const bandaY = esEscritorio ? (Math.random()<0.5?8:ALTO-8) : posActual.y;
-            const bandaX = esEscritorio ? posActual.x : (Math.random()<0.5?8:ANCHO-8);
+            const bandaY = esEscritorio ? (Math.random()<0.5?8:ALTO-8) : balonPos0.y;
+            const bandaX = esEscritorio ? balonPos0.x : (Math.random()<0.5?8:ANCHO-8);
             const puntoBanda={x:bandaX, y:bandaY};
             let extremoIdx = jugadorMasCercano(equipoAnotaPos, puntoBanda.x, puntoBanda.y, 0);
             const posRemate = corregirFueraJuego({ x: objetivoGol.x + (objetivoGol.x<CENTRO_X?10:-10), y: objetivoGol.y + (Math.random()-0.5)*10 });
