@@ -476,6 +476,7 @@
       lesiones:lesionesSemana,
       NOMBRE_STAT
     };
+    if(typeof window.unlockLMAchievement==='function' && diasEntreno>0) window.unlockLMAchievement('lm_first_training', false);
     guardarEstado();
     return eventosDias;
   }
@@ -883,6 +884,10 @@
     // vigilancia empeore; con buena satisfacción, las zonas tienden a
     // calmarse solas con el tiempo.
     const probabilidadEmpeorar = satisfaccion<=-40 ? 0.55 : (satisfaccion<=-10 ? 0.32 : (satisfaccion<10 ? 0.12 : 0));
+    // Vigilancia Extra: reduce ligeramente la probabilidad de que
+    // empeore una zona sin guardias — nunca sustituye a los guardias
+    // de verdad, solo la nudge un poco a favor.
+    const probabilidadEmpeorarFinal = (typeof lmSkillActiva==='function' && lmSkillActiva('lm_vigilancia_extra')) ? probabilidadEmpeorar*0.8 : probabilidadEmpeorar;
     const probabilidadMejorar = satisfaccion>=10 ? 0.4 : 0.15;
     let zonaEstallada=null;
     LM_ZONAS_ESTADIO.forEach(z=>{
@@ -893,7 +898,7 @@
         // mejore un nivel, y ninguna de que empeore.
         if(nivel>0 && Math.random()<0.25+guardias*0.2) nivel=Math.max(0, nivel-1);
       } else {
-        if(nivel<3 && Math.random()<probabilidadEmpeorar) nivel=Math.min(3, nivel+1);
+        if(nivel<3 && Math.random()<probabilidadEmpeorarFinal) nivel=Math.min(3, nivel+1);
         else if(nivel>0 && Math.random()<probabilidadMejorar) nivel=Math.max(0, nivel-1);
         // Una zona GRAVE, sin ningún guardia, puede estallar de verdad.
         if(nivel>=3 && !zonaEstallada && Math.random()<0.3) zonaEstallada=z;
@@ -1034,6 +1039,15 @@
     if(premio>0) registrarMovimientoFinanciero('Premio de quiniela ('+aciertos+'/'+total+' aciertos)', premio, state.jornadaActual);
     state.quinielaResultadoPendiente={aciertos, total, premio, rasgosGanados, detalle};
     state.quinielaBoleto=null;
+    if(typeof window.unlockLMAchievement==='function') window.unlockLMAchievement('lm_first_quiniela', false);
+    // Racha de quinielas perfectas (todas acertadas) seguidas — se
+    // reinicia en cuanto una quiniela resuelta no es perfecta.
+    if(aciertos===total && total>0){
+      state.quinielaRachaPerfecta=(state.quinielaRachaPerfecta||0)+1;
+      if(state.quinielaRachaPerfecta>=3 && typeof window.unlockLMAchievement==='function') window.unlockLMAchievement('lm_quiniela_streak', false);
+    } else {
+      state.quinielaRachaPerfecta=0;
+    }
     guardarEstado();
   }
   function abrirBoletoQuiniela(){
@@ -1196,6 +1210,8 @@
       baseCost:5, maxLevel:3, baseValue:1, tooltip:(lvl)=>t('mejora.cardswap.tooltip').replace('{n}', 1+lvl).replace('{s}', lvl>0?'s':'')},
     {id:'lm_sobredescuento', phIcon:'ph-percent', get name(){return t('mejora.sobredescuento.nombre');}, get desc(){return t('mejora.sobredescuento.desc');},
       baseCost:5, maxLevel:5, baseValue:0, tooltip:(lvl)=>lvl===0?t('mejora.sin_descuento'):t('mejora.sobredescuento.tooltip').replace('{n}', lvl*10)},
+    {id:'lm_girotactico', phIcon:'ph-notebook', get name(){return t('mejora.girotactico.nombre');}, get desc(){return t('mejora.girotactico.desc');},
+      baseCost:5, maxLevel:5, baseValue:5, tooltip:(lvl)=>t('mejora.girotactico.tooltip').replace('{n}', 5+lvl)},
   ];
   function lmUpgradeLevelCost(def, toLevel){ return def.baseCost*Math.pow(2, toLevel-1); }
   function lmNivelMejora(id){ return (window._lmUpgradeCache && window._lmUpgradeCache[id]) || 0; }
@@ -1204,6 +1220,12 @@
   function lmRerollsPorPartido(){ return LM_UPGRADE_DEFS[2].baseValue + lmNivelMejora('lm_rerolls'); }
   function lmCambiosCartaPorPartido(){ return LM_UPGRADE_DEFS[3].baseValue + lmNivelMejora('lm_cardswap'); }
   function lmDescuentoSobres(){ return lmNivelMejora('lm_sobredescuento')*0.10; } // 0, .10, .20, .30, .40, .50
+  // Usos de Giro Táctico disponibles por CADA media temporada (19
+  // jornadas): 5 de base, +1 por cada nivel de la mejora "Plan de
+  // Giro Táctico" comprada aquí mismo, con puntos desde el menú de
+  // perfil — igual que el resto de mejoras de Liga Manager, nunca una
+  // carta del Director General.
+  function getMaxGiroTacticoLM(){ return 5 + lmNivelMejora('lm_girotactico') + (lmSkillActiva('lm_ultimo_cartucho')?1:0); }
   async function lmCargarUpgradeCache(){
     try{
       const user=window._fbAuth && window._fbAuth.currentUser;
@@ -1272,6 +1294,7 @@
           if((window._lmScratchPoints||0)<cost) return;
           window._lmUpgradeCache[id]=currentLevel+1;
           window._lmScratchPoints=(window._lmScratchPoints||0)-cost;
+          if(typeof window.unlockLMAchievement==='function') window.unlockLMAchievement('lm_first_upgrade', false);
         } else {
           if(currentLevel<=0) return;
           const refund=lmUpgradeLevelCost(def, currentLevel);
@@ -1330,6 +1353,15 @@
     {id:'lm_all_skills',     tier:'difícil', pts:3, icon:'ph-lightning',     get name(){return t('lmach.all_skills.nombre');}, get desc(){return t('lmach.all_skills.desc');}},
     {id:'lm_perfect_season', tier:'mítico', pts:5, icon:'ph-sparkle',        get name(){return t('lmach.perfect_season.nombre');}, get desc(){return t('lmach.perfect_season.desc');}},
     {id:'lm_dynasty',        tier:'mítico', pts:5, icon:'ph-medal-military',   get name(){return t('lmach.dynasty.nombre');}, get desc(){return t('lmach.dynasty.desc');}},
+    // --- Nuevos (esta ronda): ligados al Giro Táctico y a momentos
+    // dramáticos de partido que antes no tenían ningún logro asociado.
+    {id:'lm_giro_primera_vez', tier:'básico', pts:1, icon:'ph-arrows-clockwise', get name(){return t('lmach.giro_primera_vez.nombre');}, get desc(){return t('lmach.giro_primera_vez.desc');}},
+    {id:'lm_giro_remontada', tier:'intermedio', pts:2, icon:'ph-arrow-u-up-left', get name(){return t('lmach.giro_remontada.nombre');}, get desc(){return t('lmach.giro_remontada.desc');}},
+    {id:'lm_giro_agotado',   tier:'intermedio', pts:2, icon:'ph-battery-warning', get name(){return t('lmach.giro_agotado.nombre');}, get desc(){return t('lmach.giro_agotado.desc');}},
+    {id:'lm_gol_ultimo_minuto', tier:'intermedio', pts:2, icon:'ph-clock-countdown', get name(){return t('lmach.gol_ultimo_minuto.nombre');}, get desc(){return t('lmach.gol_ultimo_minuto.desc');}},
+    {id:'lm_canterano_joya', tier:'intermedio', pts:2, icon:'ph-diamond', get name(){return t('lmach.canterano_joya.nombre');}, get desc(){return t('lmach.canterano_joya.desc');}},
+    {id:'lm_fenix_liga',     tier:'difícil', pts:3, icon:'ph-fire-simple', get name(){return t('lmach.fenix_liga.nombre');}, get desc(){return t('lmach.fenix_liga.desc');}},
+    {id:'lm_giro_leyenda',   tier:'mítico', pts:5, icon:'ph-crown-simple', get name(){return t('lmach.giro_leyenda.nombre');}, get desc(){return t('lmach.giro_leyenda.desc');}},
   ];
   async function unlockLMAchievement(id, mostrarInmediatamente){
     if(mostrarInmediatamente===undefined) mostrarInmediatamente=true;
@@ -1363,6 +1395,10 @@
     }catch(e){ console.warn('LM achievement error:', e); }
   }
   window.unlockLMAchievement = unlockLMAchievement;
+  // Expuesta globalmente para que liga-manager-partido-visor.js (otro
+  // archivo) pueda consultar habilidades activas al ofrecer el Giro
+  // Táctico — mismo patrón que unlockLMAchievement, justo arriba.
+  window.lmSkillActiva = lmSkillActiva;
   // Los logros conseguidos DURANTE la simulación de un partido no se
   // muestran al instante (podrían chivar el resultado antes de que el
   // jugador vea la animación) — se guardan en cola y se sueltan aquí,
@@ -1473,6 +1509,16 @@
       get tooltip(){return t('skill.vigilancia_extra.tooltip');}},
     {id:'lm_gestion_vestuario', get category(){return t('skill.categoria_apoyo');}, get name(){return t('skill.gestion_del_vestuario.nombre');}, cost:35, phIcon:'ph-users-three',
       get tooltip(){return t('skill.gestion_del_vestuario.tooltip');}},
+    // --- Nuevas (esta ronda): ligadas al Giro Táctico, categoría
+    // propia para que quede claro que giran en torno al descanso.
+    {id:'lm_lectura_partido', get category(){return t('skill.categoria_giro');}, get name(){return t('skill.lectura_partido.nombre');}, cost:30, phIcon:'ph-eye',
+      get tooltip(){return t('skill.lectura_partido.tooltip');}},
+    {id:'lm_ultimo_cartucho', get category(){return t('skill.categoria_giro');}, get name(){return t('skill.ultimo_cartucho.nombre');}, cost:35, phIcon:'ph-battery-charging',
+      get tooltip(){return t('skill.ultimo_cartucho.tooltip');}},
+    {id:'lm_ojeador_estrella', get category(){return t('skill.categoria_giro');}, get name(){return t('skill.ojeador_estrella.nombre');}, cost:30, phIcon:'ph-binoculars',
+      get tooltip(){return t('skill.ojeador_estrella.tooltip');}},
+    {id:'lm_mano_dura', get category(){return t('skill.categoria_giro');}, get name(){return t('skill.mano_dura.nombre');}, cost:25, phIcon:'ph-hand-palm',
+      get tooltip(){return t('skill.mano_dura.tooltip');}},
   ];
   async function lmCargarSkillsCache(){
     try{
@@ -1540,6 +1586,7 @@
             window._lmSkillsCache[def.id]=true;
             window._lmScratchPoints=(window._lmScratchPoints||0)-def.cost;
           }
+          if(typeof window.unlockLMAchievement==='function' && LM_SKILL_DEFS.every(d=>lmSkillActiva(d.id))) window.unlockLMAchievement('lm_all_skills', false);
           try{
             await window._fbDb.collection('users').doc(user.uid).set({ligaManagerSkills:window._lmSkillsCache, scratchPoints:window._lmScratchPoints}, {merge:true});
           }catch(e){}
@@ -1785,6 +1832,13 @@
       directorGeneralCartasAgotadas:[],
       directorGeneralHistorial:[],
       directorGeneralNiveles:{aforoExtra:0, ingresoPatrocinio:0, ingresoMerchandising:0, toleranciaPrecio:0},
+      // Giro Táctico (adaptado de Copa Leyendas): usos disponibles se
+      // reinician cada media temporada (jornadas 1-19 / 20-38), nunca
+      // por partido ni por temporada completa — giroTacticoMitad
+      // registra de cuál de las dos mitades es el contador actual,
+      // para saber cuándo toca reiniciarlo.
+      giroTacticoUsosRestantes:5,
+      giroTacticoMitad:1,
       directorDeportivoCartas:[],
       directorDeportivoCambiosUsados:0,
       directorDeportivoCartasAgotadas:[],
@@ -2269,6 +2323,27 @@
     return titulares[Math.floor(Math.random()*titulares.length)];
   }
 
+  // Elige un nombre real al azar de la plantilla del rival concreto —
+  // si por lo que sea no tiene plantilla cargada, cae en el nombre del
+  // propio club para no dejar el hueco en blanco. Extraída como
+  // función de nivel superior (antes vivía solo dentro de
+  // generarEventosPartido) para poder reutilizarla también desde la
+  // re-simulación de la segunda parte del Giro Táctico.
+  function jugadorRivalAleatorio(rival){
+    if(rival && rival.plantilla && rival.plantilla.length){
+      const disponibles = plantillaEfectivaRival(rival);
+      // Nunca el portero, y con preferencia clara por posiciones
+      // ofensivas — antes se elegía entre los 11 sin ningún filtro,
+      // así que el portero rival podía "marcar" con la misma
+      // probabilidad que un delantero. Nada realista.
+      const sinPortero = disponibles.filter(j=>j.pos!=='POR');
+      const ofensivos = sinPortero.filter(j=>['DC','EI','ED','MC'].includes(j.pos));
+      const pool = ofensivos.length ? ofensivos : (sinPortero.length ? sinPortero : disponibles);
+      const elegido=pool[Math.floor(Math.random()*pool.length)];
+      return {name: elegido.name||elegido, numero: elegido.n};
+    }
+    return {name: rival ? rival.name : 'Rival'};
+  }
   function generarEventosPartido(resultado, miEsLocal, campoRelevante, rival){
     // "home"/"away" se refiere SIEMPRE al equipo local/visitante real del
     // partido — mi equipo puede ser cualquiera de los dos según el
@@ -2277,31 +2352,13 @@
     // aparecían del lado del rival.
     const misLado = miEsLocal ? 'home' : 'away';
     const rivalLado = miEsLocal ? 'away' : 'home';
-    // Elige un nombre real al azar de la plantilla del rival concreto de
-    // este partido — si por lo que sea no tiene plantilla cargada, cae
-    // en el nombre del propio club para no dejar el hueco en blanco.
-    function jugadorRivalAleatorio(){
-      if(rival && rival.plantilla && rival.plantilla.length){
-        const disponibles = plantillaEfectivaRival(rival);
-        // Nunca el portero, y con preferencia clara por posiciones
-        // ofensivas — antes se elegía entre los 11 sin ningún filtro,
-        // así que el portero rival podía "marcar" con la misma
-        // probabilidad que un delantero. Nada realista.
-        const sinPortero = disponibles.filter(j=>j.pos!=='POR');
-        const ofensivos = sinPortero.filter(j=>['DC','EI','ED','MC'].includes(j.pos));
-        const pool = ofensivos.length ? ofensivos : (sinPortero.length ? sinPortero : disponibles);
-        const elegido=pool[Math.floor(Math.random()*pool.length)];
-        return {name: elegido.name||elegido, numero: elegido.n};
-      }
-      return {name: rival ? rival.name : 'Rival'};
-    }
     const eventos=[];
     for(let i=0;i<resultado.golesA;i++){
-      const goleador = miEsLocal ? elegirGoleador() : jugadorRivalAleatorio();
+      const goleador = miEsLocal ? elegirGoleador() : jugadorRivalAleatorio(rival);
       eventos.push({minute:5+Math.floor(Math.random()*85), team:'home', type:'goal', jugador:goleador});
     }
     for(let i=0;i<resultado.golesB;i++){
-      const goleador = miEsLocal ? jugadorRivalAleatorio() : elegirGoleador();
+      const goleador = miEsLocal ? jugadorRivalAleatorio(rival) : elegirGoleador();
       eventos.push({minute:5+Math.floor(Math.random()*85), team:'away', type:'goal', jugador:goleador});
     }
     // Tarjetas amarillas/rojas — de momento solo informativas (sin
@@ -2311,7 +2368,7 @@
       eventos.push({minute:10+Math.floor(Math.random()*78), team:misLado, type:'card', tarjeta:'amarilla', jugador: jugador||{name:state.nombreEquipo}});
     }
     if(Math.random()<0.35){
-      eventos.push({minute:10+Math.floor(Math.random()*78), team:rivalLado, type:'card', tarjeta:'amarilla', jugador:jugadorRivalAleatorio()});
+      eventos.push({minute:10+Math.floor(Math.random()*78), team:rivalLado, type:'card', tarjeta:'amarilla', jugador:jugadorRivalAleatorio(rival)});
     }
     if(Math.random()<0.06){
       const jugador=elegirJugadorAlineado();
@@ -2357,7 +2414,13 @@
           {label:'moderada', weeks:2, dificultad:10},
           {label:'grave', weeks:4, dificultad:13}
         ];
-        const sev=severidades[Math.floor(Math.random()*severidades.length)];
+        let sev=severidades[Math.floor(Math.random()*severidades.length)];
+        // Manos de Seda: pequeña probabilidad de que, si ha tocado
+        // "grave", en realidad se quede en "moderada" — nunca mejora
+        // más de un escalón, y nunca toca lesiones ya "leve".
+        if(sev.label==='grave' && typeof lmSkillActiva==='function' && lmSkillActiva('lm_manos_de_seda') && Math.random()<0.30){
+          sev=severidades[1];
+        }
         const nivelCuracion = familia==='muscular' ? (nivelesMed.curacionMuscular||0) : (nivelesMed.curacionOsea||0);
         let weeks=Math.max(1, sev.weeks-nivelCuracion);
         const tipoLesion=TIPOS_LESION_POR_FAMILIA[familia][sev.label][Math.floor(Math.random()*TIPOS_LESION_POR_FAMILIA[familia][sev.label].length)];
@@ -2467,6 +2530,9 @@
     // mella incluso ganando, y una grada volcada anima al equipo.
     const satisfaccion=(state.estadio && state.estadio.satisfaccion) || 0;
     delta += satisfaccion/12;
+    // Gestión del Vestuario: pequeño extra de moral tras una victoria
+    // — complementa a todo el cuerpo técnico, no sustituye su trabajo.
+    if(miGoles>suGoles && typeof lmSkillActiva==='function' && lmSkillActiva('lm_gestion_vestuario')) delta+=3;
     delta = Math.round(delta);
     // Temple Competitivo: si el partido se decide por la mínima (un gol
     // de diferencia) y vas perdiendo, la caída de moral es menor.
@@ -2487,6 +2553,7 @@
     if(miEsLocal){
       const asistenciaInfo=calcularAsistencia(clima?clima.id:null);
       est.ultimaAsistencia={...asistenciaInfo, jornada:state.jornadaActual};
+      if(typeof window.unlockLMAchievement==='function' && asistenciaInfo.asistentes>=est.aforoTotal) window.unlockLMAchievement('lm_full_stadium', false);
       if(state.directorGeneralBonos && state.directorGeneralBonos.boostAsistencia){ state.directorGeneralBonos.boostAsistencia=0; }
       const precio=state.precioEntrada===undefined?15:state.precioEntrada;
       const ingresoEntradas=asistenciaInfo.asistentes*precio;
@@ -2541,13 +2608,15 @@
   function abrirVisorPartidoManager(info, onFinish){
     if(typeof window.G2G_abrirVisorPartidoManager!=='function') return;
     window.G2G_abrirVisorPartidoManager(info, onFinish, {
-      state, t, formacionActual, generarSlotsFormacion, climaDelPartido, calcularStatsEquipo, plantillaEfectivaRival, crestHTML, rivalCrestHTML, mostrarHistoricoPartido
+      state, t, formacionActual, generarSlotsFormacion, climaDelPartido, calcularStatsEquipo, plantillaEfectivaRival, crestHTML, rivalCrestHTML, mostrarHistoricoPartido,
+      guardarEstado, getMaxGiroTacticoLM, jugadorRivalAleatorio, elegirGoleador, elegirJugadorAlineado
     });
   }
 
 
   function jugarJornada(){
     if(state.jornadaActual>38) return null;
+    actualizarUsosGiroTacticoLM();
     const j=state.jornadaActual-1;
     const jornada=state.calendario[j];
     let miPartidoInfo=null;
@@ -2585,8 +2654,9 @@
           state.medicoNotificacion={jugadorId:evInjury.jugador.id, dificultad:evInjury.sev.dificultad, severidad:evInjury.sev.label};
           const rivalDeEsta = partido.home.id==='lm_0' ? partido.away.name : partido.home.name;
           evInjury.jugador.lesionLogId=registrarLesionHistorial(evInjury.jugador, evInjury.sev, evInjury.tipoLesion, rivalDeEsta, evInjury.familia);
+          if(typeof window.unlockLMAchievement==='function') window.unlockLMAchievement('lm_first_injury', false);
         }
-        miPartidoInfo={ home:partido.home, away:partido.away, resultado, eventos, climaId: clima?clima.id:null };
+        miPartidoInfo={ home:partido.home, away:partido.away, resultado, eventos, climaId: clima?clima.id:null, jornadaIndex:j };
         actualizarEstadioTrasPartido(miEsLocalDeEste, resultado, clima);
         const misGoles=miEsLocalDeEste?resultado.golesA:resultado.golesB, susGoles=miEsLocalDeEste?resultado.golesB:resultado.golesA;
         // Se resuelve aquí, en el origen común de los dos modos de
@@ -2674,7 +2744,10 @@
     if(miPartidoInfo){
       const titularIdsJornada=new Set(Object.values(state.alineacion||{}).filter(Boolean));
       const factorResistencia=1-nivelDePF('resistenciaBase')*0.12;
-      const recuperacionExtra=nivelDePF('recuperacionSemanal')*5;
+      // Discurso Motivador: pequeño extra de recuperación tras CADA
+      // partido, encima de lo que ya da el Preparador Físico — nunca
+      // sustituye su plan, solo lo complementa.
+      const recuperacionExtra=nivelDePF('recuperacionSemanal')*5 + ((typeof lmSkillActiva==='function' && lmSkillActiva('lm_discurso_motivador')) ? 4 : 0);
       state.plantilla.forEach(p=>{
         const actual=(p.fatigue===undefined)?100:p.fatigue;
         if(!titularIdsJornada.has(p.id)){ p.fatigue=100; return; }
@@ -2698,6 +2771,10 @@
         const clasif=calcularClasificacion();
         const miPos=clasif.findIndex(t=>t.id==='lm_0')+1;
         const misDatos=clasif.find(t=>t.id==='lm_0');
+        // Rastreo para el Ave Fénix: si en algún momento de la
+        // temporada se estuvo en zona de descenso, se marca aquí —
+        // reiniciado al empezar cada temporada nueva.
+        if(miPos>=18) state.estuvoEnDescensoEstaTemporada=true;
         if(miPos>0 && miPos<=4) window.unlockLMAchievement('lm_top4', false);
         if(misDatos && misDatos.pg>=10) window.unlockLMAchievement('lm_win_10', false);
         if(misDatos && misDatos.pg>=5) window.unlockLMAchievement('lm_5_wins', false);
@@ -2712,20 +2789,56 @@
           if(misGolesDeEste>0) window.unlockLMAchievement('lm_first_goal', false);
           if(misGolesDeEste<rivalGolesDeEste) window.unlockLMAchievement('lm_first_defeat', false);
           if(misGolesDeEste===rivalGolesDeEste) window.unlockLMAchievement('lm_first_draw', false);
+          // Gol en el descuento que decide una victoria — minuto 85+.
+          if(misGolesDeEste>rivalGolesDeEste){
+            const miLadoEste = miEsLocalDeEste2 ? 'home' : 'away';
+            const huboGolTardio=(miPartidoInfo.eventos||[]).some(e=>e.type==='goal' && e.team===miLadoEste && e.minute>=85);
+            if(huboGolTardio) window.unlockLMAchievement('lm_gol_ultimo_minuto', false);
+          }
         }
         // Racha sin perder — reutiliza state.rachaResultados, que ya se
         // actualiza en otro punto tras cada partido.
         if(state.rachaResultados>=5) window.unlockLMAchievement('lm_undefeated_5', false);
+        // Jornadas seguidas sin ninguna lesión — se reinicia en cuanto
+        // hay una (jugadorLesionadoEstaJornada, ya calculado más
+        // arriba en esta misma función).
+        if(jugadorLesionadoEstaJornada) state.jornadasSinLesion=0;
+        else state.jornadasSinLesion=(state.jornadasSinLesion||0)+1;
+        if(state.jornadasSinLesion>=4) window.unlockLMAchievement('lm_no_injuries_month', false);
         // Cuerpo técnico y estadio — comprobables directamente desde el
         // estado en cualquier momento, no solo tras jugar.
         const rolesContratados=['medico','mantenimiento','directorGeneral','directorDeportivo','preparadorFisico'].filter(r=>state.trabajadores && state.trabajadores[r]);
         if(rolesContratados.length>=5) window.unlockLMAchievement('lm_all_departments', false);
+        // Departamento de élite: TODAS las pistas de nivel de un mismo
+        // departamento en el máximo a la vez (no basta con una sola).
+        const deptosNiveles=[state.medicoNiveles, state.mantenimientoNiveles, state.directorGeneralNiveles, state.directorDeportivoNiveles, state.preparadorFisicoNiveles];
+        if(deptosNiveles.some(niv=>niv && Object.values(niv).length>0 && Object.values(niv).every(n=>n>=NIVEL_MAXIMO_EQUIPO))) window.unlockLMAchievement('lm_max_level_dept', false);
+        // Estadio de primer nivel: césped y satisfacción prácticamente
+        // al máximo a la vez (no existe un "nivel 1-5" único de
+        // estadio como tal — esta es la aproximación más fiel).
+        if(state.estadio && state.estadio.campo>=99 && state.estadio.satisfaccion>=99) window.unlockLMAchievement('lm_stadium_max', false);
+        // Cuentas saneadas: simplificación deliberada de "cierra un mes
+        // en positivo" — se comprueba el capital actual cada vez que
+        // se juega, no solo en el límite exacto de cada mes.
+        if((state.capital||0)>=0) window.unlockLMAchievement('lm_positive_balance', false);
         if(state.estadio && rolesContratados.length>=5){ /* estadio de nivel máximo: pendiente de una comprobación fiable, no bloquea el resto */ }
         if(state.jornadaActual>38){
           window.unlockLMAchievement('lm_season_complete', false);
-          if(miPos===1) window.unlockLMAchievement('lm_champion', false);
+          if(miPos===1){
+            window.unlockLMAchievement('lm_champion', false);
+            // Dinastía: 2 ligas ganadas con el mismo club — solo tiene
+            // sentido contarlo si la partida sigue viva (se continúa
+            // con progreso), nunca si se empieza una liga nueva desde
+            // cero, que ya seria otro club.
+            state.titulosGanados=(state.titulosGanados||0)+1;
+            if(state.titulosGanados>=2) window.unlockLMAchievement('lm_dynasty', false);
+          }
           if(miPos<=10) window.unlockLMAchievement('lm_top_half', false);
           if(misDatos && misDatos.pp===0) window.unlockLMAchievement('lm_perfect_season', false);
+          // Ave Fénix: estuvo en descenso en algún momento de esta
+          // misma temporada y ha terminado fuera de esa zona.
+          if(state.estuvoEnDescensoEstaTemporada && miPos<18) window.unlockLMAchievement('lm_fenix_liga', false);
+          state.estuvoEnDescensoEstaTemporada=false;
         }
       }catch(e){}
     }
@@ -3116,7 +3229,7 @@
     // 1ª PARTE (0-47%) → DESCANSO (47-53%) → 2ª PARTE (53-100%).
     const DURATION=8000;
     const HT_S=0.47, HT_E=0.53;
-    const start=performance.now();
+    let start=performance.now();
     let htShown=false;
 
     function tick(now){
@@ -3131,6 +3244,63 @@
           fillEl.style.width='50%';
           addSep("Descanso — 45'");
           if(typeof window.playSound==='function') window.playSound('whistle');
+          // Oferta de Giro Táctico — solo si vamos perdiendo al
+          // descanso y quedan usos disponibles esta media temporada.
+          // Se pausa aquí (no se programa el siguiente
+          // requestAnimationFrame) hasta que el jugador decida.
+          const miGolesHT = miEsLocal?curHome:curOpp, rivalGolesHT = miEsLocal?curOpp:curHome;
+          const vaMalAlDescansoAuto = lmSkillActiva('lm_lectura_partido') ? miGolesHT<=rivalGolesHT : miGolesHT<rivalGolesHT;
+          if(typeof window.LMGiroTactico==='object' && vaMalAlDescansoAuto && (state.giroTacticoUsosRestantes||0)>0){
+            const misStatsHT = calcularStatsEquipo();
+            const rivalTeamObjHT = miEsLocal ? info.away : info.home;
+            const pausaInicioTs=performance.now();
+            const reanudar=()=>{ start+=(performance.now()-pausaInicioTs); requestAnimationFrame(tick); };
+            window.LMGiroTactico.ofrecerSiProcede({
+              contenedor: document.getElementById('ligaManagerScreen'),
+              t, usosRestantes: state.giroTacticoUsosRestantes,
+              misStats: misStatsHT, rivalStats:{attack:rivalTeamObjHT.attack,defense:rivalTeamObjHT.defense,pace:rivalTeamObjHT.pace,passing:rivalTeamObjHT.passing,technique:rivalTeamObjHT.technique},
+              rivalTeamObj: rivalTeamObjHT, esMiEquipoLocal: miEsLocal, miNombre: state.nombreEquipo, rivalNombre: rivalTeamObjHT.name,
+              manoDuraActiva: lmSkillActiva('lm_mano_dura'),
+              golesMiosPrimeraParte: miGolesHT, golesRivalPrimeraParte: rivalGolesHT,
+              elegirGoleador, jugadorRivalAleatorio, elegirJugadorAlineado,
+              onConsumirUso: ()=>{
+                state.giroTacticoUsosRestantes=Math.max(0,(state.giroTacticoUsosRestantes||0)-1);
+                if(typeof window.unlockLMAchievement==='function') window.unlockLMAchievement('lm_giro_primera_vez', false);
+                if(state.giroTacticoUsosRestantes<=0 && typeof window.unlockLMAchievement==='function') window.unlockLMAchievement('lm_giro_agotado', false);
+                guardarEstado();
+              },
+              onResultadoFinal: (golesMios2P, golesRival2P, nuevosEventos2P)=>{
+                const miLadoEv = miEsLocal ? 'home' : 'away';
+                info.eventos.filter(e=>e.minute>45 && e.team===miLadoEv && e.jugador && e.jugador.id).forEach(e=>{
+                  const p=(state.plantilla||[]).find(x=>x.id===e.jugador.id);
+                  if(p && p.golesTemporada) p.golesTemporada=Math.max(0,p.golesTemporada-1);
+                });
+                nuevosEventos2P.filter(e=>e.type==='goal' && e.team===miLadoEv && e.jugador && e.jugador.id).forEach(e=>{
+                  const p=(state.plantilla||[]).find(x=>x.id===e.jugador.id);
+                  if(p) p.golesTemporada=(p.golesTemporada||0)+1;
+                });
+                info.eventos = info.eventos.filter(e=>e.minute<=45).concat(nuevosEventos2P).sort((a,b)=>a.minute-b.minute);
+                const nuevoGolesA = miEsLocal ? (curHome+golesMios2P) : (curHome+golesRival2P);
+                const nuevoGolesB = miEsLocal ? (curOpp+golesRival2P) : (curOpp+golesMios2P);
+                info.resultado.golesA=nuevoGolesA; info.resultado.golesB=nuevoGolesB;
+                if(info.jornadaIndex!==undefined){
+                  const key=info.jornadaIndex+'-'+info.home.id+'-'+info.away.id;
+                  if(state.resultados[key]) state.resultados[key]={...state.resultados[key], golesA:nuevoGolesA, golesB:nuevoGolesB};
+                }
+                const misGolesFinalesAuto = miEsLocal ? nuevoGolesA : nuevoGolesB;
+                const rivalGolesFinalesAuto = miEsLocal ? nuevoGolesB : nuevoGolesA;
+                if(misGolesFinalesAuto>rivalGolesFinalesAuto && typeof window.unlockLMAchievement==='function'){
+                  window.unlockLMAchievement('lm_giro_remontada', false);
+                  state.giroRemontadasTotales=(state.giroRemontadasTotales||0)+1;
+                  if(state.giroRemontadasTotales>=3) window.unlockLMAchievement('lm_giro_leyenda', false);
+                }
+                guardarEstado();
+                reanudar();
+              },
+              onCancelado: reanudar
+            });
+            return;
+          }
         }
         requestAnimationFrame(tick);
         return;
@@ -3901,6 +4071,7 @@
             <div class="lm-sobre-nombre">${j.numero?('#'+j.numero+' '):''}${j.name}</div>
             ${j.esFichajeEstrella?`<div class="lm-sobre-procedencia">${t('lm.actualmente_en')} ${j.equipoOrigenName}</div>`:''}
             <div class="lm-sobre-overall">${j.overall} <span>${t('lm.puntuacion')}</span></div>
+            ${(typeof lmSkillActiva==='function' && lmSkillActiva('lm_ojo_clinico')) ? `<div class="lm-sobre-potencial"><i class="ph ph-bold ph-binoculars"></i> ${t('lm.potencial_techo')}: <b>${j.potencial||j.overall}</b></div>` : ''}
             <div class="lm-sobre-stats-fila">
               <span><b>${j.attack}</b>${t('lm.stat_ata')}</span><span><b>${j.defense}</b>${t('lm.stat_def')}</span><span><b>${j.pace}</b>${t('lm.stat_rit')}</span><span><b>${j.passing}</b>${t('lm.stat_pas')}</span><span><b>${j.technique}</b>${t('lm.stat_tec')}</span>
             </div>
@@ -4064,8 +4235,62 @@
     calendarioMesVisto=null;
     calendarioJornadaSincronizada=null;
     (state.plantilla||[]).forEach(p=>{ p.golesTemporada=0; });
+    state.giroTacticoUsosRestantes=getMaxGiroTacticoLM();
+    state.giroTacticoMitad=1;
+    state.estuvoEnDescensoEstaTemporada=false;
     guardarEstado();
     render();
+  }
+  // Premio económico de fin de temporada: depende de dónde se termine
+  // en la clasificación Y de la complejidad de lo conseguido durante
+  // la partida (los logros más difíciles pesan más que los básicos,
+  // reutilizando directamente los "pts" ya asignados a cada tier).
+  // Solo se paga si se puede continuar (nunca en caso de descenso o
+  // números rojos — el club no sobrevive, no hay nada que premiar).
+  // Texto para compartir el resumen de fin de temporada — mismo
+  // patrón que buildTeamShareText()/shareMyTeam() de Copa Leyendas
+  // (game.js): navigator.share si está disponible, si no portapapeles,
+  // y si tampoco un alert como último recurso. Aquí vive en un
+  // archivo propio de Liga Manager para no tocar game.js.
+  function buildLMResumenShareText(datos){
+    const {miPos, misDatos, zona, claveValoracion, mejorVictoria, peorDerrota, maxGoleador, premioTemporada, estrellasTotal, estrellasMax}=datos;
+    const lines=[
+      `${state.nombreEquipo.toUpperCase()} — GOAL2GOAT · LIGA MANAGER`,
+      `🏆 ${t(claveValoracion)}`,
+      `📊 Posición: ${miPos}º · ${misDatos?misDatos.pts:0} pts (${misDatos?misDatos.pg:0}G-${misDatos?misDatos.pe:0}E-${misDatos?misDatos.pp:0}P)`,
+    ];
+    if(mejorVictoria) lines.push(`⚽ Mayor victoria: ${state.nombreEquipo} ${mejorVictoria.misGoles}-${mejorVictoria.susGoles} ${mejorVictoria.rivalNombre}`);
+    if(maxGoleador && maxGoleador.golesTemporada>0) lines.push(`🎯 Máximo goleador: ${maxGoleador.name} (${maxGoleador.golesTemporada})`);
+    lines.push(`⭐ Cuerpo técnico: ${estrellasTotal}/${estrellasMax}`);
+    if(premioTemporada) lines.push(`💰 Premio de temporada: ${formatoDinero(premioTemporada.total)}`);
+    lines.push(``, `¿Te atreves a superarlo? 👉 goal2goat.com`);
+    return lines.join('\n');
+  }
+  async function shareLMResumenTemporada(datos){
+    const text=buildLMResumenShareText(datos);
+    if(navigator.share){
+      try{ await navigator.share({text}); }catch(e){ /* cancelado por el usuario, nada que hacer */ }
+    }else{
+      try{
+        await navigator.clipboard.writeText(text);
+        if(typeof showToast==='function') showToast('📋 Copiado al portapapeles', 'toast-pos');
+      }catch(e){
+        alert(text);
+      }
+    }
+  }
+  function calcularPremioFinTemporada(miPos){
+    const basePorPosicion = miPos===1?150000 : miPos<=4?90000 : miPos===5?65000 : miPos===6?50000 : miPos<=10?30000 : 15000;
+    // Complejidad de lo logrado: suma de los "pts" (1 básico, 2
+    // intermedio, 3 difícil, 5 mítico) de todos los logros de Liga
+    // Manager ya desbloqueados. window._lmAchievementsCache solo
+    // refleja con certeza lo desbloqueado EN ESTA SESIÓN si nunca se
+    // ha abierto la pestaña de logros del perfil — una aproximación
+    // razonable, no una cuenta perfecta desde Firestore.
+    const cache=window._lmAchievementsCache;
+    const puntosLogros = cache ? LM_ACHIEVEMENT_DEFS.reduce((s,d)=> s+(cache.has(d.id)?d.pts:0), 0) : 0;
+    const bonusComplejidad = puntosLogros*800;
+    return {basePorPosicion, bonusComplejidad, total: basePorPosicion+bonusComplejidad};
   }
   function mostrarResumenTemporada(){
     const overlay=document.createElement('div');
@@ -4080,6 +4305,24 @@
     else if(zona==='europa') claveValoracion='lm.resumen_temporada_valoracion_europa';
     else if(zona==='conference') claveValoracion='lm.resumen_temporada_valoracion_conference';
     else if(zona==='descenso') claveValoracion='lm.resumen_temporada_valoracion_descenso';
+    // Veredicto de la temporada, calculado aquí (antes que las cifras
+    // financieras de más abajo) porque el premio, si toca, debe
+    // reflejarse en el capital final e ingresos totales que se
+    // muestran a continuación. El mismo cálculo (con el capital DE
+    // ANTES del premio) es el que decide si la partida continúa o
+    // termina — nunca se vuelve a comprobar después de pagar el
+    // premio, para que un premio grande no pueda "salvar" a última
+    // hora una temporada que ya se había perdido.
+    const enDescenso = zona==='descenso';
+    const enNumerosRojos = (state.capital||0)<0;
+    const finDeLaPartida = enDescenso || enNumerosRojos;
+    let premioTemporada=null;
+    if(!finDeLaPartida){
+      premioTemporada=calcularPremioFinTemporada(miPos);
+      state.capital=(state.capital||0)+premioTemporada.total;
+      registrarMovimientoFinanciero('Premio de fin de temporada', premioTemporada.total, state.jornadaActual);
+      guardarEstado();
+    }
     const {mejorVictoria, peorDerrota}=calcularResultadosDestacadosTemporada();
     const golesFilaHTML = (r, claveVacio)=> !r ? `<div class="lm-resumen-temp-fila-vacia">${t(claveVacio)}</div>`
       : `<div class="lm-resumen-temp-fila"><span>${state.nombreEquipo} ${r.misGoles} - ${r.susGoles} ${r.rivalNombre}</span><span class="lm-resumen-temp-jornada">${t('lm.jornada')} ${r.jornada}</span></div>`;
@@ -4104,13 +4347,6 @@
       const nMax=Object.keys(niveles||{}).length*NIVEL_MAXIMO_EQUIPO;
       return `<div class="lm-resumen-temp-fila"><span>${t(clave)}</span><span class="lm-resumen-temp-jornada">${estrellasNivel(Math.round((n/Math.max(1,nMax))*NIVEL_MAXIMO_EQUIPO))}</span></div>`;
     }).join('');
-    // Veredicto de la temporada: descenso o números rojos (capital
-    // negativo) significa fin de la partida — el club no sobrevive a
-    // la temporada. Cualquier otra combinación permite continuar,
-    // manteniendo todo el progreso conseguido.
-    const enDescenso = zona==='descenso';
-    const enNumerosRojos = (state.capital||0)<0;
-    const finDeLaPartida = enDescenso || enNumerosRojos;
     let claveVeredicto=null;
     if(enDescenso && enNumerosRojos) claveVeredicto='lm.resumen_temporada_fin_ambos';
     else if(enDescenso) claveVeredicto='lm.resumen_temporada_fin_descenso';
@@ -4119,7 +4355,10 @@
       ? `<div class="lm-resumen-temp-veredicto lm-resumen-temp-veredicto-negativo"><i class="ph ph-bold ph-skull"></i>${t(claveVeredicto)}</div>`
       : `<div class="lm-resumen-temp-veredicto lm-resumen-temp-veredicto-positivo"><i class="ph ph-bold ph-check-circle"></i>${t('lm.resumen_temporada_puede_continuar')}</div>`;
     overlay.innerHTML=`
-      <div class="lm-dilemma-card lm-clasif-popup-card lm-resumen-temp-card" style="max-width:520px">
+      <div class="lm-dilemma-card lm-clasif-popup-card lm-resumen-temp-card" style="max-width:520px;position:relative">
+        <button id="lmResumenTemporadaCompartirBtn" title="${t('lm.compartir_resumen')}" style="display:flex;position:absolute;top:14px;right:14px;z-index:6;width:34px;height:34px;border-radius:50%;background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.5);color:#fff;align-items:center;justify-content:center;cursor:pointer;padding:0">
+          <i class="ph ph-bold ph-share-network" style="font-size:17px"></i>
+        </button>
         <div class="lm-dilemma-title" style="justify-content:center;text-align:center"><i class="ph ph-bold ph-trophy"></i>${t('lm.resumen_temporada_titulo')}</div>
         <div class="lm-clasif-scroll-area">
           <div class="lm-resumen-temp-header">
@@ -4141,6 +4380,7 @@
           <div class="lm-resumen-temp-subtitulo">${t('lm.resumen_temporada_goleador_titulo')}</div>
           ${goleadorHTML}
           <div class="lm-resumen-temp-subtitulo">${t('lm.resumen_temporada_financiero_titulo')}</div>
+          ${premioTemporada ? `<div class="lm-resumen-temp-fila"><span><i class="ph ph-bold ph-medal"></i> ${t('lm.resumen_temporada_premio')}</span><span class="lm-resumen-temp-jornada lm-resumen-temp-positivo">+${formatoDinero(premioTemporada.total)}</span></div>` : ''}
           <div class="lm-resumen-temp-fila"><span>${t('lm.resumen_temporada_capital_final')}</span><span class="lm-resumen-temp-jornada">${formatoDinero(state.capital)}</span></div>
           <div class="lm-resumen-temp-fila"><span>${t('lm.resumen_temporada_ingresos')}</span><span class="lm-resumen-temp-jornada lm-resumen-temp-positivo">+${formatoDinero(ingresosTotales)}</span></div>
           <div class="lm-resumen-temp-fila"><span>${t('lm.resumen_temporada_gastos')}</span><span class="lm-resumen-temp-jornada lm-resumen-temp-negativo">-${formatoDinero(gastosTotales)}</span></div>
@@ -4153,6 +4393,12 @@
         <div class="lm-popup-actions"><button id="lmResumenTemporadaCerrarBtn" class="mode-card-btn mode-card-btn-gold">${finDeLaPartida?t('lm.finalizar'):t('lm.continuar')}</button></div>
       </div>`;
     document.getElementById('ligaManagerScreen').appendChild(overlay);
+    const compartirBtn=overlay.querySelector('#lmResumenTemporadaCompartirBtn');
+    if(compartirBtn) compartirBtn.addEventListener('click', (e)=>{
+      e.stopPropagation();
+      if(typeof window.playSound==='function') window.playSound('select');
+      shareLMResumenTemporada({miPos, misDatos, zona, claveValoracion, mejorVictoria, peorDerrota, maxGoleador, premioTemporada, estrellasTotal, estrellasMax});
+    });
     // A propósito SIN habilitarCierreOverlay: este popup decide si la
     // partida termina o continúa a una nueva temporada — un clic fuera
     // accidental no puede saltarse esa decisión sin pasar por el botón
@@ -4753,6 +4999,18 @@
   ];
   function cartaDefDG(id){ return DIRECTOR_GENERAL_CARTAS_BASE.find(c=>c.id===id); }
   function nivelDeDG(track){ return (state.directorGeneralNiveles && state.directorGeneralNiveles[track]) || 0; }
+  // Reinicia los usos del Giro Táctico al cruzar de la primera mitad
+  // de temporada (jornadas 1-19) a la segunda (20-38) — se llama al
+  // principio de jugarJornada(), así siempre está al día antes de
+  // jugar cualquier partido. También sirve de inicialización perezosa
+  // para partidas guardadas antes de que existiera este sistema.
+  function actualizarUsosGiroTacticoLM(){
+    const mitadReal = state.jornadaActual<=19 ? 1 : 2;
+    if(state.giroTacticoUsosRestantes===undefined || state.giroTacticoMitad!==mitadReal){
+      state.giroTacticoUsosRestantes=getMaxGiroTacticoLM();
+      state.giroTacticoMitad=mitadReal;
+    }
+  }
   function dificultadActualNivelDG(def){ return Math.max(3, def.dificultadBase + nivelDeDG(def.track)*def.dificultadPaso - bonusEstrellasTrabajador('directorGeneral')); }
   function generarCartaAleatoriaDG(excluirIds){
     excluirIds=excluirIds||[];
@@ -4784,6 +5042,7 @@
         const monto=18000+Math.round(Math.random()*7000);
         state.capital=(state.capital||0)+monto;
         registrarMovimientoFinanciero('Patrocinio puntual', monto, state.jornadaActual);
+        if(typeof window.unlockLMAchievement==='function') window.unlockLMAchievement('lm_first_sponsor', false);
         return `Ingreso de ${formatoDinero(monto)}`;
       }
       case 'venta_especial': {
@@ -4938,6 +5197,10 @@
       attack:variar(), defense:variar(), pace:variar(), passing:variar(), technique:variar(),
       fatigue:100, racha:0, esSuplente:true,
       injured:false, injuryWeeks:0, injurySeverity:null,
+      // Techo de potencial — dato que existe siempre para cada
+      // candidato, pero que solo se MUESTRA al jugador si tiene activa
+      // la habilidad Ojo Clínico (ver render de la carta del sobre).
+      potencial: Math.max(overall, Math.min(99, overall+8+Math.floor(Math.random()*12))),
       salario, nivelSobre, esFichajeEstrella:false, esOportunidad
     };
   }
@@ -4992,6 +5255,7 @@
       attack, defense, pace, passing, technique,
       fatigue:100, racha:0, esSuplente:true,
       injured:false, injuryWeeks:0, injurySeverity:null,
+      potencial: Math.max(overall, Math.min(99, overall+4+Math.floor(Math.random()*8))), // un fichaje estrella ya está más cerca de su techo real
       salario:calcularSalario(overall),
       esFichajeEstrella:true, equipoOrigenId:equipo.id, equipoOrigenName:equipo.name
     };
@@ -5007,7 +5271,11 @@
     if(idx===-1) return null;
     const sobre=state.sobresFichajesPendientes[idx];
     const costeBase=sobre.gratis ? 0 : (SOBRE_COSTES[sobre.nivel]||SOBRE_COSTES[1]);
-    const coste=Math.round(costeBase*(1-lmDescuentoSobres()));
+    // Negociador Nato: pequeño descuento extra en cada sobre con coste
+    // real, mientras la habilidad esté activa — igual que el resto de
+    // habilidades del juego (bonus continuo, no de un solo uso).
+    const descuentoNegociador = (costeBase>0 && typeof lmSkillActiva==='function' && lmSkillActiva('lm_negociador_nato')) ? 0.08 : 0;
+    const coste=Math.round(costeBase*(1-lmDescuentoSobres()-descuentoNegociador));
     if((state.capital||0)<coste) return null;
     if(coste>0){
       state.capital-=coste;
@@ -5020,7 +5288,11 @@
     // partir de nivel 2 de la Red de Ojeadores — como se pidió.
     const nivelRed=nivelDeDD('sobresFichajes');
     const probEstrellaBase = nivelRed>=3 ? 0.35 : (nivelRed===2 ? 0.18 : 0);
-    const probEstrella = probEstrellaBase;
+    // Ojeador Estrella: pequeño extra de probabilidad, pero solo tiene
+    // efecto si la Red de Ojeadores ya está en nivel 2 o más — a nivel
+    // 0-1 sigue siendo imposible, tal y como se diseñó esa mejora.
+    const bonusOjeadorEstrella = (nivelRed>=2 && lmSkillActiva('lm_ojeador_estrella')) ? 0.05 : 0;
+    const probEstrella = probEstrellaBase+bonusOjeadorEstrella;
     let huboEstrella=false;
     const jugadores=[1,2,3].map(()=>{
       if(!huboEstrella && Math.random()<probEstrella){
@@ -5053,6 +5325,8 @@
     }
     if(!state.directorDeportivoHistorial) state.directorDeportivoHistorial=[];
     state.directorDeportivoHistorial.unshift({tipo:'fichaje', nombre:jugador.name, position:jugador.position, overall:jugador.overall, estrella:!!jugador.esFichajeEstrella, procedencia:jugador.equipoOrigenName||null, jornada:state.jornadaActual});
+    if(typeof window.unlockLMAchievement==='function' && state.directorDeportivoHistorial.filter(h=>h.tipo==='fichaje').length>=5) window.unlockLMAchievement('lm_5_signings', false);
+    if(typeof window.unlockLMAchievement==='function' && jugador.potencial && (jugador.potencial-jugador.overall)>=15) window.unlockLMAchievement('lm_canterano_joya', false);
     guardarEstado();
   }
   // Poner en venta / ofertas de traspaso — blindado igual que antes para
@@ -8002,6 +8276,7 @@
               <div class="lm-sobre-pos">${j.position}</div>
               <div class="lm-sobre-nombre">${j.name}</div>
               <div class="lm-sobre-overall">${j.overall} <span>${t('lm.puntuacion')}</span></div>
+              ${(typeof lmSkillActiva==='function' && lmSkillActiva('lm_ojo_clinico')) ? `<div class="lm-sobre-potencial"><i class="ph ph-bold ph-binoculars"></i> ${t('lm.potencial_techo')}: <b>${j.potencial||j.overall}</b></div>` : ''}
               <div class="lm-sobre-stats">
                 <span>ATA ${j.attack}</span><span>DEF ${j.defense}</span><span>RIT ${j.pace}</span>
                 <span>PAS ${j.passing}</span><span>TEC ${j.technique}</span>

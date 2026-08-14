@@ -30,7 +30,8 @@
   }
 
   function abrirVisorPartidoManager(info, onFinish, deps){
-    const {state, t, formacionActual, generarSlotsFormacion, climaDelPartido, calcularStatsEquipo, plantillaEfectivaRival, crestHTML, rivalCrestHTML, mostrarHistoricoPartido} = deps;
+    const {state, t, formacionActual, generarSlotsFormacion, climaDelPartido, calcularStatsEquipo, plantillaEfectivaRival, crestHTML, rivalCrestHTML, mostrarHistoricoPartido,
+      guardarEstado, getMaxGiroTacticoLM, jugadorRivalAleatorio, elegirGoleador, elegirJugadorAlineado} = deps;
     const miEsLocal = info.home.id==='lm_0';
     const rival = miEsLocal ? info.away : info.home;
     const miNombre = miEsLocal ? info.home.name : info.away.name;
@@ -1024,24 +1025,35 @@
       reubicarEquipo(false, idxExcluirRival, idxExcluirRival2, idxExcluirRival3);
     }
 
-    const eventosGol=(info.eventos||[]).filter(e=>e.type==='goal').sort((a,b)=>a.minute-b.minute);
-    let tCursorPlan=0, evIdxPlan=0;
-    const planGoles=[];
-    while(tCursorPlan<DURACION_TOTAL){
-      const tProximoGol = evIdxPlan<eventosGol.length ? (eventosGol[evIdxPlan].minute/90)*DURACION_TOTAL : Infinity;
-      if(tProximoGol<=tCursorPlan+1600){ planGoles.push(tProximoGol); evIdxPlan++; tCursorPlan=tProximoGol+1400; }
-      else { tCursorPlan+=1600; }
+    let eventosGol=(info.eventos||[]).filter(e=>e.type==='goal').sort((a,b)=>a.minute-b.minute);
+    let planGoles=[];
+    function recalcularPlanGoles(){
+      // Misma lógica de reparto que la construcción inicial, extraída
+      // aquí para poder reconstruir el calendario de goles cuando el
+      // Giro Táctico sustituye los de la segunda parte al descanso.
+      let tCursorPlanR=0, evIdxPlanR=0;
+      const nuevoPlan=[];
+      while(tCursorPlanR<DURACION_TOTAL){
+        const tProximoGolR = evIdxPlanR<eventosGol.length ? (eventosGol[evIdxPlanR].minute/90)*DURACION_TOTAL : Infinity;
+        if(tProximoGolR<=tCursorPlanR+1600){ nuevoPlan.push(tProximoGolR); evIdxPlanR++; tCursorPlanR=tProximoGolR+1400; }
+        else { tCursorPlanR+=1600; }
+      }
+      while(evIdxPlanR<eventosGol.length){ nuevoPlan.push(DURACION_TOTAL); evIdxPlanR++; }
+      planGoles=nuevoPlan;
     }
-    while(evIdxPlan<eventosGol.length){ planGoles.push(DURACION_TOTAL); evIdxPlan++; }
+    recalcularPlanGoles();
 
     // Tarjetas reales del partido — se muestran en su momento
     // proporcional, sin interrumpir la simulación como un gol.
-    const eventosTarjeta=(info.eventos||[]).filter(e=>e.type==='card').sort((a,b)=>a.minute-b.minute)
+    let eventosTarjeta=(info.eventos||[]).filter(e=>e.type==='card').sort((a,b)=>a.minute-b.minute)
       .map(e=>({...e, tMostrar:(e.minute/90)*DURACION_TOTAL, mostrado:false}));
     // Lesiones reales del partido — antes solo se mostraban en el
     // resumen final, nunca en directo durante el partido. Mismo
     // patrón que las tarjetas: se muestran en su momento proporcional,
-    // sin interrumpir la simulación.
+    // sin interrumpir la simulación. (El Giro Táctico NUNCA toca las
+    // lesiones: ya están médicamente registradas antes de que empiece
+    // el visor, así que se dejan siempre tal cual, pase lo que pase al
+    // descanso.)
     const eventosLesionVisor=(info.eventos||[]).filter(e=>e.type==='injury').sort((a,b)=>a.minute-b.minute)
       .map(e=>({...e, tMostrar:(e.minute/90)*DURACION_TOTAL, mostrado:false}));
 
@@ -1133,37 +1145,124 @@
         mostrarTextoGrande(t('lm.visor_descanso'), real(2400));
         infoBar.textContent=t('lm.visor_descanso');
         if(typeof window.playSound==='function') window.playSound('whistle');
-        // Cambio de campo real: en un partido de verdad, los equipos
-        // cambian de mitad al descanso — antes esto no se tenía en
-        // cuenta, y el equipo seguía atacando en la misma dirección
-        // toda la segunda parte. Se refleja toda la formación al otro
-        // lado del campo y se intercambian las porterías.
-        const golTemp=miGolXY; miGolXY=rivalGolXY; rivalGolXY=golTemp;
-        if(esEscritorio){
-          misSlots=misSlots.map(s=>({x:ANCHO-s.x, y:s.y}));
-          rivalSlots=rivalSlots.map(s=>({x:ANCHO-s.x, y:s.y}));
-        } else {
-          misSlots=misSlots.map(s=>({x:s.x, y:ALTO-s.y}));
-          rivalSlots=rivalSlots.map(s=>({x:s.x, y:ALTO-s.y}));
+        // Segunda parte: cambio de campo, reorganización y saque —
+        // extraído a una función aparte porque, si toca ofrecer el
+        // Giro Táctico (deps.giro), esta parte debe esperar a que el
+        // jugador decida (aceptar/cancelar/agotar el tiempo) antes de
+        // reanudarse, en vez de arrancar la segunda parte al mismo
+        // tiempo que el popup de oferta.
+        function continuarSegundaParte(){
+          // Cambio de campo real: en un partido de verdad, los equipos
+          // cambian de mitad al descanso — antes esto no se tenía en
+          // cuenta, y el equipo seguía atacando en la misma dirección
+          // toda la segunda parte. Se refleja toda la formación al otro
+          // lado del campo y se intercambian las porterías.
+          const golTemp=miGolXY; miGolXY=rivalGolXY; rivalGolXY=golTemp;
+          if(esEscritorio){
+            misSlots=misSlots.map(s=>({x:ANCHO-s.x, y:s.y}));
+            rivalSlots=rivalSlots.map(s=>({x:ANCHO-s.x, y:s.y}));
+          } else {
+            misSlots=misSlots.map(s=>({x:s.x, y:ALTO-s.y}));
+            rivalSlots=rivalSlots.map(s=>({x:s.x, y:ALTO-s.y}));
+          }
+          // Reorganización real de la segunda parte: todo el mundo
+          // vuelve a su posición de formación, igual que en el saque
+          // inicial — antes el partido seguía desde donde estaban los
+          // 22 jugadores en ese instante, sin ningún reinicio, cuando en
+          // la vida real ambos equipos se colocan de nuevo en su sitio.
+          // El equipo que NO sacó en la primera parte saca ahora.
+          misSlots.forEach((s,i)=>moverJugador(true, i, s.x, s.y, 900));
+          rivalSlots.forEach((s,i)=>moverJugador(false, i, s.x, s.y, 900));
+          posesionMia=!posesionMia;
+          idxConBalonMio=primerMedioCentro(rolesMios);
+          idxConBalonRival=primerMedioCentro(rolesRival);
+          pasesJugadaActual=0; historialMio=[]; historialRival=[];
+          const equipoSaca2P = posesionMia?posMia:posRival;
+          const idxSaca2P = posesionMia?idxConBalonMio:idxConBalonRival;
+          setTimeout(()=>{
+            moverBalon(equipoSaca2P[idxSaca2P].x, equipoSaca2P[idxSaca2P].y, 400);
+          }, real(950));
+          setTimeout(()=>sacarDeCentro(posesionMia, idxSaca2P), real(2400));
         }
-        // Reorganización real de la segunda parte: todo el mundo
-        // vuelve a su posición de formación, igual que en el saque
-        // inicial — antes el partido seguía desde donde estaban los
-        // 22 jugadores en ese instante, sin ningún reinicio, cuando en
-        // la vida real ambos equipos se colocan de nuevo en su sitio.
-        // El equipo que NO sacó en la primera parte saca ahora.
-        misSlots.forEach((s,i)=>moverJugador(true, i, s.x, s.y, 900));
-        rivalSlots.forEach((s,i)=>moverJugador(false, i, s.x, s.y, 900));
-        posesionMia=!posesionMia;
-        idxConBalonMio=primerMedioCentro(rolesMios);
-        idxConBalonRival=primerMedioCentro(rolesRival);
-        pasesJugadaActual=0; historialMio=[]; historialRival=[];
-        const equipoSaca2P = posesionMia?posMia:posRival;
-        const idxSaca2P = posesionMia?idxConBalonMio:idxConBalonRival;
-        setTimeout(()=>{
-          moverBalon(equipoSaca2P[idxSaca2P].x, equipoSaca2P[idxSaca2P].y, 400);
-        }, real(950));
-        setTimeout(()=>sacarDeCentro(posesionMia, idxSaca2P), real(2400));
+        // Oferta de Giro Táctico — solo si vamos perdiendo al descanso
+        // y quedan usos disponibles esta media temporada. Pausa aquí
+        // mismo (no se llama a continuarSegundaParte todavía) hasta que
+        // el jugador decida o se agote el tiempo de la oferta.
+        // Lectura de Partido: con esta habilidad, la oferta también
+        // aparece si se llega empatado al descanso, no solo perdiendo.
+        const vaMalAlDescansoM = typeof window.lmSkillActiva==='function' && window.lmSkillActiva('lm_lectura_partido') ? marcadorMio<=marcadorRival : marcadorMio<marcadorRival;
+        if(typeof window.LMGiroTactico==='object' && vaMalAlDescansoM && (state.giroTacticoUsosRestantes||0)>0){
+          window.LMGiroTactico.ofrecerSiProcede({
+            contenedor: document.getElementById('ligaManagerScreen'),
+            t, usosRestantes: state.giroTacticoUsosRestantes,
+            misStats: Object.assign({}, misStatsReales), rivalStats:{attack:rival.attack,defense:rival.defense,pace:rival.pace,passing:rival.passing,technique:rival.technique},
+            rivalTeamObj: rival, esMiEquipoLocal: miEsLocal, miNombre, rivalNombre,
+            manoDuraActiva: typeof window.lmSkillActiva==='function' && window.lmSkillActiva('lm_mano_dura'),
+            golesMiosPrimeraParte: marcadorMio, golesRivalPrimeraParte: marcadorRival,
+            elegirGoleador, jugadorRivalAleatorio, elegirJugadorAlineado,
+            onConsumirUso: ()=>{
+              state.giroTacticoUsosRestantes=Math.max(0,(state.giroTacticoUsosRestantes||0)-1);
+              if(typeof window.unlockLMAchievement==='function') window.unlockLMAchievement('lm_giro_primera_vez', false);
+              if(state.giroTacticoUsosRestantes<=0 && typeof window.unlockLMAchievement==='function') window.unlockLMAchievement('lm_giro_agotado', false);
+              guardarEstado();
+            },
+            onResultadoFinal: (golesMios2P, golesRival2P, nuevosEventos2P)=>{
+              // Reconciliar el total de goles de temporada de MIS
+              // jugadores: se restan los goles que iban a marcar en la
+              // segunda parte original (ya no ocurren) y se suman los
+              // de la segunda parte recién generada. La racha
+              // (p.racha) y el resto de efectos que ya se aplicaron
+              // antes de abrir el visor (nómina, logros, lesión de
+              // este partido si la hay) se dejan tal cual estaban —
+              // deshacerlos seria un cambio muy delicado que toca
+              // demasiados sistemas para lo que aporta.
+              const miLadoEv = miEsLocal ? 'home' : 'away';
+              eventosGol.filter(e=>e.minute>45 && e.team===miLadoEv && e.jugador && e.jugador.id).forEach(e=>{
+                const p=(state.plantilla||[]).find(x=>x.id===e.jugador.id);
+                if(p && p.golesTemporada) p.golesTemporada=Math.max(0,p.golesTemporada-1);
+              });
+              nuevosEventos2P.filter(e=>e.type==='goal' && e.team===miLadoEv && e.jugador && e.jugador.id).forEach(e=>{
+                const p=(state.plantilla||[]).find(x=>x.id===e.jugador.id);
+                if(p) p.golesTemporada=(p.golesTemporada||0)+1;
+              });
+              // Se sustituyen SOLO los eventos de la segunda parte
+              // (minuto>45) por los recién generados, conservando los
+              // de la primera parte tal cual ya se jugaron. Las
+              // lesiones (eventosLesionVisor) nunca se tocan.
+              eventosGol = eventosGol.filter(e=>e.minute<=45).concat(nuevosEventos2P.filter(e=>e.type==='goal')).sort((a,b)=>a.minute-b.minute);
+              eventosTarjeta = eventosTarjeta.filter(e=>e.minute<=45).concat(nuevosEventos2P.filter(e=>e.type==='card').map(e=>({...e, tMostrar:(e.minute/90)*DURACION_TOTAL, mostrado:false}))).sort((a,b)=>a.minute-b.minute);
+              recalcularPlanGoles();
+              // Marcador y resultado final actualizados — tanto la
+              // cabecera visible del partido como lo que se guarda en
+              // el calendario de la liga deben reflejar el nuevo
+              // resultado a partir de ahora.
+              const nuevoGolesA = miEsLocal ? (marcadorMio+golesMios2P) : (marcadorRival+golesRival2P);
+              const nuevoGolesB = miEsLocal ? (marcadorRival+golesRival2P) : (marcadorMio+golesMios2P);
+              info.resultado.golesA=nuevoGolesA; info.resultado.golesB=nuevoGolesB;
+              if(info.jornadaIndex!==undefined){
+                const key=info.jornadaIndex+'-'+info.home.id+'-'+info.away.id;
+                if(state.resultados[key]) state.resultados[key]={...state.resultados[key], golesA:nuevoGolesA, golesB:nuevoGolesB};
+              }
+              // Remontada de verdad gracias al Giro Táctico: se iba
+              // perdiendo al descanso y el resultado final ya es una
+              // victoria. state.giroRemontadasTotales es un contador
+              // persistente de toda la partida (no de la temporada),
+              // para el logro mítico de "3 remontadas distintas".
+              const misGolesFinales = miEsLocal ? nuevoGolesA : nuevoGolesB;
+              const rivalGolesFinales = miEsLocal ? nuevoGolesB : nuevoGolesA;
+              if(misGolesFinales>rivalGolesFinales && typeof window.unlockLMAchievement==='function'){
+                window.unlockLMAchievement('lm_giro_remontada', false);
+                state.giroRemontadasTotales=(state.giroRemontadasTotales||0)+1;
+                if(state.giroRemontadasTotales>=3) window.unlockLMAchievement('lm_giro_leyenda', false);
+              }
+              guardarEstado();
+              continuarSegundaParte();
+            },
+            onCancelado: continuarSegundaParte
+          });
+          return;
+        }
+        continuarSegundaParte();
         return;
       }
       // Tarjeta real de este partido, si toca ya — se muestra un

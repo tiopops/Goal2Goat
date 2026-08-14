@@ -3586,6 +3586,8 @@ body.liga-manager-screen .ranking-btn-label-lm{display:inline}
 }
 .lm-sobre-nombre{font-size:15px;font-weight:700;color:#eee;margin:8px 0 2px;line-height:1.25}
 .lm-sobre-overall{font-family:'Bebas Neue',Impact,sans-serif;font-size:22px;color:#eee;margin-top:2px}
+.lm-sobre-potencial{font-size:10px;color:#7bbf7b;margin:2px 0;display:flex;align-items:center;gap:3px;justify-content:center}
+.lm-sobre-potencial b{color:#9fe0a0}
 .lm-sobre-overall span{font-size:9px;color:#888;text-transform:uppercase;font-family:inherit;letter-spacing:.5px}
 .lm-sobre-stats-fila{
   display:flex;justify-content:space-between;gap:4px;font-size:10px;color:#aaa;
@@ -3913,6 +3915,16 @@ body.liga-manager-screen .ranking-btn-label-lm{display:inline}
   position:fixed;inset:0;background:rgba(0,0,0,.72);
   display:flex;align-items:center;justify-content:center;z-index:250;
 }
+/* Popup de ENHORABUENA al ganar / poder continuar a una nueva
+   temporada (mostrarFelicitacionNuevaTemporada): mismo fallo que los
+   tres anteriores — sin ninguna regla de posicionamiento propia, así
+   que aparecía metido en el flujo normal de la página en vez de
+   centrado en pantalla. Su título ya se centraba con un estilo en
+   línea, pero le faltaba esto para poder verse. */
+#lmFelicitacionTemporadaOverlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.72);
+  display:flex;align-items:center;justify-content:center;z-index:250;
+}
 #lmAvisoPlantillaTecnicaOverlay .lm-dilemma-title{justify-content:center;text-align:center}
 #lmAvisoQuinielaOverlay .lm-dilemma-title{justify-content:center;text-align:center}
 #lmAvisoEntrenamientoSinPlanOverlay .lm-dilemma-title{justify-content:center;text-align:center}
@@ -4236,7 +4248,7 @@ body.light-theme.menu-screen{
   .med-card-grid{grid-template-columns:1fr!important;gap:10px!important}
   .med-card{
     flex-direction:column!important;align-items:center!important;text-align:center!important;
-    padding:38px 14px 12px!important;height:220px;overflow:hidden;justify-content:flex-start;
+    padding:38px 14px 14px!important;min-height:220px;justify-content:flex-start;
     border-radius:12px;box-sizing:border-box;
   }
   .med-card-tag{
