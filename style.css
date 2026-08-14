@@ -3842,7 +3842,7 @@ body.liga-manager-screen .ranking-btn-label-lm{display:inline}
    cabecera de club, bloque de estadísticas en cuadrícula y filas de
    datos reutilizables para cada sección (resultados, goleador,
    finanzas, cuerpo técnico). */
-.lm-resumen-temp-card .lm-clasif-scroll-area{ max-height:60vh; text-align:left; }
+.lm-resumen-temp-card .lm-clasif-scroll-area{ max-height:60vh; text-align:left; padding-right:14px; }
 .lm-resumen-temp-header{
   display:flex;align-items:center;gap:12px;margin-bottom:14px;padding-bottom:12px;
   border-bottom:1px solid #2f3539;
@@ -3874,6 +3874,14 @@ body.liga-manager-screen .ranking-btn-label-lm{display:inline}
 .lm-resumen-temp-jornada{font-size:11px;color:#999;flex-shrink:0}
 .lm-resumen-temp-positivo{color:#5cb85c!important}
 .lm-resumen-temp-negativo{color:#e6564a!important}
+.lm-resumen-temp-veredicto{
+  display:flex;align-items:center;gap:8px;justify-content:center;
+  margin-top:16px;padding:10px 12px;border-radius:8px;
+  font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:.5px;font-size:13px;
+  text-align:center;
+}
+.lm-resumen-temp-veredicto-positivo{background:rgba(92,184,92,.12);border:1px solid rgba(92,184,92,.4);color:#7cd97c}
+.lm-resumen-temp-veredicto-negativo{background:rgba(230,86,74,.12);border:1px solid rgba(230,86,74,.4);color:#f08a80}
 #lmAvisoOverlay{
   position:fixed;inset:0;background:rgba(0,0,0,.7);
   display:flex;align-items:center;justify-content:center;z-index:30;

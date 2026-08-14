@@ -601,15 +601,29 @@
     const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,'0'), day=String(d.getDate()).padStart(2,'0');
     return `${y}-${m}-${day}`;
   }
-  function proximoSabadoDesde(base){
-    const d=new Date(base); d.setHours(0,0,0,0);
-    let diasHasta=(6-d.getDay()+7)%7; // 6 = sábado; si hoy ya es sábado, diasHasta=0
-    // El primer partido de la liga nunca puede coincidir con el día en
-    // que se crea la liga ni caer demasiado pronto — mínimo 5 días de
-    // margen para poder organizar entrenamientos, cuerpo técnico, etc.
-    if(diasHasta<5) diasHasta+=7;
-    d.setDate(d.getDate()+diasHasta);
-    return d;
+  // Fecha de inicio de temporada realista: en vez de arrancar la
+  // jornada 1 "el próximo sábado desde hoy" (lo que podía situar una
+  // liga entera en cualquier época del año, sin relación con un
+  // calendario real de fútbol), se usa el tercer sábado de agosto —
+  // fecha habitual de inicio de LaLiga — del año en curso. Con eso, 38
+  // jornadas semanales terminan de forma natural a finales de mayo del
+  // año siguiente, igual que una temporada real (agosto → mayo/junio).
+  // Si esa fecha de agosto ya ha quedado atrás este año, se usa la del
+  // año siguiente — nunca se puede arrancar una jornada 1 en el pasado.
+  function inicioTemporadaRealista(){
+    function tercerSabadoDeAgosto(year){
+      const d=new Date(year, 7, 1); // 1 de agosto
+      const diasHastaPrimerSabado=(6-d.getDay()+7)%7;
+      d.setDate(1+diasHastaPrimerSabado+14); // +2 semanas = tercer sábado
+      return d;
+    }
+    const hoy=new Date(); hoy.setHours(0,0,0,0);
+    let candidato=tercerSabadoDeAgosto(hoy.getFullYear());
+    // Mismo margen mínimo de 5 días que ya usaba proximoSabadoDesde,
+    // como red de seguridad heredada.
+    const diasMargen=(candidato-hoy)/86400000;
+    if(diasMargen<5) candidato=tercerSabadoDeAgosto(hoy.getFullYear()+1);
+    return candidato;
   }
   // Reparto real de LaLiga: cada jornada se juega entre viernes y lunes
   // (a veces incluso más días por aplazamientos, pero nos quedamos con
@@ -1714,7 +1728,7 @@
       liga, moneda, nombreEquipo, escudo,
       jornadaActual:1,
       calendario:generarCalendario(teams),
-      fechaInicioLiga:fechaISO(proximoSabadoDesde(new Date())),
+      fechaInicioLiga:fechaISO(inicioTemporadaRealista()),
       calendarioEntrenamiento:{},
       pfPlanEntrenamiento:[],
       lmPendingPrediction:null,
@@ -4014,6 +4028,41 @@
   // resumen esquemático de toda la temporada: clasificación, resultados
   // destacados, máximo goleador, balance financiero y proyectos
   // conseguidos por el cuerpo técnico.
+  // Recoge los 20 equipos (el mío + los 19 rivales) ya presentes en el
+  // calendario de la temporada que acaba de terminar — así una nueva
+  // temporada con progreso mantiene la misma liga, sin volver a
+  // sortear rivales ni arriesgarse a duplicar o perder ninguno.
+  function extraerEquiposCalendarioActual(){
+    const mapa=new Map();
+    (state.calendario||[]).forEach(jornada=>{
+      (jornada||[]).forEach(partido=>{
+        mapa.set(partido.home.id, partido.home);
+        mapa.set(partido.away.id, partido.away);
+      });
+    });
+    return [...mapa.values()];
+  }
+  // Nueva temporada MANTENIENDO todo el progreso (plantilla, mejoras,
+  // capital, logros, escudo...) — solo se reinician los elementos
+  // propios de una temporada concreta: el calendario (nuevos
+  // emparejamientos), el marcador de jornada, los resultados
+  // acumulados, la fecha de inicio (la siguiente temporada real) y el
+  // contador de goles de la temporada de cada jugador (para que el
+  // resumen del año que viene empiece de cero, no arrastre los goles
+  // del año anterior).
+  function iniciarNuevaTemporadaConProgreso(){
+    const teams=extraerEquiposCalendarioActual();
+    state.jornadaActual=1;
+    state.calendario=generarCalendario(teams);
+    state.resultados={};
+    state.fechaInicioLiga=fechaISO(inicioTemporadaRealista());
+    state.semanaResueltaParaJornada=undefined;
+    calendarioMesVisto=null;
+    calendarioJornadaSincronizada=null;
+    (state.plantilla||[]).forEach(p=>{ p.golesTemporada=0; });
+    guardarEstado();
+    render();
+  }
   function mostrarResumenTemporada(){
     const overlay=document.createElement('div');
     overlay.id='lmResumenTemporadaOverlay';
@@ -4051,6 +4100,20 @@
       const nMax=Object.keys(niveles||{}).length*NIVEL_MAXIMO_EQUIPO;
       return `<div class="lm-resumen-temp-fila"><span>${t(clave)}</span><span class="lm-resumen-temp-jornada">${estrellasNivel(Math.round((n/Math.max(1,nMax))*NIVEL_MAXIMO_EQUIPO))}</span></div>`;
     }).join('');
+    // Veredicto de la temporada: descenso o números rojos (capital
+    // negativo) significa fin de la partida — el club no sobrevive a
+    // la temporada. Cualquier otra combinación permite continuar,
+    // manteniendo todo el progreso conseguido.
+    const enDescenso = zona==='descenso';
+    const enNumerosRojos = (state.capital||0)<0;
+    const finDeLaPartida = enDescenso || enNumerosRojos;
+    let claveVeredicto=null;
+    if(enDescenso && enNumerosRojos) claveVeredicto='lm.resumen_temporada_fin_ambos';
+    else if(enDescenso) claveVeredicto='lm.resumen_temporada_fin_descenso';
+    else if(enNumerosRojos) claveVeredicto='lm.resumen_temporada_fin_numeros_rojos';
+    const veredictoHTML = finDeLaPartida
+      ? `<div class="lm-resumen-temp-veredicto lm-resumen-temp-veredicto-negativo"><i class="ph ph-bold ph-skull"></i>${t(claveVeredicto)}</div>`
+      : `<div class="lm-resumen-temp-veredicto lm-resumen-temp-veredicto-positivo"><i class="ph ph-bold ph-check-circle"></i>${t('lm.resumen_temporada_puede_continuar')}</div>`;
     overlay.innerHTML=`
       <div class="lm-dilemma-card lm-clasif-popup-card lm-resumen-temp-card" style="max-width:520px">
         <div class="lm-dilemma-title" style="justify-content:center;text-align:center"><i class="ph ph-bold ph-trophy"></i>${t('lm.resumen_temporada_titulo')}</div>
@@ -4081,14 +4144,53 @@
           <div class="lm-resumen-temp-subtitulo">${t('lm.resumen_temporada_cuerpo_tecnico_titulo')}</div>
           <div class="lm-resumen-temp-fila"><span>${t('lm.resumen_temporada_estrellas_totales')}</span><span class="lm-resumen-temp-jornada">${estrellasTotal}/${estrellasMax}</span></div>
           ${dptosHTML}
+          ${veredictoHTML}
         </div>
-        <div class="lm-popup-actions"><button id="lmResumenTemporadaCerrarBtn" class="mode-card-btn mode-card-btn-gold">${t('lm.continuar')}</button></div>
+        <div class="lm-popup-actions"><button id="lmResumenTemporadaCerrarBtn" class="mode-card-btn mode-card-btn-gold">${finDeLaPartida?t('lm.finalizar'):t('lm.continuar')}</button></div>
       </div>`;
     document.getElementById('ligaManagerScreen').appendChild(overlay);
-    habilitarCierreOverlay(overlay, ()=>overlay.remove());
+    // A propósito SIN habilitarCierreOverlay: este popup decide si la
+    // partida termina o continúa a una nueva temporada — un clic fuera
+    // accidental no puede saltarse esa decisión sin pasar por el botón
+    // explícito, a diferencia del resto de popups informativos del
+    // juego, que sí se pueden cerrar tocando fuera.
     overlay.querySelector('#lmResumenTemporadaCerrarBtn').addEventListener('click', ()=>{
       if(typeof window.playSound==='function') window.playSound('select');
       overlay.remove();
+      if(finDeLaPartida){
+        // Fin de la partida: se borra el progreso y se vuelve al menú
+        // de selección de modo — mismo camino de salida que ya usa
+        // "abandonar liga", reutilizado aquí porque el efecto es
+        // idéntico (la partida ya no puede continuar).
+        borrarEstado();
+        state=nuevoEstadoSinEmpezar();
+        setupStep=1;
+        setupData={liga:'es', moneda:null, nombre:'', escudo:null, modo:null, equipoElegidoId:null};
+        document.body.classList.remove('liga-manager-screen');
+        document.body.classList.add('menu-screen');
+        return;
+      }
+      mostrarFelicitacionNuevaTemporada();
+    });
+  }
+  // Popup de felicitación antes de arrancar la nueva temporada con
+  // todo el progreso conservado — mismo estilo que el resto de la
+  // interfaz, a modo de reconocimiento por una buena temporada antes
+  // de continuar la aventura.
+  function mostrarFelicitacionNuevaTemporada(){
+    const overlay=document.createElement('div');
+    overlay.id='lmFelicitacionTemporadaOverlay';
+    overlay.innerHTML=`
+      <div class="lm-dilemma-card" style="max-width:420px">
+        <div class="lm-dilemma-title" style="justify-content:center;text-align:center"><i class="ph ph-bold ph-confetti"></i>${t('lm.resumen_temporada_felicidades_titulo')}</div>
+        <div class="lm-dilemma-text" style="margin:10px 0 16px;text-align:center">${t('lm.resumen_temporada_felicidades_texto')}</div>
+        <div class="lm-popup-actions"><button id="lmFelicitacionEmpezarBtn" class="mode-card-btn mode-card-btn-gold">${t('lm.resumen_temporada_empezar_temporada_btn')}</button></div>
+      </div>`;
+    document.getElementById('ligaManagerScreen').appendChild(overlay);
+    overlay.querySelector('#lmFelicitacionEmpezarBtn').addEventListener('click', ()=>{
+      if(typeof window.playSound==='function') window.playSound('select');
+      overlay.remove();
+      iniciarNuevaTemporadaConProgreso();
     });
   }
 
@@ -5580,7 +5682,7 @@
     if(!state.preparadorFisicoHistorial) state.preparadorFisicoHistorial=[];
     if(!state.preparadorFisicoNiveles) state.preparadorFisicoNiveles={resistenciaBase:0, recuperacionSemanal:0, potencialTecnico:0, potencialFisico:0, planificacionSemanal:0};
     if(state.trabajadores && state.trabajadores.preparadorFisico===undefined) state.trabajadores.preparadorFisico=null;
-    if(!state.fechaInicioLiga) state.fechaInicioLiga=fechaISO(proximoSabadoDesde(new Date()));
+    if(!state.fechaInicioLiga) state.fechaInicioLiga=fechaISO(inicioTemporadaRealista());
     if(!state.calendarioEntrenamiento) state.calendarioEntrenamiento={};
     if(!state.pfPlanEntrenamiento) state.pfPlanEntrenamiento=[];
     // Migración desde el formato antiguo (solo lista de ids, sin

@@ -1044,6 +1044,20 @@
       return idxMid>=0 ? idxMid : Math.floor(roles.length/2);
     }
     let idxConBalonMio=primerMedioCentro(rolesMios), idxConBalonRival=primerMedioCentro(rolesRival);
+    // Índice del jugador que va a recibir un pase actualmente en
+    // vuelo (si lo hay) — declarada aquí, al mismo nivel que
+    // idxConBalonMio/Rival y NO dentro de tickInner() como antes,
+    // porque flujoContinuoInterval (más abajo) la necesita y vive
+    // FUERA de tickInner, en esta misma función exterior que solo se
+    // ejecuta una vez por partido. Al estar declarada dentro de
+    // tickInner, cada 230ms ese intervalo lanzaba un ReferenceError
+    // SIN CAPTURAR (los setInterval no pasan por el try/catch de
+    // tick()) desde el primer segundo del partido y durante los 90
+    // minutos enteros — miles de excepciones seguidas, suficientes
+    // para dejar el partido dando la sensación de estar completamente
+    // congelado en pantalla aunque el resultado final se calculara
+    // bien por su cuenta, exactamente el síntoma reportado.
+    let receptorPaseIdx=-1;
     // Pases seguidos de la jugada actual — le da memoria a la
     // posesión: pocos pases = todavía construyendo (juego prudente),
     // muchos pases seguidos en el último tercio = urgencia real por
@@ -1617,7 +1631,11 @@
       // balón llegaba a su destino, el jugador ya se había desplazado
       // a otro sitio — de ahí la sensación de "el balón cae donde no
       // hay nadie" y el flujo a golpes del partido.
-      let receptorPaseIdx=-1;
+      // (Reasignación de la variable compartida declarada más arriba,
+      // fuera de tickInner — NUNCA un "let" nuevo aquí: eso crearía una
+      // sombra local que dejaría a flujoContinuoInterval leyendo
+      // siempre el valor inicial sin actualizar nunca.)
+      receptorPaseIdx=-1;
       // Igual que con el receptor de un pase, el jugador que INTERCEPTA
       // el balón (entrada, presión) también debe quedarse quieto en el
       // sitio donde lo recibe — antes solo el receptor de un pase tenía
@@ -1893,6 +1911,12 @@
           };
           pasesJugadaActual=Math.max(0,pasesJugadaActual-1); // conducir no es lo mismo que pasar, no cuenta para la urgencia de disparo
           moverBalon(destinoConduccion.x, destinoConduccion.y, dur*0.75);
+          // El jugador debe conducir de verdad con el balón en los
+          // pies — antes solo se movía el balón (moverBalon), dejando
+          // la ficha del jugador clavada mientras el balón "flotaba"
+          // solo hacia delante (mismo bug que ya se corrigió en el
+          // regate 1 contra 1).
+          moverJugador(posesionMia, idxConBalon, destinoConduccion.x, destinoConduccion.y, dur*0.75);
           infoBar.textContent=`${nombreAtaca} avanza con el balón, sin oposición cerca`;
           actualizarFormacionDinamica(posesionMia, posesionMia?idxConBalon:undefined, posesionMia?undefined:idxConBalon, posActual);
           setTimeout(()=>{
@@ -1946,6 +1970,46 @@
             }, real(dur));
           }
           return;
+        }
+        // Jugada individual por falta de opciones: si el portador ya
+        // está en zona avanzada (aprox. mitad del campo rival en
+        // adelante) y NINGÚN compañero cercano ofrece un pase legal
+        // (todos estarían en fuera de juego), en vez de forzarse un
+        // pase inválido el jugador prueba por su cuenta — avanza
+        // driblando hacia portería y, si consigue acercarse lo
+        // suficiente, dispara él mismo. Antes esta situación se
+        // resolvía igualmente con un pase (el sistema de puntuación
+        // siempre elegía "el menos malo", aunque estuviera en fuera de
+        // juego), dando la sensación de que el equipo intentaba un
+        // pase imposible en vez de resolverlo un jugador real.
+        if(zona>0.5){
+          const ultimoDefensorProfIndiv = equipoDefiende.reduce((max,rv,ri)=>{
+            if(ri===0) return max;
+            const prof = esEscritorio ? (posesionMia?rv.x:ANCHO-rv.x) : (posesionMia?ALTO-rv.y:rv.y);
+            return Math.max(max, prof);
+          }, -Infinity);
+          const companerosCercanosIndiv = equipoAtaca.filter((p,i)=>i!==idxConBalon && Math.hypot(p.x-posActual.x,p.y-posActual.y)<42);
+          const hayPaseLegalIndiv = companerosCercanosIndiv.some(p=>{
+            const profP = esEscritorio ? (posesionMia?p.x:ANCHO-p.x) : (posesionMia?ALTO-p.y:p.y);
+            return profP<=ultimoDefensorProfIndiv+1.5;
+          });
+          if(companerosCercanosIndiv.length>0 && !hayPaseLegalIndiv){
+            const avanceIndiv = Math.min(0.28, 0.13+((posesionMia?misStatsReales.pace:rival.pace)-50)/280);
+            const destinoIndiv={
+              x: posActual.x+(golObjetivo.x-posActual.x)*avanceIndiv,
+              y: posActual.y+(golObjetivo.y-posActual.y)*avanceIndiv
+            };
+            pasesJugadaActual=Math.max(0,pasesJugadaActual-1);
+            moverBalon(destinoIndiv.x, destinoIndiv.y, dur*0.75);
+            moverJugador(posesionMia, idxConBalon, destinoIndiv.x, destinoIndiv.y, dur*0.75);
+            infoBar.textContent=`${nombreAtaca} no encuentra un pase legal y se lanza en jugada individual`;
+            actualizarFormacionDinamica(posesionMia, posesionMia?idxConBalon:undefined, posesionMia?undefined:idxConBalon, posActual);
+            setTimeout(()=>{
+              tiempoTranscurrido+=dur*0.75;
+              tick();
+            }, real(dur*0.75));
+            return;
+          }
         }
         // Pase: en el último tercio se busca el hueco por delante del
         // compañero (pase filtrado, simula la carrera); en el resto,
