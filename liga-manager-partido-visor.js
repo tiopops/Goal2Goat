@@ -1916,6 +1916,16 @@
           pasesJugadaActual=0;
           if(regateExitoso){
             moverBalon(destinoRegate.x, destinoRegate.y, dur*0.8);
+            // El jugador debe adelantarse de verdad tras superar a su
+            // marcador — antes solo se movía el balón (moverBalon), así
+            // que el balón avanzaba "solo" mientras la ficha del
+            // jugador se quedaba clavada en el sitio donde encaró al
+            // rival. Se le excluye de la reubicación dinámica genérica
+            // de más abajo (como ya se hacía) precisamente porque este
+            // movimiento explícito es el que debe llevarlo con el
+            // balón en los pies, adelantado respecto al defensa al que
+            // acaba de regatear.
+            moverJugador(posesionMia, idxConBalon, destinoRegate.x, destinoRegate.y, dur*0.8);
             infoBar.textContent=`${nombreAtaca} encara y supera a su marcador`;
             mostrarAlertaRegate(destinoRegate.x, destinoRegate.y);
             actualizarFormacionDinamica(posesionMia, posesionMia?idxConBalon:undefined, posesionMia?undefined:idxConBalon, posActual);

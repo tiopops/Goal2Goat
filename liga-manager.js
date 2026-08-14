@@ -2380,6 +2380,16 @@
     // NO marcaron este partido pierden la racha (mismo concepto que el
     // "streak" de goleador ya usado en Copa Leyendas).
     const marcadoresIds=new Set(eventos.filter(e=>e.type==='goal'&&e.jugador).map(e=>e.jugador.id));
+    // Total de goles de la temporada por jugador — a diferencia de
+    // marcadoresIds (un Set, solo sirve para saber SI marcó), aquí se
+    // cuenta cada gol individualmente, para poder mostrar un máximo
+    // goleador real en el resumen de fin de temporada. Solo se cuentan
+    // los goles de MI equipo (los del rival usan un jugador ajeno, no
+    // guardado en mi plantilla).
+    eventos.filter(e=>e.type==='goal' && e.team===misLado && e.jugador && e.jugador.id).forEach(e=>{
+      const p=state.plantilla.find(x=>x.id===e.jugador.id);
+      if(p) p.golesTemporada=(p.golesTemporada||0)+1;
+    });
     const idsAlineados=Object.values(state.alineacion||{}).filter(Boolean);
     idsAlineados.forEach(id=>{
       const p=state.plantilla.find(x=>x.id===id);
@@ -3970,6 +3980,117 @@
       window.showRankingModal();
     }
   };
+
+  /* ---------- 7b. Resumen de fin de temporada ---------- */
+  // Recorre las 38 jornadas ya jugadas buscando el partido de mayor
+  // margen de victoria y el de mayor margen de derrota de MI equipo —
+  // usado en el resumen final de temporada. Se recalcula sobre
+  // state.resultados (nunca se guarda aparte), igual que la propia
+  // clasificación.
+  function calcularResultadosDestacadosTemporada(){
+    let mejorVictoria=null, peorDerrota=null;
+    for(let j=0;j<38;j++){
+      const jornada=state.calendario[j];
+      if(!jornada) continue;
+      jornada.forEach(partido=>{
+        if(partido.home.id!=='lm_0' && partido.away.id!=='lm_0') return;
+        const key=j+'-'+partido.home.id+'-'+partido.away.id;
+        const res=state.resultados[key];
+        if(!res) return;
+        const miEsLocal=partido.home.id==='lm_0';
+        const misGoles = miEsLocal?res.golesA:res.golesB;
+        const susGoles = miEsLocal?res.golesB:res.golesA;
+        const rivalNombre = miEsLocal?partido.away.name:partido.home.name;
+        const diff=misGoles-susGoles;
+        if(diff>0 && (!mejorVictoria || diff>mejorVictoria.diff)) mejorVictoria={misGoles, susGoles, rivalNombre, diff, jornada:j+1};
+        else if(diff<0 && (!peorDerrota || diff<peorDerrota.diff)) peorDerrota={misGoles, susGoles, rivalNombre, diff, jornada:j+1};
+      });
+    }
+    return {mejorVictoria, peorDerrota};
+  }
+  // Popup de fin de temporada — mismo patrón visual que el resto de la
+  // interfaz (.lm-dilemma-card / .lm-clasif-popup-card, con su zona de
+  // scroll interna para que quepa en cualquier pantalla), a modo de
+  // resumen esquemático de toda la temporada: clasificación, resultados
+  // destacados, máximo goleador, balance financiero y proyectos
+  // conseguidos por el cuerpo técnico.
+  function mostrarResumenTemporada(){
+    const overlay=document.createElement('div');
+    overlay.id='lmResumenTemporadaOverlay';
+    const clasif=calcularClasificacion();
+    const miPos=clasif.findIndex(t2=>t2.id==='lm_0')+1;
+    const misDatos=clasif.find(t2=>t2.id==='lm_0');
+    const zona=zonaClasificacion(miPos);
+    let claveValoracion='lm.resumen_temporada_valoracion_media';
+    if(miPos===1) claveValoracion='lm.resumen_temporada_valoracion_campeon';
+    else if(zona==='champions') claveValoracion='lm.resumen_temporada_valoracion_champions';
+    else if(zona==='europa') claveValoracion='lm.resumen_temporada_valoracion_europa';
+    else if(zona==='conference') claveValoracion='lm.resumen_temporada_valoracion_conference';
+    else if(zona==='descenso') claveValoracion='lm.resumen_temporada_valoracion_descenso';
+    const {mejorVictoria, peorDerrota}=calcularResultadosDestacadosTemporada();
+    const golesFilaHTML = (r, claveVacio)=> !r ? `<div class="lm-resumen-temp-fila-vacia">${t(claveVacio)}</div>`
+      : `<div class="lm-resumen-temp-fila"><span>${state.nombreEquipo} ${r.misGoles} - ${r.susGoles} ${r.rivalNombre}</span><span class="lm-resumen-temp-jornada">${t('lm.jornada')} ${r.jornada}</span></div>`;
+    const maxGoleador = (state.plantilla||[]).reduce((max,p)=>(p.golesTemporada||0)>(max?max.golesTemporada||0:0) ? p : max, null);
+    const goleadorHTML = (maxGoleador && maxGoleador.golesTemporada>0)
+      ? `<div class="lm-resumen-temp-fila"><span><strong>${maxGoleador.name}</strong></span><span class="lm-resumen-temp-jornada">${tp('lm.resumen_temporada_goleador_goles',{n:maxGoleador.golesTemporada})}</span></div>`
+      : `<div class="lm-resumen-temp-fila-vacia">${t('lm.resumen_temporada_sin_goleador')}</div>`;
+    const historialFin=(state.finanzasHistorial||[]);
+    const ingresosTotales=historialFin.filter(h=>h.monto>=0).reduce((s,h)=>s+h.monto,0);
+    const gastosTotales=historialFin.filter(h=>h.monto<0).reduce((s,h)=>s+Math.abs(h.monto),0);
+    const balanceNeto=ingresosTotales-gastosTotales;
+    const {total:estrellasTotal, max:estrellasMax}=calcularEstrellasClub();
+    const dptos=[
+      ['lm.resumen_temporada_dpto_medico', state.medicoNiveles],
+      ['lm.resumen_temporada_dpto_mantenimiento', state.mantenimientoNiveles],
+      ['lm.resumen_temporada_dpto_dg', state.directorGeneralNiveles],
+      ['lm.resumen_temporada_dpto_dd', state.directorDeportivoNiveles],
+      ['lm.resumen_temporada_dpto_pf', state.preparadorFisicoNiveles],
+    ];
+    const dptosHTML = dptos.map(([clave, niveles])=>{
+      const n=nivelTotalDe(niveles);
+      const nMax=Object.keys(niveles||{}).length*NIVEL_MAXIMO_EQUIPO;
+      return `<div class="lm-resumen-temp-fila"><span>${t(clave)}</span><span class="lm-resumen-temp-jornada">${estrellasNivel(Math.round((n/Math.max(1,nMax))*NIVEL_MAXIMO_EQUIPO))}</span></div>`;
+    }).join('');
+    overlay.innerHTML=`
+      <div class="lm-dilemma-card lm-clasif-popup-card lm-resumen-temp-card" style="max-width:520px">
+        <div class="lm-dilemma-title" style="justify-content:center;text-align:center"><i class="ph ph-bold ph-trophy"></i>${t('lm.resumen_temporada_titulo')}</div>
+        <div class="lm-clasif-scroll-area">
+          <div class="lm-resumen-temp-header">
+            ${crestHTML(state.escudo, 56)}
+            <div>
+              <div class="lm-resumen-temp-club">${state.nombreEquipo.toUpperCase()}</div>
+              <div class="lm-resumen-temp-valoracion lm-zona-${zona}">${t(claveValoracion)}</div>
+            </div>
+          </div>
+          <div class="lm-resumen-temp-stats-grid">
+            <div class="lm-resumen-temp-stat"><span class="lm-resumen-temp-stat-num">${miPos}º</span><span class="lm-resumen-temp-stat-label">${t('lm.resumen_temporada_posicion')}</span></div>
+            <div class="lm-resumen-temp-stat"><span class="lm-resumen-temp-stat-num">${misDatos?misDatos.pts:0}</span><span class="lm-resumen-temp-stat-label">${t('lm.tabla_pts')}</span></div>
+            <div class="lm-resumen-temp-stat"><span class="lm-resumen-temp-stat-num">${misDatos?misDatos.pg:0}-${misDatos?misDatos.pe:0}-${misDatos?misDatos.pp:0}</span><span class="lm-resumen-temp-stat-label">${t('lm.tabla_g')}-${t('lm.tabla_e')}-${t('lm.tabla_p')}</span></div>
+            <div class="lm-resumen-temp-stat"><span class="lm-resumen-temp-stat-num">${misDatos?(misDatos.gf-misDatos.gc>0?'+':'')+(misDatos.gf-misDatos.gc):0}</span><span class="lm-resumen-temp-stat-label">${t('lm.resumen_temporada_dg')}</span></div>
+          </div>
+          <div class="lm-resumen-temp-subtitulo">${t('lm.resumen_temporada_resultados_titulo')}</div>
+          ${golesFilaHTML(mejorVictoria,'lm.resumen_temporada_sin_victorias')}
+          ${golesFilaHTML(peorDerrota,'lm.resumen_temporada_sin_derrotas')}
+          <div class="lm-resumen-temp-subtitulo">${t('lm.resumen_temporada_goleador_titulo')}</div>
+          ${goleadorHTML}
+          <div class="lm-resumen-temp-subtitulo">${t('lm.resumen_temporada_financiero_titulo')}</div>
+          <div class="lm-resumen-temp-fila"><span>${t('lm.resumen_temporada_capital_final')}</span><span class="lm-resumen-temp-jornada">${formatoDinero(state.capital)}</span></div>
+          <div class="lm-resumen-temp-fila"><span>${t('lm.resumen_temporada_ingresos')}</span><span class="lm-resumen-temp-jornada lm-resumen-temp-positivo">+${formatoDinero(ingresosTotales)}</span></div>
+          <div class="lm-resumen-temp-fila"><span>${t('lm.resumen_temporada_gastos')}</span><span class="lm-resumen-temp-jornada lm-resumen-temp-negativo">-${formatoDinero(gastosTotales)}</span></div>
+          <div class="lm-resumen-temp-fila"><span>${t('lm.resumen_temporada_balance_neto')}</span><span class="lm-resumen-temp-jornada ${balanceNeto>=0?'lm-resumen-temp-positivo':'lm-resumen-temp-negativo'}">${balanceNeto>=0?'+':''}${formatoDinero(balanceNeto)}</span></div>
+          <div class="lm-resumen-temp-subtitulo">${t('lm.resumen_temporada_cuerpo_tecnico_titulo')}</div>
+          <div class="lm-resumen-temp-fila"><span>${t('lm.resumen_temporada_estrellas_totales')}</span><span class="lm-resumen-temp-jornada">${estrellasTotal}/${estrellasMax}</span></div>
+          ${dptosHTML}
+        </div>
+        <div class="lm-popup-actions"><button id="lmResumenTemporadaCerrarBtn" class="mode-card-btn mode-card-btn-gold">${t('lm.continuar')}</button></div>
+      </div>`;
+    document.getElementById('ligaManagerScreen').appendChild(overlay);
+    habilitarCierreOverlay(overlay, ()=>overlay.remove());
+    overlay.querySelector('#lmResumenTemporadaCerrarBtn').addEventListener('click', ()=>{
+      if(typeof window.playSound==='function') window.playSound('select');
+      overlay.remove();
+    });
+  }
 
   // Suma todas las estrellas de nivel conseguidas en los proyectos de
   // los 5 departamentos del cuerpo técnico (máximo 3★ cada track) —
@@ -5931,7 +6052,18 @@
           if(state.semanaResueltaParaJornada===state.jornadaActual){
             const info=jugarJornada();
             if(info){
-              const alTerminar=()=>{ render(); mostrarLogrosPendientes(); mostrarResolucionQuinielaSiToca(); };
+              const alTerminar=()=>{
+                render();
+                mostrarLogrosPendientes();
+                mostrarResolucionQuinielaSiToca();
+                // Se acaba de cruzar de la jornada 38 a la 39: la
+                // temporada ha terminado justo ahora — se muestra el
+                // resumen una única vez, aquí mismo, nunca en renders
+                // posteriores (el botón JUGAR/SEGUIR queda deshabilitado
+                // en cuanto jornadaActual>38, así que este callback no
+                // puede volver a dispararse para la misma temporada).
+                if(state.jornadaActual>38) mostrarResumenTemporada();
+              };
               if(state.modoVisualPartido==='manager'){ abrirVisorPartidoManager(info, alTerminar); }
               else { mostrarPartidoEnVivo(info, alTerminar); }
             } else { render(); }
