@@ -1197,6 +1197,15 @@
         const balonPos0={x:parseFloat(balon.getAttribute('cx')), y:parseFloat(balon.getAttribute('cy'))};
         const equipoAnotaPos = esMio?posMia:posRival;
         const objetivoGol = esMio ? rivalGolXY : miGolXY;
+        // Jugador que tiene el balón justo antes de esta jugada de gol —
+        // variable propia de este bloque (nunca la `const idxConBalon`
+        // de más abajo, que aún no se ha inicializado en este punto de
+        // la función: usarla aquí lanzaba un ReferenceError de zona
+        // muerta temporal en CADA gol, capturado en silencio por el
+        // try/catch de tick() y "recuperado" con un reinicio al centro
+        // — por eso nunca se veía ningún gol en directo aunque el
+        // resultado final sí los contara todos correctamente).
+        const idxConBalonGol = esMio ? idxConBalonMio : idxConBalonRival;
         // El gol SIEMPRE debe salir desde cerca del área rival, nunca
         // desde donde estuviera el balón por casualidad al llegar el
         // minuto programado (a veces medio campo, o incluso más
@@ -1264,7 +1273,7 @@
             : (esMio ? 1-balonPos0.y/ALTO : balonPos0.y/ALTO);
           if(profundidadActual<0.55){
             const numPasesConstruccion = profundidadActual<0.3 ? 3 : 2;
-            let jugadorAnteriorIdx = idxConBalon;
+            let jugadorAnteriorIdx = idxConBalonGol;
             let posActualConstruccion = {x:balonPos0.x, y:balonPos0.y};
             let retrasoAcumulado = 0;
             for(let pc=1; pc<=numPasesConstruccion; pc++){
@@ -1289,13 +1298,12 @@
             }
             retrasoAcumulado += 550;
             setTimeout(()=>{
-              idxConBalon = jugadorAnteriorIdx;
               if(esMio) idxConBalonMio=jugadorAnteriorIdx; else idxConBalonRival=jugadorAnteriorIdx;
               lanzarJugadaDeGol(posActualConstruccion, jugadorAnteriorIdx);
             }, real(retrasoAcumulado));
             return;
           }
-          lanzarJugadaDeGol(balonPos0, idxConBalon);
+          lanzarJugadaDeGol(balonPos0, idxConBalonGol);
           return;
         }
         function lanzarJugadaDeGol(balonPos0, idxConBalon){
