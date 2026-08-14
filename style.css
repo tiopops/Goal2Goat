@@ -3904,8 +3904,18 @@ body.liga-manager-screen .ranking-btn-label-lm{display:inline}
   position:fixed;inset:0;background:rgba(0,0,0,.72);
   display:flex;align-items:center;justify-content:center;z-index:250;
 }
+/* Aviso de entrenamiento sin plan: mismo fallo que los dos anteriores
+   (sin posicionamiento propio, aparecía metido en el flujo normal de
+   la página en vez de centrado en pantalla, con el título alineado a
+   la izquierda) — se completa aquí para que los tres popups compartan
+   exactamente el mismo comportamiento visual. */
+#lmAvisoEntrenamientoSinPlanOverlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.72);
+  display:flex;align-items:center;justify-content:center;z-index:250;
+}
 #lmAvisoPlantillaTecnicaOverlay .lm-dilemma-title{justify-content:center;text-align:center}
 #lmAvisoQuinielaOverlay .lm-dilemma-title{justify-content:center;text-align:center}
+#lmAvisoEntrenamientoSinPlanOverlay .lm-dilemma-title{justify-content:center;text-align:center}
 .lm-dilemma-card{
   background:#1e2326;border:1px solid #c9a227;border-radius:0;
   padding:22px 26px;max-width:340px;text-align:center;

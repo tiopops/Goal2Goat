@@ -998,7 +998,26 @@
           else { y+=(Math.random()-0.5)*jitterProfundidad*2; x+=(Math.random()-0.5)*2.2; }
           destinos.push({x,y});
           const fatigaMov = 1 + Math.min(0.15, (tiempoTranscurrido/DURACION_TOTAL)*0.15);
-          setTimeout(()=>moverJugador(esMio, i, x, y, (950+Math.random()*450)*fatigaMov), real(Math.random()*350));
+          // Antes esta reubicación se relanzaba en CADA pasada de este
+          // bucle (cada ~230ms desde flujoContinuoInterval, además de
+          // en cada decisión de tick()) — cada llamada le daba a
+          // moverJugador un destino nuevo con una duración de
+          // 950-1400ms, así que casi ningún jugador llegaba a
+          // completar un movimiento antes de que llegara el siguiente,
+          // que lo redirigía a mitad de camino. El resultado visual
+          // era justo la sensación de "golpecitos rápidos y bruscos"
+          // reportada: nunca una zancada fluida, siempre un cambio de
+          // rumbo constante. Ahora, si el jugador ya tiene un
+          // movimiento en marcha que no ha llegado ni a sus 3/4 partes,
+          // se le deja terminarlo con naturalidad antes de asignarle
+          // un nuevo destino — igual que un jugador real no cambia de
+          // dirección en mitad de cada paso.
+          const keyAnimActual=(esMio?'mio-':'rival-')+i;
+          const animActual=jugadorAnims[keyAnimActual];
+          const yaEnMovimientoReciente = animActual && animActual.active && (performance.now()-animActual.startTime) < animActual.duration*0.75;
+          if(!yaEnMovimientoReciente){
+            setTimeout(()=>moverJugador(esMio, i, x, y, (950+Math.random()*450)*fatigaMov), real(Math.random()*350));
+          }
         }
       }
       reubicarEquipo(true, idxExcluirMio, idxExcluirMio2, idxExcluirMio3);
