@@ -340,9 +340,12 @@
     let anterior;
     if(state.jornadaActual<=1){
       // Antes del primer partido no hay "jornada anterior" — la semana
-      // de preparación va desde hoy (el día real de hoy) hasta el
-      // partido, así que sí se puede planificar la primera semana.
-      anterior=new Date(); anterior.setHours(0,0,0,0); anterior.setDate(anterior.getDate()-1);
+      // de preparación empieza exactamente 7 días antes del primer
+      // partido, NUNCA en el día real de hoy: con fechas de temporada
+      // realistas (agosto), "hoy" puede estar meses antes del inicio
+      // de la liga, lo que dejaba una ventana de entrenamiento
+      // gigantesca en vez de la semana previa habitual.
+      anterior=new Date(proxima); anterior.setHours(0,0,0,0); anterior.setDate(anterior.getDate()-7);
     } else {
       anterior=fechaJornadaLM(state.jornadaActual-1);
     }
@@ -2647,6 +2650,7 @@
       enviarCorreo('directorGeneral', t('correo.nuevos_candidatos.asunto'),
         t('correo.nuevos_candidatos.cuerpo'),
         {asunto:'correo.nuevos_candidatos.asunto', cuerpo:'correo.nuevos_candidatos.cuerpo'});
+      state.correoInterno[0].tipoEspecial='nuevos_candidatos';
     }
 
     state.plantilla.forEach(p=>{
@@ -6006,6 +6010,8 @@
                     } else {
                       extra=`<div class="lm-correo-resultado">${t('lm.quiniela_ya_rellenada')}</div>`;
                     }
+                  } else if(c.tipoEspecial==='nuevos_candidatos'){
+                    extra=`<div class="lm-correo-ofertas"><button class="lm-correo-oferta-btn" data-ir-contratar="1"><i class="ph ph-bold ph-user-plus"></i> ${t('lm.contratar_btn')}</button></div>`;
                   }
                   cuerpoExtra=`<div class="lm-correo-cuerpo">${correoCuerpoActual(c)||''}${extra}</div>`;
                 }
@@ -6338,6 +6344,13 @@
         e.stopPropagation();
         if(typeof window.playSound==='function') window.playSound('select');
         abrirFinanzasDG();
+      });
+    });
+    root.querySelectorAll('[data-ir-contratar]').forEach(btn=>{
+      btn.addEventListener('click', (e)=>{
+        e.stopPropagation();
+        if(typeof window.playSound==='function') window.playSound('select');
+        abrirTrabajadores();
       });
     });
     root.querySelectorAll('[data-abrir-sobre-correo]').forEach(btn=>{
