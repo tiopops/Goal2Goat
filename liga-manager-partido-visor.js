@@ -1212,8 +1212,17 @@
           // Se reactiva el vigilante anti-cuelgue — la pausa
           // deliberada por el Giro Táctico (si la hubo) ya ha
           // terminado, sea cual sea el motivo (aceptado, cancelado o
-          // agotado el tiempo).
+          // agotado el tiempo). Es IMPRESCINDIBLE refrescar también
+          // ultimoTickReal aquí: si no, el vigilante ve que ha pasado
+          // toda la duración de la pausa (10-15s o más) desde el
+          // último tick() real, y dispara un tick() extra e
+          // inmediato justo en el mismo instante en que esta función
+          // ya está reanudando el partido por su cuenta — dos
+          // caminos de código chocando a la vez, exactamente lo que
+          // hacía que el Giro Táctico pareciera "no pausar ni
+          // completarse" en modo manager.
           pausadoPorGiroTactico=false;
+          ultimoTickReal=performance.now();
           // Cambio de campo real: en un partido de verdad, los equipos
           // cambian de mitad al descanso — antes esto no se tenía en
           // cuenta, y el equipo seguía atacando en la misma dirección
@@ -1234,8 +1243,14 @@
           // la vida real ambos equipos se colocan de nuevo en su sitio.
           // El equipo que NO sacó en la primera parte saca ahora.
           bloqueoReformacionHasta=performance.now()+real(950);
-          misSlots.forEach((s,i)=>moverJugador(true, i, s.x, s.y, 900));
-          rivalSlots.forEach((s,i)=>moverJugador(false, i, s.x, s.y, 900));
+          // Curva rápida (arranque inmediato, no de carrera natural con
+          // arranque suave) — la reorganización es un reposicionamiento
+          // brusco tipo "todos a su sitio ya", no una carrera humana; con
+          // la curva suave por defecto, el portero (que recorre la mayor
+          // distancia de todo el equipo, de un extremo del campo al
+          // otro) se veía tardar mucho en arrancar y llegar tarde.
+          misSlots.forEach((s,i)=>moverJugador(true, i, s.x, s.y, 900, 'out'));
+          rivalSlots.forEach((s,i)=>moverJugador(false, i, s.x, s.y, 900, 'out'));
           posesionMia=!posesionMia;
           idxConBalonMio=primerMedioCentro(rolesMios);
           idxConBalonRival=primerMedioCentro(rolesRival);
@@ -1487,8 +1502,8 @@
               // se movía el balón al centro, y los 22 jugadores se
               // quedaban donde estuvieran en el momento del gol.
               bloqueoReformacionHasta=performance.now()+real(950);
-              misSlots.forEach((s,i)=>moverJugador(true, i, s.x, s.y, 900));
-              rivalSlots.forEach((s,i)=>moverJugador(false, i, s.x, s.y, 900));
+              misSlots.forEach((s,i)=>moverJugador(true, i, s.x, s.y, 900, 'out'));
+              rivalSlots.forEach((s,i)=>moverJugador(false, i, s.x, s.y, 900, 'out'));
               posesionMia=!esMio; avanzarTiempo(2750+esperaExtra); pasesJugadaActual=0; historialMio=[]; historialRival=[];
               idxConBalonMio=primerMedioCentro(rolesMios);
               idxConBalonRival=primerMedioCentro(rolesRival);
