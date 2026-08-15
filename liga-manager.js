@@ -4620,7 +4620,7 @@
   // decidirlo más tarde (sigue jugando sin más) o ir directo a
   // contratar. Mismo patrón visual que el aviso de quiniela pendiente,
   // para que ambos popups mantengan homogeneidad entre sí.
-  function mostrarAvisoPlantillaTecnicaIncompleta(){
+  function mostrarAvisoPlantillaTecnicaIncompleta(continuarCallback){
     const overlay=document.createElement('div');
     overlay.id='lmAvisoPlantillaTecnicaOverlay';
     overlay.innerHTML=`
@@ -4643,6 +4643,11 @@
     document.getElementById('lmAvisoPlantillaTecnicaMasTarde').addEventListener('click', ()=>{
       if(typeof window.playSound==='function') window.playSound('select');
       cerrar();
+      // Sigue encadenando al siguiente aviso pendiente (quiniela,
+      // entrenamiento sin plan...) en vez de cortar aquí el flujo —
+      // antes había que pulsar SEGUIR una vez por cada aviso
+      // distinto, en vez de verlos todos seguidos en el mismo clic.
+      if(typeof continuarCallback==='function') continuarCallback();
     });
   }
   // Aviso de entrenamiento sin plan asignado — mismo patrón visual que
@@ -6525,27 +6530,35 @@
           }
           continuarSemana();
         };
-        // Solo un aviso a la vez, y cada uno como mucho una vez en toda la
-        // partida — nunca se apilan dos popups en el mismo clic.
+        // Los avisos van encadenados: cada uno, al cerrarse (con
+        // "decidir más tarde" o similar), pasa directamente al
+        // siguiente pendiente en vez de cortar el flujo — antes había
+        // que pulsar SEGUIR una vez por cada aviso distinto para
+        // verlos todos, cuando deberían aparecer uno tras otro en el
+        // mismo clic. Cada aviso sigue mostrándose como mucho una vez
+        // en toda la partida.
+        const pasoQuiniela=()=>{
+          // Aviso de quiniela pendiente: la quiniela se entrega para
+          // usarse en ESA jornada concreta — si el jugador intenta jugar
+          // el partido sin haberla rellenado, se le avisa y se le da la
+          // opción de rellenarla ahí mismo, o seguir jugando (en cuyo
+          // caso la quiniela se pierde y se borra del correo interno,
+          // ya que no tiene sentido conservarla para una jornada que ya
+          // ha pasado).
+          if(state.quinielaBoleto && !state.quinielaBoleto.rellenado){
+            mostrarAvisoQuinielaPendienteAntesDeJugar(jugarAhora);
+            return;
+          }
+          jugarAhora();
+        };
         const faltaCuerpoTecnico=ROLES_TRABAJO.some(r=>!state.trabajadores[r]);
         if(faltaCuerpoTecnico && !state.avisoCuerpoTecnicoMostrado){
           state.avisoCuerpoTecnicoMostrado=true;
           guardarEstado();
-          mostrarAvisoPlantillaTecnicaIncompleta();
+          mostrarAvisoPlantillaTecnicaIncompleta(pasoQuiniela);
           return;
         }
-        // Aviso de quiniela pendiente: la quiniela se entrega para
-        // usarse en ESA jornada concreta — si el jugador intenta jugar
-        // el partido sin haberla rellenado, se le avisa y se le da la
-        // opción de rellenarla ahí mismo, o seguir jugando (en cuyo
-        // caso la quiniela se pierde y se borra del correo interno,
-        // ya que no tiene sentido conservarla para una jornada que ya
-        // ha pasado).
-        if(state.quinielaBoleto && !state.quinielaBoleto.rellenado){
-          mostrarAvisoQuinielaPendienteAntesDeJugar(jugarAhora);
-          return;
-        }
-        jugarAhora();
+        pasoQuiniela();
       });
       jugarBtn.addEventListener('mouseenter', marcarInteraccionJugarBtn);
       jugarBtn.addEventListener('mousemove', marcarInteraccionJugarBtn);

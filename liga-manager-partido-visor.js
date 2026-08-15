@@ -340,7 +340,7 @@
     // la hubiera, pero garantiza que el jugador nunca se quede con un
     // partido roto sin ninguna forma de seguir.
     const vigilanteInterval=setInterval(()=>{
-      if(partidoDetenido || partidoTerminado) return;
+      if(partidoDetenido || partidoTerminado || pausadoPorGiroTactico) return;
       if(performance.now()-ultimoTickReal>15000){
         console.warn('[Liga Manager] El partido llevaba más de 15s sin avanzar — reactivado por el vigilante.');
         tick();
@@ -1160,6 +1160,15 @@
     let descansoMostrado=false;
     let partidoDetenido=false; // se activa al pulsar "terminar y mostrar resultados"
     let partidoTerminado=false; // el partido llegó a su fin, ya sea jugado entero o forzado
+    // Mientras se decide el Giro Táctico (oferta de 5s + hasta 10s del
+    // selector de cartas), el partido está deliberadamente pausado —
+    // sin esta marca, el vigilante anti-cuelgue de más abajo (que
+    // reactiva el partido si pasan 15s sin que tick() avance) lo
+    // interpretaba como un cuelgue real y forzaba tick() a mitad de
+    // la decisión, corrompiendo el estado justo entre la primera y la
+    // segunda parte — por eso el Giro Táctico en modo manager ni se
+    // quedaba pausado de verdad ni llegaba a completarse limpiamente.
+    let pausadoPorGiroTactico=false;
 
     function tick(){
       try{
@@ -1200,6 +1209,11 @@
         // reanudarse, en vez de arrancar la segunda parte al mismo
         // tiempo que el popup de oferta.
         function continuarSegundaParte(){
+          // Se reactiva el vigilante anti-cuelgue — la pausa
+          // deliberada por el Giro Táctico (si la hubo) ya ha
+          // terminado, sea cual sea el motivo (aceptado, cancelado o
+          // agotado el tiempo).
+          pausadoPorGiroTactico=false;
           // Cambio de campo real: en un partido de verdad, los equipos
           // cambian de mitad al descanso — antes esto no se tenía en
           // cuenta, y el equipo seguía atacando en la misma dirección
@@ -1252,6 +1266,7 @@
           console.error('[Liga Manager] Giro Táctico no disponible: liga-manager-giro-tactico.js no se ha cargado (revisa que el archivo y el <script> en index.html estén subidos al servidor).');
         }
         if(typeof window.LMGiroTactico==='object' && vaMalAlDescansoM && (state.giroTacticoUsosRestantes||0)>0){
+          pausadoPorGiroTactico=true;
           window.LMGiroTactico.ofrecerSiProcede({
             contenedor: document.getElementById('ligaManagerScreen'),
             t, usosRestantes: state.giroTacticoUsosRestantes,
