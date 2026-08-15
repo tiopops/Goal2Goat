@@ -630,10 +630,18 @@
         if(!a.active) continue;
         const elapsed=now-a.startTime;
         const t=Math.min(1, elapsed/a.duration);
-        // easeInOutCubic — misma sensación que la transición CSS
-        // "ease-in-out" que había antes, pero calculada fotograma a
-        // fotograma en vez de dejada en manos del navegador.
-        const eased = t<0.5 ? 4*t*t*t : 1-Math.pow(-2*t+2,3)/2;
+        // Misma curva que el balón (easeOutCubic) — antes el balón
+        // usaba easeOutCubic (arranca rápido, llega casi entero a
+        // mitad de trayecto) mientras el jugador usaba easeInOutCubic
+        // (arranca despacio, solo llega a la mitad a mitad de
+        // trayecto). Con la MISMA duración y destino, el balón
+        // adelantaba muchísimo al jugador durante todo el vuelo,
+        // dando la sensación de que "el balón cae donde no hay
+        // nadie" y el jugador aparece corriendo detrás — exactamente
+        // al revés de cómo debe verse (el jugador va a por el balón,
+        // no el balón va a los jugadores). Con la misma curva, balón
+        // y jugador avanzan sincronizados todo el trayecto.
+        const eased = 1-Math.pow(1-t,3);
         const curX=a.startX+(a.targetX-a.startX)*eased;
         const curY=a.startY+(a.targetY-a.startY)*eased;
         if(a.el) a.el.setAttribute('transform', `translate(${curX},${curY})`);

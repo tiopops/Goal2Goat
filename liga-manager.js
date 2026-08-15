@@ -7344,7 +7344,7 @@
             ${xCerrarHTML()}
             <i class="ph ph-bold ${def.icon}" style="font-size:26px;color:#5dcaa5"></i>
             <div class="lm-dilemma-title" style="justify-content:center;text-align:center">${tc('med', def.id, 'nombre', def.nombre).toUpperCase()}</div>
-            <div class="lm-dilemma-text">${tc('med', def.id, 'desc', def.desc)}${def.tipo==='directa'?` — necesitas sumar ${Math.max(3, def.dificultad - bonusEstrellasTrabajador('medico'))}+`:(def.tipo==='nivel'?` — necesitas sumar ${dificultadActualNivel(def)}+ para subir a nivel ${nivelDe(def.track)+1}/${NIVEL_MAXIMO_EQUIPO}`:' — los dados invertidos siempre suman al proyecto')}</div>
+            <div class="lm-dilemma-text">${tc('med', def.id, 'desc', def.desc)}${def.tipo==='directa'?` — necesitas sumar <strong class="lm-dificultad-destacada">${Math.max(3, def.dificultad - bonusEstrellasTrabajador('medico'))}+</strong>`:(def.tipo==='nivel'?` — necesitas sumar <strong class="lm-dificultad-destacada">${dificultadActualNivel(def)}+</strong> para subir a nivel ${nivelDe(def.track)+1}/${NIVEL_MAXIMO_EQUIPO}`:' — los dados invertidos siempre suman al proyecto')}</div>
             ${jugadorObjetivo?`<div class="lm-setup-desc" style="margin-top:-4px"><strong>${jugadorObjetivo.name}</strong> — ${jugadorObjetivo.injurySeverity} · ${jugadorObjetivo.injuryWeeks} ${t('lm.jornada').toLowerCase()}${jugadorObjetivo.injuryWeeks===1?'':'s'} restante${jugadorObjetivo.injuryWeeks===1?'':'s'}</div>`:''}
             <div class="lm-dice-selector">
               <button id="lmDiceMinus" class="lm-dice-stepper">−</button>
@@ -7377,10 +7377,15 @@
 
     // Barajado 2D de las caras del dado — CALCO del slot-machine que ya se
     function renderRolloCarta(idx, numDados, jugadorObjetivoId){
+      const cartaObjetivo=cartaDef(state.medicoCartas[idx].cartaId);
+      const dificultadObjetivo = cartaObjetivo.tipo==='directa'
+        ? Math.max(3, cartaObjetivo.dificultad - bonusEstrellasTrabajador('medico'))
+        : (cartaObjetivo.tipo==='nivel' ? dificultadActualNivel(cartaObjetivo) : null);
       overlay.innerHTML=`
         <div class="lm-dilemma-card lm-dilemma-card-medico lm-dice-roll-card">
             ${xCerrarHTML()}
           <div class="lm-dilemma-title" id="lmDiceTitle" style="justify-content:center;text-align:center">TIRANDO ${numDados} DADO${numDados>1?'S':''}...</div>
+          ${dificultadObjetivo!==null?`<div class="lm-dice-objetivo">${t('lm.necesitas_sumar')} <strong>${dificultadObjetivo}+</strong></div>`:''}
           <div id="lmDice2DRow" class="lm-dice2d-row"></div>
           <div id="lmDiceResultZone"></div>
         </div>`;
@@ -7686,7 +7691,7 @@
             ${xCerrarHTML()}
             <i class="ph ph-bold ${def.icon}" style="font-size:26px;color:#5dcaa5"></i>
             <div class="lm-dilemma-title" style="justify-content:center;text-align:center">${tc('mant', def.id, 'nombre', def.nombre).toUpperCase()}</div>
-            <div class="lm-dilemma-text">${tc('mant', def.id, 'desc', def.desc)}${def.tipo==='directa'?` — necesitas sumar ${Math.max(3, def.dificultad - bonusEstrellasTrabajador('mantenimiento'))}+`:` — necesitas sumar ${dificultadActualNivelM(def)}+ para subir a nivel ${nivelDeM(def.track)+1}/${NIVEL_MAXIMO_EQUIPO}`}</div>
+            <div class="lm-dilemma-text">${tc('mant', def.id, 'desc', def.desc)}${def.tipo==='directa'?` — necesitas sumar <strong class="lm-dificultad-destacada">${Math.max(3, def.dificultad - bonusEstrellasTrabajador('mantenimiento'))}+</strong>`:` — necesitas sumar <strong class="lm-dificultad-destacada">${dificultadActualNivelM(def)}+</strong> para subir a nivel ${nivelDeM(def.track)+1}/${NIVEL_MAXIMO_EQUIPO}`}</div>
             <div class="lm-dice-selector">
               <button id="lmDiceMinus" class="lm-dice-stepper">−</button>
               <span id="lmDiceCount">${dadosElegidos}</span>
@@ -7717,10 +7722,15 @@
     }
 
     function renderRolloCarta(idx, numDados){
+      const cartaObjetivo=cartaDefM(state.mantenimientoCartas[idx].cartaId);
+      const dificultadObjetivo = cartaObjetivo.tipo==='directa'
+        ? Math.max(3, cartaObjetivo.dificultad - bonusEstrellasTrabajador('mantenimiento'))
+        : dificultadActualNivelM(cartaObjetivo);
       overlay.innerHTML=`
         <div class="lm-dilemma-card lm-dilemma-card-mant lm-dice-roll-card">
             ${xCerrarHTML()}
           <div class="lm-dilemma-title" id="lmDiceTitle" style="justify-content:center;text-align:center">TIRANDO ${numDados} DADO${numDados>1?'S':''}...</div>
+          <div class="lm-dice-objetivo">${t('lm.necesitas_sumar')} <strong>${dificultadObjetivo}+</strong></div>
           <div id="lmDice2DRow" class="lm-dice2d-row"></div>
           <div id="lmDiceResultZone"></div>
         </div>`;
@@ -7920,7 +7930,7 @@
             ${xCerrarHTML()}
             <i class="ph ph-bold ${def.icon}" style="font-size:26px;color:#e6c94a"></i>
             <div class="lm-dilemma-title" style="justify-content:center;text-align:center">${tc('dg', def.id, 'nombre', def.nombre).toUpperCase()}</div>
-            <div class="lm-dilemma-text">${tc('dg', def.id, 'desc', def.desc)}${def.tipo==='directa'?` — necesitas sumar ${Math.max(3, def.dificultad - bonusEstrellasTrabajador('directorGeneral'))}+`:` — necesitas sumar ${dificultadActualNivelDG(def)}+ para subir a nivel ${nivelDeDG(def.track)+1}/${NIVEL_MAXIMO_EQUIPO}`}</div>
+            <div class="lm-dilemma-text">${tc('dg', def.id, 'desc', def.desc)}${def.tipo==='directa'?` — necesitas sumar <strong class="lm-dificultad-destacada">${Math.max(3, def.dificultad - bonusEstrellasTrabajador('directorGeneral'))}+</strong>`:` — necesitas sumar <strong class="lm-dificultad-destacada">${dificultadActualNivelDG(def)}+</strong> para subir a nivel ${nivelDeDG(def.track)+1}/${NIVEL_MAXIMO_EQUIPO}`}</div>
             <div class="lm-dice-selector">
               <button id="lmDiceMinus" class="lm-dice-stepper">−</button>
               <span id="lmDiceCount">${dadosElegidos}</span>
@@ -7951,10 +7961,15 @@
     }
 
     function renderRolloCarta(idx, numDados){
+      const cartaObjetivo=cartaDefDG(state.directorGeneralCartas[idx].cartaId);
+      const dificultadObjetivo = cartaObjetivo.tipo==='directa'
+        ? Math.max(3, cartaObjetivo.dificultad - bonusEstrellasTrabajador('directorGeneral'))
+        : dificultadActualNivelDG(cartaObjetivo);
       overlay.innerHTML=`
         <div class="lm-dilemma-card lm-dilemma-card-dg lm-dice-roll-card">
             ${xCerrarHTML()}
           <div class="lm-dilemma-title" id="lmDiceTitle" style="justify-content:center;text-align:center">TIRANDO ${numDados} DADO${numDados>1?'S':''}...</div>
+          <div class="lm-dice-objetivo">${t('lm.necesitas_sumar')} <strong>${dificultadObjetivo}+</strong></div>
           <div id="lmDice2DRow" class="lm-dice2d-row"></div>
           <div id="lmDiceResultZone"></div>
         </div>`;
@@ -8230,7 +8245,7 @@
             ${xCerrarHTML()}
             <i class="ph ph-bold ${def.icon}" style="font-size:26px;color:#c9c9c9"></i>
             <div class="lm-dilemma-title" style="justify-content:center;text-align:center">${tc('dd', def.id, 'nombre', def.nombre).toUpperCase()}</div>
-            <div class="lm-dilemma-text">${tc('dd', def.id, 'desc', def.desc)}${def.tipo==='directa'?` — necesitas sumar ${Math.max(3, def.dificultad - bonusEstrellasTrabajador('directorDeportivo'))}+`:` — necesitas sumar ${dificultadActualNivelDD(def)}+ para subir a nivel ${nivelDeDD(def.track)+1}/${NIVEL_MAXIMO_EQUIPO}`}</div>
+            <div class="lm-dilemma-text">${tc('dd', def.id, 'desc', def.desc)}${def.tipo==='directa'?` — necesitas sumar <strong class="lm-dificultad-destacada">${Math.max(3, def.dificultad - bonusEstrellasTrabajador('directorDeportivo'))}+</strong>`:` — necesitas sumar <strong class="lm-dificultad-destacada">${dificultadActualNivelDD(def)}+</strong> para subir a nivel ${nivelDeDD(def.track)+1}/${NIVEL_MAXIMO_EQUIPO}`}</div>
             <div class="lm-dice-selector">
               <button id="lmDiceMinus" class="lm-dice-stepper">−</button>
               <span id="lmDiceCount">${dadosElegidos}</span>
@@ -8261,10 +8276,15 @@
     }
 
     function renderRolloCarta(idx, numDados, esSobre){
+      const cartaObjetivo=cartaDefDD(state.directorDeportivoCartas[idx].cartaId);
+      const dificultadObjetivo = cartaObjetivo.tipo==='directa'
+        ? Math.max(3, cartaObjetivo.dificultad - bonusEstrellasTrabajador('directorDeportivo'))
+        : dificultadActualNivelDD(cartaObjetivo);
       overlay.innerHTML=`
         <div class="lm-dilemma-card lm-dilemma-card-dd lm-dice-roll-card">
             ${xCerrarHTML()}
           <div class="lm-dilemma-title" id="lmDiceTitle" style="justify-content:center;text-align:center">TIRANDO ${numDados} DADO${numDados>1?'S':''}...</div>
+          <div class="lm-dice-objetivo">${t('lm.necesitas_sumar')} <strong>${dificultadObjetivo}+</strong></div>
           <div id="lmDice2DRow" class="lm-dice2d-row"></div>
           <div id="lmDiceResultZone"></div>
         </div>`;
@@ -8741,7 +8761,7 @@
             ${xCerrarHTML()}
             <i class="ph ph-bold ${def.icon}" style="font-size:26px;color:#e08a3e"></i>
             <div class="lm-dilemma-title" style="justify-content:center;text-align:center">${tc('pf', def.id, 'nombre', def.nombre).toUpperCase()}</div>
-            <div class="lm-dilemma-text">${tc('pf', def.id, 'desc', def.desc)}${def.tipo==='directa'?` — necesitas sumar ${Math.max(3, def.dificultad - bonusEstrellasTrabajador('preparadorFisico'))}+`:` — necesitas sumar ${dificultadActualNivelPF(def)}+ para subir a nivel ${nivelDePF(def.track)+1}/${NIVEL_MAXIMO_EQUIPO}`}</div>
+            <div class="lm-dilemma-text">${tc('pf', def.id, 'desc', def.desc)}${def.tipo==='directa'?` — necesitas sumar <strong class="lm-dificultad-destacada">${Math.max(3, def.dificultad - bonusEstrellasTrabajador('preparadorFisico'))}+</strong>`:` — necesitas sumar <strong class="lm-dificultad-destacada">${dificultadActualNivelPF(def)}+</strong> para subir a nivel ${nivelDePF(def.track)+1}/${NIVEL_MAXIMO_EQUIPO}`}</div>
             <div class="lm-dice-selector">
               <button id="lmDiceMinus" class="lm-dice-stepper">−</button>
               <span id="lmDiceCount">${dadosElegidos}</span>
@@ -8772,10 +8792,15 @@
     }
 
     function renderRolloCarta(idx, numDados){
+      const cartaObjetivo=cartaDefPF(state.preparadorFisicoCartas[idx].cartaId);
+      const dificultadObjetivo = cartaObjetivo.tipo==='directa'
+        ? Math.max(3, cartaObjetivo.dificultad - bonusEstrellasTrabajador('preparadorFisico'))
+        : dificultadActualNivelPF(cartaObjetivo);
       overlay.innerHTML=`
         <div class="lm-dilemma-card lm-dilemma-card-pf lm-dice-roll-card">
             ${xCerrarHTML()}
           <div class="lm-dilemma-title" id="lmDiceTitle" style="justify-content:center;text-align:center">TIRANDO ${numDados} DADO${numDados>1?'S':''}...</div>
+          <div class="lm-dice-objetivo">${t('lm.necesitas_sumar')} <strong>${dificultadObjetivo}+</strong></div>
           <div id="lmDice2DRow" class="lm-dice2d-row"></div>
           <div id="lmDiceResultZone"></div>
         </div>`;

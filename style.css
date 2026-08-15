@@ -3937,6 +3937,19 @@ body.liga-manager-screen .ranking-btn-label-lm{display:inline}
    siempre lo mismo, para que la interfaz no cambie de ancho ni de alto
    entre ver los dados girando y ver si se ha acertado o fallado. */
 .lm-dice-roll-card{width:340px;max-width:92vw;height:460px;display:flex;flex-direction:column;justify-content:center;overflow-y:auto}
+/* Objetivo de la tirada, resaltado — antes "necesitas sumar X+" era
+   texto plano dentro de una frase larga, fácil de perder de vista; y
+   la pantalla de TIRANDO/TU TIRADA no lo repetía en ningún momento,
+   así que si no te acordabas del número exacto no sabías si tu
+   resultado era suficiente. */
+.lm-dificultad-destacada{
+  color:#5dcaa5;font-weight:800;font-size:1.18em;letter-spacing:.5px;
+}
+.lm-dice-objetivo{
+  text-align:center;font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:1.5px;
+  font-size:14px;color:#999;margin-top:-4px;margin-bottom:6px;
+}
+.lm-dice-objetivo strong{color:#5dcaa5;font-size:1.3em;font-weight:800}
 .lm-dice-reroll-info{font-size:10px;color:#888;margin:2px 0 8px}
 /* Botón X universal de cierre — esquina superior derecha de cualquier
    popup, además del cierre al hacer clic fuera de la tarjeta. */
