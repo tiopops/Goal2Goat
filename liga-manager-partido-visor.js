@@ -1242,15 +1242,22 @@
           // 22 jugadores en ese instante, sin ningún reinicio, cuando en
           // la vida real ambos equipos se colocan de nuevo en su sitio.
           // El equipo que NO sacó en la primera parte saca ahora.
-          bloqueoReformacionHasta=performance.now()+real(950);
+          bloqueoReformacionHasta=performance.now()+real(1400);
           // Curva rápida (arranque inmediato, no de carrera natural con
           // arranque suave) — la reorganización es un reposicionamiento
           // brusco tipo "todos a su sitio ya", no una carrera humana; con
           // la curva suave por defecto, el portero (que recorre la mayor
           // distancia de todo el equipo, de un extremo del campo al
           // otro) se veía tardar mucho en arrancar y llegar tarde.
-          misSlots.forEach((s,i)=>moverJugador(true, i, s.x, s.y, 900, 'out'));
-          rivalSlots.forEach((s,i)=>moverJugador(false, i, s.x, s.y, 900, 'out'));
+          // Duración también ampliada (900→1100ms) para que el
+          // portero, con la distancia más larga de todos, tenga tiempo
+          // de sobra de llegar realmente colocado antes de que el
+          // balón vuelva a estar en juego — antes se solapaban: el
+          // saque podía empezar mientras algunos jugadores (sobre
+          // todo el portero) todavía estaban terminando de moverse,
+          // dando la sensación de reorganización lenta y a golpes.
+          misSlots.forEach((s,i)=>moverJugador(true, i, s.x, s.y, 1100, 'out'));
+          rivalSlots.forEach((s,i)=>moverJugador(false, i, s.x, s.y, 1100, 'out'));
           posesionMia=!posesionMia;
           idxConBalonMio=primerMedioCentro(rolesMios);
           idxConBalonRival=primerMedioCentro(rolesRival);
@@ -1259,8 +1266,8 @@
           const idxSaca2P = posesionMia?idxConBalonMio:idxConBalonRival;
           setTimeout(()=>{
             moverBalon(equipoSaca2P[idxSaca2P].x, equipoSaca2P[idxSaca2P].y, 400);
-          }, real(950));
-          setTimeout(()=>sacarDeCentro(posesionMia, idxSaca2P), real(2400));
+          }, real(1350));
+          setTimeout(()=>sacarDeCentro(posesionMia, idxSaca2P), real(2800));
         }
         // Oferta de Giro Táctico — solo si vamos perdiendo al descanso
         // y quedan usos disponibles esta media temporada. Pausa aquí
@@ -1277,7 +1284,16 @@
         const vaMalAlDescansoM = (typeof window.lmSkillActiva==='function' && window.lmSkillActiva('lm_lectura_partido'))
           ? marcadorMio<=marcadorRival+1
           : marcadorMio<=marcadorRival;
-        if(vaMalAlDescansoM && (state.giroTacticoUsosRestantes||0)>0 && typeof window.LMGiroTactico!=='object'){
+        // Diagnóstico SIEMPRE visible al llegar al descanso (no solo
+        // cuando algo falla) — así, si el Giro Táctico no aparece, se
+        // puede ver en la consola (F12) exactamente cuál de las tres
+        // condiciones no se cumplió, en vez de tener que adivinarlo.
+        console.log('[Liga Manager] Descanso alcanzado — comprobación Giro Táctico:', {
+          marcadorMio, marcadorRival, vaMalAlDescansoM,
+          usosRestantes: state.giroTacticoUsosRestantes,
+          LMGiroTacticoCargado: typeof window.LMGiroTactico==='object'
+        });
+        if(typeof window.LMGiroTactico!=='object'){
           console.error('[Liga Manager] Giro Táctico no disponible: liga-manager-giro-tactico.js no se ha cargado (revisa que el archivo y el <script> en index.html estén subidos al servidor).');
         }
         if(typeof window.LMGiroTactico==='object' && vaMalAlDescansoM && (state.giroTacticoUsosRestantes||0)>0){
@@ -1501,9 +1517,9 @@
               // al empezar el partido o la segunda parte — antes solo
               // se movía el balón al centro, y los 22 jugadores se
               // quedaban donde estuvieran en el momento del gol.
-              bloqueoReformacionHasta=performance.now()+real(950);
-              misSlots.forEach((s,i)=>moverJugador(true, i, s.x, s.y, 900, 'out'));
-              rivalSlots.forEach((s,i)=>moverJugador(false, i, s.x, s.y, 900, 'out'));
+              bloqueoReformacionHasta=performance.now()+real(1400);
+              misSlots.forEach((s,i)=>moverJugador(true, i, s.x, s.y, 1100, 'out'));
+              rivalSlots.forEach((s,i)=>moverJugador(false, i, s.x, s.y, 1100, 'out'));
               posesionMia=!esMio; avanzarTiempo(2750+esperaExtra); pasesJugadaActual=0; historialMio=[]; historialRival=[];
               idxConBalonMio=primerMedioCentro(rolesMios);
               idxConBalonRival=primerMedioCentro(rolesRival);
@@ -1512,7 +1528,7 @@
               setTimeout(()=>{
                 moverBalon(equipoSacaGol[idxSacaGol].x, equipoSacaGol[idxSacaGol].y, 400);
                 setTimeout(()=>sacarDeCentro(posesionMia, idxSacaGol), real(450));
-              }, real(950));
+              }, real(1350));
             }, real(1300));
           }, real(duracionVueloGol+120));
         }
