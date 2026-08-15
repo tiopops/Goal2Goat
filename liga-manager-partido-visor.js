@@ -1190,7 +1190,15 @@
         // el jugador decida o se agote el tiempo de la oferta.
         // Lectura de Partido: con esta habilidad, la oferta también
         // aparece si se llega empatado al descanso, no solo perdiendo.
-        const vaMalAlDescansoM = typeof window.lmSkillActiva==='function' && window.lmSkillActiva('lm_lectura_partido') ? marcadorMio<=marcadorRival : marcadorMio<marcadorRival;
+        // Ahora, por defecto, la oferta aparece si vas perdiendo O
+        // empatado al descanso — antes el empate solo contaba con la
+        // habilidad Lectura de Partido activa. Esa habilidad ahora va
+        // un paso más allá: con ella activa, la oferta llega incluso
+        // ganando por la mínima (un solo gol), para proteger una
+        // ventaja corta en vez de solo remontar.
+        const vaMalAlDescansoM = (typeof window.lmSkillActiva==='function' && window.lmSkillActiva('lm_lectura_partido'))
+          ? marcadorMio<=marcadorRival+1
+          : marcadorMio<=marcadorRival;
         if(typeof window.LMGiroTactico==='object' && vaMalAlDescansoM && (state.giroTacticoUsosRestantes||0)>0){
           window.LMGiroTactico.ofrecerSiProcede({
             contenedor: document.getElementById('ligaManagerScreen'),

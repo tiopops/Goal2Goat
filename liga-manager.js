@@ -3249,7 +3249,10 @@
           // Se pausa aquí (no se programa el siguiente
           // requestAnimationFrame) hasta que el jugador decida.
           const miGolesHT = miEsLocal?curHome:curOpp, rivalGolesHT = miEsLocal?curOpp:curHome;
-          const vaMalAlDescansoAuto = lmSkillActiva('lm_lectura_partido') ? miGolesHT<=rivalGolesHT : miGolesHT<rivalGolesHT;
+          // Por defecto, pierdiendo O empatado al descanso. Con la
+          // habilidad Lectura de Partido, incluso ganando por la
+          // mínima (protege una ventaja corta).
+          const vaMalAlDescansoAuto = lmSkillActiva('lm_lectura_partido') ? miGolesHT<=rivalGolesHT+1 : miGolesHT<=rivalGolesHT;
           if(typeof window.LMGiroTactico==='object' && vaMalAlDescansoAuto && (state.giroTacticoUsosRestantes||0)>0){
             const misStatsHT = calcularStatsEquipo();
             const rivalTeamObjHT = miEsLocal ? info.away : info.home;
