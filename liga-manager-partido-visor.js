@@ -221,6 +221,7 @@
           <div class="lm-visor-posesion-directo-rival" id="lmVisorPosesionRival" style="width:50%">50%</div>
         </div>
         ${clima?`<div class="lm-visor-clima-bar">${clima.label}</div>`:''}
+        <div id="lmVisorGiroDebug" class="lm-visor-giro-debug"></div>
         <div class="lm-visor-campo-wrap ${climaClase}">
           <svg class="lm-visor-campo-svg" viewBox="0 0 ${ANCHO} ${ALTO}" preserveAspectRatio="xMidYMid meet">
             ${franjasHTML}
@@ -1290,11 +1291,15 @@
           usosRestantes: state.giroTacticoUsosRestantes,
           LMGiroTacticoCargado: typeof window.LMGiroTactico==='object'
         });
-        // Aviso EN PANTALLA (no solo en la consola) — así se puede
-        // confirmar sin abrir las herramientas de desarrollador si
+        // Aviso EN LA PROPIA INTERFAZ del partido (justo debajo del
+        // clima) — no en un toast que podría no verse ni depender de
+        // herramientas de desarrollador. Queda fijo en pantalla hasta
+        // que el partido continúa, para confirmar sin ninguna duda si
         // este archivo actualizado está realmente cargado o no.
-        if(typeof window.showToast==='function'){
-          window.showToast('🔄 Giro: '+(typeof window.LMGiroTactico==='object'?'archivo OK':'archivo NO cargado')+' · '+marcadorMio+'-'+marcadorRival+' · usos:'+(state.giroTacticoUsosRestantes!==undefined?state.giroTacticoUsosRestantes:'?'), 'toast-pos');
+        const giroDebugEl=overlay.querySelector('#lmVisorGiroDebug');
+        if(giroDebugEl){
+          giroDebugEl.textContent = '🔄 GIRO TÁCTICO — '+(typeof window.LMGiroTactico==='object'?'archivo cargado ✔':'ARCHIVO NO CARGADO ✘')+' · marcador '+marcadorMio+'-'+marcadorRival+' · usos:'+(state.giroTacticoUsosRestantes!==undefined?state.giroTacticoUsosRestantes:'?')+' · debería ofrecerse: '+(vaMalAlDescansoM?'SÍ':'NO');
+          giroDebugEl.style.display='block';
         }
         if(typeof window.LMGiroTactico!=='object'){
           console.error('[Liga Manager] Giro Táctico no disponible: liga-manager-giro-tactico.js no se ha cargado (revisa que el archivo y el <script> en index.html estén subidos al servidor).');
