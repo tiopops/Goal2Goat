@@ -905,6 +905,16 @@
       }
       state.disturbiosZonas[z.id]=nivel;
     });
+    // Penalización a satisfacción y moral mientras haya disturbios
+    // activos en cualquier zona — cuanto más graves en conjunto, más
+    // castigo. Antes los disturbios solo importaban si llegaban a
+    // estallar del todo; ahora ya se notan desde el nivel "leve".
+    const severidadTotal = LM_ZONAS_ESTADIO.reduce((s,z)=>s+(state.disturbiosZonas[z.id]||0), 0);
+    if(severidadTotal>0){
+      if(!state.estadio) state.estadio={campo:90, satisfaccion:10, aforoTotal:12000, ultimaAsistencia:null};
+      state.estadio.satisfaccion=Math.max(-100, state.estadio.satisfaccion-severidadTotal*1.5);
+      state.moral=Math.max(-50, (state.moral||0)-severidadTotal);
+    }
     if(zonaEstallada) resolverEstallidoDisturbios(zonaEstallada);
   }
   function resolverEstallidoDisturbios(zona){
@@ -1236,7 +1246,23 @@
       window._lmScratchPoints=data.scratchPoints||0;
     }catch(e){ window._lmUpgradeCache=window._lmUpgradeCache||{}; }
   }
+  // Evita el salto de scroll al principio que ocurría cada vez que se
+  // pulsaba un botón en las pestañas de mejoras/logros/habilidades del
+  // perfil: al vaciar la lista para mostrar "Cargando..." antes de
+  // reconstruirla, el contenedor se quedaba momentáneamente muy bajo
+  // de altura y el navegador recortaba el scroll a 0 — al reconstruir
+  // el contenido completo, esa posición ya no se restauraba sola.
+  // Aquí se guarda el scroll del panel ANTES y se reaplica DESPUÉS.
+  async function reRenderPanelConservandoScroll(paneId, renderFn){
+    const pane=document.getElementById(paneId);
+    const scrollPrevio=pane?pane.scrollTop:0;
+    await renderFn();
+    if(pane) pane.scrollTop=scrollPrevio;
+  }
   async function renderLigaManagerUpgradesTab(){
+    await reRenderPanelConservandoScroll('lmProfileUpgradesPane', renderLigaManagerUpgradesTabImpl);
+  }
+  async function renderLigaManagerUpgradesTabImpl(){
     const list=document.getElementById('lmUpgradesList');
     const pointsEl=document.getElementById('lmUpgradePointsDisplay');
     if(!list) return;
@@ -1414,6 +1440,9 @@
     });
   }
   async function renderLigaManagerAchievementsTab(){
+    await reRenderPanelConservandoScroll('lmProfileAchievementsPane', renderLigaManagerAchievementsTabImpl);
+  }
+  async function renderLigaManagerAchievementsTabImpl(){
     const list=document.getElementById('lmAchievementsList');
     if(!list) return;
     list.innerHTML=`<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:12px">${t('lm.cargando')}</div>`;
@@ -1531,6 +1560,9 @@
   }
   function lmSkillActiva(id){ return !!(window._lmSkillsCache && window._lmSkillsCache[id]); }
   async function renderLigaManagerSkillsTab(){
+    await reRenderPanelConservandoScroll('lmProfileNotesPane', renderLigaManagerSkillsTabImpl);
+  }
+  async function renderLigaManagerSkillsTabImpl(){
     const list=document.getElementById('lmSkillsList');
     const pointsEl=document.getElementById('lmSkillPointsDisplay');
     if(!list) return;
@@ -2492,6 +2524,20 @@
   // moral del equipo y el clima del día. Todavía solo simbólico (no
   // genera ingresos), pero deja ver de un vistazo cómo responde la
   // afición a cómo va la temporada.
+  // Fracción del aforo total que queda bloqueada (sin generar
+  // ingresos por entradas) porque alguna zona está en disturbios
+  // graves — proporcional al tamaño de esa zona respecto al estadio
+  // completo. Una zona grave se considera cerrada al público hasta
+  // que se calme.
+  function fraccionAforoBloqueadoPorDisturbios(){
+    if(!state.disturbiosZonas) return 0;
+    const areaTotal=LM_ZONAS_ESTADIO.reduce((s,z)=>s+z.w*z.h, 0);
+    if(areaTotal<=0) return 0;
+    return LM_ZONAS_ESTADIO.reduce((s,z)=>{
+      const nivel=state.disturbiosZonas[z.id]||0;
+      return nivel>=3 ? s+(z.w*z.h)/areaTotal : s;
+    }, 0);
+  }
   function calcularAsistencia(weatherId){
     const est=state.estadio||{};
     const aforo=est.aforoTotal||12000;
@@ -2508,7 +2554,8 @@
     let pct=baseSatisfaccion+bonusMoral-penalizacionClima-penalizacionPrecio;
     if(state.directorGeneralBonos && state.directorGeneralBonos.boostAsistencia){ pct+=state.directorGeneralBonos.boostAsistencia; }
     pct=Math.max(0.15, Math.min(0.99, pct));
-    return {asistentes:Math.round(aforo*pct), aforo, pct};
+    const aforoBloqueado=fraccionAforoBloqueadoPorDisturbios();
+    return {asistentes:Math.round(aforo*pct*(1-aforoBloqueado)), aforo, pct, aforoBloqueado};
   }
   // Moral del equipo (-50..50) — CALCO del rango y espíritu del sistema
   // de moral de Copa Leyendas (teamMorale), pero propio de Liga Manager:
@@ -3253,6 +3300,9 @@
           // habilidad Lectura de Partido, incluso ganando por la
           // mínima (protege una ventaja corta).
           const vaMalAlDescansoAuto = lmSkillActiva('lm_lectura_partido') ? miGolesHT<=rivalGolesHT+1 : miGolesHT<=rivalGolesHT;
+          if(vaMalAlDescansoAuto && (state.giroTacticoUsosRestantes||0)>0 && typeof window.LMGiroTactico!=='object'){
+            console.error('[Liga Manager] Giro Táctico no disponible: liga-manager-giro-tactico.js no se ha cargado (revisa que el archivo y el <script> en index.html estén subidos al servidor).');
+          }
           if(typeof window.LMGiroTactico==='object' && vaMalAlDescansoAuto && (state.giroTacticoUsosRestantes||0)>0){
             const misStatsHT = calcularStatsEquipo();
             const rivalTeamObjHT = miEsLocal ? info.away : info.home;

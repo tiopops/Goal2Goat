@@ -616,6 +616,13 @@
     // el MOVIMIENTO se vea fluido, no rehacer cómo deciden los
     // jugadores.
     const jugadorAnims = {}; // clave: "mio-3" / "rival-7" → {startX,startY,targetX,targetY,startTime,duration,active,el}
+    // Bloqueo temporal del reposicionamiento ambiental (reubicarEquipo,
+    // más abajo) durante una reorganización completa del equipo —
+    // saque inicial, gol o inicio de la segunda parte. Sin esto, el
+    // bucle de fondo (flujoContinuoInterval, cada 230ms) podía asignar
+    // un destino nuevo a algún jugador a mitad de la reorganización,
+    // así que el equipo nunca llegaba a completar bien la formación.
+    let bloqueoReformacionHasta=0;
     let jugadorAnimFrameId=null;
     function jugadorAnimFrame(now){
       for(const key in jugadorAnims){
@@ -776,6 +783,10 @@
     // se vea como un bloque.
     function actualizarFormacionDinamica(atacaMio, idxExcluirMio, idxExcluirRival, balonPos, idxExcluirMio2, idxExcluirRival2, idxExcluirMio3, idxExcluirRival3){
       function reubicarEquipo(esMio, idxExcluir, idxExcluir2, idxExcluir3){
+        // Ninguna reubicación ambiental mientras el equipo se está
+        // reorganizando de verdad (saque inicial, tras un gol, o al
+        // empezar la segunda parte) — ver bloqueoReformacionHasta.
+        if(performance.now()<bloqueoReformacionHasta) return;
         const slots = esMio?misSlots:rivalSlots;
         const pos = esMio?posMia:posRival;
         const avance = esMio?avanceMio:avanceRival;
@@ -1171,6 +1182,7 @@
           // 22 jugadores en ese instante, sin ningún reinicio, cuando en
           // la vida real ambos equipos se colocan de nuevo en su sitio.
           // El equipo que NO sacó en la primera parte saca ahora.
+          bloqueoReformacionHasta=performance.now()+real(950);
           misSlots.forEach((s,i)=>moverJugador(true, i, s.x, s.y, 900));
           rivalSlots.forEach((s,i)=>moverJugador(false, i, s.x, s.y, 900));
           posesionMia=!posesionMia;
@@ -1199,6 +1211,9 @@
         const vaMalAlDescansoM = (typeof window.lmSkillActiva==='function' && window.lmSkillActiva('lm_lectura_partido'))
           ? marcadorMio<=marcadorRival+1
           : marcadorMio<=marcadorRival;
+        if(vaMalAlDescansoM && (state.giroTacticoUsosRestantes||0)>0 && typeof window.LMGiroTactico!=='object'){
+          console.error('[Liga Manager] Giro Táctico no disponible: liga-manager-giro-tactico.js no se ha cargado (revisa que el archivo y el <script> en index.html estén subidos al servidor).');
+        }
         if(typeof window.LMGiroTactico==='object' && vaMalAlDescansoM && (state.giroTacticoUsosRestantes||0)>0){
           window.LMGiroTactico.ofrecerSiProcede({
             contenedor: document.getElementById('ligaManagerScreen'),
@@ -1419,6 +1434,7 @@
               // al empezar el partido o la segunda parte — antes solo
               // se movía el balón al centro, y los 22 jugadores se
               // quedaban donde estuvieran en el momento del gol.
+              bloqueoReformacionHasta=performance.now()+real(950);
               misSlots.forEach((s,i)=>moverJugador(true, i, s.x, s.y, 900));
               rivalSlots.forEach((s,i)=>moverJugador(false, i, s.x, s.y, 900));
               posesionMia=!esMio; tiempoTranscurrido+=2750+esperaExtra; pasesJugadaActual=0; historialMio=[]; historialRival=[];
@@ -2499,6 +2515,14 @@
     }
     // El balón empieza pegado de verdad al jugador que saca de centro,
     // no flotando solo en el punto exacto del centro del campo.
+    // Reorganización inicial explícita: los 22 jugadores van a su
+    // posición exacta de formación antes del pitido, con el mismo
+    // bloqueo anti-interferencias que el resto de reorganizaciones
+    // completas (gol, segunda parte) — así el saque inicial arranca
+    // siempre con el equipo completo bien colocado.
+    bloqueoReformacionHasta=performance.now()+real(950);
+    misSlots.forEach((s,i)=>moverJugador(true, i, s.x, s.y, 1));
+    rivalSlots.forEach((s,i)=>moverJugador(false, i, s.x, s.y, 1));
     const equipoInicial = posesionMia?posMia:posRival;
     const idxInicial = posesionMia?idxConBalonMio:idxConBalonRival;
     moverBalon(equipoInicial[idxInicial].x, equipoInicial[idxInicial].y, 1);

@@ -4327,7 +4327,7 @@ body.light-theme.menu-screen{
   border-radius:8px;padding:8px 10px;margin-top:6px;
 }
 .lm-estilo-juego-titulo{
-  font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:1px;font-size:10px;
+  font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:1px;font-size:13px;
   color:var(--gold);display:flex;align-items:center;gap:5px;margin-bottom:3px;
 }
 .lm-estilo-juego-texto{font-size:11px;color:#ddd;line-height:1.35}
