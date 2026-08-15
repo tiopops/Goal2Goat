@@ -112,7 +112,7 @@
     style.id='lmGiroStylesTag';
     style.textContent=`
       #lmGiroOfertaOverlay{
-        position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:260;
+        position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:32000;
         display:flex;align-items:center;justify-content:center;
       }
       #lmGiroOfertaOverlay .press-modal{ text-align:center; }
