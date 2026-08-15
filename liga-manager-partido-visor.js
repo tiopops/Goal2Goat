@@ -21,6 +21,15 @@
      - calcularStatsEquipo(): estadísticas reales de mi equipo
    ============================================================ */
 (function(){
+  // Marcador de versión — visible en la consola del navegador nada
+  // más cargar la página. Si al abrir las herramientas de desarrollo
+  // (F12 → Console) NO ves esta línea, o ves una fecha antigua, este
+  // archivo concreto no se ha actualizado en el servidor todavía
+  // (aunque el resto del juego sí esté al día) — es la explicación
+  // más probable si el Giro Táctico funciona en modo automático
+  // (código en liga-manager.js) pero no en modo manager (código
+  // aquí, en liga-manager-partido-visor.js).
+  console.log('[Liga Manager] liga-manager-partido-visor.js cargado — versión 2026-08-15-giro-timing-fix');
 
   function elegirFormacionRivalVisor(rival){
     const desequilibrio=rival.attack-rival.defense;
@@ -630,18 +639,20 @@
         if(!a.active) continue;
         const elapsed=now-a.startTime;
         const t=Math.min(1, elapsed/a.duration);
-        // Misma curva que el balón (easeOutCubic) — antes el balón
-        // usaba easeOutCubic (arranca rápido, llega casi entero a
-        // mitad de trayecto) mientras el jugador usaba easeInOutCubic
-        // (arranca despacio, solo llega a la mitad a mitad de
-        // trayecto). Con la MISMA duración y destino, el balón
-        // adelantaba muchísimo al jugador durante todo el vuelo,
-        // dando la sensación de que "el balón cae donde no hay
-        // nadie" y el jugador aparece corriendo detrás — exactamente
-        // al revés de cómo debe verse (el jugador va a por el balón,
-        // no el balón va a los jugadores). Con la misma curva, balón
-        // y jugador avanzan sincronizados todo el trayecto.
-        const eased = 1-Math.pow(1-t,3);
+        // Curva por defecto suave (easeInOutCubic) para el movimiento
+        // ambiental normal — arranque y frenado progresivos, sin
+        // sobresaltos. Solo los movimientos marcados explícitamente
+        // como 'out' (los que van sincronizados con el balón: recibir
+        // un pase, conducir/regatear con el balón en los pies) usan
+        // la misma curva rápida que el balón (easeOutCubic), para que
+        // ambos lleguen juntos. Antes se forzó easeOutCubic para
+        // TODOS los jugadores por igual para arreglar el desajuste
+        // con el balón, pero eso hacía que las correcciones de
+        // posición pequeñas y frecuentes (porteros, marcaje) se
+        // vieran a golpecitos nerviosos en vez de suaves — con la
+        // curva normal de vuelta para esos casos, y la rápida solo
+        // donde hace falta, se arreglan los dos problemas a la vez.
+        const eased = a.easing==='out' ? (1-Math.pow(1-t,3)) : (t<0.5 ? 4*t*t*t : 1-Math.pow(-2*t+2,3)/2);
         const curX=a.startX+(a.targetX-a.startX)*eased;
         const curY=a.startY+(a.targetY-a.startY)*eased;
         if(a.el) a.el.setAttribute('transform', `translate(${curX},${curY})`);
@@ -651,7 +662,7 @@
     }
     jugadorAnimFrameId=requestAnimationFrame(jugadorAnimFrame);
 
-    function moverJugador(esMio, idx, x, y, dur){
+    function moverJugador(esMio, idx, x, y, dur, easing){
       const arr = esMio?posMia:posRival;
       // Blindaje real: si por lo que sea idx llega inválido (-1 u
       // otro fuera de rango — puede pasar en algún caso límite de las
@@ -677,7 +688,7 @@
         // sin saltos.
         const startX = (actual && actual.active) ? (actual.startX+(actual.targetX-actual.startX)*Math.min(1,(performance.now()-actual.startTime)/actual.duration)) : arr[idx].x;
         const startY = (actual && actual.active) ? (actual.startY+(actual.targetY-actual.startY)*Math.min(1,(performance.now()-actual.startTime)/actual.duration)) : arr[idx].y;
-        jugadorAnims[key] = {startX, startY, targetX:x, targetY:y, startTime:performance.now(), duration:Math.max(1,durReal), active:true, el};
+        jugadorAnims[key] = {startX, startY, targetX:x, targetY:y, startTime:performance.now(), duration:Math.max(1,durReal), active:true, el, easing:easing||'inout'};
       }
       arr[idx]={x,y};
     }
@@ -1078,6 +1089,24 @@
 
     let marcadorMio=0, marcadorRival=0;
     let tiempoTranscurrido=0, golIdx=0;
+    // Antes, saltos grandes de tiempo (sobre todo tras un gol: pases
+    // de construcción + vuelo del disparo + celebración +
+    // reorganización pueden sumar varios "minutos" de golpe) podían
+    // cruzar de largo el descanso sin que el propio código del
+    // descanso tuviera ocasión de activarse hasta el siguiente
+    // tick() — así el reloj podía anunciar "descanso" ya en el
+    // minuto 51 en vez de en el 45. avanzarTiempo() recorta
+    // cualquier salto justo en la frontera del descanso (o del
+    // final del partido) para que el reloj nunca se pase de largo.
+    function avanzarTiempo(delta){
+      const previo=tiempoTranscurrido;
+      tiempoTranscurrido+=delta;
+      if(!descansoMostrado && previo<DURACION_TOTAL/2 && tiempoTranscurrido>DURACION_TOTAL/2){
+        tiempoTranscurrido=DURACION_TOTAL/2;
+      } else if(tiempoTranscurrido>DURACION_TOTAL){
+        tiempoTranscurrido=DURACION_TOTAL;
+      }
+    }
     let posesionMia = Math.random()<probPosesionMia;
     // El saque inicial lo pone en juego un centrocampista, nunca el
     // portero — antes empezaba siempre en el índice 0 (el portero),
@@ -1147,7 +1176,7 @@
         console.error('[Liga Manager] Error inesperado en tick(), recuperando con saque de centro:', err);
         try{
           moverBalon(centroCampo.x, centroCampo.y, 500);
-          tiempoTranscurrido+=900;
+          avanzarTiempo(900);
           setTimeout(tick, real(900));
         }catch(errRecuperacion){
           console.error('[Liga Manager] Fallo también en la recuperación de emergencia:', errRecuperacion);
@@ -1308,7 +1337,7 @@
         const posAlertaFalta={x:parseFloat(balon.getAttribute('cx')), y:parseFloat(balon.getAttribute('cy'))};
         mostrarAlertaFalta(posAlertaFalta.x, posAlertaFalta.y);
         if(typeof window.playSound==='function') window.playSound('whistle_short');
-        tiempoTranscurrido+=1300;
+        avanzarTiempo(1300);
         setTimeout(tick, real(1300));
         return;
       }
@@ -1324,7 +1353,7 @@
         infoBar.textContent=`✚ ${nombreJLesion} se duele en el suelo (${esMiaLesion?miNombre:rivalNombre})`;
         const posAlertaLesion={x:parseFloat(balon.getAttribute('cx')), y:parseFloat(balon.getAttribute('cy'))};
         mostrarAlertaLesion(posAlertaLesion.x, posAlertaLesion.y);
-        tiempoTranscurrido+=1300;
+        avanzarTiempo(1300);
         setTimeout(tick, real(1300));
         return;
       }
@@ -1359,7 +1388,7 @@
             pasesJugadaActual=0; historialMio=[]; historialRival=[];
             actualizarFormacionDinamica(posesionMia, undefined, undefined, balonPosAntes);
             setTimeout(()=>{
-              tiempoTranscurrido+=550+esperaExtra;
+              avanzarTiempo(550+esperaExtra);
               tick();
             }, real(550));
           };
@@ -1445,7 +1474,7 @@
               bloqueoReformacionHasta=performance.now()+real(950);
               misSlots.forEach((s,i)=>moverJugador(true, i, s.x, s.y, 900));
               rivalSlots.forEach((s,i)=>moverJugador(false, i, s.x, s.y, 900));
-              posesionMia=!esMio; tiempoTranscurrido+=2750+esperaExtra; pasesJugadaActual=0; historialMio=[]; historialRival=[];
+              posesionMia=!esMio; avanzarTiempo(2750+esperaExtra); pasesJugadaActual=0; historialMio=[]; historialRival=[];
               idxConBalonMio=primerMedioCentro(rolesMios);
               idxConBalonRival=primerMedioCentro(rolesRival);
               const equipoSacaGol = posesionMia?posMia:posRival;
@@ -1744,7 +1773,7 @@
             moverJugador(posesionMia, idxSaqueBanda, puntoBanda.x, puntoBanda.y, 550);
             infoBar.textContent=`${t('lm.visor_saque_banda')||'Saque de banda'} (${posesionMia?miNombre:rivalNombre})`;
             mostrarAlertaSaqueBanda(puntoBanda.x, puntoBanda.y);
-            tiempoTranscurrido+=900;
+            avanzarTiempo(900);
             setTimeout(tick, real(650));
           }, real(500));
           return;
@@ -1769,7 +1798,7 @@
           const duracionCorredorD = Math.max(400, Math.min(1500, distCorredorD*26));
           if(posesionMia){ idxConBalonMio=dMioD; moverJugador(true, dMioD, destinoDespeje.x, destinoDespeje.y, duracionCorredorD); }
           else { idxConBalonRival=dRivalD; moverJugador(false, dRivalD, destinoDespeje.x, destinoDespeje.y, duracionCorredorD); }
-          tiempoTranscurrido+=duracionEfectiva+400;
+          avanzarTiempo(duracionEfectiva+400);
           setTimeout(tick, real(500));
         }, real(duracionEfectiva));
         return;
@@ -1833,7 +1862,7 @@
             disputasConsecutivas=0; // se ha resuelto con claridad, la cuenta se reinicia para la próxima vez
             if(posesionMia){ idxConBalonMio=dMioS; moverJugador(true, dMioS, puntoDisputa.x, puntoDisputa.y, 420); }
             else { idxConBalonRival=dRivalS; moverJugador(false, dRivalS, puntoDisputa.x, puntoDisputa.y, 420); }
-            tiempoTranscurrido+=dur*0.45+400;
+            avanzarTiempo(dur*0.45+400);
             setTimeout(tick, real(450));
           }, real(dur*0.45));
           return;
@@ -1985,14 +2014,14 @@
                       setTimeout(()=>{
                         moverBalon(centroCampo.x, centroCampo.y, 700);
                         asignarBalonSuelto(centroCampo.x, centroCampo.y);
-                        tiempoTranscurrido+=dur+500+350+700+700+700+900+duracionRemate;
+                        avanzarTiempo(dur+500+350+700+700+700+900+duracionRemate);
                         setTimeout(tick, real(600));
                       }, real(duracionRemate+400));
                       return;
                     }
                     moverBalon(centroCampo.x, centroCampo.y, 700);
                     asignarBalonSuelto(centroCampo.x, centroCampo.y);
-                    tiempoTranscurrido+=dur+500+350+700+700+700+900;
+                    avanzarTiempo(dur+500+350+700+700+700+900);
                     setTimeout(tick, real(600));
                   }, real(700));
                 }, real(120));
@@ -2019,7 +2048,7 @@
             moverBalon(equipoPortero[receptorDistribucion].x, equipoPortero[receptorDistribucion].y, 750);
             moverJugador(porteroEsMio, receptorDistribucion, equipoPortero[receptorDistribucion].x, equipoPortero[receptorDistribucion].y, 750);
             pasesJugadaActual=0; historialMio=[]; historialRival=[];
-            tiempoTranscurrido+=dur+750;
+            avanzarTiempo(dur+750);
             setTimeout(tick, real(750));
           }, real(dur*0.65));
         }
@@ -2066,11 +2095,11 @@
           // la ficha del jugador clavada mientras el balón "flotaba"
           // solo hacia delante (mismo bug que ya se corrigió en el
           // regate 1 contra 1).
-          moverJugador(posesionMia, idxConBalon, destinoConduccion.x, destinoConduccion.y, dur*0.75);
+          moverJugador(posesionMia, idxConBalon, destinoConduccion.x, destinoConduccion.y, dur*0.75, 'out');
           infoBar.textContent=`${nombreAtaca} avanza con el balón, sin oposición cerca`;
           actualizarFormacionDinamica(posesionMia, posesionMia?idxConBalon:undefined, posesionMia?undefined:idxConBalon, posActual);
           setTimeout(()=>{
-            tiempoTranscurrido+=dur*0.75;
+            avanzarTiempo(dur*0.75);
             tick();
           }, real(dur*0.75));
           return;
@@ -2099,12 +2128,12 @@
             // movimiento explícito es el que debe llevarlo con el
             // balón en los pies, adelantado respecto al defensa al que
             // acaba de regatear.
-            moverJugador(posesionMia, idxConBalon, destinoRegate.x, destinoRegate.y, dur*0.8);
+            moverJugador(posesionMia, idxConBalon, destinoRegate.x, destinoRegate.y, dur*0.8, 'out');
             infoBar.textContent=`${nombreAtaca} encara y supera a su marcador`;
             mostrarAlertaRegate(destinoRegate.x, destinoRegate.y);
             actualizarFormacionDinamica(posesionMia, posesionMia?idxConBalon:undefined, posesionMia?undefined:idxConBalon, posActual);
             setTimeout(()=>{
-              tiempoTranscurrido+=dur;
+              avanzarTiempo(dur);
               tick();
             }, real(dur));
           } else {
@@ -2115,7 +2144,7 @@
             actualizarFormacionDinamica(posesionMia, posesionMia?idxConBalon:undefined, posesionMia?undefined:idxConBalon, posActual);
             setTimeout(()=>{
               posesionMia=posesionTrasRegate;
-              tiempoTranscurrido+=dur;
+              avanzarTiempo(dur);
               tick();
             }, real(dur));
           }
@@ -2151,11 +2180,11 @@
             };
             pasesJugadaActual=Math.max(0,pasesJugadaActual-1);
             moverBalon(destinoIndiv.x, destinoIndiv.y, dur*0.75);
-            moverJugador(posesionMia, idxConBalon, destinoIndiv.x, destinoIndiv.y, dur*0.75);
+            moverJugador(posesionMia, idxConBalon, destinoIndiv.x, destinoIndiv.y, dur*0.75, 'out');
             infoBar.textContent=`${nombreAtaca} no encuentra un pase legal y se lanza en jugada individual`;
             actualizarFormacionDinamica(posesionMia, posesionMia?idxConBalon:undefined, posesionMia?undefined:idxConBalon, posActual);
             setTimeout(()=>{
-              tiempoTranscurrido+=dur*0.75;
+              avanzarTiempo(dur*0.75);
               tick();
             }, real(dur*0.75));
             return;
@@ -2279,7 +2308,7 @@
           actualizarFormacionDinamica(posesionMia, posesionMia?idxConBalon:undefined, posesionMia?undefined:idxConBalon, posActual);
           setTimeout(()=>{
             posesionMia=siguientePosesionMia; idxConBalonMio=siguienteIdxMio; idxConBalonRival=siguienteIdxRival;
-            tiempoTranscurrido+=dur;
+            avanzarTiempo(dur);
             tick();
           }, real(dur));
           return;
@@ -2409,7 +2438,7 @@
             posesionMia = distMioImp<=distRivalImp;
             if(posesionMia){ idxConBalonMio=dMioImp; moverJugador(true, dMioImp, destinoImpreciso.x, destinoImpreciso.y, 420); }
             else { idxConBalonRival=dRivalImp; moverJugador(false, dRivalImp, destinoImpreciso.x, destinoImpreciso.y, 420); }
-            tiempoTranscurrido+=duracionImprecision+400;
+            avanzarTiempo(duracionImprecision+400);
             setTimeout(tick, real(420));
           }, real(duracionImprecision));
           return;
@@ -2421,7 +2450,7 @@
         // en su sitio antiguo, recreando el mismo fallo que se quería
         // arreglar (el balón "cae donde no hay nadie"), solo que más
         // lejos de lo que estaba antes.
-        moverJugador(posesionMia, mejor, destino.x, destino.y, duracionEfectiva);
+        moverJugador(posesionMia, mejor, destino.x, destino.y, duracionEfectiva, 'out');
         resaltarReceptor(destino.x, destino.y, duracionEfectiva);
         infoBar.textContent=`${nombreAtaca} ${FRASES_PASE[Math.floor(Math.random()*FRASES_PASE.length)]}`;
         pasesJugadaActual++;
@@ -2461,7 +2490,7 @@
 
       setTimeout(()=>{
         posesionMia=siguientePosesionMia; idxConBalonMio=siguienteIdxMio; idxConBalonRival=siguienteIdxRival;
-        tiempoTranscurrido+=duracionEfectiva;
+        avanzarTiempo(duracionEfectiva);
         tick();
       }, real(duracionEfectiva));
     }
@@ -2517,7 +2546,7 @@
       infoBar.textContent=`${nombreQueSaca} pone el balón en juego`;
       setTimeout(()=>{
         if(esMioQueSaca){ idxConBalonMio=companeroIdx; } else { idxConBalonRival=companeroIdx; }
-        tiempoTranscurrido+=650;
+        avanzarTiempo(650);
         setTimeout(tick, real(150));
       }, real(500));
     }

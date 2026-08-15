@@ -63,6 +63,16 @@
 
   let currentStep = 0;
   let overlayEl = null;
+  // Opt-out permanente y explícito del jugador (checkbox en el propio
+  // recuadro del tutorial) — a diferencia del resto del disparo
+  // automático (que depende de sessionStorage y se reinicia con cada
+  // liga nueva a propósito), esta marca vive en localStorage y NUNCA
+  // se borra sola: ni al recargar la web, ni al reiniciar, ni al
+  // empezar una liga nueva. Es la única forma de que el tutorial deje
+  // de aparecer para siempre.
+  const NO_AUTO_KEY = 'g2g_tut_lm_no_auto';
+  let noAutoChecked = false;
+  try{ noAutoChecked = localStorage.getItem(NO_AUTO_KEY) === '1'; }catch(e){}
   let highlightEls = [];
   let transitioning = false; // evita que dobles clics rápidos solapen dos pasos
 
@@ -179,6 +189,10 @@
       <div style="font-size:10px;color:var(--gold,#f0c419);letter-spacing:1px;margin-bottom:4px">PASO ${currentStep+1} DE ${total}</div>
       <div style="font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:.5px;font-size:16px;color:#fff;margin-bottom:8px">${step.title}</div>
       <div style="font-size:13px;color:#e8e6e1;line-height:1.5;margin-bottom:16px">${text}</div>
+      <label style="display:flex;align-items:center;gap:7px;font-size:11px;color:#8a9094;margin-bottom:12px;cursor:pointer;user-select:none">
+        <input type="checkbox" id="g2gTutLmNoAuto" ${noAutoChecked?'checked':''} style="cursor:pointer;accent-color:var(--gold,#f0c419)">
+        No volver a mostrar automáticamente
+      </label>
       <div style="display:flex;gap:8px;align-items:center">
         <button id="g2gTutLmSkip" style="background:none;border:none;color:#8a9094;font-size:12px;cursor:pointer;text-decoration:underline;padding:6px 4px">Saltar</button>
         <div style="flex:1"></div>
@@ -187,6 +201,14 @@
       </div>
     `;
 
+    const noAutoCheckbox = box.querySelector('#g2gTutLmNoAuto');
+    if(noAutoCheckbox) noAutoCheckbox.addEventListener('change', ()=>{
+      noAutoChecked = noAutoCheckbox.checked;
+      try{
+        if(noAutoChecked) localStorage.setItem(NO_AUTO_KEY, '1');
+        else localStorage.removeItem(NO_AUTO_KEY);
+      }catch(e){}
+    });
     box.querySelector('#g2gTutLmSkip').addEventListener('click', ()=>{ playTutSound(); guarded(endTutorial); });
     box.querySelector('#g2gTutLmNext').addEventListener('click', ()=>{ playTutSound(); guarded(()=>{
       if(currentStep < total-1){ currentStep++; renderStep(); }
@@ -289,6 +311,9 @@
     // insignificante, así que no hay problema en dejarlo para siempre.
     setInterval(()=>{
       if(overlayEl) return; // el tutorial ya está abierto ahora mismo, no interferir
+      let noAuto = false;
+      try{ noAuto = localStorage.getItem(NO_AUTO_KEY) === '1'; }catch(e){}
+      if(noAuto) return; // el jugador marcó "no volver a mostrar" — nunca más, pase lo que pase
       let esLigaNueva = false;
       try{ esLigaNueva = sessionStorage.getItem('g2g_tut_lm_new_league') === '1'; }catch(e){}
       if(!esLigaNueva) return; // todavía no se ha creado ninguna liga nueva pendiente
