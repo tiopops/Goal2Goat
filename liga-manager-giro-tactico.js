@@ -205,6 +205,13 @@
         });
       });
     }
+    // Mismos pitidos de cuenta atrás que el resto de temporizadores del
+    // juego (rueda de prensa, Giro Táctico de Copa Leyendas...) — se
+    // cancelan si se resuelve antes de tiempo (CANCELAR/USAR).
+    const beepTimers=[5,4,3,2,1].filter(s=>s*1000<=OFERTA_MS).map(secLeft=>setTimeout(()=>{
+      if(resuelto) return;
+      if(typeof checkCountdownBeep==='function') checkCountdownBeep(secLeft, 'lmGiroOferta');
+    }, OFERTA_MS-secLeft*1000));
     const timerId=setTimeout(()=>{
       if(resuelto) return;
       resuelto=true;
@@ -215,6 +222,7 @@
       if(resuelto) return;
       resuelto=true;
       clearTimeout(timerId);
+      beepTimers.forEach(clearTimeout);
       if(typeof window.playSound==='function') window.playSound('select');
       overlay.remove();
       opts.onCancelado();
@@ -223,6 +231,7 @@
       if(resuelto) return;
       resuelto=true;
       clearTimeout(timerId);
+      beepTimers.forEach(clearTimeout);
       if(typeof window.playSound==='function') window.playSound('select');
       overlay.remove();
       opts.onConsumirUso();
@@ -381,8 +390,14 @@
 
     const giroStart=performance.now();
     const fill=panel.querySelector('#lmGiroTimerFill');
+    // Mismo pitido de cuenta atrás que el selector de Giro Táctico de
+    // Copa Leyendas — comparación por segundo exacto, no por
+    // intervalo, para no repetir el mismo pitido varias veces.
+    let lastBeepSec=null;
     const timerHandle=setInterval(()=>{
       const remainMs=Math.max(0, PICKER_MS-(performance.now()-giroStart));
+      const remainSec=Math.ceil(remainMs/1000);
+      if(remainSec!==lastBeepSec){ lastBeepSec=remainSec; if(typeof checkCountdownBeep==='function') checkCountdownBeep(remainSec, 'lmGiroPicker'); }
       if(fill) fill.style.width=(remainMs/PICKER_MS*100)+'%';
       if(remainMs<=0){
         clearInterval(timerHandle);

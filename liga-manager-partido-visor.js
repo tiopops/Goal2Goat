@@ -389,6 +389,28 @@
       ballAnimFrameId=requestAnimationFrame(ballAnimFrame);
     }
     ballAnimFrameId=requestAnimationFrame(ballAnimFrame);
+    // Congela al instante cualquier animación en marcha (balón y
+    // jugadores) — se llama justo al pausar el partido para el Giro
+    // Táctico. Sin esto, el temporizador del partido se paraba pero
+    // cualquier movimiento que ya estuviera en marcha (un jugador
+    // corriendo, el balón volando) seguía completándose visualmente
+    // de fondo, detrás del popup, dando la sensación de que el
+    // partido no estaba realmente parado.
+    function finalizarTodasLasAnimacionesEnCurso(){
+      if(ballAnim.active){
+        balon.setAttribute('cx', ballAnim.targetX);
+        balon.setAttribute('cy', ballAnim.targetY);
+        if(balonSombra){ balonSombra.setAttribute('cx', ballAnim.targetX); balonSombra.setAttribute('cy', ballAnim.targetY); }
+        ballAnim.active=false;
+      }
+      for(const key in jugadorAnims){
+        const a=jugadorAnims[key];
+        if(a.active && a.el){
+          a.el.setAttribute('transform', `translate(${a.targetX},${a.targetY})`);
+          a.active=false;
+        }
+      }
+    }
 
     function moverBalon(x,y,durMs){
       const durReal=real(durMs);
@@ -657,13 +679,20 @@
         const curX=a.startX+(a.targetX-a.startX)*eased;
         const curY=a.startY+(a.targetY-a.startY)*eased;
         if(a.el) a.el.setAttribute('transform', `translate(${curX},${curY})`);
-        if(t>=1) a.active=false;
+        if(t>=1){
+          a.active=false;
+          // Aviso de finalización — usado por la reorganización tras
+          // gol/descanso para saber con certeza cuándo TODOS los
+          // jugadores han llegado de verdad a su sitio, en vez de
+          // confiar en un tiempo fijo calculado a ojo.
+          if(typeof a.onComplete==='function'){ const cb=a.onComplete; a.onComplete=null; cb(); }
+        }
       }
       jugadorAnimFrameId=requestAnimationFrame(jugadorAnimFrame);
     }
     jugadorAnimFrameId=requestAnimationFrame(jugadorAnimFrame);
 
-    function moverJugador(esMio, idx, x, y, dur, easing){
+    function moverJugador(esMio, idx, x, y, dur, easing, onComplete){
       const arr = esMio?posMia:posRival;
       // Blindaje real: si por lo que sea idx llega inválido (-1 u
       // otro fuera de rango — puede pasar en algún caso límite de las
@@ -676,7 +705,13 @@
       // mensaje de fallo visible. Ahora, si el índice no es válido,
       // simplemente no se hace nada (en vez de reventar todo el
       // partido por un único cálculo puntual mal resuelto).
-      if(idx<0 || idx>=arr.length || !arr[idx]) return;
+      if(idx<0 || idx>=arr.length || !arr[idx]){
+        // Igual que con el índice inválido: si no se puede animar,
+        // se avisa igualmente de "terminado" para no dejar colgado
+        // para siempre a quien esté esperando a que todos lleguen.
+        if(typeof onComplete==='function') onComplete();
+        return;
+      }
       const el=elJugador(esMio, idx);
       if(el){
         const durReal=real(dur);
@@ -689,9 +724,34 @@
         // sin saltos.
         const startX = (actual && actual.active) ? (actual.startX+(actual.targetX-actual.startX)*Math.min(1,(performance.now()-actual.startTime)/actual.duration)) : arr[idx].x;
         const startY = (actual && actual.active) ? (actual.startY+(actual.targetY-actual.startY)*Math.min(1,(performance.now()-actual.startTime)/actual.duration)) : arr[idx].y;
-        jugadorAnims[key] = {startX, startY, targetX:x, targetY:y, startTime:performance.now(), duration:Math.max(1,durReal), active:true, el, easing:easing||'inout'};
+        jugadorAnims[key] = {startX, startY, targetX:x, targetY:y, startTime:performance.now(), duration:Math.max(1,durReal), active:true, el, easing:easing||'inout', onComplete};
+      } else if(typeof onComplete==='function'){
+        onComplete();
       }
       arr[idx]={x,y};
+    }
+    // Reorganización completa (saque inicial, gol, segunda parte):
+    // en vez de fiarse de un tiempo fijo calculado a ojo (que podía
+    // desincronizarse si algún jugador tardaba un poco más de lo
+    // previsto), esto espera de verdad a que los 22 jugadores hayan
+    // terminado su propio movimiento antes de llamar a "callback" —
+    // el partido no puede seguir hasta que todos estén realmente
+    // colocados donde toca, sea cual sea la distancia de cada uno.
+    function reorganizarYEsperar(dur, callback){
+      let pendientes = misSlots.length + rivalSlots.length;
+      let avisado=false;
+      function unoListo(){
+        pendientes--;
+        if(pendientes<=0 && !avisado){ avisado=true; callback(); }
+      }
+      misSlots.forEach((s,i)=>moverJugador(true, i, s.x, s.y, dur, 'out', unoListo));
+      rivalSlots.forEach((s,i)=>moverJugador(false, i, s.x, s.y, dur, 'out', unoListo));
+      // Red de seguridad: si por lo que sea algún aviso se perdiera
+      // (nunca debería pasar, pero un partido no puede quedarse
+      // colgado para siempre por un solo callback fallido), se
+      // fuerza la continuación pasado un margen generoso por encima
+      // de la duración real del movimiento.
+      setTimeout(()=>{ if(!avisado){ avisado=true; callback(); } }, real(dur+800));
     }
     function jugadorMasCercano(arr, x, y, excluirIdx){
       let mejor=-1, mejorDist=Infinity;
@@ -1244,28 +1304,21 @@
           // la vida real ambos equipos se colocan de nuevo en su sitio.
           // El equipo que NO sacó en la primera parte saca ahora.
           //
-          // Rediseñado como una pausa real de 1 segundo exacto: el
-          // partido se congela ese segundo completo (bloqueoReformacionHasta),
-          // y DENTRO de ese segundo los 22 jugadores se colocan con un
-          // movimiento corto y decidido (550ms, muy por debajo del
-          // segundo de pausa) — nunca una carrera larga donde el
-          // portero (la distancia más larga del equipo) sigue de
-          // camino mientras el resto ya ha llegado y el balón vuelve a
-          // estar en juego. El saque no empieza hasta que la pausa del
-          // segundo completo termina, nunca solapado con la colocación.
-          bloqueoReformacionHasta=performance.now()+real(1000);
-          misSlots.forEach((s,i)=>moverJugador(true, i, s.x, s.y, 550, 'out'));
-          rivalSlots.forEach((s,i)=>moverJugador(false, i, s.x, s.y, 550, 'out'));
+          // El partido queda bloqueado hasta que TODOS los 22
+          // jugadores confirmen haber llegado de verdad a su sitio
+          // (reorganizarYEsperar, no un tiempo fijo calculado a ojo) —
+          // solo entonces se mueve el balón y se reanuda el saque.
+          bloqueoReformacionHasta=performance.now()+real(2500);
           posesionMia=!posesionMia;
           idxConBalonMio=primerMedioCentro(rolesMios);
           idxConBalonRival=primerMedioCentro(rolesRival);
           pasesJugadaActual=0; historialMio=[]; historialRival=[];
-          const equipoSaca2P = posesionMia?posMia:posRival;
-          const idxSaca2P = posesionMia?idxConBalonMio:idxConBalonRival;
-          setTimeout(()=>{
+          reorganizarYEsperar(450, ()=>{
+            const equipoSaca2P = posesionMia?posMia:posRival;
+            const idxSaca2P = posesionMia?idxConBalonMio:idxConBalonRival;
             moverBalon(equipoSaca2P[idxSaca2P].x, equipoSaca2P[idxSaca2P].y, 400);
-          }, real(1000));
-          setTimeout(()=>sacarDeCentro(posesionMia, idxSaca2P), real(1600));
+            setTimeout(()=>sacarDeCentro(posesionMia, idxSaca2P), real(500));
+          });
         }
         // Oferta de Giro Táctico — solo si vamos perdiendo al descanso
         // y quedan usos disponibles esta media temporada. Pausa aquí
@@ -1306,6 +1359,7 @@
         }
         if(typeof window.LMGiroTactico==='object' && vaMalAlDescansoM && (state.giroTacticoUsosRestantes||0)>0){
           pausadoPorGiroTactico=true;
+          finalizarTodasLasAnimacionesEnCurso();
           window.LMGiroTactico.ofrecerSiProcede({
             contenedor: document.getElementById('ligaManagerScreen'),
             t, usosRestantes: state.giroTacticoUsosRestantes,
@@ -1526,22 +1580,20 @@
               // se movía el balón al centro, y los 22 jugadores se
               // quedaban donde estuvieran en el momento del gol.
               //
-              // Misma pausa real de 1 segundo que en el descanso: el
-              // partido se congela ese segundo completo mientras los
-              // 22 jugadores se colocan con un movimiento corto (550ms),
-              // nunca solapado con el reinicio del juego.
-              bloqueoReformacionHasta=performance.now()+real(1000);
-              misSlots.forEach((s,i)=>moverJugador(true, i, s.x, s.y, 550, 'out'));
-              rivalSlots.forEach((s,i)=>moverJugador(false, i, s.x, s.y, 550, 'out'));
+              // El partido queda bloqueado hasta que TODOS los 22
+              // jugadores confirmen haber llegado de verdad a su sitio
+              // (reorganizarYEsperar, no un tiempo fijo calculado a
+              // ojo) — solo entonces se reanuda el saque.
+              bloqueoReformacionHasta=performance.now()+real(2500);
               posesionMia=!esMio; avanzarTiempo(2750+esperaExtra); pasesJugadaActual=0; historialMio=[]; historialRival=[];
               idxConBalonMio=primerMedioCentro(rolesMios);
               idxConBalonRival=primerMedioCentro(rolesRival);
-              const equipoSacaGol = posesionMia?posMia:posRival;
-              const idxSacaGol = posesionMia?idxConBalonMio:idxConBalonRival;
-              setTimeout(()=>{
+              reorganizarYEsperar(450, ()=>{
+                const equipoSacaGol = posesionMia?posMia:posRival;
+                const idxSacaGol = posesionMia?idxConBalonMio:idxConBalonRival;
                 moverBalon(equipoSacaGol[idxSacaGol].x, equipoSacaGol[idxSacaGol].y, 400);
                 setTimeout(()=>sacarDeCentro(posesionMia, idxSacaGol), real(450));
-              }, real(1000));
+              });
             }, real(1300));
           }, real(duracionVueloGol+120));
         }
