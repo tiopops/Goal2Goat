@@ -1242,22 +1242,19 @@
           // 22 jugadores en ese instante, sin ningún reinicio, cuando en
           // la vida real ambos equipos se colocan de nuevo en su sitio.
           // El equipo que NO sacó en la primera parte saca ahora.
-          bloqueoReformacionHasta=performance.now()+real(1400);
-          // Curva rápida (arranque inmediato, no de carrera natural con
-          // arranque suave) — la reorganización es un reposicionamiento
-          // brusco tipo "todos a su sitio ya", no una carrera humana; con
-          // la curva suave por defecto, el portero (que recorre la mayor
-          // distancia de todo el equipo, de un extremo del campo al
-          // otro) se veía tardar mucho en arrancar y llegar tarde.
-          // Duración también ampliada (900→1100ms) para que el
-          // portero, con la distancia más larga de todos, tenga tiempo
-          // de sobra de llegar realmente colocado antes de que el
-          // balón vuelva a estar en juego — antes se solapaban: el
-          // saque podía empezar mientras algunos jugadores (sobre
-          // todo el portero) todavía estaban terminando de moverse,
-          // dando la sensación de reorganización lenta y a golpes.
-          misSlots.forEach((s,i)=>moverJugador(true, i, s.x, s.y, 1100, 'out'));
-          rivalSlots.forEach((s,i)=>moverJugador(false, i, s.x, s.y, 1100, 'out'));
+          //
+          // Rediseñado como una pausa real de 1 segundo exacto: el
+          // partido se congela ese segundo completo (bloqueoReformacionHasta),
+          // y DENTRO de ese segundo los 22 jugadores se colocan con un
+          // movimiento corto y decidido (550ms, muy por debajo del
+          // segundo de pausa) — nunca una carrera larga donde el
+          // portero (la distancia más larga del equipo) sigue de
+          // camino mientras el resto ya ha llegado y el balón vuelve a
+          // estar en juego. El saque no empieza hasta que la pausa del
+          // segundo completo termina, nunca solapado con la colocación.
+          bloqueoReformacionHasta=performance.now()+real(1000);
+          misSlots.forEach((s,i)=>moverJugador(true, i, s.x, s.y, 550, 'out'));
+          rivalSlots.forEach((s,i)=>moverJugador(false, i, s.x, s.y, 550, 'out'));
           posesionMia=!posesionMia;
           idxConBalonMio=primerMedioCentro(rolesMios);
           idxConBalonRival=primerMedioCentro(rolesRival);
@@ -1266,8 +1263,8 @@
           const idxSaca2P = posesionMia?idxConBalonMio:idxConBalonRival;
           setTimeout(()=>{
             moverBalon(equipoSaca2P[idxSaca2P].x, equipoSaca2P[idxSaca2P].y, 400);
-          }, real(1350));
-          setTimeout(()=>sacarDeCentro(posesionMia, idxSaca2P), real(2800));
+          }, real(1000));
+          setTimeout(()=>sacarDeCentro(posesionMia, idxSaca2P), real(1600));
         }
         // Oferta de Giro Táctico — solo si vamos perdiendo al descanso
         // y quedan usos disponibles esta media temporada. Pausa aquí
@@ -1293,6 +1290,12 @@
           usosRestantes: state.giroTacticoUsosRestantes,
           LMGiroTacticoCargado: typeof window.LMGiroTactico==='object'
         });
+        // Aviso EN PANTALLA (no solo en la consola) — así se puede
+        // confirmar sin abrir las herramientas de desarrollador si
+        // este archivo actualizado está realmente cargado o no.
+        if(typeof window.showToast==='function'){
+          window.showToast('🔄 Giro: '+(typeof window.LMGiroTactico==='object'?'archivo OK':'archivo NO cargado')+' · '+marcadorMio+'-'+marcadorRival+' · usos:'+(state.giroTacticoUsosRestantes!==undefined?state.giroTacticoUsosRestantes:'?'), 'toast-pos');
+        }
         if(typeof window.LMGiroTactico!=='object'){
           console.error('[Liga Manager] Giro Táctico no disponible: liga-manager-giro-tactico.js no se ha cargado (revisa que el archivo y el <script> en index.html estén subidos al servidor).');
         }
@@ -1517,9 +1520,14 @@
               // al empezar el partido o la segunda parte — antes solo
               // se movía el balón al centro, y los 22 jugadores se
               // quedaban donde estuvieran en el momento del gol.
-              bloqueoReformacionHasta=performance.now()+real(1400);
-              misSlots.forEach((s,i)=>moverJugador(true, i, s.x, s.y, 1100, 'out'));
-              rivalSlots.forEach((s,i)=>moverJugador(false, i, s.x, s.y, 1100, 'out'));
+              //
+              // Misma pausa real de 1 segundo que en el descanso: el
+              // partido se congela ese segundo completo mientras los
+              // 22 jugadores se colocan con un movimiento corto (550ms),
+              // nunca solapado con el reinicio del juego.
+              bloqueoReformacionHasta=performance.now()+real(1000);
+              misSlots.forEach((s,i)=>moverJugador(true, i, s.x, s.y, 550, 'out'));
+              rivalSlots.forEach((s,i)=>moverJugador(false, i, s.x, s.y, 550, 'out'));
               posesionMia=!esMio; avanzarTiempo(2750+esperaExtra); pasesJugadaActual=0; historialMio=[]; historialRival=[];
               idxConBalonMio=primerMedioCentro(rolesMios);
               idxConBalonRival=primerMedioCentro(rolesRival);
@@ -1528,7 +1536,7 @@
               setTimeout(()=>{
                 moverBalon(equipoSacaGol[idxSacaGol].x, equipoSacaGol[idxSacaGol].y, 400);
                 setTimeout(()=>sacarDeCentro(posesionMia, idxSacaGol), real(450));
-              }, real(1350));
+              }, real(1000));
             }, real(1300));
           }, real(duracionVueloGol+120));
         }
