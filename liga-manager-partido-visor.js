@@ -731,27 +731,33 @@
       arr[idx]={x,y};
     }
     // Reorganización completa (saque inicial, gol, segunda parte):
-    // en vez de fiarse de un tiempo fijo calculado a ojo (que podía
-    // desincronizarse si algún jugador tardaba un poco más de lo
-    // previsto), esto espera de verdad a que los 22 jugadores hayan
-    // terminado su propio movimiento antes de llamar a "callback" —
-    // el partido no puede seguir hasta que todos estén realmente
-    // colocados donde toca, sea cual sea la distancia de cada uno.
-    function reorganizarYEsperar(dur, callback){
-      let pendientes = misSlots.length + rivalSlots.length;
-      let avisado=false;
-      function unoListo(){
-        pendientes--;
-        if(pendientes<=0 && !avisado){ avisado=true; callback(); }
-      }
-      misSlots.forEach((s,i)=>moverJugador(true, i, s.x, s.y, dur, 'out', unoListo));
-      rivalSlots.forEach((s,i)=>moverJugador(false, i, s.x, s.y, dur, 'out', unoListo));
-      // Red de seguridad: si por lo que sea algún aviso se perdiera
-      // (nunca debería pasar, pero un partido no puede quedarse
-      // colgado para siempre por un solo callback fallido), se
-      // fuerza la continuación pasado un margen generoso por encima
-      // de la duración real del movimiento.
-      setTimeout(()=>{ if(!avisado){ avisado=true; callback(); } }, real(dur+800));
+    // colocación INSTANTÁNEA y garantizada — se fija directamente la
+    // posición lógica Y la visual de los 22 jugadores en el mismo
+    // instante, sin ninguna animación de por medio. Después de varios
+    // intentos con movimientos animados que acababan desincronizados
+    // (algunos jugadores tardaban más que otros, algunos quedaban
+    // superpuestos), esta es la única forma de garantizar al cien por
+    // cien que todos estén exactamente donde deben antes de que el
+    // partido continúe — sin animación no hay margen para que nada
+    // se desincronice.
+    function reorganizarInstantaneo(){
+      [[true, misSlots, posMia], [false, rivalSlots, posRival]].forEach(([esMio, slots, arr])=>{
+        slots.forEach((s,i)=>{
+          arr[i] = {x:s.x, y:s.y};
+          const key=(esMio?'mio-':'rival-')+i;
+          if(jugadorAnims[key]) jugadorAnims[key].active=false;
+          const el=elJugador(esMio, i);
+          if(el) el.setAttribute('transform', `translate(${s.x},${s.y})`);
+        });
+      });
+    }
+    // Pausa real de 1 segundo: la colocación ya es instantánea (ver
+    // arriba), así que este segundo completo es un respiro visible
+    // antes de que el juego continúe — nunca solapado con ningún
+    // movimiento, porque ya no queda ningún movimiento en marcha.
+    function reorganizarYPausar(callback){
+      reorganizarInstantaneo();
+      setTimeout(callback, real(1000));
     }
     function jugadorMasCercano(arr, x, y, excluirIdx){
       let mejor=-1, mejorDist=Infinity;
@@ -1304,16 +1310,16 @@
           // la vida real ambos equipos se colocan de nuevo en su sitio.
           // El equipo que NO sacó en la primera parte saca ahora.
           //
-          // El partido queda bloqueado hasta que TODOS los 22
-          // jugadores confirmen haber llegado de verdad a su sitio
-          // (reorganizarYEsperar, no un tiempo fijo calculado a ojo) —
-          // solo entonces se mueve el balón y se reanuda el saque.
-          bloqueoReformacionHasta=performance.now()+real(2500);
+          // El partido queda bloqueado un segundo completo mientras
+          // los 22 jugadores se colocan de forma instantánea y
+          // garantizada (reorganizarYPausar) — solo entonces se mueve
+          // el balón y se reanuda el saque.
+          bloqueoReformacionHasta=performance.now()+real(1200);
           posesionMia=!posesionMia;
           idxConBalonMio=primerMedioCentro(rolesMios);
           idxConBalonRival=primerMedioCentro(rolesRival);
           pasesJugadaActual=0; historialMio=[]; historialRival=[];
-          reorganizarYEsperar(450, ()=>{
+          reorganizarYPausar(()=>{
             const equipoSaca2P = posesionMia?posMia:posRival;
             const idxSaca2P = posesionMia?idxConBalonMio:idxConBalonRival;
             moverBalon(equipoSaca2P[idxSaca2P].x, equipoSaca2P[idxSaca2P].y, 400);
@@ -1580,15 +1586,15 @@
               // se movía el balón al centro, y los 22 jugadores se
               // quedaban donde estuvieran en el momento del gol.
               //
-              // El partido queda bloqueado hasta que TODOS los 22
-              // jugadores confirmen haber llegado de verdad a su sitio
-              // (reorganizarYEsperar, no un tiempo fijo calculado a
-              // ojo) — solo entonces se reanuda el saque.
-              bloqueoReformacionHasta=performance.now()+real(2500);
+              // El partido queda bloqueado un segundo completo mientras
+              // los 22 jugadores se colocan de forma instantánea y
+              // garantizada (reorganizarYPausar) — solo entonces se
+              // reanuda el saque.
+              bloqueoReformacionHasta=performance.now()+real(1200);
               posesionMia=!esMio; avanzarTiempo(2750+esperaExtra); pasesJugadaActual=0; historialMio=[]; historialRival=[];
               idxConBalonMio=primerMedioCentro(rolesMios);
               idxConBalonRival=primerMedioCentro(rolesRival);
-              reorganizarYEsperar(450, ()=>{
+              reorganizarYPausar(()=>{
                 const equipoSacaGol = posesionMia?posMia:posRival;
                 const idxSacaGol = posesionMia?idxConBalonMio:idxConBalonRival;
                 moverBalon(equipoSacaGol[idxSacaGol].x, equipoSacaGol[idxSacaGol].y, 400);
@@ -2663,14 +2669,12 @@
     }
     // El balón empieza pegado de verdad al jugador que saca de centro,
     // no flotando solo en el punto exacto del centro del campo.
-    // Reorganización inicial explícita: los 22 jugadores van a su
-    // posición exacta de formación antes del pitido, con el mismo
-    // bloqueo anti-interferencias que el resto de reorganizaciones
-    // completas (gol, segunda parte) — así el saque inicial arranca
-    // siempre con el equipo completo bien colocado.
+    // Reorganización inicial explícita e instantánea: los 22
+    // jugadores van a su posición exacta de formación antes del
+    // pitido, con el mismo bloqueo anti-interferencias que el resto
+    // de reorganizaciones completas (gol, segunda parte).
     bloqueoReformacionHasta=performance.now()+real(950);
-    misSlots.forEach((s,i)=>moverJugador(true, i, s.x, s.y, 1));
-    rivalSlots.forEach((s,i)=>moverJugador(false, i, s.x, s.y, 1));
+    reorganizarInstantaneo();
     const equipoInicial = posesionMia?posMia:posRival;
     const idxInicial = posesionMia?idxConBalonMio:idxConBalonRival;
     moverBalon(equipoInicial[idxInicial].x, equipoInicial[idxInicial].y, 1);
