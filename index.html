@@ -108,8 +108,8 @@
     <div class="settings-menu" id="settingsMenu">
       <button class="settings-toggle" id="settingsToggle" onclick="toggleSettingsMenu()" title="Ajustes">⚙</button>
       <div class="settings-dropdown" id="settingsDropdown">
-        <button id="audioToggleHeader" class="settings-item" title="Activar/desactivar sonido">
-          <span class="topbar-dot on"></span><span class="topbar-label" data-i18n="settings.sound">SONIDO</span>
+        <button id="audioToggleHeader" class="settings-item" title="Activar/desactivar efectos">
+          <span class="topbar-dot on"></span><span class="topbar-label" data-i18n="settings.effects">EFECTOS</span>
         </button>
         <button id="musicToggleHeader" class="settings-item" title="Activar/desactivar música de fondo">
           <span class="topbar-dot on"></span><span class="topbar-label" data-i18n="settings.music">MÚSICA</span>
@@ -336,14 +336,23 @@
 
       <!-- USUARIO TAB -->
       <div id="profileUserPane" class="profile-tab-pane" style="position:relative">
+        <label class="profile-field-label" data-i18n="settings.audio_settings">AJUSTES DE AUDIO</label>
+        <div class="profile-settings-row">
+          <div class="settings-item-row">
+            <button id="audioToggle" class="settings-item settings-item-toggle" title="Activar/desactivar efectos">
+              <span class="topbar-dot on"></span><span class="topbar-label" data-i18n="settings.effects">EFECTOS</span>
+            </button>
+            <input type="range" id="sfxVolumeSlider" class="volume-slider" min="0" max="100" value="100" title="Volumen de los efectos de sonido">
+          </div>
+          <div class="settings-item-row">
+            <button id="musicToggle" class="settings-item settings-item-toggle" title="Activar/desactivar música de fondo">
+              <span class="topbar-dot on"></span><span class="topbar-label" data-i18n="settings.music">MÚSICA</span>
+            </button>
+            <input type="range" id="musicVolumeSlider" class="volume-slider" min="0" max="100" value="55" title="Volumen de la música">
+          </div>
+        </div>
         <label class="profile-field-label" data-i18n="settings.preferences">PREFERENCIAS</label>
         <div class="profile-settings-row">
-          <button id="audioToggle" class="settings-item" title="Activar/desactivar sonido">
-            <span class="topbar-dot on"></span><span class="topbar-label" data-i18n="settings.sound">SONIDO</span>
-          </button>
-          <button id="musicToggle" class="settings-item" title="Activar/desactivar música de fondo">
-            <span class="topbar-dot on"></span><span class="topbar-label" data-i18n="settings.music">MÚSICA</span>
-          </button>
           <button id="themeToggle" class="settings-item" title="Cambiar tema claro/oscuro">
             <span class="topbar-dot on"></span><span class="topbar-label" data-i18n="settings.theme">TEMA OSCURO</span>
           </button>

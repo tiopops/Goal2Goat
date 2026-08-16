@@ -1602,6 +1602,20 @@ body.dark-theme .press-prediction-neutral{background:#1a1a1a;border-color:#333;c
 .profile-settings-row .settings-item:last-child{border-bottom:none}
 body.dark-theme .profile-settings-row{border-color:#333}
 body.dark-theme .profile-settings-row .settings-item{border-bottom-color:#333}
+/* Fila con slider de volumen a la derecha del interruptor — el botón
+   deja de ocupar todo el ancho para dejar sitio al control deslizante. */
+.settings-item-row{
+  display:flex;align-items:center;gap:10px;
+  border-bottom:1px solid var(--line);padding-right:12px;
+}
+.settings-item-row:last-child{border-bottom:none}
+.settings-item-row .settings-item-toggle{
+  border-bottom:none;flex:0 0 auto;padding-right:8px;
+}
+.settings-item-row .volume-slider{
+  flex:1;min-width:60px;accent-color:var(--gold);cursor:pointer;height:4px;
+}
+body.dark-theme .settings-item-row{border-bottom-color:#333}
 
 /* ===== MEJORAS / UPGRADES TAB ===== */
 /* ===== MEJORAS ===== */
