@@ -38,7 +38,19 @@
     if(savedVol!==null) musicVolume=Math.max(0, Math.min(1, parseFloat(savedVol)));
   }catch(e){}
 
-  const IDS_PARTIDO_EN_DIRECTO=['matchOverlay','lmMatchOverlay','lmVisorPartidoOverlay'];
+  const IDS_PARTIDO_EN_DIRECTO=['lmMatchOverlay','lmVisorPartidoOverlay'];
+  // #matchOverlay (Copa Leyendas) es distinto a los otros dos: es un
+  // <div> ESTÁTICO que existe siempre en el HTML, nunca se crea ni
+  // se destruye — se rellena/vacía su innerHTML para mostrar u
+  // ocultar el partido. Comprobar solo su existencia (como con los
+  // otros IDs) lo daba SIEMPRE como "hay partido en directo" desde
+  // el arranque de la página, silenciando la música para siempre.
+  // Aquí se comprueba si tiene contenido de verdad.
+  function hayPartidoEnDirecto(){
+    if(IDS_PARTIDO_EN_DIRECTO.some(id=>document.getElementById(id))) return true;
+    const cl=document.getElementById('matchOverlay');
+    return !!(cl && cl.innerHTML && cl.innerHTML.trim()!=='');
+  }
 
   let audioEl=null;
   let fundidoInterval=null;
@@ -72,8 +84,7 @@
 
   function volumenObjetivoActual(){
     if(!musicaEnabled) return 0;
-    const enPartido=IDS_PARTIDO_EN_DIRECTO.some(id=>document.getElementById(id));
-    return enPartido ? 0 : musicVolume;
+    return hayPartidoEnDirecto() ? 0 : musicVolume;
   }
 
   // Comprueba cada segundo si hay un partido en directo abierto o
@@ -115,9 +126,8 @@
   function setMusicVolume(v){
     musicVolume=Math.max(0, Math.min(1, v));
     try{ localStorage.setItem(VOLUME_KEY, musicVolume); }catch(e){}
-    if(audioEl && musicaEnabled){
-      const enPartido=IDS_PARTIDO_EN_DIRECTO.some(id=>document.getElementById(id));
-      if(!enPartido) audioEl.volume=musicVolume;
+    if(audioEl && musicaEnabled && !hayPartidoEnDirecto()){
+      audioEl.volume=musicVolume;
     }
   }
 
