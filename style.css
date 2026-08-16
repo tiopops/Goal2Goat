@@ -4515,8 +4515,15 @@ body.light-theme.menu-screen{
 .lm-visor-campo-svg{touch-action:pan-y}
 .lm-visor-clima-bar{
   padding:7px 16px;background:#1a1a1a;border-bottom:1px solid #2a2a2a;
-  font-size:14px;color:#ccc;text-align:center;letter-spacing:.4px;font-weight:500;
+  font-size:14px;color:#ccc;letter-spacing:.4px;font-weight:500;
+  display:flex;align-items:center;justify-content:center;position:relative;
 }
+.lm-visor-clima-texto{flex:1;text-align:center}
+.lm-visor-giro-usos{
+  position:absolute;right:16px;top:50%;transform:translateY(-50%);
+  font-size:11px;color:#999;display:flex;align-items:center;gap:4px;font-weight:600;
+}
+.lm-visor-giro-usos i{color:var(--gold);font-size:13px}
 /* Aviso temporal de diagnóstico del Giro Táctico — vacío y sin
    ocupar espacio hasta que se llena al llegar al descanso. Colores
    muy visibles a propósito, es una herramienta de depuración, no

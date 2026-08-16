@@ -220,7 +220,7 @@
           <div class="lm-visor-posesion-directo-mia" id="lmVisorPosesionMia" style="width:50%">50%</div>
           <div class="lm-visor-posesion-directo-rival" id="lmVisorPosesionRival" style="width:50%">50%</div>
         </div>
-        ${clima?`<div class="lm-visor-clima-bar">${clima.label}</div>`:''}
+        ${clima?`<div class="lm-visor-clima-bar"><span class="lm-visor-clima-texto">${clima.label}</span><span class="lm-visor-giro-usos" id="lmVisorGiroUsos"><i class="ph ph-bold ph-arrows-clockwise"></i> ${state.giroTacticoUsosRestantes!==undefined?state.giroTacticoUsosRestantes:'—'}</span></div>`:''}
         <div id="lmVisorGiroDebug" class="lm-visor-giro-debug"></div>
         <div class="lm-visor-campo-wrap ${climaClase}">
           <svg class="lm-visor-campo-svg" viewBox="0 0 ${ANCHO} ${ALTO}" preserveAspectRatio="xMidYMid meet">
@@ -1288,9 +1288,15 @@
           misSlots=misSlots.map(s=>({x:s.x, y:ALTO-s.y}));
           rivalSlots=rivalSlots.map(s=>({x:s.x, y:ALTO-s.y}));
         }
-        posesionMia=!posesionMia;
-        idxConBalonMio=primerMedioCentro(rolesMios);
-        idxConBalonRival=primerMedioCentro(rolesRival);
+        // La posesión (y quién saca) NO cambia todavía aquí — se deja
+        // exactamente como estaba al terminar la primera parte
+        // durante TODA la pausa (reorganización + decisión del Giro
+        // Táctico si toca). Solo se actualiza dentro de
+        // procederAlSaqueSegundaParte, en el instante justo en que el
+        // balón vuelve a estar en juego de verdad — antes cambiaba
+        // aquí mismo, así que el indicador de posesión ya mostraba el
+        // nuevo equipo durante toda la pausa, antes de que el saque
+        // hubiera ocurrido siquiera.
         pasesJugadaActual=0; historialMio=[]; historialRival=[];
         // Orden correcto: PRIMERO se reorganiza a los 22 jugadores en
         // sus posiciones de segunda parte (instantáneo, ver
@@ -1306,10 +1312,27 @@
         reorganizarInstantaneo();
 
         function procederAlSaqueSegundaParte(){
+          // Aquí, y solo aquí, cambia la posesión — justo en el
+          // instante real del saque, nunca antes.
+          posesionMia=!posesionMia;
+          idxConBalonMio=primerMedioCentro(rolesMios);
+          idxConBalonRival=primerMedioCentro(rolesRival);
+          // Se repite la colocación instantánea justo antes del saque
+          // — no debería hacer falta (ya se hizo arriba y el
+          // reposicionamiento ambiental ha estado bloqueado todo este
+          // tiempo), pero garantiza que el portero (y cualquier otro
+          // jugador) esté exactamente donde toca en el instante exacto
+          // en que el balón vuelve a estar en juego, sin ninguna
+          // posibilidad de que algo lo haya movido mientras tanto.
+          reorganizarInstantaneo();
           bloqueoReformacionHasta=performance.now()+real(600);
           const equipoSaca2P = posesionMia?posMia:posRival;
           const idxSaca2P = posesionMia?idxConBalonMio:idxConBalonRival;
-          moverBalon(equipoSaca2P[idxSaca2P].x, equipoSaca2P[idxSaca2P].y, 400);
+          // Instantáneo, no un viaje animado — el balón debe aparecer
+          // directamente en los pies del delantero que saca, nunca
+          // "volar" visiblemente desde donde estuviera antes de la
+          // pausa (a veces cerca del portero), que quedaba raro.
+          moverBalon(equipoSaca2P[idxSaca2P].x, equipoSaca2P[idxSaca2P].y, 1);
           setTimeout(()=>sacarDeCentro(posesionMia, idxSaca2P), real(500));
         }
 
@@ -1358,6 +1381,8 @@
               elegirGoleador, jugadorRivalAleatorio, elegirJugadorAlineado,
               onConsumirUso: ()=>{
                 state.giroTacticoUsosRestantes=Math.max(0,(state.giroTacticoUsosRestantes||0)-1);
+                const giroUsosEl=overlay.querySelector('#lmVisorGiroUsos');
+                if(giroUsosEl) giroUsosEl.innerHTML=`<i class="ph ph-bold ph-arrows-clockwise"></i> ${state.giroTacticoUsosRestantes}`;
                 if(typeof window.unlockLMAchievement==='function') window.unlockLMAchievement('lm_giro_primera_vez', false);
                 if(state.giroTacticoUsosRestantes<=0 && typeof window.unlockLMAchievement==='function') window.unlockLMAchievement('lm_giro_agotado', false);
                 guardarEstado();
@@ -1578,15 +1603,21 @@
               // El partido queda bloqueado un segundo completo mientras
               // los 22 jugadores se colocan de forma instantánea y
               // garantizada (reorganizarYPausar) — solo entonces se
-              // reanuda el saque.
+              // reanuda el saque. La posesión (quién saca) no cambia
+              // hasta ese mismo instante, nunca antes, igual que en el
+              // descanso.
               bloqueoReformacionHasta=performance.now()+real(1200);
-              posesionMia=!esMio; avanzarTiempo(2750+esperaExtra); pasesJugadaActual=0; historialMio=[]; historialRival=[];
-              idxConBalonMio=primerMedioCentro(rolesMios);
-              idxConBalonRival=primerMedioCentro(rolesRival);
+              avanzarTiempo(2750+esperaExtra); pasesJugadaActual=0; historialMio=[]; historialRival=[];
               reorganizarYPausar(()=>{
+                posesionMia=!esMio;
+                idxConBalonMio=primerMedioCentro(rolesMios);
+                idxConBalonRival=primerMedioCentro(rolesRival);
+                reorganizarInstantaneo();
                 const equipoSacaGol = posesionMia?posMia:posRival;
                 const idxSacaGol = posesionMia?idxConBalonMio:idxConBalonRival;
-                moverBalon(equipoSacaGol[idxSacaGol].x, equipoSacaGol[idxSacaGol].y, 400);
+                // Instantáneo, no un viaje animado — igual que en el
+                // saque de la segunda parte.
+                moverBalon(equipoSacaGol[idxSacaGol].x, equipoSacaGol[idxSacaGol].y, 1);
                 setTimeout(()=>sacarDeCentro(posesionMia, idxSacaGol), real(450));
               });
             }, real(1300));

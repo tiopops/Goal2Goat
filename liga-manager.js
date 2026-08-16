@@ -4305,18 +4305,52 @@
   // (game.js): navigator.share si está disponible, si no portapapeles,
   // y si tampoco un alert como último recurso. Aquí vive en un
   // archivo propio de Liga Manager para no tocar game.js.
+  // Texto para compartir el resumen de fin de temporada -- mismo
+  // patron que buildTeamShareText()/shareMyTeam() de Copa Leyendas
+  // (game.js): navigator.share si esta disponible, si no portapapeles,
+  // y si tampoco un alert como ultimo recurso. Aqui vive en un
+  // archivo propio de Liga Manager para no tocar game.js.
+  //
+  // Reescrito para ser un informe completo y profesional en vez de
+  // 4 lineas sueltas con emojis -- estructurado por secciones, con
+  // encabezados en mayusculas y separadores, pensado para poder
+  // pegarse tal cual en un chat o una red social y leerse con
+  // seriedad, no como una notificacion rapida.
   function buildLMResumenShareText(datos){
-    const {miPos, misDatos, zona, claveValoracion, mejorVictoria, peorDerrota, maxGoleador, premioTemporada, estrellasTotal, estrellasMax}=datos;
+    const {miPos, misDatos, claveValoracion, mejorVictoria, peorDerrota, maxGoleador, premioTemporada, estrellasTotal, estrellasMax, dptos, ingresosTotales, gastosTotales, balanceNeto, capitalFinal, claveVeredicto, finDeLaPartida}=datos;
+    const sep='---------------------------';
     const lines=[
-      `${state.nombreEquipo.toUpperCase()} — GOAL2GOAT · LIGA MANAGER`,
-      `🏆 ${t(claveValoracion)}`,
-      `📊 Posición: ${miPos}º · ${misDatos?misDatos.pts:0} pts (${misDatos?misDatos.pg:0}G-${misDatos?misDatos.pe:0}E-${misDatos?misDatos.pp:0}P)`,
-    ];
-    if(mejorVictoria) lines.push(`⚽ Mayor victoria: ${state.nombreEquipo} ${mejorVictoria.misGoles}-${mejorVictoria.susGoles} ${mejorVictoria.rivalNombre}`);
-    if(maxGoleador && maxGoleador.golesTemporada>0) lines.push(`🎯 Máximo goleador: ${maxGoleador.name} (${maxGoleador.golesTemporada})`);
-    lines.push(`⭐ Cuerpo técnico: ${estrellasTotal}/${estrellasMax}`);
-    if(premioTemporada) lines.push(`💰 Premio de temporada: ${formatoDinero(premioTemporada.total)}`);
-    lines.push(``, `¿Te atreves a superarlo? 👉 goal2goat.com`);
+      `GOAL2GOAT . LIGA MANAGER`,
+      `Informe de fin de temporada -- ${state.nombreEquipo.toUpperCase()}`,
+      sep,
+      `VALORACION: ${t(claveValoracion)}`,
+      '',
+      'CLASIFICACION',
+      `Posicion final: ${miPos}o`,
+      `Puntos: ${misDatos?misDatos.pts:0}`,
+      `Balance: ${misDatos?misDatos.pg:0}G ${misDatos?misDatos.pe:0}E ${misDatos?misDatos.pp:0}P`,
+      `Goles: ${misDatos?misDatos.gf:0} a favor, ${misDatos?misDatos.gc:0} en contra (diferencia ${misDatos?((misDatos.gf-misDatos.gc>0?'+':'')+(misDatos.gf-misDatos.gc)):0})`,
+      sep,
+      'RESULTADOS DESTACADOS',
+      mejorVictoria ? `Mayor victoria: ${state.nombreEquipo} ${mejorVictoria.misGoles}-${mejorVictoria.susGoles} ${mejorVictoria.rivalNombre} (jornada ${mejorVictoria.jornada})` : 'Mayor victoria: sin victorias registradas',
+      peorDerrota ? `Peor derrota: ${state.nombreEquipo} ${peorDerrota.misGoles}-${peorDerrota.susGoles} ${peorDerrota.rivalNombre} (jornada ${peorDerrota.jornada})` : 'Peor derrota: sin derrotas registradas',
+      `Maximo goleador: ${(maxGoleador && maxGoleador.golesTemporada>0) ? `${maxGoleador.name} (${maxGoleador.golesTemporada} goles)` : 'sin goles registrados'}`,
+      sep,
+      'BALANCE FINANCIERO',
+      premioTemporada ? `Premio de temporada: +${formatoDinero(premioTemporada.total)}` : null,
+      `Ingresos totales: +${formatoDinero(ingresosTotales)}`,
+      `Gastos totales: -${formatoDinero(gastosTotales)}`,
+      `Balance neto: ${balanceNeto>=0?'+':''}${formatoDinero(balanceNeto)}`,
+      `Capital final: ${formatoDinero(capitalFinal)}`,
+      sep,
+      'CUERPO TECNICO',
+      `Mejoras conseguidas: ${estrellasTotal}/${estrellasMax}`,
+      ...dptos.map(d=>`${d.nombre}: ${d.n}/${d.nMax}`),
+      sep,
+      finDeLaPartida ? `RESULTADO: ${t(claveVeredicto)}` : `RESULTADO: ${t('lm.resumen_temporada_puede_continuar')}`,
+      '',
+      'goal2goat.com',
+    ].filter(l=>l!==null);
     return lines.join('\n');
   }
   async function shareLMResumenTemporada(datos){
@@ -4326,13 +4360,93 @@
     }else{
       try{
         await navigator.clipboard.writeText(text);
-        if(typeof showToast==='function') showToast('📋 Copiado al portapapeles', 'toast-pos');
+        if(typeof showToast==='function') showToast('\ud83d\udccb Copiado al portapapeles', 'toast-pos');
       }catch(e){
         alert(text);
       }
     }
   }
-  function calcularPremioFinTemporada(miPos){
+  // Informe imprimible / "Guardar como PDF" -- genera un documento HTML
+  // independiente, con estilo profesional de informe deportivo, y
+  // abre el dialogo de impresion del propio navegador (con "Guardar
+  // como PDF" ya disponible ahi en Chrome, Edge, Safari, etc. sin
+  // necesidad de ninguna libreria externa).
+  function buildLMResumenPrintHTML(datos){
+    const {miPos, misDatos, claveValoracion, mejorVictoria, peorDerrota, maxGoleador, premioTemporada, estrellasTotal, estrellasMax, dptos, ingresosTotales, gastosTotales, balanceNeto, capitalFinal, claveVeredicto, finDeLaPartida}=datos;
+    const fila=(label,valor)=>`<tr><td class="lbl">${label}</td><td class="val">${valor}</td></tr>`;
+    const fecha=new Date().toLocaleDateString('es-ES',{day:'numeric',month:'long',year:'numeric'});
+    return `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">
+<title>Informe de temporada -- ${state.nombreEquipo}</title>
+<style>
+  @page{ margin:22mm 18mm; }
+  body{ font-family:'Georgia','Times New Roman',serif; color:#1a1a1a; max-width:720px; margin:0 auto; padding:24px; }
+  .header{ text-align:center; border-bottom:3px double #1a1a1a; padding-bottom:16px; margin-bottom:24px; }
+  .header .brand{ font-family:Arial,sans-serif; font-size:11px; letter-spacing:3px; color:#888; text-transform:uppercase; margin-bottom:6px; }
+  .header h1{ font-size:26px; margin:4px 0; }
+  .header .sub{ font-size:13px; color:#555; }
+  .valoracion{ text-align:center; font-family:Arial,sans-serif; font-size:14px; font-weight:bold; letter-spacing:.5px; text-transform:uppercase; margin:18px 0 26px; padding:10px; border:1px solid #1a1a1a; }
+  h2{ font-family:Arial,sans-serif; font-size:13px; letter-spacing:1.5px; text-transform:uppercase; border-bottom:1px solid #ccc; padding-bottom:6px; margin:28px 0 10px; color:#333; }
+  table{ width:100%; border-collapse:collapse; font-size:13px; }
+  td{ padding:6px 4px; border-bottom:1px solid #eee; }
+  td.lbl{ color:#555; }
+  td.val{ text-align:right; font-weight:bold; }
+  .destacado{ font-size:13px; padding:8px 0; border-bottom:1px solid #eee; }
+  .destacado .tag{ font-family:Arial,sans-serif; font-size:10px; letter-spacing:1px; text-transform:uppercase; color:#888; display:block; margin-bottom:2px; }
+  .resultado-final{ margin-top:30px; padding:16px; text-align:center; border:2px solid #1a1a1a; font-family:Arial,sans-serif; font-weight:bold; letter-spacing:.5px; text-transform:uppercase; font-size:14px; }
+  .footer{ margin-top:40px; text-align:center; font-family:Arial,sans-serif; font-size:10px; color:#999; border-top:1px solid #ccc; padding-top:12px; }
+  @media print{ body{ padding:0; } }
+</style></head><body>
+  <div class="header">
+    <div class="brand">GOAL2GOAT . LIGA MANAGER</div>
+    <h1>${state.nombreEquipo.toUpperCase()}</h1>
+    <div class="sub">Informe oficial de fin de temporada -- ${fecha}</div>
+  </div>
+  <div class="valoracion">${t(claveValoracion)}</div>
+
+  <h2>Clasificacion</h2>
+  <table>
+    ${fila('Posicion final', miPos+'o')}
+    ${fila('Puntos', misDatos?misDatos.pts:0)}
+    ${fila('Partidos ganados / empatados / perdidos', `${misDatos?misDatos.pg:0} / ${misDatos?misDatos.pe:0} / ${misDatos?misDatos.pp:0}`)}
+    ${fila('Goles a favor', misDatos?misDatos.gf:0)}
+    ${fila('Goles en contra', misDatos?misDatos.gc:0)}
+    ${fila('Diferencia de goles', misDatos?((misDatos.gf-misDatos.gc>0?'+':'')+(misDatos.gf-misDatos.gc)):0)}
+  </table>
+
+  <h2>Resultados destacados</h2>
+  <div class="destacado"><span class="tag">Mayor victoria</span>${mejorVictoria ? `${state.nombreEquipo} ${mejorVictoria.misGoles}-${mejorVictoria.susGoles} ${mejorVictoria.rivalNombre} (jornada ${mejorVictoria.jornada})` : 'Sin victorias registradas'}</div>
+  <div class="destacado"><span class="tag">Peor derrota</span>${peorDerrota ? `${state.nombreEquipo} ${peorDerrota.misGoles}-${peorDerrota.susGoles} ${peorDerrota.rivalNombre} (jornada ${peorDerrota.jornada})` : 'Sin derrotas registradas'}</div>
+  <div class="destacado"><span class="tag">Maximo goleador</span>${(maxGoleador && maxGoleador.golesTemporada>0) ? `${maxGoleador.name} -- ${maxGoleador.golesTemporada} goles` : 'Sin goles registrados esta temporada'}</div>
+
+  <h2>Balance financiero</h2>
+  <table>
+    ${premioTemporada ? fila('Premio de temporada', '+'+formatoDinero(premioTemporada.total)) : ''}
+    ${fila('Ingresos totales', '+'+formatoDinero(ingresosTotales))}
+    ${fila('Gastos totales', '-'+formatoDinero(gastosTotales))}
+    ${fila('Balance neto', (balanceNeto>=0?'+':'')+formatoDinero(balanceNeto))}
+    ${fila('Capital final', formatoDinero(capitalFinal))}
+  </table>
+
+  <h2>Cuerpo tecnico</h2>
+  <table>
+    ${fila('Mejoras conseguidas', `${estrellasTotal}/${estrellasMax}`)}
+    ${dptos.map(d=>fila(d.nombre, `${d.n}/${d.nMax}`)).join('')}
+  </table>
+
+  <div class="resultado-final">${finDeLaPartida ? t(claveVeredicto) : t('lm.resumen_temporada_puede_continuar')}</div>
+
+  <div class="footer">Generado automaticamente por Goal2Goat -- goal2goat.com</div>
+</body></html>`;
+  }
+  function imprimirLMResumenTemporada(datos){
+    const ventana=window.open('', '_blank');
+    if(!ventana){ alert(t('lm.popup_bloqueado_pdf')); return; }
+    ventana.document.write(buildLMResumenPrintHTML(datos));
+    ventana.document.close();
+    ventana.focus();
+    setTimeout(()=>{ ventana.print(); }, 350);
+  }
+    function calcularPremioFinTemporada(miPos){
     const basePorPosicion = miPos===1?150000 : miPos<=4?90000 : miPos===5?65000 : miPos===6?50000 : miPos<=10?30000 : 15000;
     // Complejidad de lo logrado: suma de los "pts" (1 básico, 2
     // intermedio, 3 difícil, 5 mítico) de todos los logros de Liga
@@ -4395,6 +4509,15 @@
       ['lm.resumen_temporada_dpto_dd', state.directorDeportivoNiveles],
       ['lm.resumen_temporada_dpto_pf', state.preparadorFisicoNiveles],
     ];
+    // Versión con los datos ya resueltos (nombre traducido, nivel
+    // conseguido, nivel máximo posible) — reutilizada tanto para
+    // compartir como para el informe imprimible, en vez de repetir
+    // este cálculo en cada sitio.
+    const dptosResueltos = dptos.map(([clave, niveles])=>({
+      nombre: t(clave),
+      n: nivelTotalDe(niveles),
+      nMax: Object.keys(niveles||{}).length*NIVEL_MAXIMO_EQUIPO,
+    }));
     const dptosHTML = dptos.map(([clave, niveles])=>{
       const n=nivelTotalDe(niveles);
       const nMax=Object.keys(niveles||{}).length*NIVEL_MAXIMO_EQUIPO;
@@ -4409,6 +4532,9 @@
       : `<div class="lm-resumen-temp-veredicto lm-resumen-temp-veredicto-positivo"><i class="ph ph-bold ph-check-circle"></i>${t('lm.resumen_temporada_puede_continuar')}</div>`;
     overlay.innerHTML=`
       <div class="lm-dilemma-card lm-clasif-popup-card lm-resumen-temp-card" style="max-width:520px;position:relative">
+        <button id="lmResumenTemporadaImprimirBtn" title="${t('lm.imprimir_resumen')}" style="display:flex;position:absolute;top:14px;right:56px;z-index:6;width:34px;height:34px;border-radius:50%;background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.5);color:#fff;align-items:center;justify-content:center;cursor:pointer;padding:0">
+          <i class="ph ph-bold ph-printer" style="font-size:17px"></i>
+        </button>
         <button id="lmResumenTemporadaCompartirBtn" title="${t('lm.compartir_resumen')}" style="display:flex;position:absolute;top:14px;right:14px;z-index:6;width:34px;height:34px;border-radius:50%;background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.5);color:#fff;align-items:center;justify-content:center;cursor:pointer;padding:0">
           <i class="ph ph-bold ph-share-network" style="font-size:17px"></i>
         </button>
@@ -4446,11 +4572,21 @@
         <div class="lm-popup-actions"><button id="lmResumenTemporadaCerrarBtn" class="mode-card-btn mode-card-btn-gold">${finDeLaPartida?t('lm.finalizar'):t('lm.continuar')}</button></div>
       </div>`;
     document.getElementById('ligaManagerScreen').appendChild(overlay);
+    // Datos completos, compartidos entre el botón de compartir y el
+    // de imprimir/PDF — así ambos muestran exactamente la misma
+    // información, solo en formato distinto.
+    const datosInforme = {miPos, misDatos, zona, claveValoracion, mejorVictoria, peorDerrota, maxGoleador, premioTemporada, estrellasTotal, estrellasMax, dptos:dptosResueltos, ingresosTotales, gastosTotales, balanceNeto, capitalFinal: state.capital, claveVeredicto, finDeLaPartida};
     const compartirBtn=overlay.querySelector('#lmResumenTemporadaCompartirBtn');
     if(compartirBtn) compartirBtn.addEventListener('click', (e)=>{
       e.stopPropagation();
       if(typeof window.playSound==='function') window.playSound('select');
-      shareLMResumenTemporada({miPos, misDatos, zona, claveValoracion, mejorVictoria, peorDerrota, maxGoleador, premioTemporada, estrellasTotal, estrellasMax});
+      shareLMResumenTemporada(datosInforme);
+    });
+    const imprimirBtn=overlay.querySelector('#lmResumenTemporadaImprimirBtn');
+    if(imprimirBtn) imprimirBtn.addEventListener('click', (e)=>{
+      e.stopPropagation();
+      if(typeof window.playSound==='function') window.playSound('select');
+      imprimirLMResumenTemporada(datosInforme);
     });
     // A propósito SIN habilitarCierreOverlay: este popup decide si la
     // partida termina o continúa a una nueva temporada — un clic fuera
