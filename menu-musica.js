@@ -32,7 +32,7 @@
     if(saved!==null) musicaEnabled=(saved==='true');
   }catch(e){}
 
-  let musicVolume=0.55;
+  let musicVolume=0.28;
   try{
     const savedVol=localStorage.getItem(VOLUME_KEY);
     if(savedVol!==null) musicVolume=Math.max(0, Math.min(1, parseFloat(savedVol)));
