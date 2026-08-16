@@ -605,6 +605,18 @@
     const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,'0'), day=String(d.getDate()).padStart(2,'0');
     return `${y}-${m}-${day}`;
   }
+  // Etiqueta de temporada tipo "26/27" — a partir del año de la fecha
+  // real de inicio de la liga (jornada 1, siempre en agosto). Como el
+  // calendario ya usa fechas realistas de temporada de fútbol
+  // (agosto → mayo/junio del año siguiente), esto es simplemente los
+  // dos últimos dígitos de ese año y del siguiente.
+  function temporadaLabel(){
+    if(!state.fechaInicioLiga) return '';
+    const anioInicio=parseInt(state.fechaInicioLiga.slice(0,4), 10);
+    if(!anioInicio) return '';
+    const dosDigitos=n=>String(n%100).padStart(2,'0');
+    return `${dosDigitos(anioInicio)}/${dosDigitos(anioInicio+1)}`;
+  }
   // Fecha de inicio de temporada realista: en vez de arrancar la
   // jornada 1 "el próximo sábado desde hoy" (lo que podía situar una
   // liga entera en cualquier época del año, sin relación con un
@@ -6268,7 +6280,7 @@
             ${crestHTML(state.escudo, 76)}
             <div style="flex:1;min-width:0">
               <div class="lm-title">${state.nombreEquipo.toUpperCase()}</div>
-              <div class="lm-sub">Jornada ${Math.min(state.jornadaActual,38)} de 38</div>
+              <div class="lm-sub">Jornada ${Math.min(state.jornadaActual,38)} de 38${temporadaLabel()?` <span class="lm-sub-temporada">· ${temporadaLabel()}</span>`:''}</div>
             </div>
             <div class="lm-modo-visual-toggle">
               <button type="button" class="lm-modo-visual-btn ${(!state.modoVisualPartido||state.modoVisualPartido==='auto')?'lm-modo-visual-activo':''}" data-modo-visual="auto"><i class="ph ph-bold ph-fast-forward"></i>${t('lm.modo_automatico')}</button>
