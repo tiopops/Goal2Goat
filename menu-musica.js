@@ -55,6 +55,7 @@
   let audioEl=null;
   let fundidoInterval=null;
   let intentandoArrancar=false;
+  let yaSonando=false; // true en cuanto play() resuelve con éxito una vez
 
   function getAudioEl(){
     if(audioEl) return audioEl;
@@ -62,6 +63,15 @@
     audioEl.loop=true;
     audioEl.preload='auto';
     audioEl.volume=0; // arranca en 0 y sube con fundido, nunca de golpe
+    // Diagnóstico: si el archivo no carga (ruta incorrecta en el
+    // servidor, 404, tipo MIME no servido, etc.) se avisa alto y
+    // claro en la consola — antes un fallo aquí quedaba
+    // completamente silencioso, sin ninguna pista de qué había
+    // pasado.
+    audioEl.addEventListener('error', ()=>{
+      const err=audioEl.error;
+      console.error('[Música] No se ha podido cargar el archivo de audio ('+RUTA_AUDIO+'). Código de error:', err?err.code:'?', '— revisa que el archivo exista en esa ruta exacta en el servidor.');
+    });
     return audioEl;
   }
 
@@ -96,15 +106,22 @@
   }, 1000);
 
   function arrancarMusica(){
-    if(intentandoArrancar || !musicaEnabled) return;
+    if(intentandoArrancar || yaSonando || !musicaEnabled) return;
     intentandoArrancar=true;
     const el=getAudioEl();
     el.play().then(()=>{
       intentandoArrancar=false;
+      yaSonando=true;
       fundirHacia(volumenObjetivoActual(), 900);
-    }).catch(()=>{
-      // El navegador ha bloqueado la reproducción automática (falta
-      // gesto del usuario) — se reintentará en el siguiente clic.
+    }).catch((err)=>{
+      // El intento más habitual de fallo es que el navegador bloquee
+      // la reproducción automática por falta de un gesto reciente del
+      // usuario — se reintentará en el siguiente clic/tecla/toque
+      // (yaSonando sigue en false, así que no queda descartado para
+      // siempre como pasaba antes). Se deja constancia en consola
+      // para poder diferenciar ese caso normal de un fallo real
+      // (archivo no encontrado, formato no soportado, etc.).
+      console.warn('[Música] Reproducción bloqueada o fallida de momento ('+(err&&err.name?err.name:err)+') — se reintentará con la próxima interacción.');
       intentandoArrancar=false;
     });
   }
@@ -161,16 +178,21 @@
 
   // El primer arranque de audio en cualquier navegador necesita un
   // gesto real del usuario (clic, toque, tecla) — igual que el resto
-  // del sistema de sonido del juego.
-  function primerGesto(){
-    document.removeEventListener('click', primerGesto);
-    document.removeEventListener('keydown', primerGesto);
-    document.removeEventListener('touchstart', primerGesto);
+  // del sistema de sonido del juego. A propósito NO se usa
+  // {once:true}: antes, si el primer intento fallaba por lo que
+  // fuera (no solo por el bloqueo típico de autoplay, cualquier
+  // fallo transitorio), los listeners ya se habían quitado y la
+  // música no se volvía a intentar nunca más en toda la sesión, por
+  // muchos clics que se hicieran después. Ahora se sigue
+  // reintentando en cada interacción hasta que realmente suene
+  // (arrancarMusica() ya no hace nada una vez yaSonando es true, así
+  // que dejar los listeners puestos no tiene coste real).
+  function intentoDeGesto(){
     if(musicaEnabled) arrancarMusica();
   }
-  document.addEventListener('click', primerGesto, {once:true});
-  document.addEventListener('keydown', primerGesto, {once:true});
-  document.addEventListener('touchstart', primerGesto, {once:true});
+  document.addEventListener('click', intentoDeGesto);
+  document.addEventListener('keydown', intentoDeGesto);
+  document.addEventListener('touchstart', intentoDeGesto);
 
   if(document.readyState==='loading'){
     document.addEventListener('DOMContentLoaded', conectarControles);
