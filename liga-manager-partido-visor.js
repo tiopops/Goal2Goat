@@ -220,8 +220,7 @@
           <div class="lm-visor-posesion-directo-mia" id="lmVisorPosesionMia" style="width:50%">50%</div>
           <div class="lm-visor-posesion-directo-rival" id="lmVisorPosesionRival" style="width:50%">50%</div>
         </div>
-        ${clima?`<div class="lm-visor-clima-bar"><span class="lm-visor-clima-texto">${clima.label}</span><span class="lm-visor-giro-usos" id="lmVisorGiroUsos"><i class="ph ph-bold ph-arrows-clockwise"></i> ${state.giroTacticoUsosRestantes!==undefined?state.giroTacticoUsosRestantes:'—'}</span></div>`:''}
-        <div id="lmVisorGiroDebug" class="lm-visor-giro-debug"></div>
+        ${clima?`<div class="lm-visor-clima-bar"><span class="lm-visor-clima-texto">${clima.label}</span><span class="lm-visor-giro-usos" id="lmVisorGiroUsos"><i class="ph ph-bold ph-arrows-clockwise"></i> GIRO TÁCTICO <strong>${state.giroTacticoUsosRestantes!==undefined?state.giroTacticoUsosRestantes:'—'}</strong></span></div>`:''}
         <div class="lm-visor-campo-wrap ${climaClase}">
           <svg class="lm-visor-campo-svg" viewBox="0 0 ${ANCHO} ${ALTO}" preserveAspectRatio="xMidYMid meet">
             ${franjasHTML}
@@ -1317,14 +1316,6 @@
           posesionMia=!posesionMia;
           idxConBalonMio=primerMedioCentro(rolesMios);
           idxConBalonRival=primerMedioCentro(rolesRival);
-          // Se repite la colocación instantánea justo antes del saque
-          // — no debería hacer falta (ya se hizo arriba y el
-          // reposicionamiento ambiental ha estado bloqueado todo este
-          // tiempo), pero garantiza que el portero (y cualquier otro
-          // jugador) esté exactamente donde toca en el instante exacto
-          // en que el balón vuelve a estar en juego, sin ninguna
-          // posibilidad de que algo lo haya movido mientras tanto.
-          reorganizarInstantaneo();
           bloqueoReformacionHasta=performance.now()+real(600);
           const equipoSaca2P = posesionMia?posMia:posRival;
           const idxSaca2P = posesionMia?idxConBalonMio:idxConBalonRival;
@@ -1347,25 +1338,6 @@
           const vaMalAlDescansoM = (typeof window.lmSkillActiva==='function' && window.lmSkillActiva('lm_lectura_partido'))
             ? marcadorMio<=marcadorRival+1
             : marcadorMio<=marcadorRival;
-          // Diagnóstico SIEMPRE visible al llegar al descanso (no solo
-          // cuando algo falla) — así, si el Giro Táctico no aparece, se
-          // puede ver en la consola (F12) exactamente cuál de las tres
-          // condiciones no se cumplió, en vez de tener que adivinarlo.
-          console.log('[Liga Manager] Descanso alcanzado — comprobación Giro Táctico:', {
-            marcadorMio, marcadorRival, vaMalAlDescansoM,
-            usosRestantes: state.giroTacticoUsosRestantes,
-            LMGiroTacticoCargado: typeof window.LMGiroTactico==='object'
-          });
-          // Aviso EN LA PROPIA INTERFAZ del partido (justo debajo del
-          // clima) — no en un toast que podría no verse ni depender de
-          // herramientas de desarrollador. Queda fijo en pantalla hasta
-          // que el partido continúa, para confirmar sin ninguna duda si
-          // este archivo actualizado está realmente cargado o no.
-          const giroDebugEl=overlay.querySelector('#lmVisorGiroDebug');
-          if(giroDebugEl){
-            giroDebugEl.textContent = '🔄 GIRO TÁCTICO — '+(typeof window.LMGiroTactico==='object'?'archivo cargado ✔':'ARCHIVO NO CARGADO ✘')+' · marcador '+marcadorMio+'-'+marcadorRival+' · usos:'+(state.giroTacticoUsosRestantes!==undefined?state.giroTacticoUsosRestantes:'?')+' · debería ofrecerse: '+(vaMalAlDescansoM?'SÍ':'NO');
-            giroDebugEl.style.display='block';
-          }
           if(typeof window.LMGiroTactico!=='object'){
             console.error('[Liga Manager] Giro Táctico no disponible: liga-manager-giro-tactico.js no se ha cargado (revisa que el archivo y el <script> en index.html estén subidos al servidor).');
           }
@@ -1382,7 +1354,7 @@
               onConsumirUso: ()=>{
                 state.giroTacticoUsosRestantes=Math.max(0,(state.giroTacticoUsosRestantes||0)-1);
                 const giroUsosEl=overlay.querySelector('#lmVisorGiroUsos');
-                if(giroUsosEl) giroUsosEl.innerHTML=`<i class="ph ph-bold ph-arrows-clockwise"></i> ${state.giroTacticoUsosRestantes}`;
+                if(giroUsosEl) giroUsosEl.innerHTML=`<i class="ph ph-bold ph-arrows-clockwise"></i> GIRO TÁCTICO <strong>${state.giroTacticoUsosRestantes}</strong>`;
                 if(typeof window.unlockLMAchievement==='function') window.unlockLMAchievement('lm_giro_primera_vez', false);
                 if(state.giroTacticoUsosRestantes<=0 && typeof window.unlockLMAchievement==='function') window.unlockLMAchievement('lm_giro_agotado', false);
                 guardarEstado();
@@ -1612,7 +1584,6 @@
                 posesionMia=!esMio;
                 idxConBalonMio=primerMedioCentro(rolesMios);
                 idxConBalonRival=primerMedioCentro(rolesRival);
-                reorganizarInstantaneo();
                 const equipoSacaGol = posesionMia?posMia:posRival;
                 const idxSacaGol = posesionMia?idxConBalonMio:idxConBalonRival;
                 // Instantáneo, no un viaje animado — igual que en el
