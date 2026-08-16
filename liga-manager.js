@@ -3094,7 +3094,7 @@
         guardarEstado();
         if(typeof window.playSound==='function') window.playSound('select');
         if(typeof showToast==='function') showToast(`Promesa hecha: "${answer.label}"`, 'toast-neutral');
-        setTimeout(onDone, 700);
+        setTimeout(onDone, 1700);
       });
     });
   }

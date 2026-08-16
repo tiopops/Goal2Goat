@@ -750,12 +750,38 @@
         });
       });
     }
+    // BLINDAJE definitivo contra cualquier interferencia durante la
+    // reorganización (sobre todo el portero, que es quien más se ha
+    // seguido viendo mal colocado pese a intentos anteriores). En
+    // vez de fiarse de haber bloqueado ya todos y cada uno de los
+    // puntos del código que podrían llegar a mover a un jugador
+    // durante este rato — que es exactamente lo que ha seguido
+    // fallando — esto REAFIRMA la posición correcta de los 22 cada
+    // 120ms durante toda la ventana indicada. Si algo, de donde
+    // sea, llegara a mover a alguien durante ese rato, se corrige
+    // casi al instante (como mucho 120ms de margen), en vez de
+    // quedarse mal colocado hasta la siguiente reorganización.
+    let blindajeIntervalId=null;
+    function blindarReorganizacion(duracionMs){
+      if(blindajeIntervalId){ clearInterval(blindajeIntervalId); blindajeIntervalId=null; }
+      const hasta=performance.now()+real(duracionMs);
+      blindajeIntervalId=setInterval(()=>{
+        if(performance.now()>=hasta){
+          clearInterval(blindajeIntervalId);
+          blindajeIntervalId=null;
+          reorganizarInstantaneo(); // pasada final, sin excusas
+          return;
+        }
+        reorganizarInstantaneo();
+      }, 120);
+    }
     // Pausa real de 1 segundo: la colocación ya es instantánea (ver
     // arriba), así que este segundo completo es un respiro visible
     // antes de que el juego continúe — nunca solapado con ningún
     // movimiento, porque ya no queda ningún movimiento en marcha.
     function reorganizarYPausar(callback){
       reorganizarInstantaneo();
+      blindarReorganizacion(1000);
       setTimeout(callback, real(1000));
     }
     function jugadorMasCercano(arr, x, y, excluirIdx){
@@ -1309,6 +1335,7 @@
         // moviéndose de fondo durante la selección.
         bloqueoReformacionHasta=performance.now()+real(30000);
         reorganizarInstantaneo();
+        blindarReorganizacion(1200);
 
         function procederAlSaqueSegundaParte(){
           // Aquí, y solo aquí, cambia la posesión — justo en el
@@ -1317,6 +1344,8 @@
           idxConBalonMio=primerMedioCentro(rolesMios);
           idxConBalonRival=primerMedioCentro(rolesRival);
           bloqueoReformacionHasta=performance.now()+real(600);
+          reorganizarInstantaneo();
+          blindarReorganizacion(600);
           const equipoSaca2P = posesionMia?posMia:posRival;
           const idxSaca2P = posesionMia?idxConBalonMio:idxConBalonRival;
           // Instantáneo, no un viaje animado — el balón debe aparecer
@@ -2667,6 +2696,7 @@
     // de reorganizaciones completas (gol, segunda parte).
     bloqueoReformacionHasta=performance.now()+real(950);
     reorganizarInstantaneo();
+    blindarReorganizacion(950);
     const equipoInicial = posesionMia?posMia:posRival;
     const idxInicial = posesionMia?idxConBalonMio:idxConBalonRival;
     moverBalon(equipoInicial[idxInicial].x, equipoInicial[idxInicial].y, 1);

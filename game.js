@@ -5290,7 +5290,7 @@ window.choosePressAnswer=function(idx){
   setTimeout(()=>{
     document.getElementById("matchOverlay").innerHTML="";
     if(window._pressCallback) window._pressCallback();
-  }, 700);
+  }, 1700);
 };
 
 /* Resolves the pending prediction against the real match result.
