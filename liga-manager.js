@@ -4408,50 +4408,45 @@
     return `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">
 <title>Informe de temporada -- ${state.nombreEquipo}</title>
 <style>
-  @page{ margin:16mm 14mm; }
+  @page{ margin:12mm 14mm; }
   *{ box-sizing:border-box; }
   body{
     font-family:'Segoe UI','Helvetica Neue',Arial,sans-serif; color:#1c1f24;
-    max-width:780px; margin:0 auto; padding:0; font-size:13px; line-height:1.5;
+    max-width:780px; margin:0 auto; padding:0; font-size:12.5px; line-height:1.4;
   }
-  .band{ background:#12151a; color:#fff; padding:26px 32px; border-radius:0 0 14px 14px; margin-bottom:0; }
-  .band .eyebrow{ font-size:10px; letter-spacing:3px; color:#d9b23c; text-transform:uppercase; font-weight:700; margin-bottom:6px; }
-  .band h1{ font-size:28px; margin:0 0 4px; font-weight:800; letter-spacing:-.5px; }
-  .band .sub{ font-size:12px; color:#a7adb6; }
+  .band{ background:#12151a; color:#fff; padding:18px 32px; border-radius:0 0 14px 14px; margin-bottom:0; text-align:center; }
+  .band .eyebrow{ font-size:10px; letter-spacing:3px; color:#d9b23c; text-transform:uppercase; font-weight:700; margin-bottom:5px; }
+  .band h1{ font-size:24px; margin:0 0 3px; font-weight:800; letter-spacing:-.5px; }
+  .band .sub{ font-size:11px; color:#a7adb6; }
   .valoracion-strip{
-    background:#d9b23c; color:#12151a; text-align:center; padding:10px 12px;
-    font-weight:800; font-size:13px; letter-spacing:.5px; text-transform:uppercase;
+    background:#d9b23c; color:#12151a; text-align:center; padding:8px 12px;
+    font-weight:800; font-size:12px; letter-spacing:.5px; text-transform:uppercase;
   }
-  .content{ padding:26px 30px 10px; }
-  .stats-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:8px; }
-  .stat-card{ background:#f4f5f7; border-radius:10px; padding:14px 8px; text-align:center; }
-  .stat-num{ font-size:22px; font-weight:800; color:#12151a; }
-  .stat-label{ font-size:9px; letter-spacing:.5px; text-transform:uppercase; color:#777; margin-top:3px; }
+  .content{ padding:16px 30px 4px; }
+  .stats-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:4px; }
+  .stat-card{ background:#f4f5f7; border-radius:10px; padding:10px 8px; text-align:center; }
+  .stat-num{ font-size:19px; font-weight:800; color:#12151a; }
+  .stat-label{ font-size:8.5px; letter-spacing:.5px; text-transform:uppercase; color:#777; margin-top:2px; }
   h2{
-    font-size:12px; letter-spacing:1.5px; text-transform:uppercase; font-weight:800;
-    color:#12151a; margin:26px 0 10px; padding-left:10px; border-left:4px solid #d9b23c;
+    font-size:11.5px; letter-spacing:1.5px; text-transform:uppercase; font-weight:800;
+    color:#12151a; margin:16px 0 8px; padding-left:10px; border-left:4px solid #d9b23c;
   }
-  table{ width:100%; border-collapse:collapse; font-size:12.5px; margin-bottom:4px; }
+  table{ width:100%; border-collapse:collapse; font-size:12px; margin-bottom:2px; }
   thead td{ display:none; }
   tbody tr:nth-child(odd){ background:#f7f7f8; }
-  td{ padding:8px 10px; }
+  td{ padding:6px 10px; }
   td.val{ text-align:right; font-weight:700; }
   td.positivo{ color:#1a7a3c; }
   td.negativo{ color:#c0392b; }
   .barcell{ width:110px; }
   .barbg{ background:#e6e6e6; border-radius:4px; height:7px; overflow:hidden; }
   .barfill{ background:#d9b23c; height:100%; }
-  .destacados{ display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:6px; }
-  .destacado-card{ background:#f4f5f7; border-radius:10px; padding:12px 14px; }
-  .destacado-card .tag{ font-size:9px; letter-spacing:1px; text-transform:uppercase; color:#999; font-weight:700; display:block; margin-bottom:4px; }
-  .destacado-card .cont{ font-size:12.5px; font-weight:600; }
+  .destacados{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:4px; }
+  .destacado-card{ background:#f4f5f7; border-radius:10px; padding:10px 14px; }
+  .destacado-card .tag{ font-size:8.5px; letter-spacing:1px; text-transform:uppercase; color:#999; font-weight:700; display:block; margin-bottom:3px; }
+  .destacado-card .cont{ font-size:12px; font-weight:600; }
   .destacado-card.full{ grid-column:1/3; }
-  .resultado-final{
-    margin:28px 0 0; padding:18px; text-align:center; border-radius:12px;
-    background:${finDeLaPartida?'#fdecea':'#e9f7ef'}; color:${finDeLaPartida?'#c0392b':'#1a7a3c'};
-    font-weight:800; letter-spacing:.5px; text-transform:uppercase; font-size:13px;
-  }
-  .footer{ margin-top:24px; padding:16px 30px; text-align:center; font-size:10px; color:#999; border-top:1px solid #eee; }
+  .footer{ margin-top:14px; padding:10px 30px; text-align:center; font-size:9.5px; color:#999; border-top:1px solid #eee; }
   @media print{ .band{ border-radius:0; } }
 </style></head><body>
   <div class="band">
@@ -4490,8 +4485,6 @@
     <table><tbody>
       ${dptosFilas}
     </tbody></table>
-
-    <div class="resultado-final">${finDeLaPartida ? t(claveVeredicto) : t('lm.resumen_temporada_puede_continuar')}</div>
   </div>
 
   <div class="footer">Generado automaticamente por Goal2Goat &middot; goal2goat.com</div>

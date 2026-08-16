@@ -182,7 +182,7 @@
     const t=opts.t;
     overlay.innerHTML=`
       <div class="press-modal">
-        <span class="press-icon">🔄</span>
+        <i class="ph ph-bold ph-arrows-clockwise press-icon" style="color:var(--gold)"></i>
         <h3>${t('lm.giro_oferta_titulo')}</h3>
         <p class="press-question">${t('lm.giro_oferta_texto')}</p>
         <div class="lm-giro-oferta-usos">${t('lm.giro_usos_restantes')}: ${opts.usosRestantes}</div>
