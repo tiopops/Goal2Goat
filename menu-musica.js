@@ -72,6 +72,14 @@
       const err=audioEl.error;
       console.error('[Música] No se ha podido cargar el archivo de audio ('+RUTA_AUDIO+'). Código de error:', err?err.code:'?', '— revisa que el archivo exista en esa ruta exacta en el servidor.');
     });
+    // Red de seguridad para el bucle infinito: loop=true ya se
+    // encarga de esto en cualquier navegador moderno, pero por si
+    // algún navegador antiguo o WebView no lo respeta al cien por
+    // cien, este evento fuerza el reinicio manual en cuanto termina
+    // — así el tema nunca se detiene del todo, pase lo que pase.
+    audioEl.addEventListener('ended', ()=>{
+      if(musicaEnabled){ audioEl.currentTime=0; audioEl.play().catch(()=>{}); }
+    });
     return audioEl;
   }
 

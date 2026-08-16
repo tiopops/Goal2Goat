@@ -775,8 +775,12 @@ body.dark-theme .group-row-me.group-row-qualified td{background:#1a2f1a;border-l
 
 /* PRESS EVENT MODAL */
 .press-modal{background:var(--card-bg);padding:24px;max-width:480px;width:90vw;border:2px solid #333}
-.press-modal h3{font-family:'Bebas Neue',Impact,sans-serif;font-size:18px;letter-spacing:1px;color:var(--gold);margin-bottom:12px}
+.press-modal h3{font-family:'Bebas Neue',Impact,sans-serif;font-size:18px;letter-spacing:1px;color:var(--gold);margin-bottom:12px;text-align:center}
 .press-icon{font-size:32px;margin-bottom:8px;display:block}
+/* Imagen de cabecera de la rueda de prensa — mismo ancho que la
+   propia ventana del modal (el padding de .press-modal ya la separa
+   de los bordes), justo encima de la pregunta. */
+.press-image{width:100%;display:block;border-radius:6px;margin-bottom:14px;object-fit:cover}
 .press-question{font-size:16px;color:var(--text);margin-bottom:16px;line-height:1.5;font-style:italic}
 .press-answers{display:flex;flex-direction:column;gap:8px}
 .press-answer-btn{

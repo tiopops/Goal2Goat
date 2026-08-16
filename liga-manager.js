@@ -3033,8 +3033,8 @@
     const event=elegirPreguntaPrensaLM(rivalName);
     overlay.innerHTML=`
       <div class="press-modal">
-        <span class="press-icon">🎙</span>
         <h3>${t('lm.rueda_prensa')}</h3>
+        <img src="assets/images/rueda_prensa.png" class="press-image" alt="Rueda de prensa">
         <p class="press-question">${event.q}</p>
         <div class="press-answers">
           ${event.answers.map((a,i)=>`

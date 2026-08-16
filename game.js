@@ -207,15 +207,41 @@ try{
   const savedAudio=localStorage.getItem('g2g_audioEnabled');
   if(savedAudio!==null) audioEnabled=(savedAudio==='true');
 }catch(e){}
+// Volumen maestro de EFECTOS (0-1) — independiente del interruptor
+// on/off de arriba y del volumen de la música principal, que vive
+// aparte en menu-musica.js. Todo playSound()/tone() pasa por el
+// mismo nodo de ganancia compartido (sfxMasterGain) en vez de
+// conectar cada oscilador directamente a ctx.destination, así un
+// único deslizador controla el volumen de TODOS los efectos a la vez.
+let sfxVolume=1;
+try{
+  const savedVol=localStorage.getItem('g2g_sfxVolume');
+  if(savedVol!==null) sfxVolume=Math.max(0, Math.min(1, parseFloat(savedVol)));
+}catch(e){}
 let audioCtx=null;
+let sfxMasterGain=null;
+function actualizarGananciaEfectos(){
+  if(sfxMasterGain) sfxMasterGain.gain.value = audioEnabled ? sfxVolume : 0;
+}
+function setSfxVolume(v){
+  sfxVolume=Math.max(0, Math.min(1, v));
+  try{ localStorage.setItem('g2g_sfxVolume', sfxVolume); }catch(e){}
+  actualizarGananciaEfectos();
+}
 function getAudioCtx(){
   if(!audioCtx){
     try{ audioCtx=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ audioCtx=null; }
+    if(audioCtx){
+      sfxMasterGain=audioCtx.createGain();
+      sfxMasterGain.connect(audioCtx.destination);
+      actualizarGananciaEfectos();
+    }
   }
   if(audioCtx&&audioCtx.state==='suspended') audioCtx.resume();
   return audioCtx;
 }
 function tone(ctx, freq, start, dur, type, gainPeak, gainEnd){
+  if(!sfxMasterGain){ sfxMasterGain=ctx.createGain(); sfxMasterGain.connect(ctx.destination); actualizarGananciaEfectos(); }
   const osc=ctx.createOscillator();
   const gain=ctx.createGain();
   osc.type=type||'sine';
@@ -223,7 +249,7 @@ function tone(ctx, freq, start, dur, type, gainPeak, gainEnd){
   gain.gain.setValueAtTime(0.0001, ctx.currentTime+start);
   gain.gain.exponentialRampToValueAtTime(gainPeak||0.2, ctx.currentTime+start+0.01);
   gain.gain.exponentialRampToValueAtTime(gainEnd||0.0001, ctx.currentTime+start+dur);
-  osc.connect(gain); gain.connect(ctx.destination);
+  osc.connect(gain); gain.connect(sfxMasterGain);
   osc.start(ctx.currentTime+start);
   osc.stop(ctx.currentTime+start+dur+0.02);
 }
@@ -5184,8 +5210,8 @@ function maybeShowPressConference(callback){
 function showPressEventModal(event, callback){
   document.getElementById("matchOverlay").innerHTML=`
   <div class="press-modal">
-    <span class="press-icon">🎙</span>
     <h3>${window.t?window.t('press.title_full'):'RUEDA DE PRENSA · ANTES DEL PARTIDO'}</h3>
+    <img src="assets/images/rueda_prensa.png" class="press-image" alt="Rueda de prensa">
     <p class="press-question">${event.q}</p>
     <div class="press-answers">
       ${event.answers.map((a,i)=>`
@@ -5835,9 +5861,21 @@ audioToggleBtns.forEach(btn=>{
     audioEnabled=!audioEnabled;
     syncAudioToggleUI();
     try{ localStorage.setItem('g2g_audioEnabled', audioEnabled); }catch(e){}
+    actualizarGananciaEfectos();
     if(audioEnabled) playSound('select');
   });
 });
+// Deslizador de volumen de EFECTOS — se sincroniza con el valor
+// guardado al cargar, y actualiza sfxVolume en vivo mientras se
+// arrastra (sin esperar a soltarlo).
+(function(){
+  const slider=document.getElementById('sfxVolumeSlider');
+  if(!slider) return;
+  slider.value=Math.round(sfxVolume*100);
+  slider.addEventListener('input', ()=>{
+    setSfxVolume(slider.value/100);
+  });
+})();
 themeToggleBtns.forEach(btn=>{
   btn.addEventListener("click",()=>{
     const isDark=document.body.classList.toggle("dark-theme");
