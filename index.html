@@ -111,6 +111,9 @@
         <button id="audioToggleHeader" class="settings-item" title="Activar/desactivar sonido">
           <span class="topbar-dot on"></span><span class="topbar-label" data-i18n="settings.sound">SONIDO</span>
         </button>
+        <button id="musicToggleHeader" class="settings-item" title="Activar/desactivar música de fondo">
+          <span class="topbar-dot on"></span><span class="topbar-label" data-i18n="settings.music">MÚSICA</span>
+        </button>
         <button id="themeToggleHeader" class="settings-item" title="Cambiar tema claro/oscuro">
           <span class="topbar-dot on"></span><span class="topbar-label" data-i18n="settings.theme">TEMA OSCURO</span>
         </button>
@@ -337,6 +340,9 @@
         <div class="profile-settings-row">
           <button id="audioToggle" class="settings-item" title="Activar/desactivar sonido">
             <span class="topbar-dot on"></span><span class="topbar-label" data-i18n="settings.sound">SONIDO</span>
+          </button>
+          <button id="musicToggle" class="settings-item" title="Activar/desactivar música de fondo">
+            <span class="topbar-dot on"></span><span class="topbar-label" data-i18n="settings.music">MÚSICA</span>
           </button>
           <button id="themeToggle" class="settings-item" title="Cambiar tema claro/oscuro">
             <span class="topbar-dot on"></span><span class="topbar-label" data-i18n="settings.theme">TEMA OSCURO</span>
@@ -1183,6 +1189,7 @@
 <script>
   // Cache-busting: force fresh game.js on every page load/refresh
   document.write('<script src="game.js?v=' + Date.now() + '"><\/script>');
+  document.write('<script src="menu-musica.js?v=' + Date.now() + '"><\/script>');
   document.write('<script src="main-menu.js?v=' + Date.now() + '"><\/script>');
   document.write('<script src="teams-data.js?v=' + Date.now() + '"><\/script>');
   document.write('<script src="liga-manager.js?v=' + Date.now() + '"><\/script>');

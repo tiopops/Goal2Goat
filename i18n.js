@@ -1079,6 +1079,7 @@ window.TRANSLATIONS = {
 
   /* ── AJUSTES ── */
   'settings.sound': {es:'SONIDO', en:'SOUND', pt:'SOM', fr:'SON', de:'TON', it:'AUDIO'},
+  'settings.music': {es:'MÚSICA', en:'MUSIC', pt:'MÚSICA', fr:'MUSIQUE', de:'MUSIK', it:'MUSICA'},
   'settings.theme': {es:'TEMA OSCURO', en:'DARK THEME', pt:'TEMA ESCURO', fr:'THÈME SOMBRE', de:'DUNKLES THEMA', it:'TEMA SCURO'},
   'settings.theme_light': {es:'TEMA CLARO', en:'LIGHT THEME', pt:'TEMA CLARO', fr:'THÈME CLAIR', de:'HELLES THEMA', it:'TEMA CHIARO'},
   'settings.team_name': {es:'NOMBRE DEL EQUIPO', en:'TEAM NAME', pt:'NOME DO TIME', fr:'NOM D\'ÉQUIPE', de:'TEAMNAME', it:'NOME SQUADRA'},
