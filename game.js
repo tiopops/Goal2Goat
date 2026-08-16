@@ -3334,8 +3334,8 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
       const ev=allEvents[eventIdx++];
       const label=ev.minute>90?`90+${ev.minute-90}'`:ev.minute>45&&ev.minute<=45+inj1?`45+${ev.minute-45}'`:`${ev.minute}'`;
       addEvt(ev.icon,ev.text,label,ev.type);
-      if(ev.type==='mygoal'){ curMy++; scoreEl.textContent=`${curMy} – ${curOpp}`; flashScore(); playSound('goal'); }
-      else if(ev.type==='oppgoal'){ curOpp++; scoreEl.textContent=`${curMy} – ${curOpp}`; flashScore(); playSound('goal'); }
+      if(ev.type==='mygoal'){ curMy++; scoreEl.textContent=`${curMy} – ${curOpp}`; flashScore(); playSound('goal'); if(window.G2GMusica) window.G2GMusica.reproducirGol(); }
+      else if(ev.type==='oppgoal'){ curOpp++; scoreEl.textContent=`${curMy} – ${curOpp}`; flashScore(); playSound('goal'); if(window.G2GMusica) window.G2GMusica.reproducirGol(); }
     }
     if(frac<1){ requestAnimationFrame(tickReg); return; }
     // Fin reglamento
@@ -4180,8 +4180,8 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
       while(eventIdx<allEvents.length && allEvents[eventIdx].minute<=minute){
         const ev=allEvents[eventIdx++];
         addEvt(ev.icon, ev.text, `${ev.minute}'`, ev.type);
-        if(ev.type==='mygoal'){ curMy++; scoreEl.textContent=`${curMy} – ${curOpp}`; flashScore(); playSound('goal'); }
-        else if(ev.type==='oppgoal'){ curOpp++; scoreEl.textContent=`${curMy} – ${curOpp}`; flashScore(); playSound('goal'); }
+        if(ev.type==='mygoal'){ curMy++; scoreEl.textContent=`${curMy} – ${curOpp}`; flashScore(); playSound('goal'); if(window.G2GMusica) window.G2GMusica.reproducirGol(); }
+        else if(ev.type==='oppgoal'){ curOpp++; scoreEl.textContent=`${curMy} – ${curOpp}`; flashScore(); playSound('goal'); if(window.G2GMusica) window.G2GMusica.reproducirGol(); }
       }
       if(frac<1){ requestAnimationFrame(tickET); return; }
       clockEl.textContent="120'"; halfEl.textContent=t("match.extratime")+" "+(t('match.end')||'FIN'); halfEl.style.background='#555';
@@ -4227,7 +4227,7 @@ function showLiveMatch(myGoals,oppGoals,summary,recovered,newInjuries,won,draw,p
           addEvt(shot.scored?'✅':'❌',`<strong>${shot.name}</strong>`,label(round),'pen_opp');
         }
         updatePenScore();
-        if(shot.scored) playSound('goal');
+        if(shot.scored) playSound('goal'); if(window.G2GMusica) window.G2GMusica.reproducirGol();
         const myRem=myShots.filter((_,i)=>i>=Math.ceil(seqIdx/2)).length;
         const oppRem=oppShots.filter((_,i)=>i>=Math.floor(seqIdx/2)).length;
         const diff=penMy-penOpp;
@@ -5268,12 +5268,29 @@ window.choosePressAnswer=function(idx){
   if(window._pressTimerId){ clearTimeout(window._pressTimerId); window._pressTimerId=null; }
   const event=window._pressEvent;
   const answer=event.answers[idx];
-  document.getElementById("matchOverlay").innerHTML="";
+  // Cambia la imagen de cabecera a la que corresponda al tono de la
+  // respuesta elegida (optimista/neutral/pesimista), con un fundido
+  // rápido, antes de cerrar el modal — igual que el jugador
+  // "reacciona" visualmente a lo que acaba de decir.
+  const imgEl=document.querySelector('#matchOverlay .press-image');
+  if(imgEl){
+    const archivo = answer.stance==='positive' ? 'rueda_prensa_optimista.png'
+      : answer.stance==='negative' ? 'rueda_prensa_pesimista.png'
+      : 'rueda_prensa_neutral.png';
+    imgEl.classList.add('fading');
+    setTimeout(()=>{
+      imgEl.src='assets/images/'+archivo;
+      imgEl.classList.remove('fading');
+    }, 220);
+  }
   // Store the prediction — it will be checked against the real result
   // once this match is played, and resolved in the match result modal.
   pendingPrediction={event, answer};
   showToast(`${window.t?window.t('press.promise_made'):'Promesa hecha'}: "${answer.label}"`, "toast-neutral");
-  setTimeout(()=>{ if(window._pressCallback) window._pressCallback(); }, 700);
+  setTimeout(()=>{
+    document.getElementById("matchOverlay").innerHTML="";
+    if(window._pressCallback) window._pressCallback();
+  }, 700);
 };
 
 /* Resolves the pending prediction against the real match result.

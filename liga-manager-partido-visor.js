@@ -1565,6 +1565,7 @@
             mostrarExplosionGol(objetivoGol.x, objetivoGol.y);
             mostrarAlertaGolCelebracion(objetivoGol.x, objetivoGol.y);
             if(typeof window.playSound==='function') window.playSound('goal');
+            if(window.G2GMusica) window.G2GMusica.reproducirGol();
             setTimeout(()=>{
               // Reorganización real tras el gol: todos los jugadores
               // vuelven a su posición de formación de saque, igual que

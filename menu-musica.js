@@ -1,28 +1,32 @@
 /* ============================================================
-   GOAL2GOAT — Música de fondo para los menús
+   GOAL2GOAT — Música de fondo (menús + partidos) y sonido de gol
    ------------------------------------------------------------
    Archivo aparte y autocontenido: no toca game.js más allá de un
    par de botones/slider de ajustes ya existentes, a los que se
-   engancha desde aquí.
+   engancha desde aquí, y de las llamadas puntuales a
+   window.G2GMusica.reproducirGol() en los puntos donde se marca un
+   gol (game.js, liga-manager.js, liga-manager-partido-visor.js).
 
-   Reproduce el tema principal real (assets/audio/goal2goatMainTheme.mp3)
-   en bucle mientras se navega por los menús — un elemento <audio>
-   normal con loop=true, no una composición sintetizada. Se pausa
-   sola (con un fundido suave) en cuanto se abre un partido en
-   directo — Copa Leyendas (#matchOverlay), Liga Manager modo
-   automático (#lmMatchOverlay) o modo manager
-   (#lmVisorPartidoOverlay) — y se reanuda al cerrarse, para no
-   competir con los efectos de sonido del propio partido.
+   Dos pistas en bucle, con crossfade entre ellas según haya o no un
+   partido en directo abierto — nunca sonando las dos a la vez:
+   - assets/audio/goal2goatMainTheme.mp3 — tema de los menús.
+   - assets/audio/stadium.mp3 — ambiente de estadio durante el
+     partido, sustituye a lo que antes era silencio total.
+   Comparten el mismo interruptor MÚSICA y el mismo deslizador de
+   volumen — conceptualmente es "la música", solo cambia qué pista
+   suena según dónde esté el jugador en cada momento.
 
-   Volumen totalmente independiente del de los EFECTOS de sonido
-   (ese vive en game.js, sfxVolume/sfxMasterGain) — aquí solo se
-   controla el volumen de esta música, con su propio interruptor y
-   su propio deslizador.
+   Además, assets/audio/goal.mp3 se reproduce una vez (no en bucle)
+   cada vez que se marca un gol, con su propio volumen ligado a
+   EFECTOS (sfxVolume de game.js), ya que es un efecto puntual del
+   partido, no música de fondo.
    ============================================================ */
 
 (function(){
 
-  const RUTA_AUDIO='assets/audio/goal2goatMainTheme.mp3';
+  const RUTA_TEMA='assets/audio/goal2goatMainTheme.mp3';
+  const RUTA_ESTADIO='assets/audio/stadium.mp3';
+  const RUTA_GOL='assets/audio/goal.mp3';
   const ENABLED_KEY='g2g_musicaEnabled';
   const VOLUME_KEY='g2g_musicVolume';
 
@@ -32,7 +36,7 @@
     if(saved!==null) musicaEnabled=(saved==='true');
   }catch(e){}
 
-  let musicVolume=0.28;
+  let musicVolume=0.18;
   try{
     const savedVol=localStorage.getItem(VOLUME_KEY);
     if(savedVol!==null) musicVolume=Math.max(0, Math.min(1, parseFloat(savedVol)));
@@ -52,92 +56,116 @@
     return !!(cl && cl.innerHTML && cl.innerHTML.trim()!=='');
   }
 
-  let audioEl=null;
-  let fundidoInterval=null;
-  let intentandoArrancar=false;
-  let yaSonando=false; // true en cuanto play() resuelve con éxito una vez
-
-  function getAudioEl(){
-    if(audioEl) return audioEl;
-    audioEl=new Audio(RUTA_AUDIO);
-    audioEl.loop=true;
-    audioEl.preload='auto';
-    audioEl.volume=0; // arranca en 0 y sube con fundido, nunca de golpe
-    // Diagnóstico: si el archivo no carga (ruta incorrecta en el
-    // servidor, 404, tipo MIME no servido, etc.) se avisa alto y
-    // claro en la consola — antes un fallo aquí quedaba
-    // completamente silencioso, sin ninguna pista de qué había
-    // pasado.
-    audioEl.addEventListener('error', ()=>{
-      const err=audioEl.error;
-      console.error('[Música] No se ha podido cargar el archivo de audio ('+RUTA_AUDIO+'). Código de error:', err?err.code:'?', '— revisa que el archivo exista en esa ruta exacta en el servidor.');
-    });
-    // Red de seguridad para el bucle infinito: loop=true ya se
-    // encarga de esto en cualquier navegador moderno, pero por si
-    // algún navegador antiguo o WebView no lo respeta al cien por
-    // cien, este evento fuerza el reinicio manual en cuanto termina
-    // — así el tema nunca se detiene del todo, pase lo que pase.
-    audioEl.addEventListener('ended', ()=>{
-      if(musicaEnabled){ audioEl.currentTime=0; audioEl.play().catch(()=>{}); }
-    });
-    return audioEl;
+  // ---------- Pista genérica en bucle (usada para tema y estadio) ----------
+  function crearPistaLoop(ruta, nombreParaAvisos){
+    const st={ el:null, fundidoInterval:null, intentandoArrancar:false, yaSonando:false };
+    function getEl(){
+      if(st.el) return st.el;
+      st.el=new Audio(ruta);
+      st.el.loop=true;
+      st.el.preload='auto';
+      st.el.volume=0; // arranca en 0 y sube con fundido, nunca de golpe
+      st.el.addEventListener('error', ()=>{
+        const err=st.el.error;
+        console.error('[Música] No se ha podido cargar '+nombreParaAvisos+' ('+ruta+'). Código de error:', err?err.code:'?', '— revisa que el archivo exista en esa ruta exacta en el servidor.');
+      });
+      // Red de seguridad para el bucle infinito: loop=true ya se
+      // encarga de esto en cualquier navegador moderno, pero por si
+      // algún navegador antiguo o WebView no lo respeta al cien por
+      // cien, este evento fuerza el reinicio manual en cuanto
+      // termina — así la pista nunca se detiene del todo.
+      st.el.addEventListener('ended', ()=>{
+        if(musicaEnabled){ st.el.currentTime=0; st.el.play().catch(()=>{}); }
+      });
+      return st.el;
+    }
+    function fundirHacia(objetivo, duracionMs){
+      if(st.fundidoInterval){ clearInterval(st.fundidoInterval); st.fundidoInterval=null; }
+      const el=getEl();
+      const inicio=el.volume;
+      const pasos=Math.max(1, Math.round((duracionMs||800)/40));
+      let paso=0;
+      st.fundidoInterval=setInterval(()=>{
+        paso++;
+        const t=Math.min(1, paso/pasos);
+        el.volume=inicio+(objetivo-inicio)*t;
+        if(t>=1){ clearInterval(st.fundidoInterval); st.fundidoInterval=null; }
+      }, 40);
+    }
+    function arrancar(){
+      if(st.intentandoArrancar || st.yaSonando || !musicaEnabled) return;
+      st.intentandoArrancar=true;
+      const el=getEl();
+      el.play().then(()=>{
+        st.intentandoArrancar=false;
+        st.yaSonando=true;
+      }).catch((err)=>{
+        // El más habitual es el bloqueo de autoplay por falta de un
+        // gesto reciente del usuario — se reintentará en la próxima
+        // interacción (yaSonando sigue en false, nunca se descarta
+        // para siempre).
+        console.warn('[Música] Reproducción de '+nombreParaAvisos+' bloqueada o fallida de momento ('+(err&&err.name?err.name:err)+') — se reintentará con la próxima interacción.');
+        st.intentandoArrancar=false;
+      });
+    }
+    function parar(){
+      if(!st.el) return;
+      fundirHacia(0, 400);
+      setTimeout(()=>{
+        if(st.el && st.el.volume<=0.01){
+          st.el.pause();
+          // Imprescindible: sin esto, arrancar() se creía "ya
+          // sonando" para siempre después de la primera pausa (la
+          // marca solo se ponía a true al arrancar, nunca se
+          // reseteaba al parar) — así que apagar y volver a
+          // encender la música, o simplemente que la pista se
+          // pausara al entrar en un partido, la dejaba bloqueada
+          // para siempre: nunca se volvía a llamar a .play().
+          st.yaSonando=false;
+        }
+      }, 450);
+    }
+    return { getEl, fundirHacia, arrancar, parar, estado:st };
   }
 
-  // Sube o baja el volumen real del elemento <audio> poco a poco
-  // hasta el objetivo — nunca un salto brusco, ni al empezar a sonar
-  // ni al pausarse por un partido en directo.
-  function fundirHacia(objetivo, duracionMs){
-    if(fundidoInterval){ clearInterval(fundidoInterval); fundidoInterval=null; }
-    const el=getAudioEl();
-    const inicio=el.volume;
-    const pasos=Math.max(1, Math.round((duracionMs||800)/40));
-    let paso=0;
-    fundidoInterval=setInterval(()=>{
-      paso++;
-      const t=Math.min(1, paso/pasos);
-      el.volume=inicio+(objetivo-inicio)*t;
-      if(t>=1){ clearInterval(fundidoInterval); fundidoInterval=null; }
-    }, 40);
-  }
+  const tema=crearPistaLoop(RUTA_TEMA, 'el tema principal');
+  const estadio=crearPistaLoop(RUTA_ESTADIO, 'la música de estadio');
 
-  function volumenObjetivoActual(){
+  function volumenObjetivoTema(){
     if(!musicaEnabled) return 0;
     return hayPartidoEnDirecto() ? 0 : musicVolume;
   }
+  function volumenObjetivoEstadio(){
+    if(!musicaEnabled) return 0;
+    return hayPartidoEnDirecto() ? musicVolume : 0;
+  }
 
   // Comprueba cada segundo si hay un partido en directo abierto o
-  // cerrado, y ajusta el volumen (fundido) en consecuencia — no hace
-  // falta que sea instantáneo, es solo ambientación de fondo.
+  // cerrado, y hace el crossfade entre tema/estadio en consecuencia
+  // — no hace falta que sea instantáneo, es solo ambientación de
+  // fondo. Arranca la pista de estadio la primera vez que hace
+  // falta (por si el jugador nunca llegó a interactuar antes de
+  // entrar a un partido).
   setInterval(()=>{
-    if(!audioEl) return;
-    fundirHacia(volumenObjetivoActual(), 900);
+    if(tema.estado.el) tema.fundirHacia(volumenObjetivoTema(), 900);
+    if(hayPartidoEnDirecto() && musicaEnabled) estadio.arrancar();
+    if(estadio.estado.el) estadio.fundirHacia(volumenObjetivoEstadio(), 900);
   }, 1000);
 
   function arrancarMusica(){
-    if(intentandoArrancar || yaSonando || !musicaEnabled) return;
-    intentandoArrancar=true;
-    const el=getAudioEl();
-    el.play().then(()=>{
-      intentandoArrancar=false;
-      yaSonando=true;
-      fundirHacia(volumenObjetivoActual(), 900);
-    }).catch((err)=>{
-      // El intento más habitual de fallo es que el navegador bloquee
-      // la reproducción automática por falta de un gesto reciente del
-      // usuario — se reintentará en el siguiente clic/tecla/toque
-      // (yaSonando sigue en false, así que no queda descartado para
-      // siempre como pasaba antes). Se deja constancia en consola
-      // para poder diferenciar ese caso normal de un fallo real
-      // (archivo no encontrado, formato no soportado, etc.).
-      console.warn('[Música] Reproducción bloqueada o fallida de momento ('+(err&&err.name?err.name:err)+') — se reintentará con la próxima interacción.');
-      intentandoArrancar=false;
-    });
+    tema.arrancar();
+    if(hayPartidoEnDirecto()) estadio.arrancar();
+    // El fundido al volumen real se dispara aparte (no dentro del
+    // .then() de arrancar()) porque arrancar() puede no hacer nada
+    // si ya estaba sonando — así el volumen se corrige siempre,
+    // haya hecho falta arrancar o no.
+    tema.fundirHacia(volumenObjetivoTema(), 900);
+    estadio.fundirHacia(volumenObjetivoEstadio(), 900);
   }
 
   function pararMusica(){
-    if(!audioEl) return;
-    fundirHacia(0, 400);
-    setTimeout(()=>{ if(audioEl && audioEl.volume<=0.01) audioEl.pause(); }, 450);
+    tema.parar();
+    estadio.parar();
   }
 
   function setMusicaEnabled(valor){
@@ -151,9 +179,28 @@
   function setMusicVolume(v){
     musicVolume=Math.max(0, Math.min(1, v));
     try{ localStorage.setItem(VOLUME_KEY, musicVolume); }catch(e){}
-    if(audioEl && musicaEnabled && !hayPartidoEnDirecto()){
-      audioEl.volume=musicVolume;
-    }
+    if(!musicaEnabled) return;
+    if(tema.estado.el && !hayPartidoEnDirecto()) tema.estado.el.volume=musicVolume;
+    if(estadio.estado.el && hayPartidoEnDirecto()) estadio.estado.el.volume=musicVolume;
+  }
+
+  // ---------- Sonido de gol (efecto puntual, no en bucle) ----------
+  // Instancia nueva cada vez en vez de reutilizar una sola — así, si
+  // hubiera dos goles muy seguidos (Giro Táctico, prórroga...), el
+  // segundo no corta al primero a mitad. Volumen ligado a EFECTOS
+  // (sfxVolume/audioEnabled de game.js), porque es un efecto del
+  // partido, no música de fondo — nunca depende del volumen de
+  // MÚSICA ni de su interruptor.
+  function reproducirGol(){
+    try{
+      const vol = (typeof window.audioEnabled==='undefined' || window.audioEnabled)
+        ? (typeof window.sfxVolume==='number' ? window.sfxVolume : 1)
+        : 0;
+      if(vol<=0) return;
+      const el=new Audio(RUTA_GOL);
+      el.volume=Math.max(0, Math.min(1, vol));
+      el.play().catch(()=>{});
+    }catch(e){}
   }
 
   function sincronizarBotones(){
@@ -187,14 +234,10 @@
   // El primer arranque de audio en cualquier navegador necesita un
   // gesto real del usuario (clic, toque, tecla) — igual que el resto
   // del sistema de sonido del juego. A propósito NO se usa
-  // {once:true}: antes, si el primer intento fallaba por lo que
-  // fuera (no solo por el bloqueo típico de autoplay, cualquier
-  // fallo transitorio), los listeners ya se habían quitado y la
-  // música no se volvía a intentar nunca más en toda la sesión, por
-  // muchos clics que se hicieran después. Ahora se sigue
-  // reintentando en cada interacción hasta que realmente suene
-  // (arrancarMusica() ya no hace nada una vez yaSonando es true, así
-  // que dejar los listeners puestos no tiene coste real).
+  // {once:true}: si el primer intento fallara por lo que fuera, se
+  // sigue reintentando en cada interacción hasta que realmente suene
+  // (arrancar() ya no hace nada una vez yaSonando es true, así que
+  // dejar los listeners puestos no tiene coste real).
   function intentoDeGesto(){
     if(musicaEnabled) arrancarMusica();
   }
@@ -213,6 +256,10 @@
   // si ya estaban conectados, vía dataset.g2gMusicWired).
   setInterval(conectarControles, 2000);
 
-  window.G2GMusica={ setEnabled:setMusicaEnabled, isEnabled:()=>musicaEnabled, setVolume:setMusicVolume, getVolume:()=>musicVolume };
+  window.G2GMusica={
+    setEnabled:setMusicaEnabled, isEnabled:()=>musicaEnabled,
+    setVolume:setMusicVolume, getVolume:()=>musicVolume,
+    reproducirGol,
+  };
 
 })();

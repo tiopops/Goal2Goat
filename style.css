@@ -780,7 +780,8 @@ body.dark-theme .group-row-me.group-row-qualified td{background:#1a2f1a;border-l
 /* Imagen de cabecera de la rueda de prensa — mismo ancho que la
    propia ventana del modal (el padding de .press-modal ya la separa
    de los bordes), justo encima de la pregunta. */
-.press-image{width:100%;display:block;border-radius:6px;margin-bottom:14px;object-fit:cover}
+.press-image{width:100%;display:block;border-radius:6px;margin-bottom:14px;object-fit:cover;transition:opacity .22s ease;opacity:1}
+.press-image.fading{opacity:0}
 .press-question{font-size:16px;color:var(--text);margin-bottom:16px;line-height:1.5;font-style:italic}
 .press-answers{display:flex;flex-direction:column;gap:8px}
 .press-answer-btn{

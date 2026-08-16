@@ -3076,6 +3076,20 @@
         beepTimers.forEach(id=>clearTimeout(id));
         const idx=parseInt(btn.getAttribute('data-lm-press-answer'),10);
         const answer=event.answers[idx];
+        // Cambia la imagen de cabecera a la que corresponda al tono
+        // de la respuesta elegida, con un fundido rápido — mismo
+        // efecto que en Copa Leyendas.
+        const imgEl=overlay.querySelector('.press-image');
+        if(imgEl){
+          const archivo = answer.stance==='positive' ? 'rueda_prensa_optimista.png'
+            : answer.stance==='negative' ? 'rueda_prensa_pesimista.png'
+            : 'rueda_prensa_neutral.png';
+          imgEl.classList.add('fading');
+          setTimeout(()=>{
+            imgEl.src='assets/images/'+archivo;
+            imgEl.classList.remove('fading');
+          }, 220);
+        }
         state.lmPendingPrediction={event, answer};
         guardarEstado();
         if(typeof window.playSound==='function') window.playSound('select');
@@ -3395,6 +3409,7 @@
           const nombre = ev.jugador ? ev.jugador.name : equipoGol;
           addEvt('⚽', `<strong>${nombre}</strong>${racha}`, ev.minute+"'", esLocal);
           if(typeof window.playSound==='function') window.playSound('goal');
+          if(window.G2GMusica) window.G2GMusica.reproducirGol();
         } else if(ev.type==='injury'){
           addEvt('✚', `<strong>${ev.jugador.name}</strong> <span style="font-size:10px;color:var(--red)">(lesión ${ev.sev.label})</span>`, ev.minute+"'", esLocal, 'var(--red)');
         } else if(ev.type==='card'){
