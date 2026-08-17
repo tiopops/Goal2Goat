@@ -1437,6 +1437,19 @@
                 // lesiones (eventosLesionVisor) nunca se tocan.
                 eventosGol = eventosGol.filter(e=>e.minute<=45).concat(nuevosEventos2P.filter(e=>e.type==='goal')).sort((a,b)=>a.minute-b.minute);
                 eventosTarjeta = eventosTarjeta.filter(e=>e.minute<=45).concat(nuevosEventos2P.filter(e=>e.type==='card').map(e=>({...e, tMostrar:(e.minute/90)*DURACION_TOTAL, mostrado:false}))).sort((a,b)=>a.minute-b.minute);
+                // MUY IMPORTANTE: info.eventos es un array APARTE (el
+                // que se generó una única vez al principio del
+                // partido, en liga-manager.js) del que se lee el
+                // resumen final y el histórico — nunca se tocaba
+                // aquí, así que después de usar el Giro Táctico el
+                // marcador cambiaba pero el resumen seguía mostrando
+                // los goles de ANTES de usarlo, completamente
+                // desincronizados. Se reconstruye con el mismo
+                // criterio que eventosGol/eventosTarjeta: primera
+                // parte tal cual, segunda parte sustituida por la
+                // recién generada — las lesiones nunca se tocan,
+                // pasen en el minuto que pasen.
+                info.eventos = (info.eventos||[]).filter(e=>e.minute<=45 || e.type==='injury').concat(nuevosEventos2P).sort((a,b)=>a.minute-b.minute);
                 recalcularPlanGoles();
                 // Marcador y resultado final actualizados — tanto la
                 // cabecera visible del partido como lo que se guarda en
