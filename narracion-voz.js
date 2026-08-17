@@ -135,7 +135,7 @@
     return 'normal';
   }
   const TONOS={
-    gol:        { pitch:1.18, rate:0.82 }, // el grito de gol -- MÁS LENTO, no más rápido, para que se saboree ("GOOOOL", no un atropello)
+    gol:        { pitch:1.18, rate:1.10 }, // el grito de gol -- solo un poco más rápida que la normal (1.04), no un atropello
     ocasion:    { pitch:1.05, rate:1.20 }, // sube la tensión
     tarjeta:    { pitch:0.80, rate:0.94 }, // serio, casi de reproche
     lesion:     { pitch:0.78, rate:0.90 }, // preocupado, más lento
@@ -194,19 +194,11 @@
     if(equipoDetectado) ultimoEquipoNarrado=equipoDetectado;
     return resultado;
   }
-  // Estira la palabra "gol" ("gol" -> "Goooool") para que la voz la
-  // alargue de verdad, como un comentarista real — sin esto, aunque
-  // se hable más despacio, la propia palabra dura lo mismo que
-  // cualquier otra y pasa desapercibida entre el resto de la frase.
-  function alargarGol(texto){
-    return texto.replace(/\bgol\b/gi, 'Goooool');
-  }
   function limpiarTexto(texto){
     let out=texto.replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{2190}-\u{21FF}]/gu,'');
     out=omitirEquipoRepetido(out);
     out=quitarSiglasClub(out);
     out=corregirMayusculas(out);
-    out=alargarGol(out);
     return out.replace(/\s+/g,' ').trim();
   }
 

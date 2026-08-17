@@ -4529,7 +4529,12 @@ body.light-theme.menu-screen{
 }
 .lm-visor-campo-wrap{
   flex:1;min-height:0;display:flex;align-items:center;justify-content:center;
-  background:#060806;padding:12px;position:relative;overflow:hidden;
+  /* Verde, a juego con el propio césped del campo (#3e9853) — antes
+     era casi negro, y como el clima (lluvia, sol...) se aplica como
+     filtro de color sobre este mismo elemento, ahora el margen se
+     tiñe exactamente igual que el campo bajo cualquier condición,
+     en vez de quedar un marco oscuro y desentonado alrededor. */
+  background:#3e9853;padding:12px;position:relative;overflow:hidden;
   touch-action:pan-y;
 }
 .lm-visor-campo-svg{touch-action:pan-y}
