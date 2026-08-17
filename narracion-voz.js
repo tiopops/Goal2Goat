@@ -32,7 +32,6 @@
 
   const ENABLED_KEY='g2g_narracionEnabled';
   const NIVEL_KEY='g2g_narracionNivel';
-  const VOZ_KEY='g2g_narracionVozURI';
 
   const NIVELES=[
     { volumen:0, icon:'ph-speaker-slash' },        // 0: apagado
@@ -52,46 +51,68 @@
     if(saved!==null) narracionEnabled=(saved==='true');
   }catch(e){}
 
-  let vozManualURI=null;
-  try{ vozManualURI=localStorage.getItem(VOZ_KEY); }catch(e){}
-
   const soportada = typeof window.speechSynthesis!=='undefined' && typeof window.SpeechSynthesisUtterance!=='undefined';
+
+  // Idioma del narrador = idioma seleccionado en el propio juego
+  // (window.LANG, i18n.js) — nunca se le da a elegir al jugador, se
+  // adapta sola. Español siempre busca la variante de España
+  // (es-ES) antes que cualquier otra (es-MX, es-US...).
+  const LOCALE_PREFERIDO={ es:'es-ES', en:'en-US', pt:'pt-PT', fr:'fr-FR', de:'de-DE', it:'it-IT' };
+  const PREFIJO_IDIOMA={ es:'es', en:'en', pt:'pt', fr:'fr', de:'de', it:'it' };
 
   // Heurística de "voz masculina madura": la Web Speech API no
   // permite pedir un timbre concreto, así que se puntúan las voces
   // disponibles por su NOMBRE (los motores de voz de los sistemas
   // operativos suelen incluir nombres propios reconocibles) y se
-  // elige la de mayor puntuación. Si el jugador elige una a mano en
-  // Ajustes de Audio, esa siempre gana sobre la automática.
-  const NOMBRES_MASCULINOS=['jorge','diego','pablo','juan','carlos','miguel','enrique','raul','raúl','alonso','fernando','alvaro','álvaro','ricardo','male','hombre'];
-  const NOMBRES_FEMENINOS=['monica','mónica','paulina','esperanza','marisol','sabina','helena','conchita','lucia','lucía','camila','female','mujer','laura','elvira'];
-  function puntuarVoz(v){
+  // elige la de mayor puntuación — nombres masculinos habituales en
+  // los 6 idiomas del juego, no solo en español, ya que la voz debe
+  // sonar a hombre sea cual sea el idioma seleccionado.
+  const NOMBRES_MASCULINOS=[
+    'jorge','diego','pablo','juan','carlos','miguel','enrique','raul','raúl','alonso','fernando','alvaro','álvaro','ricardo', // es
+    'david','james','mark','daniel','alex','fred','george','matthew','ryan','tom', // en
+    'diogo','bruno','duarte','joaquim', // pt
+    'thomas','nicolas','henri','antoine','paul', // fr
+    'stefan','klaus','markus','hans','michael', // de
+    'luca','marco','paolo','giorgio','roberto', // it
+    'male','hombre','homme','uomo','mann','homem',
+  ];
+  const NOMBRES_FEMENINOS=[
+    'monica','mónica','paulina','esperanza','marisol','sabina','helena','conchita','lucia','lucía','camila','laura','elvira', // es
+    'susan','samantha','karen','zira','linda','emma','kate', // en
+    'joana','ines','inês', // pt
+    'julie','celine','céline','amelie','amélie', // fr
+    'anna','petra','katja','marlene', // de
+    'elsa','giulia','francesca','paola', // it
+    'female','mujer','femme','donna','frau','mulher',
+  ];
+  function puntuarVoz(v, prefijoLang){
     const n=(v.name||'').toLowerCase();
     let score=0;
     if(NOMBRES_MASCULINOS.some(nm=>n.includes(nm))) score+=10;
     if(NOMBRES_FEMENINOS.some(nm=>n.includes(nm))) score-=10;
-    if(v.lang && v.lang.toLowerCase().startsWith('es')) score+=5;
+    if(v.lang && v.lang.toLowerCase()===LOCALE_PREFERIDO[window.LANG]) score+=6; // variante exacta (es-ES, no otro es-XX)
+    else if(v.lang && v.lang.toLowerCase().startsWith(prefijoLang)) score+=3;
     if(v.localService) score+=1;
     return score;
   }
 
   let vozSeleccionada=null;
   let vocesDisponibles=[];
+  let ultimoLangUsado=null;
   function elegirVoz(){
     if(!soportada) return null;
     vocesDisponibles=window.speechSynthesis.getVoices();
     if(!vocesDisponibles.length) return null;
-    if(vozManualURI){
-      const elegidaAMano=vocesDisponibles.find(v=>v.voiceURI===vozManualURI);
-      if(elegidaAMano) return elegidaAMano;
-    }
-    const candidatas=vocesDisponibles.filter(v=>v.lang && v.lang.toLowerCase().startsWith('es'));
+    const lang=(window.LANG && PREFIJO_IDIOMA[window.LANG]) ? window.LANG : 'es';
+    ultimoLangUsado=lang;
+    const prefijo=PREFIJO_IDIOMA[lang];
+    const candidatas=vocesDisponibles.filter(v=>v.lang && v.lang.toLowerCase().startsWith(prefijo));
     const pool=candidatas.length?candidatas:vocesDisponibles;
-    return pool.slice().sort((a,b)=>puntuarVoz(b)-puntuarVoz(a))[0] || pool[0];
+    return pool.slice().sort((a,b)=>puntuarVoz(b,prefijo)-puntuarVoz(a,prefijo))[0] || pool[0];
   }
   if(soportada){
     vozSeleccionada=elegirVoz();
-    window.speechSynthesis.onvoiceschanged=()=>{ vozSeleccionada=elegirVoz(); poblarSelectorVoces(); };
+    window.speechSynthesis.onvoiceschanged=()=>{ vozSeleccionada=elegirVoz(); };
   }
 
   // ---------- Categorías emocionales ----------
@@ -114,7 +135,7 @@
     return 'normal';
   }
   const TONOS={
-    gol:        { pitch:1.28, rate:1.32 }, // el grito de gol
+    gol:        { pitch:1.18, rate:0.82 }, // el grito de gol -- MÁS LENTO, no más rápido, para que se saboree ("GOOOOL", no un atropello)
     ocasion:    { pitch:1.05, rate:1.20 }, // sube la tensión
     tarjeta:    { pitch:0.80, rate:0.94 }, // serio, casi de reproche
     lesion:     { pitch:0.78, rate:0.90 }, // preocupado, más lento
@@ -173,11 +194,19 @@
     if(equipoDetectado) ultimoEquipoNarrado=equipoDetectado;
     return resultado;
   }
+  // Estira la palabra "gol" ("gol" -> "Goooool") para que la voz la
+  // alargue de verdad, como un comentarista real — sin esto, aunque
+  // se hable más despacio, la propia palabra dura lo mismo que
+  // cualquier otra y pasa desapercibida entre el resto de la frase.
+  function alargarGol(texto){
+    return texto.replace(/\bgol\b/gi, 'Goooool');
+  }
   function limpiarTexto(texto){
     let out=texto.replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{2190}-\u{21FF}]/gu,'');
     out=omitirEquipoRepetido(out);
     out=quitarSiglasClub(out);
     out=corregirMayusculas(out);
+    out=alargarGol(out);
     return out.replace(/\s+/g,' ').trim();
   }
 
@@ -193,7 +222,7 @@
     ultimoTextoDicho=limpio;
     const u=new SpeechSynthesisUtterance(limpio);
     if(vozSeleccionada) u.voice=vozSeleccionada;
-    u.lang='es-ES';
+    u.lang=LOCALE_PREFERIDO[window.LANG] || 'es-ES';
     u.volume=NIVELES[nivelActual].volumen;
     const tono=TONOS[categoriaDe(texto)];
     u.pitch=tono.pitch;
@@ -251,14 +280,6 @@
     const actual=narracionEnabled?nivelActual:0;
     aplicarNivel((actual+1)%NIVELES.length);
   }
-  function setVoz(voiceURI){
-    vozManualURI=voiceURI||null;
-    try{
-      if(vozManualURI) localStorage.setItem(VOZ_KEY, vozManualURI);
-      else localStorage.removeItem(VOZ_KEY);
-    }catch(e){}
-    vozSeleccionada=elegirVoz();
-  }
 
   function sincronizarBoton(){
     const btn=document.getElementById('lmNarracionToggleBtn');
@@ -271,16 +292,6 @@
   function sincronizarBotonSettings(){
     const dot=document.getElementById('narracionSettingsDot');
     if(dot) dot.classList.toggle('on', narracionEnabled);
-  }
-
-  function poblarSelectorVoces(){
-    const sel=document.getElementById('narracionVozSelect');
-    if(!sel || !soportada) return;
-    const voces=vocesDisponibles.length?vocesDisponibles:window.speechSynthesis.getVoices();
-    if(!voces.length) return;
-    const actual=sel.value;
-    sel.innerHTML='<option value="">Automática</option>'+voces.map(v=>`<option value="${v.voiceURI}">${v.name}${v.lang?' ('+v.lang+')':''}</option>`).join('');
-    sel.value = vozManualURI && voces.some(v=>v.voiceURI===vozManualURI) ? vozManualURI : (actual||'');
   }
 
   function conectarBoton(){
@@ -302,19 +313,23 @@
       });
       sincronizarBotonSettings();
     }
-    const sel=document.getElementById('narracionVozSelect');
-    if(sel && !sel.dataset.g2gWired){
-      sel.dataset.g2gWired='1';
-      poblarSelectorVoces();
-      sel.addEventListener('change', ()=>{ setVoz(sel.value); });
-    }
   }
 
-  setInterval(()=>{ conectarBoton(); observarBarra(); }, 500);
+  // Si el jugador cambia el idioma del juego (menú de ajustes), la
+  // próxima vez que se compruebe aquí se vuelve a elegir voz
+  // automáticamente para el nuevo idioma — nunca hace falta que el
+  // jugador elija nada a mano.
+  setInterval(()=>{
+    conectarBoton();
+    observarBarra();
+    if(soportada && window.LANG && window.LANG!==ultimoLangUsado){
+      vozSeleccionada=elegirVoz();
+    }
+  }, 500);
 
   window.G2GNarracion={
     setEnabled, isEnabled:()=>narracionEnabled, siguienteNivel, getNivel:()=>(narracionEnabled?nivelActual:0),
-    setVoz, getVozActual:()=>vozSeleccionada, soportada,
+    getVozActual:()=>vozSeleccionada, soportada,
   };
 
 })();

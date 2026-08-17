@@ -1620,10 +1620,6 @@ body.dark-theme .profile-settings-row .settings-item{border-bottom-color:#333}
 .settings-item-row .volume-slider{
   flex:1;min-width:60px;accent-color:var(--gold);cursor:pointer;height:4px;
 }
-.narracion-voz-select{
-  flex:1;min-width:60px;max-width:150px;background:var(--card-bg);color:var(--text);
-  border:1px solid var(--line);border-radius:5px;font-size:11px;padding:4px 6px;cursor:pointer;
-}
 body.dark-theme .settings-item-row{border-bottom-color:#333}
 
 /* ===== MEJORAS / UPGRADES TAB ===== */
