@@ -3065,8 +3065,19 @@
     const timerId=setTimeout(()=>{
       if(respondido) return;
       respondido=true;
+      // Aunque se agote el tiempo sin responder, la imagen también
+      // cambia (a la neutral) y se deja ver 1 segundo antes de
+      // cerrar — igual que cuando sí se responde.
+      const imgEl=overlay.querySelector('.press-image');
+      if(imgEl){
+        imgEl.classList.add('fading');
+        setTimeout(()=>{
+          imgEl.src='assets/images/rueda_prensa_neutral.png';
+          imgEl.classList.remove('fading');
+        }, 220);
+      }
       if(typeof showToast==='function') showToast('No respondiste a tiempo — la prensa se queda sin declaraciones.', 'toast-neutral');
-      onDone();
+      setTimeout(onDone, 1000);
     }, DURATION);
     overlay.querySelectorAll('[data-lm-press-answer]').forEach(btn=>{
       btn.addEventListener('click', ()=>{

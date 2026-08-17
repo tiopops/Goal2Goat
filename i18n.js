@@ -382,6 +382,7 @@ window.TRANSLATIONS = {
   'lm.modo_automatico': {es:'MODO AUTOMÁTICO', en:'AUTO MODE', pt:'MODO AUTOMÁTICO', fr:'MODE AUTOMATIQUE', de:'AUTOMATIKMODUS', it:'MODALITA AUTOMATICA'},
   'lm.modo_manager': {es:'MODO MANAGER', en:'MANAGER MODE', pt:'MODO MANAGER', fr:'MODE MANAGER', de:'MANAGER-MODUS', it:'MODALITA MANAGER'},
   'lm.viendo_partido': {es:'SIMULANDO PARTIDO...', en:'SIMULATING MATCH...', pt:'A SIMULAR JOGO...', fr:'SIMULATION DU MATCH...', de:'SPIEL WIRD SIMULIERT...', it:'SIMULAZIONE PARTITA...'},
+  'lm.narracion_toggle': {es:'Activar/desactivar narración por voz', en:'Enable/disable voice narration', pt:'Ativar/desativar narração por voz', fr:'Activer/desactiver la narration vocale', de:'Sprachkommentar ein-/ausschalten', it:'Attiva/disattiva la narrazione vocale'},
   'lm.visor_gol': {es:'¡GOL!', en:'GOAL!', pt:'GOLO!', fr:'BUT !', de:'TOR!', it:'GOL!'},
   'lm.visor_construye': {es:'construye la jugada...', en:'building the play...', pt:'constrói a jogada...', fr:'construit action...', de:'baut den Spielzug auf...', it:'costruisce lazione...'},
   'lm.visor_avanza': {es:'avanza con el balón...', en:'advances with the ball...', pt:'avança com a bola...', fr:'avance avec le ballon...', de:'lauft mit dem Ball vor...', it:'avanza con la palla...'},

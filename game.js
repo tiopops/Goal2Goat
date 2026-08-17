@@ -5256,10 +5256,24 @@ function showPressEventModal(event, callback){
   window._pressTimerId=setTimeout(()=>{
     if(window._pressAnswered) return;
     window._pressAnswered=true;
-    document.getElementById("matchOverlay").innerHTML="";
+    // Aunque se agote el tiempo sin responder, la imagen también
+    // cambia (a la neutral, ya que no se ha elegido ningún tono) y
+    // se deja ver 1 segundo antes de cerrar — igual que cuando sí se
+    // responde, en vez de cerrarse de golpe sin ningún cambio visual.
+    const imgEl=document.querySelector('#matchOverlay .press-image');
+    if(imgEl){
+      imgEl.classList.add('fading');
+      setTimeout(()=>{
+        imgEl.src='assets/images/rueda_prensa_neutral.png';
+        imgEl.classList.remove('fading');
+      }, 220);
+    }
     pendingPrediction=null; // no answer given — no prediction to resolve later
     showToast(window.t?window.t('press.timeout'):'No respondiste a tiempo — la prensa se queda sin declaraciones.', "toast-neutral");
-    if(window._pressCallback) window._pressCallback();
+    setTimeout(()=>{
+      document.getElementById("matchOverlay").innerHTML="";
+      if(window._pressCallback) window._pressCallback();
+    }, 1000);
   }, DURATION);
 }
 window.choosePressAnswer=function(idx){

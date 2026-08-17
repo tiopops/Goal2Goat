@@ -262,7 +262,12 @@
           ${(clima&&clima.id==='wind')?`<div class="lm-visor-viento">${Array.from({length:3}).map((_,i)=>`<div class="weather-gust" style="animation-delay:${(i*1.1).toFixed(1)}s"></div>`).join('')}</div>`:''}
           ${(clima&&(clima.id==='rain'||clima.id==='hot'||clima.id==='sunny'))?`<div class="weather-sheen"></div>`:''}
         </div>
-        <div class="lm-visor-info-bar" id="lmVisorInfoBar">${t('lm.viendo_partido')}</div>
+        <div class="lm-visor-info-bar-wrap">
+          <button id="lmNarracionToggleBtn" class="lm-narracion-toggle" title="${t('lm.narracion_toggle')}">
+            <i class="ph ph-bold ph-speaker-slash"></i>
+          </button>
+          <div class="lm-visor-info-bar" id="lmVisorInfoBar">${t('lm.viendo_partido')}</div>
+        </div>
         <div id="lmVisorResumenBox" style="display:none"></div>
         <button id="lmVisorHistoricoBtn" class="mode-card-btn mode-card-btn-secondary" style="display:none;width:calc(100% - 32px);margin:0 16px 8px"><i class="ph ph-bold ph-notebook"></i> ${t('lm.historico_partido_btn')}</button>
         </div>
@@ -283,10 +288,15 @@
     const minuteroEl=overlay.querySelector('#lmVisorMinutero');
     const miLado = miEsLocal?'home':'away';
     // 1x = el partido completo (90 minutos) se resuelve en 1 minuto
-    // real. 2x y 3x aceleran el tiempo REAL de reproducción (el botón
-    // de velocidad los cicla), pero el reparto de los goles reales
-    // sobre los 90 minutos no cambia — solo se ve más rápido.
-    let velocidadPartido=1;
+    // real, pero ahora "1X" corre más lento que antes (0.6, en vez
+    // de 1.0) para poder seguir mejor lo que va pasando; 2x/3x/4x
+    // aceleran el tiempo REAL de reproducción y hay un 5x nuevo para
+    // ir todavía más rápido. El botón de velocidad cicla por estos
+    // 5 valores. El reparto de los goles reales sobre los 90 minutos
+    // no cambia nunca — solo se ve más rápido o más lento.
+    const VELOCIDADES=[0.6, 2, 3, 4, 5];
+    let velocidadIdx=0;
+    let velocidadPartido=VELOCIDADES[velocidadIdx];
     const DURACION_TOTAL=60000;
     function real(ms){ return ms/velocidadPartido; }
     // Texto grande centrado sobre el campo — GOL, descanso, final del
@@ -2723,8 +2733,9 @@
     const velocidadBtn=overlay.querySelector('#lmVisorVelocidadBtn');
     if(velocidadBtn) velocidadBtn.addEventListener('click', ()=>{
       if(typeof window.playSound==='function') window.playSound('select');
-      velocidadPartido = velocidadPartido>=4 ? 1 : velocidadPartido+1;
-      velocidadBtn.innerHTML = `<i class="ph ph-bold ph-fast-forward"></i> ${t('lm.velocidad')} ${velocidadPartido}X`;
+      velocidadIdx = (velocidadIdx+1) % VELOCIDADES.length;
+      velocidadPartido = VELOCIDADES[velocidadIdx];
+      velocidadBtn.innerHTML = `<i class="ph ph-bold ph-fast-forward"></i> ${t('lm.velocidad')} ${velocidadIdx+1}X`;
     });
     // Salta directamente al resultado real ya decidido de antes (el
     // partido entero se calculó de golpe al principio; el visor solo
