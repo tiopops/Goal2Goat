@@ -26,6 +26,7 @@ window.TRANSLATIONS = {
   'lm.contratar': {es:'CONTRATAR', en:'HIRE', pt:'CONTRATAR', fr:'EMBAUCHER', de:'EINSTELLEN', it:'ASSUMI'},
   'lm.despedir': {es:'DESPEDIR', en:'FIRE', pt:'DEMITIR', fr:'RENVOYER', de:'ENTLASSEN', it:'LICENZIA'},
   'lm.jornada': {es:'JORNADA', en:'MATCHDAY', pt:'JORNADA', fr:'JOURNÉE', de:'SPIELTAG', it:'GIORNATA'},
+  'lm.jornada_de': {es:'de', en:'of', pt:'de', fr:'sur', de:'von', it:'di'},
   'lm.aforo_maximo': {es:'AFORO MÁXIMO', en:'MAX CAPACITY', pt:'CAPACIDADE MÁXIMA', fr:'CAPACITÉ MAXIMALE', de:'MAX. KAPAZITÄT', it:'CAPIENZA MASSIMA'},
   'lm.capital': {es:'CAPITAL', en:'BUDGET', pt:'CAPITAL', fr:'CAPITAL', de:'KAPITAL', it:'CAPITALE'},
   'lm.plantilla': {es:'PLANTILLA', en:'SQUAD', pt:'ELENCO', fr:'EFFECTIF', de:'KADER', it:'ROSA'},

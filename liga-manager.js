@@ -1571,17 +1571,26 @@
     }catch(e){ window._lmSkillsCache=window._lmSkillsCache||{}; }
   }
   function lmSkillActiva(id){ return !!(window._lmSkillsCache && window._lmSkillsCache[id]); }
-  async function renderLigaManagerSkillsTab(){
-    await reRenderPanelConservandoScroll('lmProfileNotesPane', renderLigaManagerSkillsTabImpl);
+  async function renderLigaManagerSkillsTab(omitirRecarga){
+    await reRenderPanelConservandoScroll('lmProfileNotesPane', ()=>renderLigaManagerSkillsTabImpl(omitirRecarga));
   }
-  async function renderLigaManagerSkillsTabImpl(){
+  async function renderLigaManagerSkillsTabImpl(omitirRecarga){
     const list=document.getElementById('lmSkillsList');
     const pointsEl=document.getElementById('lmSkillPointsDisplay');
     if(!list) return;
     if(!list.children.length) list.innerHTML=`<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:12px">${t('lm.cargando')}</div>`;
     const user=window._fbAuth && window._fbAuth.currentUser;
     if(!user){ list.innerHTML=`<div style="text-align:center;padding:20px;color:var(--text-muted)">${t('lm.inicia_sesion_habilidades')}</div>`; return; }
-    await lmCargarSkillsCache();
+    // Justo después de pulsar una habilidad, window._lmSkillsCache ya
+    // tiene el estado correcto en memoria (se acaba de cambiar ahí
+    // mismo) — recargarlo de Firestore en ese momento podía crear una
+    // condición de carrera real: si la lectura llegaba antes de que
+    // la escritura se hubiera asentado del todo, devolvía el estado
+    // VIEJO y deshacía visualmente el cambio que se acababa de hacer
+    // (la habilidad activada parecía no desactivarse nunca, y
+    // viceversa). Se omite esa recarga en ese caso concreto —
+    // sí se recarga de verdad la primera vez que se abre la pestaña.
+    if(!omitirRecarga) await lmCargarSkillsCache();
     let pts=window._lmScratchPoints;
     if(pts===undefined){
       const snap=await window._fbDb.collection('users').doc(user.uid).get();
@@ -1634,7 +1643,7 @@
           try{
             await window._fbDb.collection('users').doc(user.uid).set({ligaManagerSkills:window._lmSkillsCache, scratchPoints:window._lmScratchPoints}, {merge:true});
           }catch(e){}
-          renderLigaManagerSkillsTab();
+          renderLigaManagerSkillsTab(true);
         });
         grid.appendChild(btn);
       });
@@ -6346,7 +6355,7 @@
             ${crestHTML(state.escudo, 76)}
             <div style="flex:1;min-width:0">
               <div class="lm-title">${state.nombreEquipo.toUpperCase()}</div>
-              <div class="lm-sub">Jornada ${Math.min(state.jornadaActual,38)} de 38${temporadaLabel()?` <span class="lm-sub-punto">·</span> <span class="lm-sub-temporada">${temporadaLabel()}</span>`:''}</div>
+              <div class="lm-sub">${t('lm.jornada').charAt(0)+t('lm.jornada').slice(1).toLowerCase()} ${Math.min(state.jornadaActual,38)} ${t('lm.jornada_de')} 38${temporadaLabel()?` <span class="lm-sub-punto">·</span> <span class="lm-sub-temporada">${temporadaLabel()}</span>`:''}</div>
             </div>
             <div class="lm-modo-visual-toggle">
               <button type="button" class="lm-modo-visual-btn ${(!state.modoVisualPartido||state.modoVisualPartido==='auto')?'lm-modo-visual-activo':''}" data-modo-visual="auto"><i class="ph ph-bold ph-fast-forward"></i>${t('lm.modo_automatico')}</button>
