@@ -74,7 +74,7 @@
     // sitio de sobra donde dibujarse sin que el propio SVG lo
     // recorte. El fondo de ese margen es transparente, así que se ve
     // el verde del contenedor de detrás (ya a juego con el clima).
-    const SANGRADO = 11;
+    const SANGRADO = 5.5;
     const CENTRO_X = ANCHO/2, CENTRO_Y = ALTO/2;
 
     const misSlotsBase = formacionActual().slots;
