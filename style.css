@@ -3202,7 +3202,7 @@ body.liga-manager-screen .ranking-btn-label-lm{display:inline}
    si una parte se recorta. */
 #lmPitchBox .position.lm-pos-injured.highlight-pos{
   border-color:#e24b4a;
-  box-shadow:0 0 10px rgba(226,75,74,.6), 0 0 0 5px rgba(255,215,0,.9), 0 0 10px 5px rgba(255,215,0,.6);
+  box-shadow:0 0 10px rgba(226,75,74,.6), 0 0 0 2.5px rgba(255,215,0,.9), 0 0 10px 2.5px rgba(255,215,0,.6);
 }
 
 .lm-slot-list{display:flex;flex-direction:column;gap:6px;max-height:280px;overflow-y:auto;margin-top:6px}
