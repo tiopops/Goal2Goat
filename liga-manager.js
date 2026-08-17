@@ -6346,7 +6346,7 @@
             ${crestHTML(state.escudo, 76)}
             <div style="flex:1;min-width:0">
               <div class="lm-title">${state.nombreEquipo.toUpperCase()}</div>
-              <div class="lm-sub">Jornada ${Math.min(state.jornadaActual,38)} de 38${temporadaLabel()?` <span class="lm-sub-temporada">· ${temporadaLabel()}</span>`:''}</div>
+              <div class="lm-sub">Jornada ${Math.min(state.jornadaActual,38)} de 38${temporadaLabel()?` <span class="lm-sub-punto">·</span> <span class="lm-sub-temporada">${temporadaLabel()}</span>`:''}</div>
             </div>
             <div class="lm-modo-visual-toggle">
               <button type="button" class="lm-modo-visual-btn ${(!state.modoVisualPartido||state.modoVisualPartido==='auto')?'lm-modo-visual-activo':''}" data-modo-visual="auto"><i class="ph ph-bold ph-fast-forward"></i>${t('lm.modo_automatico')}</button>

@@ -2842,8 +2842,18 @@
         ${bloquePrensaVisor}
         ${partesResumen.length?`<div class="lm-visor-resumen-pie">${partesResumen.join(' · ')}</div>`:''}`;
 
-      infoBar.textContent = t('lm.visor_termina');
-      mostrarTextoGrande(t('lm.visor_termina'), real(2000));
+      // Anuncio dramático del vencedor — si no hay empate, se añade al
+      // texto de "FINAL DEL PARTIDO" tanto en la barra de información
+      // (así lo recoge también el narrador por voz, que ya observa
+      // esa barra y da prioridad a cualquier mensaje con "final") como
+      // en el texto grande centrado sobre el campo.
+      let textoFinal = t('lm.visor_termina');
+      if(misGolesFinal!==rivalGolesFinal){
+        const equipoGanador = misGolesFinal>rivalGolesFinal ? miNombre : rivalNombre;
+        textoFinal = `¡${t('lm.visor_termina')}! ${t('lm.visor_equipo_vencedor', equipoGanador.toUpperCase())}`;
+      }
+      infoBar.textContent = textoFinal;
+      mostrarTextoGrande(textoFinal, real(2000));
       if(typeof window.playSound==='function') window.playSound('whistle_final');
 
       partidoTerminado=true;
