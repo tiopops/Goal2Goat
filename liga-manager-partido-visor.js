@@ -45,6 +45,11 @@
     const rival = miEsLocal ? info.away : info.home;
     const miNombre = miEsLocal ? info.home.name : info.away.name;
     const rivalNombre = rival.name;
+    // Expuesto para el narrador por voz (narracion-voz.js) — necesita
+    // saber los nombres reales de los dos equipos de ESTE partido
+    // para poder detectar cuándo una jugada narrada es del mismo
+    // equipo que la anterior y evitar repetir el nombre cada vez.
+    window.G2G_EquiposNarracion={mio:miNombre, rival:rivalNombre};
 
     // Estadísticas reales de ambos equipos — un equipo con mejor pase
     // y técnica falla menos balones en la simulación, uno peor pierde
@@ -2845,6 +2850,7 @@
       if(ballAnimFrameId!==null) cancelAnimationFrame(ballAnimFrameId);
       if(jugadorAnimFrameId!==null) cancelAnimationFrame(jugadorAnimFrameId);
       overlay.remove();
+      window.G2G_EquiposNarracion=null;
       if(onFinish) onFinish();
     });
   }
