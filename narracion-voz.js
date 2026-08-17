@@ -265,7 +265,6 @@
     }catch(e){}
     if(!narracionEnabled) pararTodo();
     sincronizarBoton();
-    sincronizarBotonSettings();
   }
   function setEnabled(v){ aplicarNivel(v ? Math.max(1,nivelActual) : 0); }
   function siguienteNivel(){
@@ -281,10 +280,6 @@
     const icon=btn.querySelector('i');
     if(icon) icon.className='ph ph-bold '+NIVELES[nivelMostrado].icon;
   }
-  function sincronizarBotonSettings(){
-    const dot=document.getElementById('narracionSettingsDot');
-    if(dot) dot.classList.toggle('on', narracionEnabled);
-  }
 
   function conectarBoton(){
     const btn=document.getElementById('lmNarracionToggleBtn');
@@ -295,15 +290,6 @@
         if(typeof window.playSound==='function' && narracionEnabled) window.playSound('select');
       });
       sincronizarBoton();
-    }
-    const btnSettings=document.getElementById('narracionToggleSettings');
-    if(btnSettings && !btnSettings.dataset.g2gWired){
-      btnSettings.dataset.g2gWired='1';
-      btnSettings.addEventListener('click', ()=>{
-        setEnabled(!narracionEnabled);
-        if(typeof window.playSound==='function' && narracionEnabled) window.playSound('select');
-      });
-      sincronizarBotonSettings();
     }
   }
 

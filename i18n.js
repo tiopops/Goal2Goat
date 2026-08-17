@@ -1081,7 +1081,6 @@ window.TRANSLATIONS = {
   /* ── AJUSTES ── */
   'settings.effects': {es:'EFECTOS', en:'EFFECTS', pt:'EFEITOS', fr:'EFFETS', de:'EFFEKTE', it:'EFFETTI'},
   'settings.music': {es:'MÚSICA', en:'MUSIC', pt:'MÚSICA', fr:'MUSIQUE', de:'MUSIK', it:'MUSICA'},
-  'settings.narration': {es:'NARRACIÓN', en:'NARRATION', pt:'NARRAÇÃO', fr:'NARRATION', de:'ERZÄHLUNG', it:'NARRAZIONE'},
   'settings.audio_settings': {es:'AJUSTES DE AUDIO', en:'AUDIO SETTINGS', pt:'DEFINIÇÕES DE ÁUDIO', fr:'PARAMETRES AUDIO', de:'AUDIOEINSTELLUNGEN', it:'IMPOSTAZIONI AUDIO'},
   'settings.theme': {es:'TEMA OSCURO', en:'DARK THEME', pt:'TEMA ESCURO', fr:'THÈME SOMBRE', de:'DUNKLES THEMA', it:'TEMA SCURO'},
   'settings.theme_light': {es:'TEMA CLARO', en:'LIGHT THEME', pt:'TEMA CLARO', fr:'THÈME CLAIR', de:'HELLES THEMA', it:'TEMA CHIARO'},

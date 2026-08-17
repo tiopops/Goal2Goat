@@ -66,6 +66,15 @@
     const esEscritorio = window.matchMedia && window.matchMedia('(min-width:900px)').matches;
     const ANCHO = esEscritorio ? 150 : 100;
     const ALTO = esEscritorio ? 100 : 150;
+    // Margen de "sangrado" del propio lienzo SVG: NO mueve a nadie
+    // (los jugadores, el balón y el campo siguen usando exactamente
+    // las mismas coordenadas 0..ANCHO / 0..ALTO de siempre) — solo
+    // amplía la zona VISIBLE alrededor, para que un círculo o un
+    // nombre pegado justo al borde (el portero, sobre todo) tenga
+    // sitio de sobra donde dibujarse sin que el propio SVG lo
+    // recorte. El fondo de ese margen es transparente, así que se ve
+    // el verde del contenedor de detrás (ya a juego con el clima).
+    const SANGRADO = 11;
     const CENTRO_X = ANCHO/2, CENTRO_Y = ALTO/2;
 
     const misSlotsBase = formacionActual().slots;
@@ -227,7 +236,7 @@
         </div>
         ${clima?`<div class="lm-visor-clima-bar"><span class="lm-visor-clima-texto">${clima.label}</span><span class="lm-visor-giro-usos" id="lmVisorGiroUsos"><i class="ph ph-bold ph-arrows-clockwise"></i> GIRO TÁCTICO <strong>${state.giroTacticoUsosRestantes!==undefined?state.giroTacticoUsosRestantes:'—'}</strong></span></div>`:''}
         <div class="lm-visor-campo-wrap ${climaClase}">
-          <svg class="lm-visor-campo-svg" viewBox="0 0 ${ANCHO} ${ALTO}" preserveAspectRatio="xMidYMid meet">
+          <svg class="lm-visor-campo-svg" viewBox="${-SANGRADO} ${-SANGRADO} ${ANCHO+SANGRADO*2} ${ALTO+SANGRADO*2}" preserveAspectRatio="xMidYMid meet">
             ${franjasHTML}
             ${lineasCampo}
             <circle cx="${CENTRO_X}" cy="${CENTRO_Y}" r="0.8" fill="#eaf5ea" opacity="0.9"/>
@@ -952,16 +961,7 @@
         const dirAdelantoY = esEscritorio ? 0 : (esMio?-1:1);
         const gkX = (esEscritorio ? golPropioGK.x : golPropioGK.x+desvioLateralGK) + dirAdelantoX*adelantoGK;
         const gkY = (esEscritorio ? golPropioGK.y+desvioLateralGK : golPropioGK.y) + dirAdelantoY*adelantoGK;
-        // Margen de seguridad: sin esto, el portero podía quedarse
-        // pegado exactamente en la línea de gol (x=0 o x=ANCHO) en
-        // cuanto adelantoGK era 0 (lo más habitual, cuando no está
-        // atacando a fondo), y el SVG recorta cualquier círculo o
-        // texto que se salga de su propio lienzo — así el portero y
-        // su nombre se veían cortados por el borde del campo.
-        const MARGEN_GK=9;
-        const gkXSeguro=Math.max(MARGEN_GK, Math.min(ANCHO-MARGEN_GK, gkX));
-        const gkYSeguro=Math.max(MARGEN_GK, Math.min(ALTO-MARGEN_GK, gkY));
-        if(idxExcluir!==0) setTimeout(()=>moverJugador(esMio, 0, gkXSeguro, gkYSeguro, 900), real(200));
+        if(idxExcluir!==0) setTimeout(()=>moverJugador(esMio, 0, gkX, gkY, 900), real(200));
 
         const destinos=[]; // para la separación: no dejar que dos caigan en el mismo punto
         for(let i=1;i<pos.length;i++){
