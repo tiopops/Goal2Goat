@@ -244,6 +244,79 @@
     return plantilla;
   }
 
+  // Traduce los códigos de posición en inglés del Excel de Liga
+  // Personalizada (GK, CB, LB...) a los códigos internos en español
+  // que usa el resto del juego para las formaciones (POR, DFC, LI...).
+  const POS_EXCEL_A_INTERNA={
+    GK:'POR', CB:'DFC', LB:'LI', RB:'LD', LWB:'LI', RWB:'LD',
+    CDM:'MC', CM:'MC', CAM:'MC', LM:'MC', RM:'MC',
+    LW:'EI', RW:'ED', ST:'DC', CF:'DC',
+  };
+  // A partir de un equipo importado del Excel de Liga Personalizada
+  // (once inicial + banquillo, con posición y las 5 estadísticas
+  // reales que rellenó el jugador), genera la plantilla completa en
+  // el mismo formato que usa el resto del juego. Cada jugador
+  // importado se asigna al hueco de formación (POR/DFC/LI/LD/MC/EI/
+  // ED/DC) cuya posición traducida coincida mejor — si sobra algún
+  // hueco sin coincidencia exacta, se rellena igualmente con quien
+  // quede libre, para no dejar nunca una plaza vacía.
+  function generarPlantillaDesdeEquipoCustom(equipoCustom){
+    const tamanoBanquillo=lmMaxBanquillo();
+    function traducirPos(posExcel){ return POS_EXCEL_A_INTERNA[posExcel]||'MC'; }
+    function jugadorDe(id, j, posInterna, esSuplente){
+      const overall=Math.round((j.atk+j.def+j.pace+j.pas+j.tech)/5);
+      return {
+        id, name:j.nombre, numero:j.num, position:posInterna, overall,
+        attack:j.atk, defense:j.def, pace:j.pace, passing:j.pas, technique:j.tech,
+        fatigue:100, racha:0, esSuplente:!!esSuplente,
+        injured:false, injuryWeeks:0, injurySeverity:null,
+        salario:calcularSalario(overall)
+      };
+    }
+    function asignarPorSlots(jugadoresOrigen, slots){
+      const disponibles=jugadoresOrigen.slice();
+      return slots.map(slot=>{
+        let idx=disponibles.findIndex(j=>traducirPos(j.pos)===slot);
+        if(idx===-1) idx=0; // sin coincidencia exacta -> se usa quien quede, nunca se deja el hueco vacío
+        const j=disponibles.splice(idx,1)[0];
+        return {j, slot};
+      });
+    }
+    const POSICIONES_TITULARES=["POR","DFC","DFC","LI","LD","MC","MC","MC","EI","ED","DC"];
+    const POSICIONES_BANQUILLO_BASE=["POR","DFC","MC","ED","DC"];
+    const asignXI=asignarPorSlots(equipoCustom.xi, POSICIONES_TITULARES);
+    const plantilla=asignXI.map((a,i)=>jugadorDe('p'+i, a.j, a.slot, false));
+
+    const bancaFuente=equipoCustom.bench.length?equipoCustom.bench:equipoCustom.xi;
+    const numBanca=Math.min(tamanoBanquillo, bancaFuente.length);
+    const bancaSlots=[]; for(let i=0;i<numBanca;i++) bancaSlots.push(POSICIONES_BANQUILLO_BASE[i%POSICIONES_BANQUILLO_BASE.length]);
+    const asignBanca=asignarPorSlots(bancaFuente, bancaSlots);
+    asignBanca.forEach((a,i)=>plantilla.push(jugadorDe('b'+i, a.j, a.slot, true)));
+
+    return plantilla;
+  }
+  // Convierte un equipo importado a un objeto "rival" con la MISMA
+  // forma que los de teams-data.js (LM_RIVALS) — así el resto del
+  // motor del juego (clima, simulación, historial, máximo goleador
+  // de la liga...) puede tratar a los equipos personalizados
+  // exactamente igual que a los reales, sin ninguna rama de código
+  // aparte. Las estadísticas de equipo son la media real de su once
+  // inicial (no un número inventado).
+  function equipoCustomARival(equipoCustom){
+    const media=(campo)=>Math.round(equipoCustom.xi.reduce((s,j)=>s+j[campo],0)/equipoCustom.xi.length);
+    const plantilla=equipoCustom.xi.concat(equipoCustom.bench).map(j=>{
+      const jug={n:j.num, name:j.nombre, attack:j.atk, defense:j.def, pace:j.pace, passing:j.pas, technique:j.tech};
+      if(j.pos==='GK') jug.pos='POR';
+      return jug;
+    });
+    return {
+      id:equipoCustom.key, name:equipoCustom.displayName,
+      attack:media('atk'), defense:media('def'), pace:media('pace'), passing:media('pas'), technique:media('tech'),
+      crestImg:(window.G2G_LigaPersonalizada?window.G2G_LigaPersonalizada.getCrest(equipoCustom.key):null),
+      plantilla,
+    };
+  }
+
   /* ---------- 3b. Formaciones seleccionables — a diferencia de Copa
      Leyendas (fija al empezar), aquí se puede elegir antes de cada
      partido. Coordenadas en % sobre el mismo campo (480×640). ---------- */
@@ -1721,6 +1794,7 @@
     }, 1000);
   }
   let setupData={liga:'es', moneda:null, nombre:'', escudo:null, modo:null, equipoElegidoId:null};
+  let lpEstado={erroresExcel:[], erroresEscudos:[]}; // estado transitorio de la pantalla de Liga Personalizada
 
   function nuevoEstadoSinEmpezar(){ return { setupComplete:false }; }
 
@@ -1820,12 +1894,21 @@
     //   impar de equipos, que es lo que rompía el calendario antes
     //   (con 19 equipos, el generador no podía funcionar y acababa
     //   emparejando a un equipo consigo mismo, jornada tras jornada).
-    const idAExcluir = equipoRealElegidoId || LM_RIVALS[Math.floor(Math.random()*LM_RIVALS.length)].id;
-    const rivalesBarajados=LM_RIVALS.filter(r=>r.id!==idAExcluir).slice();
+    // En Liga Personalizada el mismo patrón se aplica sobre los
+    // equipos importados del Excel en vez de sobre LM_RIVALS — por
+    // eso la pantalla de importación exige un número PAR de equipos.
+    const esCustomLiga = liga==='custom';
+    const poolRivales = esCustomLiga
+      ? (window.G2G_LigaPersonalizada?window.G2G_LigaPersonalizada.getEquipos():[]).map(equipoCustomARival)
+      : LM_RIVALS;
+    const idAExcluir = equipoRealElegidoId || poolRivales[Math.floor(Math.random()*poolRivales.length)].id;
+    const rivalesBarajados=poolRivales.filter(r=>r.id!==idAExcluir).slice();
     if(typeof shuffle==='function') shuffle(rivalesBarajados); // shuffle() muta en el sitio, no devuelve nada
     const teams=[miEquipo, ...rivalesBarajados];
-    const equipoRealElegido = equipoRealElegidoId ? LM_RIVALS.find(r=>r.id===equipoRealElegidoId) : null;
-    const plantilla = equipoRealElegido ? generarPlantillaDesdeEquipoReal(equipoRealElegido) : generarMiniPlantilla();
+    const equipoRealElegido = equipoRealElegidoId ? poolRivales.find(r=>r.id===equipoRealElegidoId) : null;
+    const plantilla = esCustomLiga
+      ? (equipoRealElegidoId ? generarPlantillaDesdeEquipoCustom((window.G2G_LigaPersonalizada.getEquipos()||[]).find(e=>e.key===equipoRealElegidoId)) : generarMiniPlantilla())
+      : (equipoRealElegido ? generarPlantillaDesdeEquipoReal(equipoRealElegido) : generarMiniPlantilla());
     state={
       setupComplete:true,
       liga, moneda, nombreEquipo, escudo,
@@ -5952,6 +6035,112 @@
     }
   }
 
+  /* ---------- 10.5 Liga Personalizada: pantalla de importación ---------- */
+  function renderLigaPersonalizadaScreen(){
+    const equipos=(window.G2G_LigaPersonalizada?window.G2G_LigaPersonalizada.getEquipos():[])||[];
+    const faltantes=(window.G2G_LigaPersonalizada?window.G2G_LigaPersonalizada.faltanEscudos():[])||[];
+    // El generador de calendario (mismo que usan las ligas reales)
+    // necesita un número PAR de equipos en total — igual que en la
+    // liga española, tu propio club siempre ocupa una de las plazas
+    // importadas, así que el número de equipos IMPORTADOS debe ser
+    // par para que el total salga par también.
+    const numeroImpar=equipos.length>0 && equipos.length%2!==0;
+    const tieneEquipos=equipos.length>0 && !numeroImpar;
+
+    function bloqueError(titulo, problema, sugerencia){
+      return `
+        <div class="lm-lp-error-item">
+          <i class="ph ph-bold ph-warning-circle"></i>
+          <div>
+            <div class="lm-lp-error-titulo">${titulo}</div>
+            <div class="lm-lp-error-problema">${problema}</div>
+            ${sugerencia?`<div class="lm-lp-error-sugerencia"><i class="ph ph-bold ph-lightbulb"></i> ${sugerencia}</div>`:''}
+          </div>
+        </div>`;
+    }
+    const erroresExcelHTML=lpEstado.erroresExcel.map(e=>bloqueError(
+      e.equipo?`${e.equipo}${e.fila?` — ${t('lm.fila')} ${e.fila}`:''}${e.campo?` (${e.campo})`:''}`:'Excel',
+      e.problema, e.sugerencia,
+    )).join('');
+    const erroresEscudosHTML=lpEstado.erroresEscudos.map(e=>bloqueError(e.nombre||'Escudo', e.problema, e.sugerencia)).join('');
+    const errorImparHTML=numeroImpar?bloqueError('Excel', t('lm.lp_numero_impar', equipos.length), t('lm.lp_numero_impar_sugerencia')):'';
+    const hayErrores=lpEstado.erroresExcel.length || lpEstado.erroresEscudos.length || numeroImpar;
+
+    const estadoHTML=(equipos.length>0 && !numeroImpar)?`
+      <div class="lm-lp-estado ${faltantes.length?'lm-lp-estado-aviso':'lm-lp-estado-ok'}">
+        <i class="ph ph-bold ${faltantes.length?'ph-warning-circle':'ph-check-circle'}"></i>
+        ${t('lm.lp_equipos_importados', equipos.length)}${faltantes.length?` — ${t('lm.lp_faltan_escudos', faltantes.length)}: ${faltantes.join('.png, ')}.png`:` — ${t('lm.lp_todos_escudos_ok')}`}
+      </div>`:'';
+
+    return `
+      <div class="lm-setup-title">${t('lm.liga_personalizada')}</div>
+      <p class="lm-setup-desc">${t('lm.liga_personalizada_desc')}</p>
+      <a href="assets/templates/Goal2Goat_Custom_League_Base.xlsx" download class="lm-lp-descarga">
+        <i class="ph ph-bold ph-file-arrow-down"></i> ${t('lm.descargar_plantilla')}
+      </a>
+      ${estadoHTML}
+      <div class="lm-lp-botones">
+        <button id="lmLpImportarEquipos" class="mode-card-btn mode-card-btn-secondary"><i class="ph ph-bold ph-file-xls"></i> ${t('lm.importar_equipos')}</button>
+        <button id="lmLpImportarEscudos" class="mode-card-btn mode-card-btn-secondary" ${tieneEquipos?'':'disabled'}><i class="ph ph-bold ph-image"></i> ${t('lm.importar_escudos')}</button>
+      </div>
+      ${hayErrores?`<div class="lm-lp-errores">${errorImparHTML}${erroresExcelHTML}${erroresEscudosHTML}</div>`:''}
+      <input type="file" id="lmLpFileExcel" accept=".xlsx" style="display:none">
+      <input type="file" id="lmLpFileEscudos" accept=".png" multiple style="display:none">
+      <div class="lm-popup-actions">
+        <button id="lmSetupNext" class="mode-card-btn mode-card-btn-gold" ${tieneEquipos?'':'disabled'}>${t('lm.continuar')}</button>
+      </div>
+      <div class="lm-popup-actions" style="margin-top:8px"><button id="lmSetupAtras" class="mode-card-btn mode-card-btn-secondary">${t('lm.atras')}</button></div>
+    `;
+  }
+
+  function wireLigaPersonalizadaScreen(root){
+    const btnExcel=document.getElementById('lmLpImportarEquipos');
+    const inputExcel=document.getElementById('lmLpFileExcel');
+    if(btnExcel && inputExcel && !btnExcel.dataset.wired){
+      btnExcel.dataset.wired='1';
+      btnExcel.addEventListener('click', ()=>{ if(typeof window.playSound==='function') window.playSound('select'); inputExcel.click(); });
+      inputExcel.addEventListener('change', async ()=>{
+        const file=inputExcel.files[0];
+        if(!file) return;
+        btnExcel.disabled=true;
+        const resultado=await window.G2G_LigaPersonalizada.importarExcel(file);
+        lpEstado.erroresExcel=resultado.errores||[];
+        if(resultado.ok && resultado.equipos){
+          window.G2G_LigaPersonalizada.setEquipos(resultado.equipos);
+        }
+        inputExcel.value='';
+        renderSetup();
+      });
+    }
+    const btnEscudos=document.getElementById('lmLpImportarEscudos');
+    const inputEscudos=document.getElementById('lmLpFileEscudos');
+    if(btnEscudos && inputEscudos && !btnEscudos.dataset.wired){
+      btnEscudos.dataset.wired='1';
+      btnEscudos.addEventListener('click', ()=>{ if(typeof window.playSound==='function') window.playSound('select'); inputEscudos.click(); });
+      inputEscudos.addEventListener('change', async ()=>{
+        if(!inputEscudos.files.length) return;
+        btnEscudos.disabled=true;
+        const resultado=await window.G2G_LigaPersonalizada.importarEscudos(inputEscudos.files);
+        lpEstado.erroresEscudos=resultado.errores||[];
+        inputEscudos.value='';
+        renderSetup();
+      });
+    }
+    const next=document.getElementById('lmSetupNext');
+    if(next) next.addEventListener('click', ()=>{
+      if(!window.G2G_LigaPersonalizada.getEquipos().length) return;
+      if(typeof window.playSound==='function') window.playSound('select');
+      setupStep=2;
+      renderSetup();
+    });
+    const atras=document.getElementById('lmSetupAtras');
+    if(atras) atras.addEventListener('click', ()=>{
+      if(typeof window.playSound==='function') window.playSound('select');
+      setupStep=1;
+      renderSetup();
+    });
+  }
+
   /* ---------- 11. Render: flujo de entrada (liga → moneda → nombre → escudo) ---------- */
   function renderSetup(){
     const root=document.getElementById('ligaManagerScreen');
@@ -5961,14 +6150,18 @@
       inner=`
         <div class="lm-setup-title">${t('lm.elige_liga')}</div>
         <div class="lm-setup-list">
-          ${LIGAS_DISPONIBLES.map(l=>`
-            <div class="lm-setup-option ${l.activa?'active selected':'disabled'}" data-liga="${l.id}">
+          ${LIGAS_DISPONIBLES.filter(l=>l.activa).map(l=>`
+            <div class="lm-setup-option active selected" data-liga="${l.id}">
               <img src="${l.flagImg}" alt="" style="width:22px;height:16px;object-fit:cover;border-radius:2px;vertical-align:middle;margin-right:10px">${l.nombre}
-              ${!l.activa?`<span class="lm-setup-soon">${t('lm.proximamente')}</span>`:''}
             </div>`).join('')}
+          <div class="lm-setup-option active" data-liga="custom">
+            <i class="ph ph-bold ph-sliders-horizontal" style="width:22px;text-align:center;vertical-align:middle;margin-right:10px;color:var(--gold)"></i>${t('lm.liga_personalizada')}
+          </div>
         </div>
         <div class="lm-popup-actions"><button id="lmSetupNext" class="mode-card-btn mode-card-btn-gold">${t('lm.siguiente')}</button></div>
       `;
+    } else if(setupStep===1.5){
+      inner=renderLigaPersonalizadaScreen();
     } else if(setupStep===2){
       inner=`
         <div class="lm-setup-title">${t('lm.elige_moneda')}</div>
@@ -5995,11 +6188,15 @@
         <div class="lm-popup-actions"><button id="lmSetupNext" class="mode-card-btn mode-card-btn-gold" ${setupData.modo?'':'disabled'}>${t('lm.siguiente')}</button></div>
       `;
     } else if(setupStep===2.6){
+      const esCustomListaEquipos=setupData.liga==='custom';
+      const listaEquiposElegir=esCustomListaEquipos
+        ? (window.G2G_LigaPersonalizada.getEquipos()||[]).map(e=>({id:e.key, name:e.displayName, crestImg:window.G2G_LigaPersonalizada.getCrest(e.key)}))
+        : LM_RIVALS;
       inner=`
         <div class="lm-setup-title">${t('lm.elige_tu_equipo')}</div>
         <p class="lm-setup-desc">${t('lm.elige_tu_equipo_desc')}</p>
         <div class="lm-setup-list lm-setup-equipos-list">
-          ${LM_RIVALS.map(r=>`
+          ${listaEquiposElegir.map(r=>`
             <div class="lm-setup-option lm-setup-option-equipo ${setupData.equipoElegidoId===r.id?'selected':''}" data-equipo="${r.id}">
               ${rivalCrestHTML(28, r.crestImg)}<span>${r.name}</span>
             </div>`).join('')}
@@ -6054,7 +6251,13 @@
         });
       });
       const next=document.getElementById('lmSetupNext');
-      if(next) next.addEventListener('click', ()=>{ if(typeof window.playSound==='function') window.playSound('select'); setupStep=2; renderSetup(); });
+      if(next) next.addEventListener('click', ()=>{
+        if(typeof window.playSound==='function') window.playSound('select');
+        setupStep = setupData.liga==='custom' ? 1.5 : 2;
+        renderSetup();
+      });
+    } else if(setupStep===1.5){
+      wireLigaPersonalizadaScreen(root);
     } else if(setupStep===2){
       root.querySelectorAll('[data-moneda]').forEach(el=>{
         el.addEventListener('click', ()=>{
@@ -6119,7 +6322,10 @@
       if(next) next.addEventListener('click', ()=>{
         if(!setupData.equipoElegidoId) return;
         if(typeof window.playSound==='function') window.playSound('select');
-        const equipo=LM_RIVALS.find(r=>r.id===setupData.equipoElegidoId);
+        const esCustomElegir=setupData.liga==='custom';
+        const equipo=esCustomElegir
+          ? (()=>{ const e=(window.G2G_LigaPersonalizada.getEquipos()||[]).find(x=>x.key===setupData.equipoElegidoId); return e?{name:e.displayName, id:e.key, crestImg:window.G2G_LigaPersonalizada.getCrest(e.key)}:null; })()
+          : LM_RIVALS.find(r=>r.id===setupData.equipoElegidoId);
         if(!equipo) return;
         const escudo={type:'image', data:equipo.crestImg};
         empezarTemporada(equipo.name, setupData.moneda, setupData.liga, escudo, equipo.id);
