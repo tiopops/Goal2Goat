@@ -241,7 +241,24 @@
     // normal, más abajo).
     if(window.AndroidTTS && typeof window.AndroidTTS.speak==='function'){
       hablando=true;
-      try{ window.AndroidTTS.speak(limpio, tono.pitch, tono.rate, NIVELES[nivelActual].volumen); }catch(e){}
+      // Se manda también el idioma actual del juego (mismo mapeo que
+      // ya usa la Web Speech API más abajo) — sin esto, el puente
+      // nativo no tenía forma de saber qué idioma tocaba usar y
+      // siempre hablaba en español, sin importar lo que el jugador
+      // tuviera seleccionado en el juego.
+      const localeActual=LOCALE_PREFERIDO[window.LANG] || 'es-ES';
+      try{
+        window.AndroidTTS.speak(limpio, tono.pitch, tono.rate, NIVELES[nivelActual].volumen, localeActual);
+      }catch(e){
+        // Red de seguridad: si el puente nativo instalado en el
+        // dispositivo todavía es una versión antigua (con speak() de
+        // solo 4 parámetros, sin el idioma), la llamada de arriba
+        // falla porque el número de argumentos no coincide con
+        // ningún método nativo expuesto — sin este reintento, esa
+        // llamada fallida dejaba el narrador completamente mudo en
+        // vez de sonar aunque fuera con el idioma antiguo.
+        try{ window.AndroidTTS.speak(limpio, tono.pitch, tono.rate, NIVELES[nivelActual].volumen); }catch(e2){}
+      }
       // El puente nativo no tiene forma directa de avisar cuándo
       // termina de hablar sin código adicional en el lado Android —
       // se estima la duración a partir de la longitud del texto para
@@ -421,6 +438,28 @@
     }
   }, 500);
 
+  // Anuncio FORZADO: para el resultado final ("¡FINAL DEL PARTIDO! ¡X
+  // ES EL VENCEDOR!"), que nunca puede faltar. A diferencia de
+  // narrar() normal, esto:
+  // - Ignora la protección de "no repetir la misma frase dos veces
+  //   seguidas" (por si por cualquier casualidad coincidiera con la
+  //   última frase dicha, cosa muy improbable pero no imposible).
+  // - Interrumpe cualquier cosa que se estuviera diciendo en ese
+  //   momento, en vez de esperar cola.
+  // - Sustituye lo que hubiera en la cola prioritaria, para que este
+  //   anuncio salga literalmente ya, no "en algún momento".
+  // Sigue respetando que la narración esté activada — si el jugador
+  // la ha apagado a propósito, aquí tampoco se fuerza a hablar.
+  function narrarSiempre(texto){
+    if(!narracionEnabled || !hayMotorDeVoz() || !texto || !texto.trim()) return;
+    if(soportada && hablando) window.speechSynthesis.cancel();
+    if(window.AndroidTTS && typeof window.AndroidTTS.stop==='function' && hablando){ try{ window.AndroidTTS.stop(); }catch(e){} }
+    ultimoTextoDicho=null;
+    hablando=false;
+    colaPrioridad=[texto];
+    continuar();
+  }
+
   window.G2GNarracion={
     setEnabled, isEnabled:()=>narracionEnabled, siguienteNivel, getNivel:()=>(narracionEnabled?nivelActual:0),
     getVozActual:()=>vozSeleccionada, soportada,
@@ -431,6 +470,7 @@
     // MOSTRAR RESULTADOS" y por lo que sea el observador no llega a
     // reaccionar a tiempo a ese cambio concreto de texto.
     narrarTexto:(texto)=>narrar(texto),
+    narrarSiempre,
   };
 
 })();

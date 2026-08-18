@@ -2859,7 +2859,12 @@
       // cambios de la barra — este anuncio debe decirse SIEMPRE, tanto
       // si el partido llega a los 90' de forma natural como si se
       // corta antes con "TERMINAR Y MOSTRAR RESULTADOS".
-      if(window.G2GNarracion && typeof window.G2GNarracion.narrarTexto==='function') window.G2GNarracion.narrarTexto(textoFinal);
+      // narrarSiempre() en vez de narrarTexto(): este anuncio es el
+      // más importante de todo el partido y nunca puede faltar —
+      // interrumpe cualquier otra cosa que se estuviera narrando e
+      // ignora la protección de "no repetir la misma frase", que
+      // podría (por pura coincidencia) hacer que se omitiera.
+      if(window.G2GNarracion && typeof window.G2GNarracion.narrarSiempre==='function') window.G2GNarracion.narrarSiempre(textoFinal);
 
       partidoTerminado=true;
       cerrarBtn.textContent = t('lm.continuar');

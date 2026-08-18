@@ -198,7 +198,10 @@
         : 0;
       if(vol<=0) return;
       const el=new Audio(RUTA_GOL);
-      el.volume=Math.max(0, Math.min(1, vol));
+      // Un poco más alto que el resto de efectos a propósito, para que
+      // el momento del gol se note más — con tope en 1 (el máximo que
+      // admite el propio elemento de audio).
+      el.volume=Math.max(0, Math.min(1, vol*1.15));
       el.play().catch(()=>{});
     }catch(e){}
   }
