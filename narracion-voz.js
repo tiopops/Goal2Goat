@@ -113,6 +113,21 @@
   if(soportada){
     vozSeleccionada=elegirVoz();
     window.speechSynthesis.onvoiceschanged=()=>{ vozSeleccionada=elegirVoz(); };
+    // La app móvil (WebView de Android) es el caso conflictivo aquí:
+    // getVoices() suele devolver una lista VACÍA nada más cargar la
+    // página, y en bastantes versiones de WebView el evento
+    // "voiceschanged" nunca llega a dispararse — así que fiarse solo
+    // de ese evento deja la narración sin voz para siempre en esos
+    // casos. Como red de seguridad, se reintenta a mano cada segundo
+    // durante los primeros 15s (tiempo de sobra para que el motor de
+    // voz del sistema termine de inicializarse), y se para en cuanto
+    // ya hay una voz elegida.
+    let intentosVoz=0;
+    const intervaloVoces=setInterval(()=>{
+      intentosVoz++;
+      if(vozSeleccionada || intentosVoz>15){ clearInterval(intervaloVoces); return; }
+      vozSeleccionada=elegirVoz();
+    }, 1000);
   }
 
   // ---------- Categorías emocionales ----------
@@ -213,6 +228,10 @@
     if(!limpio || limpio===ultimoTextoDicho){ continuar(); return; }
     ultimoTextoDicho=limpio;
     const u=new SpeechSynthesisUtterance(limpio);
+    // Si no hay voz elegida (típico en WebView de Android mientras el
+    // motor de voz del sistema no ha terminado de listar sus voces)
+    // se deja que el propio sistema use su voz por defecto en vez de
+    // no decir nada — mejor una voz no ideal que silencio total.
     if(vozSeleccionada) u.voice=vozSeleccionada;
     u.lang=LOCALE_PREFERIDO[window.LANG] || 'es-ES';
     u.volume=NIVELES[nivelActual].volumen;
@@ -222,6 +241,12 @@
     u.onend=continuar;
     u.onerror=continuar;
     hablando=true;
+    // Cancelar cualquier resto pendiente justo antes de hablar es una
+    // mitigación conocida para un fallo real de los motores basados en
+    // Chromium (WebView de Android incluido): tras un tiempo la cola
+    // interna de speechSynthesis puede quedarse "atascada" y dejar de
+    // decir nada nunca más hasta recargar la página entera.
+    window.speechSynthesis.cancel();
     window.speechSynthesis.speak(u);
   }
   function continuar(){
@@ -281,17 +306,43 @@
     if(icon) icon.className='ph ph-bold '+NIVELES[nivelMostrado].icon;
   }
 
+  // "Desbloqueo" de la API de voz: algunos WebView de Android exigen
+  // un gesto real del usuario antes de dejar hablar a speechSynthesis
+  // la primera vez (igual que ya le pasaba al audio de música/efectos
+  // del juego) — se dispara una frase vacía justo en el clic real del
+  // icono, que no se oye pero "abre la puerta" para las narraciones
+  // automáticas que vengan después sin que haga falta otro clic.
+  function desbloquearVoz(){
+    if(!soportada) return;
+    try{
+      window.speechSynthesis.speak(new SpeechSynthesisUtterance(''));
+    }catch(e){}
+  }
+
   function conectarBoton(){
     const btn=document.getElementById('lmNarracionToggleBtn');
     if(btn && !btn.dataset.g2gWired){
       btn.dataset.g2gWired='1';
       btn.addEventListener('click', ()=>{
+        desbloquearVoz();
         siguienteNivel();
         if(typeof window.playSound==='function' && narracionEnabled) window.playSound('select');
       });
       sincronizarBoton();
     }
   }
+
+  // Ping de mantenimiento: un fallo real y documentado de los
+  // navegadores basados en Chromium (WebView de Android incluido) dejaba
+  // el motor de voz completamente "atascado" — sin decir nada nunca
+  // más, sin ningún error — tras un rato con la pantalla apagada o la
+  // app en segundo plano. Un pause()+resume() periódico mientras no se
+  // esté hablando en ese momento evita que llegue a atascarse.
+  setInterval(()=>{
+    if(soportada && narracionEnabled && !hablando){
+      try{ window.speechSynthesis.pause(); window.speechSynthesis.resume(); }catch(e){}
+    }
+  }, 10000);
 
   // Si el jugador cambia el idioma del juego (menú de ajustes), la
   // próxima vez que se compruebe aquí se vuelve a elegir voz
