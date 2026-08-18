@@ -223,19 +223,49 @@
   let ultimoTextoDicho=null;
 
   function hablar(texto){
-    if(!soportada) return;
     const limpio=limpiarTexto(texto);
     if(!limpio || limpio===ultimoTextoDicho){ continuar(); return; }
     ultimoTextoDicho=limpio;
+    const tono=TONOS[categoriaDe(texto)];
+    // Puente nativo opcional: si la app Android expone
+    // window.AndroidTTS (vía WebView.addJavascriptInterface(), igual
+    // que ya existe un puente nativo para el selector de archivos en
+    // esta misma app), se usa directamente el motor de Texto a Voz
+    // de Android en vez de la Web Speech API del propio WebView —
+    // mucho más fiable, porque no depende de que ESE WebView en
+    // concreto tenga bien implementada la síntesis de voz (un fallo
+    // real y frecuente en WebView de Android, a diferencia de Chrome
+    // de escritorio). Mientras ese puente no exista del lado
+    // Android, este bloque simplemente no se activa y todo sigue
+    // funcionando exactamente igual que antes (Web Speech API
+    // normal, más abajo).
+    if(window.AndroidTTS && typeof window.AndroidTTS.speak==='function'){
+      hablando=true;
+      try{ window.AndroidTTS.speak(limpio, tono.pitch, tono.rate, NIVELES[nivelActual].volumen); }catch(e){}
+      // El puente nativo no tiene forma directa de avisar cuándo
+      // termina de hablar sin código adicional en el lado Android —
+      // se estima la duración a partir de la longitud del texto para
+      // saber cuándo pasar a la siguiente frase de la cola.
+      const duracionEstimadaMs=Math.max(900, limpio.length*70/tono.rate);
+      setTimeout(continuar, duracionEstimadaMs);
+      return;
+    }
+    if(!soportada) return;
     const u=new SpeechSynthesisUtterance(limpio);
     // Si no hay voz elegida (típico en WebView de Android mientras el
     // motor de voz del sistema no ha terminado de listar sus voces)
     // se deja que el propio sistema use su voz por defecto en vez de
     // no decir nada — mejor una voz no ideal que silencio total.
     if(vozSeleccionada) u.voice=vozSeleccionada;
-    u.lang=LOCALE_PREFERIDO[window.LANG] || 'es-ES';
+    // El idioma declarado en el "utterance" debe coincidir con el de
+    // la voz REAL encontrada en el dispositivo, no con el idioma
+    // "preferido" a ciegas — si el dispositivo solo tiene instalada
+    // "es-US" y aquí se declaraba "es-ES", algunos motores de
+    // WebView de Android fallan en silencio (sin error, sin sonido)
+    // al no coincidir voz e idioma declarado. Se usa el lang real de
+    // la voz encontrada siempre que exista.
+    u.lang=(vozSeleccionada && vozSeleccionada.lang) ? vozSeleccionada.lang : (LOCALE_PREFERIDO[window.LANG] || 'es-ES');
     u.volume=NIVELES[nivelActual].volumen;
-    const tono=TONOS[categoriaDe(texto)];
     u.pitch=tono.pitch;
     u.rate=tono.rate;
     u.onend=continuar;
@@ -254,10 +284,13 @@
     if(colaPrioridad.length){ hablar(colaPrioridad.shift()); return; }
     if(colaNormal){ const t=colaNormal; colaNormal=null; hablar(t); }
   }
+  function hayMotorDeVoz(){
+    return soportada || !!(window.AndroidTTS && typeof window.AndroidTTS.speak==='function');
+  }
   function narrar(texto){
-    if(!narracionEnabled || !soportada || !texto || !texto.trim()) return;
+    if(!narracionEnabled || !hayMotorDeVoz() || !texto || !texto.trim()) return;
     if(esPrioritario(texto)){
-      if(hablando){ window.speechSynthesis.cancel(); hablando=false; }
+      if(hablando){ if(soportada) window.speechSynthesis.cancel(); hablando=false; }
       colaPrioridad.push(texto);
       if(!hablando) continuar();
     } else if(hablando){
@@ -278,6 +311,7 @@
 
   function pararTodo(){
     if(soportada) window.speechSynthesis.cancel();
+    if(window.AndroidTTS && typeof window.AndroidTTS.stop==='function'){ try{ window.AndroidTTS.stop(); }catch(e){} }
     colaPrioridad=[]; colaNormal=null; hablando=false; ultimoTextoDicho=null; ultimoEquipoNarrado=null;
   }
 
@@ -303,8 +337,12 @@
   function mostrarDiagnosticoNarracion(){
     if(diagnosticoMostrado || typeof window.showToast!=='function') return;
     diagnosticoMostrado=true;
+    if(window.AndroidTTS && typeof window.AndroidTTS.speak==='function'){
+      window.showToast('Narrador activado — usando el puente nativo de Android (AndroidTTS).', 'toast-neutral');
+      return;
+    }
     if(!soportada){
-      window.showToast('Narrador: este dispositivo no tiene la API de voz del navegador (Web Speech API) — hace falta un cambio en la app nativa de Android para poder narrar.', 'toast-neutral');
+      window.showToast('Narrador: este dispositivo no tiene la API de voz del navegador (Web Speech API) ni un puente nativo (window.AndroidTTS) — hace falta un cambio en la app nativa de Android para poder narrar. Revisa la nota técnica en el propio código (narracion-voz.js).', 'toast-neutral');
       return;
     }
     setTimeout(()=>{
@@ -386,6 +424,13 @@
   window.G2GNarracion={
     setEnabled, isEnabled:()=>narracionEnabled, siguienteNivel, getNivel:()=>(narracionEnabled?nivelActual:0),
     getVozActual:()=>vozSeleccionada, soportada,
+    // Narra un texto directamente, sin depender del MutationObserver
+    // de la barra de información — se usa para anuncios críticos
+    // (como el resultado final) que deben decirse SIEMPRE, incluso si
+    // el jugador termina el partido antes de tiempo con "TERMINAR Y
+    // MOSTRAR RESULTADOS" y por lo que sea el observador no llega a
+    // reaccionar a tiempo a ese cambio concreto de texto.
+    narrarTexto:(texto)=>narrar(texto),
   };
 
 })();

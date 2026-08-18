@@ -2855,6 +2855,11 @@
       infoBar.textContent = textoFinal;
       mostrarTextoGrande(textoFinal, real(2000));
       if(typeof window.playSound==='function') window.playSound('whistle_final');
+      // Llamada directa al narrador, sin fiarse solo del observador de
+      // cambios de la barra — este anuncio debe decirse SIEMPRE, tanto
+      // si el partido llega a los 90' de forma natural como si se
+      // corta antes con "TERMINAR Y MOSTRAR RESULTADOS".
+      if(window.G2GNarracion && typeof window.G2GNarracion.narrarTexto==='function') window.G2GNarracion.narrarTexto(textoFinal);
 
       partidoTerminado=true;
       cerrarBtn.textContent = t('lm.continuar');

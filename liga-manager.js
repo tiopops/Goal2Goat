@@ -599,7 +599,7 @@
       const ventana=ventanaEntrenoActual();
       let base;
       if(ventana){ base=new Date(ventana.desde); base.setDate(base.getDate()+1); }
-      else { base=fechaJornadaLM(Math.min(state.jornadaActual,38)) || new Date(state.fechaInicioLiga+'T00:00:00'); }
+      else { base=fechaJornadaLM(Math.min(state.jornadaActual,(state.calendario||[]).length||38)) || new Date(state.fechaInicioLiga+'T00:00:00'); }
       calendarioMesVisto={year:base.getFullYear(), month:base.getMonth()};
       calendarioJornadaSincronizada=state.jornadaActual;
     }
@@ -746,7 +746,20 @@
   }
   const MESES_LARGO=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
 
-  function generarCalendario(teams){
+  // Generador de calendario tipo "todos contra todos" (ida y vuelta).
+  // Soporta CUALQUIER número de equipos, par o impar: con un número
+  // impar (habitual en ligas personalizadas pequeñas) se añade un
+  // hueco fantasma para completar el algoritmo estándar del método
+  // del círculo, y el equipo que le toque enfrentarse a ese hueco en
+  // cada jornada simplemente descansa esa jornada — nunca se genera
+  // un partido de un equipo contra sí mismo, que es justo lo que
+  // rompía la clasificación (y el propio partido) con un número
+  // impar de equipos. El descanso va rotando de forma natural entre
+  // todos los equipos, jornada tras jornada, gracias al propio
+  // algoritmo.
+  function generarCalendario(teamsOriginal){
+    const esImpar = teamsOriginal.length % 2 !== 0;
+    const teams = esImpar ? [...teamsOriginal, null] : teamsOriginal.slice();
     const n=teams.length, rounds=n-1, half=n/2;
     let arr=teams.slice(1);
     const ida=[];
@@ -755,6 +768,7 @@
       const round=[];
       for(let i=0;i<half;i++){
         const a=roundTeams[i], b=roundTeams[n-1-i];
+        if(a===null || b===null) continue; // el equipo que le toca frente al hueco descansa esta jornada
         round.push(r%2===0 ? {home:a,away:b} : {home:b,away:a});
       }
       ida.push(round);
@@ -2415,12 +2429,36 @@
   }
 
   /* ---------- 7. Clasificación calculada a partir de resultados ---------- */
+  // Devuelve los equipos rivales que REALMENTE forman parte de la
+  // liga actual (derivados del propio calendario ya generado, nunca
+  // de LM_RIVALS a pelo) — funciona igual de bien en la liga
+  // española que en cualquier Liga Personalizada, sin tener que
+  // saber de antemano qué lista tocaba usar en cada caso.
+  function equiposDeLaLigaActual(){
+    const vistos={};
+    const lista=[];
+    (state.calendario||[]).forEach(jornada=>{
+      jornada.forEach(partido=>{
+        [partido.home, partido.away].forEach(eq=>{
+          if(eq.id!=='lm_0' && !vistos[eq.id]){ vistos[eq.id]=true; lista.push(eq); }
+        });
+      });
+    });
+    return lista;
+  }
+
   function calcularClasificacion(){
-    const teams=[{id:'lm_0',name:state.nombreEquipo}, ...LM_RIVALS];
     const tabla={};
-    teams.forEach(t=>{ tabla[t.id]={id:t.id,name:t.name,crestImg:t.crestImg,pj:0,pg:0,pe:0,pp:0,gf:0,gc:0,pts:0}; });
+    function asegurarFila(equipo){
+      if(!tabla[equipo.id]){
+        tabla[equipo.id]={id:equipo.id, name:equipo.name, crestImg:equipo.crestImg, pj:0,pg:0,pe:0,pp:0,gf:0,gc:0,pts:0};
+      }
+      return tabla[equipo.id];
+    }
+    asegurarFila({id:'lm_0', name:state.nombreEquipo, crestImg:null});
+    (state.calendario||[]).forEach(jornada=>{ jornada.forEach(partido=>{ asegurarFila(partido.home); asegurarFila(partido.away); }); });
     for(let j=0;j<state.jornadaActual-1;j++){
-      state.calendario[j].forEach(partido=>{
+      (state.calendario[j]||[]).forEach(partido=>{
         const key=j+'-'+partido.home.id+'-'+partido.away.id;
         const res=state.resultados[key];
         if(!res) return;
@@ -5734,7 +5772,7 @@
     const jugador=(state.plantilla||[]).find(p=>p.enVenta && p.ventaResolverJornada<=state.jornadaActual);
     if(!jugador) return;
     const numOfertas=1+Math.floor(Math.random()*3);
-    const clubesDisponibles=[...LM_RIVALS];
+    const clubesDisponibles=equiposDeLaLigaActual();
     if(typeof shuffle==='function') shuffle(clubesDisponibles); // shuffle() muta en el sitio, no devuelve nada
     const ofertas=clubesDisponibles.slice(0,numOfertas).map(c=>({
       club:c.name, monto:Math.round(jugador.overall*(280+Math.random()*220))
@@ -6039,13 +6077,12 @@
   function renderLigaPersonalizadaScreen(){
     const equipos=(window.G2G_LigaPersonalizada?window.G2G_LigaPersonalizada.getEquipos():[])||[];
     const faltantes=(window.G2G_LigaPersonalizada?window.G2G_LigaPersonalizada.faltanEscudos():[])||[];
-    // El generador de calendario (mismo que usan las ligas reales)
-    // necesita un número PAR de equipos en total — igual que en la
-    // liga española, tu propio club siempre ocupa una de las plazas
-    // importadas, así que el número de equipos IMPORTADOS debe ser
-    // par para que el total salga par también.
-    const numeroImpar=equipos.length>0 && equipos.length%2!==0;
-    const tieneEquipos=equipos.length>0 && !numeroImpar;
+    // El generador de calendario ya soporta cualquier número de
+    // equipos, par o impar (con rotación de descansos automática si
+    // es impar) — solo hace falta que haya al menos 2, para que
+    // exista algún rival contra quien jugar.
+    const pocosEquipos=equipos.length>0 && equipos.length<2;
+    const tieneEquipos=equipos.length>=2;
 
     function bloqueError(titulo, problema, sugerencia){
       return `
@@ -6063,10 +6100,10 @@
       e.problema, e.sugerencia,
     )).join('');
     const erroresEscudosHTML=lpEstado.erroresEscudos.map(e=>bloqueError(e.nombre||t('lm.escudo_generico'), e.problema, e.sugerencia)).join('');
-    const errorImparHTML=numeroImpar?bloqueError('Excel', t('lm.lp_numero_impar', equipos.length), t('lm.lp_numero_impar_sugerencia')):'';
-    const hayErrores=lpEstado.erroresExcel.length || lpEstado.erroresEscudos.length || numeroImpar;
+    const errorPocosHTML=pocosEquipos?bloqueError('Excel', t('lm.lp_pocos_equipos'), t('lm.lp_pocos_equipos_sugerencia')):'';
+    const hayErrores=lpEstado.erroresExcel.length || lpEstado.erroresEscudos.length || pocosEquipos;
 
-    const estadoHTML=(equipos.length>0 && !numeroImpar)?`
+    const estadoHTML=tieneEquipos?`
       <div class="lm-lp-estado ${faltantes.length?'lm-lp-estado-aviso':'lm-lp-estado-ok'}">
         <i class="ph ph-bold ${faltantes.length?'ph-warning-circle':'ph-check-circle'}"></i>
         ${t('lm.lp_equipos_importados', equipos.length)}${faltantes.length?` — ${t('lm.lp_faltan_escudos', faltantes.length)}: ${faltantes.join('.png, ')}.png`:` — ${t('lm.lp_todos_escudos_ok')}`}
@@ -6083,7 +6120,7 @@
         <button id="lmLpImportarEquipos" class="mode-card-btn mode-card-btn-secondary"><i class="ph ph-bold ph-file-xls"></i> ${t('lm.importar_equipos')}</button>
         <button id="lmLpImportarEscudos" class="mode-card-btn mode-card-btn-secondary" ${tieneEquipos?'':'disabled'}><i class="ph ph-bold ph-image"></i> ${t('lm.importar_escudos')}</button>
       </div>
-      ${hayErrores?`<div class="lm-lp-errores">${errorImparHTML}${erroresExcelHTML}${erroresEscudosHTML}</div>`:''}
+      ${hayErrores?`<div class="lm-lp-errores">${errorPocosHTML}${erroresExcelHTML}${erroresEscudosHTML}</div>`:''}
       <input type="file" id="lmLpFileExcel" accept=".xlsx" style="display:none">
       <input type="file" id="lmLpFileEscudos" accept=".png" multiple style="display:none">
       <div class="lm-popup-actions">
@@ -6561,7 +6598,7 @@
             ${crestHTML(state.escudo, 76)}
             <div style="flex:1;min-width:0">
               <div class="lm-title">${state.nombreEquipo.toUpperCase()}</div>
-              <div class="lm-sub">${t('lm.jornada').charAt(0)+t('lm.jornada').slice(1).toLowerCase()} ${Math.min(state.jornadaActual,38)} ${t('lm.jornada_de')} 38${temporadaLabel()?` <span class="lm-sub-punto">·</span> <span class="lm-sub-temporada">${temporadaLabel()}</span>`:''}</div>
+              <div class="lm-sub">${t('lm.jornada').charAt(0)+t('lm.jornada').slice(1).toLowerCase()} ${Math.min(state.jornadaActual,(state.calendario||[]).length||38)} ${t('lm.jornada_de')} ${(state.calendario||[]).length||38}${temporadaLabel()?` <span class="lm-sub-punto">·</span> <span class="lm-sub-temporada">${temporadaLabel()}</span>`:''}</div>
             </div>
             <div class="lm-modo-visual-toggle">
               <button type="button" class="lm-modo-visual-btn ${(!state.modoVisualPartido||state.modoVisualPartido==='auto')?'lm-modo-visual-activo':''}" data-modo-visual="auto"><i class="ph ph-bold ph-fast-forward"></i>${t('lm.modo_automatico')}</button>
@@ -7049,7 +7086,7 @@
         if(typeof window.playSound==='function') window.playSound('select');
         const dir=parseInt(btn.getAttribute('data-cal-nav'),10);
         if(!calendarioMesVisto){
-          const base=fechaJornadaLM(Math.min(state.jornadaActual,38)) || new Date(state.fechaInicioLiga+'T00:00:00');
+          const base=fechaJornadaLM(Math.min(state.jornadaActual,(state.calendario||[]).length||38)) || new Date(state.fechaInicioLiga+'T00:00:00');
           calendarioMesVisto={year:base.getFullYear(), month:base.getMonth()};
         }
         let {year, month}=calendarioMesVisto;
@@ -7827,7 +7864,7 @@
         <div class="lm-dilemma-card lm-dilemma-card-medico lm-dice-roll-card">
             ${xCerrarHTML()}
           <div class="lm-dilemma-title" id="lmDiceTitle" style="justify-content:center;text-align:center">TIRANDO ${numDados} DADO${numDados>1?'S':''}...</div>
-          ${dificultadObjetivo!==null?`<div class="lm-dice-objetivo">${t('lm.necesitas_sumar')} <strong>${dificultadObjetivo}+</strong></div>`:''}
+          ${dificultadObjetivo!==null?`<div class="lm-dice-objetivo lm-dice-objetivo-medico">${t('lm.necesitas_sumar')} <strong>${dificultadObjetivo}+</strong></div>`:''}
           <div id="lmDice2DRow" class="lm-dice2d-row"></div>
           <div id="lmDiceResultZone"></div>
         </div>`;
@@ -8172,7 +8209,7 @@
         <div class="lm-dilemma-card lm-dilemma-card-mant lm-dice-roll-card">
             ${xCerrarHTML()}
           <div class="lm-dilemma-title" id="lmDiceTitle" style="justify-content:center;text-align:center">TIRANDO ${numDados} DADO${numDados>1?'S':''}...</div>
-          <div class="lm-dice-objetivo">${t('lm.necesitas_sumar')} <strong>${dificultadObjetivo}+</strong></div>
+          <div class="lm-dice-objetivo lm-dice-objetivo-mantenimiento">${t('lm.necesitas_sumar')} <strong>${dificultadObjetivo}+</strong></div>
           <div id="lmDice2DRow" class="lm-dice2d-row"></div>
           <div id="lmDiceResultZone"></div>
         </div>`;
@@ -8411,7 +8448,7 @@
         <div class="lm-dilemma-card lm-dilemma-card-dg lm-dice-roll-card">
             ${xCerrarHTML()}
           <div class="lm-dilemma-title" id="lmDiceTitle" style="justify-content:center;text-align:center">TIRANDO ${numDados} DADO${numDados>1?'S':''}...</div>
-          <div class="lm-dice-objetivo">${t('lm.necesitas_sumar')} <strong>${dificultadObjetivo}+</strong></div>
+          <div class="lm-dice-objetivo lm-dice-objetivo-dg">${t('lm.necesitas_sumar')} <strong>${dificultadObjetivo}+</strong></div>
           <div id="lmDice2DRow" class="lm-dice2d-row"></div>
           <div id="lmDiceResultZone"></div>
         </div>`;
@@ -8726,7 +8763,7 @@
         <div class="lm-dilemma-card lm-dilemma-card-dd lm-dice-roll-card">
             ${xCerrarHTML()}
           <div class="lm-dilemma-title" id="lmDiceTitle" style="justify-content:center;text-align:center">TIRANDO ${numDados} DADO${numDados>1?'S':''}...</div>
-          <div class="lm-dice-objetivo">${t('lm.necesitas_sumar')} <strong>${dificultadObjetivo}+</strong></div>
+          <div class="lm-dice-objetivo lm-dice-objetivo-dd">${t('lm.necesitas_sumar')} <strong>${dificultadObjetivo}+</strong></div>
           <div id="lmDice2DRow" class="lm-dice2d-row"></div>
           <div id="lmDiceResultZone"></div>
         </div>`;
@@ -9242,7 +9279,7 @@
         <div class="lm-dilemma-card lm-dilemma-card-pf lm-dice-roll-card">
             ${xCerrarHTML()}
           <div class="lm-dilemma-title" id="lmDiceTitle" style="justify-content:center;text-align:center">TIRANDO ${numDados} DADO${numDados>1?'S':''}...</div>
-          <div class="lm-dice-objetivo">${t('lm.necesitas_sumar')} <strong>${dificultadObjetivo}+</strong></div>
+          <div class="lm-dice-objetivo lm-dice-objetivo-pf">${t('lm.necesitas_sumar')} <strong>${dificultadObjetivo}+</strong></div>
           <div id="lmDice2DRow" class="lm-dice2d-row"></div>
           <div id="lmDiceResultZone"></div>
         </div>`;
@@ -9439,7 +9476,7 @@
     }
     const clasif=calcularClasificacion();
     const posicion=clasif.findIndex(t=>t.id==='lm_0')+1;
-    set('lmpstat-jornada', Math.min(state.jornadaActual,38)+'/38');
+    set('lmpstat-jornada', Math.min(state.jornadaActual,(state.calendario||[]).length||38)+'/'+((state.calendario||[]).length||38));
     set('lmpstat-posicion', posicion>0?(posicion+'º'):'—');
     set('lmpstat-games', pj);
     set('lmpstat-wins', pg);

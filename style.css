@@ -4016,6 +4016,15 @@ body.liga-manager-screen .ranking-btn-label-lm{display:inline}
   font-size:14px;color:#999;margin-top:-4px;margin-bottom:6px;
 }
 .lm-dice-objetivo strong{color:#5dcaa5;font-size:1.3em;font-weight:800}
+/* Color característico de cada trabajador, igual que ya se usa en
+   sus propias cartas (med-card-*) — antes el número a superar
+   siempre salía en el mismo verde genérico en todos los sitios,
+   independientemente de qué departamento fuera. */
+.lm-dice-objetivo-medico strong{color:#5eead4}
+.lm-dice-objetivo-mantenimiento strong{color:#4caf50}
+.lm-dice-objetivo-dg strong{color:#e6c94a}
+.lm-dice-objetivo-dd strong{color:#c0c4c9}
+.lm-dice-objetivo-pf strong{color:#e08a3e}
 .lm-dice-reroll-info{font-size:10px;color:#888;margin:2px 0 8px}
 /* Botón X universal de cierre — esquina superior derecha de cualquier
    popup, además del cierre al hacer clic fuera de la tarjeta. */
