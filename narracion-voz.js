@@ -401,10 +401,10 @@
   ];
   let indiceVozPrueba=-1;
   function probarSiguienteVoz(){
-    if(!(window.AndroidTTS && typeof window.AndroidTTS.probarVoz==='function')){
-      alert('El puente nativo de esta versión no tiene todavía la función de probar voces (probarVoz) — hace falta actualizar AndroidTTSBridge.kt a la v7.');
-      return;
-    }
+    // Sin el puente nativo de Android no hace nada — en escritorio (o
+    // cualquier otro dispositivo sin ese puente) esta función queda
+    // completamente inerte, sin ningún aviso ni acción.
+    if(!(window.AndroidTTS && typeof window.AndroidTTS.probarVoz==='function')) return;
     indiceVozPrueba=(indiceVozPrueba+1)%VOCES_CANDIDATAS_LOCAL.length;
     const nombre=VOCES_CANDIDATAS_LOCAL[indiceVozPrueba];
     try{ window.AndroidTTS.probarVoz(nombre); }catch(e){}
@@ -422,9 +422,16 @@
       // "disparada" para que el click normal (que salta al soltar,
       // pulsación larga o no) no cambie ADEMÁS el nivel de volumen a
       // la vez que se prueba una voz.
+      //
+      // Solo tiene sentido en la app de Android con el puente nativo
+      // puesto — en escritorio (o cualquier otro caso sin ese
+      // puente) el temporizador ni siquiera se arma, así que
+      // mantener pulsado el botón no hace absolutamente nada aparte
+      // de lo que ya hacía un clic normal al soltarlo.
       let pulsacionLargaTimer=null;
       let pulsacionLargaDisparada=false;
       const iniciarPulsacionLarga=()=>{
+        if(!(window.AndroidTTS && typeof window.AndroidTTS.probarVoz==='function')) return;
         pulsacionLargaDisparada=false;
         pulsacionLargaTimer=setTimeout(()=>{ pulsacionLargaDisparada=true; probarSiguienteVoz(); }, 500);
       };
