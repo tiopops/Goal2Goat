@@ -6062,7 +6062,7 @@
       e.equipo?`${e.equipo}${e.fila?` — ${t('lm.fila')} ${e.fila}`:''}${e.campo?` (${e.campo})`:''}`:'Excel',
       e.problema, e.sugerencia,
     )).join('');
-    const erroresEscudosHTML=lpEstado.erroresEscudos.map(e=>bloqueError(e.nombre||'Escudo', e.problema, e.sugerencia)).join('');
+    const erroresEscudosHTML=lpEstado.erroresEscudos.map(e=>bloqueError(e.nombre||t('lm.escudo_generico'), e.problema, e.sugerencia)).join('');
     const errorImparHTML=numeroImpar?bloqueError('Excel', t('lm.lp_numero_impar', equipos.length), t('lm.lp_numero_impar_sugerencia')):'';
     const hayErrores=lpEstado.erroresExcel.length || lpEstado.erroresEscudos.length || numeroImpar;
 

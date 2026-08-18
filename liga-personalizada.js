@@ -32,6 +32,15 @@ window.G2G_LigaPersonalizada = (function(){
   const MAX_CREST_BYTES=500*1024;
   const MAX_CREST_DIM=1500;
 
+  // Envoltorio seguro sobre window.t (i18n.js) — todos los mensajes de
+  // error de este módulo pasan por aquí para traducirse a los 6
+  // idiomas del juego, con una frase de emergencia en español si por
+  // lo que fuera i18n.js no estuviera cargado todavía.
+  function tr(key, ...args){
+    if(typeof window.t==='function') return window.t(key, ...args);
+    return key;
+  }
+
   let equipos=[];   // [{key, displayName, xi:[...11], bench:[...5-7]}]
   let crests={};    // {key: dataURL}
 
@@ -68,18 +77,18 @@ window.G2G_LigaPersonalizada = (function(){
         const vacio=[pos,num,nombre,atk,def,pas,pace,tech].every(v=>v===undefined||v==='');
         if(vacio) continue;
         if(typeof nombre!=='string' || !nombre.trim()){
-          errores.push({equipo:displayName, fila:r, campo:'Player Name', problema:'Nombre de jugador vacío o no es texto.', sugerencia:'Escribe el nombre del jugador en la columna "Player Name" de esa fila.'});
+          errores.push({equipo:displayName, fila:r, campo:'Player Name', problema:tr('lm.lp_nombre_vacio'), sugerencia:tr('lm.lp_nombre_vacio_sugerencia')});
         }
         if(!VALID_POSITIONS.includes(pos)){
-          errores.push({equipo:displayName, fila:r, campo:'Position', problema:`Posición "${pos===undefined?'(vacía)':pos}" no reconocida.`, sugerencia:`Usa uno de estos códigos: ${VALID_POSITIONS.join(', ')}.`});
+          errores.push({equipo:displayName, fila:r, campo:'Position', problema:tr('lm.lp_posicion_invalida', pos===undefined?'—':pos), sugerencia:tr('lm.lp_posicion_invalida_sugerencia', VALID_POSITIONS.join(', '))});
         }
         [['Attack',atk],['Defense',def],['Passing',pas],['Pace',pace],['Technique',tech]].forEach(([campo,val])=>{
           if(typeof val!=='number' || val<0 || val>99 || !Number.isInteger(val)){
-            errores.push({equipo:displayName, fila:r, campo, problema:`Valor "${val===undefined?'(vacío)':val}" fuera de rango.`, sugerencia:'Debe ser un número entero entre 0 y 99.'});
+            errores.push({equipo:displayName, fila:r, campo, problema:tr('lm.lp_valor_rango', val===undefined?'—':val), sugerencia:tr('lm.lp_valor_rango_sugerencia')});
           }
         });
         if(typeof num!=='number' || num<1 || num>99){
-          errores.push({equipo:displayName, fila:r, campo:'Number', problema:`Dorsal "${num===undefined?'(vacío)':num}" inválido.`, sugerencia:'Debe ser un número entero entre 1 y 99.'});
+          errores.push({equipo:displayName, fila:r, campo:'Number', problema:tr('lm.lp_dorsal_invalido', num===undefined?'—':num), sugerencia:tr('lm.lp_dorsal_invalido_sugerencia')});
         }
         jugadores.push({pos, num, nombre, atk, def, pas, pace, tech});
       }
@@ -90,14 +99,14 @@ window.G2G_LigaPersonalizada = (function(){
     const bench=leerBloque(24, 30);
 
     if(xi.length!==11){
-      errores.push({equipo:displayName, fila:null, campo:'STARTING XI', problema:`Tiene ${xi.length} jugador(es) en el once inicial — deberían ser exactamente 11.`, sugerencia:'Completa o elimina filas del bloque ONCE INICIAL hasta tener exactamente 11 jugadores.'});
+      errores.push({equipo:displayName, fila:null, campo:'STARTING XI', problema:tr('lm.lp_xi_numero', xi.length), sugerencia:tr('lm.lp_xi_numero_sugerencia')});
     }
     if(bench.length<5 || bench.length>7){
-      errores.push({equipo:displayName, fila:null, campo:'BENCH', problema:`Tiene ${bench.length} jugador(es) en el banquillo — deberían ser entre 5 y 7.`, sugerencia:'Ajusta el número de filas rellenas en el bloque BANQUILLO (mínimo 5, máximo 7).'});
+      errores.push({equipo:displayName, fila:null, campo:'BENCH', problema:tr('lm.lp_banquillo_numero', bench.length), sugerencia:tr('lm.lp_banquillo_numero_sugerencia')});
     }
     const porteros=xi.filter(j=>j.pos==='GK').length;
     if(porteros!==1){
-      errores.push({equipo:displayName, fila:null, campo:'STARTING XI', problema:`El once inicial tiene ${porteros} portero(s) (GK) — debería tener exactamente 1.`, sugerencia:'Revisa que exactamente un jugador del once inicial tenga la posición GK.'});
+      errores.push({equipo:displayName, fila:null, campo:'STARTING XI', problema:tr('lm.lp_porteros_numero', porteros), sugerencia:tr('lm.lp_porteros_numero_sugerencia')});
     }
 
     return {key, displayName, xi, bench, errores};
@@ -105,13 +114,13 @@ window.G2G_LigaPersonalizada = (function(){
 
   function importarExcel(file){
     return new Promise((resolve)=>{
-      if(!file){ resolve({ok:false, errores:[{problema:'No se ha seleccionado ningún archivo.'}]}); return; }
+      if(!file){ resolve({ok:false, errores:[{problema:tr('lm.lp_sin_archivo')}]}); return; }
       if(!/\.xlsx?$/i.test(file.name)){
-        resolve({ok:false, errores:[{problema:`El archivo "${file.name}" no es un Excel (.xlsx).`, sugerencia:'Sube el archivo .xlsx generado a partir de la plantilla descargable.'}]});
+        resolve({ok:false, errores:[{problema:tr('lm.lp_no_es_xlsx', file.name), sugerencia:tr('lm.lp_no_es_xlsx_sugerencia')}]});
         return;
       }
       if(typeof XLSX==='undefined'){
-        resolve({ok:false, errores:[{problema:'No se ha podido cargar el lector de Excel.', sugerencia:'Comprueba tu conexión a internet y vuelve a intentarlo.'}]});
+        resolve({ok:false, errores:[{problema:tr('lm.lp_sin_lector'), sugerencia:tr('lm.lp_sin_lector_sugerencia')}]});
         return;
       }
       const reader=new FileReader();
@@ -120,7 +129,7 @@ window.G2G_LigaPersonalizada = (function(){
           const wb=XLSX.read(e.target.result, {type:'array'});
           const nombresHojas=wb.SheetNames.filter(n=>n.trim().toLowerCase()!=='tutorial');
           if(!nombresHojas.length){
-            resolve({ok:false, errores:[{problema:'El archivo no contiene ninguna pestaña de equipo (aparte de "Tutorial").', sugerencia:'Añade al menos una pestaña de equipo, duplicando la pestaña de ejemplo de la plantilla.'}]});
+            resolve({ok:false, errores:[{problema:tr('lm.lp_sin_pestanas'), sugerencia:tr('lm.lp_sin_pestanas_sugerencia')}]});
             return;
           }
           const equiposParseados=[];
@@ -130,7 +139,7 @@ window.G2G_LigaPersonalizada = (function(){
             const ws=wb.Sheets[nombre];
             const resultado=parsearEquipo(ws, nombre);
             if(clavesVistas[resultado.key]){
-              resultado.errores.push({equipo:resultado.displayName, fila:null, campo:'Sheet name', problema:`El nombre de pestaña "${nombre}" está repetido o da lugar al mismo nombre de archivo.`, sugerencia:'Cada pestaña de equipo debe tener un nombre único.'});
+              resultado.errores.push({equipo:resultado.displayName, fila:null, campo:'Sheet name', problema:tr('lm.lp_nombre_repetido', nombre), sugerencia:tr('lm.lp_nombre_repetido_sugerencia')});
             }
             clavesVistas[resultado.key]=true;
             equiposParseados.push(resultado);
@@ -138,10 +147,10 @@ window.G2G_LigaPersonalizada = (function(){
           });
           resolve({ok:todosLosErrores.length===0, equipos:equiposParseados, errores:todosLosErrores});
         }catch(err){
-          resolve({ok:false, errores:[{problema:'No se ha podido leer el archivo Excel: '+err.message, sugerencia:'Comprueba que el archivo no esté dañado y que sea un .xlsx válido, exportado desde Excel o Google Sheets.'}]});
+          resolve({ok:false, errores:[{problema:tr('lm.lp_error_lectura', err.message), sugerencia:tr('lm.lp_error_lectura_sugerencia')}]});
         }
       };
-      reader.onerror=()=>resolve({ok:false, errores:[{problema:'Error al leer el archivo del disco.'}]});
+      reader.onerror=()=>resolve({ok:false, errores:[{problema:tr('lm.lp_error_disco')}]});
       reader.readAsArrayBuffer(file);
     });
   }
@@ -149,11 +158,11 @@ window.G2G_LigaPersonalizada = (function(){
   function validarEscudo(file){
     return new Promise((resolve)=>{
       if(!/\.png$/i.test(file.name)){
-        resolve({ok:false, nombre:file.name, problema:`"${file.name}" no es un PNG.`, sugerencia:'Sube el escudo en formato PNG (se recomienda con fondo transparente).'});
+        resolve({ok:false, nombre:file.name, problema:tr('lm.lp_escudo_no_png', file.name), sugerencia:tr('lm.lp_escudo_no_png_sugerencia')});
         return;
       }
       if(file.size>MAX_CREST_BYTES){
-        resolve({ok:false, nombre:file.name, problema:`"${file.name}" ocupa ${(file.size/1024).toFixed(0)}KB — el máximo son 500KB.`, sugerencia:'Comprime la imagen o redúcela de tamaño antes de subirla.'});
+        resolve({ok:false, nombre:file.name, problema:tr('lm.lp_escudo_pesado', file.name, (file.size/1024).toFixed(0)), sugerencia:tr('lm.lp_escudo_pesado_sugerencia')});
         return;
       }
       const reader=new FileReader();
@@ -161,15 +170,15 @@ window.G2G_LigaPersonalizada = (function(){
         const img=new Image();
         img.onload=()=>{
           if(img.naturalWidth>MAX_CREST_DIM || img.naturalHeight>MAX_CREST_DIM){
-            resolve({ok:false, nombre:file.name, problema:`"${file.name}" mide ${img.naturalWidth}×${img.naturalHeight}px — el máximo son 1500×1500px.`, sugerencia:'Redimensiona la imagen a 1500×1500px o menos antes de subirla.'});
+            resolve({ok:false, nombre:file.name, problema:tr('lm.lp_escudo_dimensiones', file.name, img.naturalWidth, img.naturalHeight), sugerencia:tr('lm.lp_escudo_dimensiones_sugerencia')});
             return;
           }
           resolve({ok:true, nombre:file.name, dataUrl:e.target.result});
         };
-        img.onerror=()=>resolve({ok:false, nombre:file.name, problema:`"${file.name}" no se ha podido abrir como imagen.`, sugerencia:'Comprueba que el archivo no esté dañado y sea realmente un PNG.'});
+        img.onerror=()=>resolve({ok:false, nombre:file.name, problema:tr('lm.lp_escudo_no_imagen', file.name), sugerencia:tr('lm.lp_escudo_no_imagen_sugerencia')});
         img.src=e.target.result;
       };
-      reader.onerror=()=>resolve({ok:false, nombre:file.name, problema:`No se ha podido leer "${file.name}" del disco.`});
+      reader.onerror=()=>resolve({ok:false, nombre:file.name, problema:tr('lm.lp_escudo_error_disco', file.name)});
       reader.readAsDataURL(file);
     });
   }
@@ -184,7 +193,7 @@ window.G2G_LigaPersonalizada = (function(){
       if(!r.ok){ errores.push(r); return; }
       const clave=r.nombre.replace(/\.png$/i,'').trim().toLowerCase();
       if(!clavesEquipos.includes(clave)){
-        errores.push({ok:false, nombre:r.nombre, problema:`"${r.nombre}" no coincide con el nombre de ningún equipo importado del Excel.`, sugerencia:clavesEquipos.length?`Nombres de equipo esperados: ${clavesEquipos.join(', ')}.png`:'Importa primero el Excel de equipos.'});
+        errores.push({ok:false, nombre:r.nombre, problema:tr('lm.lp_escudo_sin_match', r.nombre), sugerencia:clavesEquipos.length?tr('lm.lp_escudo_sin_match_sugerencia', clavesEquipos.join(', ')+'.png'):tr('lm.lp_importa_excel_primero')});
         return;
       }
       crests[clave]=r.dataUrl;

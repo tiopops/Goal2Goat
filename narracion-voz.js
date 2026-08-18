@@ -291,10 +291,37 @@
     if(!narracionEnabled) pararTodo();
     sincronizarBoton();
   }
+  // Diagnóstico visible EN LA PROPIA APP (un toast, no la consola —
+  // en el APK de Android no hay forma de ver la consola sin depurar
+  // por USB) la primera vez que se activa, para saber con certeza en
+  // qué punto exacto falla si no llega a sonar: si la propia API de
+  // voz no existe en ese WebView (hace falta un cambio en la app
+  // nativa de Android, no arreglable desde aquí), si existe pero no
+  // encuentra ninguna voz de sistema, o si todo está bien y debería
+  // sonar.
+  let diagnosticoMostrado=false;
+  function mostrarDiagnosticoNarracion(){
+    if(diagnosticoMostrado || typeof window.showToast!=='function') return;
+    diagnosticoMostrado=true;
+    if(!soportada){
+      window.showToast('Narrador: este dispositivo no tiene la API de voz del navegador (Web Speech API) — hace falta un cambio en la app nativa de Android para poder narrar.', 'toast-neutral');
+      return;
+    }
+    setTimeout(()=>{
+      if(!vocesDisponibles.length){
+        window.showToast('Narrador: la voz está disponible en el navegador pero no se ha encontrado ninguna voz instalada. Revisa que el motor de Texto a Voz esté instalado y activado en Ajustes del sistema Android.', 'toast-neutral');
+      } else {
+        window.showToast('Narrador activado — voz encontrada: '+(vozSeleccionada?vozSeleccionada.name:'—'), 'toast-neutral');
+      }
+    }, 2500); // deja tiempo a que el reintento automático de voces haga su trabajo
+  }
+
   function setEnabled(v){ aplicarNivel(v ? Math.max(1,nivelActual) : 0); }
   function siguienteNivel(){
     const actual=narracionEnabled?nivelActual:0;
-    aplicarNivel((actual+1)%NIVELES.length);
+    const nuevo=(actual+1)%NIVELES.length;
+    aplicarNivel(nuevo);
+    if(nuevo>0) mostrarDiagnosticoNarracion();
   }
 
   function sincronizarBoton(){
