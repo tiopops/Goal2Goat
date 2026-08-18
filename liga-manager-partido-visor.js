@@ -2843,17 +2843,19 @@
         ${partesResumen.length?`<div class="lm-visor-resumen-pie">${partesResumen.join(' · ')}</div>`:''}`;
 
       // Anuncio dramático del vencedor — si no hay empate, se añade al
-      // texto de "FINAL DEL PARTIDO" tanto en la barra de información
-      // (así lo recoge también el narrador por voz, que ya observa
-      // esa barra y da prioridad a cualquier mensaje con "final") como
-      // en el texto grande centrado sobre el campo.
+      // texto de "FINAL DEL PARTIDO" en la barra de información (así
+      // lo recoge también el narrador por voz, que ya observa esa
+      // barra y da prioridad a cualquier mensaje con "final"). El
+      // texto GRANDE centrado sobre el campo se queda siempre simple
+      // ("¡FINAL DEL PARTIDO!"), sin el nombre del ganador — ese ya
+      // se ve enseguida en el marcador y se escucha por voz.
       let textoFinal = t('lm.visor_termina');
       if(misGolesFinal!==rivalGolesFinal){
         const equipoGanador = misGolesFinal>rivalGolesFinal ? miNombre : rivalNombre;
         textoFinal = `¡${t('lm.visor_termina')}! ${t('lm.visor_equipo_vencedor', equipoGanador.toUpperCase())}`;
       }
       infoBar.textContent = textoFinal;
-      mostrarTextoGrande(textoFinal, real(2000));
+      mostrarTextoGrande(`¡${t('lm.visor_termina')}!`, real(2000));
       if(typeof window.playSound==='function') window.playSound('whistle_final');
       // Llamada directa al narrador, sin fiarse solo del observador de
       // cambios de la barra — este anuncio debe decirse SIEMPRE, tanto
