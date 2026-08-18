@@ -351,13 +351,32 @@
   // encuentra ninguna voz de sistema, o si todo está bien y debería
   // sonar.
   let diagnosticoMostrado=false;
+  // Aparte del diagnóstico general (que solo se enseña una vez, para
+  // no ser pesado con el mismo aviso constantemente), la lista de
+  // voces de Android SÍ se vuelve a mostrar cada vez que se activa el
+  // narrador — es justo lo que hace falta para poder elegir/confirmar
+  // una voz, y limitarla a una sola vez por sesión de la app hacía
+  // que, si no se llegaba a ver la primera vez (la app en segundo
+  // plano, una notificación tapándola, etc.), ya no volviera a salir
+  // nunca más hasta cerrar la app del todo.
+  function mostrarListaVocesAndroid(){
+    if(!(window.AndroidTTS && typeof window.AndroidTTS.listarVoces==='function')) return;
+    try{
+      const lista=window.AndroidTTS.listarVoces();
+      setTimeout(()=>{ alert('Voces de Android disponibles:\n\n'+lista); }, 600);
+    }catch(e){}
+  }
   function mostrarDiagnosticoNarracion(){
-    if(diagnosticoMostrado || typeof window.showToast!=='function') return;
-    diagnosticoMostrado=true;
     if(window.AndroidTTS && typeof window.AndroidTTS.speak==='function'){
-      window.showToast('Narrador activado — usando el puente nativo de Android (AndroidTTS).', 'toast-neutral');
+      if(!diagnosticoMostrado && typeof window.showToast==='function'){
+        window.showToast('Narrador activado — usando el puente nativo de Android (AndroidTTS).', 'toast-neutral');
+      }
+      diagnosticoMostrado=true;
+      mostrarListaVocesAndroid();
       return;
     }
+    if(diagnosticoMostrado || typeof window.showToast!=='function') return;
+    diagnosticoMostrado=true;
     if(!soportada){
       window.showToast('Narrador: este dispositivo no tiene la API de voz del navegador (Web Speech API) ni un puente nativo (window.AndroidTTS) — hace falta un cambio en la app nativa de Android para poder narrar. Revisa la nota técnica en el propio código (narracion-voz.js).', 'toast-neutral');
       return;
@@ -376,7 +395,11 @@
     const actual=narracionEnabled?nivelActual:0;
     const nuevo=(actual+1)%NIVELES.length;
     aplicarNivel(nuevo);
-    if(nuevo>0) mostrarDiagnosticoNarracion();
+    // Solo se muestra al pasar de APAGADO a encendido — no cada vez
+    // que se cambia de nivel de volumen (bajo/medio/alto), que
+    // también cuentan como "nuevo>0" pero no son una activación de
+    // verdad.
+    if(actual===0 && nuevo>0) mostrarDiagnosticoNarracion();
   }
 
   function sincronizarBoton(){
@@ -471,6 +494,16 @@
     // reaccionar a tiempo a ese cambio concreto de texto.
     narrarTexto:(texto)=>narrar(texto),
     narrarSiempre,
+    // Vuelve a mostrar la lista de voces de Android en cualquier
+    // momento (sin tener que apagar y encender el narrador) — útil
+    // para comprobar qué voces reales tiene el dispositivo.
+    listarVocesAndroid:()=>{
+      if(!(window.AndroidTTS && typeof window.AndroidTTS.listarVoces==='function')){
+        alert('No hay puente nativo de Android (window.AndroidTTS) en este dispositivo.');
+        return;
+      }
+      mostrarListaVocesAndroid();
+    },
   };
 
 })();
