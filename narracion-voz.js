@@ -350,15 +350,10 @@
   // nativa de Android, no arreglable desde aquí), si existe pero no
   // encuentra ninguna voz de sistema, o si todo está bien y debería
   // sonar.
-  let diagnosticoMostrado=false;
-  // Aparte del diagnóstico general (que solo se enseña una vez, para
-  // no ser pesado con el mismo aviso constantemente), la lista de
-  // voces de Android SÍ se vuelve a mostrar cada vez que se activa el
-  // narrador — es justo lo que hace falta para poder elegir/confirmar
-  // una voz, y limitarla a una sola vez por sesión de la app hacía
-  // que, si no se llegaba a ver la primera vez (la app en segundo
-  // plano, una notificación tapándola, etc.), ya no volviera a salir
-  // nunca más hasta cerrar la app del todo.
+  // La lista de voces de Android se puede seguir consultando bajo
+  // demanda (window.G2GNarracion.listarVocesAndroid()) — ya no se
+  // muestra sola al activar el narrador, para no interrumpir con un
+  // aviso técnico cada vez.
   function mostrarListaVocesAndroid(){
     if(!(window.AndroidTTS && typeof window.AndroidTTS.listarVoces==='function')) return;
     try{
@@ -366,40 +361,12 @@
       setTimeout(()=>{ alert('Voces de Android disponibles:\n\n'+lista); }, 600);
     }catch(e){}
   }
-  function mostrarDiagnosticoNarracion(){
-    if(window.AndroidTTS && typeof window.AndroidTTS.speak==='function'){
-      if(!diagnosticoMostrado && typeof window.showToast==='function'){
-        window.showToast('Narrador activado — usando el puente nativo de Android (AndroidTTS).', 'toast-neutral');
-      }
-      diagnosticoMostrado=true;
-      mostrarListaVocesAndroid();
-      return;
-    }
-    if(diagnosticoMostrado || typeof window.showToast!=='function') return;
-    diagnosticoMostrado=true;
-    if(!soportada){
-      window.showToast('Narrador: este dispositivo no tiene la API de voz del navegador (Web Speech API) ni un puente nativo (window.AndroidTTS) — hace falta un cambio en la app nativa de Android para poder narrar. Revisa la nota técnica en el propio código (narracion-voz.js).', 'toast-neutral');
-      return;
-    }
-    setTimeout(()=>{
-      if(!vocesDisponibles.length){
-        window.showToast('Narrador: la voz está disponible en el navegador pero no se ha encontrado ninguna voz instalada. Revisa que el motor de Texto a Voz esté instalado y activado en Ajustes del sistema Android.', 'toast-neutral');
-      } else {
-        window.showToast('Narrador activado — voz encontrada: '+(vozSeleccionada?vozSeleccionada.name:'—'), 'toast-neutral');
-      }
-    }, 2500); // deja tiempo a que el reintento automático de voces haga su trabajo
-  }
 
   function setEnabled(v){ aplicarNivel(v ? Math.max(1,nivelActual) : 0); }
   function siguienteNivel(){
     const actual=narracionEnabled?nivelActual:0;
     const nuevo=(actual+1)%NIVELES.length;
     aplicarNivel(nuevo);
-    // Solo se muestra al pasar de APAGADO a encendido — no cada vez
-    // que se cambia de nivel de volumen (bajo/medio/alto), que
-    // también cuentan como "nuevo>0" pero no son una activación de
-    // verdad.
-    if(actual===0 && nuevo>0) mostrarDiagnosticoNarracion();
   }
 
   function sincronizarBoton(){
@@ -441,7 +408,7 @@
     indiceVozPrueba=(indiceVozPrueba+1)%VOCES_CANDIDATAS_LOCAL.length;
     const nombre=VOCES_CANDIDATAS_LOCAL[indiceVozPrueba];
     try{ window.AndroidTTS.probarVoz(nombre); }catch(e){}
-    if(typeof window.showToast==='function') window.showToast('Probando voz '+(indiceVozPrueba+1)+' de '+VOCES_CANDIDATAS_LOCAL.length+': '+nombre, 'toast-neutral');
+    if(typeof window.showToast==='function') window.showToast('Probando voz '+(indiceVozPrueba+1)+' de '+VOCES_CANDIDATAS_LOCAL.length, 'toast-neutral');
   }
 
   function conectarBoton(){
