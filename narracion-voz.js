@@ -424,11 +424,52 @@
     }catch(e){}
   }
 
+  // Probador de voces: las 5 voces locales en español de España que
+  // aparecieron en tu propia lista (eea/eec/eed/eee/eef) — no hay
+  // forma pública de saber cuál es masculina solo por el nombre, así
+  // que se prueban una a una diciendo su propio nombre en voz alta,
+  // sin tener que recompilar la app entre una y otra.
+  const VOCES_CANDIDATAS_LOCAL=[
+    'es-es-x-eea-local','es-es-x-eec-local','es-es-x-eed-local','es-es-x-eee-local','es-es-x-eef-local',
+  ];
+  let indiceVozPrueba=-1;
+  function probarSiguienteVoz(){
+    if(!(window.AndroidTTS && typeof window.AndroidTTS.probarVoz==='function')){
+      alert('El puente nativo de esta versión no tiene todavía la función de probar voces (probarVoz) — hace falta actualizar AndroidTTSBridge.kt a la v7.');
+      return;
+    }
+    indiceVozPrueba=(indiceVozPrueba+1)%VOCES_CANDIDATAS_LOCAL.length;
+    const nombre=VOCES_CANDIDATAS_LOCAL[indiceVozPrueba];
+    try{ window.AndroidTTS.probarVoz(nombre); }catch(e){}
+    if(typeof window.showToast==='function') window.showToast('Probando voz '+(indiceVozPrueba+1)+' de '+VOCES_CANDIDATAS_LOCAL.length+': '+nombre, 'toast-neutral');
+  }
+
   function conectarBoton(){
     const btn=document.getElementById('lmNarracionToggleBtn');
     if(btn && !btn.dataset.g2gWired){
       btn.dataset.g2gWired='1';
+      // Pulsación larga (medio segundo) sobre el propio icono del
+      // altavoz: prueba la SIGUIENTE voz candidata de la lista, una
+      // por cada pulsación larga — así se pueden escuchar las 5
+      // seguidas sin salir del partido ni tocar nada más. Se marca
+      // "disparada" para que el click normal (que salta al soltar,
+      // pulsación larga o no) no cambie ADEMÁS el nivel de volumen a
+      // la vez que se prueba una voz.
+      let pulsacionLargaTimer=null;
+      let pulsacionLargaDisparada=false;
+      const iniciarPulsacionLarga=()=>{
+        pulsacionLargaDisparada=false;
+        pulsacionLargaTimer=setTimeout(()=>{ pulsacionLargaDisparada=true; probarSiguienteVoz(); }, 500);
+      };
+      const cancelarPulsacionLarga=()=>{ if(pulsacionLargaTimer){ clearTimeout(pulsacionLargaTimer); pulsacionLargaTimer=null; } };
+      btn.addEventListener('touchstart', iniciarPulsacionLarga, {passive:true});
+      btn.addEventListener('touchend', cancelarPulsacionLarga);
+      btn.addEventListener('touchmove', cancelarPulsacionLarga);
+      btn.addEventListener('mousedown', iniciarPulsacionLarga);
+      btn.addEventListener('mouseup', cancelarPulsacionLarga);
+      btn.addEventListener('mouseleave', cancelarPulsacionLarga);
       btn.addEventListener('click', ()=>{
+        if(pulsacionLargaDisparada){ pulsacionLargaDisparada=false; return; }
         desbloquearVoz();
         siguienteNivel();
         if(typeof window.playSound==='function' && narracionEnabled) window.playSound('select');
@@ -504,6 +545,10 @@
       }
       mostrarListaVocesAndroid();
     },
+    // Prueba la siguiente voz candidata en español (pulsación larga
+    // sobre el propio icono del altavoz hace lo mismo) — útil para
+    // llamarla también desde fuera si hiciera falta.
+    probarSiguienteVoz,
   };
 
 })();
