@@ -1291,9 +1291,28 @@
       case 'amistoso':
         resolverAmistosoRapido(nodo.subtipo);
         break;
-      case 'medios':
+      case 'medios': {
         state.ruedaPrensaDisponibleEstaJornada=true;
+        // Se lanza la rueda de prensa de verdad, ahí mismo, en cuanto
+        // se elige el nodo — antes solo se marcaba una bandera que
+        // nunca llegaba a usarse, dejando la elección sin ningún
+        // efecto visible.
+        if(!state.lmPendingPrediction && typeof mostrarRuedaPrensaLM==='function'){
+          const rival=typeof obtenerRivalProximaJornada==='function' ? obtenerRivalProximaJornada() : null;
+          const overlayPrensa=document.createElement('div');
+          overlayPrensa.id='lmPrensaNodoOverlay';
+          overlayPrensa.className='lm-visor-leyenda-overlay-standalone';
+          document.body.appendChild(overlayPrensa);
+          mostrarRuedaPrensaLM(overlayPrensa, rival?rival.name:null, ()=>{
+            overlayPrensa.remove();
+          });
+          // Ya se ha resuelto aquí mismo — que el resumen animado de
+          // fin de semana no vuelva a lanzar otra entrevista el mismo
+          // día por su cuenta.
+          state.lmPrensaResueltaPorNodo=true;
+        }
         break;
+      }
       case 'tactica':
         state.moral=Math.max(-50, Math.min(50, (state.moral||0)+4));
         break;
@@ -1548,7 +1567,11 @@
       if(!d) return `<div class="lm-cal-celda lm-cal-vacia"></div>`;
       const iso=fechaISO(d);
       const partido=partidoMioEnFecha(iso);
-      const editable=fechaEsEditable(d);
+      // El calendario ya NO se puede marcar directamente — el árbol de
+      // nodos es quien decide entreno/descanso de cada día ahora. Se
+      // deja de pasar "editable" para que el calendario sea de solo
+      // lectura (un resumen visual de lo ya elegido en el árbol).
+      const editable=false;
       const entrenado=!!(state.calendarioEntrenamiento && state.calendarioEntrenamiento[iso]);
       let contenido='';
       if(partido){
@@ -1860,8 +1883,14 @@
           // avanzar de día tras elegir un nodo, sí se desliza suave,
           // para que se note el paso de un día al siguiente.
           if(instantaneo) wrap.scrollLeft=destino;
-          else if(typeof wrap.scrollTo==='function') wrap.scrollTo({left:destino, behavior:'smooth'});
-          else wrap.scrollLeft=destino;
+          // Si ya está prácticamente en la posición de destino, no se
+          // repite la animación — evita el efecto de "salto" al
+          // volver a pintar el árbol cuando en realidad no hace falta
+          // moverse nada (mismo día ya centrado).
+          else if(Math.abs(wrap.scrollLeft-destino)>4){
+            if(typeof wrap.scrollTo==='function') wrap.scrollTo({left:destino, behavior:'smooth'});
+            else wrap.scrollLeft=destino;
+          }
         });
       }
     }
@@ -2664,7 +2693,13 @@
       const xBtn=overlay.querySelector('[data-cerrar-x]');
       if(xBtn) xBtn.addEventListener('click', ()=>overlay.remove());
     }
-    document.getElementById('ligaManagerScreen').appendChild(overlay);
+    // A diferencia del resto de ventanas de Liga Manager (que se
+    // añaden dentro de #ligaManagerScreen), esta se añade directamente
+    // al body — cuando se abre desde el árbol de nodos, el propio
+    // árbol dispara un render() 220ms después que reemplaza TODO el
+    // contenido de #ligaManagerScreen, lo que borraba este popup nada
+    // más abrirse si vivía ahí dentro.
+    document.body.appendChild(overlay);
     pintar();
   }
   // Muestra el resultado de la quiniela (premio + rasgos) si hay uno
@@ -4845,13 +4880,16 @@
     // días hasta que se responda o se agote el tiempo.
     // Rueda de prensa — si el jugador eligió el nodo "día de medios" en
     // el árbol de esta semana, la entrevista pasa DE VERDAD ese día
-    // concreto (decisión propia, no azar). Si por lo que sea no hay
-    // ningún día así esta semana, se conserva el comportamiento
-    // anterior como reserva (un día al azar, 50% de probabilidad).
+    // concreto (decisión propia, no azar). Si el nodo ya se resolvió
+    // en el momento de elegirlo (ver aplicarEfectoNodoSemana), no se
+    // vuelve a lanzar aquí — se marca -1 directamente. Si por lo que
+    // sea no hay ningún día así esta semana, se conserva el
+    // comportamiento anterior como reserva (un día al azar, 50%).
     const diaMedios = state.semanaNodos && state.semanaNodos.dias.find(d=>d.elegido!=null && d.nodos[d.elegido].tipo==='medios');
-    const diaPrensaIdx = (rival && !state.lmPendingPrediction)
+    const diaPrensaIdx = state.lmPrensaResueltaPorNodo ? -1 : ((rival && !state.lmPendingPrediction)
       ? (diaMedios ? eventosDias.findIndex(e=>e.iso===diaMedios.fecha) : (Math.random()<0.5 ? Math.floor(Math.random()*eventosDias.length) : -1))
-      : -1;
+      : -1);
+    state.lmPrensaResueltaPorNodo=false;
     let idx=0;
     function pintarDia(){
       if(idx===diaPrensaIdx){
@@ -8943,18 +8981,9 @@
       if(Date.now()-colArrowsUltimaInteraccion>10000) el.classList.add('lm-col-reorder-oculto');
     });
     iniciarFadeColArrows();
-    root.querySelectorAll('[data-cal-dia]').forEach(el=>{
-      el.addEventListener('click', ()=>{
-        const iso=el.getAttribute('data-cal-dia');
-        if(!state.calendarioEntrenamiento) state.calendarioEntrenamiento={};
-        const yaEntrena=!!state.calendarioEntrenamiento[iso];
-        if(typeof window.playSound==='function') window.playSound(yaEntrena?'rest_day':'training_day');
-        if(yaEntrena) delete state.calendarioEntrenamiento[iso];
-        else state.calendarioEntrenamiento[iso]=true;
-        guardarEstado();
-        render();
-      });
-    });
+    // El calendario ya no permite marcar días directamente — eso lo
+    // decide el árbol de nodos. Se deja de cablear el clic sobre los
+    // días del calendario por completo.
     const calendarioHeaderBtn=root.querySelector('#lmCalendarioHeaderBtn');
     if(calendarioHeaderBtn) calendarioHeaderBtn.addEventListener('click', ()=>{
       if(typeof window.playSound==='function') window.playSound('select');
