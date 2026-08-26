@@ -37,6 +37,36 @@
   // archivo (teams-data.js, cargado ANTES que este script) para poder
   // actualizarlos cada temporada nueva sin tocar nada de esta lógica.
   const LM_RIVALS = window.LM_RIVALS || [];
+  // Aforo aproximado del estadio real de cada uno de los 20 equipos —
+  // solo se usa cuando el jugador elige convertirse en uno de ellos
+  // ("equipo ya existente"), nunca para un club propio (ahí el aforo
+  // modesto de un recién ascendido sigue siendo el correcto). Cifras
+  // redondeadas a la capacidad habitual de cada estadio; cuando un
+  // estadio está en obras/reforma en la temporada real (p.ej. el Camp
+  // Nou) se usa su aforo de referencia una vez terminado, no el
+  // aforo reducido y temporal de las obras.
+  const AFORO_REAL_POR_EQUIPO = {
+    lm_1: 78000,  // Real Madrid — Santiago Bernabéu
+    lm_2: 99000,  // FC Barcelona — Spotify Camp Nou (aforo de referencia, no el reducido por obras)
+    lm_3: 70000,  // Atlético de Madrid — Riyadh Air Metropolitano
+    lm_4: 53000,  // Athletic Club — San Mamés
+    lm_5: 23000,  // Villarreal CF — Estadio de la Cerámica
+    lm_6: 60000,  // Real Betis — Benito Villamarín
+    lm_7: 39500,  // Real Sociedad — Reale Arena
+    lm_8: 43000,  // Sevilla FC — Ramón Sánchez-Pizjuán
+    lm_9: 29000,  // RC Celta — Balaídos
+    lm_10: 49000, // Valencia CF — Mestalla
+    lm_11: 14700, // Rayo Vallecano — Campo de Vallecas
+    lm_12: 23500, // CA Osasuna — El Sadar
+    lm_13: 17000, // Getafe CF — Coliseum
+    lm_14: 40000, // RCD Espanyol — RCDE Stadium
+    lm_15: 33500, // Elche CF — Martínez Valero
+    lm_16: 26000, // Levante UD — Ciutat de València
+    lm_17: 19800, // Deportivo Alavés — Mendizorroza
+    lm_18: 23000, // RCD Mallorca — Son Moix
+    lm_19: 30500, // Real Oviedo — Carlos Tartiere
+    lm_20: 14600, // Girona FC — Montilivi
+  };
 
   const MONEDAS = {
     EUR:{symbol:'€', label:'Euro'},
@@ -207,6 +237,221 @@
     for(let i=0;i<tamanoBanquillo;i++){ plantilla.push(nuevoJugador('b'+i, posiciones[i%posiciones.length], true)); }
 
     return plantilla;
+  }
+
+  /* ---------- Liga Aleatoria: clubes, escudos y jugadores 100%
+     generados por el propio juego (sin ningún nombre, jugador ni
+     escudo real) — pensada como alternativa a la liga española real
+     de cara a poder vender el juego sin problemas de derechos de
+     marcas/jugadores reales. El nombre de cada club se elige con
+     coherencia respecto al icono que le toca en el escudo (p.ej. un
+     escudo con una estrella -> algo tipo "Stars FC"), igual que pidió
+     Jesús. ---------- */
+  // Un tema de nombre por cada icono posible del editor de escudos
+  // (ver CREST_ICONS en crest-editor.js) — nombres genéricos de club,
+  // ninguno copiado de un equipo real, para evitar cualquier parecido.
+  const TEMA_POR_ICONO_CLUB={
+    ninguno:['Union','Sporting','Central','Unity'],
+    'ph-star':['Stars','Starlight','Comet'],
+    'ph-crown':['Royals','Crown','Monarchs'],
+    'ph-shield':['Shield','Guardians','Defenders'],
+    'ph-lightning':['Thunder','Bolt','Volt'],
+    'ph-trophy':['Champions','Victors','Trophy'],
+    'ph-fire':['Flames','Fire','Blaze'],
+    'ph-mountains':['Peaks','Summit','Highland'],
+    'ph-anchor':['Anchors','Harbor','Maritime'],
+    'ph-sword':['Blades','Sabres','Steel'],
+    'ph-horse':['Stallions','Mustangs','Colts'],
+    'ph-bird':['Eagles','Hawks','Falcons'],
+    'ph-cat':['Panthers','Wildcats','Tigers'],
+    'ph-tree':['Oaks','Forest','Timber'],
+    'ph-sun':['Solar','Sunrise','Radiant'],
+    'ph-waves':['Waves','Tide','Current'],
+    'ph-diamonds-four':['Diamonds','Gems','Crystal'],
+    'ph-medal':['Elite','Medalists','Honor'],
+    'ph-skull':['Reapers','Renegades','Skulls'],
+    'ph-rocket':['Rockets','Comets','Orbit'],
+    'ph-fish':['Marlins','Sharks','Current'],
+    'ph-moon-stars':['Nighthawks','Lunar','Midnight'],
+    'ph-globe':['Cosmos','World','Global'],
+    'ph-hand-fist':['Fists','Warriors','Titans'],
+    'ph-flag':['Banner','Pioneers','Vanguard'],
+    'ph-compass':['Voyagers','Compass','Explorers'],
+    'ph-heart':['Pride','Hearts','Spirit'],
+    'ph-hand-peace':['Unity','Harmony','Alliance'],
+    'ph-basketball':['Dynamo','Rebound','Rally'],
+    'ph-eye':['Watchers','Vision','Sentinel'],
+  };
+  const SUFIJOS_CLUB_ALEATORIO=['FC','CF','United','City','Athletic','Rovers','Wanderers','SC','Town','Sporting'];
+  function nombreClubAleatorio(icono, usados){
+    const temas=TEMA_POR_ICONO_CLUB[icono]||TEMA_POR_ICONO_CLUB.ninguno;
+    let nombre, intentos=0;
+    do{
+      const tema=temas[Math.floor(Math.random()*temas.length)];
+      const sufijo=SUFIJOS_CLUB_ALEATORIO[Math.floor(Math.random()*SUFIJOS_CLUB_ALEATORIO.length)];
+      nombre=`${tema} ${sufijo}`;
+      intentos++;
+    }while(usados.has(nombre) && intentos<40);
+    usados.add(nombre);
+    return nombre;
+  }
+  // Utilidades de contraste WCAG (mismo estándar de accesibilidad
+  // web) — se usan para no dejar nunca un icono o una decoración casi
+  // invisible sobre el color de fondo que le haya tocado al escudo.
+  function hexALuminancia(hex){
+    hex=hex.replace('#','');
+    const r=parseInt(hex.substr(0,2),16)/255, g=parseInt(hex.substr(2,2),16)/255, b=parseInt(hex.substr(4,2),16)/255;
+    const lin=(c)=>c<=0.03928 ? c/12.92 : Math.pow((c+0.055)/1.055, 2.4);
+    return 0.2126*lin(r)+0.7152*lin(g)+0.0722*lin(b);
+  }
+  function ratioContraste(hex1, hex2){
+    const l1=hexALuminancia(hex1), l2=hexALuminancia(hex2);
+    const claro=Math.max(l1,l2), oscuro=Math.min(l1,l2);
+    return (claro+0.05)/(oscuro+0.05);
+  }
+  // Elige un color de la paleta que se lea bien (contraste >= 3.0,
+  // mínimo habitual para elementos gráficos) contra TODOS los fondos
+  // que se le pasen — un escudo con patrón de dos colores (rayas,
+  // cuartos...) puede tener el icono encima de cualquiera de los dos,
+  // así que se exige contraste contra ambos, no solo contra uno. Si
+  // por lo que fuera ningún color de la paleta cumpliera (no debería
+  // pasar, la paleta tiene bastante variedad clara/oscura), se cae
+  // con cualquiera antes que reventar.
+  function elegirColorConContraste(pool, contraFondos, minimo){
+    const puntuados=pool.map(c=>({c, minRatio:Math.min(...contraFondos.map(fondo=>ratioContraste(c,fondo)))}));
+    const validos=puntuados.filter(p=>p.minRatio>=minimo);
+    if(validos.length) return validos[Math.floor(Math.random()*validos.length)].c;
+    // Puede pasar que NINGÚN color de la paleta llegue al mínimo para
+    // esta combinación de fondos en concreto (matemáticamente
+    // imposible cuando los dos fondos del escudo son extremos
+    // opuestos entre sí, p.ej. amarillo muy claro + negro muy
+    // oscuro — cualquier color intermedio se queda corto contra
+    // alguno de los dos). En ese caso, en vez de caer en un color
+    // cualquiera al azar (que fue justo lo que causaba escudos poco
+    // legibles antes), se elige el MEJOR disponible de verdad.
+    puntuados.sort((a,b)=>b.minRatio-a.minRatio);
+    const mejorRatio=puntuados[0].minRatio;
+    const mejores=puntuados.filter(p=>p.minRatio>=mejorRatio-0.05);
+    return mejores[Math.floor(Math.random()*mejores.length)].c;
+  }
+  // Escudo por capas 100% al azar, generado con el MISMO sistema del
+  // editor de escudos (crest-editor.js, cargado antes que este
+  // archivo y accesible como global) — nunca una imagen real.
+  // - Icono central SIEMPRE presente (nunca "ninguno"), porque el
+  //   nombre del club depende de cuál le toque.
+  // - Decoración/rango: NO todos los escudos la llevan (a propósito,
+  //   para que no todos los clubes tengan el mismo aire de "combo") —
+  //   cuando aparece, combina con el icono central y le da más
+  //   personalidad; cuando no, el escudo se queda más simple, que
+  //   también tiene su sitio.
+  // - iconoForzado/rankForzado: para que una liga entera pueda repartir
+  //   los iconos SIN repetir ninguno entre sus equipos (ver
+  //   generarLigaAleatoria más abajo). rankForzado puede venir como
+  //   'ninguno' a propósito (decisión ya tomada por quien llama) — solo
+  //   si no se pasa NADA (undefined) se decide aquí mismo al azar.
+  // - Los colores de icono y decoración se eligen SIEMPRE con
+  //   contraste suficiente contra el fondo del escudo, para que nunca
+  //   queden apagados o casi invisibles.
+  function generarEscudoAleatorio(iconoForzado, rankForzado){
+    if(typeof CREST_SHAPE_KEYS==='undefined' || typeof buildCrestSVGInner!=='function'){
+      return {icon:'ninguno', rank:'ninguno', dataUri:null}; // red de seguridad si el editor de escudos no llegó a cargar
+    }
+    const formas=CREST_SHAPE_KEYS.filter(s=>s!=='ninguno');
+    const iconos=CREST_ICONS.filter(i=>i!=='ninguno');
+    const ranks=CREST_RANKS.filter(r=>r!=='ninguno' && r!=='laurel'); // "laurel" es un dibujo propio, no un icono Phosphor — se deja fuera para que la decoración combine siempre con un icono real
+    const shape=formas[Math.floor(Math.random()*formas.length)];
+    const pattern=CREST_PATTERNS[Math.floor(Math.random()*CREST_PATTERNS.length)];
+    const icon=iconoForzado||iconos[Math.floor(Math.random()*iconos.length)];
+    const rank=(rankForzado!==undefined) ? rankForzado : (Math.random()<0.5 ? ranks[Math.floor(Math.random()*ranks.length)] : 'ninguno');
+    const bgColor=CREST_COLORS[Math.floor(Math.random()*CREST_COLORS.length)];
+    let bg2Color=CREST_COLORS[Math.floor(Math.random()*CREST_COLORS.length)];
+    let intentosColor=0;
+    while(bg2Color===bgColor && intentosColor<10){ bg2Color=CREST_COLORS[Math.floor(Math.random()*CREST_COLORS.length)]; intentosColor++; }
+    const iconColor=elegirColorConContraste(CREST_COLORS, [bgColor, bg2Color], 3.0);
+    const rankColor=elegirColorConContraste(CREST_COLORS, [bgColor, bg2Color], 3.0);
+    const data={
+      shape, pattern, bgColor, bg2Color, shapeScale:100, shapeRotate:0,
+      icon, iconColor, iconScale:100, iconRotate:0, iconX:0, iconY:0,
+      rank, rankColor, rankScale:100, rankRotate:0, rankX:0, rankY:0,
+    };
+    const svgFull=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">${buildCrestSVGInner(data)}</svg>`;
+    return {icon, rank, dataUri:'data:image/svg+xml;utf8,'+encodeURIComponent(svgFull)};
+  }
+  // Genera la liga entera: N clubes con nombre+escudo coherentes entre
+  // sí y sus plantillas completas (11+5), con variedad real de nivel
+  // entre clubes (unos pocos "grandes" y bastantes "modestos", como en
+  // una liga real) en vez de que todos salgan igual de flojos.
+  const TIERS_LIGA_ALEATORIA=[
+    {min:45, max:58, peso:5}, {min:52, max:65, peso:6}, {min:58, max:72, peso:5},
+    {min:65, max:78, peso:3}, {min:74, max:88, peso:1},
+  ];
+  function elegirTierAleatorio(){
+    const pesoTotal=TIERS_LIGA_ALEATORIA.reduce((s,t)=>s+t.peso,0);
+    let r=Math.random()*pesoTotal;
+    for(const tier of TIERS_LIGA_ALEATORIA){ r-=tier.peso; if(r<=0) return tier; }
+    return TIERS_LIGA_ALEATORIA[0];
+  }
+  // Baraja de Fisher-Yates — usada para repartir iconos sin repetir
+  // entre los equipos de una misma liga generada (antes cada equipo
+  // sorteaba su icono de forma independiente, y con solo 30 posibles
+  // para 20 equipos las coincidencias eran casi seguras).
+  function barajarArray(arr){
+    const a=arr.slice();
+    for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); const tmp=a[i]; a[i]=a[j]; a[j]=tmp; }
+    return a;
+  }
+  function generarLigaAleatoria(numEquipos){
+    numEquipos=numEquipos||20;
+    const nombresUsados=new Set();
+    const clavesUsadas=new Set();
+    const equiposGenerados=[];
+    const POS_XI_ALEATORIA=['GK','CB','CB','LB','RB','CDM','CM','CAM','LW','RW','ST'];
+    const POS_BANCA_ALEATORIA=['GK','CB','CM','RW','ST'];
+    // Iconos barajados una vez para TODA la liga — con 29 posibles y
+    // como mucho 20 equipos, cada uno se queda siempre con uno
+    // distinto a todos los demás de su misma liga. Las decoraciones
+    // (solo 7 posibles) sí pueden llegar a repetirse si hay más de 7
+    // equipos — es un elemento secundario, no tan determinante como
+    // el icono principal (que además es el que da nombre al club).
+    const iconosBarajados=(typeof CREST_ICONS!=='undefined')?barajarArray(CREST_ICONS.filter(i=>i!=='ninguno')):[];
+    const ranksBarajados=(typeof CREST_RANKS!=='undefined')?barajarArray(CREST_RANKS.filter(r=>r!=='ninguno' && r!=='laurel')):[];
+    let siguienteRankIdx=0; // solo avanza para los equipos que SÍ llevan decoración
+    for(let i=0;i<numEquipos;i++){
+      const iconoAsignado=iconosBarajados.length?iconosBarajados[i%iconosBarajados.length]:null;
+      // No todos los escudos llevan decoración a propósito — cuando le
+      // toca a un equipo, se saca de la baraja (sin repetir mientras
+      // alcance); si no le toca, el escudo se queda solo con el icono
+      // central, más simple, que también tiene su sitio.
+      let rankAsignado='ninguno';
+      if(ranksBarajados.length && Math.random()<0.5){
+        rankAsignado=ranksBarajados[siguienteRankIdx%ranksBarajados.length];
+        siguienteRankIdx++;
+      }
+      const {icon, dataUri}=generarEscudoAleatorio(iconoAsignado, rankAsignado);
+      const nombre=nombreClubAleatorio(icon, nombresUsados);
+      let key=nombre.toLowerCase().replace(/\s+/g,'').replace(/[^a-z0-9]/g,'');
+      let sufijoClave=2;
+      while(clavesUsadas.has(key)){ key=nombre.toLowerCase().replace(/\s+/g,'').replace(/[^a-z0-9]/g,'')+sufijoClave; sufijoClave++; }
+      clavesUsadas.add(key);
+      const tier=elegirTierAleatorio();
+      const numerosUsados=new Set();
+      const nombresJugUsados=new Set();
+      function numeroUnicoAleatorio(){
+        let n; do{ n=1+Math.floor(Math.random()*30); }while(numerosUsados.has(n));
+        numerosUsados.add(n); return n;
+      }
+      function jugadorAleatorioLiga(pos){
+        const overall=tier.min+Math.floor(Math.random()*(tier.max-tier.min+1));
+        const variar=()=>Math.max(20,Math.min(99, overall+Math.floor(Math.random()*11)-5));
+        return {pos, num:numeroUnicoAleatorio(), nombre:nombreJugadorAleatorio(nombresJugUsados), atk:variar(), def:variar(), pace:variar(), pas:variar(), tech:variar()};
+      }
+      const xi=POS_XI_ALEATORIA.map(p=>jugadorAleatorioLiga(p));
+      const bench=POS_BANCA_ALEATORIA.map(p=>jugadorAleatorioLiga(p));
+      equiposGenerados.push({key, displayName:nombre, xi, bench});
+      if(dataUri && window.G2G_LigaPersonalizada) window.G2G_LigaPersonalizada.setCrestDirecto(key, dataUri);
+    }
+    if(window.G2G_LigaPersonalizada) window.G2G_LigaPersonalizada.setEquipos(equiposGenerados);
+    return equiposGenerados;
   }
 
   // Genera tu plantilla a partir de un equipo real elegido en vez de
@@ -436,6 +681,649 @@
     const t=fecha.getTime();
     return t>v.desde.getTime() && t<v.hasta.getTime();
   }
+  /* ═══════════════════════════════════════════════════════════════
+     SEMANA DE NODOS — Fase 1: barras de estado + contadores de icono
+     con sus hitos canjeables. El camino de nodos en sí (Fase 2) irá
+     sumando +1 al contador correspondiente cada vez que el jugador
+     elija ese tipo de nodo — de momento esta fase construye el
+     "banco" (contar, mostrar progreso, canjear recompensa) para que
+     la Fase 2 solo tenga que preocuparse de sumar.
+     ═══════════════════════════════════════════════════════════════ */
+
+  // ---------- Las 4 barras de estado ----------
+  // Todas se calculan a partir de datos que YA existen en el juego —
+  // no se inventa ningún número nuevo, solo se hacen visibles de cara
+  // al jugador para que pueda decidir con criterio qué nodo conviene.
+  // Previsión de fatiga media, teniendo en cuenta los nodos de
+  // entreno/descanso ya elegidos esta semana (aunque el motor real de
+  // procesarEntrenamientoSemanal() no los aplique hasta el final de la
+  // semana). Se calcula aparte, SIN tocar state.plantilla[].fatigue de
+  // verdad — solo es una previsión visual, para que las barras se
+  // sientan reactivas a cada elección sin arriesgarse a que el efecto
+  // real se aplique dos veces cuando la semana se resuelva de verdad.
+  // Usa exactamente los mismos números que ese motor real (-3.6 los
+  // del plan del preparador físico, -2.2 el resto, +4 en descanso).
+  function fatigaProyectadaEstaSemana(){
+    const plantilla=state.plantilla||[];
+    const fatigaBase = plantilla.length ? plantilla.reduce((s,p)=>s+(p.fatigue==null?100:p.fatigue),0)/plantilla.length : 100;
+    if(!state.semanaNodos) return fatigaBase;
+    const idsEnPlan=new Set((state.pfPlanEntrenamiento||[]).map(e=>e.jugadorId));
+    const numEnPlan=plantilla.filter(p=>idsEnPlan.has(p.id)).length;
+    const numFuera=plantilla.length-numEnPlan;
+    const desgastePromedio=plantilla.length ? (numEnPlan*3.6+numFuera*2.2)/plantilla.length : 2.5;
+    let proyeccion=fatigaBase;
+    state.semanaNodos.dias.forEach(dia=>{
+      if(dia.elegido==null) return;
+      const nodo=dia.nodos[dia.elegido];
+      if(nodo.tipo==='entreno') proyeccion-=desgastePromedio;
+      else if(nodo.tipo==='descanso') proyeccion+=4;
+    });
+    return Math.max(0, Math.min(100, proyeccion));
+  }
+
+  function calcularBarrasEstado(){
+    const fatigaMedia = fatigaProyectadaEstaSemana();
+    const nivelesMed=state.medicoNiveles||{};
+    // Riesgo de lesión: cuanto más nivel de prevención tenga el
+    // médico, más BAJO se muestra el riesgo — mismo factor 0.85^nivel
+    // que ya usa el propio cálculo real de lesiones del partido.
+    const factorPrevencion=Math.pow(0.85, (nivelesMed.prevencionMuscular||0)+(nivelesMed.prevencionOsea||0));
+    const riesgoLesionPct=Math.round(Math.min(100, 45*factorPrevencion));
+    return {
+      formaFisica:{ pct:Math.round(fatigaMedia), color:fatigaMedia>=60?'#4caf7a':(fatigaMedia>=30?'#e6c94a':'#e24b4a') },
+      riesgoLesion:{ pct:riesgoLesionPct, color:riesgoLesionPct<=15?'#4caf7a':(riesgoLesionPct<=30?'#e6c94a':'#e24b4a') },
+      moral:{ pct:Math.round(((state.moral||0)+50)/100*100), color:(state.moral||0)>=10?'#4caf7a':((state.moral||0)>=-10?'#e6c94a':'#e24b4a') },
+      aficion:{ pct:Math.round((((state.estadio&&state.estadio.satisfaccion)||0)+100)/200*100), color:((state.estadio&&state.estadio.satisfaccion)||0)>=10?'#4caf7a':((((state.estadio&&state.estadio.satisfaccion)||0)>=-20)?'#e6c94a':'#e24b4a') },
+    };
+  }
+
+  // ---------- Definición de los 7 tipos de icono y sus 3 hitos ----------
+  // Los hitos NO se resetean al canjearse — son marcas permanentes de
+  // progreso a lo largo de toda la temporada, así el contador de
+  // "entreno" sigue subiendo después de canjear el hito de 10, rumbo
+  // al de 20, en vez de volver a empezar de cero.
+  const HITOS_NODOS={
+    entreno:{icon:'ph-barbell', color:'#e08a3e', hitos:[
+      {umbral:5, tipo:'bandera', bandera:'boostEntrenoSemana'},
+      {umbral:10, tipo:'eleccion', opciones:['subida_stats_uno','curar_lesionado']},
+      {umbral:20, tipo:'subida_stats_dos'},
+    ]},
+    descanso:{icon:'ph-bed', color:'#5eead4', hitos:[
+      {umbral:5, tipo:'recuperar_fatiga_todos'},
+      {umbral:10, tipo:'resetear_riesgo_sobrecarga'},
+      {umbral:20, tipo:'jugador_como_nuevo'},
+    ]},
+    quiniela:{icon:'ph-ticket', color:'#c9a227', hitos:[
+      {umbral:5, tipo:'bandera', bandera:'quinielaConPista'},
+      {umbral:10, tipo:'bandera', bandera:'quinielaMultiplicador'},
+      {umbral:20, tipo:'bandera', bandera:'quinielaHitosGarantizados'},
+    ]},
+    scouting:{icon:'ph-binoculars', color:'#8a7fd6', hitos:[
+      {umbral:5, tipo:'bandera', bandera:'sobreGarantizado'},
+      {umbral:10, tipo:'bandera', bandera:'sobreNivelSuperior'},
+      {umbral:20, tipo:'bandera', bandera:'sobreDobleEleccion'},
+    ]},
+    amistoso:{icon:'ph-soccer-ball', color:'#4caf7a', hitos:[
+      {umbral:5, tipo:'moral_bonus_permanente'},
+      {umbral:10, tipo:'experiencia_extra_jugador'},
+      {umbral:20, tipo:'partido_leyenda'},
+    ]},
+    medios:{icon:'ph-microphone-stage', color:'#e2807f', hitos:[
+      {umbral:5, tipo:'bandera', bandera:'prensaOpcionSegura'},
+      {umbral:10, tipo:'satisfaccion_empujon'},
+      {umbral:20, tipo:'carisma_permanente'},
+    ]},
+    tactica:{icon:'ph-clipboard-text', color:'#5b9bd5', hitos:[
+      {umbral:5, tipo:'moral_empujon_fijo'},
+      {umbral:10, tipo:'moral_empujon_notable'},
+      {umbral:20, tipo:'moral_base_permanente'},
+    ]},
+  };
+  // Tipos de hito que necesitan que el jugador elija a quién aplicar
+  // el efecto (uno o dos jugadores de la plantilla) — la interfaz usa
+  // esta lista para saber cuándo debe pedir esa elección antes de
+  // canjear.
+  const TIPOS_HITO_NECESITAN_JUGADOR={subida_stats_uno:1, curar_lesionado:1, subida_stats_dos:2, jugador_como_nuevo:1, experiencia_extra_jugador:1, partido_leyenda:1};
+
+  function progresoNodo(tipoIcono){
+    const def=HITOS_NODOS[tipoIcono];
+    if(!def) return null;
+    const acumulado=(state.nodosAcumulados&&state.nodosAcumulados[tipoIcono])||0;
+    const reclamados=(state.nodosHitosReclamados&&state.nodosHitosReclamados[tipoIcono])||[];
+    const siguiente=def.hitos.find(h=>!reclamados.includes(h.umbral));
+    const disponible=siguiente && acumulado>=siguiente.umbral;
+    return {def, acumulado, reclamados, siguiente, disponible};
+  }
+
+  // Aplica de verdad el efecto de un hito ya alcanzado. jugadorIds es
+  // un array (0, 1 o 2 elementos según el tipo de hito) con los ids de
+  // los jugadores elegidos, para los hitos que lo necesiten.
+  function reclamarHitoNodo(tipoIcono, umbral, opcionElegida, jugadorIds){
+    const def=HITOS_NODOS[tipoIcono];
+    if(!def) return {ok:false, error:'tipo_desconocido'};
+    const hito=def.hitos.find(h=>h.umbral===umbral);
+    if(!hito) return {ok:false, error:'hito_desconocido'};
+    const acumulado=(state.nodosAcumulados&&state.nodosAcumulados[tipoIcono])||0;
+    if(acumulado<umbral) return {ok:false, error:'no_alcanzado'};
+    if(!state.nodosHitosReclamados) state.nodosHitosReclamados={};
+    if(!state.nodosHitosReclamados[tipoIcono]) state.nodosHitosReclamados[tipoIcono]=[];
+    const reclamados=state.nodosHitosReclamados[tipoIcono];
+    if(reclamados.includes(umbral)) return {ok:false, error:'ya_reclamado'};
+
+    const tipoEfectivo=hito.tipo==='eleccion' ? opcionElegida : hito.tipo;
+    if(hito.tipo==='eleccion' && !hito.opciones.includes(opcionElegida)) return {ok:false, error:'opcion_invalida'};
+
+    switch(tipoEfectivo){
+      case 'bandera':
+        if(!state.nodosBanderasPendientes) state.nodosBanderasPendientes={};
+        state.nodosBanderasPendientes[hito.bandera]=true;
+        break;
+      case 'subida_stats_uno': {
+        const j=(state.plantilla||[]).find(p=>p.id===(jugadorIds&&jugadorIds[0]));
+        if(!j) return {ok:false, error:'jugador_no_valido'};
+        ['attack','defense','pace','passing','technique'].forEach(s=>{ j[s]=Math.min(99,(j[s]||50)+1); });
+        j.overall=Math.round((j.attack+j.defense+j.pace+j.passing+j.technique)/5);
+        break;
+      }
+      case 'subida_stats_dos': {
+        const ids=(jugadorIds||[]).slice(0,2);
+        if(ids.length<2) return {ok:false, error:'faltan_jugadores'};
+        ids.forEach(id=>{
+          const j=(state.plantilla||[]).find(p=>p.id===id);
+          if(j){ ['attack','defense','pace','passing','technique'].forEach(s=>{ j[s]=Math.min(99,(j[s]||50)+1); }); j.overall=Math.round((j.attack+j.defense+j.pace+j.passing+j.technique)/5); }
+        });
+        break;
+      }
+      case 'curar_lesionado': {
+        const j=(state.plantilla||[]).find(p=>p.id===(jugadorIds&&jugadorIds[0]));
+        if(!j || !j.injured) return {ok:false, error:'jugador_no_valido'};
+        j.injured=false; j.injurySeverity=null; j.injuryWeeks=0;
+        if(typeof cerrarLesionHistorial==='function') cerrarLesionHistorial(j, 'Hito de entrenamiento acumulado');
+        break;
+      }
+      case 'recuperar_fatiga_todos':
+        (state.plantilla||[]).forEach(p=>{ p.fatigue=100; });
+        break;
+      case 'resetear_riesgo_sobrecarga':
+        state.diasEntrenoSeguidosAcumulado=0;
+        break;
+      case 'jugador_como_nuevo': {
+        const j=(state.plantilla||[]).find(p=>p.id===(jugadorIds&&jugadorIds[0]));
+        if(!j) return {ok:false, error:'jugador_no_valido'};
+        j.fatigue=100;
+        state.moral=Math.max(-50, Math.min(50, (state.moral||0)+3));
+        break;
+      }
+      case 'moral_bonus_permanente':
+        state.amistosoBonusMoralExtra=(state.amistosoBonusMoralExtra||0)+1;
+        break;
+      case 'experiencia_extra_jugador': {
+        const id=jugadorIds&&jugadorIds[0];
+        if(!id) return {ok:false, error:'jugador_no_valido'};
+        if(!state.nodosBanderasPendientes) state.nodosBanderasPendientes={};
+        state.nodosBanderasPendientes.experienciaExtraJugadorId=id;
+        break;
+      }
+      case 'partido_leyenda': {
+        const premio=15000+Math.floor(Math.random()*10000);
+        state.capital=(state.capital||0)+premio;
+        state.moral=Math.max(-50, Math.min(50, (state.moral||0)+10));
+        if(typeof registrarMovimientoFinanciero==='function') registrarMovimientoFinanciero('Partido de leyenda (hito de amistosos)', premio, state.jornadaActual);
+        const id=jugadorIds&&jugadorIds[0];
+        if(id && LM_RASGOS_DEFS.length){
+          const elegido=LM_RASGOS_DEFS[Math.floor(Math.random()*LM_RASGOS_DEFS.length)];
+          if(elegido) asignarRasgoJugador(id, elegido.id);
+        }
+        break;
+      }
+      case 'satisfaccion_empujon':
+        if(!state.estadio) state.estadio={campo:90, satisfaccion:10, aforoTotal:12000, ultimaAsistencia:null};
+        state.estadio.satisfaccion=Math.max(-100, Math.min(100, state.estadio.satisfaccion+8));
+        break;
+      case 'carisma_permanente':
+        state.mediosCarismaPermanente=(state.mediosCarismaPermanente||0)+1;
+        break;
+      case 'moral_empujon_fijo':
+        state.moral=Math.max(-50, Math.min(50, (state.moral||0)+3));
+        break;
+      case 'moral_empujon_notable':
+        state.moral=Math.max(-50, Math.min(50, (state.moral||0)+6));
+        break;
+      case 'moral_base_permanente':
+        // Este hito es el de mayor nivel (20) del icono de sesión
+        // táctica, así que su empujón de moral es más grande que los
+        // dos anteriores del mismo icono (+3 y +6) — no hace falta un
+        // sistema aparte de "base permanente" que nunca se llegaba a
+        // aplicar a ningún cálculo real; un empujón directo mayor
+        // consigue lo mismo de forma mucho más simple.
+        state.moral=Math.max(-50, Math.min(50, (state.moral||0)+10));
+        break;
+      default:
+        return {ok:false, error:'tipo_desconocido'};
+    }
+
+    reclamados.push(umbral);
+    guardarEstado();
+    return {ok:true};
+  }
+
+
+  // ---------- Leyenda de los 7 iconos de nodo — mismo patrón que la
+  // leyenda de iconos ya existente durante el partido en directo. ----------
+  function mostrarLeyendaIconosNodos(){
+    const existente=document.getElementById('lmNodosLeyendaOverlay');
+    if(existente){ existente.remove(); return; }
+    const overlay=document.createElement('div');
+    overlay.id='lmNodosLeyendaOverlay';
+    overlay.className='lm-visor-leyenda-overlay-standalone';
+    const tipos=Object.keys(HITOS_NODOS);
+    overlay.innerHTML=`
+      <div class="lm-visor-leyenda-card">
+        <div class="lm-visor-leyenda-titulo">${t('lm.leyenda_iconos_nodos_titulo')}</div>
+        <div class="lm-visor-leyenda-lista">
+          ${tipos.map(tipo=>{
+            const def=HITOS_NODOS[tipo];
+            return `<div class="lm-visor-leyenda-fila">
+              <span class="lm-visor-leyenda-icono" style="background:${def.color}22;color:${def.color}"><i class="ph ph-bold ${def.icon}"></i></span>
+              <div class="lm-visor-leyenda-texto"><strong>${t('lm.nodo_'+tipo)}</strong><span>${t('lm.nodo_desc_'+tipo)}</span></div>
+            </div>`;
+          }).join('')}
+        </div>
+        <button class="mode-card-btn mode-card-btn-gold" data-cerrar-leyenda-nodos style="margin-top:10px">${t('lm.entendido_btn')}</button>
+      </div>`;
+    document.body.appendChild(overlay);
+    overlay.addEventListener('click', (e)=>{ if(e.target===overlay) overlay.remove(); });
+    overlay.querySelector('[data-cerrar-leyenda-nodos]').addEventListener('click', ()=>{
+      if(typeof window.playSound==='function') window.playSound('select');
+      overlay.remove();
+    });
+  }
+
+  // ---------- Popup de canje de un hito — si el hito es de elección
+  // (ej. entreno·10: subir stats O curar lesionado) primero pregunta
+  // cuál; si el tipo resultante necesita jugador(es), pide elegirlos
+  // de la plantilla antes de aplicar el efecto de verdad. ----------
+  function abrirCanjeHitoNodo(tipoIcono, umbral){
+    const def=HITOS_NODOS[tipoIcono];
+    const hito=def && def.hitos.find(h=>h.umbral===umbral);
+    if(!hito) return;
+    const existente=document.getElementById('lmCanjeHitoOverlay');
+    if(existente) existente.remove();
+    const overlay=document.createElement('div');
+    overlay.id='lmCanjeHitoOverlay';
+    overlay.className='lm-visor-leyenda-overlay-standalone';
+    document.body.appendChild(overlay);
+
+    function cerrar(){ overlay.remove(); }
+    overlay.addEventListener('click', (e)=>{ if(e.target===overlay) cerrar(); });
+
+    function pintarEleccion(){
+      overlay.innerHTML=`
+        <div class="lm-dilemma-card" style="max-width:320px">
+          <div class="lm-dilemma-title"><i class="ph ph-bold ${def.icon}" style="color:${def.color}"></i> ${t('lm.canje_titulo')}</div>
+          <p class="lm-setup-desc">${t('lm.canje_elegir_opcion')}</p>
+          <div class="lm-popup-actions" style="flex-direction:column;gap:8px">
+            ${hito.opciones.map(op=>`<button class="mode-card-btn mode-card-btn-secondary" data-elegir-opcion="${op}" style="text-align:left;white-space:normal;height:auto;padding:10px 14px">${t('lm.hito_opcion_'+op)}</button>`).join('')}
+          </div>
+        </div>`;
+      overlay.querySelectorAll('[data-elegir-opcion]').forEach(b=>{
+        b.addEventListener('click', ()=>{
+          if(typeof window.playSound==='function') window.playSound('select');
+          continuarConTipo(b.getAttribute('data-elegir-opcion'));
+        });
+      });
+    }
+
+    function continuarConTipo(tipoEfectivo){
+      const numJugadores=TIPOS_HITO_NECESITAN_JUGADOR[tipoEfectivo]||0;
+      if(numJugadores===0){
+        aplicarYFinalizar(hito.tipo==='eleccion'?tipoEfectivo:null, []);
+        return;
+      }
+      pintarSelectorJugadores(tipoEfectivo, numJugadores);
+    }
+
+    function pintarSelectorJugadores(tipoEfectivo, numJugadores){
+      const soloLesionados=tipoEfectivo==='curar_lesionado';
+      const candidatos=(state.plantilla||[]).filter(p=>!soloLesionados||p.injured);
+      if(!candidatos.length){
+        overlay.innerHTML=`
+          <div class="lm-dilemma-card" style="max-width:320px">
+            <div class="lm-dilemma-title"><i class="ph ph-bold ph-warning-circle"></i> ${t('lm.canje_titulo')}</div>
+            <p class="lm-setup-desc">${t('lm.canje_sin_lesionados')}</p>
+            <div class="lm-popup-actions"><button class="mode-card-btn mode-card-btn-gold" data-cerrar-canje>${t('lm.entendido_btn')}</button></div>
+          </div>`;
+        overlay.querySelector('[data-cerrar-canje]').addEventListener('click', ()=>{
+          if(typeof window.playSound==='function') window.playSound('select');
+          cerrar();
+        });
+        return;
+      }
+      const elegidos=[];
+      overlay.innerHTML=`
+        <div class="lm-dilemma-card lm-seguridad-card" style="max-width:360px;text-align:left">
+          <div class="lm-dilemma-title"><i class="ph ph-bold ${def.icon}" style="color:${def.color}"></i> ${t('lm.canje_titulo')}</div>
+          <p class="lm-setup-desc">${numJugadores>1?t('lm.canje_elegir_dos_jugadores'):t('lm.canje_elegir_jugador')}</p>
+          <div class="lm-canje-lista-jugadores">
+            ${candidatos.map(j=>`<label class="lm-canje-jugador-fila">
+              <input type="checkbox" data-jugador-id="${j.id}">
+              <span>${j.name}${j.injured?` <i class=\"ph ph-bold ph-bandaids\" style=\"color:#e24b4a\"></i>`:''}</span>
+            </label>`).join('')}
+          </div>
+          <div class="lm-popup-actions"><button class="mode-card-btn mode-card-btn-gold" data-confirmar-jugadores disabled>${t('lm.canje_confirmar')}</button></div>
+        </div>`;
+      const confirmarBtn=overlay.querySelector('[data-confirmar-jugadores]');
+      overlay.querySelectorAll('[data-jugador-id]').forEach(chk=>{
+        chk.addEventListener('change', ()=>{
+          const id=chk.getAttribute('data-jugador-id');
+          if(typeof window.playSound==='function') window.playSound('select');
+          if(chk.checked){
+            if(elegidos.length>=numJugadores){ chk.checked=false; return; }
+            elegidos.push(id);
+          } else {
+            const idx=elegidos.indexOf(id);
+            if(idx>=0) elegidos.splice(idx,1);
+          }
+          confirmarBtn.disabled=elegidos.length!==numJugadores;
+        });
+      });
+      confirmarBtn.addEventListener('click', ()=>{
+        if(typeof window.playSound==='function') window.playSound('select');
+        aplicarYFinalizar(hito.tipo==='eleccion'?tipoEfectivo:null, elegidos);
+      });
+    }
+
+    function aplicarYFinalizar(opcionElegida, jugadorIds){
+      const resultado=reclamarHitoNodo(tipoIcono, umbral, opcionElegida, jugadorIds);
+      if(!resultado.ok){
+        cerrar();
+        return;
+      }
+      if(typeof window.playSound==='function') window.playSound('reveal');
+      overlay.innerHTML=`
+        <div class="lm-dilemma-card" style="max-width:300px">
+          <i class="ph ph-bold ph-check-circle" style="font-size:40px;color:${def.color};margin-bottom:8px"></i>
+          <div class="lm-dilemma-title" style="justify-content:center">${t('lm.canje_exito')}</div>
+          <div class="lm-popup-actions"><button class="mode-card-btn mode-card-btn-gold" data-cerrar-canje-ok>${t('lm.entendido_btn')}</button></div>
+        </div>`;
+      overlay.querySelector('[data-cerrar-canje-ok]').addEventListener('click', ()=>{
+        if(typeof window.playSound==='function') window.playSound('select');
+        cerrar(); render();
+      });
+    }
+
+    if(hito.tipo==='eleccion') pintarEleccion();
+    else continuarConTipo(hito.tipo);
+  }
+
+  /* ═══════════════════════════════════════════════════════════════
+     SEMANA DE NODOS — Fase 2: generación real del camino semanal y
+     resolución de cada tipo de nodo al elegirlo.
+     ═══════════════════════════════════════════════════════════════ */
+
+  function barajarArrayNodos(arr){
+    const a=arr.slice();
+    for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; }
+    return a;
+  }
+
+  // Genera las opciones de UN día — 2 o 3 tipos distintos (nunca
+  // repetidos el mismo día), con subtipo cuando corresponda (entreno
+  // estándar/intenso, dificultad del amistoso).
+  // numOpciones: cuántas opciones generar. poolTipos: de qué tipos
+  // elegir (si no se indica, usa los 7 tipos normales). Se usa para
+  // poder restringir qué tipos pueden salir cada día (el primer día
+  // solo entreno/descanso, la entrevista solo en el último).
+  function generarOpcionesDiaNodo(numOpciones, poolTipos){
+    const pool=poolTipos || Object.keys(HITOS_NODOS);
+    const tipos=barajarArrayNodos(pool).slice(0, Math.min(numOpciones, pool.length));
+    return tipos.map(tipo=>{
+      const nodo={tipo};
+      if(tipo==='entreno') nodo.subtipo = Math.random()<0.5 ? 'estandar' : 'intenso';
+      if(tipo==='amistoso') nodo.subtipo = ['facil','normal','dificil'][Math.floor(Math.random()*3)];
+      return nodo;
+    });
+  }
+
+  // Conecta cada nodo de un día con un SUBCONJUNTO de los del día
+  // siguiente (no con todos) — así hay caminos de verdad exclusivos:
+  // elegir uno u otro nodo hoy puede llevar a opciones distintas
+  // mañana. Se garantiza que ningún nodo del día siguiente se quede
+  // sin ninguna conexión de entrada (inalcanzable).
+  // Regla de conexión: reparto de verdad (partición), no que un nodo
+  // siempre lo cubra todo. Cada opción del día siguiente se asigna a
+  // UN SOLO nodo concreto de hoy — por ejemplo, con 2 nodos hoy y 3
+  // mañana, uno de hoy puede llevar a 1 de mañana y el otro a los 2
+  // restantes. Entre todos los nodos de hoy se cubre siempre el 100%
+  // de mañana, pero ninguno necesita cubrirlo él solo.
+  function asignarConexionesExclusivas(diaOrigen, diaDestino){
+    const numOrigen=diaOrigen.nodos.length, numDestino=diaDestino.nodos.length;
+    diaOrigen.nodos.forEach(nodo=>{ nodo.siguientes=[]; });
+    if(numOrigen===1){
+      // Único origen posible (día 1): no hay nada que repartir, tiene
+      // que llevar a todas las opciones del día siguiente.
+      diaOrigen.nodos[0].siguientes=diaDestino.nodos.map((_,idx)=>idx);
+      return;
+    }
+    // Se baraja el orden de los destinos y se reparten uno a uno entre
+    // los nodos de hoy (round robin) — así cada destino cae en un solo
+    // origen, sin duplicarse entre varios.
+    const destinosBarajados=barajarArrayNodos(diaDestino.nodos.map((_,idx)=>idx));
+    destinosBarajados.forEach((destinoIdx, i)=>{
+      diaOrigen.nodos[i%numOrigen].siguientes.push(destinoIdx);
+    });
+    // Si hay más nodos hoy que opciones mañana, algún nodo de hoy
+    // podría quedarse sin ningún destino tras el reparto — se le da
+    // uno al azar para que nunca se quede sin salida.
+    diaOrigen.nodos.forEach(nodo=>{
+      if(nodo.siguientes.length===0) nodo.siguientes.push(Math.floor(Math.random()*numDestino));
+    });
+  }
+
+  // Con la regla generosa de arriba, cada nodo alcanzable de un día
+  // deja alcanzable a casi todos los del siguiente — así que, salvo
+  // casos de mala suerte extrema, ya no hace falta parchear nada aquí.
+  // Se mantiene igualmente como red de seguridad final: recorre la
+  // semana entera con los caminos reales que se pueden seguir desde el
+  // día 1, y si pese a todo algún nodo quedara sin cobertura real,
+  // lo conecta directamente desde el propio día 1 (que siempre está
+  // garantizado alcanzable de por sí).
+  function garantizarAlcanzabilidadGlobal(dias){
+    if(!dias.length) return;
+    let alcanzables=dias[0].nodos.map((_,i)=>i); // día 1: siempre los dos alcanzables
+    for(let i=1;i<dias.length;i++){
+      const diaAnterior=dias[i-1], diaActual=dias[i];
+      const nuevoAlcanzable=new Set();
+      alcanzables.forEach(oi=>{
+        (diaAnterior.nodos[oi].siguientes||[]).forEach(di=>nuevoAlcanzable.add(di));
+      });
+      diaActual.nodos.forEach((_,di)=>{
+        if(!nuevoAlcanzable.has(di)){
+          const origenAlcanzable=alcanzables[Math.floor(Math.random()*alcanzables.length)];
+          diaAnterior.nodos[origenAlcanzable].siguientes.push(di);
+          nuevoAlcanzable.add(di);
+        }
+      });
+      alcanzables=[...nuevoAlcanzable];
+    }
+  }
+
+  // Genera el árbol completo de la semana actual, a partir de la
+  // ventana real de días entre el partido anterior y el próximo — las
+  // mismas fechas que ya usaba el calendario de entrenamiento de
+  // siempre, así que la duración de la semana es siempre coherente
+  // con el resto del juego (nunca inventa días de más o de menos).
+  function generarSemanaNodos(){
+    const ventana=ventanaEntrenoActual();
+    if(!ventana){ state.semanaNodos=null; return; }
+    const fechas=[];
+    const cur=new Date(ventana.desde); cur.setDate(cur.getDate()+1);
+    while(cur.getTime()<ventana.hasta.getTime()){ fechas.push(new Date(cur)); cur.setDate(cur.getDate()+1); }
+    const n=fechas.length;
+    if(n===0){ state.semanaNodos=null; return; }
+    const TIPOS_SIN_MEDIOS=Object.keys(HITOS_NODOS).filter(t=>t!=='medios');
+    // La quiniela solo puede salir como opción una vez por semana — en
+    // cuanto aparece en el día de un día, se quita del resto de días
+    // siguientes para que nunca se repita.
+    let quinielaYaOfrecida=false;
+    const dias=fechas.map((fecha,i)=>{
+      const esPrimero = i===0, esUltimo = i===n-1;
+      let numOpciones, pool;
+      if(esPrimero){ numOpciones=2; pool=['entreno','descanso']; }
+      else if(esUltimo){ numOpciones=1; pool=['medios']; }
+      else {
+        numOpciones=2+Math.floor(Math.random()*2);
+        pool = quinielaYaOfrecida ? TIPOS_SIN_MEDIOS.filter(t=>t!=='quiniela') : TIPOS_SIN_MEDIOS;
+      }
+      const nodos=generarOpcionesDiaNodo(numOpciones, pool);
+      if(nodos.some(nd=>nd.tipo==='quiniela')) quinielaYaOfrecida=true;
+      return {fecha:fechaISO(fecha), nodos, elegido:null};
+    });
+    for(let i=0;i<dias.length-1;i++) asignarConexionesExclusivas(dias[i], dias[i+1]);
+    garantizarAlcanzabilidadGlobal(dias);
+    state.semanaNodos={jornada:state.jornadaActual, dias};
+  }
+
+  // Índices de las opciones del día actual que de verdad se pueden
+  // elegir — para el primer día son todas (no hay día anterior), para
+  // el resto solo las que el nodo elegido ayer conecta hacia adelante
+  // (los "caminos exclusivos"). Las demás siguen apareciendo en el
+  // árbol pero ya no son alcanzables esta semana.
+  function nodosAlcanzablesHoy(){
+    const idx=diaActualIndiceSemanaNodos();
+    if(idx<0 || !state.semanaNodos) return [];
+    const diaHoy=state.semanaNodos.dias[idx];
+    if(idx===0) return diaHoy.nodos.map((_,i)=>i);
+    const diaAnterior=state.semanaNodos.dias[idx-1];
+    const elegidoAyer=diaAnterior && diaAnterior.nodos[diaAnterior.elegido];
+    return (elegidoAyer && elegidoAyer.siguientes) ? elegidoAyer.siguientes.slice() : diaHoy.nodos.map((_,i)=>i);
+  }
+
+  // Si no existe arbol para la jornada actual (primera vez, o cambio
+  // de jornada), lo genera. Nunca regenera uno ya empezado.
+  function asegurarSemanaNodos(){
+    if(!state.semanaNodos || state.semanaNodos.jornada!==state.jornadaActual) generarSemanaNodos();
+
+  }
+
+  function diaActualIndiceSemanaNodos(){
+    if(!state.semanaNodos) return -1;
+    return state.semanaNodos.dias.findIndex(d=>d.elegido===null);
+  }
+
+  // Simulación rápida de un amistoso — sin visor de partido completo,
+  // solo un resultado con su repercusión real (fatiga, riesgo de
+  // lesión escalado por la dificultad elegida, moral si se gana).
+  function resolverAmistosoRapido(dificultad){
+    const misStats=(typeof calcularStatsEquipoLM==='function') ? calcularStatsEquipoLM() : {overall:60};
+    const ajuste = dificultad==='facil' ? -15 : (dificultad==='dificil' ? 15 : 0);
+    const miOverall = misStats.overall || 60;
+    const rivalOverall = Math.max(30, Math.min(90, miOverall+ajuste));
+    const probGanar = 1/(1+Math.pow(10,(rivalOverall-miOverall)/18));
+    const rollResultado=Math.random();
+    const resultado = rollResultado<probGanar ? 'victoria' : (rollResultado<probGanar+0.22 ? 'empate' : 'derrota');
+    // Marcador simple, solo de cara al pop-up de resultado — no es un
+    // partido simulado evento a evento como los de verdad, es la
+    // resolución rápida propia del árbol de nodos.
+    let misGoles, susGoles;
+    if(resultado==='victoria'){ misGoles=1+Math.floor(Math.random()*3); susGoles=Math.max(0, misGoles-1-Math.floor(Math.random()*2)); }
+    else if(resultado==='derrota'){ susGoles=1+Math.floor(Math.random()*3); misGoles=Math.max(0, susGoles-1-Math.floor(Math.random()*2)); }
+    else { misGoles=susGoles=Math.floor(Math.random()*3); }
+
+    (state.plantilla||[]).forEach(p=>{ p.fatigue=Math.max(0,(p.fatigue==null?100:p.fatigue)-15); });
+
+    const nivelesMed=state.medicoNiveles||{};
+    const factorPrevencion=Math.pow(0.85, (nivelesMed.prevencionMuscular||0)+(nivelesMed.prevencionOsea||0));
+    const probLesionBase = dificultad==='dificil' ? 0.06 : (dificultad==='normal' ? 0.03 : 0.015);
+    let lesionadoNombre=null;
+    if(Math.random()<probLesionBase*factorPrevencion && state.plantilla && state.plantilla.length){
+      const candidato=state.plantilla[Math.floor(Math.random()*state.plantilla.length)];
+      if(candidato && !candidato.injured){
+        candidato.injured=true; candidato.injurySeverity='leve'; candidato.injuryWeeks=1; candidato.injuryFamilia='muscular';
+        lesionadoNombre=candidato.name;
+      }
+    }
+    let moralDelta=0;
+    if(resultado==='victoria'){
+      const bonusExtra=state.amistosoBonusMoralExtra||0;
+      moralDelta=5+bonusExtra;
+      state.moral=Math.max(-50, Math.min(50, (state.moral||0)+moralDelta));
+    }
+    state.ultimoAmistosoResultado={dificultad, resultado, lesionado:lesionadoNombre, misGoles, susGoles, moralDelta};
+    return state.ultimoAmistosoResultado;
+  }
+
+  // Aplica de verdad el efecto de un nodo elegido. fechaISOdia es la
+  // fecha real de ese día concreto (para entreno/descanso, que siguen
+  // usando el mismo calendarioEntrenamiento de siempre por debajo).
+  function aplicarEfectoNodoSemana(nodo, fechaISOdia){
+    switch(nodo.tipo){
+      case 'entreno':
+        if(!state.calendarioEntrenamiento) state.calendarioEntrenamiento={};
+        state.calendarioEntrenamiento[fechaISOdia]=true;
+        if(nodo.subtipo==='intenso'){
+          if(!state.diasEntrenoIntenso) state.diasEntrenoIntenso={};
+          state.diasEntrenoIntenso[fechaISOdia]=true;
+        }
+        break;
+      case 'descanso':
+        // No hace falta marcar nada especial — un día sin
+        // calendarioEntrenamiento[fecha]=true ya cuenta como descanso
+        // para procesarEntrenamientoSemanal(), la lógica ya existente.
+        break;
+      case 'quiniela':
+        state.quinielaDisponibleEstaJornada=true;
+        // Elegir este nodo genera el boletín de la jornada que viene
+        // (si no existe uno ya listo sin rellenar) y lo abre ahí
+        // mismo — ya no depende de "cada 3 victorias", es el propio
+        // nodo semanal el que la trae, una vez por jornada.
+        if((!state.quinielaBoleto || state.quinielaBoleto.rellenado) && typeof generarBoletoQuiniela==='function'){
+          generarBoletoQuiniela();
+        }
+        if(state.quinielaBoleto && !state.quinielaBoleto.rellenado && typeof abrirBoletoQuiniela==='function'){
+          abrirBoletoQuiniela();
+        }
+        break;
+      case 'scouting':
+        state.scoutingBoostEstaSemana=(state.scoutingBoostEstaSemana||0)+1;
+        if(typeof intentarGenerarSobreFichajes==='function') intentarGenerarSobreFichajes();
+        break;
+      case 'amistoso':
+        resolverAmistosoRapido(nodo.subtipo);
+        break;
+      case 'medios':
+        state.ruedaPrensaDisponibleEstaJornada=true;
+        break;
+      case 'tactica':
+        state.moral=Math.max(-50, Math.min(50, (state.moral||0)+4));
+        break;
+    }
+  }
+
+  // Punto de entrada único al elegir un nodo — valida que sea
+  // realmente el día que toca (nunca se puede elegir un día futuro ni
+  // repetir uno ya resuelto), aplica el efecto, suma al contador de
+  // ese icono, y guarda.
+  function elegirNodoSemana(diaIdx, nodoIdx){
+    if(!state.semanaNodos) return {ok:false, error:'sin_semana'};
+    const diaActualIdx=diaActualIndiceSemanaNodos();
+    if(diaIdx!==diaActualIdx) return {ok:false, error:'no_es_el_dia_actual'};
+    // No basta con pertenecer al día actual — con caminos exclusivos,
+    // solo son elegibles los nodos a los que la elección de ayer da
+    // paso de verdad.
+    if(!nodosAlcanzablesHoy().includes(nodoIdx)) return {ok:false, error:'no_alcanzable'};
+    const dia=state.semanaNodos.dias[diaIdx];
+    const nodo=dia && dia.nodos[nodoIdx];
+    if(!nodo) return {ok:false, error:'nodo_invalido'};
+    dia.elegido=nodoIdx;
+    aplicarEfectoNodoSemana(nodo, dia.fecha);
+    if(!state.nodosAcumulados) state.nodosAcumulados={};
+    state.nodosAcumulados[nodo.tipo]=(state.nodosAcumulados[nodo.tipo]||0)+1;
+    guardarEstado();
+    return {ok:true, nodo};
+  }
+
+
   function contarEntrenoSemanaActual(){
     const v=ventanaEntrenoActual();
     if(!v) return {entreno:0, descanso:0, dias:0};
@@ -470,6 +1358,18 @@
       .filter(Boolean);
     const nivelesMed=state.medicoNiveles||{};
     const bonusPlanificacion=1+nivelDePF('planificacionSemanal')*0.25;
+    // Hito de entreno acumulado (5 nodos): sube la probabilidad de
+    // mejora de TODA la semana que se procesa ahora — se consume una
+    // sola vez, al empezar a procesar esta semana en concreto.
+    let bonusHitoSemana=1;
+    if(state.nodosBanderasPendientes && state.nodosBanderasPendientes.boostEntrenoSemana){
+      bonusHitoSemana=1.5;
+      state.nodosBanderasPendientes.boostEntrenoSemana=false;
+    }
+    // Hito de amistoso (10 nodos): un jugador concreto tiene mejor
+    // probabilidad en su próximo entreno — se consume la primera vez
+    // que ese jugador entrena esta semana, salga bien o mal la tirada.
+    let jugadorConExperienciaExtra = (state.nodosBanderasPendientes && state.nodosBanderasPendientes.experienciaExtraJugadorId) || null;
     const cur=new Date(v.desde); cur.setDate(cur.getDate()+1);
     let seguidos=0;
     // Seguimiento agregado de toda la semana, para el resumen final
@@ -484,9 +1384,14 @@
       if(esEntreno){
         diasEntreno++;
         seguidos++;
+        const idsEnPlanHoy=new Set(plan.map(({jugador:j})=>j.id));
+        // Jugadores del Plan de Entrenamiento del preparador físico:
+        // probabilidad ALTA de mejorar justo la estadística elegida
+        // para cada uno.
         plan.forEach(({jugador:j, stat:campo})=>{
           if(!campo) return; // sin enfoque elegido, no entrena de verdad
-          if(Math.random()<0.30*bonusPlanificacion){
+          const bonusJugador = (jugadorConExperienciaExtra && j.id===jugadorConExperienciaExtra) ? 1.5 : 1;
+          if(Math.random()<0.30*bonusPlanificacion*bonusHitoSemana*bonusJugador){
             j[campo]=Math.min(99, Math.round((j[campo]||50)+1));
             // Recalcular el overall del jugador cada vez que mejora una
             // estadística — antes la estadística subía pero la
@@ -498,6 +1403,33 @@
             textos.push(tp('lm.dia_mejora_stat', {nombre:j.name, stat:t('lm.stat_'+campo)}));
             if(!mejorasPorJugador[j.id]) mejorasPorJugador[j.id]={nombre:j.name, stats:{}};
             mejorasPorJugador[j.id].stats[campo]=(mejorasPorJugador[j.id].stats[campo]||0)+1;
+          }
+          if(jugadorConExperienciaExtra && j.id===jugadorConExperienciaExtra){
+            jugadorConExperienciaExtra=null;
+            state.nodosBanderasPendientes.experienciaExtraJugadorId=null;
+          }
+        });
+        // El resto de la plantilla (once + banquillo) también entrena
+        // ese día, solo que sin un plan específico detrás — tienen una
+        // probabilidad de mejora MUCHO más baja que los del Plan de
+        // Entrenamiento (aprox. 1/8), y cuando mejoran lo hacen en su
+        // estadística más floja en vez de en una elegida a propósito,
+        // ya que nadie les está entrenando ese punto en concreto.
+        state.plantilla.forEach(j=>{
+          if(idsEnPlanHoy.has(j.id) || j.injured) return;
+          const bonusJugador = (jugadorConExperienciaExtra && j.id===jugadorConExperienciaExtra) ? 1.5 : 1;
+          if(Math.random()<0.0375*bonusPlanificacion*bonusHitoSemana*bonusJugador){
+            const stats=['attack','defense','pace','passing','technique'];
+            const campo=stats.reduce((peor,s)=>(j[s]||50)<(j[peor]||50)?s:peor, stats[0]);
+            j[campo]=Math.min(99, Math.round((j[campo]||50)+1));
+            j.overall=Math.round((j.attack+j.defense+j.pace+j.passing+j.technique)/5);
+            textos.push(tp('lm.dia_mejora_stat', {nombre:j.name, stat:t('lm.stat_'+campo)}));
+            if(!mejorasPorJugador[j.id]) mejorasPorJugador[j.id]={nombre:j.name, stats:{}};
+            mejorasPorJugador[j.id].stats[campo]=(mejorasPorJugador[j.id].stats[campo]||0)+1;
+          }
+          if(jugadorConExperienciaExtra && j.id===jugadorConExperienciaExtra){
+            jugadorConExperienciaExtra=null;
+            state.nodosBanderasPendientes.experienciaExtraJugadorId=null;
           }
         });
         // Entrenar 3+ días seguidos empieza a pasar factura — la
@@ -533,7 +1465,14 @@
           }
         }
         if(!textos.length) textos.push(t('lm.dia_entreno_sin_incidencias'));
-        state.plantilla.forEach(p=>{ p.fatigue=Math.max(0, Math.min(100, Math.round((p.fatigue===undefined?100:p.fatigue)-2.2))); });
+        // La fatiga baja para TODA la plantilla ese día (todos entrenan
+        // de una forma u otra), pero los del Plan de Entrenamiento
+        // llevan una carga de trabajo específica bastante más dura, así
+        // que se cansan notablemente más que el resto.
+        state.plantilla.forEach(p=>{
+          const desgaste = idsEnPlanHoy.has(p.id) ? 3.6 : 2.2;
+          p.fatigue=Math.max(0, Math.min(100, Math.round((p.fatigue===undefined?100:p.fatigue)-desgaste)));
+        });
       } else {
         diasDescanso++;
         seguidos=0;
@@ -626,9 +1565,8 @@
         ${contenido}
       </div>`;
     }).join('');
-    const {entreno, descanso}=contarEntrenoSemanaActual();
     return `<div class="lm-calendario-box">
-      <div class="bench-title" style="margin:0 0 10px"><span><i class="ph ph-bold ph-calendar-blank" style="color:var(--gold);margin-right:6px"></i>${t("lm.calendario")}</span></div>
+      <div class="bench-title" id="lmCalendarioHeaderBtn" style="margin:0 0 10px;cursor:pointer" title="${t('lm.arbol_elige_camino')}"><span><i class="ph ph-bold ph-calendar-blank" style="color:var(--gold);margin-right:6px"></i>${t("lm.calendario")} <i class="ph ph-bold ph-tree-structure" style="font-size:12px;color:#777;margin-left:4px"></i></span></div>
       <div class="lm-cal-header">
         <button class="lm-cal-nav" data-cal-nav="-1" title="${t('lm.tt_mes_anterior')}"><i class="ph ph-bold ph-caret-left"></i></button>
         <span class="lm-cal-titulo">${MESES_LARGO[month].toUpperCase()} ${year}</span>
@@ -636,14 +1574,483 @@
       </div>
       <div class="lm-cal-semana-dias"><span>L</span><span>M</span><span>X</span><span>J</span><span>V</span><span>S</span><span>D</span></div>
       <div class="lm-cal-grid">${celdas}</div>
-      <div class="lm-cal-leyenda">
-        <span><i class="ph ph-bold ph-barbell"></i> ${t('lm.cal_entrenamiento')} (${entreno})</span>
-        <span><i class="ph ph-bold ph-bed"></i> ${t('lm.cal_descanso')} (${descanso})</span>
-        <span class="lm-cal-leyenda-escudo">${crestHTML(state.escudo||null,14)} ${t('lm.cal_partido')}</span>
-      </div>
       <p class="lm-setup-desc" style="text-align:center;margin-top:4px">${t('lm.cal_descripcion')}</p>
+      ${renderBarrasEstadoHTML()}
+      ${renderAcumuladosNodosHTML()}
     </div>`;
   }
+
+  // ---------- Las 4 barras de estado, en la propia pantalla del
+  // calendario — ayudan a decidir con criterio antes de elegir nodo. ----------
+  function renderBarrasEstadoHTML(){
+    const b=calcularBarrasEstado();
+    const filas=[
+      {key:'formaFisica', icon:'ph-heartbeat', label:t('lm.barra_forma_fisica')},
+      {key:'riesgoLesion', icon:'ph-bandaids', label:t('lm.barra_riesgo_lesion')},
+      {key:'moral', icon:'ph-hand-fist', label:t('lm.barra_moral')},
+      {key:'aficion', icon:'ph-megaphone', label:t('lm.barra_aficion')},
+    ];
+    return `<div class="lm-barras-estado">
+      <div class="lm-barras-estado-titulo">${t('lm.barras_estado_titulo')}</div>
+      ${filas.map(f=>{
+        const d=b[f.key];
+        return `<div class="lm-barra-fila">
+          <i class="ph ph-bold ${f.icon}" style="color:${d.color}"></i>
+          <span class="lm-barra-label">${f.label}</span>
+          <div class="lm-barra-track"><div class="lm-barra-fill" style="width:${d.pct}%;background:${d.color}"></div></div>
+        </div>`;
+      }).join('')}
+    </div>`;
+  }
+
+  // ---------- Contadores de icono acumulados + botón de canje cuando
+  // se alcanza un hito. Sustituye a la antigua leyenda del calendario. ----------
+  function renderAcumuladosNodosHTML(){
+    const tipos=Object.keys(HITOS_NODOS);
+    return `<div class="lm-nodos-acumulados">
+      <div class="lm-nodos-acumulados-cab">
+        <span>${t('lm.nodos_acumulados_titulo')}</span>
+        <button class="lm-nodos-leyenda-btn" data-nodos-leyenda title="${t('lm.tt_leyenda_iconos_nodos')}"><i class="ph ph-bold ph-question"></i></button>
+      </div>
+      <div class="lm-nodos-grid">
+        ${tipos.map(tipo=>{
+          const p=progresoNodo(tipo);
+          if(!p) return '';
+          const nombreIcono=t('lm.nodo_'+tipo);
+          if(!p.siguiente){
+            // Los 3 hitos ya canjeados — icono en dorado permanente, sin barra de progreso.
+            return `<div class="lm-nodo-acumulado lm-nodo-acumulado-completo" title="${nombreIcono}">
+              <i class="ph ph-bold ${p.def.icon}" style="color:${p.def.color}"></i>
+              <span class="lm-nodo-acumulado-num">${p.acumulado}</span>
+              <i class="ph ph-bold ph-check-circle lm-nodo-acumulado-check"></i>
+            </div>`;
+          }
+          const pct=Math.min(100, Math.round((p.acumulado/p.siguiente.umbral)*100));
+          return `<div class="lm-nodo-acumulado ${p.disponible?'lm-nodo-acumulado-disponible':''}" title="${nombreIcono}">
+            <i class="ph ph-bold ${p.def.icon}" style="color:${p.def.color}"></i>
+            <span class="lm-nodo-acumulado-num">${p.acumulado}/${p.siguiente.umbral}</span>
+            <div class="lm-nodo-acumulado-track"><div class="lm-nodo-acumulado-fill" style="width:${pct}%;background:${p.def.color}"></div></div>
+            ${p.disponible?`<button class="lm-nodo-reclamar-btn" data-reclamar-nodo="${tipo}" data-reclamar-umbral="${p.siguiente.umbral}">${t('lm.reclamar_btn')}</button>`:''}
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+  }
+
+
+  /* ═══════════════════════════════════════════════════════════════
+     ÁRBOL DE NODOS — pantalla real de la semana roguelike.
+     ═══════════════════════════════════════════════════════════════ */
+
+  // Rival real de la próxima jornada — mismo patrón que ya usa el
+  // resto del juego para encontrar "mi" partido dentro del calendario.
+  function obtenerRivalProximaJornada(){
+    const j=state.jornadaActual-1;
+    if(j<0 || j>=38 || !state.calendario) return null;
+    const jornada=state.calendario[j];
+    if(!jornada) return null;
+    const miPartido=jornada.find(p=>p.home.id==='lm_0'||p.away.id==='lm_0');
+    if(!miPartido) return null;
+    return miPartido.home.id==='lm_0' ? miPartido.away : miPartido.home;
+  }
+
+  const NODO_ICONO_X=520, NODO_ICONO_Y_ALTO=260;
+
+  // Convierte state.semanaNodos en coordenadas de dibujo — X por día,
+  // Y por cada opción dentro de ese día (centradas verticalmente según
+  // cuántas opciones tenga: 1, 2 o 3).
+  function construirCoordenadasArbol(){
+    const dias=(state.semanaNodos&&state.semanaNodos.dias)||[];
+    const n=dias.length;
+    if(!n) return {puntos:[], conexiones:[]};
+    const margen=45, ultimoX=NODO_ICONO_X-45;
+    const paso=n>1 ? (ultimoX-margen)/n : 0;
+    const centroY=NODO_ICONO_Y_ALTO/2;
+    // Carriles fijos (arriba / medio / abajo) para los días de 3
+    // opciones, así se alinean entre sí en forma de rejilla — pero
+    // cuando solo hay 2 opciones no hace falta separarlas tanto (no
+    // hay carril medio que las obligue a abrirse), así que van más
+    // juntas entre sí para leerse mejor de un vistazo.
+    const carrilArriba=centroY-80, carrilAbajo=centroY+80;
+    const patronesY={1:[centroY], 2:[centroY-40,centroY+40], 3:[carrilArriba,centroY,carrilAbajo]};
+
+    const puntos=dias.map((dia,i)=>{
+      const x=margen+paso*i+paso/2;
+      const ys=patronesY[dia.nodos.length]||patronesY[1];
+      return {x, dia, nodos:dia.nodos.map((nodo,ni)=>({...nodo, y:ys[ni]}))};
+    });
+    // Punto final: escudo del rival de la próxima jornada
+    puntos.push({x:NODO_ICONO_X-15, rival:true, nodos:[{y:centroY, tipo:'rival'}]});
+
+    // Solo se dibujan las conexiones que de verdad existen (guardadas
+    // al generar la semana, no todo-con-todo) — así hay caminos
+    // exclusivos de verdad, no un abanico completo desde cada nodo.
+    const conexiones=[];
+    for(let i=0;i<puntos.length-1;i++){
+      const actual=puntos[i], siguiente=puntos[i+1];
+      const diaActual=actual.dia;
+      const esTramoHaciaRival = !!siguiente.rival;
+      if(diaActual && diaActual.elegido!=null){
+        // Día ya resuelto: solo la conexión real desde el nodo elegido.
+        const oi=diaActual.elegido;
+        const nodoElegido=diaActual.nodos[oi];
+        const destinos = esTramoHaciaRival ? siguiente.nodos.map((_,idx)=>idx) : (nodoElegido.siguientes||siguiente.nodos.map((_,idx)=>idx));
+        destinos.forEach(di=>{
+          conexiones.push({a:{x:actual.x,y:actual.nodos[oi].y}, b:{x:siguiente.x,y:siguiente.nodos[di].y}, activa:true});
+        });
+      } else {
+        // Día sin resolver: se dibuja el mapa completo de posibilidades
+        // (en gris) usando la conectividad exclusiva ya guardada.
+        actual.nodos.forEach((nodo,oi)=>{
+          const destinos = esTramoHaciaRival ? siguiente.nodos.map((_,idx)=>idx) : (nodo.siguientes||siguiente.nodos.map((_,idx)=>idx));
+          destinos.forEach(di=>{
+            conexiones.push({a:{x:actual.x,y:actual.nodos[oi].y}, b:{x:siguiente.x,y:siguiente.nodos[di].y}, activa:false});
+          });
+        });
+      }
+    }
+    return {puntos, conexiones};
+  }
+
+  // Icono, color y (si aplica) distintivo de dificultad — el color
+  // SIEMPRE es el mismo que en la leyenda de iconos para ese tipo, en
+  // cualquier estado del nodo (bloqueado, disponible o ya elegido),
+  // para que comparar con la leyenda sea siempre coherente.
+  function iconoYColorNodo(nodo){
+    if(nodo.tipo==='rival') return {icon:'ph-shield', color:'#6a86c2'};
+    const def=HITOS_NODOS[nodo.tipo];
+    const base={icon:(def&&def.icon)||'ph-question', color:(def&&def.color)||'#888'};
+    if(nodo.tipo==='entreno' && nodo.subtipo==='intenso') base.icon='ph-fire';
+    if(nodo.tipo==='amistoso'){
+      // Insignia de dificultad — mismo icono (balón) para las 3, pero
+      // un punto de color distinto en la esquina para distinguirlas de
+      // un vistazo sin tener que leer el panel de "HOY".
+      base.badgeColor = nodo.subtipo==='facil' ? '#4caf7a' : (nodo.subtipo==='dificil' ? '#e24b4a' : '#e6c94a');
+    }
+    return base;
+  }
+
+  function renderArbolNodosSVGyPuntos(){
+    const {puntos, conexiones}=construirCoordenadasArbol();
+    const diaActualIdx=diaActualIndiceSemanaNodos();
+    const alcanzablesHoy=nodosAlcanzablesHoy();
+    const rival=obtenerRivalProximaJornada();
+    let svgHTML='';
+    conexiones.forEach(c=>{
+      const midX=(c.a.x+c.b.x)/2;
+      svgHTML+=`<path d="M${c.a.x} ${c.a.y} C ${midX} ${c.a.y}, ${midX} ${c.b.y}, ${c.b.x} ${c.b.y}" fill="none" stroke="${c.activa?'#c9a227':'#2a2f32'}" stroke-width="${c.activa?3:2}"/>`;
+    });
+    let nodosHTML='';
+    puntos.forEach((punto,pIdx)=>{
+      const esRival=!!punto.rival;
+      if(esRival){
+        nodosHTML+=`<div class="lm-arbol-nodo lm-arbol-nodo-rival" style="left:${punto.x/NODO_ICONO_X*100}%;top:${punto.nodos[0].y/NODO_ICONO_Y_ALTO*100}%">${rivalCrestHTML(30, rival&&rival.crestImg)}</div>`;
+        const etiquetaRival = rival ? rival.name : '';
+        nodosHTML+=`<div class="lm-arbol-dia-num" style="left:${punto.x/NODO_ICONO_X*100}%">${etiquetaRival}</div>`;
+        return;
+      }
+      punto.nodos.forEach((nodo,nIdx)=>{
+        const {icon,color,badgeColor}=iconoYColorNodo(nodo);
+        const esHoyEsteDia = pIdx===diaActualIdx;
+        const esAlcanzable = esHoyEsteDia && alcanzablesHoy.includes(nIdx);
+        let clase='lm-arbol-nodo';
+        if(punto.dia.elegido===nIdx) clase+=' lm-arbol-nodo-completado';
+        else if(punto.dia.elegido==null && esAlcanzable) clase+=' lm-arbol-nodo-disponible';
+        else clase+=' lm-arbol-nodo-bloqueado';
+        const clickable = (punto.dia.elegido==null && esAlcanzable);
+        nodosHTML+=`<div class="${clase}" style="left:${punto.x/NODO_ICONO_X*100}%;top:${nodo.y/NODO_ICONO_Y_ALTO*100}%;${color?`--nc:${color}`:''}" ${clickable?`data-elegir-dia="${pIdx}" data-elegir-nodo="${nIdx}"`:''}>
+          <i class="ph ph-bold ${icon}"></i>
+          ${punto.dia.elegido===nIdx?'<span class="lm-arbol-nodo-check"><i class="ph ph-bold ph-check"></i></span>':''}
+          ${badgeColor?`<span class="lm-arbol-nodo-badge" style="background:${badgeColor}"></span>`:''}
+        </div>`;
+      });
+      const esHoy = pIdx===diaActualIdx;
+      const etiqueta = diaSemanaCortoI18n(new Date(punto.dia.fecha+'T00:00:00'));
+      nodosHTML+=`<div class="lm-arbol-dia-num ${esHoy?'lm-arbol-dia-hoy':''}" style="left:${punto.x/NODO_ICONO_X*100}%">${etiqueta}</div>`;
+    });
+    return {svgHTML, nodosHTML};
+  }
+
+  function nombreYDescNodo(nodo){
+    if(nodo.tipo==='entreno'){
+      const sub=nodo.subtipo==='intenso'?'intenso':'estandar';
+      return {nombre:t(nodo.subtipo==='intenso'?'lm.entreno_intenso':'lm.entreno_estandar'), desc:t('lm.nodo_desc_entreno'), gana:t('lm.gana_entreno_'+sub), cuesta:t('lm.cuesta_entreno_'+sub)};
+    }
+    if(nodo.tipo==='amistoso'){
+      const sub=nodo.subtipo==='facil'?'facil':(nodo.subtipo==='dificil'?'dificil':'normal');
+      const claveNombre=nodo.subtipo==='facil'?'lm.amistoso_facil':(nodo.subtipo==='dificil'?'lm.amistoso_dificil':'lm.amistoso_normal');
+      return {nombre:t(claveNombre), desc:t('lm.nodo_desc_amistoso'), gana:t('lm.gana_amistoso_'+sub), cuesta:t('lm.cuesta_amistoso_'+sub)};
+    }
+    return {nombre:t('lm.nodo_'+nodo.tipo), desc:t('lm.nodo_desc_'+nodo.tipo), gana:t('lm.gana_'+nodo.tipo), cuesta:t('lm.cuesta_'+nodo.tipo)};
+  }
+
+  function renderHoyPanelHTML(){
+    const diaActualIdx=diaActualIndiceSemanaNodos();
+    const dia=state.semanaNodos && state.semanaNodos.dias[diaActualIdx];
+    if(!dia){
+      // Ya no queda ningún día por elegir — en vez de dejar esta zona
+      // vacía (sin ninguna pista de qué hacer a continuación), se
+      // avisa claramente de que la semana está completa y se invita a
+      // cerrar para pasar a gestionar la plantilla antes del partido.
+      if(state.semanaNodos && state.semanaNodos.dias.every(d=>d.elegido!=null)){
+        return `<div class="lm-arbol-hoy-panel lm-arbol-hoy-panel-completa">
+          <div class="lm-arbol-hoy-titulo"><i class="ph ph-bold ph-check-circle"></i> ${t('lm.arbol_semana_completa')}</div>
+          <p class="lm-setup-desc" style="margin:0 0 10px">${t('lm.arbol_semana_completa_desc')}</p>
+          <button class="mode-card-btn mode-card-btn-gold" data-cerrar-arbol>${t('lm.arbol_continuar_btn')}</button>
+        </div>`;
+      }
+      return '';
+    }
+    return `<div class="lm-arbol-hoy-panel">
+      <div class="lm-arbol-hoy-titulo"><i class="ph ph-bold ph-map-pin"></i> ${t('lm.arbol_elige_camino')}</div>
+      ${nodosAlcanzablesHoy().map(ni=>{
+        const nodo=dia.nodos[ni];
+        const {icon,color}=iconoYColorNodo(nodo);
+        const {nombre,gana,cuesta}=nombreYDescNodo(nodo);
+        return `<div class="lm-arbol-hoy-opcion" data-elegir-dia="${diaActualIdx}" data-elegir-nodo="${ni}">
+          <div class="lm-arbol-hoy-opcion-icono" style="border-color:${color};color:${color}"><i class="ph ph-bold ${icon}"></i></div>
+          <div class="lm-arbol-hoy-opcion-texto">
+            <strong>${nombre}</strong>
+            <span class="lm-arbol-hoy-gana"><i class="ph ph-bold ph-plus-circle"></i> ${t('lm.hoy_gana_label')}: ${gana}</span>
+            <span class="lm-arbol-hoy-arriesga"><i class="ph ph-bold ph-warning"></i> ${t('lm.hoy_arriesga_label')}: ${cuesta}</span>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`;
+  }
+
+  function renderArbolNodosOverlayHTML(){
+    const {svgHTML, nodosHTML}=renderArbolNodosSVGyPuntos();
+    return `<div class="lm-arbol-pantalla">
+      <button class="lm-popup-close-x" data-cerrar-arbol title="${t('common.close')||'Cerrar'}">×</button>
+      <div class="lm-dilemma-title" style="justify-content:center"><i class="ph ph-bold ph-tree-structure"></i> ${t('lm.calendario')||'SEMANA'}</div>
+      ${renderBarrasEstadoHTML()}
+      <div class="lm-arbol-wrap" id="lmArbolWrap">
+        <div class="lm-arbol-svg-capa">
+          <svg viewBox="0 0 ${NODO_ICONO_X} ${NODO_ICONO_Y_ALTO}">${svgHTML}</svg>
+          <div class="lm-arbol-nodos-capa">${nodosHTML}</div>
+        </div>
+      </div>
+      ${renderHoyPanelHTML()}
+      <div class="lm-arbol-leyenda-fila">
+        <button class="lm-nodos-leyenda-btn-texto" data-nodos-leyenda><i class="ph ph-bold ph-question"></i> ${t('lm.arbol_ver_leyenda')}</button>
+      </div>
+    </div>`;
+  }
+
+  function pintarArbolNodos(instantaneo){
+    const overlay=document.getElementById('lmArbolNodosOverlay');
+    if(!overlay) return;
+    overlay.innerHTML=renderArbolNodosOverlayHTML();
+    cablearEventosArbolNodos(overlay);
+    // Auto-centrar el scroll horizontal en el dia de hoy, para que en
+    // movil el jugador no tenga que buscarlo manualmente al entrar.
+    const wrap=overlay.querySelector('#lmArbolWrap');
+    const diaActualIdx=diaActualIndiceSemanaNodos();
+    if(wrap && diaActualIdx>=0){
+      const {puntos}=construirCoordenadasArbol();
+      const punto=puntos[diaActualIdx];
+      if(punto){
+        requestAnimationFrame(()=>{
+          const escala=wrap.querySelector('.lm-arbol-svg-capa').offsetWidth/NODO_ICONO_X;
+          const destino=Math.max(0, punto.x*escala - wrap.clientWidth/2);
+          // Al abrir el árbol por primera vez, el centrado en el día
+          // actual es instantáneo (no tiene sentido animar un
+          // deslizamiento justo al entrar en la pantalla) — pero al
+          // avanzar de día tras elegir un nodo, sí se desliza suave,
+          // para que se note el paso de un día al siguiente.
+          if(instantaneo) wrap.scrollLeft=destino;
+          else if(typeof wrap.scrollTo==='function') wrap.scrollTo({left:destino, behavior:'smooth'});
+          else wrap.scrollLeft=destino;
+        });
+      }
+    }
+  }
+
+  function crearRippleArbol(el, evento){
+    const rect=el.getBoundingClientRect();
+    const tam=Math.max(rect.width, rect.height)*1.4;
+    const x=(evento&&evento.clientX!=null ? evento.clientX : rect.left+rect.width/2)-rect.left-tam/2;
+    const y=(evento&&evento.clientY!=null ? evento.clientY : rect.top+rect.height/2)-rect.top-tam/2;
+    const span=document.createElement('span');
+    span.className='lm-arbol-ripple';
+    span.style.width=span.style.height=tam+'px';
+    span.style.left=x+'px'; span.style.top=y+'px';
+    el.appendChild(span);
+  }
+
+  // ---------- Pop-up de resultado del amistoso ----------
+  // Se ve justo tras elegir el nodo, con la dificultad bien visible
+  // (mismo color que la insignia del propio nodo), el marcador, y lo
+  // que ha costado/ganado de verdad — moral y, si ha tocado, lesión.
+  // Baraja "mio"/"rival" tantas veces como goles tenga cada uno, para
+  // simular el orden en que caerían los goles del amistoso — es solo
+  // de cara al pop-up, no afecta al resultado ya decidido de antemano.
+  function generarSecuenciaGolesAmistoso(misGoles, susGoles){
+    const eventos=[];
+    for(let i=0;i<misGoles;i++) eventos.push('mio');
+    for(let i=0;i<susGoles;i++) eventos.push('rival');
+    return barajarArrayNodos(eventos);
+  }
+
+  function mostrarResultadoAmistosoPopup(resultado){
+    const existente=document.getElementById('lmAmistosoResultadoOverlay');
+    if(existente) existente.remove();
+    const overlay=document.createElement('div');
+    overlay.id='lmAmistosoResultadoOverlay';
+    overlay.className='lm-visor-leyenda-overlay-standalone lm-amistoso-resultado-overlay';
+    document.body.appendChild(overlay);
+
+    const colorDificultad = resultado.dificultad==='facil' ? '#4caf7a' : (resultado.dificultad==='dificil' ? '#e24b4a' : '#e6c94a');
+    const claveDificultad = resultado.dificultad==='facil' ? 'lm.amistoso_facil' : (resultado.dificultad==='dificil' ? 'lm.amistoso_dificil' : 'lm.amistoso_normal');
+    const secuencia=generarSecuenciaGolesAmistoso(resultado.misGoles, resultado.susGoles);
+    let misGolesVistos=0, susGolesVistos=0, indiceEvento=0;
+
+    // Cada "tick" pinta el marcador tal como va en ese momento de la
+    // simulación gol a gol — se reutiliza tanto para el 0-0 inicial
+    // como para cada gol que va cayendo.
+    function pintarTick(destacar){
+      overlay.innerHTML=`
+        <div class="lm-amistoso-resultado-card lm-amistoso-suspense">
+          <div class="lm-amistoso-dificultad-badge" style="border-color:${colorDificultad};color:${colorDificultad}">
+            <i class="ph ph-bold ph-soccer-ball"></i> ${t(claveDificultad).toUpperCase()}
+          </div>
+          <div class="lm-amistoso-marcador-vivo ${destacar?'lm-amistoso-marcador-vivo-destello':''}">
+            ${crestHTML(state.escudo||null,26)}
+            <span class="lm-amistoso-marcador-vivo-num">${misGolesVistos}</span>
+            <span class="lm-amistoso-marcador-guion">-</span>
+            <span class="lm-amistoso-marcador-vivo-num">${susGolesVistos}</span>
+            <span class="lm-amistoso-marcador-rival"><i class="ph ph-bold ph-shield"></i></span>
+          </div>
+          <div class="lm-amistoso-jugando-texto">${t('lm.amistoso_jugando')}</div>
+        </div>`;
+    }
+
+    function pintarResultadoFinal(){
+      const colorResultado = resultado.resultado==='victoria' ? '#4caf7a' : (resultado.resultado==='derrota' ? '#e24b4a' : '#e6c94a');
+      const claveResultado = resultado.resultado==='victoria' ? 'lm.amistoso_resultado_victoria' : (resultado.resultado==='derrota' ? 'lm.amistoso_resultado_derrota' : 'lm.amistoso_resultado_empate');
+      const iconoResultado = resultado.resultado==='victoria' ? 'ph-trophy' : (resultado.resultado==='derrota' ? 'ph-x-circle' : 'ph-equals');
+      overlay.innerHTML=`
+        <div class="lm-amistoso-resultado-card">
+          <button class="lm-popup-close-x" data-cerrar-amistoso title="${t('common.close')||'Cerrar'}">×</button>
+          <div class="lm-amistoso-dificultad-badge" style="border-color:${colorDificultad};color:${colorDificultad}">
+            <i class="ph ph-bold ph-soccer-ball"></i> ${t(claveDificultad).toUpperCase()}
+          </div>
+          <div class="lm-amistoso-resultado-titulo" style="color:${colorResultado}">
+            <i class="ph ph-bold ${iconoResultado}"></i> ${t(claveResultado)}
+          </div>
+          <div class="lm-amistoso-marcador">
+            ${crestHTML(state.escudo||null,34)}
+            <span class="lm-amistoso-marcador-num">${resultado.misGoles}</span>
+            <span class="lm-amistoso-marcador-guion">-</span>
+            <span class="lm-amistoso-marcador-num">${resultado.susGoles}</span>
+            <span class="lm-amistoso-marcador-rival"><i class="ph ph-bold ph-shield"></i></span>
+          </div>
+          <div class="lm-amistoso-consecuencias">
+            ${resultado.moralDelta>0?`<div class="lm-amistoso-consecuencia lm-amistoso-consecuencia-buena"><i class="ph ph-bold ph-hand-fist"></i> ${tp('lm.amistoso_moral_ganada',{n:resultado.moralDelta})}</div>`:''}
+            ${resultado.lesionado?`<div class="lm-amistoso-consecuencia lm-amistoso-consecuencia-mala"><i class="ph ph-bold ph-bandaids"></i> ${tp('lm.amistoso_lesion_texto',{nombre:resultado.lesionado})}</div>`:''}
+            <div class="lm-amistoso-consecuencia"><i class="ph ph-bold ph-heartbeat"></i> ${t('lm.amistoso_fatiga_texto')}</div>
+          </div>
+          <button class="mode-card-btn mode-card-btn-gold" data-cerrar-amistoso>${t('lm.entendido_btn')}</button>
+        </div>`;
+      overlay.querySelectorAll('[data-cerrar-amistoso]').forEach(btn=>{
+        btn.addEventListener('click', ()=>{
+          if(typeof window.playSound==='function') window.playSound('select');
+          overlay.remove();
+        });
+      });
+      // Victoria y derrota usan las fanfarrias ya existentes del juego
+      // (arpegio ascendente / tono descendente) — el empate se queda
+      // con el "reveal" genérico, al no ser premio ni castigo.
+      if(typeof window.playSound==='function'){
+        window.playSound(resultado.resultado==='victoria'?'victory':(resultado.resultado==='derrota'?'defeat':'reveal'));
+      }
+    }
+
+    // Cada segundo se resuelve un gol de la secuencia (si el partido
+    // acaba 0-0 no hay ninguno que resolver, y se pasa directamente a
+    // un pequeño suspense fijo antes de revelar el resultado). El tono
+    // del "goool" sube un poco en cada gol sucesivo de la racha, para
+    // que la tensión suba cuanto más ajustado o goleador es el
+    // amistoso — nunca sabes si el siguiente segundo trae otro gol.
+    function siguienteTick(){
+      if(indiceEvento>=secuencia.length){
+        pintarResultadoFinal();
+        return;
+      }
+      const evento=secuencia[indiceEvento];
+      if(evento==='mio') misGolesVistos++; else susGolesVistos++;
+      pintarTick(true);
+      if(typeof window.playSound==='function') window.playSound('goal_escalado', {indice:indiceEvento});
+      indiceEvento++;
+      setTimeout(siguienteTick, 1000);
+    }
+
+    pintarTick(false);
+    if(typeof window.playSound==='function') window.playSound('whistle');
+    setTimeout(siguienteTick, secuencia.length ? 1000 : 1300);
+
+    overlay.addEventListener('click', (e)=>{ if(e.target===overlay && overlay.querySelector('[data-cerrar-amistoso]')) overlay.remove(); });
+  }
+
+  function cablearEventosArbolNodos(overlay){
+    overlay.querySelectorAll('[data-elegir-dia]').forEach(el=>{
+      el.addEventListener('click', (e)=>{
+        const diaIdx=parseInt(el.getAttribute('data-elegir-dia'),10);
+        const nodoIdx=parseInt(el.getAttribute('data-elegir-nodo'),10);
+        const resultado=elegirNodoSemana(diaIdx, nodoIdx);
+        if(!resultado.ok) return;
+        if(typeof window.playSound==='function') window.playSound('select');
+        // La onda necesita un instante para verse antes de que el
+        // repintado sustituya este nodo por el siguiente estado — sin
+        // este pequeño retraso, el clic se sentía "seco" porque el
+        // elemento desaparecía justo cuando la onda debía empezar.
+        crearRippleArbol(el, e);
+        const eraAmistoso = resultado.nodo && resultado.nodo.tipo==='amistoso';
+        setTimeout(()=>{
+          pintarArbolNodos();
+          if(typeof render==='function') render();
+          if(eraAmistoso && state.ultimoAmistosoResultado) mostrarResultadoAmistosoPopup(state.ultimoAmistosoResultado);
+        }, 220);
+      });
+    });
+    overlay.querySelectorAll('[data-cerrar-arbol]').forEach(cerrarBtn=>{
+      cerrarBtn.addEventListener('click', ()=>{
+        if(typeof window.playSound==='function') window.playSound('select');
+        document.getElementById('lmArbolNodosOverlay').remove();
+        if(typeof render==='function') render();
+      });
+    });
+    const leyendaBtn=overlay.querySelector('[data-nodos-leyenda]');
+    if(leyendaBtn) leyendaBtn.addEventListener('click', ()=>{
+      if(typeof window.playSound==='function') window.playSound('select');
+      mostrarLeyendaIconosNodos();
+    });
+    overlay.querySelectorAll('[data-reclamar-nodo]').forEach(btn=>{
+      btn.addEventListener('click', (e)=>{
+        e.stopPropagation();
+        if(typeof window.playSound==='function') window.playSound('select');
+        abrirCanjeHitoNodo(btn.getAttribute('data-reclamar-nodo'), parseInt(btn.getAttribute('data-reclamar-umbral'),10));
+      });
+    });
+  }
+
+  // Punto de entrada público — se llama tanto al tocar el calendario
+  // como al pulsar SEGUIR mientras quede semana por resolver.
+  function abrirArbolNodosSemana(){
+    asegurarSemanaNodos();
+    if(!state.semanaNodos) return false;
+    let overlay=document.getElementById('lmArbolNodosOverlay');
+    if(!overlay){
+      overlay=document.createElement('div');
+      overlay.id='lmArbolNodosOverlay';
+      overlay.className='lm-visor-leyenda-overlay-standalone lm-arbol-overlay';
+      document.body.appendChild(overlay);
+    }
+    pintarArbolNodos(true);
+    return true;
+  }
+
 
   function calcularStatsEquipo(){
     const ids=Object.values(state.alineacion||{}).filter(Boolean);
@@ -743,6 +2150,13 @@
   }
   function diaSemanaCorto(d){
     return ['DOM','LUN','MAR','MIÉ','JUE','VIE','SÁB'][d.getDay()];
+  }
+  // Version traducible del dia de la semana, para el arbol de nodos —
+  // a diferencia de diaSemanaCorto() (uso interno del calendario,
+  // siempre en español), esta usa el idioma real del jugador.
+  function diaSemanaCortoI18n(d){
+    const claves=['lm.dia_abrev_dom','lm.dia_abrev_lun','lm.dia_abrev_mar','lm.dia_abrev_mie','lm.dia_abrev_jue','lm.dia_abrev_vie','lm.dia_abrev_sab'];
+    return t(claves[d.getDay()]);
   }
   const MESES_LARGO=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
 
@@ -1092,6 +2506,25 @@
         awayId:p.away.id, awayName:p.away.name, awayCrest:p.away.crestImg||null, awayEsMio:p.away.id==='lm_0'})),
       predicciones:{}, rellenado:false
     };
+    // Hito de scouting... no, de quiniela (5 nodos acumulados): una
+    // pista real para MI propio partido de ese boletín, si aparece en
+    // él — compara mi plantilla real contra la del rival (datos ya
+    // existentes, no inventa nada) y marca quién parte favorito.
+    if(state.nodosBanderasPendientes && state.nodosBanderasPendientes.quinielaConPista){
+      const miPartido=partidos.find(p=>p.home.id==='lm_0'||p.away.id==='lm_0');
+      if(miPartido){
+        const rivalEquipo = miPartido.home.id==='lm_0' ? miPartido.away : miPartido.home;
+        const miOverall=(typeof calcularStatsEquipoLM==='function' ? calcularStatsEquipoLM().overall : null);
+        const rivalOverall = rivalEquipo && rivalEquipo.attack!==undefined
+          ? Math.round((rivalEquipo.attack+rivalEquipo.defense+rivalEquipo.pace+rivalEquipo.passing+rivalEquipo.technique)/5)
+          : null;
+        if(miOverall!=null && rivalOverall!=null){
+          const miEntradaBoleto=state.quinielaBoleto.partidos.find(bp=>bp.homeId==='lm_0'||bp.awayId==='lm_0');
+          if(miEntradaBoleto) miEntradaBoleto.pista = miOverall>rivalOverall+3 ? 'gano' : (rivalOverall>miOverall+3 ? 'pierdo' : 'empate');
+        }
+      }
+      state.nodosBanderasPendientes.quinielaConPista=false;
+    }
     enviarCorreo('directorGeneral', t('lm.correo_quiniela_asunto'),
       t('lm.correo_quiniela_cuerpo'),
       {asunto:'lm.correo_quiniela_asunto', cuerpo:'lm.correo_quiniela_cuerpo'});
@@ -1134,10 +2567,13 @@
       return {...p, prediccion, real, acierto};
     });
     const total=detalle.length;
-    const premio=Math.round((aciertos/total)*aciertos*3500); // crece más que proporcional cuantos más aciertas
+    let premio=Math.round((aciertos/total)*aciertos*3500); // crece más que proporcional cuantos más aciertas
+    const banderas=state.nodosBanderasPendientes||{};
+    if(banderas.quinielaMultiplicador){ premio=Math.round(premio*1.5); banderas.quinielaMultiplicador=false; }
     const rasgosGanados=[];
     if(aciertos/total>0.5){
-      const numRasgos=aciertos===total?3:(aciertos/total>=0.75?2:1);
+      let numRasgos=aciertos===total?3:(aciertos/total>=0.75?2:1);
+      if(banderas.quinielaHitosGarantizados){ numRasgos=3; banderas.quinielaHitosGarantizados=false; }
       const catalogoDisponible=LM_RASGOS_DEFS.slice();
       for(let i=0;i<numRasgos;i++){
         const elegido=catalogoDisponible.splice(Math.floor(Math.random()*catalogoDisponible.length),1)[0];
@@ -1190,6 +2626,7 @@
                 else nombreLocalMostrado=p.homeName.trim()+' (2)';
               }
               return `<div class="lm-quiniela-fila">
+                ${p.pista?`<div class="lm-quiniela-pista"><i class="ph ph-bold ph-lightbulb-filament"></i> ${t('lm.quiniela_pista_'+p.pista)}</div>`:''}
                 <div class="lm-quiniela-equipo lm-quiniela-equipo-local">${quinielaEscudoHTML(p.homeEsMio, p.homeCrest, 26)}<span>${nombreLocalMostrado}</span></div>
                 <div class="lm-quiniela-opciones">
                   <button class="lm-quiniela-btn ${elegido==='1'?'lm-quiniela-btn-activa':''}" data-qk="${key}" data-qv="1">1</button>
@@ -1809,6 +3246,9 @@
   }
   let setupData={liga:'es', moneda:null, nombre:'', escudo:null, modo:null, equipoElegidoId:null};
   let lpEstado={erroresExcel:[], erroresEscudos:[]}; // estado transitorio de la pantalla de Liga Personalizada
+  let lpConfiguraciones=null; // null = todavía no se ha consultado a Firestore; luego un array
+  let lpMostrarFormularioGuardar=false;
+  let lpGuardando=false;
 
   function nuevoEstadoSinEmpezar(){ return { setupComplete:false }; }
 
@@ -1930,6 +3370,26 @@
       calendario:generarCalendario(teams),
       fechaInicioLiga:fechaISO(inicioTemporadaRealista()),
       calendarioEntrenamiento:{},
+      // ---- Semana de nodos (Fase 1: contadores + canje de hitos) ----
+      // Cada vez que se elija un nodo del camino semanal (Fase 2,
+      // todavía sin construir), se sumará +1 al contador de su tipo
+      // aquí. Los hitos (5/10/20) se pueden canjear una sola vez cada
+      // uno en cuanto se alcanzan, sin resetear el contador — así el
+      // jugador ve claramente su progreso acumulado a lo largo de toda
+      // la temporada, no solo de una semana.
+      nodosAcumulados:{entreno:0, descanso:0, quiniela:0, scouting:0, amistoso:0, medios:0, tactica:0},
+      nodosHitosReclamados:{entreno:[], descanso:[], quiniela:[], scouting:[], amistoso:[], medios:[], tactica:[]},
+      // Banderas de efectos "para la próxima vez que corresponda" —
+      // las consumirá el propio sistema afectado la próxima vez que se
+      // dé la circunstancia (ej. boostEntrenoSemana lo consume la
+      // resolución semanal de entrenamiento de la Fase 2 en cuanto
+      // exista). Por ahora solo se guardan, listas para ese momento.
+      nodosBanderasPendientes:{boostEntrenoSemana:false, quinielaConPista:false, quinielaMultiplicador:false, quinielaHitosGarantizados:false, sobreGarantizado:false, sobreNivelSuperior:false, sobreDobleEleccion:false},
+      // Árbol de nodos de la semana actual — se regenera cada vez que
+      // cambia de jornada. dias[i].elegido = indice del nodo elegido
+      // ese día (null hasta que se elige). gestionInicialHecha marca si
+      // ya se pasó por la gestión de plantilla previa a la semana.
+      semanaNodos:null,
       pfPlanEntrenamiento:[],
       lmPendingPrediction:null,
       resultados:{},
@@ -1945,11 +3405,20 @@
       medicoBonos:{},
       medicoHistorial:[],
       medicoNiveles:{curacionMuscular:0, curacionOsea:0, prevencionMuscular:0, prevencionOsea:0},
-      // Aforo inicial deliberadamente modesto — un club recién ascendido a
-      // Primera no suele tener un estadio grande (referencia real: Eibar
-      // ~8.000, Huesca ~7.600, Leganés ~12.500). Se podrá ampliar más
-      // adelante con mejoras del cuerpo técnico, todavía no implementado.
-      estadio:{campo:90, satisfaccion:10, aforoTotal:12000, ultimaAsistencia:null},
+      // Aforo inicial deliberadamente modesto para un club PROPIO — un
+      // club recién ascendido a Primera no suele tener un estadio
+      // grande (referencia real: Eibar ~8.000, Huesca ~7.600, Leganés
+      // ~12.500). Si en cambio el jugador ha elegido convertirse en
+      // uno de los 20 equipos reales, se usa el aforo real aproximado
+      // de SU estadio de verdad en vez de este valor por defecto —
+      // antes todos los equipos (incluido el Real Madrid) empezaban
+      // con el mismo estadio de 12.000 asientos, sin ningún sentido.
+      // La satisfacción de la afición también arranca más baja para un
+      // club propio (recién ascendido, sin trayectoria ni cartel
+      // todavía) que para uno de los 20 reales (afición ya fiel y
+      // asentada) — afecta directamente a la asistencia real a cada
+      // partido, y por tanto a los ingresos por entradas.
+      estadio:{campo:90, satisfaccion:equipoRealElegidoId?10:-15, aforoTotal:(equipoRealElegidoId && AFORO_REAL_POR_EQUIPO[equipoRealElegidoId]) || 12000, ultimaAsistencia:null},
       moral:0,
       rachaResultados:0,
       victoriasQuiniela:0,
@@ -1965,15 +3434,33 @@
       // guardiasZonas: cuántos de esos están asignados a cada zona (máx 3).
       // Los "disponibles" son contratados menos asignados.
       // disturbiosZonas: nivel de disturbios de cada zona del estadio.
+      // Las 6 zonas de aquí son las MISMAS (y con los MISMOS ids) que
+      // usa de verdad la interfaz en LM_ZONAS_ESTADIO — antes este
+      // objeto inicial traía 12 zonas con ids distintos
+      // (norte_1/2/3, sur_1/2/3, este_1/2/3, oeste_1/2/3) que nunca
+      // llegaban a usarse en ningún sitio, quedando como datos
+      // huérfanos sin ningún propósito.
       guardiasContratados:0,
       modoVisualPartido:'auto',
-      guardiasZonas:{norte_1:0,norte_2:0,norte_3:0,sur_1:0,sur_2:0,sur_3:0,oeste_1:0,oeste_2:0,oeste_3:0,este_1:0,este_2:0,este_3:0},
-      disturbiosZonas:{norte_1:0,norte_2:0,norte_3:0,sur_1:0,sur_2:0,sur_3:0,oeste_1:0,oeste_2:0,oeste_3:0,este_1:0,este_2:0,este_3:0},
+      guardiasZonas:{norte:0, sur:0, este_1:0, este_2:0, oeste_1:0, oeste_2:0},
+      disturbiosZonas:{norte:0, sur:0, este_1:0, este_2:0, oeste_1:0, oeste_2:0},
       dadoRerollsDisponibles:lmRerollsPorPartido(),
       // ---- Economía ----
-      // Capital inicial modesto, coherente con un recién ascendido: dos o
-      // tres meses de margen antes de que la nómina apriete de verdad.
-      capital:400000,
+      // Capital inicial: mucho más ajustado para un club PROPIO (modo
+      // difícil, recién ascendido) que para hacerte cargo de uno de los
+      // 20 equipos reales ya establecidos. Antes ambos empezaban con
+      // los mismos 400.000€ — con la nómina real de una plantilla+
+      // cuerpo técnico modestos (~85-90.000€/mes), esa cifra aguantaba
+      // meses de sobra incluso sin ningún ingreso, y un solo partido en
+      // casa ya cubría el mes entero: nunca llegaba a apretar de
+      // verdad, contradiciendo la propia intención de diseño de "dos o
+      // tres meses de margen" que ya decía este comentario. Ahora sí se
+      // ajusta a esa intención: ~2-2.5 meses de colchón si no entrara
+      // nada de dinero, obligando a gestionar bien desde el principio.
+      capital:equipoRealElegidoId?400000:200000,
+      // Préstamo bancario activo (null si no hay ninguno pedido). Ver
+      // solicitarPrestamo()/procesarCuotaPrestamo() más abajo.
+      prestamoBancario:null,
       precioEntrada:15,
       mesesPagados:0,
       finanzasHistorial:[],
@@ -2866,13 +4353,10 @@
             if((state.rachaResultados||0)+1>=3) window.unlockLMAchievement('lm_win_streak_3', false);
           }
         }
-        if(misGoles>susGoles){
-          state.victoriasQuiniela=(state.victoriasQuiniela||0)+1;
-          if(state.victoriasQuiniela>=3){
-            state.victoriasQuiniela=0;
-            generarBoletoQuiniela();
-          }
-        }
+        // La quiniela ya no se genera cada 3 victorias — ahora es el
+        // propio nodo del árbol semanal el que la genera y la abre,
+        // una vez por jornada (ver aplicarEfectoNodoSemana, caso
+        // 'quiniela').
       }
     });
 
@@ -2902,6 +4386,7 @@
     if(mesDeEstaJornada>(state.mesesPagados||0)){
       aplicarNominaMensual();
       state.mesesPagados=mesDeEstaJornada;
+      try{ comprobarInsolvenciaGrave(); }catch(e){ console.error('comprobarInsolvenciaGrave:', e); }
     }
     if(mesDeEstaJornada>(state.mesTrabajadoresGenerado||0)){
       regenerarCandidatosTrabajo();
@@ -2953,8 +4438,15 @@
     try{ procesarOfertasTraspaso(); }catch(e){ console.error('procesarOfertasTraspaso:', e); }
     try{ generarCorreosTrasJornada(); }catch(e){ console.error('generarCorreosTrasJornada:', e); }
     try{ resolverQuinielaSiToca(j); }catch(e){ console.error('resolverQuinielaSiToca:', e); }
+    try{ procesarCuotaPrestamo(); }catch(e){ console.error('procesarCuotaPrestamo:', e); }
 
     state.jornadaActual++;
+    // Red de seguridad: si la temporada acaba de terminar y quedara
+    // saldo de préstamo pendiente (no debería, ver
+    // paquetesPrestamoDisponibles(), pero por si acaso), se liquida de
+    // golpe aquí — nunca es posible "correr el reloj" para librarse de
+    // una deuda.
+    if(state.jornadaActual>38){ try{ saldarPrestamoFinTemporada(); }catch(e){ console.error('saldarPrestamoFinTemporada:', e); } }
     if(typeof window.unlockLMAchievement==='function'){
       try{
         const clasif=calcularClasificacion();
@@ -3266,7 +4758,22 @@
       return r;
     }
     const correcto=answer.check({myGoals:miGoles, oppGoals:suGoles, draw:miGoles===suGoles});
-    const delta=correcto?8:-8;
+    let delta=correcto?8:-8;
+    // Hito de "día de medios" acumulado (5 nodos): red de seguridad de
+    // un solo uso — si la promesa sale mal esta vez, se pierde bastante
+    // menos moral de lo normal. Se consume tanto si acertó como si
+    // falló (era la protección de ESTA entrevista concreta).
+    const banderas=state.nodosBanderasPendientes;
+    if(banderas && banderas.prensaOpcionSegura){
+      if(!correcto) delta=-4;
+      banderas.prensaOpcionSegura=false;
+    }
+    // Hito más alto (20 nodos): carisma permanente — cada punto
+    // acumulado suaviza un poco más el golpe de una promesa
+    // incumplida, sin llegar nunca a eliminarlo del todo.
+    if(!correcto && state.mediosCarismaPermanente){
+      delta=Math.min(-1, delta + state.mediosCarismaPermanente*1.5);
+    }
     state.moral=Math.max(-50,Math.min(50,(state.moral||0)+delta));
     const r={
       label:answer.label, outcome:correcto?'correct':'wrong', delta,
@@ -3336,8 +4843,15 @@
     // partido, con un 35% de probabilidad (si no hay ya una promesa
     // pendiente de una semana anterior sin resolver). Pausa el flujo de
     // días hasta que se responda o se agote el tiempo.
-    const diaPrensaIdx = (rival && !state.lmPendingPrediction && Math.random()<0.5)
-      ? Math.floor(Math.random()*eventosDias.length) : -1;
+    // Rueda de prensa — si el jugador eligió el nodo "día de medios" en
+    // el árbol de esta semana, la entrevista pasa DE VERDAD ese día
+    // concreto (decisión propia, no azar). Si por lo que sea no hay
+    // ningún día así esta semana, se conserva el comportamiento
+    // anterior como reserva (un día al azar, 50% de probabilidad).
+    const diaMedios = state.semanaNodos && state.semanaNodos.dias.find(d=>d.elegido!=null && d.nodos[d.elegido].tipo==='medios');
+    const diaPrensaIdx = (rival && !state.lmPendingPrediction)
+      ? (diaMedios ? eventosDias.findIndex(e=>e.iso===diaMedios.fecha) : (Math.random()<0.5 ? Math.floor(Math.random()*eventosDias.length) : -1))
+      : -1;
     let idx=0;
     function pintarDia(){
       if(idx===diaPrensaIdx){
@@ -5157,6 +6671,162 @@
     if(state.finanzasHistorial.length>250) state.finanzasHistorial=state.finanzasHistorial.slice(-250);
   }
   function nivelTotalDe(niveles){ return Object.values(niveles||{}).reduce((a,b)=>a+b,0); }
+
+  /* ---------- Préstamos bancarios ---------- */
+  // Tres paquetes fijos (pequeño/medio/grande) — más plazo = más interés,
+  // como en un banco real. El plazo se cuenta en JORNADAS, no en meses,
+  // y la cuota se descuenta una fracción igual cada jornada (no de golpe
+  // al mes) para que el impacto sea más gradual y predecible.
+  const PAQUETES_PRESTAMO=[
+    {id:'pequeno', monto:60000,  interes:0.08, plazoJornadas:6},
+    {id:'medio',   monto:150000, interes:0.14, plazoJornadas:10},
+    {id:'grande',  monto:300000, interes:0.22, plazoJornadas:16},
+  ];
+  // Solo se ofrecen los paquetes cuyo plazo cabe ENTERO dentro de lo que
+  // queda de temporada — así nunca es posible pedir un préstamo tan
+  // tarde que la liga termine antes de devolverlo del todo. Por debajo
+  // de 3 jornadas restantes no se ofrece ninguno: no tendría sentido un
+  // préstamo con 1-2 cuotas que además el propio jugador podría intentar
+  // usar para "colar" dinero fácil justo al final.
+  function paquetesPrestamoDisponibles(){
+    const jornadasRestantes=Math.max(0, 38-(state.jornadaActual-1));
+    if(jornadasRestantes<3) return [];
+    return PAQUETES_PRESTAMO.filter(p=>p.plazoJornadas<=jornadasRestantes);
+  }
+  function solicitarPrestamo(paqueteId){
+    if(state.prestamoBancario) return false; // solo un préstamo activo a la vez
+    const paquete=paquetesPrestamoDisponibles().find(p=>p.id===paqueteId);
+    if(!paquete) return false;
+    const totalADevolver=Math.round(paquete.monto*(1+paquete.interes));
+    const cuotaPorJornada=Math.round(totalADevolver/paquete.plazoJornadas);
+    state.prestamoBancario={
+      montoOriginal:paquete.monto, interes:paquete.interes,
+      plazoJornadas:paquete.plazoJornadas, jornadaInicio:state.jornadaActual,
+      cuotaPorJornada, saldoRestante:totalADevolver, cuotasPagadas:0,
+    };
+    state.capital=Math.round((state.capital||0)+paquete.monto);
+    registrarMovimientoFinanciero('Préstamo bancario', paquete.monto, state.jornadaActual);
+    if(typeof window.playSound==='function') window.playSound('loan_granted');
+    guardarEstado();
+    return true;
+  }
+  // Se llama una vez por jornada jugada (nunca en jornadas de descanso
+  // sin partido) — descuenta la cuota fija, y si con la última cuota el
+  // saldo queda saldado, cierra el préstamo del todo.
+  function procesarCuotaPrestamo(){
+    const p=state.prestamoBancario;
+    if(!p) return;
+    const cuota=Math.min(p.cuotaPorJornada, p.saldoRestante);
+    state.capital=Math.round((state.capital||0)-cuota);
+    p.saldoRestante=Math.round(p.saldoRestante-cuota);
+    p.cuotasPagadas=(p.cuotasPagadas||0)+1;
+    registrarMovimientoFinanciero('Cuota de préstamo', -cuota, state.jornadaActual);
+    if(typeof window.playSound==='function') window.playSound('loan_payment');
+    if(p.saldoRestante<=0) state.prestamoBancario=null;
+  }
+  // Red de seguridad definitiva contra el "préstamo de última hora": si
+  // por cualquier motivo (paquete elegido justo en el límite, redondeos)
+  // quedara saldo pendiente al llegar al final de la temporada, se cobra
+  // TODO de golpe aquí — nunca es posible terminar la liga con una
+  // deuda sin pagar, pase lo que pase.
+  function saldarPrestamoFinTemporada(){
+    const p=state.prestamoBancario;
+    if(!p || p.saldoRestante<=0){ state.prestamoBancario=null; return; }
+    state.capital=Math.round((state.capital||0)-p.saldoRestante);
+    registrarMovimientoFinanciero('Liquidación de préstamo (fin de temporada)', -p.saldoRestante, 38);
+    state.prestamoBancario=null;
+  }
+  // Contenido del bloque de préstamo bancario, dentro del popup del
+  // Director General — o bien la oferta de paquetes disponibles, o el
+  // estado del préstamo activo si ya hay uno pedido.
+  function renderPrestamoHTML(){
+    const p=state.prestamoBancario;
+    if(p){
+      const jornadasPagadas=p.cuotasPagadas||0;
+      const progreso=Math.min(100, Math.round(jornadasPagadas/p.plazoJornadas*100));
+      return `
+        <div class="lm-estadio-bar-label"><i class="ph ph-bold ph-bank"></i><span>${t('lm.prestamo_activo_titulo')}</span><span class="${p.saldoRestante>0?'lm-capital-neg':''}">${formatoDinero(p.saldoRestante)}</span></div>
+        <div class="lm-prestamo-progreso-track"><div class="lm-prestamo-progreso-fill" style="width:${progreso}%"></div></div>
+        <div class="lm-aforo-nota">${tp('lm.prestamo_cuota_nota', {cuota:formatoDinero(p.cuotaPorJornada), pagadas:jornadasPagadas, total:p.plazoJornadas})}</div>
+      `;
+    }
+    const paquetes=paquetesPrestamoDisponibles();
+    if(!paquetes.length){
+      return `
+        <div class="lm-estadio-bar-label"><i class="ph ph-bold ph-bank"></i><span>${t('lm.prestamo_titulo')}</span></div>
+        <div class="lm-aforo-nota">${t('lm.prestamo_no_disponible')}</div>
+      `;
+    }
+  // Icono distinto por nivel de préstamo, para diferenciarlos de un
+  // vistazo (mismo espíritu que un juego triple A: cuanto mayor el
+  // paquete, más "peso" visual del icono).
+  const PRESTAMO_ICONOS={pequeno:'ph-coin', medio:'ph-coins', grande:'ph-money'};
+  return `
+      <div class="lm-estadio-bar-label"><i class="ph ph-bold ph-bank"></i><span>${t('lm.prestamo_titulo')}</span></div>
+      <div class="lm-prestamo-paquetes">
+        ${paquetes.map(paq=>{
+          const totalADevolver=Math.round(paq.monto*(1+paq.interes));
+          return `
+          <button type="button" class="lm-prestamo-paquete" data-prestamo="${paq.id}">
+            <i class="ph ph-bold ${PRESTAMO_ICONOS[paq.id]||'ph-coin'} lm-prestamo-paquete-icon"></i>
+            <span class="lm-prestamo-paquete-monto">+${formatoDinero(paq.monto)}</span>
+            <span class="lm-prestamo-paquete-detalle">${tp('lm.prestamo_detalle', {interes:Math.round(paq.interes*100), plazo:paq.plazoJornadas})}</span>
+            <span class="lm-prestamo-paquete-total">${tp('lm.prestamo_total_devolver', {total:formatoDinero(totalADevolver)})}</span>
+          </button>`;
+        }).join('')}
+      </div>
+    `;
+  }
+
+  /* ---------- Quiebra del club (fin de la partida por mala gestión) ----------
+     Criterio elegido, razonado sobre la propia nómina del club (no un
+     número fijo arbitrario, para que se ajuste igual de bien a un club
+     modesto que a uno grande):
+     - UMBRAL GRAVE: capital por debajo de -3 veces la nómina mensual
+       total (jugadores + cuerpo técnico) — equivalente a deber más de
+       tres meses de sueldos que no se pueden pagar, una crisis de
+       verdad, no un simple mal mes.
+     - DURACIÓN: si esa situación se mantiene 3 MESES SEGUIDOS (12
+       jornadas) sin recuperarse por encima del umbral en ningún
+       momento, la partida termina por quiebra.
+     - AVISOS: el primer correo (ya existente, "números rojos") avisa
+       en cuanto el capital baja de 0 — un aviso temprano y suave. En
+       cuanto se cruza el umbral GRAVE se manda un aviso mucho más
+       serio con la cuenta atrás exacta, y se repite cada mes que se
+       siga por debajo, para que nunca llegue de sorpresa. Si en algún
+       momento se recupera por encima del umbral, la cuenta atrás se
+       reinicia del todo y se avisa también del respiro. */
+  function comprobarInsolvenciaGrave(){
+    if(state.quiebraDeclarada) return; // ya terminó, no hay nada más que comprobar
+    const nomina=calcularNominaMensual();
+    const umbral=-3*nomina.total;
+    const enCrisisGrave=(state.capital||0)<umbral;
+    const mesesPrevios=state.mesesInsolvenciaGrave||0;
+    if(!enCrisisGrave){
+      if(mesesPrevios>0){
+        enviarCorreo('sistema', t('correo.quiebra_recuperado.asunto'), t('correo.quiebra_recuperado.cuerpo'),
+          {asunto:'correo.quiebra_recuperado.asunto', cuerpo:'correo.quiebra_recuperado.cuerpo'});
+      }
+      state.mesesInsolvenciaGrave=0;
+      return;
+    }
+    const mesesNuevos=mesesPrevios+1;
+    state.mesesInsolvenciaGrave=mesesNuevos;
+    const mesesRestantes=Math.max(0, 3-mesesNuevos);
+    if(mesesNuevos>=3){
+      declararQuiebra();
+      return;
+    }
+    enviarCorreo('sistema', t('correo.quiebra_aviso.asunto'),
+      tp('correo.quiebra_aviso.cuerpo', {capital:formatoDinero(state.capital), umbral:formatoDinero(umbral), meses:mesesRestantes}),
+      {asunto:'correo.quiebra_aviso.asunto', cuerpo:'correo.quiebra_aviso.cuerpo', paramsCuerpo:{capital:formatoDinero(state.capital), umbral:formatoDinero(umbral), meses:mesesRestantes}});
+  }
+  function declararQuiebra(){
+    state.quiebraDeclarada=true;
+    guardarEstado();
+    if(typeof window.playSound==='function') window.playSound('defeat');
+  }
+
   // Nómina mensual — jugadores + los 4 departamentos técnicos. Cuanto más
   // nivel tenga un departamento, más cuesta mantenerlo (igual que un
   // jugador de sobre mejor es más caro). Se cobra una vez al entrar en
@@ -5215,7 +6885,8 @@
     get mantenimiento(){return t('lm.titulo_mantenimiento');},
     get directorGeneral(){return t('lm.titulo_dg');},
     get directorDeportivo(){return t('lm.titulo_dd');},
-    get preparadorFisico(){return t('lm.titulo_pf');}
+    get preparadorFisico(){return t('lm.titulo_pf');},
+    get sistema(){return t('lm.remitente_banco');}
   };
   function nivelAleatorioTrabajador(){
     // 1★ es lo más común, 5★ muy raro — igual de espíritu que la rareza
@@ -5281,7 +6952,7 @@
      correo con algo importante, pero como mucho uno por jornada, y solo
      si de verdad hay algo que contar (no todas las jornadas). Textos
      cortos y directos, pensados para leerse de un vistazo. ---------- */
-  const CORREO_ICONOS={medico:'ph-first-aid-kit', mantenimiento:'ph-flag-pennant', directorGeneral:'ph-briefcase', directorDeportivo:'ph-binoculars', preparadorFisico:'ph-barbell'};
+  const CORREO_ICONOS={medico:'ph-first-aid-kit', mantenimiento:'ph-flag-pennant', directorGeneral:'ph-briefcase', directorDeportivo:'ph-binoculars', preparadorFisico:'ph-barbell', sistema:'ph-bank'};
   function enviarCorreo(rol, asunto, cuerpo, claves){
     if(!state.correoInterno) state.correoInterno=[];
     if(!state.correoUltimoEnviado) state.correoUltimoEnviado={};
@@ -5371,9 +7042,20 @@
     if(!state.sobresFichajesPendientes) state.sobresFichajesPendientes=[];
     if(state.sobresFichajesPendientes.length>=3) return;
     const nivel=nivelDeDD('sobresFichajes');
-    const probabilidad=0.08+nivel*0.07; // 8% base, hasta ~29% a nivel máximo
-    if(Math.random()<probabilidad){
-      const nivelSobre=Math.max(1, nivel);
+    let probabilidad=0.08+nivel*0.07; // 8% base, hasta ~29% a nivel máximo
+    // Boost temporal por elegir nodos de scouting en el árbol de esta
+    // semana — cada uno sube la probabilidad de ESTA tirada en
+    // concreto; se consume siempre, salga bien o mal la tirada.
+    if(state.scoutingBoostEstaSemana){
+      probabilidad=Math.min(0.95, probabilidad + state.scoutingBoostEstaSemana*0.15);
+      state.scoutingBoostEstaSemana=0;
+    }
+    const banderas=state.nodosBanderasPendientes||{};
+    const garantizado=!!banderas.sobreGarantizado;
+    if(garantizado || Math.random()<probabilidad){
+      if(garantizado) banderas.sobreGarantizado=false;
+      let nivelSobre=Math.max(1, nivel);
+      if(banderas.sobreNivelSuperior){ nivelSobre+=1; banderas.sobreNivelSuperior=false; }
       const id='sobre'+Date.now()+Math.floor(Math.random()*100000);
       state.sobresFichajesPendientes.push({id, nivel:nivelSobre, jornadaGenerado:state.jornadaActual});
       enviarCorreo('directorDeportivo', t('correo.sobre_listo.asunto'),
@@ -5696,7 +7378,13 @@
     const bonusOjeadorEstrella = (nivelRed>=2 && lmSkillActiva('lm_ojeador_estrella')) ? 0.05 : 0;
     const probEstrella = probEstrellaBase+bonusOjeadorEstrella;
     let huboEstrella=false;
-    const jugadores=[1,2,3].map(()=>{
+    // Un sobre ya ofrece 3 candidatos de por sí — el hito de scouting
+    // acumulado (20 nodos) añade un cuarto candidato extra a elegir,
+    // en vez de "sustituir" un sistema de elección única que en
+    // realidad nunca existió.
+    const numCandidatos = (state.nodosBanderasPendientes && state.nodosBanderasPendientes.sobreDobleEleccion) ? 4 : 3;
+    if(numCandidatos===4 && state.nodosBanderasPendientes) state.nodosBanderasPendientes.sobreDobleEleccion=false;
+    const jugadores=Array.from({length:numCandidatos}, ()=>{
       if(!huboEstrella && Math.random()<probEstrella){
         const estrella=generarJugadorFichajeEstrella(posObjetivo);
         if(estrella){ huboEstrella=true; return estrella; }
@@ -6083,6 +7771,8 @@
     // exista algún rival contra quien jugar.
     const pocosEquipos=equipos.length>0 && equipos.length<2;
     const tieneEquipos=equipos.length>=2;
+    const importacionCompleta=tieneEquipos && faltantes.length===0;
+    const usuarioLogueado=!!(window._fbAuth && window._fbAuth.currentUser);
 
     function bloqueError(titulo, problema, sugerencia){
       return `
@@ -6101,7 +7791,8 @@
     )).join('');
     const erroresEscudosHTML=lpEstado.erroresEscudos.map(e=>bloqueError(e.nombre||t('lm.escudo_generico'), e.problema, e.sugerencia)).join('');
     const errorPocosHTML=pocosEquipos?bloqueError('Excel', t('lm.lp_pocos_equipos'), t('lm.lp_pocos_equipos_sugerencia')):'';
-    const hayErrores=lpEstado.erroresExcel.length || lpEstado.erroresEscudos.length || pocosEquipos;
+    const errorGuardarHTML=lpEstado.errorGuardar?bloqueError(t('lm.lp_guardar_titulo'), lpEstado.errorGuardar, null):'';
+    const hayErrores=lpEstado.erroresExcel.length || lpEstado.erroresEscudos.length || pocosEquipos || lpEstado.errorGuardar;
 
     const estadoHTML=tieneEquipos?`
       <div class="lm-lp-estado ${faltantes.length?'lm-lp-estado-aviso':'lm-lp-estado-ok'}">
@@ -6109,18 +7800,74 @@
         ${t('lm.lp_equipos_importados', equipos.length)}${faltantes.length?` — ${t('lm.lp_faltan_escudos', faltantes.length)}: ${faltantes.join('.png, ')}.png`:` — ${t('lm.lp_todos_escudos_ok')}`}
       </div>`:'';
 
+    // Guardar esta configuración en la nube — solo cuando el Excel Y
+    // los escudos están del todo completos, y solo si hay sesión
+    // iniciada (es un guardado ligado a la cuenta, no tendría sentido
+    // sin usuario). Los escudos NUNCA se suben aquí, se avisa de ello
+    // con toda claridad.
+    let guardarHTML='';
+    if(importacionCompleta){
+      if(!usuarioLogueado){
+        guardarHTML=`
+          <div class="lm-lp-guardar-box">
+            <div class="lm-lp-guardar-titulo"><i class="ph ph-bold ph-cloud-slash"></i> ${t('lm.lp_guardar_titulo')}</div>
+            <div class="lm-aforo-nota">${t('lm.lp_guardar_sin_sesion')}</div>
+          </div>`;
+      } else if(lpMostrarFormularioGuardar){
+        guardarHTML=`
+          <div class="lm-lp-guardar-box">
+            <div class="lm-lp-guardar-titulo"><i class="ph ph-bold ph-cloud-arrow-up"></i> ${t('lm.lp_guardar_titulo')}</div>
+            <input type="text" id="lmLpNombreConfig" class="lm-setup-input" maxlength="40" placeholder="${t('lm.lp_guardar_placeholder')}">
+            <div class="lm-aforo-nota">${t('lm.lp_guardar_nota_escudos')}</div>
+            <div class="lm-lp-botones" style="margin-top:8px">
+              <button id="lmLpGuardarConfirmar" class="mode-card-btn mode-card-btn-gold" ${lpGuardando?'disabled':''}><i class="ph ph-bold ph-floppy-disk"></i> ${lpGuardando?t('lm.lp_guardando'):t('lm.lp_guardar_confirmar')}</button>
+              <button id="lmLpGuardarCancelar" class="mode-card-btn mode-card-btn-secondary">${t('lm.cancelar')}</button>
+            </div>
+          </div>`;
+      } else {
+        guardarHTML=`
+          <button type="button" id="lmLpGuardarAbrir" class="mode-card-btn mode-card-btn-secondary" style="width:100%;margin-bottom:12px">
+            <i class="ph ph-bold ph-cloud-arrow-up"></i> ${t('lm.lp_guardar_titulo')}
+          </button>`;
+      }
+    }
+
+    // Lista de configuraciones ya guardadas — se consulta a Firestore
+    // de forma asíncrona la primera vez que se entra en esta pantalla
+    // (ver wireLigaPersonalizadaScreen), así que mientras no ha
+    // llegado la respuesta (lpConfiguraciones===null) simplemente no
+    // se muestra nada todavía, sin bloquear el resto de la pantalla.
+    let guardadasHTML='';
+    if(usuarioLogueado && Array.isArray(lpConfiguraciones)){
+      guardadasHTML=`
+        <div class="lm-lp-guardadas-box">
+          <div class="lm-lp-guardar-titulo"><i class="ph ph-bold ph-folder-open"></i> ${t('lm.lp_mis_ligas_guardadas')} (${lpConfiguraciones.length}/${window.G2G_LigaPersonalizada.MAX_CONFIGURACIONES_GUARDADAS})</div>
+          ${lpConfiguraciones.length?lpConfiguraciones.map(c=>`
+            <div class="lm-lp-guardada-item">
+              <div class="lm-lp-guardada-info">
+                <span class="lm-lp-guardada-nombre">${c.nombre}</span>
+                <span class="lm-lp-guardada-detalle">${tp('lm.lp_guardada_detalle', {n:c.numEquipos})}</span>
+              </div>
+              <button type="button" class="lm-lp-guardada-cargar" data-cargar-config="${c.id}" title="${t('lm.lp_cargar')}"><i class="ph ph-bold ph-download-simple"></i></button>
+              <button type="button" class="lm-lp-guardada-borrar" data-borrar-config="${c.id}" title="${t('lm.borrar')}"><i class="ph ph-bold ph-trash"></i></button>
+            </div>`).join(''):`<div class="lm-aforo-nota">${t('lm.lp_sin_guardadas')}</div>`}
+        </div>`;
+    }
+
     return `
       <div class="lm-setup-title">${t('lm.liga_personalizada')}</div>
       <p class="lm-setup-desc">${t('lm.liga_personalizada_desc')}</p>
       <a href="assets/templates/Goal2Goat_Custom_League_Base.xlsx" download class="lm-lp-descarga">
         <i class="ph ph-bold ph-file-arrow-down"></i> ${t('lm.descargar_plantilla')}
       </a>
+      ${guardadasHTML}
       ${estadoHTML}
       <div class="lm-lp-botones">
         <button id="lmLpImportarEquipos" class="mode-card-btn mode-card-btn-secondary"><i class="ph ph-bold ph-file-xls"></i> ${t('lm.importar_equipos')}</button>
         <button id="lmLpImportarEscudos" class="mode-card-btn mode-card-btn-secondary" ${tieneEquipos?'':'disabled'}><i class="ph ph-bold ph-image"></i> ${t('lm.importar_escudos')}</button>
       </div>
-      ${hayErrores?`<div class="lm-lp-errores">${errorPocosHTML}${erroresExcelHTML}${erroresEscudosHTML}</div>`:''}
+      ${guardarHTML}
+      ${hayErrores?`<div class="lm-lp-errores">${errorPocosHTML}${erroresExcelHTML}${erroresEscudosHTML}${errorGuardarHTML}</div>`:''}
       <input type="file" id="lmLpFileExcel" accept=".xlsx" style="display:none">
       <input type="file" id="lmLpFileEscudos" accept=".png" multiple style="display:none">
       <div class="lm-popup-actions">
@@ -6163,6 +7910,78 @@
         renderSetup();
       });
     }
+    // Carga inicial (solo una vez por entrada a esta pantalla) de las
+    // configuraciones ya guardadas en la nube, para poder mostrarlas.
+    // Se dispara sola en segundo plano; en cuanto llega la respuesta
+    // se vuelve a renderizar para mostrarlas.
+    if(lpConfiguraciones===null && window._fbAuth && window._fbAuth.currentUser && window.G2G_LigaPersonalizada){
+      lpConfiguraciones=[]; // evita relanzar la consulta mientras está en vuelo
+      window.G2G_LigaPersonalizada.listarConfiguracionesGuardadas().then(lista=>{
+        lpConfiguraciones=lista;
+        if(setupStep===1.5) renderSetup();
+      });
+    }
+    const btnGuardarAbrir=document.getElementById('lmLpGuardarAbrir');
+    if(btnGuardarAbrir) btnGuardarAbrir.addEventListener('click', ()=>{
+      if(typeof window.playSound==='function') window.playSound('select');
+      lpMostrarFormularioGuardar=true;
+      lpEstado.errorGuardar=null;
+      renderSetup();
+    });
+    const btnGuardarCancelar=document.getElementById('lmLpGuardarCancelar');
+    if(btnGuardarCancelar) btnGuardarCancelar.addEventListener('click', ()=>{
+      if(typeof window.playSound==='function') window.playSound('select');
+      lpMostrarFormularioGuardar=false;
+      lpEstado.errorGuardar=null;
+      renderSetup();
+    });
+    const btnGuardarConfirmar=document.getElementById('lmLpGuardarConfirmar');
+    if(btnGuardarConfirmar) btnGuardarConfirmar.addEventListener('click', async ()=>{
+      const input=document.getElementById('lmLpNombreConfig');
+      const nombre=input?input.value:'';
+      if(typeof window.playSound==='function') window.playSound('select');
+      lpGuardando=true;
+      lpEstado.errorGuardar=null;
+      renderSetup();
+      const resultado=await window.G2G_LigaPersonalizada.guardarConfiguracion(nombre);
+      lpGuardando=false;
+      if(resultado.ok){
+        lpMostrarFormularioGuardar=false;
+        lpConfiguraciones=await window.G2G_LigaPersonalizada.listarConfiguracionesGuardadas();
+        if(typeof window.playSound==='function') window.playSound('reveal');
+      } else {
+        lpEstado.errorGuardar=resultado.error;
+      }
+      renderSetup();
+    });
+    root.querySelectorAll('[data-cargar-config]').forEach(btn=>{
+      btn.addEventListener('click', async ()=>{
+        if(typeof window.playSound==='function') window.playSound('select');
+        const id=btn.getAttribute('data-cargar-config');
+        const resultado=await window.G2G_LigaPersonalizada.cargarConfiguracionGuardada(id);
+        if(resultado.ok){
+          lpEstado={erroresExcel:[], erroresEscudos:[]};
+          renderSetup();
+        }
+      });
+    });
+    root.querySelectorAll('[data-borrar-config]').forEach(btn=>{
+      btn.addEventListener('click', async ()=>{
+        const id=btn.getAttribute('data-borrar-config');
+        if(typeof window.showConfirmPopup==='function'){
+          window.showConfirmPopup(t('lm.lp_confirmar_borrar'), async ()=>{
+            if(typeof window.playSound==='function') window.playSound('select');
+            await window.G2G_LigaPersonalizada.borrarConfiguracionGuardada(id);
+            lpConfiguraciones=await window.G2G_LigaPersonalizada.listarConfiguracionesGuardadas();
+            renderSetup();
+          }, t('lm.borrar'));
+        } else if(confirm(t('lm.lp_confirmar_borrar'))){
+          await window.G2G_LigaPersonalizada.borrarConfiguracionGuardada(id);
+          lpConfiguraciones=await window.G2G_LigaPersonalizada.listarConfiguracionesGuardadas();
+          renderSetup();
+        }
+      });
+    });
     const next=document.getElementById('lmSetupNext');
     if(next) next.addEventListener('click', ()=>{
       if(!window.G2G_LigaPersonalizada.getEquipos().length) return;
@@ -6187,13 +8006,16 @@
       inner=`
         <div class="lm-setup-title">${t('lm.elige_liga')}</div>
         <div class="lm-setup-list">
+          <div class="lm-setup-option active" data-liga="custom">
+            <i class="ph ph-bold ph-sliders-horizontal" style="width:22px;text-align:center;vertical-align:middle;margin-right:10px;color:var(--gold)"></i>${t('lm.liga_personalizada')}
+          </div>
+          <div class="lm-setup-option active" data-liga="aleatoria">
+            <i class="ph ph-bold ph-shuffle" style="width:22px;text-align:center;vertical-align:middle;margin-right:10px;color:var(--gold)"></i>${t('lm.liga_aleatoria')}
+          </div>
           ${LIGAS_DISPONIBLES.filter(l=>l.activa).map(l=>`
             <div class="lm-setup-option active selected" data-liga="${l.id}">
               <img src="${l.flagImg}" alt="" style="width:22px;height:16px;object-fit:cover;border-radius:2px;vertical-align:middle;margin-right:10px">${l.nombre}
             </div>`).join('')}
-          <div class="lm-setup-option active" data-liga="custom">
-            <i class="ph ph-bold ph-sliders-horizontal" style="width:22px;text-align:center;vertical-align:middle;margin-right:10px;color:var(--gold)"></i>${t('lm.liga_personalizada')}
-          </div>
         </div>
         <div class="lm-popup-actions"><button id="lmSetupNext" class="mode-card-btn mode-card-btn-gold">${t('lm.siguiente')}</button></div>
       `;
@@ -6222,6 +8044,11 @@
           </div>
         </div>
         <p class="lm-setup-desc">${t('lm.como_empezar_desc')}</p>
+        ${setupData.modo==='propio'?`
+          <div class="lm-modo-dificil-aviso">
+            <div class="lm-modo-dificil-titulo"><i class="ph ph-bold ph-fire"></i> ${t('lm.modo_dificil_titulo')}</div>
+            <div class="lm-modo-dificil-texto">${t('lm.modo_dificil_texto')}</div>
+          </div>`:''}
         <div class="lm-popup-actions"><button id="lmSetupNext" class="mode-card-btn mode-card-btn-gold" ${setupData.modo?'':'disabled'}>${t('lm.siguiente')}</button></div>
       `;
     } else if(setupStep===2.6){
@@ -6290,7 +8117,20 @@
       const next=document.getElementById('lmSetupNext');
       if(next) next.addEventListener('click', ()=>{
         if(typeof window.playSound==='function') window.playSound('select');
-        setupStep = setupData.liga==='custom' ? 1.5 : 2;
+        if(setupData.liga==='aleatoria'){
+          // La Liga Aleatoria se genera entera de golpe aquí mismo (sin
+          // pantalla de importación, no hay nada que subir) y a partir
+          // de este punto se trata exactamente igual que una Liga
+          // Personalizada ya importada — mismo motor por debajo, así
+          // que no hace falta tocar ningún otro punto del código que
+          // ya sabe manejar "custom".
+          if(typeof window.playSound==='function') window.playSound('reveal');
+          generarLigaAleatoria(20);
+          setupData.liga='custom';
+          setupStep=2;
+        } else {
+          setupStep = setupData.liga==='custom' ? 1.5 : 2;
+        }
         renderSetup();
       });
     } else if(setupStep===1.5){
@@ -6427,6 +8267,17 @@
 
     if(!state || !state.setupComplete){
       renderSetup();
+      return;
+    }
+    // Quiebra declarada a mitad de temporada por insolvencia grave
+    // sostenida (ver comprobarInsolvenciaGrave()) — se reutiliza el
+    // mismo popup de resumen de temporada que ya sabe mostrar el
+    // veredicto de "fin de partida por números rojos" y cerrar la
+    // partida correctamente, en vez de construir una pantalla nueva
+    // aparte solo para esto. Se comprueba que no esté ya abierto para
+    // no acabar apilando el mismo aviso varias veces.
+    if(state.quiebraDeclarada && !document.getElementById('lmResumenTemporadaOverlay')){
+      mostrarResumenTemporada();
       return;
     }
     // Red de seguridad: si el estado guardado viene de una versión anterior
@@ -6619,7 +8470,13 @@
             </div>` : ''}
           </div>
           <div class="bench-title">
-            <span><i class="ph ph-bold ph-t-shirt" style="color:var(--gold);margin-right:6px"></i>${t("lm.once_titular")}</span>
+            <span class="lm-once-titular-label-wrap">
+              <span><i class="ph ph-bold ph-t-shirt" style="color:var(--gold);margin-right:6px"></i>${t("lm.once_titular")}</span>
+              <span class="lm-once-media-chip" title="${t('lm.media_once_titular_tt')}">
+                <span class="lm-once-media-num">${plantillaPrincipal.length?Math.round(plantillaPrincipal.reduce((s,p)=>s+(p.overall||0),0)/plantillaPrincipal.length):0}</span>
+                <span class="lm-once-media-lbl">${t('lm.media_equipo')}</span>
+              </span>
+            </span>
             <span style="display:flex;align-items:center;gap:8px">
               <button id="lmSortBtn" class="lm-sort-btn" title="${t('lm.tt_cambiar_orden')}" aria-label="Cambiar orden">
                 <span id="lmSortLabel">${LM_SORT_LABELS[lmSortMode]}</span>
@@ -6712,6 +8569,11 @@
                     <span>${esLocal?t('lm.juegas_en_casa'):t('lm.juegas_fuera')}</span>
                     ${(()=>{ const climaPartido=(typeof climaDelPartido==='function')?climaDelPartido():null; return climaPartido ? `<span style="font-size:13px;font-weight:600;color:#ccc;white-space:nowrap">${climaPartido.label}</span>` : ''; })()}
                   </div>
+                  ${(()=>{
+                    const climaPartido=(typeof climaDelPartido==='function')?climaDelPartido():null;
+                    if(!climaPartido || !climaPartido.effect || !Object.keys(climaPartido.effect).length) return '';
+                    return `<div class="lm-clima-repercusion"><i class="ph ph-bold ph-info"></i> ${climaPartido.desc}</div>`;
+                  })()}
                   ${(()=>{
                     const fila=calcularClasificacion();
                     const idx=fila.findIndex(t=>t.id===rival.id);
@@ -6981,6 +8843,18 @@
             guardarEstado();
             mostrarSemanaEnVivo(eventosDias, ()=>{ render(); });
           };
+          // Si el árbol de nodos de esta semana todavía no está
+          // completo (quedan días sin elegir), se abre esa pantalla en
+          // vez de procesar la semana de golpe como antes — cada
+          // "SEGUIR" mientras quede camino por recorrer simplemente
+          // continúa donde se dejó, sin ningún aviso de por medio (el
+          // aviso de que se va a empezar a gestionar la semana ya se
+          // ve la primera vez, al abrir el árbol).
+          asegurarSemanaNodos();
+          if(state.semanaNodos && diaActualIndiceSemanaNodos()!==-1){
+            abrirArbolNodosSemana();
+            return;
+          }
           // Si hay días de entrenamiento marcados en el calendario pero no
           // hay nadie en el Plan de Entrenamiento del Preparador Físico,
           // esos días no mejorarían a ningún jugador — se avisa (solo la
@@ -7081,6 +8955,11 @@
         render();
       });
     });
+    const calendarioHeaderBtn=root.querySelector('#lmCalendarioHeaderBtn');
+    if(calendarioHeaderBtn) calendarioHeaderBtn.addEventListener('click', ()=>{
+      if(typeof window.playSound==='function') window.playSound('select');
+      abrirArbolNodosSemana();
+    });
     root.querySelectorAll('[data-cal-nav]').forEach(btn=>{
       btn.addEventListener('click', ()=>{
         if(typeof window.playSound==='function') window.playSound('select');
@@ -7095,6 +8974,19 @@
         calendarioMesVisto={year, month};
         render();
       });
+    });
+    root.querySelectorAll('[data-reclamar-nodo]').forEach(btn=>{
+      btn.addEventListener('click', (e)=>{
+        e.stopPropagation();
+        if(typeof window.playSound==='function') window.playSound('select');
+        abrirCanjeHitoNodo(btn.getAttribute('data-reclamar-nodo'), parseInt(btn.getAttribute('data-reclamar-umbral'),10));
+      });
+    });
+    const nodosLeyendaBtn=root.querySelector('[data-nodos-leyenda]');
+    if(nodosLeyendaBtn) nodosLeyendaBtn.addEventListener('click', (e)=>{
+      e.stopPropagation();
+      if(typeof window.playSound==='function') window.playSound('select');
+      mostrarLeyendaIconosNodos();
     });
     const perfilHeader=document.getElementById('lmPerfilEquipoHeader');
     if(perfilHeader) perfilHeader.addEventListener('click', ()=>{
@@ -8246,7 +10138,7 @@
     overlay.innerHTML=`
       <div class="lm-dilemma-card lm-dilemma-card-mant" style="max-width:480px;text-align:left">
         ${xCerrarHTML()}
-        <div class="lm-dilemma-title"><i class="ph ph-bold ph-stadium"></i> ${t('lm.estado_estadio_titulo')}</div>
+        <div class="lm-dilemma-title"><i class="ph ph-bold ph-buildings"></i> ${t('lm.estado_estadio_titulo')}</div>
         <div class="lm-estadio-bars">
           <div>
             <div class="lm-estadio-bar-label"><i class="ph ph-bold ph-plant"></i><span>${t('lm.estado_cesped')}</span><span>${Math.round(est.campo)}/100</span></div>
@@ -8343,6 +10235,7 @@
               <div class="lm-aforo-nota">Próxima nómina en la jornada ${Math.max(1,(state.mesesPagados||0)*4+1)}</div>
             </div>
           </div>
+          <div class="lm-prestamo-box">${renderPrestamoHTML()}</div>
           <div class="lm-precio-box">
             <div class="lm-estadio-bar-label"><i class="ph ph-bold ph-ticket"></i><span>${t('lm.precio_de_la_entrada')}</span><span>${formatoDinero(state.precioEntrada)}</span></div>
             <input type="range" id="lmPrecioEntradaSlider" min="5" max="60" step="1" value="${state.precioEntrada}" class="lm-precio-slider">
@@ -8365,6 +10258,16 @@
         if(typeof window.playSound==='function') window.playSound('select');
         guardarEstado();
         renderHub();
+      });
+      overlay.querySelectorAll('[data-prestamo]').forEach(btn=>{
+        btn.addEventListener('click', ()=>{
+          const paqueteId=btn.getAttribute('data-prestamo');
+          if(solicitarPrestamo(paqueteId)){
+            renderHub();
+            overlay.remove();
+            abrirDirectorGeneral(); // reabre el popup ya con el préstamo activo mostrado
+          }
+        });
       });
       const xBtnDG=overlay.querySelector('[data-cerrar-x]');
       if(xBtnDG) xBtnDG.addEventListener('click', ()=>{ overlay.remove(); render(); });

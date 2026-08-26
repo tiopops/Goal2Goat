@@ -17,6 +17,13 @@
 
   const SEEN_KEY = 'g2g_tutorial_seen';
 
+  // Envoltorio seguro sobre window.t (i18n.js) — si por lo que sea
+  // i18n.js no estuviera cargado todavía, se devuelve la propia clave
+  // en vez de reventar.
+  function t(key, ...args){
+    return (typeof window.t==='function') ? window.t(key, ...args) : key;
+  }
+
   function isMobileLayout(){
     return window.innerWidth <= 1050;
   }
@@ -25,40 +32,37 @@
     return [
       {
         selector: '.formation-tabs',
-        title: '1 · Elige tu formación',
-        text: 'Elige entre Ofensiva, Equilibrada o Defensiva — la formación que elijas aquí quedará fija durante todo el torneo, así que piénsala bien.'
+        title: t('tut.cl.p1_t'),
+        text: t('tut.cl.p1_x')
       },
       {
         selector: '#rollBtn',
         extraSelector: '#quickBuildBtn',
-        title: '2 · Arma tu plantilla',
-        text: '<strong>SELECCIONAR JUGADOR</strong> te permite elegir a tus jugadores de uno en uno de manera aleatoria entre varias selecciones al azar hasta completar tu equipo.<br><br><strong>EQUIPO RÁPIDO</strong> generará por ti una selección completamente al azar para empezar a jugar inmediatamente.'
+        title: t('tut.cl.p2_t'),
+        text: t('tut.cl.p2_x')
       },
       {
         selector: '#teamProfileBox',
         mockPreview: 'teamprofile',
-        title: '3 · El perfil de tu equipo',
-        text: 'Aquí verás de un vistazo cómo queda tu equipo: ATAQUE, DEFENSA, RITMO, PASE y TÉCNICA, según los jugadores que vayas convocando. Te mostramos unos valores de ejemplo al azar para que veas cómo se ve.<br><br>Más adelante, durante el torneo, podrás usar el <strong>Ajuste Táctico</strong> para mover puntos entre estas estadísticas y compensar el clima o una mala racha en el draft.'
+        title: t('tut.cl.p3_t'),
+        text: t('tut.cl.p3_x')
       },
       {
         selector: '#pitchBox',
         mockPreview: 'pitch',
-        title: '4 · La posición ★ importa',
-        text: 'Coloca a cada jugador en su posición natural y aparecerá marcado con una ★, rindiendo al máximo. Fuera de sitio, rendirá peor.<br><br>Entre partido y partido puedes hacer cambios para rotar a quien necesite descanso, evitar sanciones o recuperarse de una lesión.'
+        title: t('tut.cl.p4_t'),
+        text: t('tut.cl.p4_x')
       },
       {
         selector: null,
         mockPreview: 'strategy',
-        title: '5 · Elige estrategia antes de cada partido',
-        text: 'Antes de cada partido del torneo podrás elegir una estrategia para contrarrestar el juego del rival. Lee detenidamente el estilo de juego del contrincante, pues una estrategia correcta te dará una ventaja real en el resultado. Para que veas cómo es, hemos cargado un rival al azar a modo de ejemplo.'
+        title: t('tut.cl.p5_t'),
+        text: t('tut.cl.p5_x')
       },
       {
         selector: () => isMobileLayout() ? '#mobileTabBar' : '.app',
-        title: '6 · Tu centro de mando',
-        text: () => (isMobileLayout()
-          ? 'En el móvil, estas pestañas de abajo cambian entre el campo, tu equipo, el rival y el historial — todo está siempre a un toque.'
-          : 'En escritorio tienes tu plantilla, el campo y la información del rival visibles los tres a la vez, sin necesidad de cambiar de pantalla.')
-          + ' <br><br>Si te registras, desde tu perfil podrás desbloquear <strong>mejoras y habilidades</strong> con GOAT Points. <br><br>Puedes volver a ver este tutorial cuando quieras desde <strong>CÓMO JUGAR</strong>.'
+        title: t('tut.cl.p6_t'),
+        text: () => (isMobileLayout() ? t('tut.cl.p6_movil') : t('tut.cl.p6_escritorio')) + t('tut.cl.p6_comun')
       },
     ];
   }
@@ -391,14 +395,14 @@
 
     const box = overlayEl.querySelector('#g2gTutBox');
     box.innerHTML = `
-      <div style="font-size:10px;color:var(--gold,#f0c419);letter-spacing:1px;margin-bottom:4px">PASO ${currentStep+1} DE ${total}</div>
+      <div style="font-size:10px;color:var(--gold,#f0c419);letter-spacing:1px;margin-bottom:4px">${t('tut.paso_de', currentStep+1, total)}</div>
       <div style="font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:.5px;font-size:16px;color:#fff;margin-bottom:8px">${step.title}</div>
       <div style="font-size:13px;color:#e8e6e1;line-height:1.5;margin-bottom:16px">${text}</div>
       <div style="display:flex;gap:8px;align-items:center">
-        <button id="g2gTutSkip" style="background:none;border:none;color:#8a9094;font-size:12px;cursor:pointer;text-decoration:underline;padding:6px 4px">Saltar</button>
+        <button id="g2gTutSkip" style="background:none;border:none;color:#8a9094;font-size:12px;cursor:pointer;text-decoration:underline;padding:6px 4px">${t('tut.saltar')}</button>
         <div style="flex:1"></div>
-        ${currentStep>0 ? `<button id="g2gTutPrev" style="background:none;border:1px solid #555;color:#ccc;border-radius:6px;padding:8px 14px;cursor:pointer;font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:1px;font-size:12px">ATRÁS</button>` : ''}
-        <button id="g2gTutNext" style="background:var(--gold,#f0c419);border:none;color:#000;border-radius:6px;padding:8px 16px;cursor:pointer;font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:1px;font-size:12px">${currentStep<total-1?'SIGUIENTE':'ENTENDIDO'}</button>
+        ${currentStep>0 ? `<button id="g2gTutPrev" style="background:none;border:1px solid #555;color:#ccc;border-radius:6px;padding:8px 14px;cursor:pointer;font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:1px;font-size:12px">${t('tut.atras')}</button>` : ''}
+        <button id="g2gTutNext" style="background:var(--gold,#f0c419);border:none;color:#000;border-radius:6px;padding:8px 16px;cursor:pointer;font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:1px;font-size:12px">${currentStep<total-1?t('tut.siguiente'):t('tut.entendido')}</button>
       </div>
     `;
 
@@ -410,6 +414,11 @@
     const prevBtn = box.querySelector('#g2gTutPrev');
     if(prevBtn) prevBtn.addEventListener('click', ()=>{ playTutSound(); guarded(()=>{ currentStep--; renderStep(); }); });
 
+    // Se posiciona la caja YA, en el mismo instante en que se rellena
+    // — antes no tenía ninguna posición vertical asignada hasta pasado
+    // el setTimeout de abajo, así que aparecía primero en un sitio por
+    // defecto (arriba) y "saltaba" a su sitio real 300ms después.
+    positionBox(box, targetEl);
     setTimeout(()=>positionBox(box, targetEl), 300);
     transitioning = false;
   }

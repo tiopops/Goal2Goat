@@ -284,6 +284,7 @@
         </div>
         <div id="lmVisorResumenBox" style="display:none"></div>
         <button id="lmVisorHistoricoBtn" class="mode-card-btn mode-card-btn-secondary" style="display:none;width:calc(100% - 32px);margin:0 16px 8px"><i class="ph ph-bold ph-notebook"></i> ${t('lm.historico_partido_btn')}</button>
+        <button id="lmVisorCronicaBtn" class="mode-card-btn mode-card-btn-secondary" style="display:none;width:calc(100% - 32px);margin:0 16px 8px"><i class="ph ph-bold ph-newspaper"></i> ${t('lm.cronica_partido_btn')}</button>
         </div>
         <div class="lm-popup-actions">
           <button id="lmVisorVelocidadBtn" class="mode-card-btn mode-card-btn-secondary"><i class="ph ph-bold ph-fast-forward"></i> ${t('lm.velocidad')} 1X</button>
@@ -1048,11 +1049,25 @@
             const equipoRivalOffside = esMio?posRival:posMia;
             const ultimoDefensorOffside = equipoRivalOffside.reduce((max,rv,ri)=>{
               if(ri===0) return max;
+              // Blindaje: una posición rival mal formada (sin x/y
+              // numéricos, por ejemplo tras un fallo puntual en otra
+              // parte del cálculo) no debe colar un NaN que luego se
+              // propague a TODO el fuera de juego de la jugada.
+              if(!rv || typeof rv.x!=='number' || typeof rv.y!=='number') return max;
               const prof = esEscritorio ? (esMio?rv.x:ANCHO-rv.x) : (esMio?ALTO-rv.y:rv.y);
-              return Math.max(max, prof);
+              return Number.isFinite(prof) ? Math.max(max, prof) : max;
             }, -Infinity);
             const profJugador = esEscritorio ? (esMio?x:ANCHO-x) : (esMio?ALTO-y:y);
-            if(profJugador>ultimoDefensorOffside-1.5){
+            // Blindaje: si el rival se quedara con menos de 2
+            // jugadores en el array (solo portero, o un instante con
+            // datos incompletos a mitad de una sustitución/roja), el
+            // reduce de arriba nunca actualiza el acumulador y
+            // ultimoDefensorOffside se queda en -Infinity — aplicar la
+            // corrección con ese valor mandaría al jugador a una
+            // coordenada infinita (rotura visual total). En ese caso,
+            // sencillamente no se corrige nada esta jugada en concreto
+            // en vez de arriesgarse a una posición inválida.
+            if(Number.isFinite(ultimoDefensorOffside) && profJugador>ultimoDefensorOffside-1.5){
               const profCorregida=ultimoDefensorOffside-1.5-((i*37)%10)/10*3; // margen fijo por jugador (no aleatorio en cada refresco, para no generar temblor), pero variado entre ellos
               if(esEscritorio) x = esMio?profCorregida:ANCHO-profCorregida;
               else y = esMio?ALTO-profCorregida:profCorregida;
@@ -2879,6 +2894,65 @@
             const posesionRealActual = muestrasPosesionTotal>4 ? Math.round((muestrasPosesionMia/muestrasPosesionTotal)*100) : null;
             mostrarHistoricoPartido(info, miEsLocal, posesionRealActual);
           }
+        });
+      }
+      const cronicaBtn=overlay.querySelector('#lmVisorCronicaBtn');
+      if(cronicaBtn && window.G2G_Cronica){
+        cronicaBtn.style.display='block';
+        cronicaBtn.addEventListener('click', ()=>{
+          if(typeof window.playSound==='function') window.playSound('select');
+          try{
+            const posesionRealActual = muestrasPosesionTotal>4 ? Math.round((muestrasPosesionMia/muestrasPosesionTotal)*100) : 50;
+            // Alineación propia: se filtra la plantilla real por los
+            // IDs que estaban en el once titular de este partido.
+            const titularIds=new Set(Object.values(state.alineacion||{}).filter(Boolean));
+            const alineacionMia=(state.plantilla||[]).filter(j=>titularIds.has(j.id))
+              .map(j=>({numero:j.numero, position:j.position, name:j.name, overall:j.overall}));
+            // Alineación rival: no hay un "once" simulado jugador a
+            // jugador para el rival, así que se toman 11 nombres
+            // representativos de su plantilla disponible esa jornada.
+            const disponiblesRival=(typeof plantillaEfectivaRival==='function') ? plantillaEfectivaRival(rival) : [];
+            const alineacionRival=(disponiblesRival||[]).slice(0,11)
+              .map((j,i)=>({numero:j.n||(i+1), position:j.position||'', name:j.name, overall:j.overall}));
+            const datosLocal = miEsLocal
+              ? {nombre:miNombre, goles:info.resultado.golesA, alineacion:alineacionMia}
+              : {nombre:rivalNombre, goles:info.resultado.golesA, alineacion:alineacionRival};
+            const datosVisitante = miEsLocal
+              ? {nombre:rivalNombre, goles:info.resultado.golesB, alineacion:alineacionRival}
+              : {nombre:miNombre, goles:info.resultado.golesB, alineacion:alineacionMia};
+            const climaActual=(typeof climaDelPartido==='function') ? climaDelPartido() : null;
+            const datosPartido={
+              nombreLocal:datosLocal.nombre, nombreVisitante:datosVisitante.nombre,
+              golesLocal:datosLocal.goles, golesVisitante:datosVisitante.goles,
+              jornada:state.jornadaActual, temporada:state.temporadaEtiqueta||'',
+              estadio:(state.nombreEstadio || (miEsLocal?miNombre:rivalNombre)+' Arena'),
+              espectadores: state.estadio && state.estadio.ultimaAsistencia ? state.estadio.ultimaAsistencia.toLocaleString('es-ES') : null,
+              clima: climaActual ? climaActual.label : null,
+              posesionLocal: miEsLocal ? posesionRealActual : (100-posesionRealActual),
+              eventos: info.eventos||[],
+              alineacionLocal: datosLocal.alineacion,
+              alineacionVisitante: datosVisitante.alineacion,
+              // Si hubo rueda de prensa esta jornada, se menciona en la
+              // crónica si la promesa se cumplió — siempre es sobre MI
+              // equipo (el sistema de rueda de prensa no existe para
+              // el rival), de ahí que prensaEquipo sea siempre miNombre.
+              prensa: state.ultimaPrensaResuelta || null,
+              prensaEquipo: state.ultimaPrensaResuelta ? miNombre : null,
+              // Resultado desde la perspectiva de MI equipo (no del
+              // local/visitante) — usado solo para elegir el banco de
+              // fotos correcto (derrota = jugador abatido).
+              resultadoJugador: (()=>{
+                const golesMios = miEsLocal ? info.resultado.golesA : info.resultado.golesB;
+                const golesRival = miEsLocal ? info.resultado.golesB : info.resultado.golesA;
+                if(golesMios>golesRival) return 'victoria';
+                if(golesMios<golesRival) return 'derrota';
+                return 'empate';
+              })(),
+            };
+            const html=window.G2G_Cronica.generarHTML(datosPartido);
+            const ventana=window.open('', '_blank');
+            if(ventana){ ventana.document.write(html); ventana.document.close(); }
+          }catch(e){ console.error('Error generando la crónica del partido:', e); }
         });
       }
     }

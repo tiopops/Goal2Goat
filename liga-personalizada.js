@@ -14,14 +14,21 @@
    1500×1500px máximo) y se emparejan por nombre de archivo contra
    los equipos ya importados del Excel.
 
-   NOTA IMPORTANTE SOBRE EL GUARDADO: esto se guarda en localStorage
-   del propio dispositivo, no en Firebase — Firestore tiene un límite
-   de 1MB por documento, y varios escudos de hasta 500KB cada uno lo
-   superarían enseguida. Guardar los escudos de verdad en la cuenta
-   del jugador (para que le aparezcan igual en otro dispositivo)
-   necesitaría Firebase Storage, que este proyecto no tiene
-   configurado todavía — de momento la liga personalizada vive en
-   este dispositivo.
+   NOTA IMPORTANTE SOBRE EL GUARDADO: los ESCUDOS se guardan en
+   localStorage del propio dispositivo, no en Firebase — Firestore
+   tiene un límite de 1MB por documento, y varios escudos de hasta
+   500KB cada uno lo superarían enseguida. Guardar los escudos de
+   verdad en la cuenta del jugador (para que le aparezcan igual en
+   otro dispositivo) necesitaría Firebase Storage, que este proyecto
+   no tiene configurado todavía.
+
+   Los DATOS de equipos y jugadores (nombres, posiciones, estadísticas
+   — nunca imágenes) sí se pueden guardar con nombre en la cuenta del
+   jugador, hasta 3 configuraciones — el tamaño real es mínimo (unos
+   pocos KB incluso con una liga de 20 equipos completos), muy lejos
+   del límite de 1MB. Al recuperar una configuración guardada en otro
+   dispositivo, los escudos habría que volver a subirlos ahí, ya que
+   esa parte sigue sin sincronizarse entre dispositivos.
    ============================================================ */
 
 window.G2G_LigaPersonalizada = (function(){
@@ -208,6 +215,16 @@ window.G2G_LigaPersonalizada = (function(){
     equipos=nuevosEquipos;
     guardarEnStorage();
   }
+  // Fija un escudo directamente, sin pasar por la validación de subida
+  // de archivo — se usa para escudos GENERADOS por el propio juego
+  // (Liga Aleatoria, ver generarLigaAleatoria() en liga-manager.js),
+  // que son siempre válidos por construcción (nunca necesitan
+  // comprobarse contra el límite de tamaño/dimensiones, que es una
+  // validación pensada solo para archivos que sube el propio usuario).
+  function setCrestDirecto(key, dataUrl){
+    crests[key]=dataUrl;
+    guardarEnStorage();
+  }
   function getEquipos(){ return equipos; }
   function getCrest(key){ return crests[key]||null; }
   function faltanEscudos(){ return equipos.map(e=>e.key).filter(k=>!crests[k]); }
@@ -216,5 +233,93 @@ window.G2G_LigaPersonalizada = (function(){
     try{ localStorage.removeItem(STORAGE_KEY_TEAMS); localStorage.removeItem(STORAGE_KEY_CRESTS); }catch(e){}
   }
 
-  return { importarExcel, importarEscudos, setEquipos, getEquipos, getCrest, faltanEscudos, limpiarTodo };
+  /* ---------- Configuraciones guardadas en la nube (Firestore) ----------
+     Se guardan solo los DATOS (nombres, posiciones, estadísticas) — los
+     escudos NUNCA se suben aquí, siguen viviendo en localStorage de
+     este dispositivo (ver la nota grande al principio del archivo). Un
+     documento típico ocupa unos pocos KB incluso con una liga de 20
+     equipos completos — muy lejos del límite de 1MB por documento de
+     Firestore, así que guardar hasta 3 configuraciones por cuenta es
+     perfectamente seguro en tamaño. El límite de 3 es una decisión de
+     interfaz (no abrumar con demasiadas), no una limitación técnica. */
+  const MAX_CONFIGURACIONES_GUARDADAS=3;
+  const MAX_LONGITUD_NOMBRE=40;
+
+  function usuarioActual(){
+    return (window._fbAuth && window._fbAuth.currentUser) || null;
+  }
+
+  async function listarConfiguracionesGuardadas(){
+    const user=usuarioActual();
+    if(!user || !window._fbDb) return [];
+    try{
+      const snap=await window._fbDb.collection('users').doc(user.uid).get();
+      const data=snap.exists?snap.data():{};
+      return data.ligasPersonalizadasGuardadas||[];
+    }catch(e){ return []; }
+  }
+
+  // nombre admite cualquier texto, incluidos emojis (son caracteres
+  // Unicode normales, no necesitan ningún tratamiento especial) — solo
+  // se recorta la longitud y se comprueba que no esté vacío.
+  async function guardarConfiguracion(nombre){
+    const user=usuarioActual();
+    if(!user || !window._fbDb){
+      return {ok:false, error:tr('lm.lp_guardar_sin_sesion')};
+    }
+    const nombreLimpio=(nombre||'').trim().slice(0, MAX_LONGITUD_NOMBRE);
+    if(!nombreLimpio){
+      return {ok:false, error:tr('lm.lp_guardar_nombre_vacio')};
+    }
+    if(!equipos.length){
+      return {ok:false, error:tr('lm.lp_guardar_sin_equipos')};
+    }
+    const actuales=await listarConfiguracionesGuardadas();
+    if(actuales.length>=MAX_CONFIGURACIONES_GUARDADAS){
+      return {ok:false, error:tr('lm.lp_guardar_limite', MAX_CONFIGURACIONES_GUARDADAS)};
+    }
+    const nueva={
+      id:'cfg'+Date.now()+Math.floor(Math.random()*100000),
+      nombre:nombreLimpio,
+      fecha:new Date().toISOString(),
+      numEquipos:equipos.length,
+      // Se guarda una copia limpia sin ninguna referencia a escudos.
+      equipos:equipos.map(e=>({key:e.key, displayName:e.displayName, xi:e.xi, bench:e.bench})),
+    };
+    try{
+      await window._fbDb.collection('users').doc(user.uid).set({
+        ligasPersonalizadasGuardadas:[...actuales, nueva],
+      }, {merge:true});
+      return {ok:true, configuracion:nueva};
+    }catch(e){
+      return {ok:false, error:tr('lm.lp_guardar_error', e.message||'')};
+    }
+  }
+
+  async function cargarConfiguracionGuardada(id){
+    const actuales=await listarConfiguracionesGuardadas();
+    const encontrada=actuales.find(c=>c.id===id);
+    if(!encontrada) return {ok:false, error:tr('lm.lp_cargar_no_encontrada')};
+    setEquipos(encontrada.equipos);
+    return {ok:true, faltanEscudos:faltanEscudos()};
+  }
+
+  async function borrarConfiguracionGuardada(id){
+    const user=usuarioActual();
+    if(!user || !window._fbDb) return {ok:false};
+    const actuales=await listarConfiguracionesGuardadas();
+    const restantes=actuales.filter(c=>c.id!==id);
+    try{
+      await window._fbDb.collection('users').doc(user.uid).set({
+        ligasPersonalizadasGuardadas:restantes,
+      }, {merge:true});
+      return {ok:true};
+    }catch(e){ return {ok:false}; }
+  }
+
+  return {
+    importarExcel, importarEscudos, setEquipos, getEquipos, getCrest, faltanEscudos, limpiarTodo, setCrestDirecto,
+    listarConfiguracionesGuardadas, guardarConfiguracion, cargarConfiguracionGuardada, borrarConfiguracionGuardada,
+    MAX_CONFIGURACIONES_GUARDADAS,
+  };
 })();

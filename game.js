@@ -341,6 +341,19 @@ function playSound(name, data){
       tone(ctx, 660, 0.1, 0.12, 'sawtooth', 0.10, 0.0001);
       tone(ctx, 880, 0.2, 0.18, 'sawtooth', 0.12, 0.0001);
       break;
+    case 'goal_escalado': {
+      // Mismo "goooal" de siempre, pero con el tono base subiendo un
+      // poco en cada gol sucesivo dentro de una misma racha — se usa
+      // en la simulación gol a gol del amistoso del árbol de nodos,
+      // para que la tensión suba a medida que se acumulan goles.
+      // data.indice = 0 para el primer gol, 1 el segundo, etc.
+      const indice = (data && typeof data.indice==='number') ? data.indice : 0;
+      const base = 440*Math.pow(1.13, Math.min(indice, 8));
+      tone(ctx, base, 0, 0.12, 'sawtooth', 0.10, 0.0001);
+      tone(ctx, base*1.5, 0.1, 0.12, 'sawtooth', 0.10, 0.0001);
+      tone(ctx, base*2, 0.2, 0.18, 'sawtooth', 0.12, 0.0001);
+      break;
+    }
     case 'victory': // upbeat fanfare arpeggio
       [523,659,784,1046,1318].forEach((f,i)=>tone(ctx, f, i*0.11, 0.28, 'triangle', 0.14, 0.0001));
       break;
@@ -431,6 +444,17 @@ function playSound(name, data){
       break;
     case 'rest_day': // día de descanso — un tono único, calmado y breve
       tone(ctx, 420, 0, 0.16, 'sine', 0.07, 0.0001);
+      break;
+    case 'loan_granted': // preéstamo bancario concedido — dos notas
+      // ascendentes y brillantes, como una pequeña "caja registradora".
+      tone(ctx, 660, 0, 0.09, 'square', 0.12, 0.0001);
+      tone(ctx, 990, 0.08, 0.16, 'square', 0.13, 0.0001);
+      break;
+    case 'loan_payment': // cuota del préstamo descontada cada jornada —
+      // un tintineo metálico breve y seco, discreto (no es una buena
+      // noticia, así que no debe sonar celebratorio).
+      tone(ctx, 520, 0, 0.05, 'triangle', 0.08, 0.0001);
+      tone(ctx, 420, 0.04, 0.08, 'triangle', 0.06, 0.0001);
       break;
     case 'envelope_drag': // tensión creciente mientras se arrastra el
       // sobre para abrirlo — el tono sube con el progreso (0 a 1

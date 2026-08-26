@@ -19,6 +19,13 @@
   // deja empezarTemporada() en liga-manager.js (ver maybeAutoStart más
   // abajo) — no de ningún "visto para siempre" en localStorage.
 
+  // Envoltorio seguro sobre window.t (i18n.js) — si por lo que sea
+  // i18n.js no estuviera cargado todavía, se devuelve la propia clave
+  // en vez de reventar.
+  function t(key, ...args){
+    return (typeof window.t==='function') ? window.t(key, ...args) : key;
+  }
+
   function isMobileLayout(){
     return window.innerWidth <= 1050;
   }
@@ -27,36 +34,33 @@
     return [
       {
         selector: '#modeCardLigaBtn, .lm-setup-card',
-        title: '1 · Elige tu club',
-        text: 'Puedes crear un club totalmente personalizado o convertirte en uno de los 20 equipos reales de LaLiga, con sus jugadores reales. Esta elección define tu identidad para toda la temporada.'
+        title: t('tut.lm.p1_t'),
+        text: t('tut.lm.p1_x')
       },
       {
         selector: '#lmPitchBox, .lm-panel',
-        title: '2 · Completa tu plantilla y formación',
-        text: 'Coloca a cada jugador en su <strong>posición</strong> para que rinda al máximo. Puedes cambiar la formación antes de cada partido — hay 21 formaciones reales entre las que elegir.'
+        title: t('tut.lm.p2_t'),
+        text: t('tut.lm.p2_x')
       },
       {
         selector: '.lm-nextmatch-box, #lmPanelRival',
-        title: '3 · Tu próximo rival',
-        text: 'Aquí ves toda la información del siguiente partido: el rival, si juegas en casa o fuera, su estilo de juego y el clima previsto — todo esto influye de verdad en el resultado.'
+        title: t('tut.lm.p3_t'),
+        text: t('tut.lm.p3_x')
       },
       {
         selector: '.lm-calendario-box',
-        title: '4 · El calendario de la temporada',
-        text: 'Sigue las 38 jornadas de la liga. Los días antes de cada partido puedes entrenar a tus jugadores o dejarlos descansar — no todo se decide el día del partido.'
+        title: t('tut.lm.p4_t'),
+        text: t('tut.lm.p4_x')
       },
       {
         selector: '.lm-correo-box',
-        title: '5 · Tu correo interno',
-        text: 'Tu cuerpo técnico (Director Deportivo, Médico, Preparador Físico y más) te escribe aquí con avisos importantes: lesiones, fichajes, sobres disponibles y decisiones que requieren tu atención.'
+        title: t('tut.lm.p5_t'),
+        text: t('tut.lm.p5_x')
       },
       {
         selector: () => isMobileLayout() ? '#lmMobileTabBar, #mobileTabBar' : '.app',
-        title: '6 · Tu centro de mando',
-        text: () => (isMobileLayout()
-          ? 'En el móvil, las pestañas de abajo cambian entre el campo, tu plantilla, el rival y el correo — todo a un toque.'
-          : 'En escritorio tienes tu plantilla, el campo y la información del rival visibles a la vez, sin cambiar de pantalla.')
-          + ' <br><br>Gestiona tu <strong>cuerpo técnico</strong> para hacer crecer el club, contesta bien en la <strong>rueda de prensa</strong>, y no descuides la <strong>moral</strong> del equipo. <br><br>Puedes volver a ver este tutorial cuando quieras desde <strong>CÓMO JUGAR</strong>.'
+        title: t('tut.lm.p6_t'),
+        text: () => (isMobileLayout() ? t('tut.lm.p6_movil') : t('tut.lm.p6_escritorio')) + t('tut.lm.p6_comun')
       },
     ];
   }
@@ -186,18 +190,18 @@
 
     const box = overlayEl.querySelector('#g2gTutLmBox');
     box.innerHTML = `
-      <div style="font-size:10px;color:var(--gold,#f0c419);letter-spacing:1px;margin-bottom:4px">PASO ${currentStep+1} DE ${total}</div>
+      <div style="font-size:10px;color:var(--gold,#f0c419);letter-spacing:1px;margin-bottom:4px">${t('tut.paso_de', currentStep+1, total)}</div>
       <div style="font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:.5px;font-size:16px;color:#fff;margin-bottom:8px">${step.title}</div>
       <div style="font-size:13px;color:#e8e6e1;line-height:1.5;margin-bottom:16px">${text}</div>
-      <label style="display:flex;align-items:center;gap:7px;font-size:11px;color:#8a9094;margin-bottom:12px;cursor:pointer;user-select:none">
+      <label style="display:flex;align-items:center;gap:7px;font-size:13px;color:#a8adb1;margin-bottom:12px;cursor:pointer;user-select:none">
         <input type="checkbox" id="g2gTutLmNoAuto" ${noAutoChecked?'checked':''} style="cursor:pointer;accent-color:var(--gold,#f0c419)">
-        No volver a mostrar automáticamente
+        ${t('tut.no_auto')}
       </label>
       <div style="display:flex;gap:8px;align-items:center">
-        <button id="g2gTutLmSkip" style="background:none;border:none;color:#8a9094;font-size:12px;cursor:pointer;text-decoration:underline;padding:6px 4px">Saltar</button>
+        <button id="g2gTutLmSkip" style="background:none;border:none;color:#8a9094;font-size:12px;cursor:pointer;text-decoration:underline;padding:6px 4px">${t('tut.saltar')}</button>
         <div style="flex:1"></div>
-        ${currentStep>0 ? `<button id="g2gTutLmPrev" style="background:none;border:1px solid #555;color:#ccc;border-radius:6px;padding:8px 14px;cursor:pointer;font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:1px;font-size:12px">ATRÁS</button>` : ''}
-        <button id="g2gTutLmNext" style="background:var(--gold,#f0c419);border:none;color:#000;border-radius:6px;padding:8px 16px;cursor:pointer;font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:1px;font-size:12px">${currentStep<total-1?'SIGUIENTE':'ENTENDIDO'}</button>
+        ${currentStep>0 ? `<button id="g2gTutLmPrev" style="background:none;border:1px solid #555;color:#ccc;border-radius:6px;padding:8px 14px;cursor:pointer;font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:1px;font-size:12px">${t('tut.atras')}</button>` : ''}
+        <button id="g2gTutLmNext" style="background:var(--gold,#f0c419);border:none;color:#000;border-radius:6px;padding:8px 16px;cursor:pointer;font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:1px;font-size:12px">${currentStep<total-1?t('tut.siguiente'):t('tut.entendido')}</button>
       </div>
     `;
 
@@ -217,6 +221,14 @@
     const prevBtn = box.querySelector('#g2gTutLmPrev');
     if(prevBtn) prevBtn.addEventListener('click', ()=>{ playTutSound(); guarded(()=>{ currentStep--; renderStep(); }); });
 
+    // Se posiciona la caja YA, en el mismo instante en que se rellena
+    // — antes no tenía ninguna posición vertical asignada hasta pasado
+    // el setTimeout de abajo, así que aparecía primero en un sitio por
+    // defecto (arriba) y "saltaba" a su sitio real 300ms después. El
+    // segundo cálculo (con el mismo retraso de antes) sigue haciendo
+    // falta para casos raros donde el scroll tarde en asentarse del
+    // todo, pero ya no hay ningún momento sin posición asignada.
+    positionBox(box, targetEl);
     setTimeout(()=>positionBox(box, targetEl), 300);
     transitioning = false;
   }

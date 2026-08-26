@@ -21,6 +21,11 @@
 <meta property="og:image:width" content="512">
 <meta property="og:image:height" content="512">
 <meta property="og:locale" content="es_ES">
+<meta property="og:locale:alternate" content="en_US">
+<meta property="og:locale:alternate" content="pt_PT">
+<meta property="og:locale:alternate" content="fr_FR">
+<meta property="og:locale:alternate" content="de_DE">
+<meta property="og:locale:alternate" content="it_IT">
 <meta property="og:site_name" content="Goal2Goat">
 
 <!-- ═══ TWITTER CARD ═══ -->
@@ -94,7 +99,7 @@
       title="Volver al inicio"
       onerror="this.style.display='none';document.getElementById('logoFallback').style.display='block'">
     <span id="logoFallback" style="display:none;font-family:'Bebas Neue',Impact,sans-serif;font-size:26px;letter-spacing:3px;color:#c9a227;cursor:pointer;line-height:1" onclick="location.reload()">GOAL2GOAT</span>
-    <div class="version-tag">v0.6</div>
+    <div class="version-tag">v0.7</div>
   </div>
   <div class="app-header-actions">
     <a href="https://ko-fi.com/goal2goat" target="_blank" class="support-btn" style="text-decoration:none;display:inline-flex;align-items:center;justify-content:center" data-i18n="app.support">APOYA A GOAL2GOAT</a>
@@ -389,7 +394,7 @@
         </button>
 
         <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;align-items:center">
-          <button onclick="window.showPatchNotes()" style="background:none;border:none;cursor:pointer;font-family:'Bebas Neue',Impact,sans-serif;font-size:13px;letter-spacing:1px;color:var(--gold);padding:0;text-decoration:underline" data-i18n="settings.patch_notes">NOTAS v0.6</button>
+          <button onclick="window.showPatchNotes()" style="background:none;border:none;cursor:pointer;font-family:'Bebas Neue',Impact,sans-serif;font-size:13px;letter-spacing:1px;color:var(--gold);padding:0;text-decoration:underline" data-i18n="settings.patch_notes">NOTAS v0.7</button>
         </div>
 
         <!-- CHEATS: solo visible para tiopops -->
@@ -518,6 +523,19 @@
     <button onclick="document.getElementById('patchNotesOverlay').style.display='none'" class="auth-close" style="position:absolute;top:12px;right:14px">✕</button>
     <div class="auth-logo" style="font-size:16px" data-i18n="patch.title">📋 NOTAS DE LA VERSIÓN</div>
     <div class="version-notes-scroll">
+      <h4 data-i18n="patch.v07_title">v0.7 — Liga Aleatoria, Crónica del Partido y economía revisada</h4>
+      <ul>
+        <li data-i18n="patch.v07_1">Nueva LIGA ALEATORIA: una alternativa 100% inventada a la liga española (nombres, escudos y jugadores generados, sin marcas reales) — cada escudo se genera con el propio editor de capas del juego y el nombre del club es coherente con su icono (por ejemplo, un escudo con una estrella genera un nombre tipo "Stars FC").</li>
+        <li data-i18n="patch.v07_2">Nueva CRÓNICA DEL PARTIDO: sustituye al histórico con una maquetación real de periódico deportivo — titular distinto según cómo haya ido el partido, marcador destacado arriba del todo, mención de si se cumplió lo dicho en la rueda de prensa, y botón para guardarla como PDF.</li>
+        <li data-i18n="patch.v07_3">Sistema de PRÉSTAMOS BANCARIOS: pide dinero prestado con interés según el plazo elegido, con protección para que nunca se pueda pedir uno tan tarde que la liga termine antes de devolverlo.</li>
+        <li data-i18n="patch.v07_4">Sistema de QUIEBRA: gestionar mal las cuentas del club durante varios meses seguidos puede terminar la partida, con avisos previos por correo para poder corregirlo a tiempo.</li>
+        <li data-i18n="patch.v07_5">Guardado en la nube de hasta 3 configuraciones de Liga Personalizada, con el nombre que quieras ponerle (emojis incluidos), para volver a usarlas cuando quieras.</li>
+        <li data-i18n="patch.v07_6">Aforo de estadio realista para cada uno de los 20 equipos de LaLiga, y economía del modo difícil (equipo propio) recalibrada para que empezar de cero sea un reto de verdad, sin dejar de ser posible.</li>
+        <li data-i18n="patch.v07_7">Entrenamiento revisado: los jugadores dentro del plan del preparador físico mejoran de verdad mucho más que el resto de la plantilla, y también se cansan más ese día.</li>
+        <li data-i18n="patch.v07_8">Nota media del once titular visible antes de cada partido, junto al resto de la plantilla.</li>
+        <li data-i18n="patch.v07_9">Blindado el simulador de partidos ante casos raros de fuera de juego mal calculados, para que nunca se rompa la posición de un jugador en el campo.</li>
+        <li data-i18n="patch.v07_10">Numerosas correcciones y mejoras de interfaz: iconos que ya no salían ovalados por error, el tutorial ya no salta de posición al abrirse, mejor legibilidad en móvil, y varias más.</li>
+      </ul>
       <h4 data-i18n="patch.v06_title">v0.6 — Liga Manager, ya disponible para todos</h4>
       <ul>
         <li data-i18n="patch.v06_1">LIGA MANAGER deja de ser beta — ya está disponible para cualquier jugador, con una temporada completa de 38 jornadas y los 20 equipos reales de LaLiga.</li>
@@ -759,9 +777,8 @@
 
     <div class="menu-modes">
 
-      <!-- LIGA MANAGER — disponible para todos, todavía en beta -->
+      <!-- LIGA MANAGER — disponible para todos -->
       <div class="mode-card mode-card-liga mode-card-liga-unlocked" id="modeCardLiga" aria-label="Liga Manager">
-        <span class="mode-card-badge" data-i18n="menu.liga_badge_beta">BETA</span>
         <div class="mode-card-bgimg" style="background-image:url('assets/images/liga_manager_button.png')"></div>
         <div class="mode-card-body">
           <span class="mode-card-tag mode-card-tag-blue" data-i18n="menu.mode_label">MODO</span>
@@ -1204,6 +1221,7 @@
   document.write('<script src="main-menu.js?v=' + Date.now() + '"><\/script>');
   document.write('<script src="teams-data.js?v=' + Date.now() + '"><\/script>');
   document.write('<script src="liga-personalizada.js?v=' + Date.now() + '"><\/script>');
+  document.write('<script src="cronica-partido.js?v=' + Date.now() + '"><\/script>');
   document.write('<script src="liga-manager.js?v=' + Date.now() + '"><\/script>');
   document.write('<script src="liga-manager-giro-tactico.js?v=' + Date.now() + '"><\/script>');
   document.write('<script src="liga-manager-dice3d.js?v=' + Date.now() + '"><\/script>');
