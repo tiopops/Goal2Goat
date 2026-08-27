@@ -2782,14 +2782,13 @@ body.liga-manager-screen .ranking-btn-label-lm{display:inline}
   background:#1e2326; border:1px solid #2f3539; border-radius:12px; padding:16px 12px; max-width:460px; width:100%;
   margin:20px auto; position:relative;
 }
-/* En escritorio hay sitio de sobra — se ensancha el lienzo del árbol
-   lo suficiente para que quepan los 6 días + el rival sin necesitar
-   scroll horizontal en absoluto (se mantiene la misma proporción
-   2:1 que usa el sistema de coordenadas interno, para que nada se
-   deforme). */
+/* En escritorio hay sitio de sobra — el JS calcula el ancho exacto que
+   hace falta según el número real de columnas de esa semana y lo
+   aplica directamente (ver pintarArbolNodos), así que aquí solo se
+   amplía el margen máximo del contenedor para que quepa lo que haga
+   falta, sin necesitar scroll horizontal en absoluto. */
 @media (min-width: 700px){
-  .lm-arbol-pantalla{ max-width:760px; }
-  .lm-arbol-svg-capa{ width:720px!important; height:360px!important; }
+  .lm-arbol-pantalla{ max-width:960px; }
 }
 .lm-arbol-wrap{
   background:linear-gradient(180deg,#181c1e,#121516); border:1px solid #2a2f32; border-radius:12px;
@@ -2836,6 +2835,9 @@ body.liga-manager-screen .ranking-btn-label-lm{display:inline}
   top:4%; transform:translateX(-50%); text-align:center; width:52px;
 }
 .lm-arbol-dia-hoy{ color:var(--gold); font-size:11px; font-weight:bold; }
+/* El nombre del rival se queda debajo del escudo, como un pie de
+   foto — a diferencia de los días normales, que van arriba. */
+.lm-arbol-rival-nombre{ top:auto; bottom:2%; color:#8fa3d9; font-size:10.5px; }
 
 .lm-arbol-hoy-panel{ background:#15181a; border:1.5px solid var(--gold); border-radius:12px; padding:12px 14px; margin-top:12px; }
 .lm-arbol-hoy-titulo{ font-family:'Bebas Neue',Impact,sans-serif; letter-spacing:1px; font-size:11px; color:var(--gold); margin-bottom:8px; display:flex; align-items:center; gap:6px; }

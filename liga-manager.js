@@ -1769,7 +1769,7 @@
       if(esRival){
         nodosHTML+=`<div class="lm-arbol-nodo lm-arbol-nodo-rival" style="left:${punto.x/NODO_ICONO_X*100}%;top:${punto.nodos[0].y/NODO_ICONO_Y_ALTO*100}%">${rivalCrestHTML(30, rival&&rival.crestImg)}</div>`;
         const etiquetaRival = rival ? rival.name : '';
-        nodosHTML+=`<div class="lm-arbol-dia-num" style="left:${punto.x/NODO_ICONO_X*100}%">${etiquetaRival}</div>`;
+        nodosHTML+=`<div class="lm-arbol-dia-num lm-arbol-rival-nombre" style="left:${punto.x/NODO_ICONO_X*100}%">${etiquetaRival}</div>`;
         return;
       }
       punto.nodos.forEach((nodo,nIdx)=>{
@@ -1845,7 +1845,6 @@
   function renderArbolNodosOverlayHTML(){
     const {svgHTML, nodosHTML}=renderArbolNodosSVGyPuntos();
     return `<div class="lm-arbol-pantalla">
-      <button class="lm-popup-close-x" data-cerrar-arbol title="${t('common.close')||'Cerrar'}">×</button>
       <div class="lm-dilemma-title" style="justify-content:center"><i class="ph ph-bold ph-tree-structure"></i> ${t('lm.calendario')||'SEMANA'}</div>
       ${renderBarrasEstadoHTML()}
       <div class="lm-arbol-wrap" id="lmArbolWrap">
@@ -1866,6 +1865,20 @@
     if(!overlay) return;
     overlay.innerHTML=renderArbolNodosOverlayHTML();
     cablearEventosArbolNodos(overlay);
+    // En escritorio (viewport ancho) el lienzo se ensancha justo lo
+    // necesario para el número real de columnas de esta semana (días
+    // + rival) — nunca más ancho de lo que hace falta, para que nunca
+    // haga falta scroll pero tampoco sobre espacio vacío. En móvil se
+    // deja el ancho fijo de siempre (más pequeño que la pantalla, con
+    // scroll horizontal).
+    const capa=overlay.querySelector('.lm-arbol-svg-capa');
+    if(capa && window.matchMedia && window.matchMedia('(min-width: 700px)').matches){
+      const numColumnas=((state.semanaNodos&&state.semanaNodos.dias.length)||6)+1; // +1 por el rival
+      const anchoPorColumna=105;
+      const anchoDeseado=Math.max(560, numColumnas*anchoPorColumna);
+      capa.style.width=anchoDeseado+'px';
+      capa.style.height=Math.round(anchoDeseado/2)+'px';
+    }
     // Auto-centrar el scroll horizontal en el dia de hoy, para que en
     // movil el jugador no tenga que buscarlo manualmente al entrar.
     const wrap=overlay.querySelector('#lmArbolWrap');
@@ -7648,7 +7661,7 @@
     {id:'pretemporada_intensiva',tipo:'directa', nombre:'Pretemporada Intensiva', icon:'ph-barbell',       dificultad:9, desc:'+2 a TODAS las estadísticas de un jugador al azar, de forma permanente'},
     {id:'recuperacion_expres',   tipo:'directa', nombre:'Recuperación Exprés',    icon:'ph-battery-charging', dificultad:5, desc:'Restaura al instante la resistencia de toda la plantilla'},
     {id:'charla_motivacional',   tipo:'directa', nombre:'Charla Motivacional',    icon:'ph-megaphone-simple', dificultad:5, desc:'Pequeño impulso a la moral del equipo'},
-    {id:'sesion_doble',          tipo:'directa', nombre:'Sesión Doble',           icon:'ph-calendar-plus',    dificultad:7, desc:'Añade un día de entrenamiento extra a esta semana en el calendario, sin coste de fatiga'},
+    {id:'sesion_doble',          tipo:'directa', nombre:'Sesión Doble',           icon:'ph-calendar-plus',    dificultad:7, desc:'Mejora la probabilidad de progreso de los entrenos que elijas esta semana en el árbol'},
     {id:'resistencia_base',      tipo:'nivel', track:'resistenciaBase',    nombre:'Programa de Resistencia',   icon:'ph-heartbeat',         dificultadBase:8, dificultadPaso:4, desc:'Reduce la resistencia que se pierde al jugar cada partido'},
     {id:'recuperacion_semanal',  tipo:'nivel', track:'recuperacionSemanal',nombre:'Recuperación Semanal',      icon:'ph-clock-clockwise',   dificultadBase:8, dificultadPaso:4, desc:'Los días de descanso del calendario recuperan más resistencia'},
     {id:'potencial_tecnico',     tipo:'nivel', track:'potencialTecnico',   nombre:'Potencial Técnico',         icon:'ph-soccer-ball',       dificultadBase:8, dificultadPaso:4, desc:'Sube la TÉCNICA de todo el equipo de forma permanente'},
@@ -7725,17 +7738,14 @@
         state.moral=Math.max(-50,Math.min(50,(state.moral||0)+4));
         return {texto:'El vestuario responde bien a la charla — sube la moral'};
       case 'sesion_doble': {
-        const v=ventanaEntrenoActual();
-        if(!v) return {texto:'Todavía no hay una semana de calendario que preparar'};
-        if(!state.calendarioEntrenamiento) state.calendarioEntrenamiento={};
-        const cur=new Date(v.desde); cur.setDate(cur.getDate()+1);
-        let marcado=false;
-        while(cur.getTime()<v.hasta.getTime()){
-          const iso=fechaISO(cur);
-          if(!state.calendarioEntrenamiento[iso]){ state.calendarioEntrenamiento[iso]=true; marcado=true; break; }
-          cur.setDate(cur.getDate()+1);
-        }
-        return marcado ? {texto:'Se añade un día de entrenamiento extra a esta semana, sin coste de fatiga'} : {texto:'Esta semana ya está entrenada al completo'};
+        // Ya no puede marcar un día de entreno directamente en el
+        // calendario — eso ahora es cosa exclusiva del árbol de
+        // nodos. En su lugar, potencia la probabilidad de mejora de
+        // los entrenos que el jugador SÍ elija esta semana (mismo
+        // sistema que ya usa el hito de 5 entrenos acumulados).
+        if(!state.nodosBanderasPendientes) state.nodosBanderasPendientes={};
+        state.nodosBanderasPendientes.boostEntrenoSemana=true;
+        return {texto:'Los entrenos que elijas esta semana tendrán mejor probabilidad de mejora'};
       }
       default: return {texto:'Aplicado'};
     }
@@ -11433,6 +11443,13 @@
       lmCargarSkillsCache();
       render();
       inicializarBarraMovilLM();
+      // Si el jugador cerró el navegador a mitad de una semana del
+      // árbol de nodos, al volver a cargar la partida retoma justo
+      // donde lo dejó — el árbol es obligatorio, así que se reabre
+      // solo en vez de esperar a que el jugador lo busque.
+      if(state.semanaNodos && state.semanaNodos.dias.some(d=>d.elegido==null) && typeof abrirArbolNodosSemana==='function'){
+        abrirArbolNodosSemana();
+      }
     }catch(e){
       console.error('Error en init() de Liga Manager:', e);
       const root=document.getElementById('ligaManagerScreen');
