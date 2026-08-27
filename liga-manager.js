@@ -764,12 +764,12 @@
       {umbral:20, tipo:'partido_leyenda'},
     ]},
     medios:{icon:'ph-microphone-stage', color:'#e2807f', hitos:[
-      {umbral:5, tipo:'bandera', bandera:'prensaOpcionSegura'},
+      {umbral:5, tipo:'satisfaccion_empujon_leve'},
       {umbral:10, tipo:'satisfaccion_empujon'},
       {umbral:20, tipo:'carisma_permanente'},
     ]},
     tactica:{icon:'ph-clipboard-text', color:'#5b9bd5', hitos:[
-      {umbral:5, tipo:'moral_empujon_fijo'},
+      {umbral:5, tipo:'subida_stats_uno'},
       {umbral:10, tipo:'moral_empujon_notable'},
       {umbral:20, tipo:'moral_base_permanente'},
     ]},
@@ -852,6 +852,26 @@
       case 'moral_bonus_permanente':
         state.amistosoBonusMoralExtra=(state.amistosoBonusMoralExtra||0)+1;
         break;
+      case 'satisfaccion_empujon_leve':
+        // Versión más suave del empujón de afición de nivel 10 — así
+        // hay una progresión real dentro del mismo icono (leve en el
+        // 5, notable en el 10), en vez de repetir el mismo efecto que
+        // el resto de iconos ya usan para su propia moral.
+        if(!state.estadio) state.estadio={campo:90, satisfaccion:10, aforoTotal:12000, ultimaAsistencia:null};
+        state.estadio.satisfaccion=Math.max(-100, Math.min(100, state.estadio.satisfaccion+4));
+        break;
+      case 'informe_rival': {
+        // Un informe táctico de verdad sobre el rival de la próxima
+        // jornada — revela su punto más flojo real, no un empujón de
+        // ánimo genérico. Encaja con lo que hace de verdad una sesión
+        // táctica: estudiar al rival antes de decidir cómo plantear
+        // el partido.
+        const rival=typeof obtenerRivalProximaJornada==='function' ? obtenerRivalProximaJornada() : null;
+        if(!rival || rival.attack===undefined) return {ok:true, textoExtra:t('lm.hito_resultado_informe_sin_rival')};
+        const stats={attack:rival.attack, defense:rival.defense, passing:rival.passing, pace:rival.pace, technique:rival.technique};
+        const peor=Object.keys(stats).reduce((a,b)=>stats[a]<=stats[b]?a:b);
+        return {ok:true, textoExtra:tp('lm.hito_resultado_informe_rival', {rival:rival.name, stat:t('lm.stat_'+peor), valor:stats[peor]})};
+      }
       case 'experiencia_extra_jugador': {
         const id=jugadorIds&&jugadorIds[0];
         if(!id) return {ok:false, error:'jugador_no_valido'};
@@ -1039,7 +1059,7 @@
       // se eligió (no el "elige entre X o Y" genérico, que ya no
       // aplica una vez decidido) — el resto usa la descripción normal
       // del hito.
-      const descripcionFinal = opcionElegida ? t('lm.hito_opcion_'+opcionElegida) : descripcionHitoNodo(tipoIcono, umbral);
+      const descripcionFinal = resultado.textoExtra ? resultado.textoExtra : (opcionElegida ? t('lm.hito_opcion_'+opcionElegida) : descripcionHitoNodo(tipoIcono, umbral));
       overlay.innerHTML=`
         <div class="lm-dilemma-card" style="max-width:300px">
           <i class="ph ph-bold ph-check-circle" style="font-size:40px;color:${def.color};margin-bottom:8px"></i>
