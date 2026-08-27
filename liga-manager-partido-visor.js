@@ -144,16 +144,19 @@
     // la página por detrás — de ahí las "franjas negras"). Ahora solo
     // se dibujan encima las franjas oscuras, sobre una base ya
     // completamente cubierta.
+    // Mismos verdes exactos que usa el campo de la pantalla principal
+    // de alineación (#pitch en index.html) — antes este visor usaba
+    // un verde ligeramente distinto, y ahora coinciden los dos.
     const NFRANJAS=8;
-    let franjasHTML=`<rect x="0" y="0" width="${ANCHO}" height="${ALTO}" fill="#3e9853"/>`;
+    let franjasHTML=`<rect x="0" y="0" width="${ANCHO}" height="${ALTO}" fill="#2f7c42"/>`;
     const anchoLargo = esEscritorio ? ANCHO : ALTO; // dimensión a lo largo del eje de ataque
     for(let i=0;i<NFRANJAS;i++){
       const pos = (5.9375 + i*11.71875)/100*anchoLargo;
       const grosor = 5.9375/100*anchoLargo;
       if(esEscritorio){
-        franjasHTML+=`<rect x="${pos}" y="0" width="${grosor}" height="${ALTO}" fill="#3a8f4d"/>`;
+        franjasHTML+=`<rect x="${pos}" y="0" width="${grosor}" height="${ALTO}" fill="#246f38"/>`;
       } else {
-        franjasHTML+=`<rect x="0" y="${pos}" width="${ANCHO}" height="${grosor}" fill="#3a8f4d"/>`;
+        franjasHTML+=`<rect x="0" y="${pos}" width="${ANCHO}" height="${grosor}" fill="#246f38"/>`;
       }
     }
     // Líneas del campo — mismo color y opacidad que el campo real

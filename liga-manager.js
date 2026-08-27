@@ -753,11 +753,6 @@
       {umbral:10, tipo:'resetear_riesgo_sobrecarga'},
       {umbral:20, tipo:'jugador_como_nuevo'},
     ]},
-    quiniela:{icon:'ph-ticket', color:'#c9a227', hitos:[
-      {umbral:5, tipo:'bandera', bandera:'quinielaConPista'},
-      {umbral:10, tipo:'bandera', bandera:'quinielaMultiplicador'},
-      {umbral:20, tipo:'bandera', bandera:'quinielaHitosGarantizados'},
-    ]},
     scouting:{icon:'ph-binoculars', color:'#8a7fd6', hitos:[
       {umbral:5, tipo:'bandera', bandera:'sobreGarantizado'},
       {umbral:10, tipo:'bandera', bandera:'sobreNivelSuperior'},
@@ -1518,6 +1513,61 @@
     return eventosDias;
   }
 
+  // Procesa la semana de verdad (mejoras, fatiga, lesiones) y enseña
+  // un resumen con quién ha mejorado y qué ha pasado — se llama tanto
+  // al cerrar el árbol de nodos nada más completarlo, como desde el
+  // botón SEGUIR (por si acaso llega a verse alguna vez sin árbol de
+  // por medio). Tras el resumen, todo queda listo para pulsar JUGAR
+  // directamente, sin pedir un segundo SEGUIR.
+  function procesarSemanaYMostrarResumen(){
+    const eventosDias=procesarEntrenamientoSemanal();
+    state.semanaResueltaParaJornada=state.jornadaActual;
+    guardarEstado();
+    mostrarResumenSemanaPopup(eventosDias.resumenSemanal, ()=>{ render(); });
+  }
+
+  function mostrarResumenSemanaPopup(resumen, onCerrar){
+    if(!resumen){ if(typeof onCerrar==='function') onCerrar(); return; }
+    const overlay=document.createElement('div');
+    overlay.id='lmResumenSemanaOverlay';
+    overlay.className='lm-visor-leyenda-overlay-standalone lm-resumen-semana-overlay';
+    document.body.appendChild(overlay);
+
+    const mejoras=resumen.mejoras||[];
+    const lesiones=resumen.lesiones||[];
+    const NOMBRE_STAT=resumen.NOMBRE_STAT||{};
+
+    const filasMejoras = mejoras.length ? mejoras.map(m=>{
+      const stats=Object.keys(m.stats||{}).map(campo=>`<span class="lm-resumen-stat-chip">+${m.stats[campo]} ${NOMBRE_STAT[campo]||campo}</span>`).join('');
+      return `<div class="lm-resumen-fila lm-resumen-fila-buena">
+        <i class="ph ph-bold ph-trend-up"></i>
+        <div class="lm-resumen-fila-texto"><strong>${m.nombre}</strong><div class="lm-resumen-stats-chips">${stats}</div></div>
+      </div>`;
+    }).join('') : `<div class="lm-resumen-vacio">${t('lm.resumen_sin_mejoras')}</div>`;
+
+    const filasLesiones = lesiones.length ? lesiones.map(l=>`
+      <div class="lm-resumen-fila lm-resumen-fila-mala">
+        <i class="ph ph-bold ph-bandaids"></i>
+        <div class="lm-resumen-fila-texto"><strong>${l.nombre}</strong><span>${l.familia==='muscular'?t('lm.sobrecarga_muscular'):t('lm.sobrecarga_osea')}</span></div>
+      </div>`).join('') : '';
+
+    overlay.innerHTML=`
+      <div class="lm-resumen-semana-card">
+        <div class="lm-resumen-semana-titulo"><i class="ph ph-bold ph-chart-line-up"></i> ${t('lm.resumen_semana_titulo')}</div>
+        <div class="lm-resumen-semana-sub">${tp('lm.resumen_semana_sub',{entreno:resumen.diasEntreno, descanso:resumen.diasDescanso})}</div>
+        <div class="lm-resumen-bloque-titulo">${t('lm.resumen_mejoras_titulo')}</div>
+        <div class="lm-resumen-lista">${filasMejoras}</div>
+        ${lesiones.length?`<div class="lm-resumen-bloque-titulo lm-resumen-bloque-titulo-mala">${t('lm.resumen_lesiones_titulo')}</div><div class="lm-resumen-lista">${filasLesiones}</div>`:''}
+        <button class="mode-card-btn mode-card-btn-gold" data-cerrar-resumen>${t('lm.resumen_listo_btn')}</button>
+      </div>`;
+    overlay.querySelector('[data-cerrar-resumen]').addEventListener('click', ()=>{
+      if(typeof window.playSound==='function') window.playSound('select');
+      overlay.remove();
+      if(typeof onCerrar==='function') onCerrar();
+    });
+    if(typeof window.playSound==='function') window.playSound(lesiones.length?'reveal':'victory');
+  }
+
   // Días de un mes concreto para pintar la rejilla del calendario —
   // semana empezando en lunes, huecos en blanco antes del día 1. Se
   // apoya solo en Date nativo, así que sigue siendo correcto pintando
@@ -1587,8 +1637,11 @@
       }
       const clases=['lm-cal-celda'];
       if(partido) clases.push('lm-cal-dia-partido');
-      if(editable) clases.push('lm-cal-editable');
-      if(!editable) clases.push('lm-cal-bloqueado');
+      // El día del propio partido nunca debe verse "desactivado" — no
+      // es que esté bloqueado, es la jornada contra el rival que
+      // toca, así que se deja con su aspecto normal aunque el resto
+      // del calendario ya no sea editable.
+      if(!editable && !partido) clases.push('lm-cal-bloqueado');
       return `<div class="${clases.join(' ')}" ${editable?`data-cal-dia="${iso}"`:''} title="${editable?t('lm.cal_tocar_entrenamiento'):''}">
         <span class="lm-cal-num">${d.getDate()}</span>
         ${contenido}
@@ -1919,8 +1972,13 @@
     const capa=overlay.querySelector('.lm-arbol-svg-capa');
     if(capa && window.matchMedia && window.matchMedia('(min-width: 700px)').matches){
       const numColumnas=((state.semanaNodos&&state.semanaNodos.dias.length)||6)+1; // +1 por el rival
-      const anchoPorColumna=105;
-      const anchoDeseado=Math.max(560, numColumnas*anchoPorColumna);
+      // El ancho ideal (105px por columna) nunca debe superar lo que
+      // la ventana puede mostrar de verdad — si no cupiera así, se
+      // reduce el espacio por columna hasta que quepa entero, en vez
+      // de dejar que se salga y siga haciendo falta scroll.
+      const margenDisponible=Math.max(320, window.innerWidth-60);
+      const anchoIdeal=Math.max(560, numColumnas*105);
+      const anchoDeseado=Math.min(anchoIdeal, margenDisponible);
       capa.style.width=anchoDeseado+'px';
       capa.style.height=Math.round(anchoDeseado/2)+'px';
       // La tarjeta entera también se ajusta al mismo ancho (más el
@@ -2116,7 +2174,12 @@
             const cerrarArbolYRender=()=>{
               const ov=document.getElementById('lmArbolNodosOverlay');
               if(ov) ov.remove();
-              if(typeof render==='function') render();
+              // En cuanto se cierra el árbol, se procesa la semana de
+              // verdad (mejoras/fatiga/lesiones) y se enseña el
+              // resumen ahí mismo — ya no hace falta pulsar SEGUIR
+              // una segunda vez, al cerrar el resumen queda listo
+              // para pulsar JUGAR directamente.
+              procesarSemanaYMostrarResumen();
             };
             if(eraAmistoso && state.ultimoAmistosoResultado){
               mostrarResultadoAmistosoPopup(state.ultimoAmistosoResultado, cerrarArbolYRender);
@@ -8966,17 +9029,7 @@
             } else { render(); }
             return;
           }
-          const continuarSemana=()=>{
-            // El árbol de nodos ya cuenta la semana entera por su
-            // cuenta — ya no hace falta la animación día a día de
-            // después ni la pantalla de resumen; se procesa la
-            // semana (aplica de verdad las mejoras/fatiga/lesiones) y
-            // se pasa directamente a JUGAR.
-            procesarEntrenamientoSemanal();
-            state.semanaResueltaParaJornada=state.jornadaActual;
-            guardarEstado();
-            render();
-          };
+          const continuarSemana=procesarSemanaYMostrarResumen;
           // Si el árbol de nodos de esta semana todavía no está
           // completo (quedan días sin elegir), se abre esa pantalla en
           // vez de procesar la semana de golpe como antes — cada

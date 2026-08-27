@@ -789,6 +789,12 @@ window.TRANSLATIONS = {
   'lm.hito_desc_moral_empujon_notable': {es:'Empuje notable de moral de cara al próximo partido', en:'A solid morale boost ahead of the next match', pt:'Impulso notável de moral para o próximo jogo', fr:'Un bon coup de boost au moral avant le prochain match', de:'Ein spürbarer Moralschub vor dem nächsten Spiel', it:'Una spinta notevole di morale in vista della prossima partita'},
   'lm.hito_desc_moral_base_permanente': {es:'Empuje grande y permanente de moral', en:'A large, permanent morale boost', pt:'Impulso grande e permanente de moral', fr:'Un gros coup de boost permanent au moral', de:'Ein großer, dauerhafter Moralschub', it:'Una grande spinta permanente di morale'},
   'lm.hito_desc_eleccion_entreno': {es:'Elige entre: {op1} — o — {op2}', en:'Choose between: {op1} — or — {op2}', pt:'Escolhe entre: {op1} — ou — {op2}', fr:'Choisis entre : {op1} — ou — {op2}', de:'Wähle zwischen: {op1} — oder — {op2}', it:'Scegli tra: {op1} — o — {op2}'},
+  'lm.resumen_semana_titulo': {es:'RESUMEN DE LA SEMANA', en:'WEEK SUMMARY', pt:'RESUMO DA SEMANA', fr:'RÉSUMÉ DE LA SEMAINE', de:'WOCHENZUSAMMENFASSUNG', it:'RIEPILOGO SETTIMANALE'},
+  'lm.resumen_semana_sub': {es:'{entreno} días de entreno · {descanso} de descanso', en:'{entreno} training days · {descanso} rest days', pt:'{entreno} dias de treino · {descanso} de descanso', fr:'{entreno} jours d\'entraînement · {descanso} de repos', de:'{entreno} Trainingstage · {descanso} Ruhetage', it:'{entreno} giorni di allenamento · {descanso} di riposo'},
+  'lm.resumen_mejoras_titulo': {es:'JUGADORES QUE HAN MEJORADO', en:'PLAYERS WHO IMPROVED', pt:'JOGADORES QUE MELHORARAM', fr:'JOUEURS QUI SE SONT AMÉLIORÉS', de:'SPIELER MIT VERBESSERUNG', it:'GIOCATORI MIGLIORATI'},
+  'lm.resumen_sin_mejoras': {es:'Nadie ha mejorado esta semana', en:'No one improved this week', pt:'Ninguém melhorou esta semana', fr:'Personne ne s\'est amélioré cette semaine', de:'Diese Woche hat sich niemand verbessert', it:'Nessuno è migliorato questa settimana'},
+  'lm.resumen_lesiones_titulo': {es:'LESIONES', en:'INJURIES', pt:'LESÕES', fr:'BLESSURES', de:'VERLETZUNGEN', it:'INFORTUNI'},
+  'lm.resumen_listo_btn': {es:'LISTO PARA JUGAR', en:'READY TO PLAY', pt:'PRONTO A JOGAR', fr:'PRÊT À JOUER', de:'BEREIT ZU SPIELEN', it:'PRONTO A GIOCARE'},
 
   /* ── Panel HOY: que se gana y que se arriesga por nodo ── */
   'lm.hoy_gana_label': {es:'GANAS', en:'YOU GAIN', pt:'GANHAS', fr:'TU GAGNES', de:'DU GEWINNST', it:'GUADAGNI'},
