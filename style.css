@@ -2961,8 +2961,9 @@ body.liga-manager-screen .ranking-btn-label-lm{display:inline}
   gap:1px;border-radius:5px;background:#171a1c;position:relative;
 }
 .lm-cal-vacia{background:transparent}
-.lm-cal-num{font-size:10px;color:#999;font-weight:600}
+.lm-cal-num{font-size:13px;color:#999;font-weight:600}
 .lm-cal-bloqueado{opacity:.55}
+.lm-cal-semana-activa{background:#20262a;border:1px solid #33393d}
 .lm-cal-editable{cursor:pointer;background:#20262a;border:1px solid #33393d;transition:background .12s,border-color .12s}
 .lm-cal-editable:hover{border-color:#e08a3e;background:#262c30}
 .lm-cal-editable .lm-cal-num{color:#f0f0f0}

@@ -1257,7 +1257,14 @@
   // Aplica de verdad el efecto de un nodo elegido. fechaISOdia es la
   // fecha real de ese día concreto (para entreno/descanso, que siguen
   // usando el mismo calendarioEntrenamiento de siempre por debajo).
-  function aplicarEfectoNodoSemana(nodo, fechaISOdia){
+  function aplicarEfectoNodoSemana(nodo, fechaISOdia, onMediosCerrado){
+    // Registro aparte de qué nodo se eligió ese día concreto — solo
+    // de cara a pintar el icono correcto sobre el calendario después.
+    // No sustituye a calendarioEntrenamiento (que sigue siendo la
+    // fuente real que usa procesarEntrenamientoSemanal), es solo un
+    // reflejo visual.
+    if(!state.calendarioNodoElegido) state.calendarioNodoElegido={};
+    state.calendarioNodoElegido[fechaISOdia]={tipo:nodo.tipo, subtipo:nodo.subtipo||null};
     switch(nodo.tipo){
       case 'entreno':
         if(!state.calendarioEntrenamiento) state.calendarioEntrenamiento={};
@@ -1306,11 +1313,17 @@
           document.body.appendChild(overlayPrensa);
           mostrarRuedaPrensaLM(overlayPrensa, rival?rival.name:null, ()=>{
             overlayPrensa.remove();
+            // Como la entrevista es siempre el último día, el resumen
+            // de la semana no debe aparecer hasta que el jugador
+            // termine de verdad la rueda de prensa — no antes.
+            if(typeof onMediosCerrado==='function') onMediosCerrado();
           });
           // Ya se ha resuelto aquí mismo — que el resumen animado de
           // fin de semana no vuelva a lanzar otra entrevista el mismo
           // día por su cuenta.
           state.lmPrensaResueltaPorNodo=true;
+        } else if(typeof onMediosCerrado==='function'){
+          onMediosCerrado();
         }
         break;
       }
@@ -1324,7 +1337,7 @@
   // realmente el día que toca (nunca se puede elegir un día futuro ni
   // repetir uno ya resuelto), aplica el efecto, suma al contador de
   // ese icono, y guarda.
-  function elegirNodoSemana(diaIdx, nodoIdx){
+  function elegirNodoSemana(diaIdx, nodoIdx, onMediosCerrado){
     if(!state.semanaNodos) return {ok:false, error:'sin_semana'};
     const diaActualIdx=diaActualIndiceSemanaNodos();
     if(diaIdx!==diaActualIdx) return {ok:false, error:'no_es_el_dia_actual'};
@@ -1336,7 +1349,7 @@
     const nodo=dia && dia.nodos[nodoIdx];
     if(!nodo) return {ok:false, error:'nodo_invalido'};
     dia.elegido=nodoIdx;
-    aplicarEfectoNodoSemana(nodo, dia.fecha);
+    aplicarEfectoNodoSemana(nodo, dia.fecha, onMediosCerrado);
     if(!state.nodosAcumulados) state.nodosAcumulados={};
     state.nodosAcumulados[nodo.tipo]=(state.nodosAcumulados[nodo.tipo]||0)+1;
     guardarEstado();
@@ -1629,9 +1642,16 @@
       // lectura (un resumen visual de lo ya elegido en el árbol).
       const editable=false;
       const entrenado=!!(state.calendarioEntrenamiento && state.calendarioEntrenamiento[iso]);
+      const nodoElegidoDia=state.calendarioNodoElegido && state.calendarioNodoElegido[iso];
       let contenido='';
       if(partido){
         contenido=`<div class="lm-cal-partido" title="${t('lm.cal_jornada_vs')} ${partido.jornada} — ${partido.esLocal?t('lm.cal_vs'):t('lm.cal_fuera_vs')} ${partido.rival.name}">${rivalCrestHTML(40, partido.rival.crestImg)}</div>`;
+      } else if(nodoElegidoDia){
+        // Se pinta el icono real del nodo que se eligió ese día en el
+        // árbol (mismo icono y color que ahí), no siempre la
+        // mancuerna genérica de "entreno".
+        const {icon,color}=iconoYColorNodo(nodoElegidoDia);
+        contenido=`<i class="ph ph-bold ${icon} lm-cal-entreno-icon" style="color:${color}" title="${t('lm.nodo_'+nodoElegidoDia.tipo)}"></i>`;
       } else if(entrenado){
         contenido=`<i class="ph ph-bold ph-barbell lm-cal-entreno-icon"></i>`;
       }
@@ -1640,8 +1660,16 @@
       // El día del propio partido nunca debe verse "desactivado" — no
       // es que esté bloqueado, es la jornada contra el rival que
       // toca, así que se deja con su aspecto normal aunque el resto
-      // del calendario ya no sea editable.
-      if(!editable && !partido) clases.push('lm-cal-bloqueado');
+      // del calendario ya no sea editable. Lo mismo para el resto de
+      // días de la semana activa actual (entre el último partido y el
+      // próximo) — es la semana en la que el jugador está tomando
+      // decisiones de verdad en el árbol, así que tampoco debe verse
+      // apagada como el resto de semanas futuras/pasadas.
+      const ventanaActual=ventanaEntrenoActual();
+      const fechaCelda=new Date(iso+'T00:00:00');
+      const enSemanaActiva = ventanaActual && fechaCelda.getTime()>ventanaActual.desde.getTime() && fechaCelda.getTime()<ventanaActual.hasta.getTime();
+      if(!editable && !partido && !enSemanaActiva) clases.push('lm-cal-bloqueado');
+      if(enSemanaActiva && !partido) clases.push('lm-cal-semana-activa');
       return `<div class="${clases.join(' ')}" ${editable?`data-cal-dia="${iso}"`:''} title="${editable?t('lm.cal_tocar_entrenamiento'):''}">
         <span class="lm-cal-num">${d.getDate()}</span>
         ${contenido}
@@ -1781,7 +1809,12 @@
     const dias=(state.semanaNodos&&state.semanaNodos.dias)||[];
     const n=dias.length;
     if(!n) return {puntos:[], conexiones:[]};
-    const margen=45, ultimoX=NODO_ICONO_X-45;
+    // Un poco de margen extra a los lados para que el día actual se
+    // pueda centrar de verdad al abrir el árbol, incluso cuando es el
+    // primer o último día de la semana (antes se quedaba pegado al
+    // borde porque no había margen suficiente para desplazar hasta
+    // el centro).
+    const margen=80, ultimoX=NODO_ICONO_X-80;
     const paso=n>1 ? (ultimoX-margen)/n : 0;
     const centroY=NODO_ICONO_Y_ALTO/2;
     // Carriles fijos (arriba / medio / abajo) para los días de 3
@@ -2155,7 +2188,24 @@
       el.addEventListener('click', (e)=>{
         const diaIdx=parseInt(el.getAttribute('data-elegir-dia'),10);
         const nodoIdx=parseInt(el.getAttribute('data-elegir-nodo'),10);
-        const resultado=elegirNodoSemana(diaIdx, nodoIdx);
+        const diaObj=state.semanaNodos && state.semanaNodos.dias[diaIdx];
+        const nodoElegido=diaObj && diaObj.nodos[nodoIdx];
+        const eraMedios = nodoElegido && nodoElegido.tipo==='medios';
+        const cerrarArbolYRender=()=>{
+          const ov=document.getElementById('lmArbolNodosOverlay');
+          if(ov) ov.remove();
+          // En cuanto se cierra el árbol, se procesa la semana de
+          // verdad (mejoras/fatiga/lesiones) y se enseña el
+          // resumen ahí mismo — ya no hace falta pulsar SEGUIR
+          // una segunda vez, al cerrar el resumen queda listo
+          // para pulsar JUGAR directamente.
+          procesarSemanaYMostrarResumen();
+        };
+        // Si el nodo elegido es "medios" (siempre el último día), el
+        // resumen de la semana no debe aparecer hasta que el jugador
+        // termine de verdad la rueda de prensa — se le pasa como
+        // callback para que se dispare solo al cerrarla, nunca antes.
+        const resultado=elegirNodoSemana(diaIdx, nodoIdx, eraMedios?cerrarArbolYRender:undefined);
         if(!resultado.ok) return;
         if(typeof window.playSound==='function') window.playSound('select');
         // La onda necesita un instante para verse antes de que el
@@ -2171,17 +2221,12 @@
           // ninguna pantalla intermedia de "semana completa" que
           // cerrar a mano.
           if(semanaYaCompleta){
-            const cerrarArbolYRender=()=>{
-              const ov=document.getElementById('lmArbolNodosOverlay');
-              if(ov) ov.remove();
-              // En cuanto se cierra el árbol, se procesa la semana de
-              // verdad (mejoras/fatiga/lesiones) y se enseña el
-              // resumen ahí mismo — ya no hace falta pulsar SEGUIR
-              // una segunda vez, al cerrar el resumen queda listo
-              // para pulsar JUGAR directamente.
-              procesarSemanaYMostrarResumen();
-            };
-            if(eraAmistoso && state.ultimoAmistosoResultado){
+            if(eraMedios){
+              // Ya se encadenó arriba: cerrarArbolYRender() se llama
+              // al cerrar la rueda de prensa, no aquí — solo hace
+              // falta repintar el árbol de fondo mientras tanto.
+              pintarArbolNodos();
+            } else if(eraAmistoso && state.ultimoAmistosoResultado){
               mostrarResultadoAmistosoPopup(state.ultimoAmistosoResultado, cerrarArbolYRender);
             } else {
               cerrarArbolYRender();
