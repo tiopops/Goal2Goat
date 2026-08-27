@@ -2748,12 +2748,12 @@ body.liga-manager-screen .ranking-btn-label-lm{display:inline}
   font-size:11px;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;
 }
 .lm-nodos-leyenda-btn:hover{ border-color:var(--gold); color:var(--gold); }
-.lm-nodos-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(72px,1fr)); gap:8px; }
+.lm-nodos-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(80px,1fr)); gap:8px; }
 .lm-nodo-acumulado{
   display:flex; flex-direction:column; align-items:center; gap:3px; text-align:center;
-  background:#15181a; border:1px solid #2a2f32; border-radius:8px; padding:8px 4px;
+  background:#15181a; border:1px solid #2a2f32; border-radius:8px; padding:8px 5px;
 }
-.lm-nodo-acumulado i{ font-size:16px; }
+.lm-nodo-acumulado i{ font-size:16px; flex-shrink:0; }
 .lm-nodo-acumulado-num{ font-family:'Bebas Neue',Impact,sans-serif; font-size:11px; color:#ccc; letter-spacing:.3px; }
 .lm-nodo-acumulado-track{ width:100%; height:4px; background:#0d0f10; border-radius:2px; overflow:hidden; margin-top:1px; }
 .lm-nodo-acumulado-fill{ height:100%; border-radius:2px; transition:width .3s ease; }
@@ -2761,11 +2761,20 @@ body.liga-manager-screen .ranking-btn-label-lm{display:inline}
 @keyframes lmNodoDisponiblePulso{ 0%,100%{box-shadow:0 0 0 1px rgba(201,162,39,.3)} 50%{box-shadow:0 0 8px 1px rgba(201,162,39,.55)} }
 .lm-nodo-reclamar-btn{
   margin-top:3px;width:100%;border:none;border-radius:5px;background:var(--gold);color:#1a1400;
-  font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:.5px;font-size:9px;padding:4px 2px;cursor:pointer;
+  font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:.4px;font-size:11.5px;padding:5px 2px;cursor:pointer;
 }
 .lm-nodo-reclamar-btn:hover{ background:#e0b82a; }
 .lm-nodo-acumulado-completo{ border-color:var(--gold); position:relative; }
 .lm-nodo-acumulado-check{ position:absolute; top:-6px; right:-6px; font-size:14px; color:var(--gold); background:#15181a; border-radius:50%; }
+.lm-nodo-acumulado{ cursor:pointer; }
+.lm-nodos-mensaje-recompensa{
+  display:none; align-items:flex-start; gap:8px; margin-top:10px; padding:10px 12px;
+  background:#15181a; border:1px solid #2f3539; border-radius:8px; font-size:11.5px; color:#ccc; line-height:1.4;
+}
+.lm-nodos-mensaje-recompensa.lm-nodos-mensaje-visible{ display:flex; }
+.lm-nodos-mensaje-recompensa i{ font-size:16px; flex-shrink:0; margin-top:1px; }
+.lm-nodos-mensaje-recompensa strong{ display:block; color:#eee; font-size:11.5px; margin-bottom:2px; }
+.lm-nodos-mensaje-recompensa span{ color:#999; }
 
 /* ---- Selector de jugador dentro del popup de canje ---- */
 .lm-canje-lista-jugadores{ display:flex; flex-direction:column; gap:6px; max-height:220px; overflow-y:auto; margin:10px 0; }
@@ -2784,9 +2793,8 @@ body.liga-manager-screen .ranking-btn-label-lm{display:inline}
 }
 /* En escritorio hay sitio de sobra — el JS calcula el ancho exacto que
    hace falta según el número real de columnas de esa semana y lo
-   aplica directamente (ver pintarArbolNodos), así que aquí solo se
-   amplía el margen máximo del contenedor para que quepa lo que haga
-   falta, sin necesitar scroll horizontal en absoluto. */
+   aplica directamente tanto al lienzo como a esta tarjeta (ver
+   pintarArbolNodos), así nunca sobra espacio vacío por los lados. */
 @media (min-width: 700px){
   .lm-arbol-pantalla{ max-width:960px; }
 }
@@ -2817,11 +2825,6 @@ body.liga-manager-screen .ranking-btn-label-lm{display:inline}
 }
 @keyframes lmArbolPulso{ 0%,100%{box-shadow:0 0 0 3px rgba(201,162,39,.22),0 0 14px rgba(201,162,39,.5)} 50%{box-shadow:0 0 0 5px rgba(201,162,39,.38),0 0 22px rgba(201,162,39,.7)} }
 .lm-arbol-nodo-bloqueado{ opacity:.4; }
-.lm-arbol-nodo-check{
-  position:absolute; top:-5px; right:-5px; width:15px; height:15px; border-radius:50%;
-  background:var(--gold); color:#1a1400; display:flex; align-items:center; justify-content:center; font-size:9px;
-  border:1.5px solid #1e2326;
-}
 .lm-arbol-nodo-badge{
   position:absolute; bottom:1px; right:1px; width:10px; height:10px; border-radius:50%; border:1.5px solid #1a1d1f;
 }
@@ -2837,7 +2840,7 @@ body.liga-manager-screen .ranking-btn-label-lm{display:inline}
 .lm-arbol-dia-hoy{ color:var(--gold); font-size:11px; font-weight:bold; }
 /* El nombre del rival se queda debajo del escudo, como un pie de
    foto — a diferencia de los días normales, que van arriba. */
-.lm-arbol-rival-nombre{ top:auto; bottom:2%; color:#8fa3d9; font-size:10.5px; }
+.lm-arbol-rival-nombre{ color:#8fa3d9; font-size:10.5px; }
 
 .lm-arbol-hoy-panel{ background:#15181a; border:1.5px solid var(--gold); border-radius:12px; padding:12px 14px; margin-top:12px; }
 .lm-arbol-hoy-titulo{ font-family:'Bebas Neue',Impact,sans-serif; letter-spacing:1px; font-size:11px; color:var(--gold); margin-bottom:8px; display:flex; align-items:center; gap:6px; }

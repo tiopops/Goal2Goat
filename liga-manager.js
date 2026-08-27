@@ -1040,10 +1040,16 @@
         return;
       }
       if(typeof window.playSound==='function') window.playSound('reveal');
+      // Si era un hito de elección, se describe la opción concreta que
+      // se eligió (no el "elige entre X o Y" genérico, que ya no
+      // aplica una vez decidido) — el resto usa la descripción normal
+      // del hito.
+      const descripcionFinal = opcionElegida ? t('lm.hito_opcion_'+opcionElegida) : descripcionHitoNodo(tipoIcono, umbral);
       overlay.innerHTML=`
         <div class="lm-dilemma-card" style="max-width:300px">
           <i class="ph ph-bold ph-check-circle" style="font-size:40px;color:${def.color};margin-bottom:8px"></i>
           <div class="lm-dilemma-title" style="justify-content:center">${t('lm.canje_exito')}</div>
+          <p class="lm-setup-desc" style="margin:0 0 12px">${descripcionFinal}</p>
           <div class="lm-popup-actions"><button class="mode-card-btn mode-card-btn-gold" data-cerrar-canje-ok>${t('lm.entendido_btn')}</button></div>
         </div>`;
       overlay.querySelector('[data-cerrar-canje-ok]').addEventListener('click', ()=>{
@@ -1628,6 +1634,36 @@
 
   // ---------- Contadores de icono acumulados + botón de canje cuando
   // se alcanza un hito. Sustituye a la antigua leyenda del calendario. ----------
+  // Describe con texto claro qué da de verdad un hito concreto —
+  // usado tanto al pulsar la tarjeta (mensaje informativo) como en el
+  // pop-up de "recompensa aplicada" tras canjearlo.
+  function descripcionHitoNodo(tipoIcono, umbral){
+    const def=HITOS_NODOS[tipoIcono];
+    const hito=def && def.hitos.find(h=>h.umbral===umbral);
+    if(!hito) return '';
+    if(hito.tipo==='eleccion'){
+      return tp('lm.hito_desc_eleccion_entreno', {op1:t('lm.hito_opcion_'+hito.opciones[0]), op2:t('lm.hito_opcion_'+hito.opciones[1])});
+    }
+    if(hito.tipo==='bandera'){
+      return t('lm.hito_desc_'+hito.bandera);
+    }
+    return t('lm.hito_desc_'+hito.tipo);
+  }
+
+  // Al pulsar una tarjeta de progreso, se enseña debajo del bloque de
+  // acumulados qué da exactamente ese hito — se llama tanto desde
+  // dentro del árbol como desde el calendario principal, así que
+  // recibe el contenedor (root) donde buscar la zona del mensaje.
+  function mostrarMensajeRecompensaHito(tipoIcono, umbral, root){
+    const zona=root.querySelector('#lmNodosMensajeRecompensa');
+    if(!zona) return;
+    const def=HITOS_NODOS[tipoIcono];
+    if(!def) return;
+    const desc=descripcionHitoNodo(tipoIcono, umbral);
+    zona.innerHTML=`<i class="ph ph-bold ${def.icon}" style="color:${def.color}"></i> <strong>${t('lm.nodo_'+tipoIcono)} · ${umbral}</strong><span>${desc}</span>`;
+    zona.classList.add('lm-nodos-mensaje-visible');
+  }
+
   function renderAcumuladosNodosHTML(){
     const tipos=Object.keys(HITOS_NODOS);
     return `<div class="lm-nodos-acumulados">
@@ -1649,14 +1685,20 @@
             </div>`;
           }
           const pct=Math.min(100, Math.round((p.acumulado/p.siguiente.umbral)*100));
-          return `<div class="lm-nodo-acumulado ${p.disponible?'lm-nodo-acumulado-disponible':''}" title="${nombreIcono}">
+          // El número mostrado nunca supera el umbral del hito aún sin
+          // reclamar (aunque el acumulado real siga contando por
+          // dentro, de cara al siguiente hito una vez se reclame
+          // este) — antes podía verse "6/5", que parecía un error.
+          const numMostrado=Math.min(p.acumulado, p.siguiente.umbral);
+          return `<div class="lm-nodo-acumulado ${p.disponible?'lm-nodo-acumulado-disponible':''}" title="${nombreIcono}" data-ver-recompensa="${tipo}" data-ver-recompensa-umbral="${p.siguiente.umbral}">
             <i class="ph ph-bold ${p.def.icon}" style="color:${p.def.color}"></i>
-            <span class="lm-nodo-acumulado-num">${p.acumulado}/${p.siguiente.umbral}</span>
+            <span class="lm-nodo-acumulado-num">${numMostrado}/${p.siguiente.umbral}</span>
             <div class="lm-nodo-acumulado-track"><div class="lm-nodo-acumulado-fill" style="width:${pct}%;background:${p.def.color}"></div></div>
             ${p.disponible?`<button class="lm-nodo-reclamar-btn" data-reclamar-nodo="${tipo}" data-reclamar-umbral="${p.siguiente.umbral}">${t('lm.reclamar_btn')}</button>`:''}
           </div>`;
         }).join('')}
       </div>
+      <div class="lm-nodos-mensaje-recompensa" id="lmNodosMensajeRecompensa"></div>
     </div>`;
   }
 
@@ -1767,9 +1809,13 @@
     puntos.forEach((punto,pIdx)=>{
       const esRival=!!punto.rival;
       if(esRival){
-        nodosHTML+=`<div class="lm-arbol-nodo lm-arbol-nodo-rival" style="left:${punto.x/NODO_ICONO_X*100}%;top:${punto.nodos[0].y/NODO_ICONO_Y_ALTO*100}%">${rivalCrestHTML(30, rival&&rival.crestImg)}</div>`;
+        const yPct=punto.nodos[0].y/NODO_ICONO_Y_ALTO*100;
+        nodosHTML+=`<div class="lm-arbol-nodo lm-arbol-nodo-rival" style="left:${punto.x/NODO_ICONO_X*100}%;top:${yPct}%">${rivalCrestHTML(30, rival&&rival.crestImg)}</div>`;
         const etiquetaRival = rival ? rival.name : '';
-        nodosHTML+=`<div class="lm-arbol-dia-num lm-arbol-rival-nombre" style="left:${punto.x/NODO_ICONO_X*100}%">${etiquetaRival}</div>`;
+        // El nombre se ata directamente a la posición Y del propio
+        // escudo (un poco por debajo), en vez de usar un porcentaje
+        // "bottom" independiente que podía desacoplarse del nodo.
+        nodosHTML+=`<div class="lm-arbol-dia-num lm-arbol-rival-nombre" style="left:${punto.x/NODO_ICONO_X*100}%;top:calc(${yPct}% + 34px)">${etiquetaRival}</div>`;
         return;
       }
       punto.nodos.forEach((nodo,nIdx)=>{
@@ -1783,7 +1829,6 @@
         const clickable = (punto.dia.elegido==null && esAlcanzable);
         nodosHTML+=`<div class="${clase}" style="left:${punto.x/NODO_ICONO_X*100}%;top:${nodo.y/NODO_ICONO_Y_ALTO*100}%;${color?`--nc:${color}`:''}" ${clickable?`data-elegir-dia="${pIdx}" data-elegir-nodo="${nIdx}"`:''}>
           <i class="ph ph-bold ${icon}"></i>
-          ${punto.dia.elegido===nIdx?'<span class="lm-arbol-nodo-check"><i class="ph ph-bold ph-check"></i></span>':''}
           ${badgeColor?`<span class="lm-arbol-nodo-badge" style="background:${badgeColor}"></span>`:''}
         </div>`;
       });
@@ -1878,6 +1923,12 @@
       const anchoDeseado=Math.max(560, numColumnas*anchoPorColumna);
       capa.style.width=anchoDeseado+'px';
       capa.style.height=Math.round(anchoDeseado/2)+'px';
+      // La tarjeta entera también se ajusta al mismo ancho (más el
+      // relleno de los contenedores que la envuelven) — si no, se
+      // quedaba estirada a su ancho máximo aunque el árbol necesitara
+      // mucho menos, dejando un hueco vacío enorme a los lados.
+      const pantalla=overlay.querySelector('.lm-arbol-pantalla');
+      if(pantalla) pantalla.style.width=(anchoDeseado+32)+'px';
     }
     // Auto-centrar el scroll horizontal en el dia de hoy, para que en
     // movil el jugador no tenga que buscarlo manualmente al entrar.
@@ -1935,7 +1986,7 @@
     return barajarArrayNodos(eventos);
   }
 
-  function mostrarResultadoAmistosoPopup(resultado){
+  function mostrarResultadoAmistosoPopup(resultado, onCerrar){
     const existente=document.getElementById('lmAmistosoResultadoOverlay');
     if(existente) existente.remove();
     const overlay=document.createElement('div');
@@ -1999,6 +2050,7 @@
         btn.addEventListener('click', ()=>{
           if(typeof window.playSound==='function') window.playSound('select');
           overlay.remove();
+          if(typeof onCerrar==='function') onCerrar();
         });
       });
       // Victoria y derrota usan las fanfarrias ya existentes del juego
@@ -2032,7 +2084,12 @@
     if(typeof window.playSound==='function') window.playSound('whistle');
     setTimeout(siguienteTick, secuencia.length ? 1000 : 1300);
 
-    overlay.addEventListener('click', (e)=>{ if(e.target===overlay && overlay.querySelector('[data-cerrar-amistoso]')) overlay.remove(); });
+    overlay.addEventListener('click', (e)=>{
+      if(e.target===overlay && overlay.querySelector('[data-cerrar-amistoso]')){
+        overlay.remove();
+        if(typeof onCerrar==='function') onCerrar();
+      }
+    });
   }
 
   function cablearEventosArbolNodos(overlay){
@@ -2050,9 +2107,27 @@
         crearRippleArbol(el, e);
         const eraAmistoso = resultado.nodo && resultado.nodo.tipo==='amistoso';
         setTimeout(()=>{
-          pintarArbolNodos();
-          if(typeof render==='function') render();
-          if(eraAmistoso && state.ultimoAmistosoResultado) mostrarResultadoAmistosoPopup(state.ultimoAmistosoResultado);
+          const semanaYaCompleta = diaActualIndiceSemanaNodos()===-1;
+          // En cuanto se completa la semana, el árbol se cierra solo
+          // y el botón de fuera pasa directamente a JUGAR — ya no hay
+          // ninguna pantalla intermedia de "semana completa" que
+          // cerrar a mano.
+          if(semanaYaCompleta){
+            const cerrarArbolYRender=()=>{
+              const ov=document.getElementById('lmArbolNodosOverlay');
+              if(ov) ov.remove();
+              if(typeof render==='function') render();
+            };
+            if(eraAmistoso && state.ultimoAmistosoResultado){
+              mostrarResultadoAmistosoPopup(state.ultimoAmistosoResultado, cerrarArbolYRender);
+            } else {
+              cerrarArbolYRender();
+            }
+          } else {
+            pintarArbolNodos();
+            if(typeof render==='function') render();
+            if(eraAmistoso && state.ultimoAmistosoResultado) mostrarResultadoAmistosoPopup(state.ultimoAmistosoResultado);
+          }
         }, 220);
       });
     });
@@ -2073,6 +2148,12 @@
         e.stopPropagation();
         if(typeof window.playSound==='function') window.playSound('select');
         abrirCanjeHitoNodo(btn.getAttribute('data-reclamar-nodo'), parseInt(btn.getAttribute('data-reclamar-umbral'),10));
+      });
+    });
+    overlay.querySelectorAll('[data-ver-recompensa]').forEach(card=>{
+      card.addEventListener('click', ()=>{
+        if(typeof window.playSound==='function') window.playSound('select');
+        mostrarMensajeRecompensaHito(card.getAttribute('data-ver-recompensa'), parseInt(card.getAttribute('data-ver-recompensa-umbral'),10), overlay);
       });
     });
   }
@@ -8886,10 +8967,15 @@
             return;
           }
           const continuarSemana=()=>{
-            const eventosDias=procesarEntrenamientoSemanal();
+            // El árbol de nodos ya cuenta la semana entera por su
+            // cuenta — ya no hace falta la animación día a día de
+            // después ni la pantalla de resumen; se procesa la
+            // semana (aplica de verdad las mejoras/fatiga/lesiones) y
+            // se pasa directamente a JUGAR.
+            procesarEntrenamientoSemanal();
             state.semanaResueltaParaJornada=state.jornadaActual;
             guardarEstado();
-            mostrarSemanaEnVivo(eventosDias, ()=>{ render(); });
+            render();
           };
           // Si el árbol de nodos de esta semana todavía no está
           // completo (quedan días sin elegir), se abre esa pantalla en
@@ -9019,6 +9105,12 @@
         e.stopPropagation();
         if(typeof window.playSound==='function') window.playSound('select');
         abrirCanjeHitoNodo(btn.getAttribute('data-reclamar-nodo'), parseInt(btn.getAttribute('data-reclamar-umbral'),10));
+      });
+    });
+    root.querySelectorAll('[data-ver-recompensa]').forEach(card=>{
+      card.addEventListener('click', ()=>{
+        if(typeof window.playSound==='function') window.playSound('select');
+        mostrarMensajeRecompensaHito(card.getAttribute('data-ver-recompensa'), parseInt(card.getAttribute('data-ver-recompensa-umbral'),10), root);
       });
     });
     const nodosLeyendaBtn=root.querySelector('[data-nodos-leyenda]');
