@@ -722,7 +722,7 @@
     state.semanaNodos.dias.forEach(dia=>{
       if(dia.elegido==null) return;
       const nodo=dia.nodos[dia.elegido];
-      if(nodo.tipo==='entreno') proyeccion+=desgastePromedio;
+      if(nodo.tipo==='entreno' || nodo.tipo==='amistoso') proyeccion+=desgastePromedio;
       else if(nodo.tipo==='descanso') proyeccion-=4;
     });
     return Math.max(0, Math.min(100, proyeccion));
@@ -766,7 +766,7 @@
   const HITOS_NODOS={
     entreno:{icon:'ph-barbell', color:'#e08a3e', hitos:[
       {umbral:5, tipo:'bandera', bandera:'boostEntrenoSemana'},
-      {umbral:10, tipo:'eleccion', opciones:['subida_stats_uno','curar_lesionado']},
+      {umbral:10, tipo:'subida_stats_uno'},
       {umbral:20, tipo:'subida_stats_dos'},
     ]},
     descanso:{icon:'ph-bed', color:'#5eead4', hitos:[
@@ -1063,13 +1063,14 @@
       }
       const elegidos=[];
       overlay.innerHTML=`
-        <div class="lm-dilemma-card lm-seguridad-card" style="max-width:360px;text-align:left">
+        <div class="lm-dilemma-card lm-seguridad-card" style="max-width:300px;text-align:left">
           <div class="lm-dilemma-title"><i class="ph ph-bold ${def.icon}" style="color:${def.color}"></i> ${t('lm.canje_titulo')}</div>
           <p class="lm-setup-desc">${numJugadores>1?t('lm.canje_elegir_dos_jugadores'):t('lm.canje_elegir_jugador')}</p>
           <div class="lm-canje-lista-jugadores">
             ${candidatos.map(j=>`<label class="lm-canje-jugador-fila">
               <input type="checkbox" data-jugador-id="${j.id}">
               <span>${j.name}${j.injured?` <i class=\"ph ph-bold ph-bandaids\" style=\"color:#e24b4a\"></i>`:''}</span>
+              <i class="ph ph-bold ph-check-circle lm-canje-jugador-check"></i>
             </label>`).join('')}
           </div>
           <div class="lm-popup-actions"><button class="mode-card-btn mode-card-btn-gold" data-confirmar-jugadores disabled>${t('lm.canje_confirmar')}</button></div>
@@ -1340,14 +1341,39 @@
         lesionadoNombre=candidato.name;
       }
     }
-    let moralDelta=0;
+    // Moral y afición NO se aplican aquí — solo se calcula cuánto
+    // tocaría cambiar cada una, y se guarda para aplicarse de verdad
+    // cuando el jugador cierre el resultado (aplicarConsecuenciasAmistoso),
+    // así las barras de arriba no cambian hasta que el amistoso
+    // termina de verdad, no en el mismo instante de elegir el nodo.
+    // Ganar: sube moral y afición. Perder: baja solo la afición, la
+    // moral no se toca. Empatar: ninguna de las dos cambia.
+    let moralDelta=0, aficionDelta=0;
     if(resultado==='victoria'){
       const bonusExtra=state.amistosoBonusMoralExtra||0;
       moralDelta=5+bonusExtra;
-      state.moral=Math.max(-50, Math.min(50, (state.moral||0)+moralDelta));
+      aficionDelta=6;
+    } else if(resultado==='derrota'){
+      aficionDelta=-6;
     }
-    state.ultimoAmistosoResultado={dificultad, resultado, lesionado:lesionadoNombre, misGoles, susGoles, moralDelta};
+    state.ultimoAmistosoResultado={dificultad, resultado, lesionado:lesionadoNombre, misGoles, susGoles, moralDelta, aficionDelta, consecuenciasAplicadas:false};
     return state.ultimoAmistosoResultado;
+  }
+
+  // Aplica de verdad moral y afición del último amistoso — se llama
+  // al cerrar el pop-up de resultado, nunca antes, para que las
+  // barras de arriba no se muevan hasta que el jugador vea el
+  // resultado completo del amistoso.
+  function aplicarConsecuenciasAmistoso(){
+    const r=state.ultimoAmistosoResultado;
+    if(!r || r.consecuenciasAplicadas) return;
+    if(r.moralDelta) state.moral=Math.max(-50, Math.min(50, (state.moral||0)+r.moralDelta));
+    if(r.aficionDelta){
+      if(!state.estadio) state.estadio={campo:90, satisfaccion:10, aforoTotal:12000, ultimaAsistencia:null};
+      state.estadio.satisfaccion=Math.max(-100, Math.min(100, (state.estadio.satisfaccion||0)+r.aficionDelta));
+    }
+    r.consecuenciasAplicadas=true;
+    guardarEstado();
   }
 
   // Aplica de verdad el efecto de un nodo elegido. fechaISOdia es la
@@ -2151,7 +2177,17 @@
       if(punto){
         requestAnimationFrame(()=>{
           const escala=wrap.querySelector('.lm-arbol-svg-capa').offsetWidth/NODO_ICONO_X;
-          const destino=Math.max(0, punto.x*escala - wrap.clientWidth/2);
+          // El destino nunca debe superar el máximo real de scroll —
+          // si no, al llegar cerca del final (el escudo del rival),
+          // el destino calculado pedía desplazarse más de lo que el
+          // navegador puede recorrer de verdad, así que quedaba
+          // recortado por el propio navegador. La comprobación de
+          // "ya está en su sitio" comparaba entonces contra ese valor
+          // sin recortar, veía una diferencia grande que en realidad
+          // no existía, y volvía a intentar desplazarse una y otra
+          // vez — de ahí los saltos aunque ya se viera todo entero.
+          const maximoScroll=Math.max(0, wrap.scrollWidth-wrap.clientWidth);
+          const destino=Math.min(maximoScroll, Math.max(0, punto.x*escala - wrap.clientWidth/2));
           // Al abrir el árbol por primera vez, el centrado en el día
           // actual es instantáneo (no tiene sentido animar un
           // deslizamiento justo al entrar en la pantalla) — pero al
@@ -2252,6 +2288,8 @@
           </div>
           <div class="lm-amistoso-consecuencias">
             ${resultado.moralDelta>0?`<div class="lm-amistoso-consecuencia lm-amistoso-consecuencia-buena"><i class="ph ph-bold ph-hand-fist"></i> ${tp('lm.amistoso_moral_ganada',{n:resultado.moralDelta})}</div>`:''}
+            ${resultado.aficionDelta>0?`<div class="lm-amistoso-consecuencia lm-amistoso-consecuencia-buena"><i class="ph ph-bold ph-megaphone"></i> ${t('lm.amistoso_aficion_ganada')}</div>`:''}
+            ${resultado.aficionDelta<0?`<div class="lm-amistoso-consecuencia lm-amistoso-consecuencia-mala"><i class="ph ph-bold ph-megaphone"></i> ${t('lm.amistoso_aficion_perdida')}</div>`:''}
             ${resultado.lesionado?`<div class="lm-amistoso-consecuencia lm-amistoso-consecuencia-mala"><i class="ph ph-bold ph-bandaids"></i> ${tp('lm.amistoso_lesion_texto',{nombre:resultado.lesionado})}</div>`:''}
             <div class="lm-amistoso-consecuencia"><i class="ph ph-bold ph-heartbeat"></i> ${t('lm.amistoso_fatiga_texto')}</div>
           </div>
@@ -2260,6 +2298,11 @@
       overlay.querySelectorAll('[data-cerrar-amistoso]').forEach(btn=>{
         btn.addEventListener('click', ()=>{
           if(typeof window.playSound==='function') window.playSound('select');
+          // Justo aquí, al cerrar, es cuando de verdad se aplican la
+          // moral y la afición del amistoso — no antes, para que las
+          // barras de arriba no cambien hasta que el jugador vea el
+          // resultado completo.
+          if(typeof aplicarConsecuenciasAmistoso==='function') aplicarConsecuenciasAmistoso();
           overlay.remove();
           if(typeof onCerrar==='function') onCerrar();
         });
@@ -2297,6 +2340,7 @@
 
     overlay.addEventListener('click', (e)=>{
       if(e.target===overlay && overlay.querySelector('[data-cerrar-amistoso]')){
+        if(typeof aplicarConsecuenciasAmistoso==='function') aplicarConsecuenciasAmistoso();
         overlay.remove();
         if(typeof onCerrar==='function') onCerrar();
       }

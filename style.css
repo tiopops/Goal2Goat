@@ -2779,11 +2779,18 @@ body.liga-manager-screen .ranking-btn-label-lm{display:inline}
 /* ---- Selector de jugador dentro del popup de canje ---- */
 .lm-canje-lista-jugadores{ display:flex; flex-direction:column; gap:6px; max-height:220px; overflow-y:auto; margin:10px 0; }
 .lm-canje-jugador-fila{
-  display:flex; align-items:center; gap:8px; background:#15181a; border:1px solid #2a2f32;
+  display:flex; align-items:center; justify-content:space-between; gap:8px; background:#15181a; border:1px solid #2a2f32;
   border-radius:6px; padding:8px 10px; cursor:pointer; font-size:12px; color:#ddd;
 }
 .lm-canje-jugador-fila:has(input:checked){ border-color:var(--gold); background:rgba(201,162,39,.08); }
-.lm-canje-jugador-fila input{ accent-color:var(--gold); cursor:pointer; }
+/* El checkbox nativo queda oculto (se veía muy tosco) — la propia
+   fila ya se resalta entera al seleccionarse, y este check dorado de
+   al lado confirma visualmente cuál está marcado, sin necesidad del
+   cuadradito nativo del navegador. */
+.lm-canje-jugador-fila input{ position:absolute; opacity:0; width:0; height:0; pointer-events:none; }
+.lm-canje-jugador-fila span{ flex:1; }
+.lm-canje-jugador-check{ font-size:15px; color:var(--gold); flex-shrink:0; visibility:hidden; }
+.lm-canje-jugador-fila:has(input:checked) .lm-canje-jugador-check{ visibility:visible; }
 
 /* ---- Árbol de nodos de la semana (Fase 2/3) ---- */
 .lm-arbol-overlay{ padding:10px; align-items:flex-start; overflow-y:auto; }
