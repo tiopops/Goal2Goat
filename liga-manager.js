@@ -1101,7 +1101,10 @@
         cerrar();
         return;
       }
-      if(typeof window.playSound==='function') window.playSound('reveal');
+      // Reclamar una recompensa merece una fanfarria de verdad, no el
+      // "reveal" genérico que se usa para cualquier otra cosa — misma
+      // fanfarria ascendente que ya usa el juego para las victorias.
+      if(typeof window.playSound==='function') window.playSound('victory');
       // Si era un hito de elección, se describe la opción concreta que
       // se eligió (no el "elige entre X o Y" genérico, que ya no
       // aplica una vez decidido) — el resto usa la descripción normal
@@ -1116,7 +1119,20 @@
         </div>`;
       overlay.querySelector('[data-cerrar-canje-ok]').addEventListener('click', ()=>{
         if(typeof window.playSound==='function') window.playSound('select');
-        cerrar(); render();
+        cerrar();
+        // render() reemplaza todo el contenido de la pantalla, lo que
+        // reinicia el scroll a 0 sin avisar — eso era lo que hacía que
+        // la columna "saltase" justo cuando más falta hacía verla
+        // quieta, para poder apreciar cómo suben o bajan las barras
+        // de arriba tras reclamar. Se guarda la posición exacta antes
+        // de repintar y se restaura justo después, en el mismo sitio.
+        const scrollContenedor=document.getElementById('ligaManagerScreen');
+        const scrollGuardado=scrollContenedor?scrollContenedor.scrollTop:0;
+        render();
+        requestAnimationFrame(()=>{
+          const contenedorNuevo=document.getElementById('ligaManagerScreen');
+          if(contenedorNuevo) contenedorNuevo.scrollTop=scrollGuardado;
+        });
       });
     }
 
@@ -1365,8 +1381,17 @@
         // (si no existe uno ya listo sin rellenar) y lo abre ahí
         // mismo — ya no depende de "cada 3 victorias", es el propio
         // nodo semanal el que la trae, una vez por jornada.
+        // El índice se pasa como jornadaActual-1 (no el valor por
+        // defecto) porque este nodo se elige DURANTE la semana previa
+        // a esa misma jornada — jugarJornada() resuelve más tarde esa
+        // jornada con j=jornadaActual-1, así que el boletín tiene que
+        // guardarse con ese mismo índice para que coincidan y la
+        // quiniela se resuelva y se muestre de verdad al final del
+        // partido (antes se generaba con el índice sin restar, que
+        // solo encajaba con el disparador antiguo de "cada 3
+        // victorias", generado una jornada antes de resolverse).
         if((!state.quinielaBoleto || state.quinielaBoleto.rellenado) && typeof generarBoletoQuiniela==='function'){
-          generarBoletoQuiniela();
+          generarBoletoQuiniela(state.jornadaActual-1);
         }
         if(state.quinielaBoleto && !state.quinielaBoleto.rellenado && typeof abrirBoletoQuiniela==='function'){
           abrirBoletoQuiniela();
@@ -2092,22 +2117,20 @@
     if(!overlay) return;
     overlay.innerHTML=renderArbolNodosOverlayHTML();
     cablearEventosArbolNodos(overlay);
-    // El lienzo se ajusta SIEMPRE al ancho real disponible en el
-    // dispositivo (no solo en escritorio) — antes tenía un ancho fijo
-    // de 460px en móvil, que en pantallas más estrechas era más ancho
-    // que el hueco real disponible, dejando parte del árbol cortado
-    // sin que el auto-scroll lo arreglase del todo. Ahora nunca es
-    // más ancho de lo que la pantalla puede mostrar de verdad.
+    // En escritorio el lienzo se ajusta al ancho real disponible para
+    // que quepa entero sin scroll — en móvil se deja el tamaño fijo
+    // de siempre (más grande, con scroll horizontal suave hacia el
+    // día actual), que es como prefieres verlo ahí.
     const capa=overlay.querySelector('.lm-arbol-svg-capa');
-    if(capa){
+    const esEscritorio = window.matchMedia && window.matchMedia('(min-width: 700px)').matches;
+    if(capa && esEscritorio){
       const numColumnas=((state.semanaNodos&&state.semanaNodos.dias.length)||6)+1; // +1 por el rival
-      const esEscritorio = window.matchMedia && window.matchMedia('(min-width: 700px)').matches;
       // El ancho ideal (105px por columna) nunca debe superar lo que
       // la ventana puede mostrar de verdad — si no cupiera así, se
       // reduce el espacio por columna hasta que quepa entero, en vez
       // de dejar que se salga y siga haciendo falta scroll.
-      const margenDisponible=Math.max(280, window.innerWidth-(esEscritorio?60:28));
-      const anchoIdeal=Math.max(esEscritorio?560:280, numColumnas*(esEscritorio?105:66));
+      const margenDisponible=Math.max(560, window.innerWidth-60);
+      const anchoIdeal=Math.max(560, numColumnas*105);
       const anchoDeseado=Math.min(anchoIdeal, margenDisponible);
       capa.style.width=anchoDeseado+'px';
       capa.style.height=Math.round(anchoDeseado/2)+'px';
@@ -8454,6 +8477,7 @@
       root.querySelectorAll('[data-liga].active').forEach(el=>{
         el.addEventListener('click', ()=>{
           setupData.liga=el.getAttribute('data-liga');
+          if(typeof window.playSound==='function') window.playSound('select');
           root.querySelectorAll('[data-liga]').forEach(o=>o.classList.remove('selected'));
           el.classList.add('selected');
         });
