@@ -770,7 +770,7 @@
     ]},
     tactica:{icon:'ph-clipboard-text', color:'#5b9bd5', hitos:[
       {umbral:5, tipo:'subida_stats_uno'},
-      {umbral:10, tipo:'moral_empujon_notable'},
+      {umbral:10, tipo:'ventaja_duelos_proximo_partido'},
       {umbral:20, tipo:'moral_base_permanente'},
     ]},
   };
@@ -901,13 +901,20 @@
       case 'moral_empujon_fijo':
         state.moral=Math.max(-50, Math.min(50, (state.moral||0)+3));
         break;
-      case 'moral_empujon_notable':
-        state.moral=Math.max(-50, Math.min(50, (state.moral||0)+6));
+      case 'ventaja_duelos_proximo_partido':
+        // Ventaja notable en los duelos individuales del próximo
+        // partido — se guarda como bandera de un solo uso, y la
+        // consume jugarJornada() al construir el contexto real de MI
+        // partido (mismo mecanismo que ya usa el bonus de moral,
+        // sumando al ritmo goleador esperado de mi equipo).
+        state.tacticaBoostProximoPartido=true;
         break;
       case 'moral_base_permanente':
         // Este hito es el de mayor nivel (20) del icono de sesión
-        // táctica, así que su empujón de moral es más grande que los
-        // dos anteriores del mismo icono (+3 y +6) — no hace falta un
+        // táctica — un empujón grande y permanente de moral, distinto
+        // de lo que dan los otros dos niveles de este mismo icono
+        // (subida de estadísticas y ventaja en el próximo partido).
+        // No hace falta un
         // sistema aparte de "base permanente" que nunca se llegaba a
         // aplicar a ningún cálculo real; un empujón directo mayor
         // consigue lo mismo de forma mucho más simple.
@@ -2515,6 +2522,14 @@
       // clima+campo — solo afecta a MI equipo, nunca al rival.
       if(contexto.esMiEquipoA) lambdaA=Math.max(0.15, lambdaA+contexto.moralBonus);
       else lambdaB=Math.max(0.15, lambdaB+contexto.moralBonus);
+    }
+    if(contexto && contexto.tacticaBoost){
+      // Hito de sesión táctica (nivel 10): ventaja notable en los
+      // duelos individuales del próximo partido — mismo mecanismo que
+      // el bonus de moral (empuja el ritmo goleador esperado de mi
+      // equipo), pero por un motivo distinto y solo para ESE partido.
+      if(contexto.esMiEquipoA) lambdaA=Math.max(0.15, lambdaA+contexto.tacticaBoost);
+      else lambdaB=Math.max(0.15, lambdaB+contexto.tacticaBoost);
     }
     // Habilidades de Liga Manager — todas de ámbito táctico/de partido,
     // nunca tocan lo que resuelven las cartas del cuerpo técnico.
@@ -4568,8 +4583,13 @@
           campoAnfitrion: campoRelevante,
           anfitrionA: miEsLocalDeEste,
           esMiEquipoA: miEsLocalDeEste,
-          moralBonus: ((state.moral||0)/50)*0.08
+          moralBonus: ((state.moral||0)/50)*0.08,
+          tacticaBoost: state.tacticaBoostProximoPartido ? 0.06 : 0,
         };
+        // El boost de la sesión táctica es de un solo uso — se
+        // consume aquí mismo, justo al construir el contexto de MI
+        // partido, para que nunca se aplique dos veces por error.
+        if(state.tacticaBoostProximoPartido) state.tacticaBoostProximoPartido=false;
       }
       const resultado=simularPartido(partido.home, partido.away, contexto);
       state.resultados[key]=resultado;
@@ -5010,33 +5030,27 @@
     const {answer}=state.lmPendingPrediction;
     state.lmPendingPrediction=null;
     if(answer.stance==='neutral'){
-      const r={label:answer.label, outcome:'neutral', delta:0, texto:'🎙 Respuesta neutral: la moral no se ve afectada.'};
+      const r={label:answer.label, outcome:'neutral', delta:0, texto:'🎙 Respuesta neutral: la afición no se ve afectada.'};
       state.ultimaPrensaResuelta=r;
       return r;
     }
     const correcto=answer.check({myGoals:miGoles, oppGoals:suGoles, draw:miGoles===suGoles});
     let delta=correcto?8:-8;
-    // Hito de "día de medios" acumulado (5 nodos): red de seguridad de
-    // un solo uso — si la promesa sale mal esta vez, se pierde bastante
-    // menos moral de lo normal. Se consume tanto si acertó como si
-    // falló (era la protección de ESTA entrevista concreta).
-    const banderas=state.nodosBanderasPendientes;
-    if(banderas && banderas.prensaOpcionSegura){
-      if(!correcto) delta=-4;
-      banderas.prensaOpcionSegura=false;
-    }
-    // Hito más alto (20 nodos): carisma permanente — cada punto
-    // acumulado suaviza un poco más el golpe de una promesa
-    // incumplida, sin llegar nunca a eliminarlo del todo.
+    // Hito más alto (nivel 20 de este mismo icono): carisma
+    // permanente — cada punto acumulado suaviza un poco más el golpe
+    // de una promesa incumplida, sin llegar nunca a eliminarlo del
+    // todo. Todo el sistema de medios gira en torno a la afición, no
+    // a la moral del vestuario (esa la tocan otros iconos).
     if(!correcto && state.mediosCarismaPermanente){
       delta=Math.min(-1, delta + state.mediosCarismaPermanente*1.5);
     }
-    state.moral=Math.max(-50,Math.min(50,(state.moral||0)+delta));
+    if(!state.estadio) state.estadio={campo:90, satisfaccion:10, aforoTotal:12000, ultimaAsistencia:null};
+    state.estadio.satisfaccion=Math.max(-100,Math.min(100,(state.estadio.satisfaccion||0)+delta));
     const r={
       label:answer.label, outcome:correcto?'correct':'wrong', delta,
       texto: correcto
-        ? `🎙 Promesa cumplida ("${answer.label}"): +${delta} moral.`
-        : `🎙 Promesa incumplida ("${answer.label}"): ${delta} moral.`
+        ? `🎙 Promesa cumplida ("${answer.label}"): +${delta} afición.`
+        : `🎙 Promesa incumplida ("${answer.label}"): ${delta} afición.`
     };
     // Se guarda aparte (no solo se devuelve), para que el histórico
     // del partido pueda mencionarlo aunque se abra más tarde, cuando
