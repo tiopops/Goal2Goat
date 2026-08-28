@@ -754,7 +754,7 @@
       {umbral:20, tipo:'jugador_como_nuevo'},
     ]},
     scouting:{icon:'ph-binoculars', color:'#8a7fd6', hitos:[
-      {umbral:5, tipo:'bandera', bandera:'sobreGarantizado'},
+      {umbral:5, tipo:'sobre_calidad_boost'},
       {umbral:10, tipo:'bandera', bandera:'sobreNivelSuperior'},
       {umbral:20, tipo:'bandera', bandera:'sobreDobleEleccion'},
     ]},
@@ -859,6 +859,15 @@
         // el resto de iconos ya usan para su propia moral.
         if(!state.estadio) state.estadio={campo:90, satisfaccion:10, aforoTotal:12000, ultimaAsistencia:null};
         state.estadio.satisfaccion=Math.max(-100, Math.min(100, state.estadio.satisfaccion+4));
+        break;
+      case 'sobre_calidad_boost':
+        // A diferencia de una garantía única (todo o nada), este
+        // contador sube la probabilidad Y la calidad del próximo
+        // sobre — y si se llega a acumular más de una vez antes de
+        // que el sobre llegue de verdad, el beneficio se suma. Solo
+        // se reinicia a 0 cuando un sobre se genera de verdad (ver
+        // intentarGenerarSobreFichajes), nunca en un intento fallido.
+        state.sobreCalidadAcumulada=(state.sobreCalidadAcumulada||0)+1;
         break;
       case 'informe_rival': {
         // Un informe táctico de verdad sobre el rival de la próxima
@@ -2023,21 +2032,22 @@
     if(!overlay) return;
     overlay.innerHTML=renderArbolNodosOverlayHTML();
     cablearEventosArbolNodos(overlay);
-    // En escritorio (viewport ancho) el lienzo se ensancha justo lo
-    // necesario para el número real de columnas de esta semana (días
-    // + rival) — nunca más ancho de lo que hace falta, para que nunca
-    // haga falta scroll pero tampoco sobre espacio vacío. En móvil se
-    // deja el ancho fijo de siempre (más pequeño que la pantalla, con
-    // scroll horizontal).
+    // El lienzo se ajusta SIEMPRE al ancho real disponible en el
+    // dispositivo (no solo en escritorio) — antes tenía un ancho fijo
+    // de 460px en móvil, que en pantallas más estrechas era más ancho
+    // que el hueco real disponible, dejando parte del árbol cortado
+    // sin que el auto-scroll lo arreglase del todo. Ahora nunca es
+    // más ancho de lo que la pantalla puede mostrar de verdad.
     const capa=overlay.querySelector('.lm-arbol-svg-capa');
-    if(capa && window.matchMedia && window.matchMedia('(min-width: 700px)').matches){
+    if(capa){
       const numColumnas=((state.semanaNodos&&state.semanaNodos.dias.length)||6)+1; // +1 por el rival
+      const esEscritorio = window.matchMedia && window.matchMedia('(min-width: 700px)').matches;
       // El ancho ideal (105px por columna) nunca debe superar lo que
       // la ventana puede mostrar de verdad — si no cupiera así, se
       // reduce el espacio por columna hasta que quepa entero, en vez
       // de dejar que se salga y siga haciendo falta scroll.
-      const margenDisponible=Math.max(320, window.innerWidth-60);
-      const anchoIdeal=Math.max(560, numColumnas*105);
+      const margenDisponible=Math.max(280, window.innerWidth-(esEscritorio?60:28));
+      const anchoIdeal=Math.max(esEscritorio?560:280, numColumnas*(esEscritorio?105:66));
       const anchoDeseado=Math.min(anchoIdeal, margenDisponible);
       capa.style.width=anchoDeseado+'px';
       capa.style.height=Math.round(anchoDeseado/2)+'px';
@@ -2046,7 +2056,7 @@
       // quedaba estirada a su ancho máximo aunque el árbol necesitara
       // mucho menos, dejando un hueco vacío enorme a los lados.
       const pantalla=overlay.querySelector('.lm-arbol-pantalla');
-      if(pantalla) pantalla.style.width=(anchoDeseado+32)+'px';
+      if(pantalla) pantalla.style.width=Math.min(anchoDeseado+32, window.innerWidth-24)+'px';
     }
     // Auto-centrar el scroll horizontal en el dia de hoy, para que en
     // movil el jugador no tenga que buscarlo manualmente al entrar.
@@ -7325,11 +7335,20 @@
       state.scoutingBoostEstaSemana=0;
     }
     const banderas=state.nodosBanderasPendientes||{};
-    const garantizado=!!banderas.sobreGarantizado;
-    if(garantizado || Math.random()<probabilidad){
-      if(garantizado) banderas.sobreGarantizado=false;
+    // El contador de calidad acumulada sube tanto la probabilidad
+    // como el nivel del sobre — cuantas más veces se haya reclamado
+    // antes de que llegue uno de verdad, más notable es el beneficio.
+    // Solo se reinicia cuando el sobre se genera de verdad, nunca en
+    // un intento fallido (a diferencia del boost semanal de arriba).
+    const calidadAcumulada=state.sobreCalidadAcumulada||0;
+    if(calidadAcumulada>0){
+      probabilidad=Math.min(0.95, probabilidad + calidadAcumulada*0.18);
+    }
+    if(Math.random()<probabilidad){
       let nivelSobre=Math.max(1, nivel);
+      if(calidadAcumulada>=2) nivelSobre+=1;
       if(banderas.sobreNivelSuperior){ nivelSobre+=1; banderas.sobreNivelSuperior=false; }
+      state.sobreCalidadAcumulada=0;
       const id='sobre'+Date.now()+Math.floor(Math.random()*100000);
       state.sobresFichajesPendientes.push({id, nivel:nivelSobre, jornadaGenerado:state.jornadaActual});
       enviarCorreo('directorDeportivo', t('correo.sobre_listo.asunto'),

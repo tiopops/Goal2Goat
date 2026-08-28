@@ -2952,8 +2952,8 @@ body.liga-manager-screen .ranking-btn-label-lm{display:inline}
 }
 .lm-cal-nav:hover{border-color:#c9a227;color:#c9a227}
 .lm-cal-semana-dias{
-  display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:3px;
-  font-size:9px;color:#666;text-align:center;font-weight:700;
+  display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:2px;
+  font-size:9px;color:#666;text-align:center;font-weight:700;line-height:1;padding:2px 0;
 }
 .lm-cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
 .lm-cal-celda{
