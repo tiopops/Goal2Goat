@@ -712,23 +712,44 @@
     const numFuera=plantilla.length-numEnPlan;
     const desgastePromedio=plantilla.length ? (numEnPlan*3.6+numFuera*2.2)/plantilla.length : 2.5;
     let proyeccion=fatigaBase;
+    // La barra "Forma física" representa lo en forma que está el
+    // equipo de cara al partido (sube entrenando, baja descansando) —
+    // a propósito en sentido contrario al valor real de fatiga que
+    // maneja procesarEntrenamientoSemanal() por dentro (que sí baja
+    // entrenando y sube descansando, porque ese es literalmente el
+    // desgaste físico del cuerpo). Son dos cosas distintas: una es la
+    // "forma"/soltura de estar entrenando, la otra el cansancio real.
     state.semanaNodos.dias.forEach(dia=>{
       if(dia.elegido==null) return;
       const nodo=dia.nodos[dia.elegido];
-      if(nodo.tipo==='entreno') proyeccion-=desgastePromedio;
-      else if(nodo.tipo==='descanso') proyeccion+=4;
+      if(nodo.tipo==='entreno') proyeccion+=desgastePromedio;
+      else if(nodo.tipo==='descanso') proyeccion-=4;
+    });
+    return Math.max(0, Math.min(100, proyeccion));
+  }
+
+  // Riesgo de lesión proyectado: parte del riesgo base según el nivel
+  // de prevención del médico (fijo, no cambia día a día), y le suma o
+  // resta según las elecciones ya hechas esta semana — el entreno
+  // intenso sube el riesgo de verdad, el descanso lo baja.
+  function riesgoLesionProyectado(){
+    const nivelesMed=state.medicoNiveles||{};
+    const factorPrevencion=Math.pow(0.85, (nivelesMed.prevencionMuscular||0)+(nivelesMed.prevencionOsea||0));
+    const riesgoBase=Math.min(100, 45*factorPrevencion);
+    if(!state.semanaNodos) return riesgoBase;
+    let proyeccion=riesgoBase;
+    state.semanaNodos.dias.forEach(dia=>{
+      if(dia.elegido==null) return;
+      const nodo=dia.nodos[dia.elegido];
+      if(nodo.tipo==='entreno' && nodo.subtipo==='intenso') proyeccion+=8;
+      else if(nodo.tipo==='descanso') proyeccion-=8;
     });
     return Math.max(0, Math.min(100, proyeccion));
   }
 
   function calcularBarrasEstado(){
     const fatigaMedia = fatigaProyectadaEstaSemana();
-    const nivelesMed=state.medicoNiveles||{};
-    // Riesgo de lesión: cuanto más nivel de prevención tenga el
-    // médico, más BAJO se muestra el riesgo — mismo factor 0.85^nivel
-    // que ya usa el propio cálculo real de lesiones del partido.
-    const factorPrevencion=Math.pow(0.85, (nivelesMed.prevencionMuscular||0)+(nivelesMed.prevencionOsea||0));
-    const riesgoLesionPct=Math.round(Math.min(100, 45*factorPrevencion));
+    const riesgoLesionPct=Math.round(riesgoLesionProyectado());
     return {
       formaFisica:{ pct:Math.round(fatigaMedia), color:fatigaMedia>=60?'#4caf7a':(fatigaMedia>=30?'#e6c94a':'#e24b4a') },
       riesgoLesion:{ pct:riesgoLesionPct, color:riesgoLesionPct<=15?'#4caf7a':(riesgoLesionPct<=30?'#e6c94a':'#e24b4a') },
@@ -753,6 +774,16 @@
       {umbral:10, tipo:'resetear_riesgo_sobrecarga'},
       {umbral:20, tipo:'jugador_como_nuevo'},
     ]},
+    // Sin ningún hito de recompensa (array vacío a propósito) — pero
+    // sigue necesitando su propia entrada aquí, porque este mismo
+    // objeto también define el icono/color de cada tipo de nodo Y de
+    // aquí sale la lista de tipos que se pueden sortear en el árbol
+    // (Object.keys(HITOS_NODOS)). Quitar la entrada entera (en vez de
+    // solo vaciar sus hitos) rompía la quiniela como nodo del árbol
+    // por completo, no solo sus recompensas — ya no puede volver a
+    // pasar, porque asegurarQuinielaCadaSemana() de abajo no depende
+    // de esto para saber que "quiniela" es un tipo válido.
+    quiniela:{icon:'ph-ticket', color:'#c9a227', hitos:[]},
     scouting:{icon:'ph-binoculars', color:'#8a7fd6', hitos:[
       {umbral:5, tipo:'sobre_calidad_boost'},
       {umbral:10, tipo:'bandera', bandera:'sobreNivelSuperior'},
@@ -1795,7 +1826,12 @@
   }
 
   function renderAcumuladosNodosHTML(){
-    const tipos=Object.keys(HITOS_NODOS);
+    // La quiniela sigue existiendo en HITOS_NODOS (icono, color, y
+    // para que pueda salir sorteada como nodo), pero no tiene ningún
+    // hito de recompensa — se excluye explícitamente de esta rejilla
+    // para no mostrarla como si estuviera "completada" (que es lo que
+    // pasaría al no tener ningún hito pendiente que mostrar).
+    const tipos=Object.keys(HITOS_NODOS).filter(t=>t!=='quiniela');
     return `<div class="lm-nodos-acumulados">
       <div class="lm-nodos-acumulados-cab">
         <span>${t('lm.nodos_acumulados_titulo')}</span>
@@ -1956,7 +1992,7 @@
       const esRival=!!punto.rival;
       if(esRival){
         const yPct=punto.nodos[0].y/NODO_ICONO_Y_ALTO*100;
-        nodosHTML+=`<div class="lm-arbol-nodo lm-arbol-nodo-rival" style="left:${punto.x/NODO_ICONO_X*100}%;top:${yPct}%">${rivalCrestHTML(30, rival&&rival.crestImg)}</div>`;
+        nodosHTML+=`<div class="lm-arbol-nodo lm-arbol-nodo-rival" style="left:${punto.x/NODO_ICONO_X*100}%;top:${yPct}%">${rivalCrestHTML(40, rival&&rival.crestImg)}</div>`;
         const etiquetaRival = rival ? rival.name : '';
         // El nombre se ata directamente a la posición Y del propio
         // escudo (un poco por debajo), en vez de usar un porcentaje
