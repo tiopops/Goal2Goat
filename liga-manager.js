@@ -1850,8 +1850,16 @@
     // primer o último día de la semana (antes se quedaba pegado al
     // borde porque no había margen suficiente para desplazar hasta
     // el centro).
-    const margen=80, ultimoX=NODO_ICONO_X-80;
-    const paso=n>1 ? (ultimoX-margen)/n : 0;
+    // Se reparten los N días + el rival como N+1 puntos EQUIESPACIADOS
+    // dentro del mismo margen simétrico a ambos lados — antes el
+    // rival usaba una fórmula fija aparte que no tenía en cuenta el
+    // margen de los días, así que al ajustar ese margen (para poder
+    // centrar el día 1) el lado derecho se quedaba mucho más estrecho
+    // que el izquierdo, dando la sensación de árbol descuadrado hacia
+    // la derecha.
+    const totalPuntos=n+1, margen=55;
+    const anchoUtil=NODO_ICONO_X-margen*2;
+    const paso=totalPuntos>0 ? anchoUtil/totalPuntos : 0;
     const centroY=NODO_ICONO_Y_ALTO/2;
     // Carriles fijos (arriba / medio / abajo) para los días de 3
     // opciones, así se alinean entre sí en forma de rejilla — pero
@@ -1866,8 +1874,11 @@
       const ys=patronesY[dia.nodos.length]||patronesY[1];
       return {x, dia, nodos:dia.nodos.map((nodo,ni)=>({...nodo, y:ys[ni]}))};
     });
-    // Punto final: escudo del rival de la próxima jornada
-    puntos.push({x:NODO_ICONO_X-15, rival:true, nodos:[{y:centroY, tipo:'rival'}]});
+    // Punto final: escudo del rival de la próxima jornada — usa
+    // exactamente el mismo paso que los días, en la posición N (justo
+    // después del último día), para que quede tan simétrico como
+    // ellos respecto al margen.
+    puntos.push({x:margen+paso*n+paso/2, rival:true, nodos:[{y:centroY, tipo:'rival'}]});
 
     // Solo se dibujan las conexiones que de verdad existen (guardadas
     // al generar la semana, no todo-con-todo) — así hay caminos
@@ -3808,12 +3819,6 @@
         {asunto:'correo.bienvenida_sobre.asunto', cuerpo:'correo.bienvenida_sobre.cuerpo'});
       const ultimoCorreo=state.correoInterno && state.correoInterno[0];
       if(ultimoCorreo){ ultimoCorreo.tipoEspecial='sobre_listo'; ultimoCorreo.sobreId=idRegalo; }
-    }
-    // Regalo especial solo para tiopops: una quiniela de bienvenida ya
-    // lista para rellenar desde el primer día — mismo mecanismo que las
-    // que se ganan jugando (cada 3 victorias, acumulado).
-    if(window.currentUsername==='tiopops'){
-      generarBoletoQuiniela(0);
     }
     guardarEstado();
   }
