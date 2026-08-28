@@ -1111,9 +1111,18 @@
   // elegir (si no se indica, usa los 7 tipos normales). Se usa para
   // poder restringir qué tipos pueden salir cada día (el primer día
   // solo entreno/descanso, la entrevista solo en el último).
-  function generarOpcionesDiaNodo(numOpciones, poolTipos){
+  function generarOpcionesDiaNodo(numOpciones, poolTipos, tipoForzado){
     const pool=poolTipos || Object.keys(HITOS_NODOS);
-    const tipos=barajarArrayNodos(pool).slice(0, Math.min(numOpciones, pool.length));
+    let tipos;
+    if(tipoForzado && pool.includes(tipoForzado)){
+      // Se garantiza que este tipo concreto esté entre las opciones
+      // del día — el resto de huecos se rellena al azar con lo que
+      // quede del resto del pool.
+      const resto=barajarArrayNodos(pool.filter(t=>t!==tipoForzado)).slice(0, Math.max(0, Math.min(numOpciones,pool.length)-1));
+      tipos=barajarArrayNodos([tipoForzado, ...resto]);
+    } else {
+      tipos=barajarArrayNodos(pool).slice(0, Math.min(numOpciones, pool.length));
+    }
     return tipos.map(tipo=>{
       const nodo={tipo};
       if(tipo==='entreno') nodo.subtipo = Math.random()<0.5 ? 'estandar' : 'intenso';
@@ -1199,9 +1208,13 @@
     const n=fechas.length;
     if(n===0){ state.semanaNodos=null; return; }
     const TIPOS_SIN_MEDIOS=Object.keys(HITOS_NODOS).filter(t=>t!=='medios');
-    // La quiniela solo puede salir como opción una vez por semana — en
-    // cuanto aparece en el día de un día, se quita del resto de días
-    // siguientes para que nunca se repita.
+    // La quiniela debe aparecer SIEMPRE exactamente una vez por
+    // semana — nunca cero (antes dependía de que el sorteo la
+    // incluyera por suerte, así que algunas semanas se quedaban sin
+    // ninguna) ni más de una. Se elige al azar cuál de los días
+    // intermedios será "el día de la quiniela" antes de generar nada.
+    const diasIntermedios=Math.max(0, n-2); // entre el primero y el ultimo, ambos con pool fijo
+    const diaQuinielaIdx = diasIntermedios>0 ? 1+Math.floor(Math.random()*diasIntermedios) : -1;
     let quinielaYaOfrecida=false;
     const dias=fechas.map((fecha,i)=>{
       const esPrimero = i===0, esUltimo = i===n-1;
@@ -1212,7 +1225,7 @@
         numOpciones=2+Math.floor(Math.random()*2);
         pool = quinielaYaOfrecida ? TIPOS_SIN_MEDIOS.filter(t=>t!=='quiniela') : TIPOS_SIN_MEDIOS;
       }
-      const nodos=generarOpcionesDiaNodo(numOpciones, pool);
+      const nodos=generarOpcionesDiaNodo(numOpciones, pool, i===diaQuinielaIdx?'quiniela':null);
       if(nodos.some(nd=>nd.tipo==='quiniela')) quinielaYaOfrecida=true;
       return {fecha:fechaISO(fecha), nodos, elegido:null};
     });

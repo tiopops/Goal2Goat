@@ -2952,12 +2952,12 @@ body.liga-manager-screen .ranking-btn-label-lm{display:inline}
 }
 .lm-cal-nav:hover{border-color:#c9a227;color:#c9a227}
 .lm-cal-semana-dias{
-  display:grid;grid-template-columns:repeat(7,34px);gap:3px;margin-bottom:2px;justify-content:center;
-  font-size:9px;color:#666;text-align:center;font-weight:700;line-height:1;padding:2px 0;
+  display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:3px;
+  font-size:9px;color:#666;text-align:center;font-weight:700;
 }
-.lm-cal-grid{display:grid;grid-template-columns:repeat(7,34px);gap:4px;justify-content:center}
+.lm-cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
 .lm-cal-celda{
-  aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  aspect-ratio:1;min-width:44px;display:flex;flex-direction:column;align-items:center;justify-content:center;
   gap:1px;border-radius:5px;background:#171a1c;position:relative;
 }
 .lm-cal-vacia{background:transparent}
