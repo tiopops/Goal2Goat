@@ -767,12 +767,10 @@
     entreno:{icon:'ph-barbell', color:'#e08a3e', hitos:[
       {umbral:5, tipo:'bandera', bandera:'boostEntrenoSemana'},
       {umbral:10, tipo:'subida_stats_uno'},
-      {umbral:20, tipo:'subida_stats_dos'},
     ]},
     descanso:{icon:'ph-bed', color:'#5eead4', hitos:[
       {umbral:5, tipo:'recuperar_fatiga_todos'},
       {umbral:10, tipo:'resetear_riesgo_sobrecarga'},
-      {umbral:20, tipo:'jugador_como_nuevo'},
     ]},
     // Sin ningún hito de recompensa (array vacío a propósito) — pero
     // sigue necesitando su propia entrada aquí, porque este mismo
@@ -787,22 +785,18 @@
     scouting:{icon:'ph-binoculars', color:'#8a7fd6', hitos:[
       {umbral:5, tipo:'sobre_calidad_boost'},
       {umbral:10, tipo:'bandera', bandera:'sobreNivelSuperior'},
-      {umbral:20, tipo:'bandera', bandera:'sobreDobleEleccion'},
     ]},
     amistoso:{icon:'ph-soccer-ball', color:'#4caf7a', hitos:[
       {umbral:5, tipo:'moral_bonus_permanente'},
-      {umbral:10, tipo:'experiencia_extra_jugador'},
-      {umbral:20, tipo:'partido_leyenda'},
+      {umbral:10, tipo:'reducir_perdidas_balon_liga'},
     ]},
     medios:{icon:'ph-microphone-stage', color:'#e2807f', hitos:[
       {umbral:5, tipo:'satisfaccion_empujon_leve'},
       {umbral:10, tipo:'satisfaccion_empujon'},
-      {umbral:20, tipo:'carisma_permanente'},
     ]},
     tactica:{icon:'ph-clipboard-text', color:'#5b9bd5', hitos:[
-      {umbral:5, tipo:'subida_stats_uno'},
-      {umbral:10, tipo:'ventaja_duelos_proximo_partido'},
-      {umbral:20, tipo:'moral_base_permanente'},
+      {umbral:5, tipo:'ventaja_duelos_proximo_partido'},
+      {umbral:10, tipo:'subida_stats_uno'},
     ]},
   };
   // Tipos de hito que necesitan que el jugador elija a quién aplicar
@@ -912,13 +906,14 @@
         const peor=Object.keys(stats).reduce((a,b)=>stats[a]<=stats[b]?a:b);
         return {ok:true, textoExtra:tp('lm.hito_resultado_informe_rival', {rival:rival.name, stat:t('lm.stat_'+peor), valor:stats[peor]})};
       }
-      case 'experiencia_extra_jugador': {
-        const id=jugadorIds&&jugadorIds[0];
-        if(!id) return {ok:false, error:'jugador_no_valido'};
-        if(!state.nodosBanderasPendientes) state.nodosBanderasPendientes={};
-        state.nodosBanderasPendientes.experienciaExtraJugadorId=id;
+      case 'reducir_perdidas_balon_liga':
+        // Bandera de un solo uso — se consume en el visor real de
+        // partidos (liga-manager-partido-visor.js), ese mismo módulo
+        // solo se usa para partidos de LIGA, nunca amistosos (esos se
+        // resuelven aparte, de forma instantánea), así que el efecto
+        // siempre cae en el próximo partido de liga como corresponde.
+        state.amistosoBoostPaseProximoPartido=true;
         break;
-      }
       case 'partido_leyenda': {
         const premio=15000+Math.floor(Math.random()*10000);
         state.capital=(state.capital||0)+premio;
@@ -1081,7 +1076,18 @@
           const id=chk.getAttribute('data-jugador-id');
           if(typeof window.playSound==='function') window.playSound('select');
           if(chk.checked){
-            if(elegidos.length>=numJugadores){ chk.checked=false; return; }
+            // Si ya se llegó al máximo de jugadores permitidos, el
+            // más reciente sustituye al que se eligió primero — antes
+            // esto simplemente se rechazaba (el checkbox se
+            // desmarcaba solo) y había que desmarcar a mano el
+            // anterior antes de poder elegir a otro, lo cual no era
+            // nada intuitivo, sobre todo cuando solo hace falta
+            // elegir a un único jugador.
+            while(elegidos.length>=numJugadores){
+              const idAntiguo=elegidos.shift();
+              const chkAntiguo=overlay.querySelector(`[data-jugador-id="${idAntiguo}"]`);
+              if(chkAntiguo) chkAntiguo.checked=false;
+            }
             elegidos.push(id);
           } else {
             const idx=elegidos.indexOf(id);
@@ -1902,14 +1908,19 @@
             </div>`;
           }
           const pct=Math.min(100, Math.round((p.acumulado/p.siguiente.umbral)*100));
-          // El número mostrado nunca supera el umbral del hito aún sin
-          // reclamar (aunque el acumulado real siga contando por
-          // dentro, de cara al siguiente hito una vez se reclame
-          // este) — antes podía verse "6/5", que parecía un error.
-          const numMostrado=Math.min(p.acumulado, p.siguiente.umbral);
+          // El número mostrado usa como denominador el umbral FINAL
+          // de este icono (el del último nivel, ahora 10 en vez de
+          // 5), no el del hito más próximo — así al llegar a 5/10 el
+          // jugador entiende que hay un nivel más por delante, en vez
+          // de ver "5/5" y pensar que ya está completo del todo. La
+          // barra de progreso (el relleno) sigue llenándose respecto
+          // al hito más próximo, para que se vea "llena" justo cuando
+          // ya se puede reclamar ese nivel concreto.
+          const umbralFinal=p.def.hitos[p.def.hitos.length-1].umbral;
+          const numMostrado=Math.min(p.acumulado, umbralFinal);
           return `<div class="lm-nodo-acumulado ${p.disponible?'lm-nodo-acumulado-disponible':''}" title="${nombreIcono}" data-ver-recompensa="${tipo}" data-ver-recompensa-umbral="${p.siguiente.umbral}">
             <i class="ph ph-bold ${p.def.icon}" style="color:${p.def.color}"></i>
-            <span class="lm-nodo-acumulado-num">${numMostrado}/${p.siguiente.umbral}</span>
+            <span class="lm-nodo-acumulado-num">${numMostrado}/${umbralFinal}</span>
             <div class="lm-nodo-acumulado-track"><div class="lm-nodo-acumulado-fill" style="width:${pct}%;background:${p.def.color}"></div></div>
             ${p.disponible?`<button class="lm-nodo-reclamar-btn" data-reclamar-nodo="${tipo}" data-reclamar-umbral="${p.siguiente.umbral}">${t('lm.reclamar_btn')}</button>`:''}
           </div>`;
@@ -2398,7 +2409,17 @@
           } else {
             pintarArbolNodos();
             if(typeof render==='function') render();
-            if(eraAmistoso && state.ultimoAmistosoResultado) mostrarResultadoAmistosoPopup(state.ultimoAmistosoResultado);
+            // Aquí también hace falta repintar DESPUÉS de aplicar las
+            // consecuencias del amistoso (moral/afición) — antes solo
+            // se pintaba justo antes de abrir este pop-up, así que la
+            // barra de afición se quedaba con el valor de antes del
+            // partido hasta la siguiente vez que algo más disparase
+            // un repintado por su cuenta.
+            if(eraAmistoso && state.ultimoAmistosoResultado){
+              mostrarResultadoAmistosoPopup(state.ultimoAmistosoResultado, ()=>{
+                if(typeof render==='function') render();
+              });
+            }
           }
         }, 220);
       });
@@ -9892,6 +9913,7 @@
     const titleEl = cardEl.querySelector('.med-card-title');
     const tagEl = cardEl.querySelector('.med-card-tag');
     const descEl = cardEl.querySelector('.med-card-desc');
+    const dificultadEl = cardEl.querySelector('.med-card-dificultad');
     const swapBtn = cardEl.querySelector('.med-card-swap');
     if(!iconEl || !titleEl){ onDone(); return; }
     if(swapBtn) swapBtn.disabled=true;
@@ -9904,6 +9926,17 @@
       titleEl.textContent=rnd.nombre;
       if(tagEl) tagEl.textContent = rnd.tipo==='nivel' ? t('lm.tag_proyecto') : (rnd.tipo==='sobre' ? t('lm.tag_proyecto_especial') : t('lm.tag_accion'));
       if(descEl) descEl.textContent = rnd.desc;
+      // La dificultad también tiene que barajarse en vivo como el
+      // resto de elementos de la carta — antes se quedaba parada en
+      // el valor de la carta anterior hasta que el sorteo terminaba
+      // del todo, dando la sensación de que ese dato no rerolleaba.
+      // Aquí se usa el valor base del catálogo (sin el bono de
+      // estrellas del trabajador, que no aplica igual a todo tipo de
+      // carta) — el valor final correcto, ya con el bono aplicado, se
+      // pinta al asentarse el sorteo, como siempre.
+      if(dificultadEl && typeof rnd.dificultad==='number'){
+        dificultadEl.textContent=`${t('lm.dificultad_lbl')} ${rnd.dificultad}+`;
+      }
       if(typeof window.playSound==='function') window.playSound('spin');
       ticks++;
       if(ticks>=totalTicks){

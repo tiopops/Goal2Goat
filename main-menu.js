@@ -15,6 +15,16 @@
    ============================================================ */
 (function(){
 
+  // Liga Manager está desbloqueado para todo el mundo desde la v0.6
+  // (game.js lo confirma de forma asíncrona, dentro de
+  // onAuthStateChanged, tras resolver la autenticación de Firebase).
+  // Se fija aquí también, de forma síncrona e inmediata, para que
+  // nunca haya una ventana de tiempo en la que pulsar el botón antes
+  // de que esa comprobación asíncrona termine muestre "próximamente"
+  // por error — game.js lo volverá a fijar más tarde a lo mismo
+  // (true), sin ningún efecto distinto, solo por si acaso.
+  if(typeof window.LIGA_MANAGER_UNLOCKED !== 'boolean') window.LIGA_MANAGER_UNLOCKED = true;
+
   // El navegador no debe "recordar" el scroll de la carga anterior:
   // queremos decidir nosotros mismos dónde aparece el scroll en cada
   // caso (ver resetGameScroll más abajo).

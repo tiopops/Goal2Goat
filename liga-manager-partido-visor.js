@@ -55,8 +55,19 @@
     // y técnica falla menos balones en la simulación, uno peor pierde
     // el balón con más frecuencia sin necesitar que el rival presione.
     const misStatsReales = (typeof calcularStatsEquipo==='function') ? calcularStatsEquipo() : {passing:60,technique:60};
-    const precisionMia = Math.max(0.25, Math.min(0.95, (misStatsReales.passing+misStatsReales.technique)/200));
+    let precisionMia = Math.max(0.25, Math.min(0.95, (misStatsReales.passing+misStatsReales.technique)/200));
     const precisionRival = Math.max(0.25, Math.min(0.95, (rival.passing+rival.technique)/200));
+    // Hito de amistoso (nivel 10): reduce mucho las pérdidas de balón
+    // en el siguiente partido de LIGA — este visor solo se usa para
+    // los partidos reales (los amistosos se resuelven aparte, de
+    // forma instantánea, sin pasar por aquí), así que el efecto
+    // siempre cae exactamente donde debe: el próximo partido de liga,
+    // nunca en otro amistoso. Se consume aquí mismo, una sola vez.
+    if(state && state.amistosoBoostPaseProximoPartido){
+      precisionMia = Math.min(0.97, precisionMia+0.18);
+      state.amistosoBoostPaseProximoPartido=false;
+      if(typeof guardarEstado==='function') guardarEstado();
+    }
 
     // En vez de rotar con CSS (frágil: el campo se veía cortado en
     // escritorio), se generan las coordenadas ya en su orientación
@@ -158,6 +169,19 @@
       } else {
         franjasHTML+=`<rect x="0" y="${pos}" width="${ANCHO}" height="${grosor}" fill="#246f38"/>`;
       }
+    }
+    // Desgaste del césped: misma técnica y misma fórmula EXACTA que ya
+    // usa la pantalla principal de alineación (#lmCampoLayer +
+    // campoOpacidadDesgaste en liga-manager.js) — un rectángulo marrón
+    // con mix-blend-mode:color, cuya opacidad sube cuanto peor esté el
+    // estado del campo. Antes este visor no tenía en cuenta el
+    // desgaste en absoluto y el césped se veía siempre igual de verde
+    // sin importar cómo estuviera de verdad el estadio. "state" viene
+    // desestructurado de "deps" al principio de esta misma función.
+    const campoValor = (state && state.estadio && state.estadio.campo!==undefined) ? state.estadio.campo : 100;
+    const opacidadFinal = Math.max(0, (100-Math.max(0,Math.min(100,campoValor)))/100*0.85).toFixed(2);
+    if(opacidadFinal>0){
+      franjasHTML+=`<rect x="0" y="0" width="${ANCHO}" height="${ALTO}" fill="#8a6a35" style="mix-blend-mode:color;opacity:${opacidadFinal}"/>`;
     }
     // Líneas del campo — mismo color y opacidad que el campo real
     // (rgba blanco, no un verde claro sólido), con las mismas
