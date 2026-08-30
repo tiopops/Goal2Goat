@@ -445,7 +445,7 @@
     .wordmark{ font-size:30px; } .subfranja{ padding:9px 18px; font-size:9.5px; }
     .masthead,.portada,.hero-bloque,.cuerpo{ padding-left:18px; padding-right:18px; } .franja-mvp,.franja-alineaciones{ margin-left:18px; margin-right:18px; }
   }
-  @media print{ body{ background:#fff; padding:0; display:block; } .btn-imprimir-wrap{ display:none; } .periodico{ box-shadow:none; max-width:none; width:100%; } @page{ margin:12mm; } }
+  @media print{ body{ background:#d8d5cd; padding:0; display:block; -webkit-print-color-adjust:exact; print-color-adjust:exact; } .btn-imprimir-wrap{ display:none; } .periodico{ box-shadow:none; max-width:none; width:100%; -webkit-print-color-adjust:exact; print-color-adjust:exact; } @page{ margin:12mm; } }
   `;
 
   window.G2G_Cronica = { generarHTML, construirCronica, elegirMVP, elegirTitular };

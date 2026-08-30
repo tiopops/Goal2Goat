@@ -938,7 +938,17 @@
     // toca — en vez de un reparto fijo cercano al 50%.
     const calidadMia = (misStatsReales.attack+misStatsReales.passing)/2;
     const calidadRival = (rival.attack+rival.passing)/2;
-    const probPosesionMia = Math.max(0.32, Math.min(0.68, 0.5+(calidadMia-calidadRival)/160));
+    let probPosesionMia = Math.max(0.32, Math.min(0.68, 0.5+(calidadMia-calidadRival)/160));
+    // Hito de sesión táctica (nivel 10): ventaja notable en la
+    // posesión del próximo partido — mismo mecanismo de bandera de un
+    // solo uso que el resto de hitos de "próximo partido", consumida
+    // aquí mismo. Solo afecta a partidos de LIGA (este visor nunca se
+    // usa para amistosos, que se resuelven aparte).
+    if(state && state.tacticaBoostPosesionProximoPartido){
+      probPosesionMia = Math.min(0.85, probPosesionMia+0.18);
+      state.tacticaBoostPosesionProximoPartido=false;
+      if(typeof guardarEstado==='function') guardarEstado();
+    }
 
     // Reposiciona a todos los jugadores EXCEPTO el que lleva el balón
     // en ese instante — cada uno según su propio rol (avance) y si su
@@ -1315,6 +1325,19 @@
     // alargando el forcejeo indefinidamente.
     let disputasConsecutivas=0;
     const FRASES_PASE=[t('lm.visor_construye'), t('lm.visor_avanza')];
+    // Variedad de frases para dos de los eventos que más se repetían
+    // en la retransmisión (el pase impreciso y la parada del
+    // portero, que antes no tenía ninguna frase propia en absoluto) —
+    // se elige una al azar cada vez, en vez de repetir siempre la
+    // misma literal.
+    const FRASES_PASE_IMPRECISO=[t('lm.visor_pase_impreciso_1'), t('lm.visor_pase_impreciso_2'), t('lm.visor_pase_impreciso_3'), t('lm.visor_pase_impreciso_4'), t('lm.visor_pase_impreciso_5')];
+    const FRASES_PARADA=[t('lm.visor_parada_1'), t('lm.visor_parada_2'), t('lm.visor_parada_3'), t('lm.visor_parada_4'), t('lm.visor_parada_5')];
+    // Misma idea aplicada a otros tres eventos muy frecuentes que
+    // hasta ahora repetían siempre la misma frase literal: recuperar
+    // el balón, hacer circular el balón, y despejar el peligro.
+    const FRASES_RECUPERA=[t('lm.visor_recupera_1'), t('lm.visor_recupera_2'), t('lm.visor_recupera_3'), t('lm.visor_recupera_4'), t('lm.visor_recupera_5')];
+    const FRASES_CIRCULA=[t('lm.visor_circula_1'), t('lm.visor_circula_2'), t('lm.visor_circula_3'), t('lm.visor_circula_4'), t('lm.visor_circula_5')];
+    const FRASES_DESPEJA=[t('lm.visor_despeja_1'), t('lm.visor_despeja_2'), t('lm.visor_despeja_3'), t('lm.visor_despeja_4'), t('lm.visor_despeja_5')];
     let descansoMostrado=false;
     let partidoDetenido=false; // se activa al pulsar "terminar y mostrar resultados"
     let partidoTerminado=false; // el partido llegó a su fin, ya sea jugado entero o forzado
@@ -1602,13 +1625,13 @@
           };
           if(distRecuperador<=UMBRAL_RECUPERACION_CERCA){
             moverBalon(equipoRecupera[recuperadorIdx].x, equipoRecupera[recuperadorIdx].y, 550);
-            infoBar.textContent=`${nombreRecupera} recupera el balón`;
+            infoBar.textContent=`${nombreRecupera} ${FRASES_RECUPERA[Math.floor(Math.random()*FRASES_RECUPERA.length)]}`;
             completarRecuperacion(0);
           } else {
             infoBar.textContent=`${nombreRecupera} presiona para recuperar el balón`;
             moverJugador(esMio, recuperadorIdx, balonPosAntes.x, balonPosAntes.y, 700);
             setTimeout(()=>{
-              infoBar.textContent=`${nombreRecupera} recupera el balón`;
+              infoBar.textContent=`${nombreRecupera} ${FRASES_RECUPERA[Math.floor(Math.random()*FRASES_RECUPERA.length)]}`;
               completarRecuperacion(150);
             }, real(700));
           }
@@ -1737,7 +1760,7 @@
                   esMio?jcCapturado:undefined, esMio?undefined:jcCapturado);
                 moverJugador(esMio, jcCapturado, puntoConstruccion.x, puntoConstruccion.y, duracionPaseConstruccion);
                 moverBalon(puntoConstruccion.x, puntoConstruccion.y, duracionPaseConstruccion);
-                infoBar.textContent=`${esMio?miNombre:rivalNombre} hace circular el balón`;
+                infoBar.textContent=`${esMio?miNombre:rivalNombre} ${FRASES_CIRCULA[Math.floor(Math.random()*FRASES_CIRCULA.length)]}`;
               }, real(retrasoAcumulado));
               jugadorAnteriorIdx = jugadorConstruccionIdx;
               posActualConstruccion = puntoConstruccion;
@@ -2001,7 +2024,7 @@
         };
         duracionEfectiva=Math.max(400, Math.min(1100, Math.hypot(destinoDespeje.x-posActual.x, destinoDespeje.y-posActual.y)*17));
         moverBalon(destinoDespeje.x, destinoDespeje.y, duracionEfectiva);
-        infoBar.textContent=`${nombreAtaca} despeja el peligro`;
+        infoBar.textContent=`${nombreAtaca} ${FRASES_DESPEJA[Math.floor(Math.random()*FRASES_DESPEJA.length)]}`;
         mostrarAlertaDespeje(posActual.x, posActual.y);
         pasesJugadaActual=0; historialMio=[]; historialRival=[];
         actualizarFormacionDinamica(posesionMia, posesionMia?idxConBalon:undefined, posesionMia?undefined:idxConBalon, posActual);
@@ -2247,26 +2270,36 @@
           }, real(dur*0.65));
         } else {
           setTimeout(()=>{
-            // El portero SE QUEDA con el balón tras una parada normal
-            // — antes se reiniciaba como un balón suelto en el centro
-            // del campo, que cualquiera de los dos equipos podía ganar
-            // por cercanía, algo que no tiene ningún sentido: un
-            // portero que para el balón limpiamente lo controla, no lo
-            // suelta al aire para que se dispute. Ahora distribuye de
-            // verdad a un defensa cercano, con la misma prudencia que
-            // ya tiene el resto de la distribución del portero.
-            const equipoPortero = porteroEsMio?posMia:posRival;
-            const rolesPortero = porteroEsMio?rolesMios:rolesRival;
-            let receptorDistribucion = rolesPortero.findIndex((r,ri)=>ri!==0 && r==='def');
-            if(receptorDistribucion<0) receptorDistribucion = jugadorMasCercano(equipoPortero, equipoPortero[0].x, equipoPortero[0].y, 0);
-            posesionMia = porteroEsMio;
-            if(porteroEsMio){ idxConBalonMio=receptorDistribucion; } else { idxConBalonRival=receptorDistribucion; }
-            infoBar.textContent=`${porteroEsMio?miNombre:rivalNombre} saca desde atrás con el balón controlado`;
-            moverBalon(equipoPortero[receptorDistribucion].x, equipoPortero[receptorDistribucion].y, 750);
+            // Frase propia de la parada — antes este momento no tenía
+            // ninguna narración: se saltaba directo del disparo a la
+            // distribución del portero, como si nadie hubiera hecho
+            // nada entremedias. Con un pequeño respiro antes de la
+            // frase de distribución, para que de verdad se vea esta
+            // primero, en vez de sustituirse la una a la otra en el
+            // mismo instante.
+            infoBar.textContent=`${porteroEsMio?miNombre:rivalNombre} ${FRASES_PARADA[Math.floor(Math.random()*FRASES_PARADA.length)]}`;
+            setTimeout(()=>{
+              // El portero SE QUEDA con el balón tras una parada normal
+              // — antes se reiniciaba como un balón suelto en el centro
+              // del campo, que cualquiera de los dos equipos podía ganar
+              // por cercanía, algo que no tiene ningún sentido: un
+              // portero que para el balón limpiamente lo controla, no lo
+              // suelta al aire para que se dispute. Ahora distribuye de
+              // verdad a un defensa cercano, con la misma prudencia que
+              // ya tiene el resto de la distribución del portero.
+              const equipoPortero = porteroEsMio?posMia:posRival;
+              const rolesPortero = porteroEsMio?rolesMios:rolesRival;
+              let receptorDistribucion = rolesPortero.findIndex((r,ri)=>ri!==0 && r==='def');
+              if(receptorDistribucion<0) receptorDistribucion = jugadorMasCercano(equipoPortero, equipoPortero[0].x, equipoPortero[0].y, 0);
+              posesionMia = porteroEsMio;
+              if(porteroEsMio){ idxConBalonMio=receptorDistribucion; } else { idxConBalonRival=receptorDistribucion; }
+              infoBar.textContent=`${porteroEsMio?miNombre:rivalNombre} saca desde atrás con el balón controlado`;
+              moverBalon(equipoPortero[receptorDistribucion].x, equipoPortero[receptorDistribucion].y, 750);
             moverJugador(porteroEsMio, receptorDistribucion, equipoPortero[receptorDistribucion].x, equipoPortero[receptorDistribucion].y, 750);
             pasesJugadaActual=0; historialMio=[]; historialRival=[];
             avanzarTiempo(dur+750);
             setTimeout(tick, real(750));
+            }, real(550));
           }, real(dur*0.65));
         }
         // Este disparo gestiona su propio final (arriba) — se corta
@@ -2544,7 +2577,7 @@
           const destinoFallido=equipoAtaca[mejor];
           const interceptorIdx=jugadorMasCercano(equipoDefiende, destinoFallido.x, destinoFallido.y, -1);
           moverBalon(equipoDefiende[interceptorIdx].x, equipoDefiende[interceptorIdx].y, dur);
-          infoBar.textContent=`${nombreAtaca} pierde el balón con un pase impreciso`;
+          infoBar.textContent=`${nombreAtaca} ${FRASES_PASE_IMPRECISO[Math.floor(Math.random()*FRASES_PASE_IMPRECISO.length)]}`;
           siguientePosesionMia=!posesionMia; pasesJugadaActual=0; historialMio=[]; historialRival=[];
           if(siguientePosesionMia) siguienteIdxMio=interceptorIdx; else siguienteIdxRival=interceptorIdx;
         } else {

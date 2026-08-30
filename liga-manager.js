@@ -434,6 +434,18 @@
       while(clavesUsadas.has(key)){ key=nombre.toLowerCase().replace(/\s+/g,'').replace(/[^a-z0-9]/g,'')+sufijoClave; sufijoClave++; }
       clavesUsadas.add(key);
       const tier=elegirTierAleatorio();
+      // Estilo de equipo: reparte el mismo overall total de forma
+      // distinta según ataque/defensa (y en menor medida pase/ritmo) —
+      // antes TODAS las estadísticas de todos los equipos se repartían
+      // exactamente igual, dando plantillas siempre "equilibradas" sin
+      // ninguna variedad real entre un equipo y otro.
+      const ESTILOS_EQUIPO=[
+        {id:'equilibrado', atk:0, def:0, pas:0},
+        {id:'ofensivo',    atk:9, def:-9, pas:3},
+        {id:'defensivo',   atk:-9, def:9, pas:-2},
+        {id:'tecnico',     atk:2, def:-4, pas:8},
+      ];
+      const estiloEquipo=ESTILOS_EQUIPO[Math.floor(Math.random()*ESTILOS_EQUIPO.length)];
       const numerosUsados=new Set();
       const nombresJugUsados=new Set();
       function numeroUnicoAleatorio(){
@@ -442,12 +454,14 @@
       }
       function jugadorAleatorioLiga(pos){
         const overall=tier.min+Math.floor(Math.random()*(tier.max-tier.min+1));
-        const variar=()=>Math.max(20,Math.min(99, overall+Math.floor(Math.random()*11)-5));
-        return {pos, num:numeroUnicoAleatorio(), nombre:nombreJugadorAleatorio(nombresJugUsados), atk:variar(), def:variar(), pace:variar(), pas:variar(), tech:variar()};
+        const variar=(sesgo)=>Math.max(20,Math.min(99, overall+(sesgo||0)+Math.floor(Math.random()*11)-5));
+        return {pos, num:numeroUnicoAleatorio(), nombre:nombreJugadorAleatorio(nombresJugUsados),
+          atk:variar(estiloEquipo.atk), def:variar(estiloEquipo.def), pace:variar(estiloEquipo.pas*0.4),
+          pas:variar(estiloEquipo.pas), tech:variar(estiloEquipo.pas*0.6)};
       }
       const xi=POS_XI_ALEATORIA.map(p=>jugadorAleatorioLiga(p));
       const bench=POS_BANCA_ALEATORIA.map(p=>jugadorAleatorioLiga(p));
-      equiposGenerados.push({key, displayName:nombre, xi, bench});
+      equiposGenerados.push({key, displayName:nombre, xi, bench, estilo:estiloEquipo.id});
       if(dataUri && window.G2G_LigaPersonalizada) window.G2G_LigaPersonalizada.setCrestDirecto(key, dataUri);
     }
     if(window.G2G_LigaPersonalizada) window.G2G_LigaPersonalizada.setEquipos(equiposGenerados);
@@ -769,8 +783,8 @@
       {umbral:10, tipo:'subida_stats_uno'},
     ]},
     descanso:{icon:'ph-bed', color:'#5eead4', hitos:[
-      {umbral:5, tipo:'recuperar_fatiga_todos'},
-      {umbral:10, tipo:'resetear_riesgo_sobrecarga'},
+      {umbral:5, tipo:'recuperar_fatiga_parcial'},
+      {umbral:10, tipo:'recuperar_fatiga_todos'},
     ]},
     // Sin ningún hito de recompensa (array vacío a propósito) — pero
     // sigue necesitando su propia entrada aquí, porque este mismo
@@ -796,7 +810,7 @@
     ]},
     tactica:{icon:'ph-clipboard-text', color:'#5b9bd5', hitos:[
       {umbral:5, tipo:'ventaja_duelos_proximo_partido'},
-      {umbral:10, tipo:'subida_stats_uno'},
+      {umbral:10, tipo:'ventaja_posesion_proximo_partido'},
     ]},
   };
   // Tipos de hito que necesitan que el jugador elija a quién aplicar
@@ -861,6 +875,16 @@
         if(typeof cerrarLesionHistorial==='function') cerrarLesionHistorial(j, 'Hito de entrenamiento acumulado');
         break;
       }
+      case 'recuperar_fatiga_parcial':
+        // 30% de recuperación de resistencia — a diferencia del nivel
+        // 10 (recuperación total), este solo recupera una parte, para
+        // que haya una progresión real entre los dos niveles del
+        // mismo icono.
+        (state.plantilla||[]).forEach(p=>{
+          const actual=p.fatigue===undefined?100:p.fatigue;
+          p.fatigue=Math.min(100, Math.round(actual+(100-actual)*0.30));
+        });
+        break;
       case 'recuperar_fatiga_todos':
         (state.plantilla||[]).forEach(p=>{ p.fatigue=100; });
         break;
@@ -943,6 +967,12 @@
         // partido (mismo mecanismo que ya usa el bonus de moral,
         // sumando al ritmo goleador esperado de mi equipo).
         state.tacticaBoostProximoPartido=true;
+        break;
+      case 'ventaja_posesion_proximo_partido':
+        // Bandera de un solo uso — se consume en el visor real de
+        // partidos de liga (probPosesionMia), nunca afecta a
+        // amistosos.
+        state.tacticaBoostPosesionProximoPartido=true;
         break;
       case 'moral_base_permanente':
         // Este hito es el de mayor nivel (20) del icono de sesión
@@ -2000,12 +2030,18 @@
       const diaActual=actual.dia;
       const esTramoHaciaRival = !!siguiente.rival;
       if(diaActual && diaActual.elegido!=null){
-        // Día ya resuelto: solo la conexión real desde el nodo elegido.
+        // Día ya resuelto: se dibuja la conexión real del nodo
+        // elegido en dorado, PERO también las del resto de nodos de
+        // ese mismo día en gris — antes esas otras simplemente
+        // desaparecían al resolver el día, cuando lo correcto es que
+        // se queden visibles en su gris inicial, igual que un día
+        // aún sin resolver.
         const oi=diaActual.elegido;
-        const nodoElegido=diaActual.nodos[oi];
-        const destinos = esTramoHaciaRival ? siguiente.nodos.map((_,idx)=>idx) : (nodoElegido.siguientes||siguiente.nodos.map((_,idx)=>idx));
-        destinos.forEach(di=>{
-          conexiones.push({a:{x:actual.x,y:actual.nodos[oi].y}, b:{x:siguiente.x,y:siguiente.nodos[di].y}, activa:true});
+        diaActual.nodos.forEach((nodo,ni)=>{
+          const destinos = esTramoHaciaRival ? siguiente.nodos.map((_,idx)=>idx) : (nodo.siguientes||siguiente.nodos.map((_,idx)=>idx));
+          destinos.forEach(di=>{
+            conexiones.push({a:{x:actual.x,y:actual.nodos[ni].y}, b:{x:siguiente.x,y:siguiente.nodos[di].y}, activa:ni===oi});
+          });
         });
       } else {
         // Día sin resolver: se dibuja el mapa completo de posibilidades
@@ -2187,7 +2223,21 @@
       const punto=puntos[diaActualIdx];
       if(punto){
         requestAnimationFrame(()=>{
-          const escala=wrap.querySelector('.lm-arbol-svg-capa').offsetWidth/NODO_ICONO_X;
+          const capaEl=wrap.querySelector('.lm-arbol-svg-capa');
+          const escala=capaEl.offsetWidth/NODO_ICONO_X;
+          // Si el último punto del árbol (el escudo del rival) ya
+          // está COMPLETAMENTE visible dentro del hueco actual, no
+          // hace falta desplazar nada más — quedarse quieto es
+          // siempre mejor que un micro-ajuste que apenas se nota pero
+          // sí se siente como un salto molesto. Esto es justo lo que
+          // pedías: una vez se ve entero el nodo final, se acabó el
+          // scroll, para siempre, en esa apertura del árbol.
+          const puntoRival=puntos[puntos.length-1];
+          const radioRival=30; // mitad del ancho del círculo del rival + margen
+          const xRivalIzq=puntoRival.x*escala-radioRival;
+          const xRivalDer=puntoRival.x*escala+radioRival;
+          const rivalYaVisibleEntero = xRivalIzq>=wrap.scrollLeft && xRivalDer<=wrap.scrollLeft+wrap.clientWidth;
+          if(rivalYaVisibleEntero) return;
           // El destino nunca debe superar el máximo real de scroll —
           // si no, al llegar cerca del final (el escudo del rival),
           // el destino calculado pedía desplazarse más de lo que el
@@ -2772,7 +2822,8 @@
   const LM_DISTURBIO_COLOR={0:null,1:'#e6c94a',2:'#e88a2e',3:'#e24b4a'};
   // Coste base del guardia y descuento por trabajador de nivel alto —
   // igual que el resto del cuerpo técnico, 3 estrellas abarata las cosas.
-  const GUARDIA_SALARIO_BASE=900;
+  const GUARDIA_SALARIO_BASE=1000;
+  const GUARDIA_FINIQUITO=1000;
   function guardiaSalarioActual(){
     const trab=state.trabajadores && state.trabajadores.mantenimiento;
     const nivel=trab?trab.nivel:1;
@@ -2791,6 +2842,15 @@
   }
   function despedirGuardiaDisponible(){
     if(guardiasDisponibles()<=0) return false;
+    // Despedir tiene un finiquito real de 1000€ — se descuenta de las
+    // finanzas del club de verdad (registrarMovimientoFinanciero solo
+    // anota el movimiento en el historial, no toca el capital por su
+    // cuenta) y se avisa al jugador con un toast.
+    state.capital=(state.capital||0)-GUARDIA_FINIQUITO;
+    if(typeof registrarMovimientoFinanciero==='function'){
+      registrarMovimientoFinanciero(t('lm.concepto_finiquito_guardia'), -GUARDIA_FINIQUITO, state.jornadaActual);
+    }
+    if(typeof showToast==='function') showToast(tp('lm.aviso_finiquito_guardia', {n:GUARDIA_FINIQUITO}));
     state.guardiasContratados=Math.max(0,(state.guardiasContratados||0)-1);
     guardarEstado();
     return true;
@@ -2949,11 +3009,6 @@
       }
       state.nodosBanderasPendientes.quinielaConPista=false;
     }
-    enviarCorreo('directorGeneral', t('lm.correo_quiniela_asunto'),
-      t('lm.correo_quiniela_cuerpo'),
-      {asunto:'lm.correo_quiniela_asunto', cuerpo:'lm.correo_quiniela_cuerpo'});
-    const ultimo=state.correoInterno && state.correoInterno[0];
-    if(ultimo){ ultimo.tipoEspecial='quiniela_lista'; }
   }
   function resultadoPartidoQuiniela(res){
     if(res.golesA>res.golesB) return '1';
@@ -3084,9 +3139,30 @@
         overlay.remove();
         render();
       });
-      habilitarCierreOverlay(overlay, ()=>overlay.remove());
+      habilitarCierreOverlay(overlay, ()=>{
+        overlay.remove();
+        // Si se cierra sin haber terminado de rellenar el boletín
+        // (por la X o tocando fuera), se avisa por correo de que
+        // queda pendiente — antes este correo se enviaba SIEMPRE al
+        // generarse el boletín, aunque el jugador lo rellenara ahí
+        // mismo sin cerrar nada, lo cual no tenía sentido.
+        if(!boleto.rellenado){
+          enviarCorreo('directorGeneral', t('lm.correo_quiniela_asunto'), t('lm.correo_quiniela_cuerpo'),
+            {asunto:'lm.correo_quiniela_asunto', cuerpo:'lm.correo_quiniela_cuerpo'});
+          const ultimo=state.correoInterno && state.correoInterno[0];
+          if(ultimo){ ultimo.tipoEspecial='quiniela_lista'; }
+        }
+      });
       const xBtn=overlay.querySelector('[data-cerrar-x]');
-      if(xBtn) xBtn.addEventListener('click', ()=>overlay.remove());
+      if(xBtn) xBtn.addEventListener('click', ()=>{
+        overlay.remove();
+        if(!boleto.rellenado){
+          enviarCorreo('directorGeneral', t('lm.correo_quiniela_asunto'), t('lm.correo_quiniela_cuerpo'),
+            {asunto:'lm.correo_quiniela_asunto', cuerpo:'lm.correo_quiniela_cuerpo'});
+          const ultimo=state.correoInterno && state.correoInterno[0];
+          if(ultimo){ ultimo.tipoEspecial='quiniela_lista'; }
+        }
+      });
     }
     // A diferencia del resto de ventanas de Liga Manager (que se
     // añaden dentro de #ligaManagerScreen), esta se añade directamente
@@ -4721,6 +4797,7 @@
     const jornada=state.calendario[j];
     let miPartidoInfo=null;
     let jugadorLesionadoEstaJornada=null;
+    const jugadoresSancionadosEstaJornada=new Set();
     const clima=climaDelPartido();
     jornada.forEach(partido=>{
       const key=j+'-'+partido.home.id+'-'+partido.away.id;
@@ -4761,6 +4838,25 @@
           evInjury.jugador.lesionLogId=registrarLesionHistorial(evInjury.jugador, evInjury.sev, evInjury.tipoLesion, rivalDeEsta, evInjury.familia);
           if(typeof window.unlockLMAchievement==='function') window.unlockLMAchievement('lm_first_injury', false);
         }
+        // Aplicar tarjetas MÍAS al estado real del jugador — reglas de
+        // La Liga: 5 amarillas acumuladas = 1 partido de sanción (el
+        // contador se reinicia al sancionar), roja directa = 1
+        // partido de sanción inmediata. Antes las tarjetas eran solo
+        // un evento cosmético del visor, sin ningún efecto real.
+        eventos.filter(e=>e.type==='card' && e.team===misLado && e.jugador && e.jugador.id).forEach(evCard=>{
+          const j=evCard.jugador;
+          if(evCard.tarjeta==='amarilla'){
+            j.amarillasAcumuladas=(j.amarillasAcumuladas||0)+1;
+            if(j.amarillasAcumuladas>=5){
+              j.amarillasAcumuladas=0;
+              j.suspendido=true; j.partidosSancion=(j.partidosSancion||0)+1;
+              jugadoresSancionadosEstaJornada.add(j.id);
+            }
+          } else if(evCard.tarjeta==='roja'){
+            j.suspendido=true; j.partidosSancion=(j.partidosSancion||0)+1;
+            jugadoresSancionadosEstaJornada.add(j.id);
+          }
+        });
         miPartidoInfo={ home:partido.home, away:partido.away, resultado, eventos, climaId: clima?clima.id:null, jornadaIndex:j };
         actualizarEstadioTrasPartido(miEsLocalDeEste, resultado, clima);
         const misGoles=miEsLocalDeEste?resultado.golesA:resultado.golesB, susGoles=miEsLocalDeEste?resultado.golesB:resultado.golesA;
@@ -4834,6 +4930,18 @@
           p.injured=false; p.injurySeverity=null;
           cerrarLesionHistorial(p, 'Tiempo natural');
         }
+      }
+      // Sanción por tarjetas: se descuenta un partido cumplido cada vez
+      // que se resuelve una jornada — antes las tarjetas eran solo
+      // cosméticas (se veían en el visor pero nunca se acumulaban ni
+      // causaban ninguna sanción real, por eso nunca se veían
+      // reflejadas en la plantilla). Igual que con la lesión, si la
+      // sanción se acaba de imponer ESTA misma jornada, su cuenta
+      // atrás empieza la próxima, no ahora mismo.
+      if(jugadoresSancionadosEstaJornada.has(p.id)) return;
+      if(p.suspendido && p.partidosSancion>0){
+        p.partidosSancion--;
+        if(p.partidosSancion<=0) p.suspendido=false;
       }
     });
 
@@ -7424,6 +7532,11 @@
         enviarCorreo('mantenimiento', t('correo.grada_descontenta.asunto'),
           tp('correo.grada_descontenta.cuerpo', {n:est.satisfaccion}),
           {asunto:'correo.grada_descontenta.asunto', cuerpo:'correo.grada_descontenta.cuerpo', paramsCuerpo:{n:est.satisfaccion}});
+        // Este correo lleva un botón directo a la interfaz de
+        // Seguridad del Estadio — antes solo informaba del problema
+        // sin dar ninguna forma rápida de ir a solucionarlo.
+        const ultimoCorreo=state.correoInterno && state.correoInterno[0];
+        if(ultimoCorreo) ultimoCorreo.tipoEspecial='grada_descontenta';
       }
     }
     if(trab.medico && !yaEnviado('medico')){
@@ -8815,9 +8928,10 @@
     }
     function filaJugador(p){
       const cross=p.injured?` <span class="cross" title="${t('lm.tt_lesionado')}">✚</span>`:'';
+      const tarjetaSancion=p.suspendido?` <span class="lm-tarjeta-sancion" title="${tp('lm.tt_sancionado',{n:p.partidosSancion})}">🟥</span>`:'';
       const racha=p.racha>=2?` <span title="${t('lm.tt_racha_gol')}">🔥${p.racha}</span>`:'';
       const star=titularIds.has(p.id)?`<span class="star" title="${t('lm.tt_titular')}">★</span>`:'';
-      const claseFila=[p.id===seleccionJugador?'lm-row-selected':'', p.injured?'lm-row-injured':''].filter(Boolean).join(' ');
+      const claseFila=[p.id===seleccionJugador?'lm-row-selected':'', (p.injured||p.suspendido)?'lm-row-injured':''].filter(Boolean).join(' ');
       // Posición JUGADA (la del slot del campo si está alineado) frente a
       // su posición natural — mismo tratamiento que Copa Leyendas en
       // CONVOCADOS: si difieren, la jugada se marca en rojo y la natural
@@ -8828,7 +8942,7 @@
       const posCell=`<span style="font-weight:700${fueraDePos?';color:#e24b4a':''}">${posJugada}</span>${star}${fueraDePos?`<br><span style="font-size:9px;color:#888">${p.position}</span>`:''}`;
       return `<tr data-pid="${p.id}" class="${claseFila}">
         <td class="lm-td-numero">${p.numero||'-'}</td>
-        <td>${p.name}${rasgosIconosHTML(p)}${cross}${racha}</td>
+        <td>${p.name}${rasgosIconosHTML(p)}${cross}${tarjetaSancion}${racha}</td>
         <td>${fatigueBarHTML(p)}</td>
         <td>${posCell}</td>
         <td>${p.attack}</td><td>${p.defense}</td><td>${p.pace}</td><td>${p.passing}</td><td>${p.technique}</td>
@@ -9105,6 +9219,8 @@
                     }
                   } else if(c.tipoEspecial==='nuevos_candidatos'){
                     extra=`<div class="lm-correo-ofertas"><button class="lm-correo-oferta-btn" data-ir-contratar="1"><i class="ph ph-bold ph-user-plus"></i> ${t('lm.contratar_btn')}</button></div>`;
+                  } else if(c.tipoEspecial==='grada_descontenta'){
+                    extra=`<div class="lm-correo-ofertas"><button class="lm-correo-oferta-btn" data-ir-seguridad="1"><i class="ph ph-bold ph-shield-check"></i> ${t('lm.seguridad_estadio')}</button></div>`;
                   }
                   cuerpoExtra=`<div class="lm-correo-cuerpo">${correoCuerpoActual(c)||''}${extra}</div>`;
                 }
@@ -9474,6 +9590,13 @@
         e.stopPropagation();
         if(typeof window.playSound==='function') window.playSound('select');
         abrirTrabajadores();
+      });
+    });
+    root.querySelectorAll('[data-ir-seguridad]').forEach(btn=>{
+      btn.addEventListener('click', (e)=>{
+        e.stopPropagation();
+        if(typeof window.playSound==='function') window.playSound('select');
+        abrirSeguridadEstadio();
       });
     });
     root.querySelectorAll('[data-abrir-sobre-correo]').forEach(btn=>{
@@ -10283,10 +10406,15 @@
       const contratados=state.guardiasContratados||0;
       const disponibles=guardiasDisponibles();
       const salario=guardiaSalarioActual();
+      const bloqueado = state.guardiasConfigGuardadaEnJornada===state.jornadaActual;
       overlay.innerHTML=`
         <div class="lm-dilemma-card lm-seguridad-card">
           ${xCerrarHTML()}
           <div class="lm-dilemma-title"><i class="ph ph-bold ph-shield-check"></i> ${t('lm.seguridad_estadio')}</div>
+          <div style="margin-bottom:10px">
+            <div style="display:flex;justify-content:space-between;font-size:10px;color:#999;margin-bottom:2px"><span><i class="ph ph-bold ph-grass"></i> ${t('lm.estado_cesped')}</span><span>${(state.estadio&&state.estadio.campo)||0}%</span></div>
+            ${campoBarraHTML((state.estadio&&state.estadio.campo)||0, true)}
+          </div>
           <div class="lm-seguridad-resumen">
             <div class="lm-seguridad-resumen-item">
               <i class="ph ph-bold ph-users-three"></i>
@@ -10318,9 +10446,9 @@
                   <div class="lm-zona-nombre">${z.label}</div>
                   ${nivel>0?`<div class="lm-zona-disturbio" style="color:${color}">${LM_DISTURBIO_LABEL[nivel]}</div>`:''}
                   <div class="lm-zona-guardias-fila">
-                    <button class="lm-zona-btn" data-zona-quitar="${z.id}" ${guardiasZona<=0?'disabled':''}><i class="ph ph-bold ph-minus"></i></button>
+                    <button class="lm-zona-btn" data-zona-quitar="${z.id}" ${(guardiasZona<=0||bloqueado)?'disabled':''}><i class="ph ph-bold ph-minus"></i></button>
                     <span class="lm-zona-guardias-num"><i class="ph ph-bold ph-shield"></i> ${guardiasZona}/3</span>
-                    <button class="lm-zona-btn" data-zona-anadir="${z.id}" ${(guardiasZona>=3||disponibles<=0)?'disabled':''}><i class="ph ph-bold ph-plus"></i></button>
+                    <button class="lm-zona-btn" data-zona-anadir="${z.id}" ${(guardiasZona>=3||disponibles<=0||bloqueado)?'disabled':''}><i class="ph ph-bold ph-plus"></i></button>
                   </div>
                 </div>
               </div>`;
@@ -10341,14 +10469,18 @@
                   <div class="lm-zona-fila-nombre">${z.label}</div>
                   <div class="lm-zona-fila-estado" style="color:${color||'#666'}">${nivel>0?LM_DISTURBIO_LABEL[nivel]:t('lm.disturbio_0')}</div>
                 </div>
-                <button class="lm-zona-btn-movil" data-zona-quitar="${z.id}" ${guardiasZona<=0?'disabled':''}><i class="ph ph-bold ph-minus"></i></button>
+                <button class="lm-zona-btn-movil" data-zona-quitar="${z.id}" ${(guardiasZona<=0||bloqueado)?'disabled':''}><i class="ph ph-bold ph-minus"></i></button>
                 <span class="lm-zona-fila-num"><i class="ph ph-bold ph-shield"></i> ${guardiasZona}/3</span>
-                <button class="lm-zona-btn-movil" data-zona-anadir="${z.id}" ${(guardiasZona>=3||disponibles<=0)?'disabled':''}><i class="ph ph-bold ph-plus"></i></button>
+                <button class="lm-zona-btn-movil" data-zona-anadir="${z.id}" ${(guardiasZona>=3||disponibles<=0||bloqueado)?'disabled':''}><i class="ph ph-bold ph-plus"></i></button>
               </div>`;
             }).join('')}
           </div>
           <div class="lm-setup-desc" style="text-align:center;margin-top:8px">${t('lm.zonas_sin_guardia_desc')}</div>
-          <div class="lm-popup-actions"><button id="lmSeguridadCerrarBtn" class="mode-card-btn mode-card-btn-gold">${t('lm.cerrar')}</button></div>
+          ${state.guardiasConfigGuardadaEnJornada===state.jornadaActual?`<div class="lm-setup-desc" style="text-align:center;color:var(--gold)"><i class="ph ph-bold ph-lock-simple"></i> ${t('lm.guardias_bloqueado_desc')}</div>`:''}
+          <div class="lm-popup-actions lm-popup-actions-compact">
+            <button id="lmSeguridadGuardarBtn" class="mode-card-btn mode-card-btn-gold" ${state.guardiasConfigGuardadaEnJornada===state.jornadaActual?'disabled':''}><i class="ph ph-bold ph-floppy-disk"></i> ${t('lm.guardar_btn')}</button>
+            <button id="lmSeguridadCerrarBtn" class="mode-card-btn mode-card-btn-secondary">${t('lm.cerrar')}</button>
+          </div>
         </div>`;
       document.getElementById('lmContratarGuardiaBtn').addEventListener('click', ()=>{
         if(typeof window.playSound==='function') window.playSound('select');
@@ -10359,6 +10491,27 @@
       if(despedirBtn) despedirBtn.addEventListener('click', ()=>{
         if(typeof window.playSound==='function') window.playSound('select');
         despedirGuardiaDisponible();
+        pintar();
+      });
+      const guardarBtn=document.getElementById('lmSeguridadGuardarBtn');
+      if(guardarBtn) guardarBtn.addEventListener('click', ()=>{
+        if(typeof window.playSound==='function') window.playSound('victory');
+        // Guardar aplica un efecto calmante real e inmediato a toda
+        // zona que tenga guardias asignados (no solo evita que
+        // empeore, como ya hacía el sistema de fondo — ahora también
+        // mejora directamente en el momento) y bloquea la colocación
+        // hasta el siguiente partido, para que el efecto se note de
+        // verdad y no se pueda reconfigurar sin parar.
+        LM_ZONAS_ESTADIO.forEach(z=>{
+          const guardiasZona=state.guardiasZonas[z.id]||0;
+          const nivelActual=state.disturbiosZonas[z.id]||0;
+          if(guardiasZona>0 && nivelActual>0){
+            state.disturbiosZonas[z.id]=Math.max(0, nivelActual-1);
+          }
+        });
+        state.guardiasConfigGuardadaEnJornada=state.jornadaActual;
+        guardarEstado();
+        if(typeof showToast==='function') showToast(t('lm.guardias_guardado_aviso'));
         pintar();
       });
       overlay.querySelectorAll('[data-zona-jump]').forEach(btn=>{
@@ -10446,7 +10599,11 @@
         <div class="lm-dilemma-card lm-dilemma-card-mant" style="max-width:640px">
           ${xCerrarHTML()}
           <div class="lm-dilemma-title"><i class="ph ph-bold ph-flag-pennant"></i> ${t('lm.titulo_mantenimiento')}</div>
-          <button type="button" class="mode-card-btn mode-card-btn-gold" id="lmSeguridadEstadioBtn" style="width:100%;margin-bottom:10px"><i class="ph ph-bold ph-shield-check"></i> ${t('lm.seguridad_estadio')}</button>
+          <button type="button" class="mode-card-btn mode-card-btn-gold" id="lmSeguridadEstadioBtn" style="width:100%;margin-bottom:4px"><i class="ph ph-bold ph-shield-check"></i> ${t('lm.seguridad_estadio')}</button>
+          <div style="margin-bottom:10px">
+            <div style="display:flex;justify-content:space-between;font-size:10px;color:#999;margin-bottom:2px"><span><i class="ph ph-bold ph-grass"></i> ${t('lm.estado_cesped')}</span><span>${est.campo||0}%</span></div>
+            ${campoBarraHTML(est.campo||0, true)}
+          </div>
           ${renderNivelesMantenimientoHTML()}
           <div class="lm-staff-bar-capital" style="justify-content:center;margin:10px 0 8px"><span><i class="ph ph-bold ph-dice-five"></i> ${t('lm.dados')}: <strong>${state.diceAvailable}</strong></span><span><i class="ph ph-bold ph-arrows-clockwise"></i> ${t('lm.rerrolls')}: <strong>${state.dadoRerollsDisponibles||0}</strong></span><span><i class="ph ph-bold ph-cards"></i> ${t('lm.cambios')}: <strong>${Math.max(0,lmCambiosCartaPorPartido()-(state.mantenimientoCambiosUsados||0))}/${lmCambiosCartaPorPartido()}</strong></span></div>
           <div class="med-card-grid">${cartasHTML}</div>
@@ -10871,6 +11028,7 @@
     const mesActual=mesesOrdenadosDesc[0];
     const mesesHistoricos=mesesOrdenadosDesc.slice(1).sort((a,b)=>a-b); // resto, de más antiguo a más reciente para el gráfico
     let filaMesActual=`<p class="lm-setup-desc" style="text-align:center">${t('lm.sin_movimientos_mes')}</p>`;
+    let desgloseIngresos='', desgloseGastos='';
     if(mesActual!==undefined){
       const d=meses[mesActual];
       const neto=d.ingresos-d.gastos;
@@ -10880,6 +11038,30 @@
         <div class="lm-fin-bar-row"><span class="lm-fin-bar-label">${t('lm.ingresos')}</span><div class="lm-fin-bar-wrap"><div class="lm-fin-bar-fill lm-fin-bar-ingreso" style="width:${Math.round(d.ingresos/maxValor*100)}%"></div></div><span class="lm-fin-bar-valor">${formatoDinero(d.ingresos)}</span></div>
         <div class="lm-fin-bar-row"><span class="lm-fin-bar-label">${t('lm.gastos')}</span><div class="lm-fin-bar-wrap"><div class="lm-fin-bar-fill lm-fin-bar-gasto" style="width:${Math.round(d.gastos/maxValor*100)}%"></div></div><span class="lm-fin-bar-valor">${formatoDinero(d.gastos)}</span></div>
       </div>`;
+      // Desglose por concepto — de dónde viene cada ingreso y a dónde
+      // va cada gasto, no solo el total agregado. Se agrupan por el
+      // texto exacto del concepto (ya guardado en cada movimiento
+      // desde que se registró) y se ordenan de mayor a menor, con una
+      // mini barra de proporción dentro de su propio grupo — así se ve
+      // de un vistazo cuál es la partida que más pesa.
+      const gruposIngreso={}, gruposGasto={};
+      d.movimientos.forEach(m=>{
+        const grupo = m.monto>=0 ? gruposIngreso : gruposGasto;
+        grupo[m.concepto]=(grupo[m.concepto]||0)+Math.abs(m.monto);
+      });
+      function filasDesglose(grupo, colorClase){
+        const entradas=Object.entries(grupo).sort((a,b)=>b[1]-a[1]);
+        if(!entradas.length) return `<div class="lm-fin-desglose-vacio">${t('lm.sin_movimientos_mes')}</div>`;
+        const max=Math.max(...entradas.map(e=>e[1]));
+        return entradas.map(([concepto,monto])=>`
+          <div class="lm-fin-desglose-fila">
+            <span class="lm-fin-desglose-concepto">${concepto}</span>
+            <div class="lm-fin-desglose-track"><div class="lm-fin-desglose-fill ${colorClase}" style="width:${Math.round(monto/max*100)}%"></div></div>
+            <span class="lm-fin-desglose-valor">${formatoDinero(monto)}</span>
+          </div>`).join('');
+      }
+      desgloseIngresos=filasDesglose(gruposIngreso, 'lm-fin-desglose-fill-ingreso');
+      desgloseGastos=filasDesglose(gruposGasto, 'lm-fin-desglose-fill-gasto');
     }
     // Histórico de meses anteriores — gráfico de barras (neto por mes),
     // en vez de repetir la misma tabla detallada para cada mes.
@@ -10913,6 +11095,12 @@
           </div>
         </div>
         ${filaMesActual}
+        <div class="lm-fin-tabs">
+          <button type="button" class="lm-fin-tab-btn lm-fin-tab-activa" data-fin-tab="ingresos">${t('lm.ingresos')}</button>
+          <button type="button" class="lm-fin-tab-btn" data-fin-tab="gastos">${t('lm.gastos')}</button>
+        </div>
+        <div class="lm-fin-desglose" data-fin-panel="ingresos">${desgloseIngresos}</div>
+        <div class="lm-fin-desglose" data-fin-panel="gastos" style="display:none">${desgloseGastos}</div>
         <p class="lm-setup-desc" style="text-align:left;margin:12px 0 4px">${t('lm.historico_meses_anteriores')}</p>
         ${graficoHistorico}
         ${esModoMantener?'':`<div class="lm-popup-actions lm-popup-actions-compact">
@@ -10920,6 +11108,14 @@
         </div>`}
       </div>`;
     document.getElementById('ligaManagerScreen').appendChild(overlay);
+    overlay.querySelectorAll('[data-fin-tab]').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        if(typeof window.playSound==='function') window.playSound('select');
+        const tab=btn.getAttribute('data-fin-tab');
+        overlay.querySelectorAll('[data-fin-tab]').forEach(b=>b.classList.toggle('lm-fin-tab-activa', b===btn));
+        overlay.querySelectorAll('[data-fin-panel]').forEach(p=>{ p.style.display = p.getAttribute('data-fin-panel')===tab ? '' : 'none'; });
+      });
+    });
     habilitarCierreOverlay(overlay, ()=>overlay.remove());
     const xBtnFin=overlay.querySelector('[data-cerrar-x]');
     if(xBtnFin) xBtnFin.addEventListener('click', ()=>overlay.remove());
