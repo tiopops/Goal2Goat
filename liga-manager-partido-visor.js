@@ -437,6 +437,13 @@
         if(balonSombra){ balonSombra.setAttribute('cx', curX); balonSombra.setAttribute('cy', curY); }
         if(t>=1) ballAnim.active=false;
       }
+      // Posición real del balón, actualizada cada fotograma — única
+      // fuente de verdad que el jugador que lo lleva en los pies lee
+      // directamente (ver jugadorAnimFrame/moverJugador, modo
+      // followBall) para no desincronizarse nunca del balón, sea cual
+      // sea la duración con la que se llamó a cada animación.
+      ballAnim.curX = parseFloat(balon.getAttribute('cx'))||ballAnim.targetX;
+      ballAnim.curY = parseFloat(balon.getAttribute('cy'))||ballAnim.targetY;
       ballAnimFrameId=requestAnimationFrame(ballAnimFrame);
     }
     ballAnimFrameId=requestAnimationFrame(ballAnimFrame);
@@ -726,11 +733,25 @@
         // vieran a golpecitos nerviosos en vez de suaves — con la
         // curva normal de vuelta para esos casos, y la rápida solo
         // donde hace falta, se arreglan los dos problemas a la vez.
-        const eased = a.easing==='out' ? (1-Math.pow(1-t,3)) : (t<0.5 ? 4*t*t*t : 1-Math.pow(-2*t+2,3)/2);
-        const curX=a.startX+(a.targetX-a.startX)*eased;
-        const curY=a.startY+(a.targetY-a.startY)*eased;
+        let curX, curY;
+        if(a.followBall){
+          // El jugador que lleva el balón en los pies NO interpola su
+          // propio trayecto por separado: cada fotograma toma la
+          // posición REAL que el balón acaba de pintar (ballAnim.curX/
+          // curY) y le suma el desfase fijo con el que arrancó este
+          // movimiento (offsetX/Y). Así el marcador del jugador queda
+          // literalmente pegado al balón fotograma a fotograma — no
+          // pueden desincronizarse entre sí, sea cual sea la duración
+          // pasada a moverJugador/moverBalon para este tramo.
+          curX = ballAnim.curX + a.offsetX;
+          curY = ballAnim.curY + a.offsetY;
+        } else {
+          const eased = a.easing==='out' ? (1-Math.pow(1-t,3)) : (t<0.5 ? 4*t*t*t : 1-Math.pow(-2*t+2,3)/2);
+          curX=a.startX+(a.targetX-a.startX)*eased;
+          curY=a.startY+(a.targetY-a.startY)*eased;
+        }
         if(a.el) a.el.setAttribute('transform', `translate(${curX},${curY})`);
-        if(t>=1){
+        if(a.followBall ? !ballAnim.active : t>=1){
           a.active=false;
           // Aviso de finalización — usado por la reorganización tras
           // gol/descanso para saber con certeza cuándo TODOS los
@@ -743,7 +764,7 @@
     }
     jugadorAnimFrameId=requestAnimationFrame(jugadorAnimFrame);
 
-    function moverJugador(esMio, idx, x, y, dur, easing, onComplete){
+    function moverJugador(esMio, idx, x, y, dur, easing, onComplete, followBall){
       const arr = esMio?posMia:posRival;
       // Blindaje real: si por lo que sea idx llega inválido (-1 u
       // otro fuera de rango — puede pasar en algún caso límite de las
@@ -768,14 +789,35 @@
         const durReal=real(dur);
         const key=(esMio?'mio-':'rival-')+idx;
         const actual=jugadorAnims[key];
-        // Parte SIEMPRE desde la posición visual real en la que esté
-        // en ESTE instante (si ya estaba a mitad de otro movimiento,
-        // continúa desde ahí, no desde el destino de la animación
-        // anterior) — así los cambios de dirección se ven naturales,
-        // sin saltos.
-        const startX = (actual && actual.active) ? (actual.startX+(actual.targetX-actual.startX)*Math.min(1,(performance.now()-actual.startTime)/actual.duration)) : arr[idx].x;
-        const startY = (actual && actual.active) ? (actual.startY+(actual.targetY-actual.startY)*Math.min(1,(performance.now()-actual.startTime)/actual.duration)) : arr[idx].y;
-        jugadorAnims[key] = {startX, startY, targetX:x, targetY:y, startTime:performance.now(), duration:Math.max(1,durReal), active:true, el, easing:easing||'inout', onComplete};
+        if(followBall){
+          // Modo "lleva el balón en los pies": no se calcula ningún
+          // trayecto ni duración propios para el jugador — simplemente
+          // sigue la posición real del balón fotograma a fotograma
+          // (ver jugadorAnimFrame), con un desfase fijo calculado una
+          // única vez aquí a partir de dónde está el balón ahora mismo
+          // y a dónde va el jugador. Esto anula por completo cualquier
+          // posibilidad de desajuste de duración/curva entre
+          // moverBalon y moverJugador para este movimiento.
+          const offsetX = x - ballAnim.targetX;
+          const offsetY = y - ballAnim.targetY;
+          jugadorAnims[key] = {startX:arr[idx].x, startY:arr[idx].y, targetX:x, targetY:y, offsetX, offsetY, startTime:performance.now(), duration:Math.max(1,durReal), active:true, el, easing:easing||'out', followBall:true, onComplete};
+        } else {
+          // Parte SIEMPRE desde la posición visual real en la que esté
+          // en ESTE instante (si ya estaba a mitad de otro movimiento,
+          // continúa desde ahí, no desde el destino de la animación
+          // anterior) — así los cambios de dirección se ven naturales,
+          // sin saltos. Usa la MISMA curva (eased) que se pintó de
+          // verdad en el fotograma anterior, no una interpolación
+          // lineal — antes este cálculo usaba t sin aplicar el easing,
+          // así que al redirigir a un jugador a mitad de carrera el
+          // nuevo tramo arrancaba desde una posición que no coincidía
+          // con la que se acababa de dibujar, dando un salto visible.
+          const tAnt = (actual && actual.active) ? Math.min(1,(performance.now()-actual.startTime)/actual.duration) : 1;
+          const easedAnt = (actual && actual.easing==='out') ? (1-Math.pow(1-tAnt,3)) : (tAnt<0.5 ? 4*tAnt*tAnt*tAnt : 1-Math.pow(-2*tAnt+2,3)/2);
+          const startX = (actual && actual.active) ? (actual.startX+(actual.targetX-actual.startX)*easedAnt) : arr[idx].x;
+          const startY = (actual && actual.active) ? (actual.startY+(actual.targetY-actual.startY)*easedAnt) : arr[idx].y;
+          jugadorAnims[key] = {startX, startY, targetX:x, targetY:y, startTime:performance.now(), duration:Math.max(1,durReal), active:true, el, easing:easing||'inout', followBall:false, onComplete};
+        }
       } else if(typeof onComplete==='function'){
         onComplete();
       }
@@ -2352,7 +2394,7 @@
           // la ficha del jugador clavada mientras el balón "flotaba"
           // solo hacia delante (mismo bug que ya se corrigió en el
           // regate 1 contra 1).
-          moverJugador(posesionMia, idxConBalon, destinoConduccion.x, destinoConduccion.y, dur*0.75, 'out');
+          moverJugador(posesionMia, idxConBalon, destinoConduccion.x, destinoConduccion.y, dur*0.75, 'out', null, true);
           infoBar.textContent=`${nombreAtaca} avanza con el balón, sin oposición cerca`;
           actualizarFormacionDinamica(posesionMia, posesionMia?idxConBalon:undefined, posesionMia?undefined:idxConBalon, posActual);
           setTimeout(()=>{
@@ -2385,7 +2427,7 @@
             // movimiento explícito es el que debe llevarlo con el
             // balón en los pies, adelantado respecto al defensa al que
             // acaba de regatear.
-            moverJugador(posesionMia, idxConBalon, destinoRegate.x, destinoRegate.y, dur*0.8, 'out');
+            moverJugador(posesionMia, idxConBalon, destinoRegate.x, destinoRegate.y, dur*0.8, 'out', null, true);
             infoBar.textContent=`${nombreAtaca} encara y supera a su marcador`;
             mostrarAlertaRegate(destinoRegate.x, destinoRegate.y);
             actualizarFormacionDinamica(posesionMia, posesionMia?idxConBalon:undefined, posesionMia?undefined:idxConBalon, posActual);
@@ -2437,7 +2479,7 @@
             };
             pasesJugadaActual=Math.max(0,pasesJugadaActual-1);
             moverBalon(destinoIndiv.x, destinoIndiv.y, dur*0.75);
-            moverJugador(posesionMia, idxConBalon, destinoIndiv.x, destinoIndiv.y, dur*0.75, 'out');
+            moverJugador(posesionMia, idxConBalon, destinoIndiv.x, destinoIndiv.y, dur*0.75, 'out', null, true);
             infoBar.textContent=`${nombreAtaca} no encuentra un pase legal y se lanza en jugada individual`;
             actualizarFormacionDinamica(posesionMia, posesionMia?idxConBalon:undefined, posesionMia?undefined:idxConBalon, posActual);
             setTimeout(()=>{

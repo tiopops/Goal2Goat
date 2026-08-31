@@ -4830,8 +4830,16 @@ body.light-theme.menu-screen{
 .lm-zona-marcador-izq .lm-zona-etiqueta{transform:translateX(38%)}
 .lm-zona-marcador-der .lm-zona-etiqueta{transform:translateX(-38%)}
 .lm-zona-tinte{
-  position:absolute;top:50%;left:50%;width:100px;height:64px;border-radius:16px;
-  transform:translate(-50%,-50%);opacity:.18;filter:blur(10px);pointer-events:none;
+  /* Antes tenía un tamaño fijo (100x64) centrado exactamente igual
+     que la etiqueta — como la etiqueta real (con su nombre, nivel de
+     disturbios y fila de guardias) casi siempre acaba siendo más
+     grande que eso, la tapaba por completo con su fondo opaco y el
+     destello no se veía nunca, ni en norte ni en sur. Con "inset"
+     negativo el destello siempre sobresale por los cuatro lados de
+     la etiqueta (haga esta el tamaño que haga), así que se ve de
+     verdad por encima y por debajo del panel, no solo detrás. */
+  position:absolute;inset:-26px;border-radius:20px;
+  opacity:.32;filter:blur(14px);pointer-events:none;z-index:0;
 }
 .lm-zona-marcador-grave .lm-zona-tinte{animation:lmZonaPulso 1.1s ease-in-out infinite}
 @keyframes lmZonaPulso{
@@ -4839,7 +4847,7 @@ body.light-theme.menu-screen{
   50%{opacity:.32;transform:translate(-50%,-50%) scale(1.15)}
 }
 .lm-zona-etiqueta{
-  position:relative;background:rgba(10,12,10,.92);border:1px solid rgba(255,255,255,.15);
+  position:relative;z-index:1;background:rgba(10,12,10,.92);border:1px solid rgba(255,255,255,.15);
   border-radius:8px;padding:7px 10px;min-width:128px;text-align:center;
   box-shadow:0 4px 10px rgba(0,0,0,.5);
 }

@@ -1389,14 +1389,37 @@
 
     (state.plantilla||[]).forEach(p=>{ p.fatigue=Math.max(0,(p.fatigue==null?100:p.fatigue)-15); });
 
+    // Los amistosos NUNCA generan tarjetas (no hay ningún código de
+    // tarjetas en esta función, a propósito) — pero SÍ pueden dejar
+    // lesiones, con probabilidad Y gravedad que suben con la
+    // dificultad elegida para el amistoso: uno "fácil" apenas arriesga
+    // nada, uno "difícil" se juega de verdad al mismo nivel de riesgo
+    // que un partido de competición.
     const nivelesMed=state.medicoNiveles||{};
     const factorPrevencion=Math.pow(0.85, (nivelesMed.prevencionMuscular||0)+(nivelesMed.prevencionOsea||0));
-    const probLesionBase = dificultad==='dificil' ? 0.06 : (dificultad==='normal' ? 0.03 : 0.015);
+    const probLesionBase = dificultad==='dificil' ? 0.10 : (dificultad==='normal' ? 0.06 : 0.03);
     let lesionadoNombre=null;
     if(Math.random()<probLesionBase*factorPrevencion && state.plantilla && state.plantilla.length){
       const candidato=state.plantilla[Math.floor(Math.random()*state.plantilla.length)];
       if(candidato && !candidato.injured){
-        candidato.injured=true; candidato.injurySeverity='leve'; candidato.injuryWeeks=1; candidato.injuryFamilia='muscular';
+        // Gravedad ponderada según la dificultad: en "fácil" casi
+        // siempre leve, en "difícil" hay hueco real para algo grave —
+        // antes toda lesión de amistoso era fija "leve"/1 semana pase
+        // lo que pase, sin distinguir un amistoso de entrenamiento
+        // suave de uno exigente de pretemporada.
+        const TABLA_SEVERIDAD_AMISTOSO = {
+          facil:   [{label:'leve', weeks:1, peso:0.92},{label:'moderada', weeks:2, peso:0.08}],
+          normal:  [{label:'leve', weeks:1, peso:0.65},{label:'moderada', weeks:2, peso:0.30},{label:'grave', weeks:4, peso:0.05}],
+          dificil: [{label:'leve', weeks:1, peso:0.45},{label:'moderada', weeks:2, peso:0.38},{label:'grave', weeks:4, peso:0.17}],
+        };
+        const tabla=TABLA_SEVERIDAD_AMISTOSO[dificultad]||TABLA_SEVERIDAD_AMISTOSO.normal;
+        let rSev=Math.random(), sevAmistoso=tabla[tabla.length-1];
+        for(const s of tabla){ if(rSev<s.peso){ sevAmistoso=s; break;} rSev-=s.peso; }
+        const nivelCuracion = Math.random()<0.5 ? (nivelesMed.curacionMuscular||0) : (nivelesMed.curacionOsea||0);
+        candidato.injured=true;
+        candidato.injurySeverity=sevAmistoso.label;
+        candidato.injuryWeeks=Math.max(1, sevAmistoso.weeks-nivelCuracion);
+        candidato.injuryFamilia='muscular';
         lesionadoNombre=candidato.name;
       }
     }
@@ -1550,9 +1573,33 @@
     dia.elegido=nodoIdx;
     aplicarEfectoNodoSemana(nodo, dia.fecha, onMediosCerrado, onQuinielaCerrada);
     if(!state.nodosAcumulados) state.nodosAcumulados={};
-    state.nodosAcumulados[nodo.tipo]=(state.nodosAcumulados[nodo.tipo]||0)+1;
+    // Para los amistosos, el contador de progreso NO se suma aquí —
+    // se difiere hasta que se cierra el pop-up de resultado (botón
+    // ENTENDIDO, ver aplicarIncrementoNodoAmistoso), igual que ya se
+    // hacía con la moral y la afición. Sumarlo aquí mismo, al elegir
+    // el nodo, repintaba las barras del árbol con el nuevo valor ANTES
+    // de que el jugador viera el resultado del amistoso — un
+    // spoiler real de si algo bueno había pasado.
+    if(nodo.tipo!=='amistoso'){
+      state.nodosAcumulados[nodo.tipo]=(state.nodosAcumulados[nodo.tipo]||0)+1;
+    }
     guardarEstado();
     return {ok:true, nodo};
+  }
+
+  // Aplica de verdad el incremento del contador de progreso del nodo
+  // "amistoso" — se llama al cerrar el pop-up de resultado (botón
+  // ENTENDIDO), nunca antes, para que las barras de recompensas del
+  // árbol no se muevan hasta que el jugador vea el resultado completo
+  // del amistoso. Protegido contra doble aplicación (p.ej. si el
+  // jugador pudiera cerrar el pop-up dos veces).
+  function aplicarIncrementoNodoAmistoso(){
+    const r=state.ultimoAmistosoResultado;
+    if(!r || r.nodoAcumuladoAplicado) return;
+    if(!state.nodosAcumulados) state.nodosAcumulados={};
+    state.nodosAcumulados.amistoso=(state.nodosAcumulados.amistoso||0)+1;
+    r.nodoAcumuladoAplicado=true;
+    guardarEstado();
   }
 
 
@@ -2220,6 +2267,16 @@
   function pintarArbolNodos(instantaneo){
     const overlay=document.getElementById('lmArbolNodosOverlay');
     if(!overlay) return;
+    // El repintado reconstruye TODO el contenido del overlay
+    // (innerHTML), lo que crea un #lmArbolWrap totalmente nuevo con
+    // scrollLeft=0 aunque el jugador ya estuviera viendo el árbol
+    // desplazado a la derecha. Sin guardar y restaurar esa posición
+    // aquí, la comprobación de "el escudo rival ya se ve entero" de
+    // más abajo se evaluaba siempre contra un scroll en 0 (falso), así
+    // que volvía a lanzar el desplazamiento suave en cada repintado —
+    // el salto que se veía aunque el nodo final ya estuviera visible.
+    const wrapPrevio=overlay.querySelector('#lmArbolWrap');
+    const scrollLeftPrevio=wrapPrevio ? wrapPrevio.scrollLeft : 0;
     overlay.innerHTML=renderArbolNodosOverlayHTML();
     cablearEventosArbolNodos(overlay);
     // En escritorio el lienzo se ajusta al ancho real disponible para
@@ -2249,6 +2306,7 @@
     // Auto-centrar el scroll horizontal en el dia de hoy, para que en
     // movil el jugador no tenga que buscarlo manualmente al entrar.
     const wrap=overlay.querySelector('#lmArbolWrap');
+    if(wrap) wrap.scrollLeft=scrollLeftPrevio;
     const diaActualIdx=diaActualIndiceSemanaNodos();
     if(wrap && diaActualIdx>=0){
       const {puntos}=construirCoordenadasArbol();
@@ -2396,6 +2454,7 @@
           // barras de arriba no cambien hasta que el jugador vea el
           // resultado completo.
           if(typeof aplicarConsecuenciasAmistoso==='function') aplicarConsecuenciasAmistoso();
+          if(typeof aplicarIncrementoNodoAmistoso==='function') aplicarIncrementoNodoAmistoso();
           overlay.remove();
           if(typeof onCerrar==='function') onCerrar();
         });
@@ -3234,7 +3293,7 @@
             }).join('')}
           </div>
           <div id="lmQuinielaAviso" class="lm-quiniela-aviso" style="display:none">${t('lm.quiniela_incompleta')}</div>
-          <div class="lm-popup-actions lm-popup-actions-compact">
+          <div class="lm-popup-actions">
             <button id="lmQuinielaAutoRellenar" class="mode-card-btn mode-card-btn-secondary"><i class="ph ph-bold ph-shuffle"></i> ${t('lm.quiniela_rellenar_auto_btn')}</button>
           </div>
           <div class="lm-popup-actions"><button id="lmQuinielaConfirmar" class="mode-card-btn mode-card-btn-gold">${t('lm.confirmar_quiniela')}</button></div>
@@ -4629,7 +4688,25 @@
     const idsAlineados=Object.values(state.alineacion||{}).filter(Boolean).filter(id=>!excluirIds.has(id));
     const titulares=idsAlineados.map(id=>state.plantilla.find(p=>p.id===id)).filter(p=>p && !p.injured);
     if(!titulares.length) return null;
-    return titulares[Math.floor(Math.random()*titulares.length)];
+    // Elección PONDERADA, no uniforme: un jugador que ya acumula
+    // amarillas pesa más en el sorteo, igual que en la vida real hay
+    // jugadores "propensos a la tarjeta" que repiten mucho más que el
+    // resto de la plantilla. Con un sorteo uniforme entre ~15-20
+    // titulares, las 35 amarillas de temporada (35% x 38 jornadas)
+    // se repartían tan finas que casi nadie llegaba nunca a las 5
+    // necesarias para la sanción por acumulación — la norma existía
+    // en el código pero era casi inalcanzable en la práctica. Con
+    // este sesgo, una vez un jugador empieza a acumular, tiene más
+    // números de seguir acumulando, así que la sanción se ve de
+    // verdad a lo largo de una temporada, no solo en la teoría.
+    const pesos=titulares.map(p=>1+(p.amarillasAcumuladas||0)*1.6);
+    const pesoTotal=pesos.reduce((a,b)=>a+b,0);
+    let r=Math.random()*pesoTotal;
+    for(let i=0;i<titulares.length;i++){
+      r-=pesos[i];
+      if(r<=0) return titulares[i];
+    }
+    return titulares[titulares.length-1];
   }
 
   // Elige un nombre real al azar de la plantilla del rival concreto —
@@ -4670,18 +4747,39 @@
       const goleador = miEsLocal ? jugadorRivalAleatorio(rival) : elegirGoleador();
       eventos.push({minute:5+Math.floor(Math.random()*85), team:'away', type:'goal', jugador:goleador});
     }
-    // Tarjetas amarillas/rojas — de momento solo informativas (sin
-    // sanción de partidos todavía), con nombre real si es tu jugador.
-    if(Math.random()<0.35){
+    // Tarjetas amarillas/rojas — probabilidades subidas respecto a
+    // antes (35%/35%/6%, con tope de una amarilla por equipo), que se
+    // quedaban muy por debajo de la media real de un partido de liga
+    // (2-4 amarillas repartidas entre los dos equipos, roja bastante
+    // más habitual que 1 cada ~16 partidos). Ahora cada equipo puede
+    // recibir más de una amarilla en el mismo partido (segunda tirada
+    // independiente tras la primera), y las rojas suben a un ~12%.
+    let amarillasMiEquipo=0, amarillasRival=0;
+    if(Math.random()<0.55){
       const jugador=elegirJugadorAlineado();
       eventos.push({minute:10+Math.floor(Math.random()*78), team:misLado, type:'card', tarjeta:'amarilla', jugador: jugador||{name:state.nombreEquipo}});
+      amarillasMiEquipo++;
     }
-    if(Math.random()<0.35){
+    if(Math.random()<0.55){
+      eventos.push({minute:10+Math.floor(Math.random()*78), team:rivalLado, type:'card', tarjeta:'amarilla', jugador:jugadorRivalAleatorio(rival)});
+      amarillasRival++;
+    }
+    // Segunda amarilla por equipo: bastante menos probable que la
+    // primera (un partido con 2 tarjetas para el mismo equipo no es
+    // lo normal, pero tampoco debe ser rarísimo).
+    if(amarillasMiEquipo>0 && Math.random()<0.22){
+      const jugador2=elegirJugadorAlineado();
+      eventos.push({minute:10+Math.floor(Math.random()*78), team:misLado, type:'card', tarjeta:'amarilla', jugador: jugador2||{name:state.nombreEquipo}});
+    }
+    if(amarillasRival>0 && Math.random()<0.22){
       eventos.push({minute:10+Math.floor(Math.random()*78), team:rivalLado, type:'card', tarjeta:'amarilla', jugador:jugadorRivalAleatorio(rival)});
     }
-    if(Math.random()<0.06){
+    if(Math.random()<0.12){
       const jugador=elegirJugadorAlineado();
       eventos.push({minute:20+Math.floor(Math.random()*68), team:misLado, type:'card', tarjeta:'roja', jugador: jugador||{name:state.nombreEquipo}});
+    }
+    if(Math.random()<0.12){
+      eventos.push({minute:20+Math.floor(Math.random()*68), team:rivalLado, type:'card', tarjeta:'roja', jugador:jugadorRivalAleatorio(rival)});
     }
     // Lesión: puede pasar DURANTE tu propio partido, no como aviso aparte
     // después de la jornada — mismo espíritu que Copa Leyendas. Existen dos
@@ -4695,7 +4793,12 @@
     // del campo relevante para este partido (el propio si juegas en casa,
     // el del rival si juegas fuera), hasta un +40% con el campo a 0.
     const factorCampo = (campoRelevante===undefined||campoRelevante===null) ? 1 : (1+Math.max(0,(100-campoRelevante))*0.004);
-    const riesgoBase=0.18*(bonos.riesgoLesionSiguiente||1)*factorCampo;
+    // Subido de 0.18 a 0.30 — con el médico invertido (que reduce este
+    // riesgo un 15% por nivel en cada familia) el jugador debe notar
+    // de verdad la diferencia entre tener o no tener equipo médico; con
+    // el valor anterior las lesiones eran tan raras que invertir en el
+    // médico apenas cambiaba nada perceptible en una temporada.
+    const riesgoBase=0.30*(bonos.riesgoLesionSiguiente||1)*factorCampo;
     if(bonos.riesgoLesionSiguiente){ state.medicoBonos.riesgoLesionSiguiente=1; } // se consume tras un partido
     const riesgoMuscular=riesgoBase*0.55*Math.pow(0.85, nivelesMed.prevencionMuscular||0);
     const riesgoOsea=riesgoBase*0.45*Math.pow(0.85, nivelesMed.prevencionOsea||0);
@@ -12180,6 +12283,13 @@
 
     function pintar(){
       const roles = rolFiltrado ? [rolFiltrado] : ROLES_TRABAJO;
+      // El overlay entero se reconstruye (innerHTML) cada vez que se
+      // contrata/despide o se cambia de filtro, lo que reseteaba su
+      // propio scroll a 0 — en móvil eso se sentía como si TODA la
+      // pantalla "saltara arriba" de golpe al pulsar un candidato.
+      // Guardando y restaurando aquí su scrollTop, la posición se
+      // queda exactamente donde estaba el jugador.
+      const scrollTopPrevio=overlay.scrollTop;
       overlay.innerHTML=`
         <div class="lm-dilemma-card" style="width:960px;max-width:94vw;text-align:left">
           ${xCerrarHTML()}
@@ -12192,6 +12302,7 @@
             <button id="lmTrabajadoresCerrar" class="mode-card-btn mode-card-btn-gold">${t('lm.cerrar')}</button>
           </div>
         </div>`;
+      overlay.scrollTop=scrollTopPrevio;
       const xBtnTrab=overlay.querySelector('[data-cerrar-x]');
       if(xBtnTrab) xBtnTrab.addEventListener('click', ()=>{ overlay.remove(); render(); });
       document.getElementById('lmTrabajadoresCerrar').addEventListener('click', ()=>{
