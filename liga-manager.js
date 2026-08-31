@@ -416,6 +416,13 @@
     const iconosBarajados=(typeof CREST_ICONS!=='undefined')?barajarArray(CREST_ICONS.filter(i=>i!=='ninguno')):[];
     const ranksBarajados=(typeof CREST_RANKS!=='undefined')?barajarArray(CREST_RANKS.filter(r=>r!=='ninguno' && r!=='laurel')):[];
     let siguienteRankIdx=0; // solo avanza para los equipos que SÍ llevan decoración
+    // Escudos reales (assets/escudos_random/), barajados sin repetir
+    // mientras alcance — si hay más equipos que escudos disponibles,
+    // se recicla la baraja (mismo patrón que ya usa iconosBarajados de
+    // arriba) en vez de fallar. Si el manifiesto aún no ha terminado
+    // de cargar (o la carpeta está vacía), se cae de vuelta al escudo
+    // procedural de siempre, sin que la liga deje de generarse.
+    const escudosRealesBarajados=(ESCUDOS_RANDOM_CACHE && ESCUDOS_RANDOM_CACHE.length) ? barajarArray(ESCUDOS_RANDOM_CACHE) : [];
     for(let i=0;i<numEquipos;i++){
       const iconoAsignado=iconosBarajados.length?iconosBarajados[i%iconosBarajados.length]:null;
       // No todos los escudos llevan decoración a propósito — cuando le
@@ -427,8 +434,24 @@
         rankAsignado=ranksBarajados[siguienteRankIdx%ranksBarajados.length];
         siguienteRankIdx++;
       }
-      const {icon, dataUri}=generarEscudoAleatorio(iconoAsignado, rankAsignado);
-      const nombre=nombreClubAleatorio(icon, nombresUsados);
+      let icon, dataUri, nombre;
+      if(escudosRealesBarajados.length){
+        const archivoEscudo=escudosRealesBarajados[i%escudosRealesBarajados.length];
+        dataUri='assets/escudos_random/'+archivoEscudo;
+        nombre=nombreClubDesdeArchivoEscudo(archivoEscudo);
+        icon=null;
+        // Si hay más equipos que escudos distintos y toca reciclar
+        // alguno, el nombre puede repetirse — se distingue igual que
+        // el resto de nombres generados, añadiendo un sufijo numérico.
+        let sufijoNombre=2;
+        const nombreBase=nombre;
+        while(nombresUsados.has(nombre)){ nombre=nombreBase+' '+sufijoNombre; sufijoNombre++; }
+        nombresUsados.add(nombre);
+      } else {
+        const generado=generarEscudoAleatorio(iconoAsignado, rankAsignado);
+        icon=generado.icon; dataUri=generado.dataUri;
+        nombre=nombreClubAleatorio(icon, nombresUsados);
+      }
       let key=nombre.toLowerCase().replace(/\s+/g,'').replace(/[^a-z0-9]/g,'');
       let sufijoClave=2;
       while(clavesUsadas.has(key)){ key=nombre.toLowerCase().replace(/\s+/g,'').replace(/[^a-z0-9]/g,'')+sufijoClave; sufijoClave++; }
@@ -1415,7 +1438,7 @@
   // Aplica de verdad el efecto de un nodo elegido. fechaISOdia es la
   // fecha real de ese día concreto (para entreno/descanso, que siguen
   // usando el mismo calendarioEntrenamiento de siempre por debajo).
-  function aplicarEfectoNodoSemana(nodo, fechaISOdia, onMediosCerrado){
+  function aplicarEfectoNodoSemana(nodo, fechaISOdia, onMediosCerrado, onQuinielaCerrada){
     // Registro aparte de qué nodo se eligió ese día concreto — solo
     // de cara a pintar el icono correcto sobre el calendario después.
     // No sustituye a calendarioEntrenamiento (que sigue siendo la
@@ -1456,7 +1479,16 @@
           generarBoletoQuiniela(state.jornadaActual-1);
         }
         if(state.quinielaBoleto && !state.quinielaBoleto.rellenado && typeof abrirBoletoQuiniela==='function'){
-          abrirBoletoQuiniela();
+          // Igual que con la entrevista: si este nodo resulta ser el
+          // último día pendiente de la semana, el resumen no debe
+          // aparecer hasta que el jugador termine de verdad con el
+          // boletín (lo rellene o lo cierre) — antes esto no estaba
+          // conectado, así que el árbol podía cerrarse solo y saltar
+          // al resumen mientras el boletín seguía abierto encima, sin
+          // resolver de ninguna manera.
+          abrirBoletoQuiniela(onQuinielaCerrada);
+        } else if(typeof onQuinielaCerrada==='function'){
+          onQuinielaCerrada();
         }
         break;
       case 'scouting':
@@ -1504,7 +1536,7 @@
   // realmente el día que toca (nunca se puede elegir un día futuro ni
   // repetir uno ya resuelto), aplica el efecto, suma al contador de
   // ese icono, y guarda.
-  function elegirNodoSemana(diaIdx, nodoIdx, onMediosCerrado){
+  function elegirNodoSemana(diaIdx, nodoIdx, onMediosCerrado, onQuinielaCerrada){
     if(!state.semanaNodos) return {ok:false, error:'sin_semana'};
     const diaActualIdx=diaActualIndiceSemanaNodos();
     if(diaIdx!==diaActualIdx) return {ok:false, error:'no_es_el_dia_actual'};
@@ -1516,7 +1548,7 @@
     const nodo=dia && dia.nodos[nodoIdx];
     if(!nodo) return {ok:false, error:'nodo_invalido'};
     dia.elegido=nodoIdx;
-    aplicarEfectoNodoSemana(nodo, dia.fecha, onMediosCerrado);
+    aplicarEfectoNodoSemana(nodo, dia.fecha, onMediosCerrado, onQuinielaCerrada);
     if(!state.nodosAcumulados) state.nodosAcumulados={};
     state.nodosAcumulados[nodo.tipo]=(state.nodosAcumulados[nodo.tipo]||0)+1;
     guardarEstado();
@@ -2416,6 +2448,7 @@
         const diaObj=state.semanaNodos && state.semanaNodos.dias[diaIdx];
         const nodoElegido=diaObj && diaObj.nodos[nodoIdx];
         const eraMedios = nodoElegido && nodoElegido.tipo==='medios';
+        const eraQuinielaNodo = nodoElegido && nodoElegido.tipo==='quiniela';
         const cerrarArbolYRender=()=>{
           const ov=document.getElementById('lmArbolNodosOverlay');
           if(ov) ov.remove();
@@ -2426,11 +2459,12 @@
           // para pulsar JUGAR directamente.
           procesarSemanaYMostrarResumen();
         };
-        // Si el nodo elegido es "medios" (siempre el último día), el
-        // resumen de la semana no debe aparecer hasta que el jugador
-        // termine de verdad la rueda de prensa — se le pasa como
-        // callback para que se dispare solo al cerrarla, nunca antes.
-        const resultado=elegirNodoSemana(diaIdx, nodoIdx, eraMedios?cerrarArbolYRender:undefined);
+        // Si el nodo elegido es "medios" o "quiniela" (ambos abren su
+        // propia interfaz interactiva encima del árbol), el resumen de
+        // la semana no debe aparecer hasta que el jugador termine de
+        // verdad con esa interfaz — se le pasa como callback para que
+        // se dispare solo al cerrarla, nunca antes.
+        const resultado=elegirNodoSemana(diaIdx, nodoIdx, eraMedios?cerrarArbolYRender:undefined, eraQuinielaNodo?cerrarArbolYRender:undefined);
         if(!resultado.ok) return;
         if(typeof window.playSound==='function') window.playSound('select');
         // La onda necesita un instante para verse antes de que el
@@ -2446,10 +2480,11 @@
           // ninguna pantalla intermedia de "semana completa" que
           // cerrar a mano.
           if(semanaYaCompleta){
-            if(eraMedios){
+            if(eraMedios || eraQuinielaNodo){
               // Ya se encadenó arriba: cerrarArbolYRender() se llama
-              // al cerrar la rueda de prensa, no aquí — solo hace
-              // falta repintar el árbol de fondo mientras tanto.
+              // al cerrar la rueda de prensa o el boletín de la
+              // quiniela, no aquí — solo hace falta repintar el árbol
+              // de fondo mientras tanto.
               pintarArbolNodos();
             } else if(eraAmistoso && state.ultimoAmistosoResultado){
               mostrarResultadoAmistosoPopup(state.ultimoAmistosoResultado, cerrarArbolYRender);
@@ -3074,9 +3109,9 @@
     }
     guardarEstado();
   }
-  function abrirBoletoQuiniela(){
+  function abrirBoletoQuiniela(onCerrar){
     const boleto=state.quinielaBoleto;
-    if(!boleto || boleto.rellenado) return;
+    if(!boleto || boleto.rellenado){ if(typeof onCerrar==='function') onCerrar(); return; }
     const overlay=document.createElement('div');
     overlay.id='lmQuinielaOverlay';
     function pintar(){
@@ -3138,6 +3173,7 @@
         guardarEstado();
         overlay.remove();
         render();
+        if(typeof onCerrar==='function') onCerrar();
       });
       habilitarCierreOverlay(overlay, ()=>{
         overlay.remove();
@@ -3152,6 +3188,7 @@
           const ultimo=state.correoInterno && state.correoInterno[0];
           if(ultimo){ ultimo.tipoEspecial='quiniela_lista'; }
         }
+        if(typeof onCerrar==='function') onCerrar();
       });
       const xBtn=overlay.querySelector('[data-cerrar-x]');
       if(xBtn) xBtn.addEventListener('click', ()=>{
@@ -3162,6 +3199,7 @@
           const ultimo=state.correoInterno && state.correoInterno[0];
           if(ultimo){ ultimo.tipoEspecial='quiniela_lista'; }
         }
+        if(typeof onCerrar==='function') onCerrar();
       });
     }
     // A diferencia del resto de ventanas de Liga Manager (que se
@@ -7072,6 +7110,38 @@
       continuarCallback();
     });
   }
+
+  // Se muestra la primera vez que se intenta despedir a un guardia en
+  // toda la partida — a partir de ahí, ya no se vuelve a preguntar
+  // (state.avisoFiniquitoGuardiaMostrado queda marcado para siempre).
+  function mostrarAvisoDespedirGuardia(confirmarCallback){
+    const overlay=document.createElement('div');
+    overlay.id='lmAvisoFiniquitoGuardiaOverlay';
+    overlay.innerHTML=`
+      <div class="lm-dilemma-card" style="max-width:380px">
+        <div class="lm-dilemma-title"><i class="ph ph-bold ph-user-minus"></i>${t('lm.despedir_guardia_titulo')}</div>
+        <div class="lm-dilemma-text" style="margin:10px 0 16px">${tp('lm.confirmar_despedir_guardia', {n:GUARDIA_FINIQUITO})}</div>
+        <div class="lm-popup-actions lm-popup-actions-compact">
+          <button id="lmAvisoFiniquitoCancelar" class="mode-card-btn mode-card-btn-secondary">${t('lm.cancelar_btn')}</button>
+          <button id="lmAvisoFiniquitoConfirmar" class="mode-card-btn mode-card-btn-gold">${t('lm.aceptar_btn')}</button>
+        </div>
+      </div>`;
+    document.getElementById('ligaManagerScreen').appendChild(overlay);
+    const cerrar=()=>overlay.remove();
+    habilitarCierreOverlay(overlay, cerrar);
+    document.getElementById('lmAvisoFiniquitoCancelar').addEventListener('click', ()=>{
+      if(typeof window.playSound==='function') window.playSound('select');
+      cerrar();
+    });
+    document.getElementById('lmAvisoFiniquitoConfirmar').addEventListener('click', ()=>{
+      if(typeof window.playSound==='function') window.playSound('select');
+      state.avisoFiniquitoGuardiaMostrado=true;
+      guardarEstado();
+      cerrar();
+      confirmarCallback();
+    });
+  }
+
   function mostrarAvisoJuego(mensaje, titulo){
     const overlay=document.createElement('div');
     overlay.id='lmAvisoOverlay';
@@ -10490,6 +10560,17 @@
       const despedirBtn=document.getElementById('lmDespedirGuardiaBtn');
       if(despedirBtn) despedirBtn.addEventListener('click', ()=>{
         if(typeof window.playSound==='function') window.playSound('select');
+        // La primera vez que se intenta despedir a un guardia en toda
+        // la partida, se avisa de la consecuencia real (el finiquito)
+        // y se pide confirmación explícita — a partir de ahí, ya no
+        // se vuelve a preguntar, se despide directamente.
+        if(!state.avisoFiniquitoGuardiaMostrado){
+          mostrarAvisoDespedirGuardia(()=>{
+            despedirGuardiaDisponible();
+            pintar();
+          });
+          return;
+        }
         despedirGuardiaDisponible();
         pintar();
       });
@@ -12027,6 +12108,35 @@
   }
   window.renderLigaManagerProfileStats = renderLigaManagerProfileStats;
 
+  // Caché de los escudos aleatorios reales (assets/escudos_random/) —
+  // Cloudflare Pages no puede listar el contenido de una carpeta en
+  // tiempo real (alojamiento 100% estático), así que se lee un
+  // manifest.json con la lista de archivos, generado de antemano.
+  // Para añadir más escudos en el futuro: basta con soltar el .png
+  // nuevo en esa carpeta y añadir su nombre de archivo a
+  // manifest.json — el juego no necesita ningún otro cambio.
+  let ESCUDOS_RANDOM_CACHE=null;
+  async function cargarEscudosRandomManifest(){
+    try{
+      const resp=await fetch('assets/escudos_random/manifest.json');
+      if(!resp.ok) throw new Error('sin manifest');
+      const lista=await resp.json();
+      ESCUDOS_RANDOM_CACHE=Array.isArray(lista) ? lista : [];
+    }catch(e){ ESCUDOS_RANDOM_CACHE=[]; }
+  }
+  // Convierte "80's_legends.png" -> "80's Legends" — guiones bajos
+  // por espacios, primera letra de cada palabra en mayúscula (el
+  // resto en minúscula). Los dígitos/símbolos que ya empiecen la
+  // palabra (como "80's") se quedan igual, no tienen mayúscula que
+  // aplicar.
+  function nombreClubDesdeArchivoEscudo(nombreArchivo){
+    const sinExtension=nombreArchivo.replace(/\.png$/i, '');
+    return sinExtension.split('_').map(palabra=>{
+      if(!palabra) return palabra;
+      return palabra.charAt(0).toUpperCase()+palabra.slice(1).toLowerCase();
+    }).join(' ');
+  }
+
   function init(){
     try{
       state=cargarEstado();
@@ -12035,6 +12145,7 @@
       seleccionJugador=null;
       lmCargarUpgradeCache().then(()=>render());
       lmCargarSkillsCache();
+      cargarEscudosRandomManifest();
       render();
       inicializarBarraMovilLM();
       // Si el jugador cerró el navegador a mitad de una semana del

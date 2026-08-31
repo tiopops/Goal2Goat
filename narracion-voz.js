@@ -220,6 +220,12 @@
   let colaNormal=null;
   let colaPrioridad=[];
   let hablando=false;
+  // Ficha de turno — identifica cada intento de hablar concreto, para
+  // que la red de seguridad de más abajo (el "watchdog") pueda saber
+  // si sigue siendo el mismo intento al que pertenece antes de forzar
+  // nada, y no interfiera si mientras tanto ya se pasó de verdad a la
+  // siguiente frase por su cuenta.
+  let tokenHabla=0;
   let ultimoTextoDicho=null;
 
   function hablar(texto){
@@ -241,6 +247,7 @@
     // normal, más abajo).
     if(window.AndroidTTS && typeof window.AndroidTTS.speak==='function'){
       hablando=true;
+      const miTokenAndroid=++tokenHabla;
       // Se manda también el idioma actual del juego (mismo mapeo que
       // ya usa la Web Speech API más abajo) — sin esto, el puente
       // nativo no tenía forma de saber qué idioma tocaba usar y
@@ -264,7 +271,7 @@
       // se estima la duración a partir de la longitud del texto para
       // saber cuándo pasar a la siguiente frase de la cola.
       const duracionEstimadaMs=Math.max(900, limpio.length*70/tono.rate);
-      setTimeout(continuar, duracionEstimadaMs);
+      setTimeout(()=>{ if(tokenHabla===miTokenAndroid) continuar(); }, duracionEstimadaMs);
       return;
     }
     if(!soportada) return;
@@ -285,9 +292,10 @@
     u.volume=NIVELES[nivelActual].volumen;
     u.pitch=tono.pitch;
     u.rate=tono.rate;
-    u.onend=continuar;
-    u.onerror=continuar;
     hablando=true;
+    const miToken=++tokenHabla;
+    u.onend=()=>{ if(tokenHabla===miToken) continuar(); };
+    u.onerror=()=>{ if(tokenHabla===miToken) continuar(); };
     // Cancelar cualquier resto pendiente justo antes de hablar es una
     // mitigación conocida para un fallo real de los motores basados en
     // Chromium (WebView de Android incluido): tras un tiempo la cola
@@ -295,6 +303,20 @@
     // decir nada nunca más hasta recargar la página entera.
     window.speechSynthesis.cancel();
     window.speechSynthesis.speak(u);
+    // Red de seguridad adicional (el "watchdog"): la cancelación de
+    // arriba no siempre evita el atasco — si tras un margen generoso
+    // ni onend ni onerror han disparado todavía, se fuerza a seguir de
+    // todas formas. Sin esto, un solo atasco dejaba al narrador mudo
+    // para el resto del partido entero, aunque los mensajes de texto
+    // siguieran apareciendo con normalidad debajo (el fallo exacto que
+    // describía el jugador).
+    const duracionEstimadaMs=Math.max(1500, limpio.length*90/tono.rate);
+    setTimeout(()=>{
+      if(tokenHabla===miToken && hablando){
+        hablando=false;
+        continuar();
+      }
+    }, duracionEstimadaMs);
   }
   function continuar(){
     hablando=false;
