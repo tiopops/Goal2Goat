@@ -4525,6 +4525,28 @@ body.light-theme.menu-screen{
 }
 .lm-quiniela-pista i{ font-size:12px; flex-shrink:0; }
 .lm-quiniela-equipo{display:flex;align-items:center;gap:6px;font-size:12px;color:#ddd;min-width:0}
+.lm-historial-info-btn{
+  flex-shrink:0;width:18px;height:18px;border-radius:50%;background:rgba(0,0,0,.4);border:1px solid #666;
+  color:#aaa;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:10px;padding:0;
+}
+.lm-historial-info-btn:hover{border-color:#c9a227;color:#c9a227;background:rgba(0,0,0,.65)}
+
+/* ---- Historial ganados/empatados/perdidos de un equipo (desde la quiniela) ---- */
+.lm-historial-equipo-cab{display:flex;align-items:center;gap:12px;margin-bottom:16px;text-align:left}
+.lm-historial-equipo-nombre{font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:.6px;font-size:16px;color:#eee}
+.lm-historial-equipo-sub{font-size:11px;color:#888;margin-top:2px}
+.lm-historial-fila{display:flex;align-items:center;gap:8px;margin-bottom:9px}
+.lm-historial-fila-label{width:96px;flex-shrink:0;font-size:11px;display:flex;align-items:center;gap:5px}
+.lm-historial-fila-label i{font-size:14px}
+.lm-historial-fila-label-ganado{color:#5dcaa5}
+.lm-historial-fila-label-empatado{color:#e6c94a}
+.lm-historial-fila-label-perdido{color:#e24b4a}
+.lm-historial-track{flex:1;height:8px;background:#0d0f10;border-radius:4px;overflow:hidden}
+.lm-historial-fill{height:100%;border-radius:4px;transition:width .3s ease}
+.lm-historial-fill-ganado{background:linear-gradient(90deg,#2f7d5c,#5dcaa5)}
+.lm-historial-fill-empatado{background:linear-gradient(90deg,#8a7420,#e6c94a)}
+.lm-historial-fill-perdido{background:linear-gradient(90deg,#8a2e2e,#e24b4a)}
+.lm-historial-num{width:22px;flex-shrink:0;text-align:right;font-weight:700;color:#eee}
 .lm-quiniela-equipo img{width:26px;height:26px;object-fit:contain;flex-shrink:0}
 .lm-quiniela-equipo span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .lm-quiniela-equipo-visitante{flex-direction:row-reverse;text-align:right;justify-content:flex-start}

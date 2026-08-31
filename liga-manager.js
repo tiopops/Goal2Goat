@@ -2459,12 +2459,28 @@
           // para pulsar JUGAR directamente.
           procesarSemanaYMostrarResumen();
         };
-        // Si el nodo elegido es "medios" o "quiniela" (ambos abren su
-        // propia interfaz interactiva encima del árbol), el resumen de
-        // la semana no debe aparecer hasta que el jugador termine de
-        // verdad con esa interfaz — se le pasa como callback para que
-        // se dispare solo al cerrarla, nunca antes.
-        const resultado=elegirNodoSemana(diaIdx, nodoIdx, eraMedios?cerrarArbolYRender:undefined, eraQuinielaNodo?cerrarArbolYRender:undefined);
+        // Si el nodo elegido es "medios" (siempre el último día
+        // garantizado), cerrar su interfaz SIEMPRE coincide con
+        // completar la semana. La quiniela, en cambio, NUNCA está
+        // garantizada como último día — puede caer en cualquier día
+        // intermedio — así que su callback de cierre comprueba de
+        // verdad, en el momento real en que el jugador termina con el
+        // boletín (que puede ser bastante después, mientras lo
+        // rellena con calma), si la semana ya está completa entonces.
+        // Si no lo está, simplemente repinta el árbol para seguir
+        // eligiendo el resto de días con normalidad — antes se
+        // cerraba el árbol entero pasara lo que pasara, cortando la
+        // semana en seco en cuanto la quiniela caía en un día que no
+        // era el último.
+        const onQuinielaCerrada=()=>{
+          if(diaActualIndiceSemanaNodos()===-1){
+            cerrarArbolYRender();
+          } else {
+            pintarArbolNodos();
+            if(typeof render==='function') render();
+          }
+        };
+        const resultado=elegirNodoSemana(diaIdx, nodoIdx, eraMedios?cerrarArbolYRender:undefined, eraQuinielaNodo?onQuinielaCerrada:undefined);
         if(!resultado.ok) return;
         if(typeof window.playSound==='function') window.playSound('select');
         // La onda necesita un instante para verse antes de que el
@@ -3109,6 +3125,68 @@
     }
     guardarEstado();
   }
+  // Historial real ganados/empatados/perdidos de un equipo concreto —
+  // recorre todo el calendario ya jugado, comparando cada resultado
+  // guardado contra los goles del propio equipo en ese partido.
+  function calcularHistorialEquipo(equipoId){
+    const historial={ganados:0, empatados:0, perdidos:0, jugados:0};
+    (state.calendario||[]).forEach((jornada, j)=>{
+      jornada.forEach(partido=>{
+        const esLocal = partido.home.id===equipoId, esVisitante = partido.away.id===equipoId;
+        if(!esLocal && !esVisitante) return;
+        const key=j+'-'+partido.home.id+'-'+partido.away.id;
+        const resultado=state.resultados[key];
+        if(!resultado) return;
+        const misGoles = esLocal ? resultado.golesA : resultado.golesB;
+        const susGoles = esLocal ? resultado.golesB : resultado.golesA;
+        historial.jugados++;
+        if(misGoles>susGoles) historial.ganados++;
+        else if(misGoles===susGoles) historial.empatados++;
+        else historial.perdidos++;
+      });
+    });
+    return historial;
+  }
+  function mostrarHistorialEquipoQuiniela(equipoId, nombreEquipo, crestImg){
+    const h=calcularHistorialEquipo(equipoId);
+    const overlay=document.createElement('div');
+    overlay.className='lm-visor-leyenda-overlay-standalone';
+    const pctBarra=(valor)=>h.jugados ? Math.round(valor/h.jugados*100) : 0;
+    overlay.innerHTML=`
+      <div class="lm-dilemma-card lm-historial-equipo-card" style="max-width:320px">
+        <div class="lm-historial-equipo-cab">
+          ${rivalCrestHTML(48, crestImg)}
+          <div>
+            <div class="lm-historial-equipo-nombre">${nombreEquipo}</div>
+            <div class="lm-historial-equipo-sub">${tp('lm.historial_partidos_jugados', {n:h.jugados})}</div>
+          </div>
+        </div>
+        ${h.jugados===0 ? `<p class="lm-setup-desc" style="text-align:center;margin:16px 0">${t('lm.historial_sin_partidos')}</p>` : `
+        <div class="lm-historial-fila">
+          <span class="lm-historial-fila-label lm-historial-fila-label-ganado"><i class="ph ph-bold ph-check-circle"></i> ${t('lm.historial_ganados')}</span>
+          <div class="lm-historial-track"><div class="lm-historial-fill lm-historial-fill-ganado" style="width:${pctBarra(h.ganados)}%"></div></div>
+          <span class="lm-historial-num">${h.ganados}</span>
+        </div>
+        <div class="lm-historial-fila">
+          <span class="lm-historial-fila-label lm-historial-fila-label-empatado"><i class="ph ph-bold ph-minus-circle"></i> ${t('lm.historial_empatados')}</span>
+          <div class="lm-historial-track"><div class="lm-historial-fill lm-historial-fill-empatado" style="width:${pctBarra(h.empatados)}%"></div></div>
+          <span class="lm-historial-num">${h.empatados}</span>
+        </div>
+        <div class="lm-historial-fila">
+          <span class="lm-historial-fila-label lm-historial-fila-label-perdido"><i class="ph ph-bold ph-x-circle"></i> ${t('lm.historial_perdidos')}</span>
+          <div class="lm-historial-track"><div class="lm-historial-fill lm-historial-fill-perdido" style="width:${pctBarra(h.perdidos)}%"></div></div>
+          <span class="lm-historial-num">${h.perdidos}</span>
+        </div>`}
+        <button class="mode-card-btn mode-card-btn-gold" data-cerrar-historial style="margin-top:16px">${t('lm.cerrar')}</button>
+      </div>`;
+    document.body.appendChild(overlay);
+    const cerrar=()=>overlay.remove();
+    habilitarCierreOverlay(overlay, cerrar);
+    overlay.querySelector('[data-cerrar-historial]').addEventListener('click', ()=>{
+      if(typeof window.playSound==='function') window.playSound('select');
+      cerrar();
+    });
+  }
   function abrirBoletoQuiniela(onCerrar){
     const boleto=state.quinielaBoleto;
     if(!boleto || boleto.rellenado){ if(typeof onCerrar==='function') onCerrar(); return; }
@@ -3141,13 +3219,13 @@
               }
               return `<div class="lm-quiniela-fila">
                 ${p.pista?`<div class="lm-quiniela-pista"><i class="ph ph-bold ph-lightbulb-filament"></i> ${t('lm.quiniela_pista_'+p.pista)}</div>`:''}
-                <div class="lm-quiniela-equipo lm-quiniela-equipo-local">${quinielaEscudoHTML(p.homeEsMio, p.homeCrest, 26)}<span>${nombreLocalMostrado}</span></div>
+                <div class="lm-quiniela-equipo lm-quiniela-equipo-local">${quinielaEscudoHTML(p.homeEsMio, p.homeCrest, 26)}<span>${nombreLocalMostrado}</span><button class="lm-historial-info-btn" data-historial-equipo="${p.homeId}" data-historial-nombre="${nombreLocalMostrado.replace(/"/g,'&quot;')}" data-historial-crest="${p.homeCrest?p.homeCrest.replace(/"/g,'&quot;'):''}" title="${t('lm.tt_ver_historial')}"><i class="ph ph-bold ph-info"></i></button></div>
                 <div class="lm-quiniela-opciones">
                   <button class="lm-quiniela-btn ${elegido==='1'?'lm-quiniela-btn-activa':''}" data-qk="${key}" data-qv="1">1</button>
                   <button class="lm-quiniela-btn ${elegido==='X'?'lm-quiniela-btn-activa':''}" data-qk="${key}" data-qv="X">X</button>
                   <button class="lm-quiniela-btn ${elegido==='2'?'lm-quiniela-btn-activa':''}" data-qk="${key}" data-qv="2">2</button>
                 </div>
-                <div class="lm-quiniela-equipo lm-quiniela-equipo-visitante"><span>${nombreVisitanteMostrado}</span>${quinielaEscudoHTML(p.awayEsMio, p.awayCrest, 26)}</div>
+                <div class="lm-quiniela-equipo lm-quiniela-equipo-visitante"><button class="lm-historial-info-btn" data-historial-equipo="${p.awayId}" data-historial-nombre="${nombreVisitanteMostrado.replace(/"/g,'&quot;')}" data-historial-crest="${p.awayCrest?p.awayCrest.replace(/"/g,'&quot;'):''}" title="${t('lm.tt_ver_historial')}"><i class="ph ph-bold ph-info"></i></button><span>${nombreVisitanteMostrado}</span>${quinielaEscudoHTML(p.awayEsMio, p.awayCrest, 26)}</div>
               </div>`;
             }).join('')}
           </div>
@@ -3159,6 +3237,17 @@
           if(typeof window.playSound==='function') window.playSound('select');
           boleto.predicciones[btn.getAttribute('data-qk')]=btn.getAttribute('data-qv');
           pintar();
+        });
+      });
+      overlay.querySelectorAll('[data-historial-equipo]').forEach(btn=>{
+        btn.addEventListener('click', (e)=>{
+          e.stopPropagation();
+          if(typeof window.playSound==='function') window.playSound('select');
+          mostrarHistorialEquipoQuiniela(
+            btn.getAttribute('data-historial-equipo'),
+            btn.getAttribute('data-historial-nombre'),
+            btn.getAttribute('data-historial-crest')||null
+          );
         });
       });
       const confirmar=document.getElementById('lmQuinielaConfirmar');
@@ -7117,6 +7206,13 @@
   function mostrarAvisoDespedirGuardia(confirmarCallback){
     const overlay=document.createElement('div');
     overlay.id='lmAvisoFiniquitoGuardiaOverlay';
+    // Sin esta clase el overlay no tenía posición fija ni z-index
+    // propio — se quedaba flotando en el flujo normal del documento
+    // (aparecía en la esquina inferior izquierda) y por detrás de
+    // Seguridad del Estadio, que sí es un overlay fijo con su propio
+    // z-index. Con esta clase queda centrado de verdad y por encima
+    // de cualquier otra interfaz, sea cual sea desde la que se abra.
+    overlay.className='lm-visor-leyenda-overlay-standalone';
     overlay.innerHTML=`
       <div class="lm-dilemma-card" style="max-width:380px">
         <div class="lm-dilemma-title"><i class="ph ph-bold ph-user-minus"></i>${t('lm.despedir_guardia_titulo')}</div>
@@ -7126,7 +7222,7 @@
           <button id="lmAvisoFiniquitoConfirmar" class="mode-card-btn mode-card-btn-gold">${t('lm.aceptar_btn')}</button>
         </div>
       </div>`;
-    document.getElementById('ligaManagerScreen').appendChild(overlay);
+    document.body.appendChild(overlay);
     const cerrar=()=>overlay.remove();
     habilitarCierreOverlay(overlay, cerrar);
     document.getElementById('lmAvisoFiniquitoCancelar').addEventListener('click', ()=>{
@@ -8677,7 +8773,7 @@
         <div class="lm-setup-list lm-setup-equipos-list">
           ${listaEquiposElegir.map(r=>`
             <div class="lm-setup-option lm-setup-option-equipo ${setupData.equipoElegidoId===r.id?'selected':''}" data-equipo="${r.id}">
-              ${rivalCrestHTML(28, r.crestImg)}<span>${r.name}</span>
+              ${rivalCrestHTML(44, r.crestImg)}<span>${r.name}</span>
             </div>`).join('')}
         </div>
         <div class="lm-popup-actions"><button id="lmSetupNext" class="mode-card-btn mode-card-btn-gold" ${setupData.equipoElegidoId?'':'disabled'}>${t('lm.empezar_temporada')}</button></div>

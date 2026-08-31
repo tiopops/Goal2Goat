@@ -2928,6 +2928,11 @@
       if(misGolesFinal!==rivalGolesFinal){
         const equipoGanador = misGolesFinal>rivalGolesFinal ? miNombre : rivalNombre;
         textoFinal = `¡${t('lm.visor_termina')}! ${t('lm.visor_equipo_vencedor', equipoGanador.toUpperCase())}`;
+      } else {
+        // El empate merece el mismo anuncio con importancia — antes se
+        // quedaba en un simple "FINAL DEL PARTIDO" sin más, sin
+        // mencionar nunca que el resultado fue un empate.
+        textoFinal = `¡${t('lm.visor_termina')}! ${t('lm.visor_resultado_empate')}`;
       }
       infoBar.textContent = textoFinal;
       mostrarTextoGrande(`¡${t('lm.visor_termina')}!`, real(2000));
