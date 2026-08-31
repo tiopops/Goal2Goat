@@ -4146,7 +4146,7 @@ body.liga-manager-screen .ranking-btn-label-lm{display:inline}
 .lm-setup-soon{float:right;font-size:9px;color:#888;letter-spacing:.5px}
 .lm-setup-option-currency{flex:1;text-align:center;padding:16px 10px}
 .lm-setup-equipos-list{max-height:340px;overflow-y:auto;padding-right:4px}
-.lm-setup-option-equipo{display:flex;align-items:center;gap:10px}
+.lm-setup-option-equipo{display:flex;align-items:center;gap:10px;padding-top:4px;padding-bottom:4px}
 .lm-setup-input{
   width:100%;padding:12px 14px;background:#1e2326;border:1px solid #2f3539;
   border-radius:8px;color:#eee;font-size:14px;text-align:center;margin-bottom:6px;
@@ -4283,6 +4283,15 @@ body.liga-manager-screen .ranking-btn-label-lm{display:inline}
 #lmHistoricoOverlay{
   position:fixed;inset:0;background:rgba(0,0,0,.75);
   display:flex;align-items:center;justify-content:center;z-index:31000;
+}
+/* Estos dos pop-ups pueden abrirse desde dentro de OTRAS interfaces
+   que ya son overlays de pantalla completa (Seguridad del Estadio a
+   220, la Quiniela a 250) — con la misma prioridad máxima de arriba,
+   quedan siempre por encima, sea cual sea la pantalla desde la que se
+   invoquen. */
+#lmAvisoFiniquitoGuardiaOverlay, #lmHistorialEquipoOverlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:31000;
+  display:flex;align-items:center;justify-content:center;padding:14px;
 }
 #lmAvisoQuinielaOverlay{
   position:fixed;inset:0;background:rgba(0,0,0,.72);

@@ -3150,7 +3150,11 @@
   function mostrarHistorialEquipoQuiniela(equipoId, nombreEquipo, crestImg){
     const h=calcularHistorialEquipo(equipoId);
     const overlay=document.createElement('div');
-    overlay.className='lm-visor-leyenda-overlay-standalone';
+    // Se usa un id propio con z-index de máxima prioridad, no la clase
+    // genérica de siempre (z-index:200) — este pop-up se abre desde
+    // dentro de la quiniela, que ya tiene z-index:250 por sí sola, así
+    // que con la clase genérica se quedaba siempre por detrás.
+    overlay.id='lmHistorialEquipoOverlay';
     const pctBarra=(valor)=>h.jugados ? Math.round(valor/h.jugados*100) : 0;
     overlay.innerHTML=`
       <div class="lm-dilemma-card lm-historial-equipo-card" style="max-width:320px">
@@ -3230,8 +3234,25 @@
             }).join('')}
           </div>
           <div id="lmQuinielaAviso" class="lm-quiniela-aviso" style="display:none">${t('lm.quiniela_incompleta')}</div>
+          <div class="lm-popup-actions lm-popup-actions-compact">
+            <button id="lmQuinielaAutoRellenar" class="mode-card-btn mode-card-btn-secondary"><i class="ph ph-bold ph-shuffle"></i> ${t('lm.quiniela_rellenar_auto_btn')}</button>
+          </div>
           <div class="lm-popup-actions"><button id="lmQuinielaConfirmar" class="mode-card-btn mode-card-btn-gold">${t('lm.confirmar_quiniela')}</button></div>
         </div>`;
+      const autoRellenarBtn=document.getElementById('lmQuinielaAutoRellenar');
+      if(autoRellenarBtn) autoRellenarBtn.addEventListener('click', ()=>{
+        if(typeof window.playSound==='function') window.playSound('select');
+        // Rellena TODOS los partidos con una predicción al azar (1/X/2)
+        // de golpe — no toca los que ya estuvieran elegidos a mano, se
+        // sobrescriben igual que el resto, para que sea un "empezar de
+        // cero al azar" claro y predecible.
+        const opciones=['1','X','2'];
+        boleto.partidos.forEach(p=>{
+          const key=boleto.jornadaIndex+'-'+p.homeId+'-'+p.awayId;
+          boleto.predicciones[key]=opciones[Math.floor(Math.random()*opciones.length)];
+        });
+        pintar();
+      });
       overlay.querySelectorAll('[data-qk]').forEach(btn=>{
         btn.addEventListener('click', ()=>{
           if(typeof window.playSound==='function') window.playSound('select');
@@ -7206,13 +7227,11 @@
   function mostrarAvisoDespedirGuardia(confirmarCallback){
     const overlay=document.createElement('div');
     overlay.id='lmAvisoFiniquitoGuardiaOverlay';
-    // Sin esta clase el overlay no tenía posición fija ni z-index
-    // propio — se quedaba flotando en el flujo normal del documento
-    // (aparecía en la esquina inferior izquierda) y por detrás de
-    // Seguridad del Estadio, que sí es un overlay fijo con su propio
-    // z-index. Con esta clase queda centrado de verdad y por encima
-    // de cualquier otra interfaz, sea cual sea desde la que se abra.
-    overlay.className='lm-visor-leyenda-overlay-standalone';
+    // Antes usaba la clase genérica compartida (z-index:200), que se
+    // quedaba por detrás de Seguridad del Estadio (z-index:220) —
+    // ahora usa una regla propia por su propio id, con z-index de
+    // máxima prioridad, por encima de cualquier otra interfaz, sea
+    // cual sea desde la que se abra.
     overlay.innerHTML=`
       <div class="lm-dilemma-card" style="max-width:380px">
         <div class="lm-dilemma-title"><i class="ph ph-bold ph-user-minus"></i>${t('lm.despedir_guardia_titulo')}</div>
@@ -9527,6 +9546,20 @@
     const jugarBtn=document.getElementById('lmJugarBtn');
     if(jugarBtn){
       jugarBtn.addEventListener('click', ()=>{
+        // Blindaje contra doble clic: jugarJornada() avanza la
+        // jornada de forma SÍNCRONA, antes incluso de que el visor
+        // del partido termine de abrirse — si el botón se queda
+        // activo aunque sea un instante, un segundo clic (accidental
+        // o por impaciencia) cae en la rama equivocada, porque
+        // jornadaActual ya subió pero semanaResueltaParaJornada
+        // todavía no, así que "SEGUIR" se dispara para la jornada
+        // SIGUIENTE sin haber visto el partido de la actual. Se
+        // deshabilita aquí mismo, de inmediato, y solo se vuelve a
+        // habilitar con el siguiente render() de verdad (que llega al
+        // cerrar el visor, o de inmediato si por lo que sea no hay
+        // partido que jugar).
+        if(jugarBtn.disabled) return;
+        jugarBtn.disabled=true;
         marcarInteraccionJugarBtn();
         if(typeof window.playSound==='function') window.playSound('select');
         const jugarAhora=()=>{
