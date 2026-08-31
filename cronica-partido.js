@@ -247,12 +247,13 @@
 <title>${t('cr.cronica_del_partido')} — GOAL 2 GOAT</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Oswald:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=PT+Serif:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>${CSS_CRONICA}</style>
 </head>
 <body>
 
 <div class="btn-imprimir-wrap">
-  <button class="btn-imprimir" onclick="window.print()" title="${escaparHTML(t('cr.imprimir_pdf'))}" aria-label="${escaparHTML(t('cr.imprimir_pdf'))}">
+  <button class="btn-imprimir" id="btnDescargarCronica" title="${escaparHTML(t('cr.imprimir_pdf'))}" aria-label="${escaparHTML(t('cr.imprimir_pdf'))}">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
   </button>
   <span>${escaparHTML(t('cr.imprimir_pdf'))}</span>
@@ -350,6 +351,55 @@
     IMAGENES_GENERAL
   )};
   document.getElementById('foto-hero').src = IMAGENES_DISPONIBLES[Math.floor(Math.random() * IMAGENES_DISPONIBLES.length)];
+
+  // Guardar como imagen en vez de PDF: se captura tal cual se ve en
+  // pantalla el "periódico" (con html2canvas, cargado en el <head>) y
+  // se descarga directamente como JPG — mejor relación calidad/peso
+  // que un PNG para una página con tanto texto y una sola foto, sin
+  // artefactos visibles a esta calidad (.92).
+  (function(){
+    const btn = document.getElementById('btnDescargarCronica');
+    const etiqueta = document.querySelector('.btn-imprimir-wrap span');
+    if(!btn) return;
+    const textoOriginal = etiqueta ? etiqueta.textContent : '';
+    btn.addEventListener('click', function(){
+      if(btn.disabled) return;
+      if(typeof html2canvas!=='function'){
+        // Sin conexión al CDN por lo que sea: no dejar el botón
+        // muerto sin explicación, caer de vuelta al diálogo de
+        // impresión nativo del navegador (que sí puede guardar como
+        // PDF sin depender de nada externo).
+        window.print();
+        return;
+      }
+      btn.disabled = true;
+      if(etiqueta) etiqueta.textContent = ${JSON.stringify(t('cr.generando_imagen'))};
+      const periodico = document.querySelector('.periodico');
+      // Espera a que las tipografías de Google Fonts hayan terminado
+      // de cargar de verdad antes de capturar — si el jugador pulsa
+      // el botón nada más abrirse la crónica, sin esto podía
+      // capturarse un instante con la tipografía de reserva del
+      // sistema en vez de la real.
+      const listoTipografias = (document.fonts && document.fonts.ready) ? document.fonts.ready : Promise.resolve();
+      // scale:2 para que el texto salga nítido en pantallas de alta
+      // densidad (retina) en vez de un poco borroso — el peso extra
+      // lo compensa igualmente la compresión JPG de abajo.
+      listoTipografias.then(function(){
+        return html2canvas(periodico, {scale:2, backgroundColor:'#f0efed', useCORS:true});
+      }).then(function(canvas){
+        const enlace = document.createElement('a');
+        enlace.download = 'cronica-goal2goat.jpg';
+        enlace.href = canvas.toDataURL('image/jpeg', 0.92);
+        enlace.click();
+      }).catch(function(err){
+        console.error('Error generando la imagen de la crónica:', err);
+        window.print();
+      }).finally(function(){
+        btn.disabled = false;
+        if(etiqueta) etiqueta.textContent = textoOriginal;
+      });
+    });
+  })();
 </script>
 </body>
 </html>`;

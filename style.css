@@ -1462,6 +1462,14 @@ body.dark-theme .card-section{background:#3a3322;border-color:#5a5030}
 .fatigue-bar.fatigue-yellow{background:#f1c40f}
 .fatigue-bar.fatigue-red{background:#e74c3c}
 body.dark-theme .fatigue-bar-wrap{background:#333}
+/* Amarillas acumuladas junto al nombre (once titular / banquillo) —
+   mismo semáforo verde/amarillo/rojo que la barra de resistencia, para
+   que se lea de un vistazo cómo de cerca está el jugador de perderse
+   un partido por acumulación. */
+.lm-tarjeta-acumulada{font-size:11px;font-weight:700;margin-left:2px}
+.lm-tarjeta-acumulada-green{color:#2ecc71}
+.lm-tarjeta-acumulada-yellow{color:#f1c40f}
+.lm-tarjeta-acumulada-red{color:#e74c3c}
 
 /* PRESS PREDICTION RESULT (resolved post-match) */
 .press-prediction-section{
@@ -4932,7 +4940,7 @@ body.light-theme.menu-screen{
 }
 .lm-visor-partido-card{
   width:94vw;max-width:420px;max-height:92vh;display:flex;flex-direction:column;
-  background:linear-gradient(160deg,#2E4231,#212f23);border:1px solid rgba(201,162,39,.35);
+  background:linear-gradient(160deg,#1c1c1c,#141414);border:1px solid rgba(201,162,39,.35);
   border-radius:16px;overflow:hidden;
   box-shadow:0 24px 70px rgba(0,0,0,.75);
 }
@@ -4950,7 +4958,7 @@ body.light-theme.menu-screen{
 }
 .lm-visor-marcador{
   display:flex;align-items:center;justify-content:space-between;gap:8px;
-  padding:16px 18px 10px;background:linear-gradient(160deg,#2E4231,#212f23);
+  padding:16px 18px 10px;background:linear-gradient(160deg,#1c1c1c,#141414);
 }
 .lm-visor-equipo-bloque{display:flex;flex-direction:column;align-items:center;gap:6px;flex:1;min-width:0}
 .lm-visor-equipo{
@@ -4992,7 +5000,7 @@ body.light-theme.menu-screen{
 }
 .lm-visor-campo-wrap{
   flex:1;min-height:0;display:flex;align-items:center;justify-content:center;
-  background:#060806;padding:2px;position:relative;overflow:hidden;
+  background:#2E4231;padding:2px;position:relative;overflow:hidden;
   touch-action:pan-y;
 }
 .lm-visor-campo-svg{touch-action:pan-y}

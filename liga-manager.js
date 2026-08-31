@@ -1013,6 +1013,23 @@
     }
 
     reclamados.push(umbral);
+    // Si este era el hito de nivel más alto (el 10) del icono, se
+    // "consumen" los puntos de verdad: el contador se descuenta esos
+    // 10 en vez de quedarse ahí parado para siempre (antes, una vez
+    // canjeados los dos niveles, el icono se quedaba "agotado" el
+    // resto de la temporada — cualquier progreso posterior no servía
+    // para nada). Si sobraba algo por encima de 10 se conserva (nunca
+    // se pierde), y los hitos reclamados de este icono se vacían para
+    // que el ciclo 5/10 pueda volver a completarse otra vez. Al
+    // canjear el hito de nivel 1 (el 5) el contador NO se toca — sigue
+    // sumando de forma normal hacia el 10, así que los puntos que ya
+    // llevara de más (p.ej. estar en 7 al canjear el 5) se conservan
+    // tal cual, nunca se pierden ni se recortan a 5.
+    const umbralMaximo=Math.max(...def.hitos.map(h=>h.umbral));
+    if(umbral===umbralMaximo){
+      state.nodosAcumulados[tipoIcono]=Math.max(0, acumulado-umbralMaximo);
+      state.nodosHitosReclamados[tipoIcono]=[];
+    }
     guardarEstado();
     return {ok:true};
   }
@@ -5108,10 +5125,18 @@
               j.amarillasAcumuladas=0;
               j.suspendido=true; j.partidosSancion=(j.partidosSancion||0)+1;
               jugadoresSancionadosEstaJornada.add(j.id);
+              if(typeof enviarCorreo==='function') enviarCorreo('preparadorFisico',
+                tp('correo.sancion_tarjetas.asunto',{jugador:j.name}),
+                tp('correo.sancion_tarjetas.cuerpo',{jugador:j.name, n:j.partidosSancion}),
+                {asunto:'correo.sancion_tarjetas.asunto', paramsAsunto:{jugador:j.name}, cuerpo:'correo.sancion_tarjetas.cuerpo', paramsCuerpo:{jugador:j.name, n:j.partidosSancion}});
             }
           } else if(evCard.tarjeta==='roja'){
             j.suspendido=true; j.partidosSancion=(j.partidosSancion||0)+1;
             jugadoresSancionadosEstaJornada.add(j.id);
+            if(typeof enviarCorreo==='function') enviarCorreo('preparadorFisico',
+              tp('correo.sancion_roja.asunto',{jugador:j.name}),
+              tp('correo.sancion_roja.cuerpo',{jugador:j.name, n:j.partidosSancion}),
+              {asunto:'correo.sancion_roja.asunto', paramsAsunto:{jugador:j.name}, cuerpo:'correo.sancion_roja.cuerpo', paramsCuerpo:{jugador:j.name, n:j.partidosSancion}});
           }
         });
         miPartidoInfo={ home:partido.home, away:partido.away, resultado, eventos, climaId: clima?clima.id:null, jornadaIndex:j };
@@ -5732,6 +5757,7 @@
         <div id="lmLiveEvents" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;align-items:stretch;gap:2px;padding:4px 0;min-height:80px;max-height:260px"></div>
         <div id="lmPostMatchInfo"></div>
         <button id="lmHistoricoBtn" class="mode-card-btn mode-card-btn-secondary" style="display:none;width:100%;margin-top:8px"><i class="ph ph-bold ph-notebook"></i> ${t('lm.historico_partido_btn')}</button>
+        <button id="lmCronicaAutoBtn" class="mode-card-btn mode-card-btn-secondary" style="display:none;width:100%;margin-top:8px"><i class="ph ph-bold ph-newspaper"></i> ${t('lm.cronica_partido_btn')}</button>
         <button id="lmLiveContinuar" class="mode-card-btn mode-card-btn-gold" style="display:none;width:100%;padding:11px;margin-top:10px">${t('lm.continuar')}</button>
       </div>`;
     document.getElementById('ligaManagerScreen').appendChild(overlay);
@@ -5928,10 +5954,66 @@
 
         document.getElementById('lmLiveContinuar').style.display='block';
         document.getElementById('lmHistoricoBtn').style.display='block';
+        const cronicaAutoBtn=document.getElementById('lmCronicaAutoBtn');
+        if(cronicaAutoBtn && window.G2G_Cronica) cronicaAutoBtn.style.display='block';
       }
     }
     requestAnimationFrame(tick);
 
+    const cronicaAutoBtnEl=document.getElementById('lmCronicaAutoBtn');
+    if(cronicaAutoBtnEl){
+      // Misma crónica que en el visor manager, disponible también en
+      // modo automático — jugarJornada() genera exactamente los mismos
+      // datos (eventos, resultado, posesión) para los dos modos de
+      // visualización, así que no hace falta simular nada aparte: solo
+      // faltaba este botón para abrirla desde aquí.
+      cronicaAutoBtnEl.addEventListener('click', ()=>{
+        if(typeof window.playSound==='function') window.playSound('select');
+        try{
+          const rival = miEsLocal ? info.away : info.home;
+          const miNombre = state.nombreEquipo;
+          const rivalNombre = rival.name;
+          const posMioFinal = info.resultado.posesionA!=null ? (miEsLocal?info.resultado.posesionA:info.resultado.posesionB) : 50;
+          const titularIds=new Set(Object.values(state.alineacion||{}).filter(Boolean));
+          const alineacionMia=(state.plantilla||[]).filter(j=>titularIds.has(j.id))
+            .map(j=>({numero:j.numero, position:j.position, name:j.name, overall:j.overall}));
+          const disponiblesRival=(typeof plantillaEfectivaRival==='function') ? plantillaEfectivaRival(rival) : [];
+          const alineacionRival=(disponiblesRival||[]).slice(0,11)
+            .map((j,i)=>({numero:j.n||(i+1), position:j.position||'', name:j.name, overall:j.overall}));
+          const datosLocal = miEsLocal
+            ? {nombre:miNombre, goles:info.resultado.golesA, alineacion:alineacionMia}
+            : {nombre:rivalNombre, goles:info.resultado.golesA, alineacion:alineacionRival};
+          const datosVisitante = miEsLocal
+            ? {nombre:rivalNombre, goles:info.resultado.golesB, alineacion:alineacionRival}
+            : {nombre:miNombre, goles:info.resultado.golesB, alineacion:alineacionMia};
+          const climaActual=(typeof climaDelPartido==='function') ? climaDelPartido() : null;
+          const datosPartido={
+            nombreLocal:datosLocal.nombre, nombreVisitante:datosVisitante.nombre,
+            golesLocal:datosLocal.goles, golesVisitante:datosVisitante.goles,
+            jornada:state.jornadaActual, temporada:state.temporadaEtiqueta||'',
+            estadio:(state.nombreEstadio || (miEsLocal?miNombre:rivalNombre)+' Arena'),
+            espectadores: state.estadio && state.estadio.ultimaAsistencia ? state.estadio.ultimaAsistencia.toLocaleString('es-ES') : null,
+            clima: climaActual ? climaActual.label : null,
+            posesionLocal: miEsLocal ? posMioFinal : (100-posMioFinal),
+            eventos: info.eventos||[],
+            alineacionLocal: datosLocal.alineacion,
+            alineacionVisitante: datosVisitante.alineacion,
+            prensa: state.ultimaPrensaResuelta || null,
+            prensaEquipo: state.ultimaPrensaResuelta ? miNombre : null,
+            resultadoJugador: (()=>{
+              const golesMios = miEsLocal ? info.resultado.golesA : info.resultado.golesB;
+              const golesRival = miEsLocal ? info.resultado.golesB : info.resultado.golesA;
+              if(golesMios>golesRival) return 'victoria';
+              if(golesMios<golesRival) return 'derrota';
+              return 'empate';
+            })(),
+          };
+          const html=window.G2G_Cronica.generarHTML(datosPartido);
+          const ventana=window.open('', '_blank');
+          if(ventana){ ventana.document.write(html); ventana.document.close(); }
+        }catch(e){ console.error('Error generando la crónica del partido (modo automático):', e); }
+      });
+    }
     document.getElementById('lmHistoricoBtn').addEventListener('click', ()=>{
       if(typeof window.playSound==='function') window.playSound('select');
       mostrarHistoricoPartido(info, miEsLocal);
@@ -9241,6 +9323,11 @@
     const monedaInfo=MONEDAS[state.moneda]||MONEDAS.EUR;
 
     function fatigueColor(f){ if(f>=75) return 'green'; if(f>=40) return 'yellow'; return 'red'; }
+    // Verde/amarillo/rojo según lo cerca que esté de la sanción por
+    // acumulación (5 amarillas) — mismo lenguaje de "semáforo" que la
+    // barra de resistencia, para que se lea de un vistazo el riesgo
+    // real, no solo el número seco.
+    function colorTarjetaAcumulada(n){ if(n>=4) return 'red'; if(n>=2) return 'yellow'; return 'green'; }
     function fatigueBarHTML(p){
       const f=(p.fatigue===undefined)?100:p.fatigue;
       return `<div class="fatigue-bar-wrap" title="Resistencia: ${f}%"><div class="fatigue-bar fatigue-${fatigueColor(f)}" style="width:${f}%"></div></div>`;
@@ -9248,6 +9335,12 @@
     function filaJugador(p){
       const cross=p.injured?` <span class="cross" title="${t('lm.tt_lesionado')}">✚</span>`:'';
       const tarjetaSancion=p.suspendido?` <span class="lm-tarjeta-sancion" title="${tp('lm.tt_sancionado',{n:p.partidosSancion})}">🟥</span>`:'';
+      // Amarillas acumuladas (solo si no está ya sancionado — en cuanto
+      // llega a 5 el contador se resetea y pasa a mostrar el 🟥 de
+      // arriba en su lugar, nunca los dos a la vez).
+      const amarillasAcum=(!p.suspendido && (p.amarillasAcumuladas||0)>0)
+        ? ` <span class="lm-tarjeta-acumulada lm-tarjeta-acumulada-${colorTarjetaAcumulada(p.amarillasAcumuladas)}" title="${tp('lm.tt_amarillas_acumuladas',{n:p.amarillasAcumuladas})}">🟨${p.amarillasAcumuladas}</span>`
+        : '';
       const racha=p.racha>=2?` <span title="${t('lm.tt_racha_gol')}">🔥${p.racha}</span>`:'';
       const star=titularIds.has(p.id)?`<span class="star" title="${t('lm.tt_titular')}">★</span>`:'';
       const claseFila=[p.id===seleccionJugador?'lm-row-selected':'', (p.injured||p.suspendido)?'lm-row-injured':''].filter(Boolean).join(' ');
@@ -9261,7 +9354,7 @@
       const posCell=`<span style="font-weight:700${fueraDePos?';color:#e24b4a':''}">${posJugada}</span>${star}${fueraDePos?`<br><span style="font-size:9px;color:#888">${p.position}</span>`:''}`;
       return `<tr data-pid="${p.id}" class="${claseFila}">
         <td class="lm-td-numero">${p.numero||'-'}</td>
-        <td>${p.name}${rasgosIconosHTML(p)}${cross}${tarjetaSancion}${racha}</td>
+        <td>${p.name}${rasgosIconosHTML(p)}${cross}${tarjetaSancion}${amarillasAcum}${racha}</td>
         <td>${fatigueBarHTML(p)}</td>
         <td>${posCell}</td>
         <td>${p.attack}</td><td>${p.defense}</td><td>${p.pace}</td><td>${p.passing}</td><td>${p.technique}</td>
