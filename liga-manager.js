@@ -4991,7 +4991,13 @@
         // contador se reinicia al sancionar), roja directa = 1
         // partido de sanción inmediata. Antes las tarjetas eran solo
         // un evento cosmético del visor, sin ningún efecto real.
-        eventos.filter(e=>e.type==='card' && e.team===misLado && e.jugador && e.jugador.id).forEach(evCard=>{
+        // "misLado" es la etiqueta 'home'/'away' que usa
+        // generarEventosPartido() para marcar de quién es cada
+        // evento — se recalcula aquí con el mismo criterio
+        // (miEsLocalDeEste), porque esa variable vive dentro de esa
+        // OTRA función y no está disponible en este ámbito.
+        const misLadoJornada = miEsLocalDeEste ? 'home' : 'away';
+        eventos.filter(e=>e.type==='card' && e.team===misLadoJornada && e.jugador && e.jugador.id).forEach(evCard=>{
           const j=evCard.jugador;
           if(evCard.tarjeta==='amarilla'){
             j.amarillasAcumuladas=(j.amarillasAcumuladas||0)+1;
@@ -5330,7 +5336,7 @@
     // buscar y sustituir texto en español, que dejaba de funcionar
     // en cualquier otro idioma.
     const q = idx===1 ? tp('lm.prensa.q2', {rival:rivalName||'el rival'}) : def.q;
-    return {...def, q};
+    return {...def, q, eventIdx:idx};
   }
   // Muestra la rueda de prensa reutilizando literalmente las mismas
   // clases CSS que Copa Leyendas (.press-modal/.press-icon/...), con el
@@ -5408,7 +5414,21 @@
             imgEl.classList.remove('fading');
           }, 220);
         }
-        state.lmPendingPrediction={event, answer};
+        // Se guardan solo los ÍNDICES (números, serializables de
+        // verdad), nunca el objeto "answer" completo — ese objeto
+        // lleva una función (check) para evaluar la promesa, y
+        // JSON.stringify (lo que usa guardarEstado()) elimina en
+        // silencio cualquier propiedad que sea una función. Si el
+        // jugador guardaba la partida justo tras elegir una
+        // respuesta y la recargaba antes de jugar el partido, esa
+        // función desaparecía y resolverPrensaLM() lanzaba un error
+        // al intentar llamarla — eso interrumpía sin aviso todo el
+        // resto de jugarJornada(), dando la sensación de que el
+        // partido "no se reproducía" al pulsar JUGAR. Reconstruir el
+        // objeto completo (con su función) a partir de estos índices
+        // y del catálogo LM_PRESS_EVENTS, justo en el momento de
+        // resolver, evita el problema de raíz.
+        state.lmPendingPrediction={eventIdx:event.eventIdx, answerIdx:idx};
         guardarEstado();
         if(typeof window.playSound==='function') window.playSound('select');
         if(typeof showToast==='function') showToast(`Promesa hecha: "${answer.label}"`, 'toast-neutral');
@@ -5435,8 +5455,19 @@
       return null;
     }
     state._prensaResueltaEstePartido=true;
-    const {answer}=state.lmPendingPrediction;
+    // Se reconstruye el objeto completo (con su función check) a
+    // partir de los índices guardados y del catálogo original — ver
+    // el comentario en el punto donde se guarda la promesa para el
+    // porqué de este paso. Si por cualquier motivo los índices ya no
+    // encajan (versión antigua guardada, catálogo cambiado...), se
+    // trata igual que "sin rueda de prensa" en vez de fallar.
+    const eventDef=LM_PRESS_EVENTS[state.lmPendingPrediction.eventIdx];
+    const answer=eventDef && eventDef.answers[state.lmPendingPrediction.answerIdx];
     state.lmPendingPrediction=null;
+    if(!answer){
+      state.ultimaPrensaResuelta=null;
+      return null;
+    }
     if(answer.stance==='neutral'){
       const r={label:answer.label, outcome:'neutral', delta:0, texto:'🎙 Respuesta neutral: la afición no se ve afectada.'};
       state.ultimaPrensaResuelta=r;
@@ -9562,6 +9593,15 @@
         jugarBtn.disabled=true;
         marcarInteraccionJugarBtn();
         if(typeof window.playSound==='function') window.playSound('select');
+        // Red de seguridad definitiva: si CUALQUIER cosa de todo este
+        // flujo lanza un error sin capturar (aquí mismo o en cualquier
+        // función que llame), el botón deshabilitado de arriba se
+        // quedaría así para siempre, sin ningún aviso — exactamente la
+        // sensación de "juego colgado". Con este blindaje, un fallo
+        // real se ve en la consola Y se reactiva el botón para poder
+        // reintentar, en vez de dejar la partida completamente
+        // bloqueada sin ninguna forma de seguir.
+        try{
         const jugarAhora=()=>{
           // Si la semana de esta jornada ya se resolvió (primer SEGUIR),
           // este segundo SEGUIR juega directamente el partido.
@@ -9642,6 +9682,11 @@
           return;
         }
         pasoQuiniela();
+        }catch(errJugar){
+          console.error('jugarBtn click:', errJugar);
+          jugarBtn.disabled=false;
+          if(typeof showToast==='function') showToast(t('lm.error_jugar_reintentar')||'Ha ocurrido un error — inténtalo de nuevo', 'toast-error');
+        }
       });
       jugarBtn.addEventListener('mouseenter', marcarInteraccionJugarBtn);
       jugarBtn.addEventListener('mousemove', marcarInteraccionJugarBtn);

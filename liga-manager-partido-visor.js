@@ -1324,20 +1324,27 @@
     // la técnica de los implicados, en vez de dejar que el azar siga
     // alargando el forcejeo indefinidamente.
     let disputasConsecutivas=0;
-    const FRASES_PASE=[t('lm.visor_construye'), t('lm.visor_avanza')];
+    const FRASES_PASE=[t('lm.visor_construye'), t('lm.visor_avanza'), t('lm.visor_pase_progresa'), t('lm.visor_pase_busca_hueco')];
     // Variedad de frases para dos de los eventos que más se repetían
     // en la retransmisión (el pase impreciso y la parada del
     // portero, que antes no tenía ninguna frase propia en absoluto) —
     // se elige una al azar cada vez, en vez de repetir siempre la
     // misma literal.
-    const FRASES_PASE_IMPRECISO=[t('lm.visor_pase_impreciso_1'), t('lm.visor_pase_impreciso_2'), t('lm.visor_pase_impreciso_3'), t('lm.visor_pase_impreciso_4'), t('lm.visor_pase_impreciso_5')];
-    const FRASES_PARADA=[t('lm.visor_parada_1'), t('lm.visor_parada_2'), t('lm.visor_parada_3'), t('lm.visor_parada_4'), t('lm.visor_parada_5')];
+    const FRASES_PASE_IMPRECISO=[t('lm.visor_pase_impreciso_1'), t('lm.visor_pase_impreciso_2'), t('lm.visor_pase_impreciso_3'), t('lm.visor_pase_impreciso_4'), t('lm.visor_pase_impreciso_5'), t('lm.visor_pase_impreciso_6'), t('lm.visor_pase_impreciso_7'), t('lm.visor_pase_impreciso_8'), t('lm.visor_pase_impreciso_9'), t('lm.visor_pase_impreciso_10')];
+    const FRASES_PARADA=[t('lm.visor_parada_1'), t('lm.visor_parada_2'), t('lm.visor_parada_3'), t('lm.visor_parada_4'), t('lm.visor_parada_5'), t('lm.visor_parada_6'), t('lm.visor_parada_7'), t('lm.visor_parada_8'), t('lm.visor_parada_9'), t('lm.visor_parada_10')];
     // Misma idea aplicada a otros tres eventos muy frecuentes que
     // hasta ahora repetían siempre la misma frase literal: recuperar
     // el balón, hacer circular el balón, y despejar el peligro.
-    const FRASES_RECUPERA=[t('lm.visor_recupera_1'), t('lm.visor_recupera_2'), t('lm.visor_recupera_3'), t('lm.visor_recupera_4'), t('lm.visor_recupera_5')];
-    const FRASES_CIRCULA=[t('lm.visor_circula_1'), t('lm.visor_circula_2'), t('lm.visor_circula_3'), t('lm.visor_circula_4'), t('lm.visor_circula_5')];
-    const FRASES_DESPEJA=[t('lm.visor_despeja_1'), t('lm.visor_despeja_2'), t('lm.visor_despeja_3'), t('lm.visor_despeja_4'), t('lm.visor_despeja_5')];
+    const FRASES_RECUPERA=[t('lm.visor_recupera_1'), t('lm.visor_recupera_2'), t('lm.visor_recupera_3'), t('lm.visor_recupera_4'), t('lm.visor_recupera_5'), t('lm.visor_recupera_6'), t('lm.visor_recupera_7'), t('lm.visor_recupera_8'), t('lm.visor_recupera_9'), t('lm.visor_recupera_10')];
+    const FRASES_CIRCULA=[t('lm.visor_circula_1'), t('lm.visor_circula_2'), t('lm.visor_circula_3'), t('lm.visor_circula_4'), t('lm.visor_circula_5'), t('lm.visor_circula_6'), t('lm.visor_circula_7'), t('lm.visor_circula_8'), t('lm.visor_circula_9'), t('lm.visor_circula_10')];
+    const FRASES_DESPEJA=[t('lm.visor_despeja_1'), t('lm.visor_despeja_2'), t('lm.visor_despeja_3'), t('lm.visor_despeja_4'), t('lm.visor_despeja_5'), t('lm.visor_despeja_6'), t('lm.visor_despeja_7'), t('lm.visor_despeja_8'), t('lm.visor_despeja_9'), t('lm.visor_despeja_10')];
+    // Dos frases fijas más que se repetían mucho, ahora con variedad:
+    // el robo por presión conjunta de varios jugadores, y el robo por
+    // una entrada individual — son situaciones distintas entre sí
+    // (por eso siguen siendo dos arrays separados), pero cada una
+    // tenía siempre la misma única frase literal.
+    const FRASES_PRESION_CONJUNTA=[t('lm.visor_presion_conjunta_1'), t('lm.visor_presion_conjunta_2'), t('lm.visor_presion_conjunta_3'), t('lm.visor_presion_conjunta_4'), t('lm.visor_presion_conjunta_5')];
+    const FRASES_ENTRADA=[t('lm.visor_entrada_1'), t('lm.visor_entrada_2'), t('lm.visor_entrada_3'), t('lm.visor_entrada_4'), t('lm.visor_entrada_5')];
     let descansoMostrado=false;
     let partidoDetenido=false; // se activa al pulsar "terminar y mostrar resultados"
     let partidoTerminado=false; // el partido llegó a su fin, ya sea jugado entero o forzado
@@ -2109,8 +2116,8 @@
         }
         moverBalon(equipoDefiende[rivalCercanoIdx].x, equipoDefiende[rivalCercanoIdx].y, dur*0.7);
         infoBar.textContent = presionadores>=2
-          ? `${nombreDefiende} recupera el balón con una presión conjunta`
-          : `${nombreDefiende} recupera el balón con una entrada`;
+          ? `${nombreDefiende} ${FRASES_PRESION_CONJUNTA[Math.floor(Math.random()*FRASES_PRESION_CONJUNTA.length)]}`
+          : `${nombreDefiende} ${FRASES_ENTRADA[Math.floor(Math.random()*FRASES_ENTRADA.length)]}`;
         mostrarAlertaRobo(equipoDefiende[rivalCercanoIdx].x, equipoDefiende[rivalCercanoIdx].y);
         siguientePosesionMia=!posesionMia;
         pasesJugadaActual=0;
