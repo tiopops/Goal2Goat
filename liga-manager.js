@@ -2024,7 +2024,11 @@
     const def=HITOS_NODOS[tipoIcono];
     if(!def) return;
     const desc=descripcionHitoNodo(tipoIcono, umbral);
-    zona.innerHTML=`<i class="ph ph-bold ${def.icon}" style="color:${def.color}"></i> <strong>${t('lm.nodo_'+tipoIcono)} · ${umbral}</strong><span>${desc}</span>`;
+    // Se muestra "Nivel 1"/"Nivel 2" en vez del umbral en bruto (5/10)
+    // — el número de puntos ya se ve en la propia tarjeta de progreso,
+    // aquí lo que importa es de qué nivel de recompensa se trata.
+    const nivelHito=def.hitos.findIndex(h=>h.umbral===umbral)+1;
+    zona.innerHTML=`<i class="ph ph-bold ${def.icon}" style="color:${def.color}"></i> <strong>${t('lm.nodo_'+tipoIcono)} · ${t('lm.nivel_n_de_x')} ${nivelHito}</strong><span>${desc}</span>`;
     zona.classList.add('lm-nodos-mensaje-visible');
   }
 
