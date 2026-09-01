@@ -847,8 +847,22 @@
     if(!def) return null;
     const acumulado=(state.nodosAcumulados&&state.nodosAcumulados[tipoIcono])||0;
     const reclamados=(state.nodosHitosReclamados&&state.nodosHitosReclamados[tipoIcono])||[];
-    const siguiente=def.hitos.find(h=>!reclamados.includes(h.umbral));
-    const disponible=siguiente && acumulado>=siguiente.umbral;
+    // Si el contador ya alcanza para más de un hito sin reclamar a la
+    // vez (típicamente al llegar de golpe a 10/10 sin haber pasado por
+    // reclamar el de 5 antes), se ofrece SIEMPRE el más alto de los
+    // que ya se pueden reclamar — nunca se obliga a reclamar primero
+    // el de nivel 1 por separado cuando ya te mereces el de nivel 2.
+    // Antes esto usaba el primero sin reclamar en orden, así que con
+    // 10/10 mostraba la recompensa pequeña (5) y, al reclamarla (que
+    // por diseño no resta puntos), el contador se quedaba clavado en
+    // 10/10 en vez de bajar a 0 — daba la sensación de que "no
+    // restaba los puntos", cuando en realidad hacía falta un segundo
+    // reclamo aparte para llegar al de verdad.
+    const reclamablesAhora=def.hitos.filter(h=>!reclamados.includes(h.umbral) && acumulado>=h.umbral);
+    const siguiente = reclamablesAhora.length
+      ? reclamablesAhora.reduce((mejor,h)=>h.umbral>mejor.umbral?h:mejor)
+      : def.hitos.find(h=>!reclamados.includes(h.umbral));
+    const disponible = reclamablesAhora.length>0;
     return {def, acumulado, reclamados, siguiente, disponible};
   }
 
