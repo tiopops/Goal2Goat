@@ -846,24 +846,25 @@
     const def=HITOS_NODOS[tipoIcono];
     if(!def) return null;
     const acumulado=(state.nodosAcumulados&&state.nodosAcumulados[tipoIcono])||0;
-    const reclamados=(state.nodosHitosReclamados&&state.nodosHitosReclamados[tipoIcono])||[];
-    // Si el contador ya alcanza para más de un hito sin reclamar a la
-    // vez (típicamente al llegar de golpe a 10/10 sin haber pasado por
-    // reclamar el de 5 antes), se ofrece SIEMPRE el más alto de los
-    // que ya se pueden reclamar — nunca se obliga a reclamar primero
-    // el de nivel 1 por separado cuando ya te mereces el de nivel 2.
-    // Antes esto usaba el primero sin reclamar en orden, así que con
-    // 10/10 mostraba la recompensa pequeña (5) y, al reclamarla (que
-    // por diseño no resta puntos), el contador se quedaba clavado en
-    // 10/10 en vez de bajar a 0 — daba la sensación de que "no
-    // restaba los puntos", cuando en realidad hacía falta un segundo
-    // reclamo aparte para llegar al de verdad.
-    const reclamablesAhora=def.hitos.filter(h=>!reclamados.includes(h.umbral) && acumulado>=h.umbral);
+    // El contador es un "saldo" que se gana (+1 por nodo elegido) y se
+    // GASTA al reclamar — cada hito cuesta exactamente su propio
+    // umbral (5 o 10), nunca solo el de nivel más alto. Con eso ya no
+    // hace falta llevar la cuenta de "qué se ha reclamado ya": un
+    // hito deja de estar disponible en cuanto se paga su coste, sin
+    // trampas de doble cobro, y vuelve a estarlo en cuanto el saldo
+    // vuelve a alcanzarlo con puntos nuevos — así el ciclo 5/10 se
+    // repite solo, de forma natural.
+    // Si el saldo alcanza para más de un hito a la vez (típicamente al
+    // llegar de golpe a 10, sin haber reclamado antes el de 5), se
+    // ofrece SIEMPRE el más caro de los que ya se pueden pagar — nunca
+    // se obliga a reclamar primero el de nivel 1 cuando ya te mereces
+    // directamente el de nivel 2.
+    const reclamablesAhora=def.hitos.filter(h=>acumulado>=h.umbral);
     const siguiente = reclamablesAhora.length
       ? reclamablesAhora.reduce((mejor,h)=>h.umbral>mejor.umbral?h:mejor)
-      : def.hitos.find(h=>!reclamados.includes(h.umbral));
+      : def.hitos[0];
     const disponible = reclamablesAhora.length>0;
-    return {def, acumulado, reclamados, siguiente, disponible};
+    return {def, acumulado, siguiente, disponible};
   }
 
   // Aplica de verdad el efecto de un hito ya alcanzado. jugadorIds es
@@ -875,11 +876,10 @@
     const hito=def.hitos.find(h=>h.umbral===umbral);
     if(!hito) return {ok:false, error:'hito_desconocido'};
     const acumulado=(state.nodosAcumulados&&state.nodosAcumulados[tipoIcono])||0;
+    // El saldo disponible es la única guardia que hace falta: si no
+    // llega para pagar este hito, no se puede reclamar — sin eso no
+    // hay forma de reclamarlo dos veces con los mismos puntos.
     if(acumulado<umbral) return {ok:false, error:'no_alcanzado'};
-    if(!state.nodosHitosReclamados) state.nodosHitosReclamados={};
-    if(!state.nodosHitosReclamados[tipoIcono]) state.nodosHitosReclamados[tipoIcono]=[];
-    const reclamados=state.nodosHitosReclamados[tipoIcono];
-    if(reclamados.includes(umbral)) return {ok:false, error:'ya_reclamado'};
 
     const tipoEfectivo=hito.tipo==='eleccion' ? opcionElegida : hito.tipo;
     if(hito.tipo==='eleccion' && !hito.opciones.includes(opcionElegida)) return {ok:false, error:'opcion_invalida'};
@@ -1026,24 +1026,17 @@
         return {ok:false, error:'tipo_desconocido'};
     }
 
-    reclamados.push(umbral);
-    // Si este era el hito de nivel más alto (el 10) del icono, se
-    // "consumen" los puntos de verdad: el contador se descuenta esos
-    // 10 en vez de quedarse ahí parado para siempre (antes, una vez
-    // canjeados los dos niveles, el icono se quedaba "agotado" el
-    // resto de la temporada — cualquier progreso posterior no servía
-    // para nada). Si sobraba algo por encima de 10 se conserva (nunca
-    // se pierde), y los hitos reclamados de este icono se vacían para
-    // que el ciclo 5/10 pueda volver a completarse otra vez. Al
-    // canjear el hito de nivel 1 (el 5) el contador NO se toca — sigue
-    // sumando de forma normal hacia el 10, así que los puntos que ya
-    // llevara de más (p.ej. estar en 7 al canjear el 5) se conservan
-    // tal cual, nunca se pierden ni se recortan a 5.
-    const umbralMaximo=Math.max(...def.hitos.map(h=>h.umbral));
-    if(umbral===umbralMaximo){
-      state.nodosAcumulados[tipoIcono]=Math.max(0, acumulado-umbralMaximo);
-      state.nodosHitosReclamados[tipoIcono]=[];
-    }
+    // Se paga el coste de ESTE hito — sea el de nivel 1 (5) o el de
+    // nivel 2 (10) — descontándolo del saldo. Antes solo se descontaba
+    // al reclamar el de nivel más alto, así que reclamar el de 5
+    // (p.ej. con 7/10) no restaba nada y dejaba el contador clavado en
+    // 7 en vez de en los 2 que de verdad quedaban sin gastar. Lo que
+    // sobre por encima del coste nunca se pierde: sigue contando para
+    // el próximo hito que se pueda pagar, del mismo icono o de nivel
+    // superior, sin necesidad de ningún reseteo aparte — el ciclo 5/10
+    // se repite solo, de forma natural, en cuanto el saldo vuelve a
+    // alcanzar cada umbral.
+    state.nodosAcumulados[tipoIcono]=Math.max(0, acumulado-umbral);
     guardarEstado();
     return {ok:true};
   }
