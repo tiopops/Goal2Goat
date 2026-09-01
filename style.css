@@ -3495,6 +3495,29 @@ body.liga-manager-screen .ranking-btn-label-lm{display:inline}
   border-color:#e24b4a;
   box-shadow:0 0 10px rgba(226,75,74,.6), 0 0 0 2.5px rgba(255,215,0,.9), 0 0 10px 2.5px rgba(255,215,0,.6);
 }
+/* Sancionado por tarjetas — mismo lenguaje visual que "lesionado"
+   (aro rojo con resplandor), para que se note al vuelo en el campo que
+   ese hueco necesita sustitución antes de poder jugar. */
+#lmPitchBox .position.lm-pos-sancionado{border-color:#e24b4a;box-shadow:0 0 10px rgba(226,75,74,.6)}
+#lmPitchBox .position.lm-pos-sancionado.highlight-pos{
+  border-color:#e24b4a;
+  box-shadow:0 0 10px rgba(226,75,74,.6), 0 0 0 2.5px rgba(255,215,0,.9), 0 0 10px 2.5px rgba(255,215,0,.6);
+}
+
+/* ---- Popup de sustitución automática por sanción ---- */
+.lm-sancion-lista{display:flex;flex-direction:column;gap:10px;margin:6px 0 4px}
+.lm-sancion-fila{
+  display:flex;align-items:center;gap:10px;
+  background:var(--lm-surface-2,#1e2326);border:1px solid var(--lm-border,#2a2f32);
+  border-radius:10px;padding:8px 10px;flex-wrap:wrap;
+}
+.lm-sancion-fila-sale,.lm-sancion-fila-entra{display:flex;align-items:center;gap:6px;font-size:13px;flex:1;min-width:120px}
+.lm-sancion-fila-sale i{color:#e24b4a}
+.lm-sancion-fila-entra i{color:#5dcaa5}
+.lm-sancion-fila-tag{font-size:10px;font-weight:700;color:#e24b4a;border:1px solid #e24b4a;border-radius:6px;padding:1px 5px;margin-left:2px}
+.lm-sancion-fila-overall{font-size:11px;font-weight:700;color:var(--gold);margin-left:2px}
+.lm-sancion-fila-flecha{color:var(--lm-text-muted,#999);flex-shrink:0}
+.lm-sancion-sin-reemplazo{font-size:12px;color:var(--lm-text-muted,#999);font-style:italic}
 
 .lm-slot-list{display:flex;flex-direction:column;gap:6px;max-height:280px;overflow-y:auto;margin-top:6px}
 .lm-slot-option{

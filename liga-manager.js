@@ -1404,7 +1404,14 @@
     else if(resultado==='derrota'){ susGoles=1+Math.floor(Math.random()*3); misGoles=Math.max(0, susGoles-1-Math.floor(Math.random()*2)); }
     else { misGoles=susGoles=Math.floor(Math.random()*3); }
 
-    (state.plantilla||[]).forEach(p=>{ p.fatigue=Math.max(0,(p.fatigue==null?100:p.fatigue)-15); });
+    // OJO: la fatiga NO se aplica aquí todavía — igual que moral y
+    // afición, se calcula y se guarda (fatigaDeltas) para aplicarse de
+    // verdad en aplicarConsecuenciasAmistoso(), al cerrar el pop-up con
+    // ENTENDIDO. Antes esta línea mutaba p.fatigue al instante, así que
+    // la barra de forma física ya se movía en el mismo segundo de
+    // elegir el nodo, spoileando el amistoso igual que hacía la barra
+    // de afición antes de arreglarse.
+    const fatigaDeltas=(state.plantilla||[]).map(p=>({id:p.id, delta:15}));
 
     // Los amistosos NUNCA generan tarjetas (no hay ningún código de
     // tarjetas en esta función, a propósito) — pero SÍ pueden dejar
@@ -1455,14 +1462,14 @@
     } else if(resultado==='derrota'){
       aficionDelta=-6;
     }
-    state.ultimoAmistosoResultado={dificultad, resultado, lesionado:lesionadoNombre, misGoles, susGoles, moralDelta, aficionDelta, consecuenciasAplicadas:false};
+    state.ultimoAmistosoResultado={dificultad, resultado, lesionado:lesionadoNombre, misGoles, susGoles, moralDelta, aficionDelta, fatigaDeltas, consecuenciasAplicadas:false};
     return state.ultimoAmistosoResultado;
   }
 
-  // Aplica de verdad moral y afición del último amistoso — se llama
-  // al cerrar el pop-up de resultado, nunca antes, para que las
-  // barras de arriba no se muevan hasta que el jugador vea el
-  // resultado completo del amistoso.
+  // Aplica de verdad moral, afición y fatiga del último amistoso — se
+  // llama al cerrar el pop-up de resultado, nunca antes, para que las
+  // barras de arriba (forma física incluida) no se muevan hasta que el
+  // jugador vea el resultado completo del amistoso.
   function aplicarConsecuenciasAmistoso(){
     const r=state.ultimoAmistosoResultado;
     if(!r || r.consecuenciasAplicadas) return;
@@ -1470,6 +1477,12 @@
     if(r.aficionDelta){
       if(!state.estadio) state.estadio={campo:90, satisfaccion:10, aforoTotal:12000, ultimaAsistencia:null};
       state.estadio.satisfaccion=Math.max(-100, Math.min(100, (state.estadio.satisfaccion||0)+r.aficionDelta));
+    }
+    if(r.fatigaDeltas && r.fatigaDeltas.length){
+      r.fatigaDeltas.forEach(fd=>{
+        const p=(state.plantilla||[]).find(pl=>pl.id===fd.id);
+        if(p) p.fatigue=Math.max(0,(p.fatigue==null?100:p.fatigue)-fd.delta);
+      });
     }
     r.consecuenciasAplicadas=true;
     guardarEstado();
@@ -2647,7 +2660,10 @@
 
   function calcularStatsEquipo(){
     const ids=Object.values(state.alineacion||{}).filter(Boolean);
-    const titulares = ids.map(id=>state.plantilla.find(p=>p.id===id)).filter(Boolean);
+    // Un sancionado NUNCA cuenta aquí — su hueco queda directamente
+    // fuera de la media, como si la posición estuviera vacía, hasta que
+    // se le sustituya (ver mostrarPopupSancionesAntesDeJugar).
+    const titulares = ids.map(id=>state.plantilla.find(p=>p.id===id)).filter(p=>p && !p.suspendido);
     const base = titulares.length ? titulares : state.plantilla;
     const baseFinal = base.length ? base : state.plantilla; // último recurso: si la plantilla está vacía
     const suma = {attack:0,defense:0,pace:0,passing:0,technique:0};
@@ -5057,6 +5073,84 @@
     });
   }
 
+
+  // ---------- Sustitución automática por sanción de tarjetas ----------
+  // Un jugador sancionado (amarillasAcumuladas>=5 o roja) NUNCA debe
+  // disputar el partido ni contar en la media del once titular — su
+  // hueco debe cubrirlo el mejor jugador disponible del banquillo, o
+  // quedarse vacío si no hay ninguno elegible. Se detecta y se resuelve
+  // aquí mismo, con una pequeña interfaz de confirmación, justo antes
+  // de que jugarJornada() simule el partido — así el resto del motor
+  // (goleador, tarjetas, riesgo de lesión, medias, etc.) ni siquiera
+  // necesita saber que existió una sanción: para cuando se juega, ese
+  // jugador simplemente ya no está en state.alineacion.
+  function titularesSancionadosEnAlineacion(){
+    const resultado=[];
+    Object.keys(state.alineacion||{}).forEach(slot=>{
+      const pid=state.alineacion[slot];
+      if(!pid) return;
+      const jugador=(state.plantilla||[]).find(p=>p.id===pid);
+      if(jugador && jugador.suspendido) resultado.push({slot, jugador});
+    });
+    return resultado;
+  }
+
+  function mejorReemplazoParaSlot(slot, excluirIds){
+    const posGenerica=basePos(slot);
+    const titularIds=new Set(Object.values(state.alineacion||{}).filter(Boolean));
+    const candidatos=(state.plantilla||[]).filter(p=>
+      !titularIds.has(p.id) && !p.injured && !p.suspendido && !excluirIds.has(p.id)
+    );
+    if(!candidatos.length) return null;
+    const mismaPosicion=candidatos.filter(p=>p.position===posGenerica);
+    const pool=mismaPosicion.length?mismaPosicion:candidatos;
+    return pool.reduce((mejor,p)=>(!mejor || efectivoOverall(p)>efectivoOverall(mejor)) ? p : mejor, null);
+  }
+
+  // Popup "AAA" de sustitución: enseña, para cada sancionado, quién sale
+  // y la mejor opción sugerida para entrar (ya calculada), con un único
+  // botón para aplicar todos los cambios de golpe y continuar hacia el
+  // partido. Si no hay ningún sancionado en el once, se salta del todo
+  // y llama a onListo() de inmediato.
+  function mostrarPopupSancionesAntesDeJugar(onListo){
+    const sancionados=titularesSancionadosEnAlineacion();
+    if(!sancionados.length){ onListo(); return; }
+    const usadosComoRefuerzo=new Set();
+    const propuestas=sancionados.map(({slot,jugador})=>{
+      const reemplazo=mejorReemplazoParaSlot(slot, usadosComoRefuerzo);
+      if(reemplazo) usadosComoRefuerzo.add(reemplazo.id);
+      return {slot, jugador, reemplazo};
+    });
+    const overlay=document.createElement('div');
+    overlay.id='lmSancionSustitucionOverlay';
+    overlay.className='lm-visor-leyenda-overlay-standalone';
+    document.body.appendChild(overlay);
+    overlay.innerHTML=`
+      <div class="lm-dilemma-card lm-sancion-sustitucion-card" style="max-width:420px;text-align:left">
+        <div class="lm-dilemma-title" style="justify-content:center;text-align:center"><i class="ph ph-bold ph-flag-banner-fold" style="color:#e24b4a"></i> ${t('lm.sancion_sustitucion_titulo')}</div>
+        <p class="lm-setup-desc" style="text-align:center;margin:0 0 10px">${t('lm.sancion_sustitucion_desc')}</p>
+        <div class="lm-sancion-lista">
+          ${propuestas.map(p=>`
+            <div class="lm-sancion-fila">
+              <div class="lm-sancion-fila-sale"><i class="ph ph-bold ph-x-circle"></i> <span>${p.jugador.name}</span><span class="lm-sancion-fila-tag">${t('lm.sancionado_tag')}</span></div>
+              <i class="ph ph-bold ph-arrow-down lm-sancion-fila-flecha"></i>
+              <div class="lm-sancion-fila-entra">${p.reemplazo?`<i class="ph ph-bold ph-check-circle"></i> <span>${p.reemplazo.name}</span><span class="lm-sancion-fila-overall">${efectivoOverall(p.reemplazo)}</span>`:`<span class="lm-sancion-sin-reemplazo">${t('lm.sin_sustituto_disponible')}</span>`}</div>
+            </div>`).join('')}
+        </div>
+        <div class="lm-popup-actions"><button id="lmAplicarSancionBtn" class="mode-card-btn mode-card-btn-gold">${t('lm.aplicar_cambios_btn')}</button></div>
+      </div>`;
+    const btn=document.getElementById('lmAplicarSancionBtn');
+    if(btn) btn.addEventListener('click', ()=>{
+      if(typeof window.playSound==='function') window.playSound('select');
+      propuestas.forEach(p=>{
+        if(p.reemplazo){ state.alineacion[p.slot]=p.reemplazo.id; }
+        else { delete state.alineacion[p.slot]; }
+      });
+      guardarEstado();
+      overlay.remove();
+      onListo();
+    });
+  }
 
   function jugarJornada(){
     if(state.jornadaActual>38) return null;
@@ -9386,6 +9480,9 @@
       return lista; // 'arrival' = orden de llegada = orden del array tal cual
     }
     const plantillaPrincipal=ordenarPlantilla(state.plantilla.filter(p=>titularIds.has(p.id)));
+    // Para la media del once, un sancionado no cuenta — su hueco pesa
+    // como si estuviera vacío, no como un jugador normal.
+    const plantillaPrincipalSinSancion=plantillaPrincipal.filter(p=>!p.suspendido);
     const banquillo=state.plantilla.filter(p=>!titularIds.has(p.id));
     const filasPlantilla=plantillaPrincipal.map(filaJugador).join('');
     const filasBanquillo=banquillo.map(filaJugador).join('');
@@ -9432,7 +9529,7 @@
             <span class="lm-once-titular-label-wrap">
               <span><i class="ph ph-bold ph-t-shirt" style="color:var(--gold);margin-right:6px"></i>${t("lm.once_titular")}</span>
               <span class="lm-once-media-chip" title="${t('lm.media_once_titular_tt')}">
-                <span class="lm-once-media-num">${plantillaPrincipal.length?Math.round(plantillaPrincipal.reduce((s,p)=>s+(p.overall||0),0)/plantillaPrincipal.length):0}</span>
+                <span class="lm-once-media-num">${plantillaPrincipalSinSancion.length?Math.round(plantillaPrincipalSinSancion.reduce((s,p)=>s+(p.overall||0),0)/plantillaPrincipalSinSancion.length):0}</span>
                 <span class="lm-once-media-lbl">${t('lm.media_equipo')}</span>
               </span>
             </span>
@@ -9477,6 +9574,7 @@
             const jugador=pid?state.plantilla.find(p=>p.id===pid):null;
             const vacio=!jugador;
             const lesionado=jugador&&jugador.injured;
+            const sancionado=jugador&&jugador.suspendido;
             const seleccionado=jugador && jugador.id===seleccionJugador;
             const label=basePos(def.slot);
             // Calco exacto de renderSlotContent() de Copa Leyendas: círculo
@@ -9490,10 +9588,10 @@
             }else{
               const inPos=jugador.position===label;
               const star=inPos?' <span class="star">★</span>':'';
-              const statusIcons=lesionado?`<div class="pitch-status-row"><span class="pitch-status-icon pitch-status-injury" title="${t('lm.tt_lesionado')}">✚</span></div>`:'';
+              const statusIcons=(lesionado||sancionado)?`<div class="pitch-status-row">${lesionado?`<span class="pitch-status-icon pitch-status-injury" title="${t('lm.tt_lesionado')}">✚</span>`:''}${sancionado?`<span class="pitch-status-icon pitch-status-sancion" title="${tp('lm.tt_sancionado',{n:jugador.partidosSancion||1})}">🟥</span>`:''}</div>`:'';
               inner=`${statusIcons}<span class="pos-rating">${efectivoOverall(jugador)}</span><div class="player-info"><div class="lm-player-name-row"><span class="lm-player-name-text">${jugador.name}${rasgosIconosHTML(jugador)}</span>${star}</div><div class="player-pos-label${inPos?'':' out-of-position'}">${label}</div></div>`;
             }
-            const clases=['position', vacio?'empty-slot':'locked', lesionado?'lm-pos-injured':'', seleccionado?'highlight-pos':''].filter(Boolean).join(' ');
+            const clases=['position', vacio?'empty-slot':'locked', lesionado?'lm-pos-injured':'', sancionado?'lm-pos-sancionado':'', seleccionado?'highlight-pos':''].filter(Boolean).join(' ');
             return `<div class="${clases}" data-slot="${def.slot}" style="left:${def.x}%;top:${def.y}%" title="${jugador?jugador.name+' ('+efectivoOverall(jugador)+')':'Vacío'}">${inner}</div>`;
           }).join('')}</div>
 
@@ -9802,23 +9900,30 @@
           // Si la semana de esta jornada ya se resolvió (primer SEGUIR),
           // este segundo SEGUIR juega directamente el partido.
           if(state.semanaResueltaParaJornada===state.jornadaActual){
-            const info=jugarJornada();
-            if(info){
-              const alTerminar=()=>{
-                render();
-                mostrarLogrosPendientes();
-                mostrarResolucionQuinielaSiToca();
-                // Se acaba de cruzar de la jornada 38 a la 39: la
-                // temporada ha terminado justo ahora — se muestra el
-                // resumen una única vez, aquí mismo, nunca en renders
-                // posteriores (el botón JUGAR/SEGUIR queda deshabilitado
-                // en cuanto jornadaActual>38, así que este callback no
-                // puede volver a dispararse para la misma temporada).
-                if(state.jornadaActual>38) mostrarResumenTemporada();
-              };
-              if(state.modoVisualPartido==='manager'){ abrirVisorPartidoManager(info, alTerminar); }
-              else { mostrarPartidoEnVivo(info, alTerminar); }
-            } else { render(); }
+            // Antes de simular nada: si hay algún titular sancionado por
+            // tarjetas, se resuelve su sustitución (con la mejor opción
+            // ya sugerida) — jugarJornada() solo se llama DESPUÉS, para
+            // que el sancionado ya no exista en state.alineacion cuando
+            // se juegue el partido de verdad.
+            mostrarPopupSancionesAntesDeJugar(()=>{
+              const info=jugarJornada();
+              if(info){
+                const alTerminar=()=>{
+                  render();
+                  mostrarLogrosPendientes();
+                  mostrarResolucionQuinielaSiToca();
+                  // Se acaba de cruzar de la jornada 38 a la 39: la
+                  // temporada ha terminado justo ahora — se muestra el
+                  // resumen una única vez, aquí mismo, nunca en renders
+                  // posteriores (el botón JUGAR/SEGUIR queda deshabilitado
+                  // en cuanto jornadaActual>38, así que este callback no
+                  // puede volver a dispararse para la misma temporada).
+                  if(state.jornadaActual>38) mostrarResumenTemporada();
+                };
+                if(state.modoVisualPartido==='manager'){ abrirVisorPartidoManager(info, alTerminar); }
+                else { mostrarPartidoEnVivo(info, alTerminar); }
+              } else { render(); }
+            });
             return;
           }
           const continuarSemana=procesarSemanaYMostrarResumen;
@@ -10787,7 +10892,7 @@
             ${xCerrarHTML()}
             <i class="ph ph-bold ph-first-aid-kit" style="font-size:26px;color:#e24b4a"></i>
             <div class="lm-dilemma-title" style="justify-content:center;text-align:center">${t('lm.medico_te_consulta')}</div>
-            <div class="lm-dilemma-text">${jugador?jugador.name:'Un jugador'} tiene una lesión ${state.medicoNotificacion.severidad}. Necesitas sumar ${dificultad}+ para acelerar su recuperación.</div>
+            <div class="lm-dilemma-text">${jugador?jugador.name:'Un jugador'} tiene una lesión ${state.medicoNotificacion.severidad}. Necesitas sumar <strong class="lm-dificultad-destacada">${dificultad}+</strong> para acelerar su recuperación.</div>
             <div class="lm-dice-selector">
               <button id="lmDiceMinus" class="lm-dice-stepper">−</button>
               <span id="lmDiceCount">${dadosElegidos}</span>
