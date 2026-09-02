@@ -193,10 +193,19 @@
     return nombre;
   }
   // Salario mensual a partir del overall — escala pensada para que una
-  // plantilla modesta (48-65) cueste en torno a 150.000-200.000€/mes en
-  // total, coherente con el capital inicial y el aforo modestos.
+  // plantilla modesta (48-65) cueste en torno a 190.000-215.000€/mes en
+  // total, coherente con el capital inicial y el aforo modestos: con esa
+  // nómina, un solo partido en casa (con el aforo/asistencia típicos de
+  // un recién ascendido) ya NO cubre el mes entero por sí solo, y ni
+  // siquiera un mes "normal" de dos partidos en casa deja demasiado
+  // margen — hace falta gestionar bien (precio de entrada, plantilla,
+  // patrocinios) para que el balance vaya mejorando mes a mes.
+  // (Antes el multiplicador era 260, lo que dejaba una nómina real de
+  // ~68.000€/mes muy por debajo de este objetivo y hacía que el primer
+  // mes fuera ampliamente positivo incluso sin fichar a nadie del
+  // cuerpo técnico — contradecía la propia intención de diseño.)
   function calcularSalario(overall){
-    return Math.round(Math.max(1200, (overall-40)*260));
+    return Math.round(Math.max(1200, (overall-40)*800));
   }
   function generarMiniPlantilla(){
     const usados=new Set();
@@ -4205,15 +4214,18 @@
       // ---- Economía ----
       // Capital inicial: mucho más ajustado para un club PROPIO (modo
       // difícil, recién ascendido) que para hacerte cargo de uno de los
-      // 20 equipos reales ya establecidos. Antes ambos empezaban con
-      // los mismos 400.000€ — con la nómina real de una plantilla+
-      // cuerpo técnico modestos (~85-90.000€/mes), esa cifra aguantaba
-      // meses de sobra incluso sin ningún ingreso, y un solo partido en
-      // casa ya cubría el mes entero: nunca llegaba a apretar de
-      // verdad, contradiciendo la propia intención de diseño de "dos o
-      // tres meses de margen" que ya decía este comentario. Ahora sí se
-      // ajusta a esa intención: ~2-2.5 meses de colchón si no entrara
-      // nada de dinero, obligando a gestionar bien desde el principio.
+      // 20 equipos reales ya establecidos. Con la nómina real de una
+      // plantilla modesta (~190.000-215.000€/mes, ver calcularSalario) y
+      // el cuerpo técnico aún sin contratar, estos 200.000€ dan menos de
+      // un mes de colchón si no entrara nada de dinero: el jugador
+      // depende de verdad de la recaudación de los partidos en casa
+      // desde la primera jornada, y un mal sorteo de calendario (pocos
+      // partidos en casa en el primer mes) puede dejar el balance en
+      // números rojos. El aviso de quiebra grave (comprobarInsolvenciaGrave)
+      // exige 3 meses seguidos por debajo de -3x la nómina mensual antes
+      // de declarar la quiebra, así que hay margen real para recuperarse
+      // mientras se aprende a gestionar precio de entrada, fichajes y
+      // patrocinios — difícil de dominar, pero nunca injusto.
       capital:equipoRealElegidoId?400000:200000,
       // Préstamo bancario activo (null si no hay ninguno pedido). Ver
       // solicitarPrestamo()/procesarCuotaPrestamo() más abajo.
