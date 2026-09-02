@@ -48,7 +48,7 @@
         text: t('tut.lm.p3_x')
       },
       {
-        selector: '.lm-nodos-acumulados, .lm-calendario-box',
+        selector: '.lm-calendario-box',
         title: t('tut.lm.p4_t'),
         text: t('tut.lm.p4_x')
       },
