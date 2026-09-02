@@ -9793,6 +9793,7 @@
               <div class="howto-step"><span class="howto-num">3</span><div>${t('lm.howto_paso3')}</div></div>
               <div class="howto-step"><span class="howto-num">4</span><div>${t('lm.howto_paso4')}</div></div>
               <div class="howto-step"><span class="howto-num">5</span><div>${t('lm.howto_paso5')}</div></div>
+              <div class="howto-step"><span class="howto-num">6</span><div>${t('lm.howto_paso6')}</div></div>
               <button id="lmReplayTutorialBtn" style="width:100%;margin-top:12px;font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:1px;font-size:16px;background:none;border:1px solid var(--gold);color:var(--gold);border-radius:6px;padding:9px 14px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px">
                 <i class="ph ph-bold ph-play-circle" style="font-size:20px"></i> ${t('lm.howto_ver_tutorial')}
               </button>

@@ -53,14 +53,19 @@
         text: t('tut.lm.p4_x')
       },
       {
-        selector: '.lm-correo-box',
+        selector: '.lm-nodos-acumulados, .lm-calendario-box',
         title: t('tut.lm.p5_t'),
         text: t('tut.lm.p5_x')
       },
       {
-        selector: () => isMobileLayout() ? '#lmMobileTabBar, #mobileTabBar' : '.app',
+        selector: '.lm-correo-box',
         title: t('tut.lm.p6_t'),
-        text: () => (isMobileLayout() ? t('tut.lm.p6_movil') : t('tut.lm.p6_escritorio')) + t('tut.lm.p6_comun')
+        text: t('tut.lm.p6_x')
+      },
+      {
+        selector: () => isMobileLayout() ? '#lmMobileTabBar, #mobileTabBar' : '.app',
+        title: t('tut.lm.p7_t'),
+        text: () => (isMobileLayout() ? t('tut.lm.p7_movil') : t('tut.lm.p7_escritorio')) + t('tut.lm.p7_comun')
       },
     ];
   }
