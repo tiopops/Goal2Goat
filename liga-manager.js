@@ -8296,32 +8296,56 @@
   }
 
   // ---------------------------------------------------------------
-  // MINIJUEGO DE SCOUTING (push-your-luck / "empuja o plántate") —
-  // PROTOTIPO. Poner esta constante a false restaura EXACTAMENTE el
-  // comportamiento clásico del nodo de scouting (tirada automática e
-  // invisible, +15% de boost fijo por nodo elegido esta semana) sin
-  // tocar nada más: es el único interruptor que hace falta para
-  // volver atrás si no convence.
+  // MINIJUEGO DE SCOUTING — "INFILTRADO EN LA GRADA" (push-your-luck
+  // con riesgo real de descubierta) — PROTOTIPO. Poner esta constante
+  // a false restaura EXACTAMENTE el comportamiento clásico del nodo
+  // de scouting (tirada automática e invisible, +15% de boost fijo
+  // por nodo elegido esta semana) sin tocar nada más: es el único
+  // interruptor que hace falta para volver atrás si no convence.
+  //
+  // DISEÑO (v2 — sustituye al primer prototipo "empuja hasta 3 veces
+  // y plántate", que no generaba ninguna decisión real: como cada
+  // empujón subía la probabilidad SIEMPRE y sin riesgo propio, la
+  // jugada óptima era mecánica —empujar 2 veces y plantarse siempre—,
+  // sin nada que valorar. Un push-your-luck de verdad (el género de
+  // "Can't Stop", "Farkle"/dados de la codicia, o el Balloon Analogue
+  // Risk Task usado en psicología para estudiar la toma de riesgos)
+  // necesita que CADA empujón individual tenga una probabilidad real
+  // de fallar, que ese fallo cueste algo de verdad, y que el riesgo
+  // vaya subiendo cuanto más se insiste — así la tensión crece empujón
+  // a empujón y "plantarse" es una decisión de verdad, no un trámite):
+  //
+  // El ojeador se va colando más cerca del terreno de juego para
+  // conseguir un informe mejor. Cada paso que da hacia delante sube la
+  // probabilidad/calidad del sobre, pero también la posibilidad de que
+  // le pillen — ambas suben a la vez, a la vista del jugador, en dos
+  // medidores. Si le pillan: la tirada de esta semana se pierde entera
+  // (0%, ningún sobre) Y, si llevaba calidad acumulada de semanas
+  // anteriores (sobreCalidadAcumulada), esa ventaja también se quema
+  // — el jugador queda peor que si no hubiera jugado el minijuego en
+  // absoluto, no solo "sin premio". Plantarse en cualquier momento
+  // anterior resuelve la tirada de forma segura con lo conseguido
+  // hasta ese momento (vía resolverTiradaSobreFichajes, la MISMA
+  // función que usa la tirada automática, así que el resultado final
+  // —nivel del sobre, correo de aviso— es idéntico en ambos caminos).
   const LM_MINIJUEGO_SCOUTING_ACTIVO = true;
 
-  // Abre el minijuego del nodo de scouting: empieza mostrando la
-  // MISMA probabilidad base que usaría la tirada automática
-  // (calcularProbabilidadBaseSobreFichajes — nivel de Red de
-  // Ojeadores + calidad acumulada). El jugador puede EMPUJAR hasta 3
-  // veces para intentar subirla más, o PLANTARSE en cualquier
-  // momento para resolver la tirada YA con lo que lleve acumulado.
-  // Empujar es un riesgo real: si se agotan los 3 intentos sin haber
-  // pulsado plantarse antes, la codicia sale cara y la tirada se
-  // pierde entera (0%, sin sobre). Reutiliza resolverTiradaSobreFichajes
-  // para que el resultado (nivel del sobre, correo de aviso...) sea
-  // idéntico tanto si sale del minijuego como de la tirada automática.
+  // Riesgo de que el ojeador sea descubierto en el empujón número
+  // "paso" (1-indexado): sube con cada paso, con un techo por debajo
+  // del 100% para que nunca sea una muerte segura, pero sí cada vez
+  // más disuasorio.
+  function lmRiesgoDescubiertaScouting(paso){
+    return Math.min(0.72, 0.09 + (paso-1)*0.11);
+  }
+
+  // Abre el minijuego del nodo de scouting.
   function abrirMinijuegoScouting(onCerrado){
-    const MAX_EMPUJONES=3;
+    const MAX_PASOS=6;
     let probActual=calcularProbabilidadBaseSobreFichajes();
-    let empujones=0;
+    let pasos=0;
     let fase='jugando'; // 'jugando' | 'animando' | 'resuelto'
-    let resultadoExito=null;
-    let agotado=false;
+    let resultadoTipo=null; // 'exito' | 'fallo' | 'pillado'
+    let calidadQuemada=false;
 
     const overlay=document.createElement('div');
     overlay.id='lmScoutingMinijuegoOverlay';
@@ -8339,37 +8363,51 @@
       if(p>=0.25) return 'lm-scout-mini-meter-fill-media';
       return 'lm-scout-mini-meter-fill-baja';
     }
+    function claseRiesgoParaValor(r){
+      if(r>=0.45) return 'lm-scout-mini-risk-fill-alta';
+      if(r>=0.22) return 'lm-scout-mini-risk-fill-media';
+      return 'lm-scout-mini-risk-fill-baja';
+    }
 
     function pintar(){
       const pct=Math.round(probActual*100);
-      const intentosRestantes=Math.max(0, MAX_EMPUJONES-empujones);
-      const puedeEmpujar = fase==='jugando' && empujones<MAX_EMPUJONES;
+      const puedeSeguir = fase==='jugando' && pasos<MAX_PASOS;
       const puedePlantarse = fase==='jugando';
+      const riesgoSiguiente = lmRiesgoDescubiertaScouting(pasos+1);
+      const riesgoPct=Math.round(riesgoSiguiente*100);
       let resultadoTexto='';
       if(fase==='resuelto'){
-        resultadoTexto = resultadoExito ? t('lm.scoutmini_resultado_exito')
-          : (agotado ? t('lm.scoutmini_resultado_agotado') : t('lm.scoutmini_resultado_fallo'));
+        if(resultadoTipo==='pillado'){
+          resultadoTexto = calidadQuemada ? t('lm.scoutmini_resultado_pillado_calidad') : t('lm.scoutmini_resultado_pillado');
+        } else {
+          resultadoTexto = resultadoTipo==='exito' ? t('lm.scoutmini_resultado_exito') : t('lm.scoutmini_resultado_fallo');
+        }
       }
       overlay.innerHTML=`
-        <div class="lm-dilemma-card lm-scout-mini-card">
+        <div class="lm-dilemma-card lm-scout-mini-card" id="lmScoutMiniCard">
           <div class="lm-dilemma-title lm-scout-mini-title"><i class="ph ph-bold ph-binoculars"></i>${t('lm.scoutmini_titulo')}</div>
           ${fase!=='resuelto' ? `<div class="lm-dilemma-text lm-scout-mini-desc">${t('lm.scoutmini_desc')}</div>` : ''}
           <div class="lm-scout-mini-meter-wrap">
+            <div class="lm-scout-mini-meter-label">${t('lm.scoutmini_label_informe')}</div>
             <div class="lm-scout-mini-meter-track">
               <div class="lm-scout-mini-meter-fill ${claseMeterParaProb(probActual)}" id="lmScoutMeterFill" style="width:${pct}%"></div>
             </div>
             <div class="lm-scout-mini-pct" id="lmScoutMeterPct">${pct}%</div>
           </div>
-          <div class="lm-scout-mini-intentos">
-            ${Array.from({length:MAX_EMPUJONES}).map((_,i)=>`<span class="lm-scout-mini-intento-pip${i<empujones?' lm-scout-mini-intento-pip-usado':''}"></span>`).join('')}
-            ${fase==='jugando' ? `<span class="lm-scout-mini-intentos-label">${tp('lm.scoutmini_intentos_restantes',{n:intentosRestantes})}</span>` : ''}
-          </div>
-          ${fase==='resuelto' ? `<div class="lm-scout-mini-resultado ${resultadoExito?'lm-scout-mini-resultado-exito':'lm-scout-mini-resultado-fallo'}">${resultadoTexto}</div>` : ''}
+          ${puedeSeguir ? `
+          <div class="lm-scout-mini-meter-wrap lm-scout-mini-risk-wrap">
+            <div class="lm-scout-mini-meter-label lm-scout-mini-risk-label">${t('lm.scoutmini_label_riesgo')}</div>
+            <div class="lm-scout-mini-risk-track">
+              <div class="lm-scout-mini-risk-fill ${claseRiesgoParaValor(riesgoSiguiente)}" id="lmScoutRiskFill" style="width:${riesgoPct}%"></div>
+            </div>
+            <div class="lm-scout-mini-risk-pct ${riesgoSiguiente>=0.45?'lm-scout-mini-risk-pct-alta':''}" id="lmScoutRiskPct">${riesgoPct}%</div>
+          </div>` : ''}
+          ${fase==='resuelto' ? `<div class="lm-scout-mini-resultado lm-scout-mini-resultado-${resultadoTipo}">${resultadoTexto}</div>` : ''}
           <div class="lm-scout-mini-actions">
             ${fase==='resuelto'
               ? `<button type="button" id="lmScoutBtnContinuar" class="mode-card-btn mode-card-btn-gold">${t('lm.continuar')}</button>`
               : `<button type="button" id="lmScoutBtnPlantarse" class="mode-card-btn mode-card-btn-gold" ${puedePlantarse?'':'disabled'}><i class="ph ph-bold ph-hand-palm"></i> ${t('lm.scoutmini_plantarse')}</button>
-                 <button type="button" id="lmScoutBtnEmpujar" class="mode-card-btn mode-card-btn-secondary" ${puedeEmpujar?'':'disabled'}><i class="ph ph-bold ph-arrow-fat-lines-up"></i> ${t('lm.scoutmini_empujar')}</button>`}
+                 <button type="button" id="lmScoutBtnEmpujar" class="mode-card-btn mode-card-btn-secondary" ${puedeSeguir?'':'disabled'}><i class="ph ph-bold ph-footprints"></i> ${t('lm.scoutmini_empujar')}</button>`}
           </div>
         </div>`;
       cablear();
@@ -8382,12 +8420,12 @@
       if(btnPlantarse) btnPlantarse.addEventListener('click', ()=>{
         if(fase!=='jugando') return;
         if(typeof window.playSound==='function') window.playSound('select');
-        resolver(probActual, false);
+        resolver('banco');
       });
       if(btnEmpujar) btnEmpujar.addEventListener('click', ()=>{
-        if(fase!=='jugando' || empujones>=MAX_EMPUJONES) return;
+        if(fase!=='jugando' || pasos>=MAX_PASOS) return;
         if(typeof window.playSound==='function') window.playSound('select');
-        empujar();
+        avanzarPaso();
       });
       if(btnContinuar) btnContinuar.addEventListener('click', ()=>{
         if(typeof window.playSound==='function') window.playSound('select');
@@ -8396,51 +8434,60 @@
       });
     }
 
-    function empujar(){
+    function avanzarPaso(){
       fase='animando';
       pintar();
-      empujones++;
-      const bonus=0.06+Math.random()*0.09; // cada empujón sube entre +6% y +15%
-      const nuevaProb=Math.min(0.95, probActual+bonus);
-      const fillEl=overlay.querySelector('#lmScoutMeterFill');
-      const pctEl=overlay.querySelector('#lmScoutMeterPct');
-      const desde=Math.round(probActual*100);
-      const hasta=Math.round(nuevaProb*100);
-      let paso=0; const pasos=10;
-      const spin=setInterval(()=>{
-        paso++;
-        const val=Math.round(desde+(hasta-desde)*(paso/pasos));
-        if(fillEl) fillEl.style.width=val+'%';
-        if(pctEl) pctEl.textContent=val+'%';
+      const riesgo=lmRiesgoDescubiertaScouting(pasos+1);
+      const card=overlay.querySelector('#lmScoutMiniCard');
+      // Tensión creciente: ticks de "spin" cada vez más rápidos según
+      // sube el riesgo, con el medidor de riesgo pulsando — antes de
+      // revelar si el ojeador ha pasado desapercibido o le han pillado.
+      if(card) card.classList.add('lm-scout-mini-card-tension');
+      let ticks=0;
+      const totalTicks=8+Math.floor(Math.random()*3);
+      const velocidad=Math.max(55, 95-Math.round(riesgo*50));
+      const tension=setInterval(()=>{
+        ticks++;
         if(typeof window.playSound==='function') window.playSound('spin');
-        if(paso>=pasos){
-          clearInterval(spin);
-          probActual=nuevaProb;
+        if(ticks>=totalTicks){
+          clearInterval(tension);
+          if(card) card.classList.remove('lm-scout-mini-card-tension');
+          const pillado=Math.random()<riesgo;
+          pasos++;
           if(typeof window.playSound==='function') window.playSound('reveal');
-          if(empujones>=MAX_EMPUJONES){
-            // 3 empujones sin plantarse: la codicia sale cara — la
-            // probabilidad conseguida se pierde entera.
-            probActual=0;
-            resolver(0, true);
+          if(pillado){
+            if(card){ card.classList.add('lm-scout-mini-card-pillado'); setTimeout(()=>card.classList.remove('lm-scout-mini-card-pillado'), 500); }
+            resolver('pillado');
           } else {
+            const ganancia=0.07+Math.random()*0.06; // cada paso seguro sube entre +7% y +13%
+            probActual=Math.min(0.95, probActual+ganancia);
+            if(card){ card.classList.add('lm-scout-mini-card-seguro'); setTimeout(()=>card.classList.remove('lm-scout-mini-card-seguro'), 450); }
             fase='jugando';
             pintar();
           }
         }
-      },70);
+      }, velocidad);
     }
 
-    function resolver(probFinal, seAgoto){
+    function resolver(motivo){
       fase='resuelto';
-      agotado=seAgoto;
-      resultadoExito = probFinal>0 ? resolverTiradaSobreFichajes(probFinal) : false;
+      if(motivo==='pillado'){
+        resultadoTipo='pillado';
+        calidadQuemada=(state.sobreCalidadAcumulada||0)>0;
+        state.sobreCalidadAcumulada=0;
+        probActual=0;
+        resolverTiradaSobreFichajes(0);
+      } else {
+        const exito = probActual>0 ? resolverTiradaSobreFichajes(probActual) : false;
+        resultadoTipo = exito ? 'exito' : 'fallo';
+      }
       guardarEstado();
       pintar();
     }
 
     // A propósito SIN habilitarCierreOverlay mientras se juega: un
     // clic fuera accidental no puede saltarse la decisión de
-    // plantarse/empujar. Solo se cierra con el botón explícito
+    // plantarse/seguir. Solo se cierra con el botón explícito
     // ("CONTINUAR", una vez resuelto), igual que las pantallas de
     // tirada de dados del resto del juego.
     pintar();

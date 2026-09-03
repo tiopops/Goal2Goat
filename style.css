@@ -4479,7 +4479,11 @@ body.liga-manager-screen .ranking-btn-label-lm{display:inline}
 .lm-scout-mini-title{justify-content:center;text-align:center}
 .lm-scout-mini-title i{color:#8a7fd6}
 .lm-scout-mini-desc{text-align:center}
-.lm-scout-mini-meter-wrap{margin:18px 0 6px}
+.lm-scout-mini-meter-wrap{margin:16px 0 6px;transition:transform .2s ease}
+.lm-scout-mini-meter-label{
+  font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--lm-text-dim);
+  text-align:left;margin-bottom:4px;
+}
 .lm-scout-mini-meter-track{
   width:100%;height:22px;border-radius:11px;background:rgba(255,255,255,.06);
   border:1px solid rgba(138,127,214,.35);overflow:hidden;position:relative;
@@ -4493,27 +4497,66 @@ body.liga-manager-screen .ranking-btn-label-lm{display:inline}
 .lm-scout-mini-meter-fill-media{background:linear-gradient(90deg,#a68a3e,#e6c94a)}
 .lm-scout-mini-meter-fill-alta{background:linear-gradient(90deg,#2f8f5b,#5dcaa5)}
 .lm-scout-mini-pct{
-  font-family:'Bebas Neue',Impact,sans-serif;font-size:38px;letter-spacing:1px;
-  color:var(--lm-text);text-align:center;margin-top:8px;line-height:1;
+  font-family:'Bebas Neue',Impact,sans-serif;font-size:34px;letter-spacing:1px;
+  color:var(--lm-text);text-align:center;margin-top:6px;line-height:1;
 }
-.lm-scout-mini-intentos{
-  display:flex;align-items:center;justify-content:center;gap:6px;
-  margin:12px 0 16px;flex-wrap:wrap;
+/* Medidor de riesgo — mismo tamaño que el de calidad del informe pero
+   en rojo/naranja, para que el jugador vea las dos cosas subiendo A LA
+   VEZ cada vez que decide dar un paso más: esa comparación en vivo es
+   la que genera la tensión real de "¿empujo una vez más o no?". */
+.lm-scout-mini-risk-wrap{margin-top:14px}
+.lm-scout-mini-risk-label{color:#e29a8a}
+.lm-scout-mini-risk-track{
+  width:100%;height:14px;border-radius:7px;background:rgba(255,255,255,.06);
+  border:1px solid rgba(226,75,74,.3);overflow:hidden;
 }
-.lm-scout-mini-intento-pip{
-  width:12px;height:12px;border-radius:50%;background:rgba(255,255,255,.1);
-  border:1px solid rgba(138,127,214,.5);flex-shrink:0;
+.lm-scout-mini-risk-fill{
+  height:100%;border-radius:7px 0 0 7px;
+  background:linear-gradient(90deg,#7a4a3a,#e08a3e);
+  transition:width .2s ease,background .2s ease;
 }
-.lm-scout-mini-intento-pip-usado{background:#8a7fd6;border-color:#8a7fd6}
-.lm-scout-mini-intentos-label{font-size:11px;color:var(--lm-text-dim);margin-left:6px}
+.lm-scout-mini-risk-fill-media{background:linear-gradient(90deg,#a05a3a,#e2704a)}
+.lm-scout-mini-risk-fill-alta{background:linear-gradient(90deg,#a5342f,#e24b4a);animation:lmScoutRiskPulse 1s ease-in-out infinite}
+.lm-scout-mini-risk-pct{
+  font-family:'Bebas Neue',Impact,sans-serif;font-size:15px;letter-spacing:.5px;
+  color:var(--lm-text-muted);text-align:right;margin-top:4px;
+}
+.lm-scout-mini-risk-pct-alta{color:#f08a80;animation:lmScoutRiskTextPulse 1s ease-in-out infinite}
 .lm-scout-mini-resultado{
   font-size:13px;line-height:1.5;padding:12px 14px;border-radius:8px;margin:6px 0 16px;
 }
 .lm-scout-mini-resultado-exito{background:rgba(93,202,165,.12);border:1px solid rgba(93,202,165,.4);color:#7cd9bd}
 .lm-scout-mini-resultado-fallo{background:rgba(230,86,74,.1);border:1px solid rgba(230,86,74,.35);color:#f08a80}
+.lm-scout-mini-resultado-pillado{background:rgba(230,86,74,.16);border:1px solid #e24b4a;color:#ffb3ab;font-weight:600}
 .lm-scout-mini-actions{display:flex;gap:10px;width:100%;justify-content:center}
 .lm-scout-mini-actions button{flex:1;min-width:0}
 .lm-scout-mini-actions button:disabled{opacity:.4;cursor:not-allowed}
+/* Animaciones de la tarjeta durante y tras cada paso: pulso de tensión
+   mientras se resuelve, y flash verde (a salvo) o rojo+sacudida
+   (pillado) al revelar — el "PAM" visual que pedía el diseño. */
+@keyframes lmScoutRiskPulse{0%,100%{opacity:1}50%{opacity:.6}}
+@keyframes lmScoutRiskTextPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.12)}}
+@keyframes lmScoutTensionBorder{
+  0%,100%{box-shadow:0 0 0 1px rgba(226,75,74,.18),0 18px 50px rgba(0,0,0,.55)}
+  50%{box-shadow:0 0 0 3px rgba(226,75,74,.5),0 18px 50px rgba(0,0,0,.55)}
+}
+.lm-scout-mini-card-tension{animation:lmScoutTensionBorder .35s ease-in-out infinite}
+@keyframes lmScoutShake{
+  0%,100%{transform:translateX(0)}
+  20%{transform:translateX(-8px)}
+  40%{transform:translateX(7px)}
+  60%{transform:translateX(-5px)}
+  80%{transform:translateX(4px)}
+}
+.lm-scout-mini-card-pillado{
+  animation:lmScoutShake .45s ease-in-out;
+  box-shadow:0 0 0 3px rgba(226,75,74,.75),0 18px 50px rgba(0,0,0,.55) !important;
+}
+@keyframes lmScoutFlashGreen{
+  0%{box-shadow:0 0 0 3px rgba(93,202,165,.8),0 18px 50px rgba(0,0,0,.55)}
+  100%{box-shadow:0 0 0 1px rgba(138,127,214,.18),0 18px 50px rgba(0,0,0,.55)}
+}
+.lm-scout-mini-card-seguro{animation:lmScoutFlashGreen .45s ease-out}
 
 /* Tarjeta de Liga Manager cuando el acceso está desbloqueado (solo admin
    autorizado mientras el modo está en construcción): mismo tratamiento
