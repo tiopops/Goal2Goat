@@ -8325,7 +8325,14 @@
 
     const overlay=document.createElement('div');
     overlay.id='lmScoutingMinijuegoOverlay';
-    document.getElementById('ligaManagerScreen').appendChild(overlay);
+    // A document.body, NUNCA a #ligaManagerScreen: el árbol de nodos
+    // repinta ese contenedor (pintarArbolNodos()/render() sustituyen su
+    // innerHTML entero) mientras el minijuego sigue abierto encima —
+    // colgado de #ligaManagerScreen se borraba solo a los pocos
+    // instantes de abrirse, igual que el resto de overlays del juego
+    // que deben sobrevivir a un repintado (p.ej. el boletín de la
+    // quiniela, más abajo).
+    document.body.appendChild(overlay);
 
     function claseMeterParaProb(p){
       if(p>=0.5) return 'lm-scout-mini-meter-fill-alta';
