@@ -184,7 +184,16 @@
     const genero = Math.random()<0.5 ? 'hombre' : 'mujer';
     const nombres = genero==='mujer' ? NOMBRES_MUJER : NOMBRES_JUGADOR;
     const nombre = nombres[Math.floor(Math.random()*nombres.length)]+' '+APELLIDOS_JUGADOR[Math.floor(Math.random()*APELLIDOS_JUGADOR.length)];
-    return {nombre, genero};
+    // Variante de foto (1, 2 o 3) — cada puesto del cuerpo técnico tiene
+    // hasta 3 fotos distintas por género (archivo_hombre.png/mujer.png,
+    // _hombre2/_mujer2, _hombre3/_mujer3), así que dos trabajadores del
+    // mismo género no salen siempre con la misma cara. Se decide UNA vez
+    // aquí (al generarse el nombre) y se guarda con el resto de sus
+    // datos, nunca se vuelve a sortear en cada render — si no, la foto
+    // "parpadearía" a otra persona distinta cada vez que se repintara la
+    // pantalla.
+    const fotoVariante = 1+Math.floor(Math.random()*3);
+    return {nombre, genero, fotoVariante};
   }
   function nombreJugadorAleatorio(usados){
     let nombre;
@@ -7662,12 +7671,29 @@
   // proyecto: {carpeta}/{archivo}_hombre.png o _mujer.png según quién lo
   // ocupe, y {archivo}_escenario.png (sin género) en blanco y negro
   // cuando el puesto está vacante (despedido o sin cubrir todavía).
-  function staffFotoHTML(carpeta, archivoBase, alt, iconoFallback, genero, vacante){
+  //
+  // Variantes por género: algunos puestos tienen varias fotos distintas
+  // para el mismo género (_hombre.png/_hombre2.png/_hombre3.png, igual
+  // en mujer) — "variante" (1, 2 o 3) elige cuál, decidida una sola vez
+  // al generar al trabajador (ver nombreTrabajadorAleatorio) y guardada
+  // con él, así que no cambia de cara en cada render. La variante 1 usa
+  // el nombre de archivo de siempre sin número, para no romper partidas
+  // guardadas antes de este cambio ni puestos (Director General/
+  // Deportivo) que todavía solo tienen una foto por género: si el
+  // archivo numerado no existe, el onerror reintenta automáticamente con
+  // el archivo base antes de rendirse y mostrar el icono de repuesto.
+  function staffFotoHTML(carpeta, archivoBase, alt, iconoFallback, genero, vacante, variante){
+    const g = genero==='mujer' ? 'mujer' : 'hombre';
+    const sufijoVariante = (!vacante && variante>1) ? variante : '';
+    const rutaBase = `assets/equipo_tecnico/${carpeta}/${archivoBase}_${g}.png`;
     const ruta = vacante
       ? `assets/equipo_tecnico/${carpeta}/${archivoBase}_escenario.png`
-      : `assets/equipo_tecnico/${carpeta}/${archivoBase}_${genero==='mujer'?'mujer':'hombre'}.png`;
+      : `assets/equipo_tecnico/${carpeta}/${archivoBase}_${g}${sufijoVariante}.png`;
     const estiloGris = vacante ? ' style="filter:grayscale(1)"' : '';
-    return `<img src="${ruta}" alt="${alt}"${vacante?` title="${t('lm.tt_puesto_vacante')}"`:''} class="lm-staff-photo-img"${estiloGris} onerror="this.onerror=null;this.style.display='none';this.nextElementSibling.style.display='flex';">
+    const onerrorAttr = sufijoVariante
+      ? `onerror="if(this.dataset.fbTried){this.onerror=null;this.style.display='none';this.nextElementSibling.style.display='flex';}else{this.dataset.fbTried='1';this.src='${rutaBase}';}"`
+      : `onerror="this.onerror=null;this.style.display='none';this.nextElementSibling.style.display='flex';"`;
+    return `<img src="${ruta}" alt="${alt}"${vacante?` title="${t('lm.tt_puesto_vacante')}"`:''} class="lm-staff-photo-img"${estiloGris} ${onerrorAttr}>
       <div class="lm-staff-photo-fallback${vacante?' lm-staff-photo-vacante':''}" style="display:none"><i class="ph ph-bold ${iconoFallback}"></i></div>`;
   }
   // Cuánto se "seca" visualmente el campo — nada sutil a propósito: con
@@ -7979,7 +8005,7 @@
       state.capital=Math.round((state.capital||0)-finiquito);
       registrarMovimientoFinanciero('Finiquito de '+actual.nombre, -finiquito, state.jornadaActual);
     }
-    state.trabajadores[rol]={id:'t'+Date.now(), nombre:candidato.nombre, genero:candidato.genero, nivel:candidato.nivel, sueldo:candidato.sueldo};
+    state.trabajadores[rol]={id:'t'+Date.now(), nombre:candidato.nombre, genero:candidato.genero, fotoVariante:candidato.fotoVariante, nivel:candidato.nivel, sueldo:candidato.sueldo};
     state.candidatosTrabajo=state.candidatosTrabajo.filter(c=>c.id!==candidatoId);
     if(typeof window.unlockLMAchievement==='function' && ROLES_TRABAJO.every(r=>state.trabajadores[r])) window.unlockLMAchievement('lm_first_worker');
     guardarEstado();
@@ -10682,7 +10708,7 @@
     <div class="lm-staff-tile ${o.acento||''} ${trab?'':'lm-staff-tile-vacante'}" id="${o.btnId}">
       <i class="ph ph-bold ${o.icono} lm-staff-tile-rol-icon"></i>
       <div class="lm-staff-tile-photo">
-        ${staffFotoHTML(o.carpeta, o.archivo, o.alt, o.icono, trab?trab.genero:'hombre', !trab)}
+        ${staffFotoHTML(o.carpeta, o.archivo, o.alt, o.icono, trab?trab.genero:'hombre', !trab, trab?trab.fotoVariante:1)}
         ${o.notif?`<span class="lm-staff-tile-badge">${o.badgeTexto}</span>`:''}
         <button class="lm-staff-tile-info-btn" id="${o.infoId}" title="${o.infoTitle}"><i class="ph ph-bold ph-info"></i></button>
         <div class="lm-staff-tile-photo-fade"></div>
