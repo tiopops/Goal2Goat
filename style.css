@@ -4464,6 +4464,57 @@ body.liga-manager-screen .ranking-btn-label-lm{display:inline}
 .lm-dilemma-card-pf{border-color:#e08a3e}
 .lm-dilemma-card-pf .lm-dilemma-title i{color:#e08a3e}
 
+/* ---------- Minijuego de scouting (push-your-luck), prototipo tras
+   LM_MINIJUEGO_SCOUTING_ACTIVO — usa el mismo morado/lavanda (#8a7fd6)
+   que ya identifica al nodo de scouting en el árbol de nodos, para que
+   se reconozca de un vistazo como parte del mismo sistema. */
+#lmScoutingMinijuegoOverlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:260;
+  display:flex;align-items:center;justify-content:center;padding:14px;
+}
+.lm-scout-mini-card{
+  border-color:#8a7fd6;width:360px;max-width:92vw;
+  box-shadow:0 0 0 1px rgba(138,127,214,.18),0 18px 50px rgba(0,0,0,.55);
+}
+.lm-scout-mini-title{justify-content:center;text-align:center}
+.lm-scout-mini-title i{color:#8a7fd6}
+.lm-scout-mini-desc{text-align:center}
+.lm-scout-mini-meter-wrap{margin:18px 0 6px}
+.lm-scout-mini-meter-track{
+  width:100%;height:22px;border-radius:11px;background:rgba(255,255,255,.06);
+  border:1px solid rgba(138,127,214,.35);overflow:hidden;position:relative;
+}
+.lm-scout-mini-meter-fill{
+  height:100%;border-radius:11px 0 0 11px;
+  background:linear-gradient(90deg,#6b5fc4,#8a7fd6);
+  transition:background .25s ease;
+  box-shadow:0 0 12px rgba(138,127,214,.55) inset;
+}
+.lm-scout-mini-meter-fill-media{background:linear-gradient(90deg,#a68a3e,#e6c94a)}
+.lm-scout-mini-meter-fill-alta{background:linear-gradient(90deg,#2f8f5b,#5dcaa5)}
+.lm-scout-mini-pct{
+  font-family:'Bebas Neue',Impact,sans-serif;font-size:38px;letter-spacing:1px;
+  color:var(--lm-text);text-align:center;margin-top:8px;line-height:1;
+}
+.lm-scout-mini-intentos{
+  display:flex;align-items:center;justify-content:center;gap:6px;
+  margin:12px 0 16px;flex-wrap:wrap;
+}
+.lm-scout-mini-intento-pip{
+  width:12px;height:12px;border-radius:50%;background:rgba(255,255,255,.1);
+  border:1px solid rgba(138,127,214,.5);flex-shrink:0;
+}
+.lm-scout-mini-intento-pip-usado{background:#8a7fd6;border-color:#8a7fd6}
+.lm-scout-mini-intentos-label{font-size:11px;color:var(--lm-text-dim);margin-left:6px}
+.lm-scout-mini-resultado{
+  font-size:13px;line-height:1.5;padding:12px 14px;border-radius:8px;margin:6px 0 16px;
+}
+.lm-scout-mini-resultado-exito{background:rgba(93,202,165,.12);border:1px solid rgba(93,202,165,.4);color:#7cd9bd}
+.lm-scout-mini-resultado-fallo{background:rgba(230,86,74,.1);border:1px solid rgba(230,86,74,.35);color:#f08a80}
+.lm-scout-mini-actions{display:flex;gap:10px;width:100%;justify-content:center}
+.lm-scout-mini-actions button{flex:1;min-width:0}
+.lm-scout-mini-actions button:disabled{opacity:.4;cursor:not-allowed}
+
 /* Tarjeta de Liga Manager cuando el acceso está desbloqueado (solo admin
    autorizado mientras el modo está en construcción): mismo tratamiento
    visual que Copa Leyendas, sin gris ni "próximamente". */

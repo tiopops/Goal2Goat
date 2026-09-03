@@ -1516,7 +1516,7 @@
   // Aplica de verdad el efecto de un nodo elegido. fechaISOdia es la
   // fecha real de ese día concreto (para entreno/descanso, que siguen
   // usando el mismo calendarioEntrenamiento de siempre por debajo).
-  function aplicarEfectoNodoSemana(nodo, fechaISOdia, onMediosCerrado, onQuinielaCerrada){
+  function aplicarEfectoNodoSemana(nodo, fechaISOdia, onMediosCerrado, onQuinielaCerrada, onScoutingCerrado){
     // Registro aparte de qué nodo se eligió ese día concreto — solo
     // de cara a pintar el icono correcto sobre el calendario después.
     // No sustituye a calendarioEntrenamiento (que sigue siendo la
@@ -1570,8 +1570,26 @@
         }
         break;
       case 'scouting':
-        state.scoutingBoostEstaSemana=(state.scoutingBoostEstaSemana||0)+1;
-        if(typeof intentarGenerarSobreFichajes==='function') intentarGenerarSobreFichajes();
+        // Minijuego de scouting (activable/desactivable con
+        // LM_MINIJUEGO_SCOUTING_ACTIVO, ver más abajo) — si está
+        // desactivado, se mantiene EXACTAMENTE el comportamiento de
+        // siempre (tirada automática e invisible), así que apagar la
+        // constante basta para volver atrás sin tocar nada más.
+        if(LM_MINIJUEGO_SCOUTING_ACTIVO && typeof abrirMinijuegoScouting==='function'){
+          // Igual que "medios"/"quiniela": el efecto real (la tirada)
+          // no ocurre aquí mismo, sino al cerrar el minijuego — por eso
+          // se abre en un setTimeout(0), DESPUÉS de que elegirNodoSemana
+          // termine de aplicar su propia contabilidad (nodosAcumulados,
+          // guardarEstado) más abajo. Así el callback de cierre siempre
+          // encuentra el estado ya consistente, nunca a mitad de
+          // actualizar.
+          setTimeout(()=>{
+            abrirMinijuegoScouting(()=>{ if(typeof onScoutingCerrado==='function') onScoutingCerrado(); });
+          }, 0);
+        } else {
+          state.scoutingBoostEstaSemana=(state.scoutingBoostEstaSemana||0)+1;
+          if(typeof intentarGenerarSobreFichajes==='function') intentarGenerarSobreFichajes();
+        }
         break;
       case 'amistoso':
         resolverAmistosoRapido(nodo.subtipo);
@@ -1614,7 +1632,7 @@
   // realmente el día que toca (nunca se puede elegir un día futuro ni
   // repetir uno ya resuelto), aplica el efecto, suma al contador de
   // ese icono, y guarda.
-  function elegirNodoSemana(diaIdx, nodoIdx, onMediosCerrado, onQuinielaCerrada){
+  function elegirNodoSemana(diaIdx, nodoIdx, onMediosCerrado, onQuinielaCerrada, onScoutingCerrado){
     if(!state.semanaNodos) return {ok:false, error:'sin_semana'};
     const diaActualIdx=diaActualIndiceSemanaNodos();
     if(diaIdx!==diaActualIdx) return {ok:false, error:'no_es_el_dia_actual'};
@@ -1626,7 +1644,7 @@
     const nodo=dia && dia.nodos[nodoIdx];
     if(!nodo) return {ok:false, error:'nodo_invalido'};
     dia.elegido=nodoIdx;
-    aplicarEfectoNodoSemana(nodo, dia.fecha, onMediosCerrado, onQuinielaCerrada);
+    aplicarEfectoNodoSemana(nodo, dia.fecha, onMediosCerrado, onQuinielaCerrada, onScoutingCerrado);
     if(!state.nodosAcumulados) state.nodosAcumulados={};
     // Para los amistosos, el contador de progreso NO se suma aquí —
     // se difiere hasta que se cierra el pop-up de resultado (botón
@@ -2567,6 +2585,11 @@
         const nodoElegido=diaObj && diaObj.nodos[nodoIdx];
         const eraMedios = nodoElegido && nodoElegido.tipo==='medios';
         const eraQuinielaNodo = nodoElegido && nodoElegido.tipo==='quiniela';
+        // El minijuego de scouting (si está activo) también necesita
+        // que el árbol espere a que se cierre antes de decidir si la
+        // semana ya está completa — igual que la quiniela, el nodo de
+        // scouting puede caer en cualquier día, no solo en el último.
+        const eraScoutingConMinijuego = nodoElegido && nodoElegido.tipo==='scouting' && LM_MINIJUEGO_SCOUTING_ACTIVO;
         const cerrarArbolYRender=()=>{
           const ov=document.getElementById('lmArbolNodosOverlay');
           if(ov) ov.remove();
@@ -2598,7 +2621,18 @@
             if(typeof render==='function') render();
           }
         };
-        const resultado=elegirNodoSemana(diaIdx, nodoIdx, eraMedios?cerrarArbolYRender:undefined, eraQuinielaNodo?onQuinielaCerrada:undefined);
+        // Mismo patrón que la quiniela: el minijuego de scouting puede
+        // caer en cualquier día de la semana, así que su cierre
+        // comprueba en ese momento si ya se ha completado la semana.
+        const onScoutingCerrada=()=>{
+          if(diaActualIndiceSemanaNodos()===-1){
+            cerrarArbolYRender();
+          } else {
+            pintarArbolNodos();
+            if(typeof render==='function') render();
+          }
+        };
+        const resultado=elegirNodoSemana(diaIdx, nodoIdx, eraMedios?cerrarArbolYRender:undefined, eraQuinielaNodo?onQuinielaCerrada:undefined, eraScoutingConMinijuego?onScoutingCerrada:undefined);
         if(!resultado.ok) return;
         if(typeof window.playSound==='function') window.playSound('select');
         // La onda necesita un instante para verse antes de que el
@@ -2614,11 +2648,11 @@
           // ninguna pantalla intermedia de "semana completa" que
           // cerrar a mano.
           if(semanaYaCompleta){
-            if(eraMedios || eraQuinielaNodo){
+            if(eraMedios || eraQuinielaNodo || eraScoutingConMinijuego){
               // Ya se encadenó arriba: cerrarArbolYRender() se llama
-              // al cerrar la rueda de prensa o el boletín de la
-              // quiniela, no aquí — solo hace falta repintar el árbol
-              // de fondo mientras tanto.
+              // al cerrar la rueda de prensa, el boletín de la
+              // quiniela o el minijuego de scouting, no aquí — solo
+              // hace falta repintar el árbol de fondo mientras tanto.
               pintarArbolNodos();
             } else if(eraAmistoso && state.ultimoAmistosoResultado){
               mostrarResultadoAmistosoPopup(state.ultimoAmistosoResultado, cerrarArbolYRender);
@@ -8199,29 +8233,37 @@
   // Máximo 3 sin abrir a la vez: si no abres los que tienes, no llegan
   // más nuevos hasta que hagas hueco. Cada uno avisa por correo en
   // cuanto está listo, y se abre directamente desde ahí.
-  function intentarGenerarSobreFichajes(){
-    if(!state.sobresFichajesPendientes) state.sobresFichajesPendientes=[];
-    if(state.sobresFichajesPendientes.length>=3) return;
+  //
+  // Probabilidad "de base" (nivel de Red de Ojeadores + calidad
+  // acumulada), SIN el boost temporal de haber elegido nodos de
+  // scouting esta semana — la usan tanto la tirada automática de
+  // siempre (intentarGenerarSobreFichajes) como el minijuego de
+  // scouting interactivo (que aplica su propio empujón manual encima
+  // de este mismo punto de partida, en vez del +15% fijo por nodo).
+  function calcularProbabilidadBaseSobreFichajes(){
     const nivel=nivelDeDD('sobresFichajes');
     let probabilidad=0.08+nivel*0.07; // 8% base, hasta ~29% a nivel máximo
-    // Boost temporal por elegir nodos de scouting en el árbol de esta
-    // semana — cada uno sube la probabilidad de ESTA tirada en
-    // concreto; se consume siempre, salga bien o mal la tirada.
-    if(state.scoutingBoostEstaSemana){
-      probabilidad=Math.min(0.95, probabilidad + state.scoutingBoostEstaSemana*0.15);
-      state.scoutingBoostEstaSemana=0;
-    }
-    const banderas=state.nodosBanderasPendientes||{};
-    // El contador de calidad acumulada sube tanto la probabilidad
-    // como el nivel del sobre — cuantas más veces se haya reclamado
-    // antes de que llegue uno de verdad, más notable es el beneficio.
-    // Solo se reinicia cuando el sobre se genera de verdad, nunca en
-    // un intento fallido (a diferencia del boost semanal de arriba).
     const calidadAcumulada=state.sobreCalidadAcumulada||0;
     if(calidadAcumulada>0){
       probabilidad=Math.min(0.95, probabilidad + calidadAcumulada*0.18);
     }
-    if(Math.random()<probabilidad){
+    return probabilidad;
+  }
+  // Resuelve DE VERDAD la tirada de un sobre con una probabilidad ya
+  // decidida de antemano (por calcularProbabilidadBaseSobreFichajes +
+  // boost automático, o por el resultado final del minijuego de
+  // scouting) — separado de la parte que CALCULA esa probabilidad para
+  // que ambos caminos (automático e interactivo) compartan exactamente
+  // la misma lógica de éxito/nivel del sobre/correo de aviso. Devuelve
+  // true si ha salido sobre, false si no (o si no había hueco).
+  function resolverTiradaSobreFichajes(probabilidad){
+    if(!state.sobresFichajesPendientes) state.sobresFichajesPendientes=[];
+    if(state.sobresFichajesPendientes.length>=3) return false;
+    const nivel=nivelDeDD('sobresFichajes');
+    const banderas=state.nodosBanderasPendientes||{};
+    const calidadAcumulada=state.sobreCalidadAcumulada||0;
+    const exito=Math.random()<probabilidad;
+    if(exito){
       let nivelSobre=Math.max(1, nivel);
       if(calidadAcumulada>=2) nivelSobre+=1;
       if(banderas.sobreNivelSuperior){ nivelSobre+=1; banderas.sobreNivelSuperior=false; }
@@ -8234,6 +8276,167 @@
       const ultimo=state.correoInterno && state.correoInterno[0];
       if(ultimo){ ultimo.tipoEspecial='sobre_listo'; ultimo.sobreId=id; }
     }
+    return exito;
+  }
+  function intentarGenerarSobreFichajes(){
+    if(!state.sobresFichajesPendientes) state.sobresFichajesPendientes=[];
+    if(state.sobresFichajesPendientes.length>=3) return;
+    let probabilidad=calcularProbabilidadBaseSobreFichajes();
+    // Boost temporal por elegir nodos de scouting en el árbol de esta
+    // semana (solo aplica cuando el minijuego interactivo está
+    // desactivado — con él activo, cada nodo de scouting resuelve su
+    // propia tirada al momento y nunca llega a tocar esta bandera) —
+    // cada uno sube la probabilidad de ESTA tirada en concreto; se
+    // consume siempre, salga bien o mal la tirada.
+    if(state.scoutingBoostEstaSemana){
+      probabilidad=Math.min(0.95, probabilidad + state.scoutingBoostEstaSemana*0.15);
+      state.scoutingBoostEstaSemana=0;
+    }
+    resolverTiradaSobreFichajes(probabilidad);
+  }
+
+  // ---------------------------------------------------------------
+  // MINIJUEGO DE SCOUTING (push-your-luck / "empuja o plántate") —
+  // PROTOTIPO. Poner esta constante a false restaura EXACTAMENTE el
+  // comportamiento clásico del nodo de scouting (tirada automática e
+  // invisible, +15% de boost fijo por nodo elegido esta semana) sin
+  // tocar nada más: es el único interruptor que hace falta para
+  // volver atrás si no convence.
+  const LM_MINIJUEGO_SCOUTING_ACTIVO = true;
+
+  // Abre el minijuego del nodo de scouting: empieza mostrando la
+  // MISMA probabilidad base que usaría la tirada automática
+  // (calcularProbabilidadBaseSobreFichajes — nivel de Red de
+  // Ojeadores + calidad acumulada). El jugador puede EMPUJAR hasta 3
+  // veces para intentar subirla más, o PLANTARSE en cualquier
+  // momento para resolver la tirada YA con lo que lleve acumulado.
+  // Empujar es un riesgo real: si se agotan los 3 intentos sin haber
+  // pulsado plantarse antes, la codicia sale cara y la tirada se
+  // pierde entera (0%, sin sobre). Reutiliza resolverTiradaSobreFichajes
+  // para que el resultado (nivel del sobre, correo de aviso...) sea
+  // idéntico tanto si sale del minijuego como de la tirada automática.
+  function abrirMinijuegoScouting(onCerrado){
+    const MAX_EMPUJONES=3;
+    let probActual=calcularProbabilidadBaseSobreFichajes();
+    let empujones=0;
+    let fase='jugando'; // 'jugando' | 'animando' | 'resuelto'
+    let resultadoExito=null;
+    let agotado=false;
+
+    const overlay=document.createElement('div');
+    overlay.id='lmScoutingMinijuegoOverlay';
+    document.getElementById('ligaManagerScreen').appendChild(overlay);
+
+    function claseMeterParaProb(p){
+      if(p>=0.5) return 'lm-scout-mini-meter-fill-alta';
+      if(p>=0.25) return 'lm-scout-mini-meter-fill-media';
+      return 'lm-scout-mini-meter-fill-baja';
+    }
+
+    function pintar(){
+      const pct=Math.round(probActual*100);
+      const intentosRestantes=Math.max(0, MAX_EMPUJONES-empujones);
+      const puedeEmpujar = fase==='jugando' && empujones<MAX_EMPUJONES;
+      const puedePlantarse = fase==='jugando';
+      let resultadoTexto='';
+      if(fase==='resuelto'){
+        resultadoTexto = resultadoExito ? t('lm.scoutmini_resultado_exito')
+          : (agotado ? t('lm.scoutmini_resultado_agotado') : t('lm.scoutmini_resultado_fallo'));
+      }
+      overlay.innerHTML=`
+        <div class="lm-dilemma-card lm-scout-mini-card">
+          <div class="lm-dilemma-title lm-scout-mini-title"><i class="ph ph-bold ph-binoculars"></i>${t('lm.scoutmini_titulo')}</div>
+          ${fase!=='resuelto' ? `<div class="lm-dilemma-text lm-scout-mini-desc">${t('lm.scoutmini_desc')}</div>` : ''}
+          <div class="lm-scout-mini-meter-wrap">
+            <div class="lm-scout-mini-meter-track">
+              <div class="lm-scout-mini-meter-fill ${claseMeterParaProb(probActual)}" id="lmScoutMeterFill" style="width:${pct}%"></div>
+            </div>
+            <div class="lm-scout-mini-pct" id="lmScoutMeterPct">${pct}%</div>
+          </div>
+          <div class="lm-scout-mini-intentos">
+            ${Array.from({length:MAX_EMPUJONES}).map((_,i)=>`<span class="lm-scout-mini-intento-pip${i<empujones?' lm-scout-mini-intento-pip-usado':''}"></span>`).join('')}
+            ${fase==='jugando' ? `<span class="lm-scout-mini-intentos-label">${tp('lm.scoutmini_intentos_restantes',{n:intentosRestantes})}</span>` : ''}
+          </div>
+          ${fase==='resuelto' ? `<div class="lm-scout-mini-resultado ${resultadoExito?'lm-scout-mini-resultado-exito':'lm-scout-mini-resultado-fallo'}">${resultadoTexto}</div>` : ''}
+          <div class="lm-scout-mini-actions">
+            ${fase==='resuelto'
+              ? `<button type="button" id="lmScoutBtnContinuar" class="mode-card-btn mode-card-btn-gold">${t('lm.continuar')}</button>`
+              : `<button type="button" id="lmScoutBtnPlantarse" class="mode-card-btn mode-card-btn-gold" ${puedePlantarse?'':'disabled'}><i class="ph ph-bold ph-hand-palm"></i> ${t('lm.scoutmini_plantarse')}</button>
+                 <button type="button" id="lmScoutBtnEmpujar" class="mode-card-btn mode-card-btn-secondary" ${puedeEmpujar?'':'disabled'}><i class="ph ph-bold ph-arrow-fat-lines-up"></i> ${t('lm.scoutmini_empujar')}</button>`}
+          </div>
+        </div>`;
+      cablear();
+    }
+
+    function cablear(){
+      const btnPlantarse=overlay.querySelector('#lmScoutBtnPlantarse');
+      const btnEmpujar=overlay.querySelector('#lmScoutBtnEmpujar');
+      const btnContinuar=overlay.querySelector('#lmScoutBtnContinuar');
+      if(btnPlantarse) btnPlantarse.addEventListener('click', ()=>{
+        if(fase!=='jugando') return;
+        if(typeof window.playSound==='function') window.playSound('select');
+        resolver(probActual, false);
+      });
+      if(btnEmpujar) btnEmpujar.addEventListener('click', ()=>{
+        if(fase!=='jugando' || empujones>=MAX_EMPUJONES) return;
+        if(typeof window.playSound==='function') window.playSound('select');
+        empujar();
+      });
+      if(btnContinuar) btnContinuar.addEventListener('click', ()=>{
+        if(typeof window.playSound==='function') window.playSound('select');
+        overlay.remove();
+        if(typeof onCerrado==='function') onCerrado();
+      });
+    }
+
+    function empujar(){
+      fase='animando';
+      pintar();
+      empujones++;
+      const bonus=0.06+Math.random()*0.09; // cada empujón sube entre +6% y +15%
+      const nuevaProb=Math.min(0.95, probActual+bonus);
+      const fillEl=overlay.querySelector('#lmScoutMeterFill');
+      const pctEl=overlay.querySelector('#lmScoutMeterPct');
+      const desde=Math.round(probActual*100);
+      const hasta=Math.round(nuevaProb*100);
+      let paso=0; const pasos=10;
+      const spin=setInterval(()=>{
+        paso++;
+        const val=Math.round(desde+(hasta-desde)*(paso/pasos));
+        if(fillEl) fillEl.style.width=val+'%';
+        if(pctEl) pctEl.textContent=val+'%';
+        if(typeof window.playSound==='function') window.playSound('spin');
+        if(paso>=pasos){
+          clearInterval(spin);
+          probActual=nuevaProb;
+          if(typeof window.playSound==='function') window.playSound('reveal');
+          if(empujones>=MAX_EMPUJONES){
+            // 3 empujones sin plantarse: la codicia sale cara — la
+            // probabilidad conseguida se pierde entera.
+            probActual=0;
+            resolver(0, true);
+          } else {
+            fase='jugando';
+            pintar();
+          }
+        }
+      },70);
+    }
+
+    function resolver(probFinal, seAgoto){
+      fase='resuelto';
+      agotado=seAgoto;
+      resultadoExito = probFinal>0 ? resolverTiradaSobreFichajes(probFinal) : false;
+      guardarEstado();
+      pintar();
+    }
+
+    // A propósito SIN habilitarCierreOverlay mientras se juega: un
+    // clic fuera accidental no puede saltarse la decisión de
+    // plantarse/empujar. Solo se cierra con el botón explícito
+    // ("CONTINUAR", una vez resuelto), igual que las pantallas de
+    // tirada de dados del resto del juego.
+    pintar();
   }
 
   /* ---------- 9d. CARTAS DEL DIRECTOR GENERAL (dorado) — economía y
