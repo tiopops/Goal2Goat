@@ -8379,6 +8379,11 @@
       const pct=Math.round(probActual*100);
       const puedeSeguir = fase==='jugando' && pasos<MAX_PASOS;
       const puedePlantarse = fase==='jugando';
+      // El medidor de riesgo se queda visible también mientras se
+      // resuelve el paso (fase 'animando'), no solo mientras se puede
+      // seguir eligiendo — así el jugador lo ve rellenarse en vivo en
+      // vez de que desaparezca de golpe al pulsar ACERCARSE.
+      const mostrarRiesgo = fase!=='resuelto' && pasos<MAX_PASOS;
       const riesgoSiguiente = lmRiesgoDescubiertaScouting(pasos+1);
       const riesgoPct=Math.round(riesgoSiguiente*100);
       let resultadoTexto='';
@@ -8408,20 +8413,20 @@
             </div>
             <div class="lm-scout-mini-pct" id="lmScoutMeterPct">${pct}<span class="lm-scout-mini-pct-simbolo">%</span></div>
           </div>
-          ${puedeSeguir ? `
+          ${mostrarRiesgo ? `
           <div class="lm-scout-mini-meter-wrap lm-scout-mini-risk-wrap">
             <div class="lm-scout-mini-meter-label lm-scout-mini-risk-label"><i class="ph ph-bold ph-eye"></i>${t('lm.scoutmini_label_riesgo')}</div>
             <div class="lm-scout-mini-risk-track">
-              <div class="lm-scout-mini-risk-fill ${claseRiesgoParaValor(riesgoSiguiente)}" id="lmScoutRiskFill" style="width:${riesgoPct}%"></div>
+              <div class="lm-scout-mini-risk-fill ${claseRiesgoParaValor(riesgoSiguiente)}" id="lmScoutRiskFill" style="width:${fase==='animando'?0:riesgoPct}%"></div>
             </div>
-            <div class="lm-scout-mini-risk-pct ${riesgoSiguiente>=0.45?'lm-scout-mini-risk-pct-alta':''}" id="lmScoutRiskPct">${riesgoPct}%</div>
+            <div class="lm-scout-mini-risk-pct ${riesgoSiguiente>=0.45?'lm-scout-mini-risk-pct-alta':''}" id="lmScoutRiskPct">${fase==='animando'?0:riesgoPct}%</div>
           </div>` : ''}
           ${fase==='resuelto' ? `<div class="lm-scout-mini-resultado lm-scout-mini-resultado-${resultadoTipo}">${resultadoTexto}</div>` : ''}
           <div class="lm-scout-mini-actions">
             ${fase==='resuelto'
               ? `<button type="button" id="lmScoutBtnContinuar" class="mode-card-btn mode-card-btn-gold">${t('lm.continuar')}</button>`
-              : `<button type="button" id="lmScoutBtnPlantarse" class="mode-card-btn mode-card-btn-gold" ${puedePlantarse?'':'disabled'}><i class="ph ph-bold ph-hand-palm"></i> ${t('lm.scoutmini_plantarse')}</button>
-                 <button type="button" id="lmScoutBtnEmpujar" class="mode-card-btn mode-card-btn-secondary ${claseBtnEmpujarParaRiesgo(riesgoSiguiente)}" ${puedeSeguir?'':'disabled'}><i class="ph ph-bold ph-footprints"></i> ${t('lm.scoutmini_empujar')}</button>`}
+              : `<button type="button" id="lmScoutBtnEmpujar" class="mode-card-btn mode-card-btn-secondary ${claseBtnEmpujarParaRiesgo(riesgoSiguiente)}" ${puedeSeguir?'':'disabled'}><i class="ph ph-bold ph-footprints"></i> ${t('lm.scoutmini_empujar')}</button>
+                 <button type="button" id="lmScoutBtnPlantarse" class="mode-card-btn mode-card-btn-gold" ${puedePlantarse?'':'disabled'}><i class="ph ph-bold ph-hand-palm"></i> ${t('lm.scoutmini_plantarse')}</button>`}
           </div>
         </div>`;
       cablear();
@@ -8449,17 +8454,43 @@
     }
 
     function avanzarPaso(){
+      const riesgo=lmRiesgoDescubiertaScouting(pasos+1);
+      const riesgoPctObjetivo=Math.round(riesgo*100);
+      let ticks=0;
+      const totalTicks=8+Math.floor(Math.random()*3);
+      const velocidad=Math.max(55, 95-Math.round(riesgo*50));
       fase='animando';
       pintar();
-      const riesgo=lmRiesgoDescubiertaScouting(pasos+1);
       const card=overlay.querySelector('#lmScoutMiniCard');
+      // El medidor de riesgo se rellena EN VIVO durante toda la
+      // tensión (de 0 hasta su valor real), en vez de aparecer ya
+      // relleno de golpe — la barra de transición CSS dura lo mismo
+      // que la propia animación de suspense (ticks × velocidad), así
+      // que el número y el relleno terminan de subir justo cuando se
+      // revela el resultado.
+      const riskFillEl=overlay.querySelector('#lmScoutRiskFill');
+      const riskPctEl=overlay.querySelector('#lmScoutRiskPct');
+      const duracionTotalMs=totalTicks*velocidad;
+      if(riskFillEl) riskFillEl.style.transition=`width ${duracionTotalMs}ms linear`;
+      requestAnimationFrame(()=>{
+        requestAnimationFrame(()=>{
+          if(riskFillEl) riskFillEl.style.width=riesgoPctObjetivo+'%';
+        });
+      });
+      if(riskPctEl){
+        const inicioTs=performance.now();
+        const contarRiesgo=()=>{
+          if(!overlay.contains(riskPctEl)) return;
+          const t2=Math.min(1,(performance.now()-inicioTs)/duracionTotalMs);
+          riskPctEl.textContent=Math.round(t2*riesgoPctObjetivo)+'%';
+          if(t2<1) requestAnimationFrame(contarRiesgo);
+        };
+        requestAnimationFrame(contarRiesgo);
+      }
       // Tensión creciente: ticks de "spin" cada vez más rápidos según
       // sube el riesgo, con el medidor de riesgo pulsando — antes de
       // revelar si el ojeador ha pasado desapercibido o le han pillado.
       if(card) card.classList.add('lm-scout-mini-card-tension');
-      let ticks=0;
-      const totalTicks=8+Math.floor(Math.random()*3);
-      const velocidad=Math.max(55, 95-Math.round(riesgo*50));
       const tension=setInterval(()=>{
         ticks++;
         if(typeof window.playSound==='function') window.playSound('spin');
