@@ -3511,8 +3511,48 @@
     });
     document.getElementById('lmQuinielaResultadoCerrar').addEventListener('click', ()=>{
       if(typeof window.playSound==='function') window.playSound('select');
+      // Si ganó algún rasgo y todavía queda alguno sin asignar a un
+      // jugador (su <select> sigue habilitado porque nunca se eligió
+      // nada), avisar antes de cerrar de verdad — cerrando aquí sin más
+      // ese rasgo se perdía en silencio, sin que el jugador se diera
+      // cuenta de que se le había olvidado.
+      const pendientes=overlay.querySelectorAll('.lm-rasgo-select:not(:disabled)').length;
+      if(pendientes>0){
+        mostrarAvisoRasgosSinAsignar(pendientes, ()=>{ overlay.remove(); render(); });
+        return;
+      }
       overlay.remove();
       render();
+    });
+  }
+  // Aviso antes de cerrar la pantalla de resultado de la quiniela si
+  // todavía queda algún rasgo ganado sin asignar a ningún jugador —
+  // igual en espíritu al aviso de "quiniela sin rellenar", pero aquí lo
+  // que está en juego es la recompensa ya ganada, no la propia quiniela.
+  function mostrarAvisoRasgosSinAsignar(cantidad, confirmarCallback){
+    const overlay=document.createElement('div');
+    overlay.id='lmAvisoRasgosSinAsignarOverlay';
+    const aviso = cantidad>1 ? tp('lm.rasgos_sin_asignar_aviso_plural', {n:cantidad}) : t('lm.rasgos_sin_asignar_aviso_singular');
+    overlay.innerHTML=`
+      <div class="lm-dilemma-card" style="max-width:400px">
+        <div class="lm-dilemma-title"><i class="ph ph-bold ph-sparkle"></i>${t('lm.rasgos_sin_asignar_titulo')}</div>
+        <div class="lm-dilemma-text" style="margin:10px 0 16px">${aviso}</div>
+        <div class="lm-popup-actions lm-popup-actions-compact">
+          <button id="lmAvisoRasgosContinuar" class="mode-card-btn mode-card-btn-secondary">${t('lm.continuar_sin_asignar_btn')}</button>
+          <button id="lmAvisoRasgosVolver" class="mode-card-btn mode-card-btn-gold">${t('lm.volver_a_elegir_btn')}</button>
+        </div>
+      </div>`;
+    document.getElementById('ligaManagerScreen').appendChild(overlay);
+    const cerrar=()=>overlay.remove();
+    habilitarCierreOverlay(overlay, cerrar);
+    document.getElementById('lmAvisoRasgosVolver').addEventListener('click', ()=>{
+      if(typeof window.playSound==='function') window.playSound('select');
+      cerrar();
+    });
+    document.getElementById('lmAvisoRasgosContinuar').addEventListener('click', ()=>{
+      if(typeof window.playSound==='function') window.playSound('select');
+      cerrar();
+      confirmarCallback();
     });
   }
   // ---- Sistema de mejoras (GOAT Points) de Liga Manager ----
