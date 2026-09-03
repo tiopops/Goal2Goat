@@ -885,6 +885,36 @@
     return {def, acumulado, siguiente, disponible};
   }
 
+  // Suma 1 al saldo acumulado de un tipo de nodo — ÚNICO sitio que
+  // debe tocar state.nodosAcumulados[tipo] al ganar puntos (los dos
+  // sitios que antes lo hacían cada uno por su cuenta —elegir nodo y
+  // cerrar el resultado del amistoso— ahora pasan por aquí).
+  //
+  // Se tope el saldo real en el umbral FINAL (10) de ese tipo, el
+  // mismo límite que ya usaba la tarjeta de progreso para lo que
+  // ENSEÑA (Math.min(acumulado, umbralFinal) en
+  // renderAcumuladosNodosHTML) — antes solo se topaba la pantalla,
+  // no el dato real: el jugador podía seguir eligiendo ese nodo por
+  // encima de 10 sin que se notara nada raro ("seguía en 10/10"),
+  // pero ese exceso invisible se quedaba en el saldo de verdad, y al
+  // reclamar el hito de Nivel 2 (coste 10) el resto de ARRIBA del 10
+  // sobrevivía a la resta — por ejemplo, con un saldo real de 18
+  // (aunque la tarjeta llevara un rato clavada en "10/10"), reclamar
+  // dejaba 18-10=8, así que el jugador veía un rarísimo "8/10" recién
+  // canjeado un hito que él veía a tope justo antes de pulsar. Topar
+  // aquí mismo la acumulación hace que lo que se ve y lo que hay
+  // sean SIEMPRE el mismo número, así que canjear un "10/10" deja
+  // exactamente "0/10", sin sorpresas, en los 6 tipos de nodo con
+  // recompensas (quiniela, sin hitos, no se ve afectada: no tiene
+  // umbral final que respetar).
+  function incrementarNodoAcumulado(tipo){
+    if(!state.nodosAcumulados) state.nodosAcumulados={};
+    const def=HITOS_NODOS[tipo];
+    const umbralFinal = (def && def.hitos.length) ? def.hitos[def.hitos.length-1].umbral : Infinity;
+    const actual=state.nodosAcumulados[tipo]||0;
+    state.nodosAcumulados[tipo]=Math.min(umbralFinal, actual+1);
+  }
+
   // Aplica de verdad el efecto de un hito ya alcanzado. jugadorIds es
   // un array (0, 1 o 2 elementos según el tipo de hito) con los ids de
   // los jugadores elegidos, para los hitos que lo necesiten.
@@ -1654,7 +1684,7 @@
     // de que el jugador viera el resultado del amistoso — un
     // spoiler real de si algo bueno había pasado.
     if(nodo.tipo!=='amistoso'){
-      state.nodosAcumulados[nodo.tipo]=(state.nodosAcumulados[nodo.tipo]||0)+1;
+      incrementarNodoAcumulado(nodo.tipo);
     }
     guardarEstado();
     return {ok:true, nodo};
@@ -1669,8 +1699,7 @@
   function aplicarIncrementoNodoAmistoso(){
     const r=state.ultimoAmistosoResultado;
     if(!r || r.nodoAcumuladoAplicado) return;
-    if(!state.nodosAcumulados) state.nodosAcumulados={};
-    state.nodosAcumulados.amistoso=(state.nodosAcumulados.amistoso||0)+1;
+    incrementarNodoAcumulado('amistoso');
     r.nodoAcumuladoAplicado=true;
     guardarEstado();
   }
@@ -9771,6 +9800,21 @@
     if(!state.medicoCartasAgotadas) state.medicoCartasAgotadas=[];
     if(!state.medicoHistorial) state.medicoHistorial=[];
     if(!state.medicoNiveles) state.medicoNiveles={curacionMuscular:0, curacionOsea:0, prevencionMuscular:0, prevencionOsea:0};
+    // Migración de partidas guardadas ANTES de que incrementarNodoAcumulado
+    // topara el saldo real en el umbral final (10): esas partidas podían
+    // llevar acumulado más de 10 sin que la tarjeta lo enseñara nunca (se
+    // quedaba clavada en "10/10"), así que al reclamar el hito de Nivel 2
+    // sobraba un resto invisible hasta entonces — por ejemplo, "8/10" recién
+    // canjeado un "10/10". Se recorta aquí, una sola vez, para que el
+    // saldo real coincida siempre con lo último que se vio en pantalla.
+    if(state.nodosAcumulados){
+      Object.keys(HITOS_NODOS).forEach(tipo=>{
+        const def=HITOS_NODOS[tipo];
+        if(!def.hitos.length) return; // quiniela: sin hitos, sin tope que aplicar
+        const umbralFinal=def.hitos[def.hitos.length-1].umbral;
+        if((state.nodosAcumulados[tipo]||0)>umbralFinal) state.nodosAcumulados[tipo]=umbralFinal;
+      });
+    }
     if(!state.estadio) state.estadio={campo:90, satisfaccion:10, aforoTotal:12000, ultimaAsistencia:null};
     if(state.estadio.aforoTotal===undefined) state.estadio.aforoTotal=12000;
     if(state.estadio.ultimaAsistencia===undefined) state.estadio.ultimaAsistencia=null;
