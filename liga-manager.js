@@ -8369,6 +8369,12 @@
       return 'lm-scout-mini-risk-fill-baja';
     }
 
+    function claseBtnEmpujarParaRiesgo(r){
+      if(r>=0.45) return 'lm-scout-mini-btn-empujar-alta';
+      if(r>=0.22) return 'lm-scout-mini-btn-empujar-media';
+      return '';
+    }
+
     function pintar(){
       const pct=Math.round(probActual*100);
       const puedeSeguir = fase==='jugando' && pasos<MAX_PASOS;
@@ -8383,20 +8389,28 @@
           resultadoTexto = resultadoTipo==='exito' ? t('lm.scoutmini_resultado_exito') : t('lm.scoutmini_resultado_fallo');
         }
       }
+      // Confeti dorado solo en el reveal de éxito — el "chispazo" de
+      // recompensa satisfactoria que pedía el diseño; son <span>
+      // decorativos, sin lógica, que la animación CSS dispersa y
+      // desvanece sola.
+      const confetiHTML = (fase==='resuelto' && resultadoTipo==='exito')
+        ? `<div class="lm-scout-mini-confeti">${Array.from({length:14}).map((_,i)=>`<span class="lm-scout-mini-confeti-p lm-scout-mini-confeti-p${i%7}"></span>`).join('')}</div>`
+        : '';
       overlay.innerHTML=`
         <div class="lm-dilemma-card lm-scout-mini-card" id="lmScoutMiniCard">
+          ${confetiHTML}
+          <div class="lm-scout-mini-eyebrow">${t('lm.scoutmini_eyebrow')}${pasos>0 && fase!=='resuelto' ? ` · ${tp('lm.scoutmini_paso', {n:pasos})}` : ''}</div>
           <div class="lm-dilemma-title lm-scout-mini-title"><i class="ph ph-bold ph-binoculars"></i>${t('lm.scoutmini_titulo')}</div>
-          ${fase!=='resuelto' ? `<div class="lm-dilemma-text lm-scout-mini-desc">${t('lm.scoutmini_desc')}</div>` : ''}
           <div class="lm-scout-mini-meter-wrap">
-            <div class="lm-scout-mini-meter-label">${t('lm.scoutmini_label_informe')}</div>
+            <div class="lm-scout-mini-meter-label"><i class="ph ph-bold ph-magnifying-glass"></i>${t('lm.scoutmini_label_informe')}</div>
             <div class="lm-scout-mini-meter-track">
-              <div class="lm-scout-mini-meter-fill ${claseMeterParaProb(probActual)}" id="lmScoutMeterFill" style="width:${pct}%"></div>
+              <div class="lm-scout-mini-meter-fill ${claseMeterParaProb(probActual)}" id="lmScoutMeterFill" style="width:${pct}%"><span class="lm-scout-mini-meter-sheen"></span></div>
             </div>
-            <div class="lm-scout-mini-pct" id="lmScoutMeterPct">${pct}%</div>
+            <div class="lm-scout-mini-pct" id="lmScoutMeterPct">${pct}<span class="lm-scout-mini-pct-simbolo">%</span></div>
           </div>
           ${puedeSeguir ? `
           <div class="lm-scout-mini-meter-wrap lm-scout-mini-risk-wrap">
-            <div class="lm-scout-mini-meter-label lm-scout-mini-risk-label">${t('lm.scoutmini_label_riesgo')}</div>
+            <div class="lm-scout-mini-meter-label lm-scout-mini-risk-label"><i class="ph ph-bold ph-eye"></i>${t('lm.scoutmini_label_riesgo')}</div>
             <div class="lm-scout-mini-risk-track">
               <div class="lm-scout-mini-risk-fill ${claseRiesgoParaValor(riesgoSiguiente)}" id="lmScoutRiskFill" style="width:${riesgoPct}%"></div>
             </div>
@@ -8407,7 +8421,7 @@
             ${fase==='resuelto'
               ? `<button type="button" id="lmScoutBtnContinuar" class="mode-card-btn mode-card-btn-gold">${t('lm.continuar')}</button>`
               : `<button type="button" id="lmScoutBtnPlantarse" class="mode-card-btn mode-card-btn-gold" ${puedePlantarse?'':'disabled'}><i class="ph ph-bold ph-hand-palm"></i> ${t('lm.scoutmini_plantarse')}</button>
-                 <button type="button" id="lmScoutBtnEmpujar" class="mode-card-btn mode-card-btn-secondary" ${puedeSeguir?'':'disabled'}><i class="ph ph-bold ph-footprints"></i> ${t('lm.scoutmini_empujar')}</button>`}
+                 <button type="button" id="lmScoutBtnEmpujar" class="mode-card-btn mode-card-btn-secondary ${claseBtnEmpujarParaRiesgo(riesgoSiguiente)}" ${puedeSeguir?'':'disabled'}><i class="ph ph-bold ph-footprints"></i> ${t('lm.scoutmini_empujar')}</button>`}
           </div>
         </div>`;
       cablear();
@@ -8454,13 +8468,20 @@
           if(card) card.classList.remove('lm-scout-mini-card-tension');
           const pillado=Math.random()<riesgo;
           pasos++;
-          if(typeof window.playSound==='function') window.playSound('reveal');
           if(pillado){
+            // Sobresalto real: sonido de derrota, sacudida de la
+            // tarjeta Y un flash rojo que invade el overlay entero (no
+            // solo la tarjeta) — el riesgo tenía que sentirse de
+            // verdad, no ser un simple cambio de texto.
+            if(typeof window.playSound==='function') window.playSound('defeat');
+            overlay.classList.add('lm-scout-mini-overlay-flash-rojo');
+            setTimeout(()=>overlay.classList.remove('lm-scout-mini-overlay-flash-rojo'), 550);
             if(card){ card.classList.add('lm-scout-mini-card-pillado'); setTimeout(()=>card.classList.remove('lm-scout-mini-card-pillado'), 500); }
             resolver('pillado');
           } else {
             const ganancia=0.07+Math.random()*0.06; // cada paso seguro sube entre +7% y +13%
             probActual=Math.min(0.95, probActual+ganancia);
+            if(typeof window.playSound==='function') window.playSound('reveal');
             if(card){ card.classList.add('lm-scout-mini-card-seguro'); setTimeout(()=>card.classList.remove('lm-scout-mini-card-seguro'), 450); }
             fase='jugando';
             pintar();
@@ -8480,6 +8501,9 @@
       } else {
         const exito = probActual>0 ? resolverTiradaSobreFichajes(probActual) : false;
         resultadoTipo = exito ? 'exito' : 'fallo';
+        // Recompensa satisfactoria de verdad: sonido de victoria propio
+        // (no el "reveal" genérico) en cuanto se confirma el sobre.
+        if(exito && typeof window.playSound==='function') window.playSound('victory');
       }
       guardarEstado();
       pintar();

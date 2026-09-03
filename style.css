@@ -4467,96 +4467,162 @@ body.liga-manager-screen .ranking-btn-label-lm{display:inline}
 /* ---------- Minijuego de scouting (push-your-luck), prototipo tras
    LM_MINIJUEGO_SCOUTING_ACTIVO — usa el mismo morado/lavanda (#8a7fd6)
    que ya identifica al nodo de scouting en el árbol de nodos, para que
-   se reconozca de un vistazo como parte del mismo sistema. */
+   se reconozca de un vistazo como parte del mismo sistema. Tratamiento
+   "de sala de scouting": tarjeta oscura con textura sutil y borde
+   luminoso, tipografía con jerarquía clara (eyebrow / título / cifras
+   grandes), nada de bordes redondeados sueltos ni sombras planas —
+   mismo lenguaje visual de esquinas rectas que el resto de Liga
+   Manager (.lm-dilemma-card ya fuerza border-radius:0). */
 #lmScoutingMinijuegoOverlay{
-  position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:260;
+  position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:260;
   display:flex;align-items:center;justify-content:center;padding:14px;
+  transition:background .3s ease;
 }
 .lm-scout-mini-card{
-  border-color:#8a7fd6;width:360px;max-width:92vw;
-  box-shadow:0 0 0 1px rgba(138,127,214,.18),0 18px 50px rgba(0,0,0,.55);
+  border-color:#8a7fd6;width:372px;max-width:92vw;
+  padding:24px 26px 22px;position:relative;overflow:hidden;
+  background:
+    radial-gradient(120% 90% at 50% -10%, rgba(138,127,214,.16), transparent 60%),
+    linear-gradient(165deg,#1c1a24,#121016 65%);
+  box-shadow:0 0 0 1px rgba(138,127,214,.22),0 24px 60px rgba(0,0,0,.6);
 }
-.lm-scout-mini-title{justify-content:center;text-align:center}
-.lm-scout-mini-title i{color:#8a7fd6}
-.lm-scout-mini-desc{text-align:center}
-.lm-scout-mini-meter-wrap{margin:16px 0 6px;transition:transform .2s ease}
+.lm-scout-mini-eyebrow{
+  font-size:9.5px;letter-spacing:2.2px;text-align:center;color:#a79ae0;
+  font-weight:700;margin-bottom:6px;opacity:.85;
+}
+.lm-scout-mini-title{justify-content:center;text-align:center;font-size:17px;margin:0 0 16px}
+.lm-scout-mini-title i{color:#8a7fd6;font-size:20px}
+.lm-scout-mini-meter-wrap{margin:14px 0 4px;transition:transform .2s ease}
 .lm-scout-mini-meter-label{
-  font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--lm-text-dim);
-  text-align:left;margin-bottom:4px;
+  display:flex;align-items:center;gap:6px;
+  font-size:10px;letter-spacing:1.4px;text-transform:uppercase;color:var(--lm-text-dim);
+  text-align:left;margin-bottom:5px;font-weight:700;
 }
+.lm-scout-mini-meter-label i{font-size:11px;color:#8a7fd6}
+.lm-scout-mini-risk-label i{color:#e29a8a}
 .lm-scout-mini-meter-track{
-  width:100%;height:22px;border-radius:11px;background:rgba(255,255,255,.06);
+  width:100%;height:20px;border-radius:3px;background:rgba(0,0,0,.35);
   border:1px solid rgba(138,127,214,.35);overflow:hidden;position:relative;
+  box-shadow:inset 0 2px 5px rgba(0,0,0,.5);
 }
 .lm-scout-mini-meter-fill{
-  height:100%;border-radius:11px 0 0 11px;
-  background:linear-gradient(90deg,#6b5fc4,#8a7fd6);
-  transition:background .25s ease;
-  box-shadow:0 0 12px rgba(138,127,214,.55) inset;
+  height:100%;position:relative;overflow:hidden;
+  background:linear-gradient(90deg,#5b4fb8,#8a7fd6);
+  transition:width .2s ease,background .25s ease;
+  box-shadow:0 0 14px rgba(138,127,214,.6) inset, 0 0 8px rgba(138,127,214,.5);
 }
-.lm-scout-mini-meter-fill-media{background:linear-gradient(90deg,#a68a3e,#e6c94a)}
-.lm-scout-mini-meter-fill-alta{background:linear-gradient(90deg,#2f8f5b,#5dcaa5)}
+.lm-scout-mini-meter-fill-media{background:linear-gradient(90deg,#a68a3e,#e6c94a);box-shadow:0 0 14px rgba(230,201,74,.55) inset,0 0 8px rgba(230,201,74,.45)}
+.lm-scout-mini-meter-fill-alta{background:linear-gradient(90deg,#2f8f5b,#5dcaa5);box-shadow:0 0 14px rgba(93,202,165,.6) inset,0 0 8px rgba(93,202,165,.5)}
+/* Barrido de brillo constante sobre el relleno — el detalle "gloss"
+   que separa un medidor plano de uno que parece pulido de verdad. */
+.lm-scout-mini-meter-sheen{
+  position:absolute;inset:0;
+  background:linear-gradient(100deg,transparent 20%,rgba(255,255,255,.28) 45%,transparent 65%);
+  background-size:220% 100%;
+  animation:lmScoutSheenSweep 2.6s linear infinite;
+}
+@keyframes lmScoutSheenSweep{0%{background-position:140% 0}100%{background-position:-40% 0}}
 .lm-scout-mini-pct{
-  font-family:'Bebas Neue',Impact,sans-serif;font-size:34px;letter-spacing:1px;
+  font-family:'Bebas Neue',Impact,sans-serif;font-size:40px;letter-spacing:.5px;
   color:var(--lm-text);text-align:center;margin-top:6px;line-height:1;
+  text-shadow:0 0 18px rgba(138,127,214,.35);
 }
+.lm-scout-mini-pct-simbolo{font-size:.55em;color:var(--lm-text-muted);margin-left:1px}
 /* Medidor de riesgo — mismo tamaño que el de calidad del informe pero
    en rojo/naranja, para que el jugador vea las dos cosas subiendo A LA
    VEZ cada vez que decide dar un paso más: esa comparación en vivo es
    la que genera la tensión real de "¿empujo una vez más o no?". */
-.lm-scout-mini-risk-wrap{margin-top:14px}
+.lm-scout-mini-risk-wrap{margin-top:16px}
 .lm-scout-mini-risk-label{color:#e29a8a}
 .lm-scout-mini-risk-track{
-  width:100%;height:14px;border-radius:7px;background:rgba(255,255,255,.06);
-  border:1px solid rgba(226,75,74,.3);overflow:hidden;
+  width:100%;height:12px;border-radius:2px;background:rgba(0,0,0,.35);
+  border:1px solid rgba(226,75,74,.3);overflow:hidden;box-shadow:inset 0 2px 4px rgba(0,0,0,.5);
 }
 .lm-scout-mini-risk-fill{
-  height:100%;border-radius:7px 0 0 7px;
+  height:100%;
   background:linear-gradient(90deg,#7a4a3a,#e08a3e);
   transition:width .2s ease,background .2s ease;
 }
 .lm-scout-mini-risk-fill-media{background:linear-gradient(90deg,#a05a3a,#e2704a)}
 .lm-scout-mini-risk-fill-alta{background:linear-gradient(90deg,#a5342f,#e24b4a);animation:lmScoutRiskPulse 1s ease-in-out infinite}
 .lm-scout-mini-risk-pct{
-  font-family:'Bebas Neue',Impact,sans-serif;font-size:15px;letter-spacing:.5px;
-  color:var(--lm-text-muted);text-align:right;margin-top:4px;
+  font-family:'Bebas Neue',Impact,sans-serif;font-size:14px;letter-spacing:.5px;
+  color:var(--lm-text-muted);text-align:right;margin-top:5px;
 }
 .lm-scout-mini-risk-pct-alta{color:#f08a80;animation:lmScoutRiskTextPulse 1s ease-in-out infinite}
 .lm-scout-mini-resultado{
-  font-size:13px;line-height:1.5;padding:12px 14px;border-radius:8px;margin:6px 0 16px;
+  font-size:12.5px;line-height:1.55;padding:12px 14px;margin:14px 0 4px;
+  border-left:3px solid transparent;
 }
-.lm-scout-mini-resultado-exito{background:rgba(93,202,165,.12);border:1px solid rgba(93,202,165,.4);color:#7cd9bd}
-.lm-scout-mini-resultado-fallo{background:rgba(230,86,74,.1);border:1px solid rgba(230,86,74,.35);color:#f08a80}
-.lm-scout-mini-resultado-pillado{background:rgba(230,86,74,.16);border:1px solid #e24b4a;color:#ffb3ab;font-weight:600}
-.lm-scout-mini-actions{display:flex;gap:10px;width:100%;justify-content:center}
-.lm-scout-mini-actions button{flex:1;min-width:0}
-.lm-scout-mini-actions button:disabled{opacity:.4;cursor:not-allowed}
+.lm-scout-mini-resultado-exito{background:rgba(93,202,165,.1);border-left-color:#5dcaa5;color:#8fe4c9}
+.lm-scout-mini-resultado-fallo{background:rgba(255,255,255,.04);border-left-color:var(--lm-text-dim);color:var(--lm-text-muted)}
+.lm-scout-mini-resultado-pillado{background:rgba(230,86,74,.14);border-left-color:#e24b4a;color:#ffb3ab;font-weight:600}
+.lm-scout-mini-actions{display:flex;gap:10px;width:100%;justify-content:center;margin-top:18px}
+.lm-scout-mini-actions button{flex:1;min-width:0;transition:transform .12s ease,box-shadow .2s ease}
+.lm-scout-mini-actions button:active:not(:disabled){transform:scale(.96)}
+.lm-scout-mini-actions button:disabled{opacity:.35;cursor:not-allowed}
+/* El botón de seguir se tiñe y late cada vez más según el riesgo del
+   PRÓXIMO paso — el jugador siente el peligro en el propio botón que
+   va a pulsar, no solo leyéndolo en una cifra aparte. */
+.lm-scout-mini-btn-empujar-media{box-shadow:0 0 0 1px rgba(224,138,62,.5),0 0 14px rgba(224,138,62,.35)}
+.lm-scout-mini-btn-empujar-alta{
+  box-shadow:0 0 0 1px rgba(226,75,74,.65),0 0 16px rgba(226,75,74,.5);
+  animation:lmScoutRiskPulse 1s ease-in-out infinite;
+}
+/* Confeti dorado del reveal de éxito — recompensa que se SIENTE, no
+   solo se lee: un puñado de partículas que saltan y caen desvaneciéndose
+   por encima de la tarjeta, sincronizadas con el sonido de victoria. */
+.lm-scout-mini-confeti{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:2}
+.lm-scout-mini-confeti-p{
+  position:absolute;top:38%;left:50%;width:6px;height:10px;border-radius:1px;
+  background:var(--gold);opacity:0;
+  animation:lmScoutConfetiPop .9s cubic-bezier(.2,.8,.3,1) forwards;
+}
+.lm-scout-mini-confeti-p0{left:20%;background:var(--gold);animation-delay:.02s;transform:rotate(-12deg)}
+.lm-scout-mini-confeti-p1{left:32%;background:#5dcaa5;animation-delay:.07s;transform:rotate(20deg)}
+.lm-scout-mini-confeti-p2{left:44%;background:#8a7fd6;animation-delay:0s;transform:rotate(-4deg)}
+.lm-scout-mini-confeti-p3{left:56%;background:var(--gold);animation-delay:.09s;transform:rotate(14deg)}
+.lm-scout-mini-confeti-p4{left:68%;background:#5dcaa5;animation-delay:.03s;transform:rotate(-20deg)}
+.lm-scout-mini-confeti-p5{left:80%;background:var(--gold);animation-delay:.06s;transform:rotate(8deg)}
+.lm-scout-mini-confeti-p6{left:14%;background:#8a7fd6;animation-delay:.1s;transform:rotate(30deg)}
+@keyframes lmScoutConfetiPop{
+  0%{opacity:0;transform:translateY(0) scale(.4) rotate(0deg)}
+  15%{opacity:1}
+  100%{opacity:0;transform:translateY(120px) scale(1) rotate(140deg)}
+}
 /* Animaciones de la tarjeta durante y tras cada paso: pulso de tensión
    mientras se resuelve, y flash verde (a salvo) o rojo+sacudida
-   (pillado) al revelar — el "PAM" visual que pedía el diseño. */
+   (pillado) al revelar — el "PAM" visual que pedía el diseño. El flash
+   rojo, además, invade el overlay ENTERO (no solo el borde de la
+   tarjeta) para que el susto se sienta también fuera de ella. */
 @keyframes lmScoutRiskPulse{0%,100%{opacity:1}50%{opacity:.6}}
 @keyframes lmScoutRiskTextPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.12)}}
 @keyframes lmScoutTensionBorder{
-  0%,100%{box-shadow:0 0 0 1px rgba(226,75,74,.18),0 18px 50px rgba(0,0,0,.55)}
-  50%{box-shadow:0 0 0 3px rgba(226,75,74,.5),0 18px 50px rgba(0,0,0,.55)}
+  0%,100%{box-shadow:0 0 0 1px rgba(226,75,74,.2),0 24px 60px rgba(0,0,0,.6)}
+  50%{box-shadow:0 0 0 3px rgba(226,75,74,.55),0 24px 60px rgba(0,0,0,.6)}
 }
 .lm-scout-mini-card-tension{animation:lmScoutTensionBorder .35s ease-in-out infinite}
 @keyframes lmScoutShake{
   0%,100%{transform:translateX(0)}
-  20%{transform:translateX(-8px)}
-  40%{transform:translateX(7px)}
-  60%{transform:translateX(-5px)}
+  20%{transform:translateX(-9px)}
+  40%{transform:translateX(8px)}
+  60%{transform:translateX(-6px)}
   80%{transform:translateX(4px)}
 }
 .lm-scout-mini-card-pillado{
   animation:lmScoutShake .45s ease-in-out;
-  box-shadow:0 0 0 3px rgba(226,75,74,.75),0 18px 50px rgba(0,0,0,.55) !important;
+  box-shadow:0 0 0 3px rgba(226,75,74,.8),0 24px 60px rgba(0,0,0,.6) !important;
 }
 @keyframes lmScoutFlashGreen{
-  0%{box-shadow:0 0 0 3px rgba(93,202,165,.8),0 18px 50px rgba(0,0,0,.55)}
-  100%{box-shadow:0 0 0 1px rgba(138,127,214,.18),0 18px 50px rgba(0,0,0,.55)}
+  0%{box-shadow:0 0 0 3px rgba(93,202,165,.85),0 24px 60px rgba(0,0,0,.6)}
+  100%{box-shadow:0 0 0 1px rgba(138,127,214,.22),0 24px 60px rgba(0,0,0,.6)}
 }
 .lm-scout-mini-card-seguro{animation:lmScoutFlashGreen .45s ease-out}
+@keyframes lmScoutOverlayFlashRojo{
+  0%{background:rgba(120,20,18,.55)}
+  100%{background:rgba(0,0,0,.82)}
+}
+.lm-scout-mini-overlay-flash-rojo{animation:lmScoutOverlayFlashRojo .55s ease-out}
 
 /* Tarjeta de Liga Manager cuando el acceso está desbloqueado (solo admin
    autorizado mientras el modo está en construcción): mismo tratamiento
