@@ -7909,6 +7909,30 @@
   // nivel tenga un departamento, más cuesta mantenerlo (igual que un
   // jugador de sobre mejor es más caro). Se cobra una vez al entrar en
   // cada mes (cada 4 jornadas).
+  // Mantenimiento del estadio — SOLO para clubes reales (nunca para un
+  // club propio, cuyo aforo modesto y fijo ya está calibrado aparte para
+  // que apriete desde el minuto uno). Un club real hereda gratis el
+  // aforo de su estadio de verdad, que puede ser 6-7 veces mayor que el
+  // de un club propio recién ascendido — sin ningún coste asociado a esa
+  // ventaja, hasta un club real modesto llenaba caja con la simple
+  // recaudación de taquilla, sin necesitar tocar ni una sola estrella de
+  // los proyectos económicos del Director General. Este gasto mensual,
+  // proporcional al aforo, hace que ESE tamaño de estadio también cueste
+  // mantenerlo — y su coste baja con el nivel de "Relaciones con la
+  // Afición" (más eficiencia operativa cuanto mejor gestionada está la
+  // relación con el club), dándole a ese proyecto una razón de ser más
+  // allá de tolerar precios de entrada más altos. Con esto, solo los
+  // clubes con el aforo más grande de verdad (Real Madrid, Barcelona,
+  // Atlético...) siguen siendo cómodos por defecto — el resto nota la
+  // presión igual que un club propio, tal y como debe ser para que
+  // subir esos proyectos económicos tenga sentido.
+  const GASTO_ESTADIO_POR_ASIENTO=6;
+  function calcularGastoEstadio(){
+    if(!state.equipoRealElegidoId) return 0;
+    const aforo=(state.estadio && state.estadio.aforoTotal) || 0;
+    const descuento=Math.min(0.45, nivelDeDG('toleranciaPrecio')*0.15);
+    return Math.round(aforo*GASTO_ESTADIO_POR_ASIENTO*(1-descuento));
+  }
   function calcularNominaMensual(){
     const nominaJugadores=(state.plantilla||[]).reduce((s,p)=>s+(p.salario||0),0);
     const trab=state.trabajadores||{};
@@ -7920,7 +7944,8 @@
     const nominaPF=(trab.preparadorFisico?trab.preparadorFisico.sueldo:0)+nivelTotalDe(state.preparadorFisicoNiveles)*1200;
     const nominaStaff=nominaMedico+nominaMantenimiento+nominaGuardias+nominaDG+nominaDD+nominaPF;
     const ingresoPatrocinio=nivelDeDG('ingresoPatrocinio')*15000;
-    return {nominaJugadores, nominaStaff, ingresoPatrocinio, total:nominaJugadores+nominaStaff};
+    const gastoEstadio=calcularGastoEstadio();
+    return {nominaJugadores, nominaStaff, ingresoPatrocinio, gastoEstadio, total:nominaJugadores+nominaStaff+gastoEstadio};
   }
   function aplicarNominaMensual(){
     const n=calcularNominaMensual();
@@ -7934,17 +7959,19 @@
       nominaStaff=Math.round(nominaStaff*(1-state.directorGeneralBonos.descuentoNomina));
       state.directorGeneralBonos.descuentoNomina=0;
     }
-    state.capital=Math.round((state.capital||0)-nominaJugadores-nominaStaff+n.ingresoPatrocinio);
+    const gastoEstadio=n.gastoEstadio||0;
+    state.capital=Math.round((state.capital||0)-nominaJugadores-nominaStaff-gastoEstadio+n.ingresoPatrocinio);
     registrarMovimientoFinanciero('Nómina de jugadores', -nominaJugadores, state.jornadaActual);
     registrarMovimientoFinanciero('Nómina del cuerpo técnico', -nominaStaff, state.jornadaActual);
+    if(gastoEstadio>0) registrarMovimientoFinanciero('Mantenimiento del estadio', -gastoEstadio, state.jornadaActual);
     if(n.ingresoPatrocinio>0) registrarMovimientoFinanciero('Patrocinio mensual', n.ingresoPatrocinio, state.jornadaActual);
     // Aviso mensual de nóminas pagadas, con acceso directo al balance
     // económico completo desde el propio correo.
-    const netoMes=n.ingresoPatrocinio-nominaJugadores-nominaStaff;
+    const netoMes=n.ingresoPatrocinio-nominaJugadores-nominaStaff-gastoEstadio;
     if(typeof enviarCorreo==='function'){
       enviarCorreo('directorGeneral', t('correo.nominas_pagadas.asunto'),
-        tp('correo.nominas_pagadas.cuerpo', {jugadores:formatoDinero(nominaJugadores), staff:formatoDinero(nominaStaff), patrocinio:n.ingresoPatrocinio>0?tp('correo.nominas_patrocinio',{patrocinio:formatoDinero(n.ingresoPatrocinio)}):'', balance:(netoMes>=0?'+':'')+formatoDinero(netoMes), capital:formatoDinero(state.capital)}),
-        {asunto:'correo.nominas_pagadas.asunto', cuerpo:'correo.nominas_pagadas.cuerpo', paramsCuerpo:{jugadores:formatoDinero(nominaJugadores), staff:formatoDinero(nominaStaff), patrocinio:n.ingresoPatrocinio>0?tp('correo.nominas_patrocinio',{patrocinio:formatoDinero(n.ingresoPatrocinio)}):'', balance:(netoMes>=0?'+':'')+formatoDinero(netoMes), capital:formatoDinero(state.capital)}});
+        tp('correo.nominas_pagadas.cuerpo', {jugadores:formatoDinero(nominaJugadores), staff:formatoDinero(nominaStaff), estadio:gastoEstadio>0?tp('correo.nominas_estadio',{estadio:formatoDinero(gastoEstadio)}):'', patrocinio:n.ingresoPatrocinio>0?tp('correo.nominas_patrocinio',{patrocinio:formatoDinero(n.ingresoPatrocinio)}):'', balance:(netoMes>=0?'+':'')+formatoDinero(netoMes), capital:formatoDinero(state.capital)}),
+        {asunto:'correo.nominas_pagadas.asunto', cuerpo:'correo.nominas_pagadas.cuerpo', paramsCuerpo:{jugadores:formatoDinero(nominaJugadores), staff:formatoDinero(nominaStaff), estadio:gastoEstadio>0?tp('correo.nominas_estadio',{estadio:formatoDinero(gastoEstadio)}):'', patrocinio:n.ingresoPatrocinio>0?tp('correo.nominas_patrocinio',{patrocinio:formatoDinero(n.ingresoPatrocinio)}):'', balance:(netoMes>=0?'+':'')+formatoDinero(netoMes), capital:formatoDinero(state.capital)}});
       const ultimo=state.correoInterno && state.correoInterno[0];
       if(ultimo) ultimo.tipoEspecial='balance_mensual';
     }
