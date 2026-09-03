@@ -8005,7 +8005,18 @@
       state.capital=Math.round((state.capital||0)-finiquito);
       registrarMovimientoFinanciero('Finiquito de '+actual.nombre, -finiquito, state.jornadaActual);
     }
-    state.trabajadores[rol]={id:'t'+Date.now(), nombre:candidato.nombre, genero:candidato.genero, fotoVariante:candidato.fotoVariante, nivel:candidato.nivel, sueldo:candidato.sueldo};
+    // Si quien entra es del mismo sexo que quien ocupaba el puesto
+    // antes, se evita que le toque exactamente la misma variante de
+    // foto — si no, la ficha del cuerpo técnico enseñaría la misma cara
+    // de siempre aunque acabes de fichar a otra persona distinta. Se
+    // resortea solo la variante (nunca el género, que ya viene fijado
+    // por el candidato elegido) entre las otras 2 disponibles.
+    let fotoVariante=candidato.fotoVariante;
+    if(actual && actual.genero===candidato.genero && actual.fotoVariante===fotoVariante){
+      const otras=[1,2,3].filter(v=>v!==fotoVariante);
+      fotoVariante=otras[Math.floor(Math.random()*otras.length)];
+    }
+    state.trabajadores[rol]={id:'t'+Date.now(), nombre:candidato.nombre, genero:candidato.genero, fotoVariante, nivel:candidato.nivel, sueldo:candidato.sueldo};
     state.candidatosTrabajo=state.candidatosTrabajo.filter(c=>c.id!==candidatoId);
     if(typeof window.unlockLMAchievement==='function' && ROLES_TRABAJO.every(r=>state.trabajadores[r])) window.unlockLMAchievement('lm_first_worker');
     guardarEstado();
