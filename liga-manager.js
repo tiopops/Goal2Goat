@@ -7348,7 +7348,16 @@
   // contador de goles de la temporada de cada jugador (para que el
   // resumen del año que viene empiece de cero, no arrastre los goles
   // del año anterior).
-  function iniciarNuevaTemporadaConProgreso(){
+  // Incentivo económico de bienvenida a la nueva temporada — se paga
+  // ADEMÁS del premio de fin de temporada ya cobrado en el resumen
+  // (calcularPremioFinTemporada), pero es una cifra deliberadamente
+  // más modesta: no es el premio en sí, es "empezar la temporada con
+  // un poco más de colchón", con la misma idea de que cuanto mejor la
+  // posición final, mayor el empujón inicial.
+  function calcularIncentivoNuevaTemporada(miPos){
+    return miPos===1?40000 : miPos<=4?25000 : miPos===5?18000 : miPos===6?15000 : miPos<=10?10000 : 6000;
+  }
+  function iniciarNuevaTemporadaConProgreso(miPos){
     const teams=extraerEquiposCalendarioActual();
     state.jornadaActual=1;
     state.calendario=generarCalendario(teams);
@@ -7357,10 +7366,37 @@
     state.semanaResueltaParaJornada=undefined;
     calendarioMesVisto=null;
     calendarioJornadaSincronizada=null;
-    (state.plantilla||[]).forEach(p=>{ p.golesTemporada=0; });
+    // Tabla rasa físico-disciplinaria de cara a la nueva temporada:
+    // lesiones curadas, resistencia al máximo y tarjetas acumuladas
+    // borradas (igual que en el fútbol real, la cuenta de amonestados
+    // y las sanciones no se arrastran de una temporada a otra). Los
+    // rasgos ganados (p.rasgos) NO se tocan aquí a propósito — esos sí
+    // se conservan.
+    (state.plantilla||[]).forEach(p=>{
+      p.golesTemporada=0;
+      if(p.injured) cerrarLesionHistorial(p, 'Nueva temporada');
+      p.injured=false; p.injurySeverity=null; p.injuryWeeks=0; p.injuryFamilia=null;
+      p.fatigue=100;
+      p.amarillasAcumuladas=0; p.suspendido=false; p.partidosSancion=0;
+    });
     state.giroTacticoUsosRestantes=getMaxGiroTacticoLM();
     state.giroTacticoMitad=1;
     state.estuvoEnDescensoEstaTemporada=false;
+    // Bandeja de correo vacía para arrancar la temporada — y, como
+    // primer y único mensaje de esa bandeja recién vaciada, un correo
+    // de enhorabuena de dirección general con el incentivo económico
+    // de bienvenida ya calculado más arriba.
+    state.correoInterno=[];
+    state.correoUltimoEnviado={};
+    correoExpandido=null;
+    if(miPos!=null){
+      const incentivo=calcularIncentivoNuevaTemporada(miPos);
+      state.capital=(state.capital||0)+incentivo;
+      registrarMovimientoFinanciero(t('lm.resumen_temporada_incentivo_concepto'), incentivo, state.jornadaActual);
+      enviarCorreo('directorGeneral', tp('correo.incentivo_temporada.asunto', {n:miPos}),
+        tp('correo.incentivo_temporada.cuerpo', {n:miPos, monto:formatoDinero(incentivo)}),
+        {asunto:'correo.incentivo_temporada.asunto', paramsAsunto:{n:miPos}, cuerpo:'correo.incentivo_temporada.cuerpo', paramsCuerpo:{n:miPos, monto:formatoDinero(incentivo)}});
+    }
     guardarEstado();
     render();
   }
@@ -7719,14 +7755,16 @@
         document.body.classList.add('menu-screen');
         return;
       }
-      mostrarFelicitacionNuevaTemporada();
+      mostrarFelicitacionNuevaTemporada(miPos);
     });
   }
   // Popup de felicitación antes de arrancar la nueva temporada con
   // todo el progreso conservado — mismo estilo que el resto de la
   // interfaz, a modo de reconocimiento por una buena temporada antes
-  // de continuar la aventura.
-  function mostrarFelicitacionNuevaTemporada(){
+  // de continuar la aventura. miPos se hace llegar hasta el arranque
+  // de la nueva temporada para poder calcular el incentivo económico
+  // de bienvenida según dónde se haya quedado el equipo.
+  function mostrarFelicitacionNuevaTemporada(miPos){
     const overlay=document.createElement('div');
     overlay.id='lmFelicitacionTemporadaOverlay';
     overlay.innerHTML=`
@@ -7739,7 +7777,7 @@
     overlay.querySelector('#lmFelicitacionEmpezarBtn').addEventListener('click', ()=>{
       if(typeof window.playSound==='function') window.playSound('select');
       overlay.remove();
-      iniciarNuevaTemporadaConProgreso();
+      iniciarNuevaTemporadaConProgreso(miPos);
     });
   }
 
