@@ -2779,6 +2779,16 @@ body.liga-manager-screen .ranking-btn-label-lm{display:inline}
 .lm-barra-label{ font-size:10px; color:var(--lm-text-muted); letter-spacing:.3px; width:76px; flex-shrink:0; }
 .lm-barra-track{ flex:1; height:6px; background:var(--lm-surface-0); border-radius:3px; overflow:hidden; }
 .lm-barra-fill{ height:100%; border-radius:3px; transition:width .3s ease; }
+/* Barra que acaba de cambiar tras elegir un nodo: arranca bien
+   iluminada (más brillo + resplandor de su propio color, vía --bc) y
+   se va apagando hasta quedar normal, mientras el ancho recorre en
+   vivo el trayecto del valor viejo al nuevo — así se ve de un vistazo
+   cuál de las 4 barras es la que se está moviendo. */
+.lm-barra-fill-cambio{ animation:lmBarraCambioGlow .75s ease-out; }
+@keyframes lmBarraCambioGlow{
+  0%{ filter:brightness(1.9) saturate(1.4); box-shadow:0 0 10px 1px var(--bc,#fff); }
+  100%{ filter:brightness(1) saturate(1); box-shadow:0 0 0 0 transparent; }
+}
 
 /* ---- Contadores de icono acumulados + canje ---- */
 .lm-nodos-acumulados{ margin-top:12px; padding-top:10px; border-top:1px solid var(--lm-border); }
@@ -4532,7 +4542,7 @@ body.liga-manager-screen .ranking-btn-label-lm{display:inline}
    en rojo/naranja, para que el jugador vea las dos cosas subiendo A LA
    VEZ cada vez que decide dar un paso más: esa comparación en vivo es
    la que genera la tensión real de "¿empujo una vez más o no?". */
-.lm-scout-mini-risk-wrap{margin-top:16px}
+.lm-scout-mini-risk-wrap{margin-top:16px;text-align:right}
 .lm-scout-mini-risk-label{color:#e29a8a}
 .lm-scout-mini-risk-track{
   width:100%;height:12px;border-radius:2px;background:rgba(0,0,0,.35);
@@ -4547,9 +4557,23 @@ body.liga-manager-screen .ranking-btn-label-lm{display:inline}
 .lm-scout-mini-risk-fill-alta{background:linear-gradient(90deg,#a5342f,#e24b4a);animation:lmScoutRiskPulse 1s ease-in-out infinite}
 .lm-scout-mini-risk-pct{
   font-family:'Bebas Neue',Impact,sans-serif;font-size:14px;letter-spacing:.5px;
-  color:var(--lm-text-muted);text-align:right;margin-top:5px;
+  color:var(--lm-text-muted);margin-top:5px;
+  display:inline-block;position:relative;padding:2px 4px;
 }
-.lm-scout-mini-risk-pct-alta{color:#f08a80;animation:lmScoutRiskTextPulse 1s ease-in-out infinite}
+/* Riesgo alto: la cifra se queda QUIETA (nada de zoom) y en su lugar
+   el pulso se transmite con ondas rojas expandiéndose detrás, al
+   ritmo de un latido real (doble onda rápida — "lub-dub" — y una
+   pausa antes de repetir), igual que el destello de gol del visor de
+   partido pero en rojo y sin necesitar un lienzo SVG. */
+.lm-scout-mini-risk-pct-alta{color:#f08a80}
+.lm-scout-mini-risk-pct-alta::before,
+.lm-scout-mini-risk-pct-alta::after{
+  content:'';position:absolute;left:50%;top:50%;width:30px;height:30px;
+  margin:-15px 0 0 -15px;border-radius:50%;border:2px solid #e24b4a;
+  opacity:0;pointer-events:none;
+  animation:lmScoutHeartbeatOnda 1.15s cubic-bezier(.16,.72,.32,1) infinite;
+}
+.lm-scout-mini-risk-pct-alta::after{animation-delay:.16s}
 .lm-scout-mini-resultado{
   font-size:12.5px;line-height:1.55;padding:12px 14px;margin:14px 0 4px;
   border-left:3px solid transparent;
@@ -4596,7 +4620,16 @@ body.liga-manager-screen .ranking-btn-label-lm{display:inline}
    rojo, además, invade el overlay ENTERO (no solo el borde de la
    tarjeta) para que el susto se sienta también fuera de ella. */
 @keyframes lmScoutRiskPulse{0%,100%{opacity:1}50%{opacity:.6}}
-@keyframes lmScoutRiskTextPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.12)}}
+/* Doble onda por ciclo (late-late... pausa) imitando el ritmo real de
+   un latido, no un pulso uniforme: la primera onda (::before) sale ya
+   bien abierta cuando arranca la segunda (::after, con .16s de
+   retraso), y ambas se desvanecen mucho antes de que el ciclo se
+   repita — de ahí la pausa perceptible entre "lub-dub" y el siguiente. */
+@keyframes lmScoutHeartbeatOnda{
+  0%{transform:scale(.5);opacity:.85}
+  55%{opacity:0}
+  100%{transform:scale(2.2);opacity:0}
+}
 @keyframes lmScoutTensionBorder{
   0%,100%{box-shadow:0 0 0 1px rgba(226,75,74,.2),0 24px 60px rgba(0,0,0,.6)}
   50%{box-shadow:0 0 0 3px rgba(226,75,74,.55),0 24px 60px rgba(0,0,0,.6)}

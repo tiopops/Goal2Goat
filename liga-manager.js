@@ -2055,10 +2055,57 @@
         return `<div class="lm-barra-fila">
           <i class="ph ph-bold ${f.icon}" style="color:${d.color}"></i>
           <span class="lm-barra-label">${f.label}</span>
-          <div class="lm-barra-track"><div class="lm-barra-fill" style="width:${d.pct}%;background:${d.color}"></div></div>
+          <div class="lm-barra-track"><div class="lm-barra-fill" data-barra-key="${f.key}" style="width:${d.pct}%;background:${d.color};--bc:${d.color}"></div></div>
         </div>`;
       }).join('')}
     </div>`;
+  }
+
+  // Lee el % actual de cada barra de estado YA pintada en pantalla,
+  // justo ANTES de reconstruir el overlay del árbol — como el repintado
+  // sustituye el innerHTML entero (nunca actualiza el ancho de un
+  // elemento ya existente), sin esto no habría forma de saber de dónde
+  // "venía" cada barra para poder animar el trayecto. Devuelve {} si
+  // el overlay aún no tenía barras pintadas (primera apertura del
+  // árbol), lo que a su vez le dice a animarBarrasEstadoCambiadas que
+  // no hay nada que animar todavía.
+  function capturarAnchosBarrasEstado(root){
+    const anchos={};
+    root.querySelectorAll('.lm-barra-fill[data-barra-key]').forEach(el=>{
+      anchos[el.getAttribute('data-barra-key')]=parseFloat(el.style.width)||0;
+    });
+    return anchos;
+  }
+
+  // Anima cada barra de estado desde su valor ANTERIOR (capturado por
+  // capturarAnchosBarrasEstado antes del repintado) hasta el nuevo
+  // valor ya presente en el HTML recién insertado — el jugador ve el
+  // recorrido completo subiendo o bajando, no solo el resultado ya
+  // aplicado de golpe. Mientras dura la animación, la barra que
+  // cambia se ilumina (más brillo/resplandor al empezar, que se va
+  // apagando) para que quede claro cuál de las 4 es la que se está
+  // moviendo — el resto se quedan quietas y sin iluminar.
+  function animarBarrasEstadoCambiadas(root, anchosPrevios){
+    if(!anchosPrevios || !Object.keys(anchosPrevios).length) return;
+    root.querySelectorAll('.lm-barra-fill[data-barra-key]').forEach(el=>{
+      const key=el.getAttribute('data-barra-key');
+      const nuevoPct=parseFloat(el.style.width)||0;
+      const anteriorPct=anchosPrevios[key];
+      if(anteriorPct===undefined || Math.abs(anteriorPct-nuevoPct)<0.5) return;
+      el.style.transition='none';
+      el.style.width=anteriorPct+'%';
+      void el.offsetWidth; // fuerza el reflow para que el salto de vuelta no se anime también
+      el.classList.add('lm-barra-fill-cambio');
+      requestAnimationFrame(()=>{
+        // Más lento que la transición .3s por defecto de la barra
+        // (pensada para micro-ajustes instantáneos): aquí el recorrido
+        // tiene que verse bien, a la misma duración que dura el
+        // resplandor, para que ambos terminen a la vez.
+        el.style.transition='width .7s cubic-bezier(.22,.85,.32,1)';
+        el.style.width=nuevoPct+'%';
+      });
+      setTimeout(()=>{ el.classList.remove('lm-barra-fill-cambio'); el.style.transition=''; }, 750);
+    });
   }
 
   // ---------- Contadores de icono acumulados + botón de canje cuando
@@ -2383,8 +2430,15 @@
     // el salto que se veía aunque el nodo final ya estuviera visible.
     const wrapPrevio=overlay.querySelector('#lmArbolWrap');
     const scrollLeftPrevio=wrapPrevio ? wrapPrevio.scrollLeft : 0;
+    // Mismo motivo que el scroll de arriba: al reconstruir el overlay
+    // entero se perdería el punto de partida de las barras de estado
+    // (forma física, riesgo de lesión, moral, afición) si no se lee
+    // ANTES de machacar el HTML — se captura aquí y se usa después
+    // para animar el trayecto viejo→nuevo en vez de un salto seco.
+    const anchosBarrasPrevios=capturarAnchosBarrasEstado(overlay);
     overlay.innerHTML=renderArbolNodosOverlayHTML();
     cablearEventosArbolNodos(overlay);
+    animarBarrasEstadoCambiadas(overlay, anchosBarrasPrevios);
     // En escritorio el lienzo se ajusta al ancho real disponible para
     // que quepa entero sin scroll — en móvil se deja el tamaño fijo
     // de siempre (más grande, con scroll horizontal suave hacia el
@@ -8285,7 +8339,16 @@
   // que ambos caminos (automático e interactivo) compartan exactamente
   // la misma lógica de éxito/nivel del sobre/correo de aviso. Devuelve
   // true si ha salido sobre, false si no (o si no había hueco).
-  function resolverTiradaSobreFichajes(probabilidad){
+  //
+  // gratis: true marca el sobre conseguido así como de coste 0 al
+  // abrirlo (mismo campo que ya usaba el sobre de regalo inicial) —
+  // el minijuego de "Infiltrado en la grada" lo pasa siempre a true:
+  // el riesgo de que te pillen (perderlo todo) ya es el precio que
+  // paga ese sobre, así que cobrar ADEMÁS por abrirlo sería pagar dos
+  // veces por lo mismo. La tirada automática de siempre (sin jugar el
+  // minijuego) sigue sin pasar este parámetro, así que esos sobres
+  // mantienen su coste normal al abrirse.
+  function resolverTiradaSobreFichajes(probabilidad, gratis){
     if(!state.sobresFichajesPendientes) state.sobresFichajesPendientes=[];
     if(state.sobresFichajesPendientes.length>=3) return false;
     const nivel=nivelDeDD('sobresFichajes');
@@ -8298,7 +8361,7 @@
       if(banderas.sobreNivelSuperior){ nivelSobre+=1; banderas.sobreNivelSuperior=false; }
       state.sobreCalidadAcumulada=0;
       const id='sobre'+Date.now()+Math.floor(Math.random()*100000);
-      state.sobresFichajesPendientes.push({id, nivel:nivelSobre, jornadaGenerado:state.jornadaActual});
+      state.sobresFichajesPendientes.push({id, nivel:nivelSobre, jornadaGenerado:state.jornadaActual, gratis:!!gratis});
       enviarCorreo('directorDeportivo', t('correo.sobre_listo.asunto'),
         tp('correo.sobre_listo.cuerpo', {n:nivelSobre}),
         {asunto:'correo.sobre_listo.asunto', cuerpo:'correo.sobre_listo.cuerpo', paramsCuerpo:{n:nivelSobre}});
@@ -8559,7 +8622,7 @@
         probActual=0;
         resolverTiradaSobreFichajes(0);
       } else {
-        const exito = probActual>0 ? resolverTiradaSobreFichajes(probActual) : false;
+        const exito = probActual>0 ? resolverTiradaSobreFichajes(probActual, true) : false;
         resultadoTipo = exito ? 'exito' : 'fallo';
         // Recompensa satisfactoria de verdad: sonido de victoria propio
         // (no el "reveal" genérico) en cuanto se confirma el sobre.
