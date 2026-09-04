@@ -10823,8 +10823,21 @@
   // ver y copiar el problema real sin necesitar herramientas de
   // desarrollador ni conexión USB.
   function render(){
+    // Mismo problema que el overlay del árbol de nodos (ver
+    // pintarArbolNodos): renderInner() reconstruye TODO el innerHTML
+    // de #ligaManagerScreen en cada llamada, así que las barras de
+    // "Estado del equipo" de la pantalla principal (calendarioHTML())
+    // nunca heredan su ancho anterior para poder animarlo — se leen
+    // aquí ANTES de reconstruir, y valen tanto si el cambio viene de
+    // elegir un nodo como de cualquier otra cosa que las mueva (un
+    // partido, una carta de médico...). Si no han cambiado, la propia
+    // animarBarrasEstadoCambiadas no hace nada — es seguro llamarla en
+    // cada render(), por frecuente que sea.
+    const rootParaBarras=document.getElementById('ligaManagerScreen');
+    const anchosBarrasPrevios=rootParaBarras ? capturarAnchosBarrasEstado(rootParaBarras) : {};
     try{
       renderInner();
+      if(rootParaBarras) animarBarrasEstadoCambiadas(rootParaBarras, anchosBarrasPrevios);
     }catch(e){
       console.error('Error en render() de Liga Manager:', e);
       const root=document.getElementById('ligaManagerScreen');
