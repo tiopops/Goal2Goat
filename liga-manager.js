@@ -2641,9 +2641,9 @@
   function crearRippleArbol(el, evento){
     const rect=el.getBoundingClientRect();
     const tam=Math.max(rect.width, rect.height)*1.4;
-    const cx=(evento&&evento.clientX!=null ? evento.clientX : rect.left+rect.width/2)-rect.left;
-    const cy=(evento&&evento.clientY!=null ? evento.clientY : rect.top+rect.height/2)-rect.top;
-    const x=cx-tam/2, y=cy-tam/2;
+    const cxLocal=(evento&&evento.clientX!=null ? evento.clientX : rect.left+rect.width/2)-rect.left;
+    const cyLocal=(evento&&evento.clientY!=null ? evento.clientY : rect.top+rect.height/2)-rect.top;
+    const x=cxLocal-tam/2, y=cyLocal-tam/2;
     // Color del propio nodo (--nc, ya presente tanto en los círculos
     // del árbol como en las opciones del panel HOY) — así el destello
     // siempre coincide con el color del icono que se acaba de elegir,
@@ -2658,14 +2658,21 @@
     // Onda "casino" al estilo del destello de gol del visor de partido
     // (mismo lenguaje que el latido del minijuego de ojeadores): un
     // doble anillo del color del nodo que se expande y se desvanece
-    // desde el punto exacto del clic, dando el feedback que faltaba al
-    // elegir un nodo del árbol.
+    // siempre desde el CENTRO del propio nodo (no desde el punto de
+    // clic — un clic cerca del borde no debe nacer descentrado). Se
+    // cuelga de <body> con position:fixed en vez de ser hijo del
+    // propio nodo — los nodos llevan overflow:hidden (para recortar el
+    // destello dorado a su círculo) y eso también recortaba el anillo,
+    // dejándolo invisible en cuanto crecía más allá del borde del
+    // nodo. Colgado de <body> la onda sale libremente hacia fuera.
     const ondaWrap=document.createElement('span');
     ondaWrap.className='lm-arbol-onda-wrap';
+    const cx=rect.left+rect.width/2;
+    const cy=rect.top+rect.height/2;
     ondaWrap.style.left=cx+'px'; ondaWrap.style.top=cy+'px';
     ondaWrap.style.setProperty('--nc-onda', color);
     ondaWrap.innerHTML='<span class="lm-arbol-onda-anillo lm-arbol-onda-anillo-1"></span><span class="lm-arbol-onda-anillo lm-arbol-onda-anillo-2"></span>';
-    el.appendChild(ondaWrap);
+    document.body.appendChild(ondaWrap);
     setTimeout(()=>{ if(ondaWrap.parentNode) ondaWrap.remove(); }, 750);
   }
 
