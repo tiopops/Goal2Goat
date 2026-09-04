@@ -2911,28 +2911,34 @@ body.liga-manager-screen .ranking-btn-label-lm{display:inline}
   overflow:hidden;
 }
 .lm-arbol-ripple{
-  position:absolute; border-radius:50%; opacity:.55;
-  transform:scale(0); animation:lmArbolRippleAnim .55s ease-out forwards; pointer-events:none;
+  position:absolute; border-radius:50%; opacity:.35;
+  transform:scale(0); animation:lmArbolRippleAnim .5s ease-out forwards; pointer-events:none;
 }
-@keyframes lmArbolRippleAnim{ to{ transform:scale(2.8); opacity:0; } }
+@keyframes lmArbolRippleAnim{ to{ transform:scale(2.2); opacity:0; } }
 /* Onda "casino" al elegir un nodo del árbol roguelike: doble anillo
    luminoso del color del propio nodo (--nc-onda, fijado en JS a partir
-   de --nc) que se expande y se desvanece desde el punto de clic, igual
-   en espíritu al destello de gol del visor de partido y al latido del
-   minijuego de ojeadores, pero de un solo disparo (no en bucle). */
-.lm-arbol-onda-wrap{ position:fixed; width:0; height:0; pointer-events:none; z-index:9999; }
+   de --nc) que se expande y se desvanece desde el centro del nodo,
+   igual en espíritu al destello de gol del visor de partido y al
+   latido del minijuego de ojeadores, pero de un solo disparo (no en
+   bucle). Sutil a propósito (poco tamaño, poco brillo) para que sea un
+   acuse de recibo, no un flash que distraiga. z-index apenas por
+   encima del propio overlay del árbol (200) y NUNCA de las interfaces
+   que puedan abrirse por delante de él (quiniela ~250, scouting ~260,
+   etc.) — si se abre un minijuego u otro popup justo tras elegir el
+   nodo, la onda debe quedar tapada detrás, no verse flotando encima. */
+.lm-arbol-onda-wrap{ position:fixed; width:0; height:0; pointer-events:none; z-index:201; }
 .lm-arbol-onda-anillo{
-  position:absolute; left:0; top:0; width:38px; height:38px; margin:-19px 0 0 -19px;
-  border-radius:50%; border:2.5px solid var(--nc-onda, var(--gold));
-  box-shadow:0 0 12px var(--nc-onda, var(--gold)), 0 0 3px var(--nc-onda, var(--gold)) inset;
-  opacity:0; transform:scale(.4);
-  animation:lmArbolOndaAnim .65s cubic-bezier(.16,.72,.32,1) forwards;
+  position:absolute; left:0; top:0; width:34px; height:34px; margin:-17px 0 0 -17px;
+  border-radius:50%; border:1.5px solid var(--nc-onda, var(--gold));
+  box-shadow:0 0 5px var(--nc-onda, var(--gold));
+  opacity:0; transform:scale(.5);
+  animation:lmArbolOndaAnim .55s cubic-bezier(.16,.72,.32,1) forwards;
 }
-.lm-arbol-onda-anillo-2{ animation-delay:.14s; }
+.lm-arbol-onda-anillo-2{ animation-delay:.12s; }
 @keyframes lmArbolOndaAnim{
-  0%{ transform:scale(.4); opacity:.9; }
-  65%{ opacity:.32; }
-  100%{ transform:scale(2.7); opacity:0; }
+  0%{ transform:scale(.5); opacity:.55; }
+  60%{ opacity:.18; }
+  100%{ transform:scale(1.7); opacity:0; }
 }
 .lm-arbol-nodo-completado{ border-color:var(--gold); border-width:3px; color:var(--nc, var(--gold)); }
 .lm-arbol-nodo-disponible{
