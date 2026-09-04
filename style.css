@@ -2911,10 +2911,29 @@ body.liga-manager-screen .ranking-btn-label-lm{display:inline}
   overflow:hidden;
 }
 .lm-arbol-ripple{
-  position:absolute; border-radius:50%; background:rgba(201,162,39,.6);
+  position:absolute; border-radius:50%; opacity:.55;
   transform:scale(0); animation:lmArbolRippleAnim .55s ease-out forwards; pointer-events:none;
 }
 @keyframes lmArbolRippleAnim{ to{ transform:scale(2.8); opacity:0; } }
+/* Onda "casino" al elegir un nodo del árbol roguelike: doble anillo
+   luminoso del color del propio nodo (--nc-onda, fijado en JS a partir
+   de --nc) que se expande y se desvanece desde el punto de clic, igual
+   en espíritu al destello de gol del visor de partido y al latido del
+   minijuego de ojeadores, pero de un solo disparo (no en bucle). */
+.lm-arbol-onda-wrap{ position:absolute; width:0; height:0; pointer-events:none; z-index:6; }
+.lm-arbol-onda-anillo{
+  position:absolute; left:0; top:0; width:38px; height:38px; margin:-19px 0 0 -19px;
+  border-radius:50%; border:2.5px solid var(--nc-onda, var(--gold));
+  box-shadow:0 0 12px var(--nc-onda, var(--gold)), 0 0 3px var(--nc-onda, var(--gold)) inset;
+  opacity:0; transform:scale(.4);
+  animation:lmArbolOndaAnim .65s cubic-bezier(.16,.72,.32,1) forwards;
+}
+.lm-arbol-onda-anillo-2{ animation-delay:.14s; }
+@keyframes lmArbolOndaAnim{
+  0%{ transform:scale(.4); opacity:.9; }
+  65%{ opacity:.32; }
+  100%{ transform:scale(2.7); opacity:0; }
+}
 .lm-arbol-nodo-completado{ border-color:var(--gold); border-width:3px; color:var(--nc, var(--gold)); }
 .lm-arbol-nodo-disponible{
   border-color:var(--gold); color:var(--nc, var(--gold)); background:var(--lm-surface-1); cursor:pointer;
@@ -4437,6 +4456,17 @@ body.liga-manager-screen .ranking-btn-label-lm{display:inline}
   position:fixed;inset:0;background:rgba(0,0,0,.72);
   display:flex;align-items:center;justify-content:center;z-index:250;
 }
+/* Aviso de rasgos ganados sin asignar: mismo fallo que los anteriores
+   (sin posicionamiento propio, aparecía metido en el flujo normal de
+   la página — en una esquina, detrás de la ventana de resultado de la
+   quiniela desde la que se abre en vez de centrado y por delante). Va
+   a un z-index por encima del de esa ventana (250) para quedar siempre
+   visible delante de ella. */
+#lmAvisoRasgosSinAsignarOverlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:255;
+  display:flex;align-items:center;justify-content:center;padding:14px;
+}
+#lmAvisoRasgosSinAsignarOverlay .lm-dilemma-title{justify-content:center;text-align:center}
 /* Popup de ENHORABUENA al ganar / poder continuar a una nueva
    temporada (mostrarFelicitacionNuevaTemporada): mismo fallo que los
    tres anteriores — sin ninguna regla de posicionamiento propia, así

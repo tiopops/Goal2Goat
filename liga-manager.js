@@ -777,7 +777,20 @@
     state.semanaNodos.dias.forEach(dia=>{
       if(dia.elegido==null) return;
       const nodo=dia.nodos[dia.elegido];
-      if(nodo.tipo==='entreno' || nodo.tipo==='amistoso') proyeccion+=desgastePromedio;
+      if(nodo.tipo==='entreno' && nodo.subtipo==='intenso' && LM_MINIJUEGO_ENTRENO_INTENSO_ACTIVO){
+        // El efecto real de un día de entreno intenso depende del
+        // combo conseguido en el minijuego "Parada Perfecta" — no se
+        // suma nada a la proyección hasta que el jugador ha salido de
+        // verdad del minijuego (con el combo ya guardado), para no
+        // adelantar en la barra un efecto que todavía no se conoce.
+        // Una vez se conoce, se usa el multiplicador real de ese combo
+        // en vez del desgaste plano de siempre.
+        const comboDia = state.diasEntrenoIntensoCombo ? state.diasEntrenoIntensoCombo[dia.fecha] : undefined;
+        if(comboDia==null) return;
+        const fatigaMult = LM_TABLA_FATIGA_ENTRENO_INTENSO[comboDia]!=null ? LM_TABLA_FATIGA_ENTRENO_INTENSO[comboDia] : 1;
+        proyeccion+=desgastePromedio*fatigaMult;
+      }
+      else if(nodo.tipo==='entreno' || nodo.tipo==='amistoso') proyeccion+=desgastePromedio;
       else if(nodo.tipo==='descanso') proyeccion-=4;
     });
     return Math.max(0, Math.min(100, proyeccion));
@@ -796,7 +809,16 @@
     state.semanaNodos.dias.forEach(dia=>{
       if(dia.elegido==null) return;
       const nodo=dia.nodos[dia.elegido];
-      if(nodo.tipo==='entreno' && nodo.subtipo==='intenso') proyeccion+=8;
+      if(nodo.tipo==='entreno' && nodo.subtipo==='intenso'){
+        // Mismo criterio que la fatiga: mientras el minijuego de ese
+        // día siga sin resolverse, no cuenta todavía para el riesgo
+        // proyectado.
+        if(LM_MINIJUEGO_ENTRENO_INTENSO_ACTIVO){
+          const comboDia = state.diasEntrenoIntensoCombo ? state.diasEntrenoIntensoCombo[dia.fecha] : undefined;
+          if(comboDia==null) return;
+        }
+        proyeccion+=8;
+      }
       else if(nodo.tipo==='descanso') proyeccion-=8;
     });
     return Math.max(0, Math.min(100, proyeccion));
@@ -2215,6 +2237,21 @@
     const nivelHito=def.hitos.findIndex(h=>h.umbral===umbral)+1;
     zona.innerHTML=`<i class="ph ph-bold ${def.icon}" style="color:${def.color}"></i> <strong>${t('lm.nodo_'+tipoIcono)} · ${t('lm.nivel_n_de_x')} ${nivelHito}</strong><span>${desc}</span>`;
     zona.classList.add('lm-nodos-mensaje-visible');
+    // La descripción aparece AL FINAL del bloque de recompensas, que
+    // suele quedar por debajo de lo visible en la columna — antes había
+    // que hacer scroll a mano para verla. Se busca el contenedor que
+    // scrollea de verdad (el div interior con position:absolute cuando
+    // JS ha envuelto la columna, o si no el propio panel/overlay) y se
+    // lleva hasta abajo del todo justo después de pintar el mensaje,
+    // para que quede visible sin que el jugador tenga que hacer nada.
+    requestAnimationFrame(()=>{
+      const scroller = zona.closest('.lm-col-scroll-inner') || zona.closest('.lm-panel') || zona.closest('.lm-arbol-overlay') || root;
+      if(scroller && typeof scroller.scrollTo==='function'){
+        scroller.scrollTo({top:scroller.scrollHeight, behavior:'smooth'});
+      } else if(scroller){
+        scroller.scrollTop=scroller.scrollHeight;
+      }
+    });
   }
 
   function renderAcumuladosNodosHTML(){
@@ -2470,7 +2507,7 @@
         const nodo=dia.nodos[ni];
         const {icon,color}=iconoYColorNodo(nodo);
         const {nombre,gana,cuesta}=nombreYDescNodo(nodo);
-        return `<div class="lm-arbol-hoy-opcion" data-elegir-dia="${diaActualIdx}" data-elegir-nodo="${ni}">
+        return `<div class="lm-arbol-hoy-opcion" data-elegir-dia="${diaActualIdx}" data-elegir-nodo="${ni}" style="--nc:${color}">
           <div class="lm-arbol-hoy-opcion-icono" style="border-color:${color};color:${color}"><i class="ph ph-bold ${icon}"></i></div>
           <div class="lm-arbol-hoy-opcion-texto">
             <strong>${nombre}</strong>
@@ -2604,13 +2641,32 @@
   function crearRippleArbol(el, evento){
     const rect=el.getBoundingClientRect();
     const tam=Math.max(rect.width, rect.height)*1.4;
-    const x=(evento&&evento.clientX!=null ? evento.clientX : rect.left+rect.width/2)-rect.left-tam/2;
-    const y=(evento&&evento.clientY!=null ? evento.clientY : rect.top+rect.height/2)-rect.top-tam/2;
+    const cx=(evento&&evento.clientX!=null ? evento.clientX : rect.left+rect.width/2)-rect.left;
+    const cy=(evento&&evento.clientY!=null ? evento.clientY : rect.top+rect.height/2)-rect.top;
+    const x=cx-tam/2, y=cy-tam/2;
+    // Color del propio nodo (--nc, ya presente tanto en los círculos
+    // del árbol como en las opciones del panel HOY) — así el destello
+    // siempre coincide con el color del icono que se acaba de elegir,
+    // en vez de ser siempre dorado sin importar el tipo de nodo.
+    const color=(getComputedStyle(el).getPropertyValue('--nc')||'').trim() || '#c9a227';
     const span=document.createElement('span');
     span.className='lm-arbol-ripple';
     span.style.width=span.style.height=tam+'px';
     span.style.left=x+'px'; span.style.top=y+'px';
+    span.style.background=color;
     el.appendChild(span);
+    // Onda "casino" al estilo del destello de gol del visor de partido
+    // (mismo lenguaje que el latido del minijuego de ojeadores): un
+    // doble anillo del color del nodo que se expande y se desvanece
+    // desde el punto exacto del clic, dando el feedback que faltaba al
+    // elegir un nodo del árbol.
+    const ondaWrap=document.createElement('span');
+    ondaWrap.className='lm-arbol-onda-wrap';
+    ondaWrap.style.left=cx+'px'; ondaWrap.style.top=cy+'px';
+    ondaWrap.style.setProperty('--nc-onda', color);
+    ondaWrap.innerHTML='<span class="lm-arbol-onda-anillo lm-arbol-onda-anillo-1"></span><span class="lm-arbol-onda-anillo lm-arbol-onda-anillo-2"></span>';
+    el.appendChild(ondaWrap);
+    setTimeout(()=>{ if(ondaWrap.parentNode) ondaWrap.remove(); }, 750);
   }
 
   // ---------- Pop-up de resultado del amistoso ----------
@@ -3762,8 +3818,8 @@
         <div class="lm-dilemma-title"><i class="ph ph-bold ph-sparkle"></i>${t('lm.rasgos_sin_asignar_titulo')}</div>
         <div class="lm-dilemma-text" style="margin:10px 0 16px">${aviso}</div>
         <div class="lm-popup-actions lm-popup-actions-compact">
-          <button id="lmAvisoRasgosContinuar" class="mode-card-btn mode-card-btn-secondary">${t('lm.continuar_sin_asignar_btn')}</button>
           <button id="lmAvisoRasgosVolver" class="mode-card-btn mode-card-btn-gold">${t('lm.volver_a_elegir_btn')}</button>
+          <button id="lmAvisoRasgosContinuar" class="mode-card-btn mode-card-btn-secondary">${t('lm.continuar_sin_asignar_btn')}</button>
         </div>
       </div>`;
     document.getElementById('ligaManagerScreen').appendChild(overlay);
