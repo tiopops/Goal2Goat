@@ -1137,7 +1137,12 @@
     document.body.appendChild(overlay);
 
     function cerrar(){ overlay.remove(); }
-    overlay.addEventListener('click', (e)=>{ if(e.target===overlay) cerrar(); });
+    // A diferencia de otros popups, este NO se cierra al pulsar fuera:
+    // es un flujo de varios pasos (elegir opción, elegir jugador) y
+    // cerrarlo sin querer a mitad de camino dejaba al jugador con la
+    // sensación de que la recompensa se había "perdido" o quedado
+    // bloqueada. Ahora la única forma de salir sin reclamar es el
+    // botón CANCELAR explícito de cada pantalla.
 
     function pintarEleccion(){
       overlay.innerHTML=`
@@ -1146,6 +1151,7 @@
           <p class="lm-setup-desc">${t('lm.canje_elegir_opcion')}</p>
           <div class="lm-popup-actions" style="flex-direction:column;gap:8px">
             ${hito.opciones.map(op=>`<button class="mode-card-btn mode-card-btn-secondary" data-elegir-opcion="${op}" style="text-align:left;white-space:normal;height:auto;padding:10px 14px">${t('lm.hito_opcion_'+op)}</button>`).join('')}
+            <button type="button" class="mode-card-btn lm-btn-rojo" data-cancelar-canje>${t('lm.cancelar_btn')}</button>
           </div>
         </div>`;
       overlay.querySelectorAll('[data-elegir-opcion]').forEach(b=>{
@@ -1153,6 +1159,10 @@
           if(typeof window.playSound==='function') window.playSound('select');
           continuarConTipo(b.getAttribute('data-elegir-opcion'));
         });
+      });
+      overlay.querySelector('[data-cancelar-canje]').addEventListener('click', ()=>{
+        if(typeof window.playSound==='function') window.playSound('select');
+        cerrar();
       });
     }
 
@@ -1193,9 +1203,16 @@
               <i class="ph ph-bold ph-check-circle lm-canje-jugador-check"></i>
             </label>`).join('')}
           </div>
-          <div class="lm-popup-actions"><button class="mode-card-btn mode-card-btn-gold" data-confirmar-jugadores disabled>${t('lm.canje_confirmar')}</button></div>
+          <div class="lm-popup-actions" style="flex-direction:column;gap:8px">
+            <button class="mode-card-btn mode-card-btn-gold" data-confirmar-jugadores disabled>${t('lm.canje_confirmar')}</button>
+            <button type="button" class="mode-card-btn lm-btn-rojo" data-cancelar-canje>${t('lm.cancelar_btn')}</button>
+          </div>
         </div>`;
       const confirmarBtn=overlay.querySelector('[data-confirmar-jugadores]');
+      overlay.querySelector('[data-cancelar-canje]').addEventListener('click', ()=>{
+        if(typeof window.playSound==='function') window.playSound('select');
+        cerrar();
+      });
       overlay.querySelectorAll('[data-jugador-id]').forEach(chk=>{
         chk.addEventListener('change', ()=>{
           const id=chk.getAttribute('data-jugador-id');
@@ -1247,7 +1264,7 @@
           <i class="ph ph-bold ph-check-circle" style="font-size:40px;color:${def.color};margin-bottom:8px"></i>
           <div class="lm-dilemma-title" style="justify-content:center">${t('lm.canje_exito')}</div>
           <p class="lm-setup-desc" style="margin:0 0 12px">${descripcionFinal}</p>
-          <div class="lm-popup-actions"><button class="mode-card-btn mode-card-btn-gold" data-cerrar-canje-ok>${t('lm.entendido_btn')}</button></div>
+          <div class="lm-popup-actions"><button class="mode-card-btn mode-card-btn-gold" data-cerrar-canje-ok>${t('lm.reclamar_btn')}</button></div>
         </div>`;
       overlay.querySelector('[data-cerrar-canje-ok]').addEventListener('click', ()=>{
         if(typeof window.playSound==='function') window.playSound('select');
@@ -1306,6 +1323,11 @@
       const nodo={tipo};
       if(tipo==='entreno') nodo.subtipo = Math.random()<0.5 ? 'estandar' : 'intenso';
       if(tipo==='amistoso') nodo.subtipo = ['facil','normal','dificil'][Math.floor(Math.random()*3)];
+      // Igual que el amistoso: el scouting también tiene 3 niveles de
+      // dificultad — más difícil sube el riesgo de que pillen al
+      // ojeador más rápido, pero si se consigue el sobre sale de mejor
+      // calidad (ver LM_SCOUTING_DIFICULTADES).
+      if(tipo==='scouting') nodo.subtipo = ['facil','normal','dificil'][Math.floor(Math.random()*3)];
       return nodo;
     });
   }
@@ -1546,7 +1568,7 @@
   // Aplica de verdad el efecto de un nodo elegido. fechaISOdia es la
   // fecha real de ese día concreto (para entreno/descanso, que siguen
   // usando el mismo calendarioEntrenamiento de siempre por debajo).
-  function aplicarEfectoNodoSemana(nodo, fechaISOdia, onMediosCerrado, onQuinielaCerrada, onScoutingCerrado){
+  function aplicarEfectoNodoSemana(nodo, fechaISOdia, onMediosCerrado, onQuinielaCerrada, onScoutingCerrado, onEntrenoIntensoCerrado){
     // Registro aparte de qué nodo se eligió ese día concreto — solo
     // de cara a pintar el icono correcto sobre el calendario después.
     // No sustituye a calendarioEntrenamiento (que sigue siendo la
@@ -1561,6 +1583,22 @@
         if(nodo.subtipo==='intenso'){
           if(!state.diasEntrenoIntenso) state.diasEntrenoIntenso={};
           state.diasEntrenoIntenso[fechaISOdia]=true;
+          // Igual que el scouting: el minijuego se abre DESPUÉS de que
+          // elegirNodoSemana termine de aplicar su propia contabilidad
+          // (setTimeout(0)), y el resultado real (comboMax) no se
+          // guarda hasta que el jugador cierra la pantalla final —
+          // así procesarEntrenamientoSemanal() siempre encuentra el
+          // estado ya consistente.
+          if(LM_MINIJUEGO_ENTRENO_INTENSO_ACTIVO && typeof abrirMinijuegoParadaPerfecta==='function'){
+            setTimeout(()=>{
+              abrirMinijuegoParadaPerfecta((comboMax)=>{
+                if(!state.diasEntrenoIntensoCombo) state.diasEntrenoIntensoCombo={};
+                state.diasEntrenoIntensoCombo[fechaISOdia]=comboMax;
+                guardarEstado();
+                if(typeof onEntrenoIntensoCerrado==='function') onEntrenoIntensoCerrado();
+              });
+            }, 0);
+          }
         }
         break;
       case 'descanso':
@@ -1614,7 +1652,7 @@
           // encuentra el estado ya consistente, nunca a mitad de
           // actualizar.
           setTimeout(()=>{
-            abrirMinijuegoScouting(()=>{ if(typeof onScoutingCerrado==='function') onScoutingCerrado(); });
+            abrirMinijuegoScouting(()=>{ if(typeof onScoutingCerrado==='function') onScoutingCerrado(); }, nodo.subtipo);
           }, 0);
         } else {
           state.scoutingBoostEstaSemana=(state.scoutingBoostEstaSemana||0)+1;
@@ -1662,7 +1700,7 @@
   // realmente el día que toca (nunca se puede elegir un día futuro ni
   // repetir uno ya resuelto), aplica el efecto, suma al contador de
   // ese icono, y guarda.
-  function elegirNodoSemana(diaIdx, nodoIdx, onMediosCerrado, onQuinielaCerrada, onScoutingCerrado){
+  function elegirNodoSemana(diaIdx, nodoIdx, onMediosCerrado, onQuinielaCerrada, onScoutingCerrado, onEntrenoIntensoCerrado){
     if(!state.semanaNodos) return {ok:false, error:'sin_semana'};
     const diaActualIdx=diaActualIndiceSemanaNodos();
     if(diaIdx!==diaActualIdx) return {ok:false, error:'no_es_el_dia_actual'};
@@ -1674,7 +1712,7 @@
     const nodo=dia && dia.nodos[nodoIdx];
     if(!nodo) return {ok:false, error:'nodo_invalido'};
     dia.elegido=nodoIdx;
-    aplicarEfectoNodoSemana(nodo, dia.fecha, onMediosCerrado, onQuinielaCerrada, onScoutingCerrado);
+    aplicarEfectoNodoSemana(nodo, dia.fecha, onMediosCerrado, onQuinielaCerrada, onScoutingCerrado, onEntrenoIntensoCerrado);
     if(!state.nodosAcumulados) state.nodosAcumulados={};
     // Para los amistosos, el contador de progreso NO se suma aquí —
     // se difiere hasta que se cierra el pop-up de resultado (botón
@@ -1757,14 +1795,35 @@
     // condensado (no hace falta guardar el detalle día a día ahí).
     const mejorasPorJugador={}; // id -> {nombre, stats:{campo:cantidad}}
     const lesionesSemana=[]; // {nombre, familia}
-    let diasEntreno=0, diasDescanso=0;
+    let diasEntreno=0, diasDescanso=0, diasActividad=0;
     while(cur.getTime()<v.hasta.getTime()){
       const iso=fechaISO(cur);
-      const esEntreno=!!(state.calendarioEntrenamiento && state.calendarioEntrenamiento[iso]);
+      // El tipo real del día lo decide el nodo elegido en el árbol
+      // roguelike (calendarioNodoElegido), no solo si hubo entreno —
+      // antes cualquier día SIN entreno se trataba como descanso
+      // completo (recuperaba fatiga y se etiquetaba "día de descanso"),
+      // aunque ese día se hubiera usado para scouting, medios, táctica,
+      // amistoso o quiniela. Ahora cada tipo de nodo tiene su propio
+      // trato; calendarioEntrenamiento se mantiene solo como respaldo
+      // para partidas guardadas antiguas sin este dato por día.
+      const nodoDelDia = state.calendarioNodoElegido && state.calendarioNodoElegido[iso];
+      const esEntreno = nodoDelDia ? nodoDelDia.tipo==='entreno' : !!(state.calendarioEntrenamiento && state.calendarioEntrenamiento[iso]);
+      const esDescansoReal = nodoDelDia ? nodoDelDia.tipo==='descanso' : !esEntreno;
       const textos=[];
       if(esEntreno){
         diasEntreno++;
         seguidos++;
+        // Si este día concreto fue un nodo de "entreno intenso" resuelto
+        // con el minijuego Parada Perfecta, el mejor combo alcanzado
+        // (comboMax, guardado al cerrar el minijuego) sube de verdad la
+        // probabilidad de mejora de ESE día — antes esto no existía: el
+        // subtipo "intenso" no aportaba ninguna ventaja mecánica real
+        // pese a prometerlo en su descripción.
+        const esIntensoConCombo = !!(nodoDelDia && nodoDelDia.subtipo==='intenso');
+        const comboMaxDia = esIntensoConCombo && state.diasEntrenoIntensoCombo ? (state.diasEntrenoIntensoCombo[iso]||0) : 0;
+        const bonusIntenso = esIntensoConCombo ? (LM_TABLA_BONUS_ENTRENO_INTENSO[comboMaxDia]!=null ? LM_TABLA_BONUS_ENTRENO_INTENSO[comboMaxDia] : 1) : 1;
+        const fatigaMultIntenso = esIntensoConCombo ? (LM_TABLA_FATIGA_ENTRENO_INTENSO[comboMaxDia]!=null ? LM_TABLA_FATIGA_ENTRENO_INTENSO[comboMaxDia] : 1) : 1;
+        if(esIntensoConCombo && comboMaxDia>0) textos.push(tp('lm.dia_entreno_intenso_combo', {combo:comboMaxDia}));
         const idsEnPlanHoy=new Set(plan.map(({jugador:j})=>j.id));
         // Jugadores del Plan de Entrenamiento del preparador físico:
         // probabilidad ALTA de mejorar justo la estadística elegida
@@ -1772,7 +1831,7 @@
         plan.forEach(({jugador:j, stat:campo})=>{
           if(!campo) return; // sin enfoque elegido, no entrena de verdad
           const bonusJugador = (jugadorConExperienciaExtra && j.id===jugadorConExperienciaExtra) ? 1.5 : 1;
-          if(Math.random()<0.30*bonusPlanificacion*bonusHitoSemana*bonusJugador){
+          if(Math.random()<0.30*bonusPlanificacion*bonusHitoSemana*bonusJugador*bonusIntenso){
             j[campo]=Math.min(99, Math.round((j[campo]||50)+1));
             // Recalcular el overall del jugador cada vez que mejora una
             // estadística — antes la estadística subía pero la
@@ -1799,7 +1858,7 @@
         state.plantilla.forEach(j=>{
           if(idsEnPlanHoy.has(j.id) || j.injured) return;
           const bonusJugador = (jugadorConExperienciaExtra && j.id===jugadorConExperienciaExtra) ? 1.5 : 1;
-          if(Math.random()<0.0375*bonusPlanificacion*bonusHitoSemana*bonusJugador){
+          if(Math.random()<0.0375*bonusPlanificacion*bonusHitoSemana*bonusJugador*bonusIntenso){
             const stats=['attack','defense','pace','passing','technique'];
             const campo=stats.reduce((peor,s)=>(j[s]||50)<(j[peor]||50)?s:peor, stats[0]);
             j[campo]=Math.min(99, Math.round((j[campo]||50)+1));
@@ -1851,20 +1910,34 @@
         // llevan una carga de trabajo específica bastante más dura, así
         // que se cansan notablemente más que el resto.
         state.plantilla.forEach(p=>{
-          const desgaste = idsEnPlanHoy.has(p.id) ? 3.6 : 2.2;
+          const desgaste = (idsEnPlanHoy.has(p.id) ? 3.6 : 2.2) * fatigaMultIntenso;
           p.fatigue=Math.max(0, Math.min(100, Math.round((p.fatigue===undefined?100:p.fatigue)-desgaste)));
         });
-      } else {
+      } else if(esDescansoReal){
         diasDescanso++;
         seguidos=0;
         textos.push(t('lm.dia_descanso_texto'));
         state.plantilla.forEach(p=>{ p.fatigue=Math.max(0, Math.min(100, Math.round((p.fatigue===undefined?100:p.fatigue)+4))); });
+      } else {
+        // Día ocupado por otro nodo del árbol (scouting, medios,
+        // táctica, amistoso, quiniela...): el cuerpo técnico está
+        // liado con eso, así que no es entreno — pero tampoco es un
+        // día libre de verdad para la plantilla, así que ya no debe
+        // sumar al hito de "descanso" ni dar la recuperación completa
+        // de un día libre. Se corta la racha de entrenos igual que un
+        // descanso (no se sigue entrenando), pero solo con una
+        // recuperación pasiva pequeña, no el +4 completo.
+        diasActividad++;
+        seguidos=0;
+        const nombreNodoDia = nodoDelDia ? t('lm.nodo_'+nodoDelDia.tipo) : '';
+        textos.push(nombreNodoDia ? tp('lm.dia_actividad_texto', {actividad:nombreNodoDia}) : t('lm.dia_descanso_texto'));
+        state.plantilla.forEach(p=>{ p.fatigue=Math.max(0, Math.min(100, Math.round((p.fatigue===undefined?100:p.fatigue)+1))); });
       }
-      eventosDias.push({fecha:new Date(cur), iso, tipo:esEntreno?'entreno':'descanso', textos});
+      eventosDias.push({fecha:new Date(cur), iso, tipo:esEntreno?'entreno':(esDescansoReal?'descanso':'actividad'), nodoTipo:nodoDelDia?nodoDelDia.tipo:null, textos});
       cur.setDate(cur.getDate()+1);
     }
     eventosDias.resumenSemanal={
-      diasEntreno, diasDescanso,
+      diasEntreno, diasDescanso, diasActividad,
       mejoras:Object.values(mejorasPorJugador),
       lesiones:lesionesSemana,
       NOMBRE_STAT
@@ -2180,7 +2253,11 @@
           // ya se puede reclamar ese nivel concreto.
           const umbralFinal=p.def.hitos[p.def.hitos.length-1].umbral;
           const numMostrado=Math.min(p.acumulado, umbralFinal);
-          return `<div class="lm-nodo-acumulado ${p.disponible?'lm-nodo-acumulado-disponible':''}" title="${nombreIcono}" data-ver-recompensa="${tipo}" data-ver-recompensa-umbral="${p.siguiente.umbral}">
+          // Nivel 2 (el hito final, umbralFinal) pulsa más fuerte que
+          // el nivel 1 — misma idea pero más grande y más rápida, para
+          // que destaque como la recompensa gorda que es.
+          const claseDisponible = p.disponible ? ('lm-nodo-acumulado-disponible'+(p.siguiente.umbral===umbralFinal?' lm-nodo-acumulado-disponible-n2':'')) : '';
+          return `<div class="lm-nodo-acumulado ${claseDisponible}" title="${nombreIcono}" data-ver-recompensa="${tipo}" data-ver-recompensa-umbral="${p.siguiente.umbral}">
             <i class="ph ph-bold ${p.def.icon}" style="color:${p.def.color}"></i>
             <span class="lm-nodo-acumulado-num">${numMostrado}/${umbralFinal}</span>
             <div class="lm-nodo-acumulado-track"><div class="lm-nodo-acumulado-fill" style="width:${pct}%;background:${p.def.color}"></div></div>
@@ -2298,10 +2375,11 @@
     const def=HITOS_NODOS[nodo.tipo];
     const base={icon:(def&&def.icon)||'ph-question', color:(def&&def.color)||'#888'};
     if(nodo.tipo==='entreno' && nodo.subtipo==='intenso') base.icon='ph-fire';
-    if(nodo.tipo==='amistoso'){
-      // Insignia de dificultad — mismo icono (balón) para las 3, pero
-      // un punto de color distinto en la esquina para distinguirlas de
-      // un vistazo sin tener que leer el panel de "HOY".
+    if(nodo.tipo==='amistoso' || nodo.tipo==='scouting'){
+      // Insignia de dificultad — mismo icono base para las 3, pero un
+      // punto de color distinto en la esquina para distinguirlas de un
+      // vistazo sin tener que leer el panel de "HOY". Mismo esquema de
+      // colores que el amistoso, ahora también para scouting.
       base.badgeColor = nodo.subtipo==='facil' ? '#4caf7a' : (nodo.subtipo==='dificil' ? '#e24b4a' : '#e6c94a');
     }
     return base;
@@ -2360,6 +2438,11 @@
       const sub=nodo.subtipo==='facil'?'facil':(nodo.subtipo==='dificil'?'dificil':'normal');
       const claveNombre=nodo.subtipo==='facil'?'lm.amistoso_facil':(nodo.subtipo==='dificil'?'lm.amistoso_dificil':'lm.amistoso_normal');
       return {nombre:t(claveNombre), desc:t('lm.nodo_desc_amistoso'), gana:t('lm.gana_amistoso_'+sub), cuesta:t('lm.cuesta_amistoso_'+sub)};
+    }
+    if(nodo.tipo==='scouting'){
+      const sub=nodo.subtipo==='facil'?'facil':(nodo.subtipo==='dificil'?'dificil':'normal');
+      const claveNombre=nodo.subtipo==='facil'?'lm.scouting_facil':(nodo.subtipo==='dificil'?'lm.scouting_dificil':'lm.scouting_normal');
+      return {nombre:t(claveNombre), desc:t('lm.nodo_desc_scouting'), gana:t('lm.gana_scouting_'+sub), cuesta:t('lm.cuesta_scouting_'+sub)};
     }
     return {nombre:t('lm.nodo_'+nodo.tipo), desc:t('lm.nodo_desc_'+nodo.tipo), gana:t('lm.gana_'+nodo.tipo), cuesta:t('lm.cuesta_'+nodo.tipo)};
   }
@@ -2673,6 +2756,9 @@
         // semana ya está completa — igual que la quiniela, el nodo de
         // scouting puede caer en cualquier día, no solo en el último.
         const eraScoutingConMinijuego = nodoElegido && nodoElegido.tipo==='scouting' && LM_MINIJUEGO_SCOUTING_ACTIVO;
+        // Mismo caso que el scouting: el minijuego de entreno intenso
+        // puede caer en cualquier día de la semana, no solo el último.
+        const eraEntrenoIntensoConMinijuego = nodoElegido && nodoElegido.tipo==='entreno' && nodoElegido.subtipo==='intenso' && LM_MINIJUEGO_ENTRENO_INTENSO_ACTIVO;
         const cerrarArbolYRender=()=>{
           const ov=document.getElementById('lmArbolNodosOverlay');
           if(ov) ov.remove();
@@ -2715,7 +2801,17 @@
             if(typeof render==='function') render();
           }
         };
-        const resultado=elegirNodoSemana(diaIdx, nodoIdx, eraMedios?cerrarArbolYRender:undefined, eraQuinielaNodo?onQuinielaCerrada:undefined, eraScoutingConMinijuego?onScoutingCerrada:undefined);
+        // Mismo patrón que scouting/quiniela para el minijuego de
+        // entreno intenso.
+        const onEntrenoIntensoCerrada=()=>{
+          if(diaActualIndiceSemanaNodos()===-1){
+            cerrarArbolYRender();
+          } else {
+            pintarArbolNodos();
+            if(typeof render==='function') render();
+          }
+        };
+        const resultado=elegirNodoSemana(diaIdx, nodoIdx, eraMedios?cerrarArbolYRender:undefined, eraQuinielaNodo?onQuinielaCerrada:undefined, eraScoutingConMinijuego?onScoutingCerrada:undefined, eraEntrenoIntensoConMinijuego?onEntrenoIntensoCerrada:undefined);
         if(!resultado.ok) return;
         if(typeof window.playSound==='function') window.playSound('select');
         // La onda necesita un instante para verse antes de que el
@@ -2731,11 +2827,12 @@
           // ninguna pantalla intermedia de "semana completa" que
           // cerrar a mano.
           if(semanaYaCompleta){
-            if(eraMedios || eraQuinielaNodo || eraScoutingConMinijuego){
+            if(eraMedios || eraQuinielaNodo || eraScoutingConMinijuego || eraEntrenoIntensoConMinijuego){
               // Ya se encadenó arriba: cerrarArbolYRender() se llama
               // al cerrar la rueda de prensa, el boletín de la
-              // quiniela o el minijuego de scouting, no aquí — solo
-              // hace falta repintar el árbol de fondo mientras tanto.
+              // quiniela o el minijuego de scouting/entreno intenso,
+              // no aquí — solo hace falta repintar el árbol de fondo
+              // mientras tanto.
               pintarArbolNodos();
             } else if(eraAmistoso && state.ultimoAmistosoResultado){
               mostrarResultadoAmistosoPopup(state.ultimoAmistosoResultado, cerrarArbolYRender);
@@ -2782,6 +2879,10 @@
     overlay.querySelectorAll('[data-ver-recompensa]').forEach(card=>{
       card.addEventListener('click', ()=>{
         if(typeof window.playSound==='function') window.playSound('select');
+        // Feedback visual de selección — antes no había ninguna forma
+        // de saber qué tarjeta era la que se estaba consultando.
+        overlay.querySelectorAll('.lm-nodo-acumulado-seleccionada').forEach(c=>{ if(c!==card) c.classList.remove('lm-nodo-acumulado-seleccionada'); });
+        card.classList.add('lm-nodo-acumulado-seleccionada');
         mostrarMensajeRecompensaHito(card.getAttribute('data-ver-recompensa'), parseInt(card.getAttribute('data-ver-recompensa-umbral'),10), overlay);
       });
     });
@@ -3436,6 +3537,11 @@
     overlay.id='lmQuinielaOverlay';
     function pintar(){
       const todasRellenas=boleto.partidos.every(p=>boleto.predicciones[boleto.jornadaIndex+'-'+p.homeId+'-'+p.awayId]);
+      // Se guarda y restaura el scroll del propio overlay al repintar
+      // (marcar cada predicción reconstruye todo el innerHTML) — sin
+      // esto, cada toque en un partido devolvía la vista arriba del
+      // todo, sobre todo notorio en móvil con el boletín largo.
+      const scrollTopPrevio=overlay.scrollTop;
       overlay.innerHTML=`
         <div class="lm-dilemma-card lm-quiniela-card">
           ${xCerrarHTML()}
@@ -3477,6 +3583,7 @@
           </div>
           <div class="lm-popup-actions"><button id="lmQuinielaConfirmar" class="mode-card-btn mode-card-btn-gold">${t('lm.confirmar_quiniela')}</button></div>
         </div>`;
+      overlay.scrollTop=scrollTopPrevio;
       const autoRellenarBtn=document.getElementById('lmQuinielaAutoRellenar');
       if(autoRellenarBtn) autoRellenarBtn.addEventListener('click', ()=>{
         if(typeof window.playSound==='function') window.playSound('select');
@@ -5143,7 +5250,20 @@
   function calcularAsistencia(weatherId){
     const est=state.estadio||{};
     const aforo=est.aforoTotal||12000;
-    const baseSatisfaccion=0.35+((est.satisfaccion||0)+100)/200*0.55; // 35% a 90% según satisfacción
+    // Curva de asistencia NO lineal a propósito: antes era casi una
+    // recta (35%-90%) que con la satisfacción inicial (10 en clubes
+    // reales, -15 en los creados) ya daba un 55-65% de aforo lleno
+    // desde la primera jornada — la economía nunca suponía un reto de
+    // verdad porque las entradas entraban a tope desde el minuto uno.
+    // Ahora la curva es exponencial: floja al principio (23-33% con la
+    // satisfacción inicial típica) y solo se dispara de verdad cuando
+    // la afición ya está contenta de forma sostenida — hay que ganarse
+    // el aforo lleno subiendo la satisfacción con victorias, buen trato
+    // (moral, precio razonable) y las mejoras del Director General
+    // (Campaña de Socios, Ampliación de Grada, etc.), no lo regala el
+    // primer partido en casa.
+    const normalizado=Math.max(0, Math.min(1, ((est.satisfaccion||0)+100)/200));
+    const baseSatisfaccion=0.12+Math.pow(normalizado, 2.2)*0.78; // ~12% a 90% según satisfacción, con arranque muy suave
     const bonusMoral=(state.moral||0)/50*0.08; // hasta ±8% según moral del equipo
     const penalizacionClima = weatherId ? ({sunny:0, cloudy:0, rain:0.12, wind:0.05, hot:0.08, snow:0.15}[weatherId]||0) : 0;
     // Precio de la entrada: por encima de un precio de referencia (10€)
@@ -5153,11 +5273,26 @@
     const precio=state.precioEntrada===undefined?15:state.precioEntrada;
     const tolerancia=nivelDeDG('toleranciaPrecio');
     const penalizacionPrecio=Math.max(0,(precio-10))*0.012*(1-tolerancia*0.22);
-    let pct=baseSatisfaccion+bonusMoral-penalizacionClima-penalizacionPrecio;
+    // Los disturbios ya castigaban la satisfacción a largo plazo (ver
+    // procesarDisturbiosTrasPartido), pero eso tarda semanas en
+    // notarse. Aquí se añade el golpe directo e inmediato de ESTE
+    // partido: ¿quién quiere ir a ver un partido con mal ambiente o
+    // sensación de inseguridad? Cuanta más gravedad de disturbios haya
+    // AHORA MISMO repartida por el estadio, menos gente se anima a ir
+    // esta misma jornada, se note ya o no en la satisfacción general.
+    const disturbiosSeveridad = state.disturbiosZonas ? LM_ZONAS_ESTADIO.reduce((s,z)=>s+(state.disturbiosZonas[z.id]||0), 0) : 0;
+    const penalizacionDisturbios = Math.min(0.30, disturbiosSeveridad*0.018);
+    // Contrapartida: bajar el precio por debajo del de referencia
+    // (10€) ahora SÍ compensa (antes solo penalizaba subir de precio,
+    // nunca premiaba bajarlo). Es la palanca real que tiene el club
+    // para intentar llenar igualmente el estadio con entradas más
+    // baratas si no puede permitirse pagar más guardias de seguridad.
+    const bonusPrecioBajo = precio<10 ? Math.min(0.12, (10-precio)*0.012) : 0;
+    let pct=baseSatisfaccion+bonusMoral+bonusPrecioBajo-penalizacionClima-penalizacionPrecio-penalizacionDisturbios;
     if(state.directorGeneralBonos && state.directorGeneralBonos.boostAsistencia){ pct+=state.directorGeneralBonos.boostAsistencia; }
-    pct=Math.max(0.15, Math.min(0.99, pct));
+    pct=Math.max(0.10, Math.min(0.99, pct));
     const aforoBloqueado=fraccionAforoBloqueadoPorDisturbios();
-    return {asistentes:Math.round(aforo*pct*(1-aforoBloqueado)), aforo, pct, aforoBloqueado};
+    return {asistentes:Math.round(aforo*pct*(1-aforoBloqueado)), aforo, pct, aforoBloqueado, penalizacionDisturbios};
   }
   // Moral del equipo (-50..50) — CALCO del rango y espíritu del sistema
   // de moral de Copa Leyendas (teamMorale), pero propio de Liga Manager:
@@ -5924,7 +6059,7 @@
     // único botón ACEPTAR que solo cierra esta ventana. El partido no se
     // juega aquí: hace falta un segundo SEGUIR aparte para eso.
     function pantallaResumen(){
-      const r=eventosDias.resumenSemanal || {diasEntreno:0, diasDescanso:0, mejoras:[], lesiones:[], NOMBRE_STAT:{}};
+      const r=eventosDias.resumenSemanal || {diasEntreno:0, diasDescanso:0, diasActividad:0, mejoras:[], lesiones:[], NOMBRE_STAT:{}};
       const totalMejoras=r.mejoras.reduce((s,m)=>s+Object.values(m.stats).reduce((a,b)=>a+b,0), 0);
       const filasMejoras=r.mejoras.map(m=>{
         const detalle=Object.entries(m.stats).map(([campo,cant])=>`${r.NOMBRE_STAT[campo]||campo} +${cant}`).join(', ');
@@ -5945,6 +6080,7 @@
           <div class="lm-resumen-stats-row">
             <div class="lm-resumen-stat"><i class="ph ph-bold ph-barbell" style="color:#e08a3e"></i><strong>${r.diasEntreno}</strong><span>${t('lm.resumen_entreno')}</span></div>
             <div class="lm-resumen-stat"><i class="ph ph-bold ph-bed" style="color:#5dcaa5"></i><strong>${r.diasDescanso}</strong><span>${t('lm.resumen_descanso')}</span></div>
+            ${r.diasActividad?`<div class="lm-resumen-stat"><i class="ph ph-bold ph-briefcase" style="color:#c9a227"></i><strong>${r.diasActividad}</strong><span>${t('lm.resumen_actividad')}</span></div>`:''}
             <div class="lm-resumen-stat"><i class="ph ph-bold ph-trend-up" style="color:#5dcaa5"></i><strong>${totalMejoras}</strong><span>${t('lm.resumen_mejoras')}</span></div>
             <div class="lm-resumen-stat"><i class="ph ph-bold ph-first-aid-kit" style="color:#e24b4a"></i><strong>${r.lesiones.length}</strong><span>${t('lm.resumen_lesiones')}</span></div>
           </div>
@@ -5988,13 +6124,21 @@
       const ev=eventosDias[idx];
       const nombreDia=diaLargo(ev.fecha.getDay());
       if(typeof window.playSound==='function') window.playSound(ev.tipo==='entreno'?'training_day':'rest_day');
+      // Días de "actividad" (scouting, medios, táctica, amistoso,
+      // quiniela) usan el icono/color real del nodo elegido ese día en
+      // vez del genérico de descanso, para que no parezcan un día
+      // libre — coherente con cómo ya se pintaban en el calendario.
+      const iconoActividad = (ev.tipo==='actividad' && ev.nodoTipo) ? iconoYColorNodo({tipo:ev.nodoTipo}) : null;
+      const iconoClaseDia = ev.tipo==='entreno' ? 'ph-barbell' : (ev.tipo==='descanso' ? 'ph-bed' : ((iconoActividad&&iconoActividad.icon)||'ph-briefcase'));
+      const tagClaseDia = ev.tipo==='entreno' ? 'lm-semana-entreno' : (ev.tipo==='descanso' ? 'lm-semana-descanso' : 'lm-semana-actividad');
+      const etiquetaDia = ev.tipo==='entreno' ? t('lm.dia_entrenamiento') : (ev.tipo==='descanso' ? t('lm.dia_descanso') : (ev.nodoTipo?t('lm.nodo_'+ev.nodoTipo):t('lm.dia_actividad')));
       overlay.innerHTML=`
         <div class="lm-dilemma-card lm-semana-card-fija" style="width:380px;max-width:92vw">
           <div class="lm-dilemma-title" style="text-transform:uppercase;justify-content:center;text-align:center">${nombreDia} ${ev.fecha.getDate()}</div>
-          <div class="lm-semana-dia-icono ${ev.tipo==='entreno'?'lm-semana-entreno':'lm-semana-descanso'}">
-            <i class="ph ph-bold ${ev.tipo==='entreno'?'ph-barbell':'ph-bed'}"></i>
+          <div class="lm-semana-dia-icono ${tagClaseDia}" ${iconoActividad?`style="color:${iconoActividad.color}"`:''}>
+            <i class="ph ph-bold ${iconoClaseDia}"></i>
           </div>
-          <div class="lm-semana-dia-tag">${ev.tipo==='entreno'?t('lm.dia_entrenamiento'):t('lm.dia_descanso')}</div>
+          <div class="lm-semana-dia-tag">${etiquetaDia}</div>
           <div class="lm-semana-dia-textos">
             ${ev.textos.map(txt=>`<p>${txt}</p>`).join('')}
           </div>
@@ -7913,9 +8057,12 @@
   // y la cuota se descuenta una fracción igual cada jornada (no de golpe
   // al mes) para que el impacto sea más gradual y predecible.
   const PAQUETES_PRESTAMO=[
-    {id:'pequeno', monto:60000,  interes:0.08, plazoJornadas:6},
-    {id:'medio',   monto:150000, interes:0.14, plazoJornadas:10},
-    {id:'grande',  monto:300000, interes:0.22, plazoJornadas:16},
+    // Intereses subidos respecto a la versión original (8/14/22%) — a
+    // ese precio pedir préstamos en cadena salía casi gratis y no había
+    // freno real para abusar de ellos. Ahora cada tramo pesa de verdad.
+    {id:'pequeno', monto:60000,  interes:0.16, plazoJornadas:6},
+    {id:'medio',   monto:150000, interes:0.26, plazoJornadas:10},
+    {id:'grande',  monto:300000, interes:0.38, plazoJornadas:16},
   ];
   // Solo se ofrecen los paquetes cuyo plazo cabe ENTERO dentro de lo que
   // queda de temporada — así nunca es posible pedir un préstamo tan
@@ -8348,7 +8495,13 @@
   // veces por lo mismo. La tirada automática de siempre (sin jugar el
   // minijuego) sigue sin pasar este parámetro, así que esos sobres
   // mantienen su coste normal al abrirse.
-  function resolverTiradaSobreFichajes(probabilidad, gratis){
+  //
+  // bonusNivel: extra directo al nivel del sobre conseguido, por
+  // encima de todos los demás bonus (calidad acumulada, bandera de
+  // nivel superior...) — lo usa el minijuego de scouting cuando se
+  // juega en dificultad ALTA: si el sobre llega, es de mejor calidad
+  // de verdad, no solo más probable.
+  function resolverTiradaSobreFichajes(probabilidad, gratis, bonusNivel){
     if(!state.sobresFichajesPendientes) state.sobresFichajesPendientes=[];
     if(state.sobresFichajesPendientes.length>=3) return false;
     const nivel=nivelDeDD('sobresFichajes');
@@ -8356,7 +8509,7 @@
     const calidadAcumulada=state.sobreCalidadAcumulada||0;
     const exito=Math.random()<probabilidad;
     if(exito){
-      let nivelSobre=Math.max(1, nivel);
+      let nivelSobre=Math.max(1, nivel+(bonusNivel||0));
       if(calidadAcumulada>=2) nivelSobre+=1;
       if(banderas.sobreNivelSuperior){ nivelSobre+=1; banderas.sobreNivelSuperior=false; }
       state.sobreCalidadAcumulada=0;
@@ -8422,16 +8575,44 @@
   // —nivel del sobre, correo de aviso— es idéntico en ambos caminos).
   const LM_MINIJUEGO_SCOUTING_ACTIVO = true;
 
+  // Igual que el amistoso: el nodo de scouting sale con 3 niveles de
+  // dificultad (ver generación en construirOpcionesDia/nodo.subtipo).
+  // Cada tramo ajusta tres cosas a la vez, todas visibles en la
+  // interfaz del minijuego:
+  //  - riesgoBase/riesgoPaso/riesgoTope: lo rápido y lo alto que sube
+  //    la posibilidad de que pillen al ojeador con cada paso.
+  //  - gananciaMin/gananciaMax: cuánto sube la "Calidad del informe"
+  //    (la probabilidad real de que el sobre llegue) por cada paso
+  //    seguro.
+  //  - bonusNivelSobre: si el sobre SÍ llega, un extra directo al
+  //    nivel del sobre (mismo mecanismo que ya usaba la calidad
+  //    acumulada de semanas anteriores) — a dificultad alta, el sobre
+  //    conseguido es de mejor calidad de verdad, no solo más probable.
+  const LM_SCOUTING_DIFICULTADES = {
+    facil:   {riesgoBase:0.06, riesgoPaso:0.08, riesgoTope:0.55, gananciaMin:0.05, gananciaMax:0.09, bonusNivelSobre:0, color:'#4caf7a'},
+    normal:  {riesgoBase:0.09, riesgoPaso:0.11, riesgoTope:0.72, gananciaMin:0.07, gananciaMax:0.13, bonusNivelSobre:0, color:'#e6c94a'},
+    dificil: {riesgoBase:0.13, riesgoPaso:0.15, riesgoTope:0.85, gananciaMin:0.10, gananciaMax:0.18, bonusNivelSobre:1, color:'#e24b4a'},
+  };
+  function lmCfgDificultadScouting(dificultad){
+    return LM_SCOUTING_DIFICULTADES[dificultad] || LM_SCOUTING_DIFICULTADES.normal;
+  }
   // Riesgo de que el ojeador sea descubierto en el empujón número
   // "paso" (1-indexado): sube con cada paso, con un techo por debajo
   // del 100% para que nunca sea una muerte segura, pero sí cada vez
-  // más disuasorio.
-  function lmRiesgoDescubiertaScouting(paso){
-    return Math.min(0.72, 0.09 + (paso-1)*0.11);
+  // más disuasorio. El punto de partida, el ritmo de subida y el techo
+  // dependen de la dificultad elegida para ese nodo en concreto.
+  function lmRiesgoDescubiertaScouting(paso, dificultad){
+    const cfg=lmCfgDificultadScouting(dificultad);
+    return Math.min(cfg.riesgoTope, cfg.riesgoBase + (paso-1)*cfg.riesgoPaso);
   }
 
-  // Abre el minijuego del nodo de scouting.
-  function abrirMinijuegoScouting(onCerrado){
+  // Abre el minijuego del nodo de scouting. "dificultad" es el subtipo
+  // del nodo elegido en el árbol ('facil'|'normal'|'dificil'); si no
+  // llega (partidas guardadas antiguas, o llamada directa), se trata
+  // como 'normal' — el comportamiento original.
+  function abrirMinijuegoScouting(onCerrado, dificultad){
+    const cfgDificultad=lmCfgDificultadScouting(dificultad);
+    dificultad = LM_SCOUTING_DIFICULTADES[dificultad] ? dificultad : 'normal';
     const MAX_PASOS=6;
     let probActual=calcularProbabilidadBaseSobreFichajes();
     let pasos=0;
@@ -8467,6 +8648,16 @@
       return '';
     }
 
+    // Intensidad (0.12–1) de la onda de tensión que late detrás de la
+    // cifra de riesgo — YA NO es un interruptor todo-o-nada a partir
+    // de un umbral: la onda está siempre ahí (0.12 = apenas
+    // perceptible, para que se note que existe desde el primer
+    // empujón) y crece de forma continua con el riesgo real hasta
+    // saturar en 1 sobre un riesgo del 65%.
+    function intensidadOndaRiesgo(r){
+      return Math.max(0.12, Math.min(1, r/0.65));
+    }
+
     function pintar(){
       const pct=Math.round(probActual*100);
       const puedeSeguir = fase==='jugando' && pasos<MAX_PASOS;
@@ -8476,8 +8667,19 @@
       // seguir eligiendo — así el jugador lo ve rellenarse en vivo en
       // vez de que desaparezca de golpe al pulsar ACERCARSE.
       const mostrarRiesgo = fase!=='resuelto' && pasos<MAX_PASOS;
-      const riesgoSiguiente = lmRiesgoDescubiertaScouting(pasos+1);
-      const riesgoPct=Math.round(riesgoSiguiente*100);
+      const riesgoSiguiente = lmRiesgoDescubiertaScouting(pasos+1, dificultad);
+      // Nivel de riesgo YA superado (el de los pasos ya dados, o 0 si
+      // todavía no se ha empujado ninguna vez). En REPOSO la barra se
+      // queda aquí, NO en un adelanto del riesgo del próximo paso —
+      // antes mostraba ese adelanto en reposo y luego, al pulsar
+      // ACERCARSE, la re-renderizaba de golpe con el valor ya superado
+      // (más bajo) antes de animarla de vuelta hasta el mismo valor de
+      // siempre: un salto hacia atrás visible que parecía un fallo.
+      // Ahora reposo y punto de partida de la animación son el MISMO
+      // valor, así que avanzarPaso() siempre anima un crecimiento de
+      // verdad, nunca un salto. El aviso de peligro del próximo paso lo
+      // da el propio botón ACERCARSE (se tiñe/pulsa según ese riesgo).
+      const riesgoPctBase = pasos>0 ? Math.round(lmRiesgoDescubiertaScouting(pasos, dificultad)*100) : 0;
       let resultadoTexto='';
       if(fase==='resuelto'){
         if(resultadoTipo==='pillado'){
@@ -8497,28 +8699,32 @@
         <div class="lm-dilemma-card lm-scout-mini-card" id="lmScoutMiniCard">
           ${confetiHTML}
           <div class="lm-scout-mini-eyebrow">${t('lm.scoutmini_eyebrow')}${pasos>0 && fase!=='resuelto' ? ` · ${tp('lm.scoutmini_paso', {n:pasos})}` : ''}</div>
+          <div class="lm-amistoso-dificultad-badge" style="border-color:${cfgDificultad.color};color:${cfgDificultad.color}">
+            <i class="ph ph-bold ph-binoculars"></i> ${t('lm.dificultad_'+dificultad).toUpperCase()}
+          </div>
           <div class="lm-dilemma-title lm-scout-mini-title"><i class="ph ph-bold ph-binoculars"></i>${t('lm.scoutmini_titulo')}</div>
           <div class="lm-scout-mini-meter-wrap">
-            <div class="lm-scout-mini-meter-label"><i class="ph ph-bold ph-magnifying-glass"></i>${t('lm.scoutmini_label_informe')}</div>
+            <div class="lm-scout-mini-meter-label"><i class="ph ph-bold ph-magnifying-glass"></i>${t('lm.scoutmini_label_informe')}<span class="lm-scout-mini-tag-gratis">${t('lm.scoutmini_tag_gratis')}</span></div>
             <div class="lm-scout-mini-meter-track">
               <div class="lm-scout-mini-meter-fill ${claseMeterParaProb(probActual)}" id="lmScoutMeterFill" style="width:${pct}%"><span class="lm-scout-mini-meter-sheen"></span></div>
             </div>
             <div class="lm-scout-mini-pct" id="lmScoutMeterPct">${pct}<span class="lm-scout-mini-pct-simbolo">%</span></div>
           </div>
+          <div class="lm-scout-mini-informe-nota">${t('lm.scoutmini_informe_nota')}</div>
           ${mostrarRiesgo ? `
           <div class="lm-scout-mini-meter-wrap lm-scout-mini-risk-wrap">
             <div class="lm-scout-mini-meter-label lm-scout-mini-risk-label"><i class="ph ph-bold ph-eye"></i>${t('lm.scoutmini_label_riesgo')}</div>
             <div class="lm-scout-mini-risk-track">
-              <div class="lm-scout-mini-risk-fill ${claseRiesgoParaValor(riesgoSiguiente)}" id="lmScoutRiskFill" style="width:${fase==='animando'?0:riesgoPct}%"></div>
+              <div class="lm-scout-mini-risk-fill ${claseRiesgoParaValor(riesgoPctBase/100)}" id="lmScoutRiskFill" style="width:${riesgoPctBase}%"></div>
             </div>
-            <div class="lm-scout-mini-risk-pct ${riesgoSiguiente>=0.45?'lm-scout-mini-risk-pct-alta':''}" id="lmScoutRiskPct">${fase==='animando'?0:riesgoPct}%</div>
+            <div class="lm-scout-mini-risk-pct lm-scout-mini-risk-pct-onda ${riesgoPctBase>=45?'lm-scout-mini-risk-pct-alta':''}" id="lmScoutRiskPct" style="--oi:${intensidadOndaRiesgo(riesgoPctBase/100)}">${riesgoPctBase}%</div>
           </div>` : ''}
           ${fase==='resuelto' ? `<div class="lm-scout-mini-resultado lm-scout-mini-resultado-${resultadoTipo}">${resultadoTexto}</div>` : ''}
           <div class="lm-scout-mini-actions">
             ${fase==='resuelto'
               ? `<button type="button" id="lmScoutBtnContinuar" class="mode-card-btn mode-card-btn-gold">${t('lm.continuar')}</button>`
-              : `<button type="button" id="lmScoutBtnEmpujar" class="mode-card-btn mode-card-btn-secondary ${claseBtnEmpujarParaRiesgo(riesgoSiguiente)}" ${puedeSeguir?'':'disabled'}><i class="ph ph-bold ph-footprints"></i> ${t('lm.scoutmini_empujar')}</button>
-                 <button type="button" id="lmScoutBtnPlantarse" class="mode-card-btn mode-card-btn-gold" ${puedePlantarse?'':'disabled'}><i class="ph ph-bold ph-hand-palm"></i> ${t('lm.scoutmini_plantarse')}</button>`}
+              : `<button type="button" id="lmScoutBtnEmpujar" class="mode-card-btn mode-card-btn-amarillo ${claseBtnEmpujarParaRiesgo(riesgoSiguiente)}" ${puedeSeguir?'':'disabled'}><i class="ph ph-bold ph-footprints"></i> ${t('lm.scoutmini_empujar')}</button>
+                 <button type="button" id="lmScoutBtnPlantarse" class="mode-card-btn mode-card-btn-rojo" ${puedePlantarse?'':'disabled'}><i class="ph ph-bold ph-hand-palm"></i> ${t('lm.scoutmini_plantarse')}</button>`}
           </div>
         </div>`;
       cablear();
@@ -8546,8 +8752,13 @@
     }
 
     function avanzarPaso(){
-      const riesgo=lmRiesgoDescubiertaScouting(pasos+1);
+      const riesgo=lmRiesgoDescubiertaScouting(pasos+1, dificultad);
       const riesgoPctObjetivo=Math.round(riesgo*100);
+      // Punto de partida real de la animación: el riesgo ya superado
+      // hasta ahora (0 si es el primer empujón) — así la barra CRECE
+      // desde donde está en vez de reiniciarse a 0 en cada empujón,
+      // como pedía el diseño (debe sentirse acumulativo y adictivo).
+      const riesgoPctBase = pasos>0 ? Math.round(lmRiesgoDescubiertaScouting(pasos, dificultad)*100) : 0;
       let ticks=0;
       const totalTicks=8+Math.floor(Math.random()*3);
       const velocidad=Math.max(55, 95-Math.round(riesgo*50));
@@ -8555,26 +8766,40 @@
       pintar();
       const card=overlay.querySelector('#lmScoutMiniCard');
       // El medidor de riesgo se rellena EN VIVO durante toda la
-      // tensión (de 0 hasta su valor real), en vez de aparecer ya
-      // relleno de golpe — la barra de transición CSS dura lo mismo
-      // que la propia animación de suspense (ticks × velocidad), así
-      // que el número y el relleno terminan de subir justo cuando se
-      // revela el resultado.
+      // tensión, CRECIENDO desde el riesgo ya superado hasta ahora
+      // (riesgoPctBase) hasta el nuevo valor real de este paso — nunca
+      // desde 0, para que se sienta acumulativo (cada empujón añade
+      // riesgo sobre el anterior, no lo resetea) — la barra de
+      // transición CSS dura lo mismo que la propia animación de
+      // suspense (ticks × velocidad), así que el número y el relleno
+      // terminan de subir justo cuando se revela el resultado.
       const riskFillEl=overlay.querySelector('#lmScoutRiskFill');
       const riskPctEl=overlay.querySelector('#lmScoutRiskPct');
       const duracionTotalMs=totalTicks*velocidad;
-      if(riskFillEl) riskFillEl.style.transition=`width ${duracionTotalMs}ms linear`;
-      requestAnimationFrame(()=>{
-        requestAnimationFrame(()=>{
-          if(riskFillEl) riskFillEl.style.width=riesgoPctObjetivo+'%';
-        });
-      });
+      // La anchura se controla a mano, fotograma a fotograma, en el
+      // mismo bucle que cuenta el número — NO con una transición CSS
+      // "de un tirón": esa técnica podía saltarse la animación en
+      // algunos casos (el navegador no siempre respeta un cambio de
+      // transition+width dentro del mismo frame) y la barra no se veía
+      // crecer aunque el número sí subiera. Fotograma a fotograma es
+      // infalible.
+      if(riskFillEl) riskFillEl.style.transition='background .2s ease, box-shadow .2s ease';
       if(riskPctEl){
         const inicioTs=performance.now();
         const contarRiesgo=()=>{
           if(!overlay.contains(riskPctEl)) return;
           const t2=Math.min(1,(performance.now()-inicioTs)/duracionTotalMs);
-          riskPctEl.textContent=Math.round(t2*riesgoPctObjetivo)+'%';
+          const pctEnVivo=riesgoPctBase+t2*(riesgoPctObjetivo-riesgoPctBase);
+          if(riskFillEl){
+            riskFillEl.style.width=pctEnVivo+'%';
+            riskFillEl.className='lm-scout-mini-risk-fill '+claseRiesgoParaValor(pctEnVivo/100);
+          }
+          riskPctEl.textContent=Math.round(pctEnVivo)+'%';
+          riskPctEl.classList.toggle('lm-scout-mini-risk-pct-alta', pctEnVivo>=45);
+          // La onda de tensión se actualiza EN VIVO al mismo ritmo que
+          // la cifra — así se nota crecer de verdad mientras el
+          // contador sube, no solo de golpe entre un empujón y otro.
+          riskPctEl.style.setProperty('--oi', intensidadOndaRiesgo(pctEnVivo/100));
           if(t2<1) requestAnimationFrame(contarRiesgo);
         };
         requestAnimationFrame(contarRiesgo);
@@ -8602,7 +8827,7 @@
             if(card){ card.classList.add('lm-scout-mini-card-pillado'); setTimeout(()=>card.classList.remove('lm-scout-mini-card-pillado'), 500); }
             resolver('pillado');
           } else {
-            const ganancia=0.07+Math.random()*0.06; // cada paso seguro sube entre +7% y +13%
+            const ganancia=cfgDificultad.gananciaMin+Math.random()*(cfgDificultad.gananciaMax-cfgDificultad.gananciaMin);
             probActual=Math.min(0.95, probActual+ganancia);
             if(typeof window.playSound==='function') window.playSound('reveal');
             if(card){ card.classList.add('lm-scout-mini-card-seguro'); setTimeout(()=>card.classList.remove('lm-scout-mini-card-seguro'), 450); }
@@ -8622,7 +8847,7 @@
         probActual=0;
         resolverTiradaSobreFichajes(0);
       } else {
-        const exito = probActual>0 ? resolverTiradaSobreFichajes(probActual, true) : false;
+        const exito = probActual>0 ? resolverTiradaSobreFichajes(probActual, true, cfgDificultad.bonusNivelSobre) : false;
         resultadoTipo = exito ? 'exito' : 'fallo';
         // Recompensa satisfactoria de verdad: sonido de victoria propio
         // (no el "reveal" genérico) en cuanto se confirma el sobre.
@@ -8638,6 +8863,244 @@
     // ("CONTINUAR", una vez resuelto), igual que las pantallas de
     // tirada de dados del resto del juego.
     pintar();
+  }
+
+  // ---------------------------------------------------------------
+  // MINIJUEGO "PARADA PERFECTA" (entreno intenso) — push-your-luck de
+  // reflejos: una aguja rebota de lado a lado sobre una pista y hay que
+  // pulsar PARAR justo cuando pasa por la zona amarilla. Cada acierto
+  // suma combo (y encoge la zona + acelera la aguja, cada vez más
+  // difícil); cada fallo rompe el combo. Son 5 intentos fijos y lo que
+  // cuenta para la recompensa final es el MEJOR combo alcanzado durante
+  // esos 5 intentos (comboMax), no el combo con el que se termine.
+  //
+  // Poner esta constante a false restaura el comportamiento clásico del
+  // nodo de entreno intenso (ninguna mejora mecánica real más allá de
+  // "baja más la fatiga", como llevaba pasando desde siempre) sin tocar
+  // nada más.
+  const LM_MINIJUEGO_ENTRENO_INTENSO_ACTIVO = true;
+
+  // comboMax alcanzado -> multiplicador aplicado a la probabilidad de
+  // mejora de estadística de ESE día concreto (se combina con
+  // bonusPlanificacion/bonusHitoSemana/bonusJugador de siempre, igual
+  // que hace el hito de "Sesión Doble"). Curva con incrementos cada vez
+  // más pequeños a propósito (0.22 → 0.18 → 0.15 → 0.11 → 0.09): un
+  // combo de 5 nota mucho más que un combo de 2, pero nunca se acerca a
+  // sentirse como un "x5" del entrenamiento normal.
+  const LM_TABLA_BONUS_ENTRENO_INTENSO = {0:1, 1:1.22, 2:1.40, 3:1.55, 4:1.66, 5:1.75};
+  // Mismo comboMax -> multiplicador sobre el desgaste (fatiga) de ese
+  // día. Crece mucho más despacio que el bonus de mejora (máximo +20% a
+  // combo 5) para que perseguir el combo máximo siga mereciendo la pena
+  // de verdad — si el cansancio subiera al mismo ritmo, no tendría
+  // sentido arriesgar.
+  const LM_TABLA_FATIGA_ENTRENO_INTENSO = {0:1, 1:1.06, 2:1.11, 3:1.15, 4:1.18, 5:1.20};
+
+  // Abre el minijuego. onCerrado(comboMax) se llama al pulsar CONTINUAR
+  // en la pantalla final, con el mejor combo alcanzado durante los 5
+  // intentos — quien llama es responsable de guardarlo (en
+  // state.diasEntrenoIntensoCombo[fechaISOdia]) antes de continuar.
+  function abrirMinijuegoParadaPerfecta(onCerrado){
+    const MAX_INTENTOS=5;
+    const ANCHO_ZONA_INICIAL=24, ANCHO_ZONA_MIN=6.5, VELOCIDAD_TOPE=2.6;
+    let intento=0, combo=0, comboMax=0;
+    let anchoZonaPct=ANCHO_ZONA_INICIAL, posAguja=0, velocidad=0.95, dir=1;
+    let corriendo=true, terminado=false, ultimoTs=null, rafId=null;
+    let zonaActual={left:0, width:0};
+
+    const overlay=document.createElement('div');
+    overlay.id='lmParadaPerfectaOverlay';
+    overlay.className='lm-visor-leyenda-overlay-standalone';
+    // A document.body, igual que el resto de overlays que deben
+    // sobrevivir a un repintado del árbol de nodos por debajo.
+    document.body.appendChild(overlay);
+    overlay.innerHTML=`
+      <div class="lm-pp-card" id="lmPpCard">
+        <div class="lm-pp-eyebrow"><i class="ph ph-bold ph-fire"></i>${t('lm.entreno_intenso')}</div>
+        <h2 class="lm-pp-titulo">${t('lm.pp_titulo')}</h2>
+        <p class="lm-pp-subtitulo" id="lmPpSubtitulo">${t('lm.pp_subtitulo')}</p>
+        <div class="lm-pp-intentos" id="lmPpIntentos"></div>
+        <div class="lm-pp-combo-zona" id="lmPpComboZona">
+          <div class="lm-pp-combo-num" id="lmPpComboNum">0</div>
+          <div class="lm-pp-combo-label">${t('lm.pp_combo_actual')}</div>
+        </div>
+        <div class="lm-pp-pista-wrap" id="lmPpPistaWrap">
+          <div class="lm-pp-pista" id="lmPpPista">
+            <div class="lm-pp-zona-amarilla" id="lmPpZona"></div>
+            <div class="lm-pp-aguja" id="lmPpAguja"></div>
+            <div class="lm-pp-particulas" id="lmPpParticulas"></div>
+          </div>
+        </div>
+        <button class="mode-card-btn mode-card-btn-gold" id="lmPpBtnParar"><i class="ph ph-bold ph-hand-palm"></i>${t('lm.pp_btn_parar')}</button>
+        <div class="lm-pp-resultado-texto" id="lmPpResultadoTexto">${t('lm.pp_resultado_inicial')}</div>
+        <div class="lm-pp-final" id="lmPpFinal">
+          <div class="lm-pp-trofeo" id="lmPpTrofeo"><i class="ph ph-bold ph-minus-circle"></i></div>
+          <div class="lm-pp-combo-label">${t('lm.pp_mejor_combo')}</div>
+          <div class="lm-pp-combo-final" id="lmPpComboFinal">0</div>
+          <div class="lm-pp-desc" id="lmPpDesc">—</div>
+          <div class="lm-pp-stats">
+            <div class="lm-pp-stat"><div class="lm-pp-stat-n lm-pp-pos" id="lmPpFinalBonus">+0%</div><div class="lm-pp-stat-l">${t('lm.pp_stat_entreno')}</div></div>
+            <div class="lm-pp-stat"><div class="lm-pp-stat-n" id="lmPpFinalFatiga">+0%</div><div class="lm-pp-stat-l">${t('lm.pp_stat_fatiga')}</div></div>
+          </div>
+          <button class="mode-card-btn mode-card-btn-gold" id="lmPpBtnContinuar">${t('lm.pp_btn_continuar')}</button>
+        </div>
+      </div>`;
+
+    const card=overlay.querySelector('#lmPpCard');
+    const pista=overlay.querySelector('#lmPpPista');
+    const aguja=overlay.querySelector('#lmPpAguja');
+    const zonaAmarilla=overlay.querySelector('#lmPpZona');
+    const btnParar=overlay.querySelector('#lmPpBtnParar');
+    const intentosEl=overlay.querySelector('#lmPpIntentos');
+    const comboNumEl=overlay.querySelector('#lmPpComboNum');
+    const resultadoTextoEl=overlay.querySelector('#lmPpResultadoTexto');
+    const finalEl=overlay.querySelector('#lmPpFinal');
+    const particulasEl=overlay.querySelector('#lmPpParticulas');
+
+    function pistaAnchoPx(){ return pista.clientWidth; }
+    function agujaAnchoPx(){ return aguja.offsetWidth||4; }
+
+    function centrarZona(){
+      const anchoPx=pistaAnchoPx();
+      const zonaPx=Math.max(14, anchoPx*(anchoZonaPct/100));
+      const maxLeft=anchoPx-zonaPx;
+      const left=6+Math.random()*Math.max(0,(maxLeft-12));
+      zonaAmarilla.style.width=zonaPx+'px';
+      zonaAmarilla.style.left=left+'px';
+      return {left, width:zonaPx};
+    }
+    zonaActual=centrarZona();
+
+    function pintarIntentos(){
+      intentosEl.innerHTML='';
+      for(let i=0;i<MAX_INTENTOS;i++){
+        const d=document.createElement('div');
+        d.className='lm-pp-intento-punto'+(i===intento && !terminado ? ' lm-pp-activo':'');
+        intentosEl.appendChild(d);
+      }
+    }
+    function marcarIntento(i, hit){
+      const puntos=intentosEl.children;
+      if(puntos[i]) puntos[i].className='lm-pp-intento-punto '+(hit?'lm-pp-usado-hit':'lm-pp-usado-miss');
+    }
+    function actualizarCombo(){
+      comboNumEl.textContent=combo;
+      comboNumEl.classList.toggle('lm-pp-combo-activo', combo>0);
+    }
+    function lanzarParticulas(colorRgb, cx, cy){
+      for(let i=0;i<10;i++){
+        const p=document.createElement('div');
+        p.className='lm-pp-particula';
+        const ang=Math.random()*Math.PI*2;
+        const dist=26+Math.random()*30;
+        p.style.setProperty('--dx', Math.cos(ang)*dist+'px');
+        p.style.setProperty('--dy', Math.sin(ang)*dist+'px');
+        p.style.left=cx+'px'; p.style.top=cy+'px';
+        p.style.background=`rgb(${colorRgb})`;
+        p.style.boxShadow=`0 0 6px rgb(${colorRgb})`;
+        particulasEl.appendChild(p);
+        setTimeout(()=>p.remove(), 750);
+      }
+    }
+
+    function tick(ts){
+      if(!ultimoTs) ultimoTs=ts;
+      const dt=Math.min(0.05, (ts-ultimoTs)/1000);
+      ultimoTs=ts;
+      if(corriendo && !terminado){
+        posAguja+=dir*velocidad*dt;
+        if(posAguja>=1){ posAguja=1; dir=-1; }
+        if(posAguja<=0){ posAguja=0; dir=1; }
+        const anchoPx=pistaAnchoPx();
+        const agujaPx=agujaAnchoPx();
+        aguja.style.left=(posAguja*(anchoPx-agujaPx))+'px';
+      }
+      if(document.body.contains(overlay)) rafId=requestAnimationFrame(tick);
+    }
+    rafId=requestAnimationFrame(tick);
+
+    function agujaCentroPx(){
+      const anchoPx=pistaAnchoPx();
+      const agujaPx=agujaAnchoPx();
+      return posAguja*(anchoPx-agujaPx) + agujaPx/2;
+    }
+
+    function golpear(){
+      if(terminado || intento>=MAX_INTENTOS) return;
+      if(typeof window.playSound==='function') window.playSound('stopbar_click');
+      const centro=agujaCentroPx();
+      const dentro=centro>=zonaActual.left && centro<=(zonaActual.left+zonaActual.width);
+      const rectPista=pista.getBoundingClientRect();
+      const cx=centro, cy=rectPista.height/2;
+
+      if(dentro){
+        combo++;
+        comboMax=Math.max(comboMax, combo);
+        marcarIntento(intento, true);
+        pista.classList.remove('lm-pp-flash-hit'); void pista.offsetWidth; pista.classList.add('lm-pp-flash-hit');
+        lanzarParticulas('255,225,77', cx, cy);
+        if(typeof window.playSound==='function') window.playSound('stopbar_hit', {combo});
+        resultadoTextoEl.innerHTML=`<b>${t('lm.pp_dentro')}</b> ${tp('lm.pp_combo_x', {combo})}`;
+        anchoZonaPct=Math.max(ANCHO_ZONA_MIN, anchoZonaPct*0.62);
+        velocidad=Math.min(VELOCIDAD_TOPE, velocidad*1.18);
+      } else {
+        marcarIntento(intento, false);
+        pista.classList.remove('lm-pp-flash-miss'); void pista.offsetWidth; pista.classList.add('lm-pp-flash-miss');
+        card.classList.remove('lm-pp-shake'); void card.offsetWidth; card.classList.add('lm-pp-shake');
+        lanzarParticulas('255,45,85', cx, cy);
+        if(typeof window.playSound==='function') window.playSound('stopbar_miss');
+        resultadoTextoEl.textContent = combo>0 ? tp('lm.pp_fallo_combo', {combo}) : t('lm.pp_fallo');
+        combo=0;
+        anchoZonaPct=Math.min(ANCHO_ZONA_INICIAL*0.75, anchoZonaPct*1.35);
+        velocidad=Math.min(VELOCIDAD_TOPE, velocidad*1.1);
+      }
+      actualizarCombo();
+
+      intento++;
+      zonaActual=centrarZona();
+      pintarIntentos();
+
+      if(intento>=MAX_INTENTOS){
+        terminado=true;
+        setTimeout(mostrarFinal, 550);
+      }
+    }
+
+    function mostrarFinal(){
+      const bonusMult=LM_TABLA_BONUS_ENTRENO_INTENSO[comboMax]!=null?LM_TABLA_BONUS_ENTRENO_INTENSO[comboMax]:1;
+      const fatigaMult=LM_TABLA_FATIGA_ENTRENO_INTENSO[comboMax]!=null?LM_TABLA_FATIGA_ENTRENO_INTENSO[comboMax]:1;
+      const bonusPct=Math.round((bonusMult-1)*100);
+      const fatigaPct=Math.round((fatigaMult-1)*100);
+      overlay.querySelector('#lmPpComboFinal').textContent=comboMax;
+      overlay.querySelector('#lmPpFinalBonus').textContent=(comboMax>0?'+':'')+bonusPct+'%';
+      overlay.querySelector('#lmPpFinalFatiga').textContent=(comboMax>0?'+':'')+fatigaPct+'%';
+      const desc = comboMax===0 ? t('lm.pp_desc_0')
+        : comboMax>=5 ? t('lm.pp_desc_max')
+        : comboMax>=3 ? t('lm.pp_desc_alto')
+        : t('lm.pp_desc_medio');
+      overlay.querySelector('#lmPpDesc').textContent=desc;
+      const iconoFinal = comboMax>=5?'ph-trophy':(comboMax>=3?'ph-star':(comboMax>0?'ph-check-circle':'ph-minus-circle'));
+      overlay.querySelector('#lmPpTrofeo').innerHTML=`<i class="ph ph-bold ${iconoFinal}"></i>`;
+      if(typeof window.playSound==='function') window.playSound('stopbar_final', {comboMax});
+      finalEl.classList.add('lm-pp-visible');
+      btnParar.style.display='none';
+      overlay.querySelector('#lmPpPistaWrap').style.opacity='.35';
+      overlay.querySelector('#lmPpComboZona').style.display='none';
+      overlay.querySelector('#lmPpSubtitulo').style.display='none';
+    }
+
+    btnParar.addEventListener('click', golpear);
+    function onKeydown(e){ if(e.code==='Space'){ e.preventDefault(); golpear(); } }
+    document.addEventListener('keydown', onKeydown);
+
+    overlay.querySelector('#lmPpBtnContinuar').addEventListener('click', ()=>{
+      document.removeEventListener('keydown', onKeydown);
+      if(rafId) cancelAnimationFrame(rafId);
+      overlay.remove();
+      if(typeof onCerrado==='function') onCerrado(comboMax);
+    });
+
+    pintarIntentos();
+    actualizarCombo();
   }
 
   /* ---------- 9d. CARTAS DEL DIRECTOR GENERAL (dorado) — economía y
@@ -8793,7 +9256,7 @@
     {id:'negociacion_salarial',    tipo:'directa', nombre:'Negociación Salarial',    icon:'ph-file-text',    dificultad:9, desc:'La nómina de jugadores del próximo mes será más barata'},
     {id:'informe_ojeo',            tipo:'directa', nombre:'Informe de Ojeo Exprés', icon:'ph-magnifying-glass', dificultad:7, desc:'El próximo sobre que abras traerá mejor calidad de la habitual'},
     {id:'gira_promocional',        tipo:'directa', nombre:'Gira Promocional',        icon:'ph-airplane-tilt',dificultad:6, desc:'Ingreso instantáneo de capital y un pequeño impulso a la moral'},
-    {id:'sobres_fichajes',   tipo:'nivel', track:'sobresFichajes', nombre:'Red de Ojeadores Activa',      icon:'ph-envelope-open', dificultadBase:9, dificultadPaso:5, desc:'Acorta el tiempo entre sobres de fichajes — llegarán con más frecuencia por correo. A nivel alto, aumenta también la posibilidad de que aparezca un fichaje estrella real'},
+    {id:'sobres_fichajes',   tipo:'nivel', track:'sobresFichajes', nombre:'Oficina de Fichajes',      icon:'ph-envelope-open', dificultadBase:9, dificultadPaso:5, desc:'Acorta el tiempo entre sobres de fichajes — llegarán con más frecuencia por correo. A nivel alto, aumenta también la posibilidad de que aparezca un fichaje estrella real'},
     {id:'red_ojeadores',     tipo:'nivel', track:'calidadOjeo',    nombre:'Red de Ojeadores',        icon:'ph-binoculars',    dificultadBase:8, dificultadPaso:4, desc:'Mejora la calidad de los jugadores que salen en los sobres'},
     {id:'negociacion_contratos',tipo:'nivel', track:'ahorroSalarial', nombre:'Negociación de Contratos', icon:'ph-handshake', dificultadBase:8, dificultadPaso:4, desc:'Reduce el salario de los jugadores fichados por sobre'},
     {id:'formacion_cantera', tipo:'nivel', track:'costeSobres',    nombre:'Formación de Cantera',    icon:'ph-graduation-cap',dificultadBase:8, dificultadPaso:4, desc:'Tu academia forma talento desde la base: cada canterano que llega por sobre nace con un nivel superior al habitual'}
@@ -10054,8 +10517,8 @@
               <div class="lm-sub">${t('lm.jornada').charAt(0)+t('lm.jornada').slice(1).toLowerCase()} ${Math.min(state.jornadaActual,(state.calendario||[]).length||38)} ${t('lm.jornada_de')} ${(state.calendario||[]).length||38}${temporadaLabel()?` <span class="lm-sub-punto">·</span> <span class="lm-sub-temporada">${temporadaLabel()}</span>`:''}</div>
             </div>
             <div class="lm-modo-visual-toggle">
-              <button type="button" class="lm-modo-visual-btn ${(!state.modoVisualPartido||state.modoVisualPartido==='auto')?'lm-modo-visual-activo':''}" data-modo-visual="auto"><i class="ph ph-bold ph-fast-forward"></i>${t('lm.modo_automatico')}</button>
-              <button type="button" class="lm-modo-visual-btn ${state.modoVisualPartido==='manager'?'lm-modo-visual-activo':''}" data-modo-visual="manager"><i class="ph ph-bold ph-strategy"></i>${t('lm.modo_manager')}</button>
+              <button type="button" class="lm-modo-visual-btn ${(!state.modoVisualPartido||state.modoVisualPartido==='auto')?'lm-modo-visual-activo':''}" data-modo-visual="auto" title="${t('lm.tt_modo_automatico')}"><i class="ph ph-bold ph-fast-forward"></i>${t('lm.modo_automatico')}</button>
+              <button type="button" class="lm-modo-visual-btn ${state.modoVisualPartido==='manager'?'lm-modo-visual-activo':''}" data-modo-visual="manager" title="${t('lm.tt_modo_manager')}"><i class="ph ph-bold ph-strategy"></i>${t('lm.modo_manager')}</button>
             </div>
             <button id="lmJugarBtn" class="lm-btn-jugar-icon" ${state.jornadaActual>38?'disabled':''} title="${state.jornadaActual>38?t('lm.tt_temporada_completa'):(hayVacantes?t('lm.tt_falta_cuerpo_tecnico'):t('lm.tt_jugar_jornada'))}">
               <i class="ph ph-bold ph-play-circle"></i>
@@ -10612,6 +11075,8 @@
     root.querySelectorAll('[data-ver-recompensa]').forEach(card=>{
       card.addEventListener('click', ()=>{
         if(typeof window.playSound==='function') window.playSound('select');
+        root.querySelectorAll('.lm-nodo-acumulado-seleccionada').forEach(c=>{ if(c!==card) c.classList.remove('lm-nodo-acumulado-seleccionada'); });
+        card.classList.add('lm-nodo-acumulado-seleccionada');
         mostrarMensajeRecompensaHito(card.getAttribute('data-ver-recompensa'), parseInt(card.getAttribute('data-ver-recompensa-umbral'),10), root);
       });
     });
@@ -10733,7 +11198,15 @@
       e.stopPropagation();
       if(typeof window.playSound==='function') window.playSound('select');
       const proceder=()=>{ borrarTodoElCorreo(); render(); };
-      if(typeof window.showConfirmPopup==='function'){
+      // El aviso de confirmación solo tiene sentido como red de
+      // seguridad para no perder un correo que todavía no se ha leído
+      // — si ya están todos leídos no hay nada que se pueda perder por
+      // sorpresa, así que se borra directamente sin interrumpir con un
+      // popup de por medio.
+      const hayCorreoSinLeer=(state.correoInterno||[]).some(c=>c && !c.leido);
+      if(!hayCorreoSinLeer){
+        proceder();
+      } else if(typeof window.showConfirmPopup==='function'){
         window.showConfirmPopup(t('lm.confirmar_borrar_todos'), proceder, t('lm.borrar_todos').toUpperCase());
       } else if(confirm(t('lm.confirmar_borrar_todos'))){
         proceder();
@@ -10959,6 +11432,7 @@
         </div>`;
       }).join('');
 
+      const scrollTopPrevio=overlay.scrollTop;
       overlay.innerHTML=`
         <div class="lm-dilemma-card lm-dilemma-card-medico" style="width:480px;max-width:90vw;text-align:left">
           ${xCerrarHTML()}
@@ -10972,6 +11446,7 @@
             <button id="lmHistorialCerrar" class="mode-card-btn mode-card-btn-gold">${t('lm.cerrar')}</button>
           </div>`}
         </div>`;
+      overlay.scrollTop=scrollTopPrevio;
       overlay.querySelectorAll('[data-histtab]').forEach(el=>{
         el.addEventListener('click', ()=>{
           if(typeof window.playSound==='function') window.playSound('select');
@@ -11292,6 +11767,7 @@
         </div>`;
       }).join('');
 
+      const scrollTopPrevio=overlay.scrollTop;
       overlay.innerHTML=`
         <div class="lm-dilemma-card lm-dilemma-card-medico" style="max-width:640px">
           ${xCerrarHTML()}
@@ -11311,6 +11787,7 @@
             <button id="lmMedicoCerrar" class="mode-card-btn mode-card-btn-secondary">${t('lm.cerrar')}</button>
           </div>
         </div>`;
+      overlay.scrollTop=scrollTopPrevio;
 
       wireMostrarInfoHold(overlay, abrirHistorialMedico, 'lmHistorialOverlay');
       const xBtnMed=overlay.querySelector('[data-cerrar-x]');
@@ -11375,6 +11852,7 @@
       const jugadorObjetivo = jugadorObjetivoId ? state.plantilla.find(p=>p.id===jugadorObjetivoId) : null;
       let dadosElegidos=Math.min(1, state.diceAvailable);
       function pintar(){
+        const scrollTopPrevio=overlay.scrollTop;
         overlay.innerHTML=`
           <div class="lm-dilemma-card lm-dilemma-card-medico">
             ${xCerrarHTML()}
@@ -11393,6 +11871,7 @@
               <button id="lmCancelarCartaBtn" class="lm-btn-cancelar">${t('lm.cancelar')}</button>
             </div>
           </div>`;
+        overlay.scrollTop=scrollTopPrevio;
         const minus=document.getElementById('lmDiceMinus');
         const plus=document.getElementById('lmDicePlus');
         const tirarBtn=document.getElementById('lmTirarBtn');
@@ -11447,6 +11926,7 @@
       const dificultad=state.medicoNotificacion.dificultad;
       let dadosElegidos=Math.min(1, state.diceAvailable);
       function pintar(){
+        const scrollTopPrevio=overlay.scrollTop;
         overlay.innerHTML=`
           <div class="lm-dilemma-card lm-dilemma-card-medico">
             ${xCerrarHTML()}
@@ -11463,6 +11943,7 @@
               <button id="lmTirarBtn" class="mode-card-btn mode-card-btn-gold" ${state.diceAvailable<1?'disabled':''}>TIRAR ${dadosElegidos} DADO${dadosElegidos>1?'S':''}</button>
             </div>
           </div>`;
+        overlay.scrollTop=scrollTopPrevio;
         const minus=document.getElementById('lmDiceMinus');
         const plus=document.getElementById('lmDicePlus');
         const tirarBtn=document.getElementById('lmTirarBtn');
@@ -11512,6 +11993,13 @@
       const disponibles=guardiasDisponibles();
       const salario=guardiaSalarioActual();
       const bloqueado = state.guardiasConfigGuardadaEnJornada===state.jornadaActual;
+      // Se guarda y restaura el scroll del overlay y el de la tarjeta
+      // interna .lm-seguridad-card (que se destruye y recrea entera en
+      // cada pintar()) para que pulsar un botón no haga "saltar" la
+      // pantalla arriba del todo, sobretodo notorio en móvil.
+      const scrollTopPrevio=overlay.scrollTop;
+      const cardPrevia=overlay.querySelector('.lm-seguridad-card');
+      const scrollTopCardPrevio=cardPrevia?cardPrevia.scrollTop:0;
       overlay.innerHTML=`
         <div class="lm-dilemma-card lm-seguridad-card">
           ${xCerrarHTML()}
@@ -11587,6 +12075,9 @@
             <button id="lmSeguridadCerrarBtn" class="mode-card-btn mode-card-btn-secondary">${t('lm.cerrar')}</button>
           </div>
         </div>`;
+      overlay.scrollTop=scrollTopPrevio;
+      const cardNueva=overlay.querySelector('.lm-seguridad-card');
+      if(cardNueva) cardNueva.scrollTop=scrollTopCardPrevio;
       document.getElementById('lmContratarGuardiaBtn').addEventListener('click', ()=>{
         if(typeof window.playSound==='function') window.playSound('select');
         contratarGuardia();
@@ -11711,6 +12202,7 @@
         </div>`;
       }).join('');
 
+      const scrollTopPrevio=overlay.scrollTop;
       overlay.innerHTML=`
         <div class="lm-dilemma-card lm-dilemma-card-mant" style="max-width:640px">
           ${xCerrarHTML()}
@@ -11728,6 +12220,7 @@
             <button id="lmMantenimientoCerrar" class="mode-card-btn mode-card-btn-secondary">${t('lm.cerrar')}</button>
           </div>
         </div>`;
+        overlay.scrollTop=scrollTopPrevio;
         wireMostrarInfoHold(overlay, abrirEstadoEstadio, 'lmEstadoEstadioOverlay');
         const btnSeguridad=overlay.querySelector('#lmSeguridadEstadioBtn');
         if(btnSeguridad) btnSeguridad.addEventListener('click', ()=>{
@@ -11767,6 +12260,7 @@
       const def=cartaDefM(state.mantenimientoCartas[idx].cartaId);
       let dadosElegidos=Math.min(1, state.diceAvailable);
       function pintar(){
+        const scrollTopPrevio=overlay.scrollTop;
         overlay.innerHTML=`
           <div class="lm-dilemma-card lm-dilemma-card-mant">
             ${xCerrarHTML()}
@@ -11784,6 +12278,7 @@
               <button id="lmCancelarCartaBtn" class="lm-btn-cancelar">${t('lm.cancelar')}</button>
             </div>
           </div>`;
+        overlay.scrollTop=scrollTopPrevio;
         const minus=document.getElementById('lmDiceMinus');
         const plus=document.getElementById('lmDicePlus');
         const tirarBtn=document.getElementById('lmTirarBtn');
@@ -11872,6 +12367,7 @@
               Previsión próximo partido en casa: <strong>${prevista.asistentes.toLocaleString('es-ES')}</strong> asientos (${Math.round(prevista.pct*100)}%)
               ${ultima?` · Último partido en casa (J${ultima.jornada}): <strong>${ultima.asistentes.toLocaleString('es-ES')}</strong> (${Math.round(ultima.pct*100)}%)`:''}
             </div>
+            ${prevista.penalizacionDisturbios>0?`<div class="lm-aforo-nota lm-aforo-nota-aviso"><i class="ph ph-bold ph-warning"></i> ${tp('lm.aviso_disturbios_asistencia', {pct:Math.round(prevista.penalizacionDisturbios*100)})}</div>`:''}
           </div>
         </div>
         ${esModoMantener?'':`<div class="lm-popup-actions lm-popup-actions-compact">
@@ -11934,6 +12430,7 @@
         </div>`;
       }).join('');
 
+      const scrollTopPrevio=overlay.scrollTop;
       overlay.innerHTML=`
         <div class="lm-dilemma-card lm-dilemma-card-dg" style="max-width:640px">
           ${xCerrarHTML()}
@@ -11947,7 +12444,7 @@
           </div>
           <div class="lm-prestamo-box">${renderPrestamoHTML()}</div>
           <div class="lm-precio-box">
-            <div class="lm-estadio-bar-label"><i class="ph ph-bold ph-ticket"></i><span>${t('lm.precio_de_la_entrada')}</span><span>${formatoDinero(state.precioEntrada)}</span></div>
+            <div class="lm-estadio-bar-label"><i class="ph ph-bold ph-ticket"></i><span>${t('lm.precio_de_la_entrada')}</span><span id="lmPrecioEntradaValor">${formatoDinero(state.precioEntrada)}</span></div>
             <input type="range" id="lmPrecioEntradaSlider" min="5" max="60" step="1" value="${state.precioEntrada}" class="lm-precio-slider">
             <div class="lm-aforo-nota">Más caro = más ingreso por entrada, pero menos afición vendrá a verte (se nota menos cuanto más nivel tengas en Relaciones con la Afición).</div>
           </div>
@@ -11960,9 +12457,19 @@
             <button id="lmDirectorGeneralCerrar" class="mode-card-btn mode-card-btn-secondary">${t('lm.cerrar')}</button>
           </div>
         </div>`;
+        overlay.scrollTop=scrollTopPrevio;
         wireMostrarInfoHold(overlay, abrirFinanzasDG, 'lmFinanzasOverlay');
 
       const slider=document.getElementById('lmPrecioEntradaSlider');
+      const valorSliderEl=document.getElementById('lmPrecioEntradaValor');
+      // El valor mostrado debe actualizarse en vivo mientras se arrastra
+      // el slider, no solo al soltarlo — 'input' dispara en cada tick del
+      // arrastre, así que aquí solo se actualiza el texto (barato); el
+      // guardado real y el repintado completo del hub se dejan para
+      // 'change' (al soltar), que es cuando de verdad se confirma el valor.
+      if(slider) slider.addEventListener('input', ()=>{
+        if(valorSliderEl) valorSliderEl.textContent=formatoDinero(parseInt(slider.value,10));
+      });
       if(slider) slider.addEventListener('change', ()=>{
         state.precioEntrada=parseInt(slider.value,10);
         if(typeof window.playSound==='function') window.playSound('select');
@@ -12017,6 +12524,7 @@
       const def=cartaDefDG(state.directorGeneralCartas[idx].cartaId);
       let dadosElegidos=Math.min(1, state.diceAvailable);
       function pintar(){
+        const scrollTopPrevio=overlay.scrollTop;
         overlay.innerHTML=`
           <div class="lm-dilemma-card lm-dilemma-card-dg">
             ${xCerrarHTML()}
@@ -12034,6 +12542,7 @@
               <button id="lmCancelarCartaBtn" class="lm-btn-cancelar">${t('lm.cancelar')}</button>
             </div>
           </div>`;
+        overlay.scrollTop=scrollTopPrevio;
         const minus=document.getElementById('lmDiceMinus');
         const plus=document.getElementById('lmDicePlus');
         const tirarBtn=document.getElementById('lmTirarBtn');
@@ -12293,6 +12802,7 @@
         </div>`;
       }).join('');
 
+      const scrollTopPrevio=overlay.scrollTop;
       overlay.innerHTML=`
         <div class="lm-dilemma-card lm-dilemma-card-dd" style="max-width:640px">
           ${xCerrarHTML()}
@@ -12315,6 +12825,7 @@
             <button id="lmDirectorDeportivoCerrar" class="mode-card-btn mode-card-btn-secondary">${t('lm.cerrar')}</button>
           </div>
         </div>`;
+        overlay.scrollTop=scrollTopPrevio;
         wireMostrarInfoHold(overlay, abrirHistorialFichajesDD, 'lmHistorialFichajesDDOverlay');
         const btnInfoPlantillaDD=overlay.querySelector('#lmInfoPlantillaDDBtn');
         if(btnInfoPlantillaDD) btnInfoPlantillaDD.addEventListener('click', ()=>{
@@ -12371,6 +12882,7 @@
       const esSobre=def.tipo==='sobre';
       let dadosElegidos=Math.min(1, state.diceAvailable);
       function pintar(){
+        const scrollTopPrevio=overlay.scrollTop;
         overlay.innerHTML=`
           <div class="lm-dilemma-card lm-dilemma-card-dd">
             ${xCerrarHTML()}
@@ -12388,6 +12900,7 @@
               <button id="lmCancelarCartaBtn" class="lm-btn-cancelar">${t('lm.cancelar')}</button>
             </div>
           </div>`;
+        overlay.scrollTop=scrollTopPrevio;
         const minus=document.getElementById('lmDiceMinus');
         const plus=document.getElementById('lmDicePlus');
         const tirarBtn=document.getElementById('lmTirarBtn');
@@ -12569,6 +13082,7 @@
           <td class="lm-salario-accion-td">${accion}</td>
         </tr>`;
       }).join('');
+      const scrollTopPrevio=overlay.scrollTop;
       overlay.innerHTML=`
         <div class="lm-dilemma-card lm-dilemma-card-dd" style="max-width:640px;text-align:left">
           ${xCerrarHTML()}
@@ -12584,6 +13098,7 @@
             ${esModoMantener?'':`<button id="lmSalariosCerrar" class="mode-card-btn mode-card-btn-gold">${t('lm.cerrar')}</button>`}
           </div>
         </div>`;
+      overlay.scrollTop=scrollTopPrevio;
       const xBtnSal=overlay.querySelector('[data-cerrar-x]');
       if(xBtnSal) xBtnSal.addEventListener('click', ()=>overlay.remove());
       const btnCerrarSal=document.getElementById('lmSalariosCerrar');
@@ -12723,6 +13238,7 @@
         </div>`;
       }).join('');
 
+      const scrollTopPrevio=overlay.scrollTop;
       overlay.innerHTML=`
         <div class="lm-dilemma-card lm-dilemma-card-pf" style="max-width:640px">
           ${xCerrarHTML()}
@@ -12736,6 +13252,7 @@
             <button id="lmPreparadorFisicoCerrar" class="mode-card-btn mode-card-btn-secondary">${t('lm.cerrar')}</button>
           </div>
         </div>`;
+        overlay.scrollTop=scrollTopPrevio;
         wireMostrarInfoHold(overlay, abrirHistorialPF, 'lmHistorialPFOverlay');
 
       const xBtnPF=overlay.querySelector('[data-cerrar-x]');
@@ -12801,6 +13318,7 @@
           </div>`;
         }).join('');
         const completos=slots.filter(s=>s && s.stat).length;
+        const scrollTopPrevio=overlay.scrollTop;
         overlay.innerHTML=`
           <div class="lm-dilemma-card lm-dilemma-card-pf" style="width:520px;max-width:92vw;text-align:left">
             ${xCerrarHTML()}
@@ -12812,6 +13330,7 @@
               <button id="lmPlanCancelar" class="lm-btn-cancelar">${t('lm.cerrar')}</button>
             </div>
           </div>`;
+        overlay.scrollTop=scrollTopPrevio;
         overlay.querySelectorAll('[data-plan-slot-add]').forEach(el=>{
           el.addEventListener('click', ()=>{
             const i=parseInt(el.getAttribute('data-plan-slot-add'),10);
@@ -12887,6 +13406,7 @@
       const def=cartaDefPF(state.preparadorFisicoCartas[idx].cartaId);
       let dadosElegidos=Math.min(1, state.diceAvailable);
       function pintar(){
+        const scrollTopPrevio=overlay.scrollTop;
         overlay.innerHTML=`
           <div class="lm-dilemma-card lm-dilemma-card-pf">
             ${xCerrarHTML()}
@@ -12904,6 +13424,7 @@
               <button id="lmCancelarCartaBtn" class="lm-btn-cancelar">${t('lm.cancelar')}</button>
             </div>
           </div>`;
+        overlay.scrollTop=scrollTopPrevio;
         const minus=document.getElementById('lmDiceMinus');
         const plus=document.getElementById('lmDicePlus');
         const tirarBtn=document.getElementById('lmTirarBtn');

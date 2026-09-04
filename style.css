@@ -2512,6 +2512,13 @@ body.menu-screen .ranking-btn{display:none!important}
    confundía al ratón en botones que en realidad funcionan bien. */
 .mode-card-btn-secondary{background:#2c3238;color:#ccc;cursor:pointer}
 .mode-card-btn-secondary:hover{background:#333a41}
+/* Variantes amarillo/rojo — mismo tratamiento plano que el resto de
+   botones del juego, usadas en el minijuego de scouting: ACERCARSE
+   (arriesgar) en amarillo, PLANTARSE (asegurar lo conseguido) en rojo. */
+.mode-card-btn-amarillo{background:#ffe14d;color:#1a1400}
+.mode-card-btn-amarillo:hover{background:#ffd21a}
+.mode-card-btn-rojo{background:#ff2d55;color:#fff}
+.mode-card-btn-rojo:hover{background:#e0143d}
 
 @media(max-width:1050px){
   .menu-modes{flex-direction:column;align-items:center;gap:24px}
@@ -2803,13 +2810,46 @@ body.liga-manager-screen .ranking-btn-label-lm{display:inline}
 .lm-nodo-acumulado{
   display:flex; flex-direction:column; align-items:center; gap:2px; text-align:center;
   background:var(--lm-surface-0); border:1px solid var(--lm-border); border-radius:7px; padding:6px 2px;
+  /* Capa de selección, en blanco muy sutil — por defecto invisible
+     (spread 0, alpha 0), pero SIEMPRE presente en la lista de
+     box-shadow para que las tarjetas "disponible" (que animan su
+     propio box-shadow) puedan seguir mostrándola de fondo sin
+     pisarla en cada frame de la pulsación dorada. */
+  --sel-shadow:0 0 0 0 rgba(255,255,255,0);
+  box-shadow:var(--sel-shadow);
+  transition:background .15s ease, border-color .15s ease, box-shadow .15s ease;
 }
 .lm-nodo-acumulado i{ font-size:14px; flex-shrink:0; }
 .lm-nodo-acumulado-num{ font-family:'Bebas Neue',Impact,sans-serif; font-size:9.5px; color:var(--lm-text-soft); letter-spacing:.2px; }
 .lm-nodo-acumulado-track{ width:100%; height:3px; background:var(--lm-surface-0); border-radius:2px; overflow:hidden; margin-top:1px; }
 .lm-nodo-acumulado-fill{ height:100%; border-radius:2px; transition:width .3s ease; }
-.lm-nodo-acumulado-disponible{ border-color:var(--gold); box-shadow:0 0 0 1px rgba(201,162,39,.3); animation:lmNodoDisponiblePulso 1.6s ease-in-out infinite; }
-@keyframes lmNodoDisponiblePulso{ 0%,100%{box-shadow:0 0 0 1px rgba(201,162,39,.3)} 50%{box-shadow:0 0 8px 1px rgba(201,162,39,.55)} }
+/* Feedback de selección al pulsar una tarjeta para ver su
+   descripción — antes no había ninguna marca visual de cuál se
+   estaba consultando. Es un aro blanco muy sutil hacia dentro
+   (inset), así queda siempre POR DEBAJO del brillo dorado de las
+   disponibles (que es hacia fuera) en vez de competir con él. */
+.lm-nodo-acumulado-seleccionada{
+  --sel-shadow:inset 0 0 0 1px rgba(255,255,255,.32);
+  background:rgba(255,255,255,.08);
+  border-color:rgba(255,255,255,.45);
+}
+.lm-nodo-acumulado-disponible{
+  border-color:var(--gold);
+  box-shadow:var(--sel-shadow), 0 0 0 1px rgba(201,162,39,.3);
+  animation:lmNodoDisponiblePulso 1.6s ease-in-out infinite;
+}
+@keyframes lmNodoDisponiblePulso{
+  0%,100%{box-shadow:var(--sel-shadow), 0 0 0 1px rgba(201,162,39,.3)}
+  50%{box-shadow:var(--sel-shadow), 0 0 8px 1px rgba(201,162,39,.55)}
+}
+/* Nivel 2 (el hito final de ese tipo de nodo) destaca más que el
+   nivel 1: el mismo destello dorado pero más grande y más rápido,
+   para que se note que es la recompensa gorda. */
+.lm-nodo-acumulado-disponible-n2{ animation-name:lmNodoDisponiblePulsoN2; animation-duration:1.3s; }
+@keyframes lmNodoDisponiblePulsoN2{
+  0%,100%{box-shadow:var(--sel-shadow), 0 0 0 1px rgba(201,162,39,.35)}
+  50%{box-shadow:var(--sel-shadow), 0 0 11px 2px rgba(201,162,39,.65)}
+}
 .lm-nodo-reclamar-btn{
   margin-top:2px;width:100%;border:none;border-radius:4px;background:var(--gold);color:var(--lm-gold-tint);
   font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:.3px;font-size:9px;padding:3px 1px;cursor:pointer;
@@ -3638,6 +3678,7 @@ body.liga-manager-screen .ranking-btn-label-lm{display:inline}
 .lm-aforo-bar-wrap{width:100%;height:10px;background:var(--lm-border);border-radius:5px;overflow:hidden}
 .lm-aforo-bar-fill{height:100%;background:linear-gradient(90deg,#c9a227,#e6c94a);border-radius:5px;transition:width .3s ease}
 .lm-aforo-nota{font-size:9px;color:var(--lm-text-dim);margin-top:5px;line-height:1.4}
+.lm-aforo-nota-aviso{color:#e88a2e;display:flex;align-items:center;gap:5px;font-weight:600}
 .med-nivel-row{display:flex;align-items:center;gap:8px;background:var(--lm-surface-2);border:1px solid var(--lm-border);padding:8px 10px;position:relative}
 .med-nivel-completado{border-color:#e6c94a;background:linear-gradient(90deg,rgba(230,201,74,.12),transparent 60%)}
 .med-nivel-check{color:#e6c94a!important;font-size:16px;flex-shrink:0}
@@ -4117,6 +4158,12 @@ body.liga-manager-screen .ranking-btn-label-lm{display:inline}
 }
 .lm-semana-entreno{background:rgba(224,138,62,.15);color:#e08a3e;border:2px solid #e08a3e}
 .lm-semana-descanso{background:rgba(93,202,165,.15);color:#5dcaa5;border:2px solid #5dcaa5}
+/* Días ocupados por otro nodo del árbol (scouting, medios, táctica,
+   amistoso, quiniela): el color real del nodo llega inline vía
+   --zona-color-less approach (style="color:...") heredado por
+   currentColor, así este bloque solo define el fondo/borde neutros
+   que se tiñen automáticamente del color de cada nodo. */
+.lm-semana-actividad{background:rgba(201,162,39,.13);border:2px solid currentColor}
 .lm-semana-dia-tag{font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:1.5px;font-size:13px;color:var(--lm-text-soft);text-align:center;margin-bottom:8px}
 .lm-semana-dia-textos{min-height:50px;text-align:center}
 .lm-semana-dia-textos p{font-size:12px;color:var(--lm-text-muted);margin:3px 0;line-height:1.4}
@@ -4492,37 +4539,71 @@ body.liga-manager-screen .ranking-btn-label-lm{display:inline}
   border-color:#8a7fd6;width:372px;max-width:92vw;
   padding:24px 26px 22px;position:relative;overflow:hidden;
   background:
-    radial-gradient(120% 90% at 50% -10%, rgba(138,127,214,.16), transparent 60%),
-    linear-gradient(165deg,#1c1a24,#121016 65%);
-  box-shadow:0 0 0 1px rgba(138,127,214,.22),0 24px 60px rgba(0,0,0,.6);
+    radial-gradient(120% 90% at 50% -10%, rgba(167,139,250,.18), transparent 60%),
+    linear-gradient(165deg,#171420,#0a0d12 70%);
+  box-shadow:0 0 0 1px rgba(167,139,250,.16),0 30px 70px rgba(0,0,0,.7),inset 0 1px 0 rgba(255,255,255,.03);
+}
+/* Rejilla neón de fondo, igual que Parada Perfecta — mismo lenguaje
+   visual "casino" en los dos minijuegos del árbol de nodos. */
+.lm-scout-mini-card::before{
+  content:'';position:absolute;inset:0;pointer-events:none;opacity:.35;border-radius:inherit;
+  background-image:
+    linear-gradient(rgba(167,139,250,.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(167,139,250,.06) 1px, transparent 1px);
+  background-size:34px 34px;
+  mask-image:radial-gradient(ellipse at 50% 40%, #000 10%, transparent 72%);
 }
 .lm-scout-mini-eyebrow{
-  font-size:9.5px;letter-spacing:2.2px;text-align:center;color:#a79ae0;
-  font-weight:700;margin-bottom:6px;opacity:.85;
+  font-size:9.5px;letter-spacing:2.4px;text-align:center;color:#c4b5fd;
+  font-weight:700;margin-bottom:6px;text-shadow:0 0 10px rgba(196,181,253,.6);
+  display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap;position:relative;z-index:1;
 }
-.lm-scout-mini-title{justify-content:center;text-align:center;font-size:17px;margin:0 0 16px}
-.lm-scout-mini-title i{color:#8a7fd6;font-size:20px}
-.lm-scout-mini-meter-wrap{margin:14px 0 4px;transition:transform .2s ease}
+/* Insignia de dificultad del nodo (fácil/normal/difícil) — mismo
+   esquema de color que ya usa el amistoso, para que de un vistazo se
+   sepa a qué se está jugando antes de empezar a empujar. */
+.lm-scout-mini-dificultad-badge{
+  font-family:'Bebas Neue',Impact,sans-serif;font-size:9.5px;letter-spacing:1.5px;
+  color:var(--dc,#e6c94a);border:1px solid var(--dc,#e6c94a);border-radius:20px;
+  padding:2px 8px;opacity:1;
+}
+.lm-scout-mini-title{
+  justify-content:center;text-align:center;font-size:26px;margin:0 0 16px;letter-spacing:2px;
+  text-shadow:0 0 14px rgba(196,181,253,.55),0 0 28px rgba(196,181,253,.25);position:relative;z-index:1;
+}
+.lm-scout-mini-title i{color:#a78bfa;font-size:22px;filter:drop-shadow(0 0 8px rgba(167,139,250,.7))}
+.lm-scout-mini-meter-wrap{margin:14px 0 4px;transition:transform .2s ease;position:relative;z-index:1}
 .lm-scout-mini-meter-label{
   display:flex;align-items:center;gap:6px;
   font-size:10px;letter-spacing:1.4px;text-transform:uppercase;color:var(--lm-text-dim);
   text-align:left;margin-bottom:5px;font-weight:700;
 }
-.lm-scout-mini-meter-label i{font-size:11px;color:#8a7fd6}
+.lm-scout-mini-meter-label i{font-size:11px;color:#c4b5fd}
 .lm-scout-mini-risk-label i{color:#e29a8a}
-.lm-scout-mini-meter-track{
-  width:100%;height:20px;border-radius:3px;background:rgba(0,0,0,.35);
-  border:1px solid rgba(138,127,214,.35);overflow:hidden;position:relative;
-  box-shadow:inset 0 2px 5px rgba(0,0,0,.5);
+/* Etiqueta "GRATIS" junto a la calidad del informe — el sobre de este
+   minijuego nunca cuesta nada, y ahora se ve desde el primer vistazo,
+   no solo al final si se consigue. */
+.lm-scout-mini-tag-gratis{
+  font-family:'Bebas Neue',Impact,sans-serif;font-size:9px;letter-spacing:1px;
+  color:#0c1016;background:#5dcaa5;border-radius:10px;padding:1px 6px;
+  box-shadow:0 0 8px rgba(93,202,165,.5);margin-left:2px;
 }
+.lm-scout-mini-meter-track{
+  width:100%;height:22px;border-radius:4px;background:rgba(0,0,0,.4);
+  border:1px solid rgba(167,139,250,.35);overflow:hidden;position:relative;
+  box-shadow:inset 0 2px 6px rgba(0,0,0,.6);
+}
+/* Clara al principio, cada vez más dorada e intensa según sube la
+   calidad del informe — antes iba de morado a dorado a verde; ahora es
+   una progresión continua dentro del dorado, que es lo que de verdad
+   transmite "premio" (y es GRATIS, además). */
 .lm-scout-mini-meter-fill{
   height:100%;position:relative;overflow:hidden;
-  background:linear-gradient(90deg,#5b4fb8,#8a7fd6);
-  transition:width .2s ease,background .25s ease;
-  box-shadow:0 0 14px rgba(138,127,214,.6) inset, 0 0 8px rgba(138,127,214,.5);
+  background:linear-gradient(90deg,#fff3c4,#ffe98a);
+  transition:width .2s ease,background .25s ease,box-shadow .25s ease;
+  box-shadow:0 0 10px rgba(255,225,138,.35) inset, 0 0 6px rgba(255,225,138,.3);
 }
-.lm-scout-mini-meter-fill-media{background:linear-gradient(90deg,#a68a3e,#e6c94a);box-shadow:0 0 14px rgba(230,201,74,.55) inset,0 0 8px rgba(230,201,74,.45)}
-.lm-scout-mini-meter-fill-alta{background:linear-gradient(90deg,#2f8f5b,#5dcaa5);box-shadow:0 0 14px rgba(93,202,165,.6) inset,0 0 8px rgba(93,202,165,.5)}
+.lm-scout-mini-meter-fill-media{background:linear-gradient(90deg,#ffe14d,#e6b800);box-shadow:0 0 15px rgba(230,184,0,.55) inset,0 0 10px rgba(230,184,0,.5)}
+.lm-scout-mini-meter-fill-alta{background:linear-gradient(90deg,#ffcf40,#c9a227);box-shadow:0 0 20px rgba(255,207,64,.75) inset,0 0 14px rgba(255,207,64,.65)}
 /* Barrido de brillo constante sobre el relleno — el detalle "gloss"
    que separa un medidor plano de uno que parece pulido de verdad. */
 .lm-scout-mini-meter-sheen{
@@ -4533,11 +4614,19 @@ body.liga-manager-screen .ranking-btn-label-lm{display:inline}
 }
 @keyframes lmScoutSheenSweep{0%{background-position:140% 0}100%{background-position:-40% 0}}
 .lm-scout-mini-pct{
-  font-family:'Bebas Neue',Impact,sans-serif;font-size:40px;letter-spacing:.5px;
-  color:var(--lm-text);text-align:center;margin-top:6px;line-height:1;
-  text-shadow:0 0 18px rgba(138,127,214,.35);
+  font-family:'Bebas Neue',Impact,sans-serif;font-size:42px;letter-spacing:.5px;
+  color:#fff;text-align:center;margin-top:6px;line-height:1;
+  text-shadow:0 0 20px rgba(255,207,64,.4);
 }
 .lm-scout-mini-pct-simbolo{font-size:.55em;color:var(--lm-text-muted);margin-left:1px}
+/* Aclaración explícita de que ese % ES la probabilidad real de sobre
+   — para que quede claro que conseguirlo o no depende directamente de
+   esta barra, no de un sorteo aparte. Más grande que antes (se leía
+   demasiado pequeña) y menciona que el sobre es GRATIS. */
+.lm-scout-mini-informe-nota{
+  font-size:11.5px;text-align:center;color:#a9afb8;letter-spacing:.2px;
+  margin:2px 0 10px;line-height:1.4;
+}
 /* Medidor de riesgo — mismo tamaño que el de calidad del informe pero
    en rojo/naranja, para que el jugador vea las dos cosas subiendo A LA
    VEZ cada vez que decide dar un paso más: esa comparación en vivo es
@@ -4545,35 +4634,59 @@ body.liga-manager-screen .ranking-btn-label-lm{display:inline}
 .lm-scout-mini-risk-wrap{margin-top:16px;text-align:right}
 .lm-scout-mini-risk-label{color:#e29a8a}
 .lm-scout-mini-risk-track{
-  width:100%;height:12px;border-radius:2px;background:rgba(0,0,0,.35);
-  border:1px solid rgba(226,75,74,.3);overflow:hidden;box-shadow:inset 0 2px 4px rgba(0,0,0,.5);
+  width:100%;height:13px;border-radius:2px;background:rgba(0,0,0,.4);
+  border:1px solid rgba(255,45,85,.32);overflow:hidden;box-shadow:inset 0 2px 5px rgba(0,0,0,.6);
 }
+/* Pálida al principio, cada vez MÁS roja e intensa (nunca al revés)
+   según sube el riesgo — antes iba de marrón a naranja, lo que se leía
+   como "se calma" en vez de "se dispara". */
 .lm-scout-mini-risk-fill{
   height:100%;
-  background:linear-gradient(90deg,#7a4a3a,#e08a3e);
-  transition:width .2s ease,background .2s ease;
+  background:linear-gradient(90deg,#ffb3c0,#ff6b85);
+  box-shadow:0 0 4px rgba(255,107,133,.25) inset;
+  transition:width .2s ease,background .2s ease,box-shadow .2s ease;
 }
-.lm-scout-mini-risk-fill-media{background:linear-gradient(90deg,#a05a3a,#e2704a)}
-.lm-scout-mini-risk-fill-alta{background:linear-gradient(90deg,#a5342f,#e24b4a);animation:lmScoutRiskPulse 1s ease-in-out infinite}
+.lm-scout-mini-risk-fill-media{background:linear-gradient(90deg,#ff5d78,#ff2d55);box-shadow:0 0 10px rgba(255,45,85,.4) inset,0 0 8px rgba(255,45,85,.3)}
+.lm-scout-mini-risk-fill-alta{background:linear-gradient(90deg,#ff2d55,#ff0033);box-shadow:0 0 16px rgba(255,0,51,.7) inset,0 0 14px rgba(255,0,51,.6);animation:lmScoutRiskPulse 1s ease-in-out infinite}
+/* La cifra en sí misma late al ritmo (no solo los anillos detrás, que
+   antes eran el único indicio y apenas se notaban) — un "lub-dub" real:
+   dos golpes de escala + brillo rojo seguidos de una pausa, siempre
+   visible desde el primer empujón pero tanto más fuerte cuanto mayor
+   es --oi. Roja en todo momento, no solo a partir del umbral "alta". */
 .lm-scout-mini-risk-pct{
-  font-family:'Bebas Neue',Impact,sans-serif;font-size:14px;letter-spacing:.5px;
-  color:var(--lm-text-muted);margin-top:5px;
+  font-family:'Bebas Neue',Impact,sans-serif;font-size:16px;letter-spacing:.5px;
+  color:#ff6b85;margin-top:5px;
   display:inline-block;position:relative;padding:2px 4px;
 }
-/* Riesgo alto: la cifra se queda QUIETA (nada de zoom) y en su lugar
-   el pulso se transmite con ondas rojas expandiéndose detrás, al
-   ritmo de un latido real (doble onda rápida — "lub-dub" — y una
-   pausa antes de repetir), igual que el destello de gol del visor de
-   partido pero en rojo y sin necesitar un lienzo SVG. */
-.lm-scout-mini-risk-pct-alta{color:#f08a80}
-.lm-scout-mini-risk-pct-alta::before,
-.lm-scout-mini-risk-pct-alta::after{
-  content:'';position:absolute;left:50%;top:50%;width:30px;height:30px;
-  margin:-15px 0 0 -15px;border-radius:50%;border:2px solid #e24b4a;
+/* Además de la cifra, unas ondas rojas expandiéndose detrás, al ritmo
+   de un latido real (doble onda rápida — "lub-dub" — y una pausa antes
+   de repetir), igual que el destello de gol del visor de partido pero
+   en rojo y sin necesitar un lienzo SVG.
+   La onda está SIEMPRE presente desde el primer empujón, pero su
+   intensidad (opacidad y cuánto se expande) depende de la variable
+   --oi (0.12 a 1) que el JS actualiza en tiempo real según el riesgo
+   mostrado — así empieza casi imperceptible y se va notando cada vez
+   más a medida que sube el porcentaje, incluso mientras el contador
+   está subiendo en vivo durante la animación de cada empujón. */
+.lm-scout-mini-risk-pct-alta{color:#ff2d55}
+.lm-scout-mini-risk-pct-onda{animation:lmScoutNumeroLatido 1.15s cubic-bezier(.16,.72,.32,1) infinite}
+@keyframes lmScoutNumeroLatido{
+  0%{transform:scale(1);text-shadow:0 0 calc(4px + 10px * var(--oi, .12)) rgba(255,45,85, calc(.5 + .5 * var(--oi, .12)))}
+  9%{transform:scale(calc(1 + .22 * var(--oi, .12)));text-shadow:0 0 calc(10px + 18px * var(--oi, .12)) rgba(255,45,85, calc(.7 + .3 * var(--oi, .12)))}
+  18%{transform:scale(1);text-shadow:0 0 calc(4px + 10px * var(--oi, .12)) rgba(255,45,85, calc(.5 + .5 * var(--oi, .12)))}
+  27%{transform:scale(calc(1 + .16 * var(--oi, .12)));text-shadow:0 0 calc(10px + 18px * var(--oi, .12)) rgba(255,45,85, calc(.7 + .3 * var(--oi, .12)))}
+  38%{transform:scale(1);text-shadow:0 0 calc(4px + 10px * var(--oi, .12)) rgba(255,45,85, calc(.5 + .5 * var(--oi, .12)))}
+  100%{transform:scale(1);text-shadow:0 0 calc(4px + 10px * var(--oi, .12)) rgba(255,45,85, calc(.5 + .5 * var(--oi, .12)))}
+}
+.lm-scout-mini-risk-pct-onda::before,
+.lm-scout-mini-risk-pct-onda::after{
+  content:'';position:absolute;left:50%;top:50%;width:32px;height:32px;
+  margin:-16px 0 0 -16px;border-radius:50%;
+  border:2px solid rgba(255,45,85, calc(.35 + .65 * var(--oi, .12)));
   opacity:0;pointer-events:none;
   animation:lmScoutHeartbeatOnda 1.15s cubic-bezier(.16,.72,.32,1) infinite;
 }
-.lm-scout-mini-risk-pct-alta::after{animation-delay:.16s}
+.lm-scout-mini-risk-pct-onda::after{animation-delay:.16s}
 .lm-scout-mini-resultado{
   font-size:12.5px;line-height:1.55;padding:12px 14px;margin:14px 0 4px;
   border-left:3px solid transparent;
@@ -4626,9 +4739,9 @@ body.liga-manager-screen .ranking-btn-label-lm{display:inline}
    retraso), y ambas se desvanecen mucho antes de que el ciclo se
    repita — de ahí la pausa perceptible entre "lub-dub" y el siguiente. */
 @keyframes lmScoutHeartbeatOnda{
-  0%{transform:scale(.5);opacity:.85}
+  0%{transform:scale(calc(.5 + .12 * (1 - var(--oi, .12))));opacity:calc(.85 * var(--oi, .12))}
   55%{opacity:0}
-  100%{transform:scale(2.2);opacity:0}
+  100%{transform:scale(calc(1.35 + .85 * var(--oi, .12)));opacity:0}
 }
 @keyframes lmScoutTensionBorder{
   0%,100%{box-shadow:0 0 0 1px rgba(226,75,74,.2),0 24px 60px rgba(0,0,0,.6)}
@@ -4656,6 +4769,102 @@ body.liga-manager-screen .ranking-btn-label-lm{display:inline}
   100%{background:rgba(0,0,0,.82)}
 }
 .lm-scout-mini-overlay-flash-rojo{animation:lmScoutOverlayFlashRojo .55s ease-out}
+
+/* ---------- Minijuego "Parada Perfecta" (entreno intenso) ---------- */
+.lm-pp-card{
+  position:relative;width:100%;max-width:400px;max-height:92%;overflow-y:auto;
+  background:linear-gradient(165deg,#12161d,#0a0d12 70%);
+  border:1px solid #1c2530;border-radius:18px;
+  padding:24px 22px 20px;
+  box-shadow:0 0 0 1px rgba(224,138,62,.10),0 30px 70px rgba(0,0,0,.7),inset 0 1px 0 rgba(255,255,255,.03);
+  animation:contactPopupIn .2s cubic-bezier(.22,1,.36,1);
+}
+.lm-pp-card.lm-pp-shake{animation:lmPpCardShake .3s ease}
+@keyframes lmPpCardShake{
+  0%,100%{transform:translateX(0)} 20%{transform:translateX(-6px)} 40%{transform:translateX(5px)}
+  60%{transform:translateX(-4px)} 80%{transform:translateX(3px)}
+}
+.lm-pp-eyebrow{
+  display:flex;align-items:center;justify-content:center;gap:6px;
+  font-size:10px;letter-spacing:3px;text-transform:uppercase;
+  color:#ff9d3f;text-shadow:0 0 10px rgba(255,157,63,.6);margin-bottom:2px;
+}
+.lm-pp-eyebrow i{font-size:12px}
+.lm-pp-titulo{
+  text-align:center;font-family:'Bebas Neue',Impact,sans-serif;font-size:28px;letter-spacing:2px;
+  margin:0 0 4px;color:#fff;
+  text-shadow:0 0 14px rgba(255,225,77,.5),0 0 28px rgba(255,225,77,.25);
+}
+.lm-pp-subtitulo{text-align:center;font-size:11.5px;color:#8b93a1;margin:0 0 18px;line-height:1.5}
+.lm-pp-intentos{display:flex;justify-content:center;gap:9px;margin-bottom:18px}
+.lm-pp-intento-punto{
+  width:13px;height:13px;border-radius:50%;background:#1a1f27;border:1.5px solid #2a323e;
+  transition:all .25s ease;
+}
+.lm-pp-intento-punto.lm-pp-usado-hit{background:#ffe14d;border-color:#ffe14d;box-shadow:0 0 10px rgba(255,225,77,.8)}
+.lm-pp-intento-punto.lm-pp-usado-miss{background:#ff2d55;border-color:#ff2d55;box-shadow:0 0 10px rgba(255,45,85,.7);opacity:.7}
+.lm-pp-intento-punto.lm-pp-activo{box-shadow:0 0 0 3px rgba(255,157,63,.3);border-color:#ff9d3f}
+.lm-pp-combo-zona{text-align:center;margin-bottom:14px;height:46px}
+.lm-pp-combo-num{
+  font-family:'Bebas Neue',Impact,sans-serif;font-size:34px;letter-spacing:1px;color:#fff;
+  transition:text-shadow .15s ease,color .15s ease;
+}
+.lm-pp-combo-num.lm-pp-combo-activo{color:#ffcf40;text-shadow:0 0 16px rgba(255,207,64,.85),0 0 34px rgba(255,207,64,.4)}
+.lm-pp-combo-label{font-size:9.5px;letter-spacing:2px;text-transform:uppercase;color:#6b7280;margin-top:-2px}
+.lm-pp-pista-wrap{position:relative;height:32px;margin-bottom:18px}
+.lm-pp-pista{
+  position:relative;width:100%;height:100%;
+  background:linear-gradient(180deg,#080a0d,#0d1116);
+  border:1.5px solid #1f2833;border-radius:7px;overflow:hidden;
+  box-shadow:inset 0 3px 8px rgba(0,0,0,.7),inset 0 0 0 1px rgba(255,255,255,.02);
+}
+.lm-pp-zona-amarilla{
+  position:absolute;top:0;bottom:0;
+  background:linear-gradient(180deg,rgba(255,225,77,.9),rgba(255,180,40,.75));
+  box-shadow:0 0 16px rgba(255,225,77,.55),inset 0 0 10px rgba(255,255,255,.25);
+  border-left:1px solid rgba(255,255,255,.5);border-right:1px solid rgba(255,255,255,.5);
+  transition:width .3s cubic-bezier(.2,.9,.3,1),left .3s cubic-bezier(.2,.9,.3,1);
+}
+.lm-pp-aguja{
+  position:absolute;top:-2px;bottom:-2px;width:4px;
+  background:linear-gradient(180deg,#ff6b8a,#ff2d55);
+  box-shadow:0 0 10px rgba(255,45,85,.9),0 0 20px rgba(255,45,85,.5);
+  border-radius:2px;will-change:left;
+}
+.lm-pp-pista.lm-pp-flash-hit{animation:lmPpFlashHit .3s ease}
+.lm-pp-pista.lm-pp-flash-miss{animation:lmPpFlashMiss .3s ease}
+@keyframes lmPpFlashHit{0%{box-shadow:inset 0 0 34px rgba(255,225,77,.9)}100%{box-shadow:inset 0 3px 8px rgba(0,0,0,.7)}}
+@keyframes lmPpFlashMiss{0%{box-shadow:inset 0 0 34px rgba(255,45,85,.9)}100%{box-shadow:inset 0 3px 8px rgba(0,0,0,.7)}}
+.lm-pp-resultado-texto{text-align:center;font-size:12px;color:#9aa2ad;min-height:16px;margin-top:10px;letter-spacing:.3px}
+.lm-pp-resultado-texto b{color:#ffe14d}
+.lm-pp-final{display:none;text-align:center}
+.lm-pp-final.lm-pp-visible{display:block}
+.lm-pp-trofeo{font-size:38px;margin-bottom:6px}
+.lm-pp-trofeo i{filter:drop-shadow(0 0 14px rgba(255,207,64,.6))}
+.lm-pp-trofeo .ph-minus-circle{color:#5b6270;filter:none}
+.lm-pp-trofeo .ph-check-circle{color:#5dcaa5;filter:drop-shadow(0 0 10px rgba(93,202,165,.5))}
+.lm-pp-trofeo .ph-star{color:#ffcf40}
+.lm-pp-trofeo .ph-trophy{color:#ffcf40}
+.lm-pp-combo-final{
+  font-family:'Bebas Neue',Impact,sans-serif;font-size:44px;color:#ffcf40;
+  text-shadow:0 0 20px rgba(255,207,64,.8),0 0 46px rgba(255,207,64,.4);margin:2px 0;
+}
+.lm-pp-desc{font-size:12px;color:#9aa2ad;margin-bottom:16px}
+.lm-pp-stats{display:flex;gap:10px;margin-bottom:16px}
+.lm-pp-stat{flex:1;background:#11161d;border:1px solid #1c2530;border-radius:10px;padding:10px 6px}
+.lm-pp-stat-n{font-family:'Bebas Neue',Impact,sans-serif;font-size:19px;color:#fff}
+.lm-pp-stat-n.lm-pp-pos{color:#5dcaa5;text-shadow:0 0 10px rgba(93,202,165,.5)}
+.lm-pp-stat-l{font-size:8.5px;letter-spacing:1px;text-transform:uppercase;color:#6b7280;margin-top:2px}
+.lm-pp-particulas{position:absolute;inset:0;pointer-events:none;overflow:visible;z-index:5}
+.lm-pp-particula{
+  position:absolute;width:5px;height:5px;border-radius:1px;opacity:0;
+  animation:lmPpParticulaPop .7s cubic-bezier(.2,.8,.3,1) forwards;
+}
+@keyframes lmPpParticulaPop{
+  0%{opacity:0;transform:translate(0,0) scale(.4) rotate(0)}
+  12%{opacity:1}
+  100%{opacity:0;transform:translate(var(--dx),var(--dy)) scale(1) rotate(220deg)}
+}
 
 /* Tarjeta de Liga Manager cuando el acceso está desbloqueado (solo admin
    autorizado mientras el modo está en construcción): mismo tratamiento
@@ -4993,11 +5202,21 @@ body.light-theme.menu-screen{
   .lm-seguridad-mapa-mini{width:100%;border-radius:10px;opacity:.9;display:block!important}
   .lm-seguridad-lista-movil{display:flex!important;flex-direction:column;gap:6px}
   .lm-zona-fila-movil{
-    display:grid;grid-template-columns:5px 1fr auto auto auto;align-items:center;gap:8px;
-    background:var(--lm-surface-1);border:1px solid var(--lm-border);border-radius:8px;padding:8px 10px;
+    display:grid;grid-template-columns:6px 1fr auto auto auto;align-items:center;gap:8px;
+    background:var(--lm-surface-1);border:1px solid var(--zona-color, var(--lm-border));border-radius:8px;padding:8px 10px;
+    box-shadow:inset 0 0 0 1px transparent;
+    transition:border-color .2s ease;
   }
-  .lm-zona-fila-color{width:5px;align-self:stretch;border-radius:3px;min-height:32px}
-  .lm-zona-fila-color-grave{animation:lmZonaPulso 1.1s ease-in-out infinite}
+  /* La fila entera se tiñe del color del nivel de disturbio de su zona
+     (--zona-color, ya fijado desde JS como custom property inline) —
+     antes solo se pintaba la barrita lateral y esta variable se
+     quedaba sin usar en el resto de la tarjeta, así que en móvil no
+     se percibía ningún tinte real. */
+  .lm-zona-fila-movil[style*="--zona-color"]{
+    box-shadow:inset 3px 0 0 0 var(--zona-color), inset 0 0 14px -6px var(--zona-color);
+  }
+  .lm-zona-fila-color{width:6px;align-self:stretch;border-radius:3px;min-height:32px;background:var(--zona-color, #333)}
+  .lm-zona-fila-color-grave{animation:lmZonaFilaColorPulso 1.1s ease-in-out infinite}
   .lm-zona-fila-info{min-width:0}
   .lm-zona-fila-nombre{font-size:11px;color:var(--lm-text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .lm-zona-fila-estado{font-family:'Bebas Neue',Impact,sans-serif;font-size:10px;letter-spacing:.5px;margin-top:1px}
@@ -5107,6 +5326,10 @@ body.light-theme.menu-screen{
 @keyframes lmZonaPulso{
   0%,100%{opacity:.15;transform:translate(-50%,-50%) scale(1)}
   50%{opacity:.32;transform:translate(-50%,-50%) scale(1.15)}
+}
+@keyframes lmZonaFilaColorPulso{
+  0%,100%{opacity:.7}
+  50%{opacity:1;box-shadow:0 0 8px 1px var(--zona-color,transparent)}
 }
 .lm-zona-etiqueta{
   position:relative;z-index:1;background:rgba(10,12,10,.92);border:1px solid rgba(255,255,255,.15);

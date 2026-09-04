@@ -110,42 +110,98 @@
 
   // ---------- Construcción de la crónica (prosa) a partir de eventos reales ----------
   // datos.eventos: [{minute, team:'home'|'away', type:'goal'|'card', tarjeta, jugador:{name}}]
+  //
+  // Devuelve {lead, cuerpo}: "lead" es el párrafo de apertura, pensado
+  // para ir junto a la foto (ahora más pequeña) en la portada, y
+  // "cuerpo" es el resto de la crónica — bastante más extensa que
+  // antes, para que enlace los sucesos entre sí (remontadas, tarjetas,
+  // reparto de la posesión...) como haría un periódico de verdad, en
+  // vez de limitarse a listar los goles uno detrás de otro.
   function construirCronica(datos){
     const {nombreLocal, nombreVisitante, golesLocal, golesVisitante, eventos} = datos;
     const goles=(eventos||[]).filter(e=>e.type==='goal').sort((a,b)=>a.minute-b.minute);
+    const tarjetas=(eventos||[]).filter(e=>e.type==='card').sort((a,b)=>a.minute-b.minute);
     const ganaLocal=golesLocal>golesVisitante, ganaVisitante=golesVisitante>golesLocal, empate=golesLocal===golesVisitante;
     const equipoGanador = ganaLocal?nombreLocal:(ganaVisitante?nombreVisitante:null);
     const equipoPerdedor = ganaLocal?nombreVisitante:(ganaVisitante?nombreLocal:null);
+    const nar=detectarNarrativa(datos);
 
-    const parrafos=[];
-
-    // Párrafo 1: contexto de cómo arrancó/se decidió el partido
+    // Lead: contexto de cómo arrancó el partido — se muestra junto a
+    // la foto en portada, así que se queda como párrafo propio y NO
+    // se repite luego en el cuerpo.
+    let lead;
     if(goles.length===0){
-      parrafos.push(tp('cr.pocas_ocasiones', {estadio:escaparHTML(datos.estadio||t('cr.final')), local:escaparHTML(nombreLocal), visitante:escaparHTML(nombreVisitante)}));
+      lead=tp('cr.pocas_ocasiones', {estadio:escaparHTML(datos.estadio||t('cr.final')), local:escaparHTML(nombreLocal), visitante:escaparHTML(nombreVisitante)});
     } else {
       const primerGol=goles[0];
       const equipoPrimerGol = primerGol.team==='home' ? nombreLocal : nombreVisitante;
-      parrafos.push(tp('cr.abre_marcador', {
+      lead=tp('cr.abre_marcador', {
         minuto:primerGol.minute,
         jugador:`<b>${escaparHTML(primerGol.jugador && primerGol.jugador.name || 'Jugador')}</b>`,
         equipo:escaparHTML(equipoPrimerGol), estadio:escaparHTML(datos.estadio||''),
-      }));
+      });
     }
 
-    // Párrafo 2: resto de goles, con jugador+equipo siempre identificados
-    // y variando la frase para no repetir siempre el mismo verbo.
+    const parrafos=[];
+
+    // Resto de goles: ya no es una simple lista separada por comas —
+    // cada uno es su propia frase, con un conector distinto delante
+    // (variado, para que no suene mecánico) que enlaza con el gol
+    // anterior, imitando cómo un cronista real va hilando la acción.
     if(goles.length>1){
       const verbos=[t('cr.verbo1'),t('cr.verbo2'),t('cr.verbo3'),t('cr.verbo4'),t('cr.verbo5'),t('cr.verbo6')];
-      const resto=goles.slice(1).map((g,i)=>{
+      const conectores=[t('cr.conector1'),t('cr.conector2'),t('cr.conector3'),t('cr.conector4'),t('cr.conector5'),t('cr.conector6')];
+      const frasesGoles=goles.slice(1).map((g,i)=>{
         const equipo = g.team==='home' ? nombreLocal : nombreVisitante;
-        const verbo=verbos[i%verbos.length];
-        return `<b>${escaparHTML(g.jugador && g.jugador.name || 'Jugador')}</b> (${escaparHTML(equipo)}) ${verbo} en el ${g.minute}'`;
+        return tp('cr.gol_frase', {
+          conector:conectores[i%conectores.length],
+          jugador:`<b>${escaparHTML(g.jugador && g.jugador.name || 'Jugador')}</b>`,
+          equipo:escaparHTML(equipo), verbo:verbos[i%verbos.length], minuto:g.minute,
+        });
       });
-      const frase = resto.length===1 ? resto[0] : (resto.slice(0,-1).join(', ') + ' y ' + resto[resto.length-1]);
-      parrafos.push(`${frase}, ${t('cr.no_dio_tregua')}`);
+      parrafos.push(`${frasesGoles.join(' ')} ${t('cr.no_dio_tregua')}`);
     }
 
-    // Párrafo 3: cierre, con veredicto
+    // Vuelco del marcador: si hubo remontada o pinchazo, se dedica un
+    // párrafo propio a explicar ESE giro concreto — es lo que más
+    // conecta unos sucesos con otros en una crónica real, más que la
+    // simple sucesión de goles.
+    if(nar.remontadaLocal || nar.remontadaVisitante){
+      const equipoRemonta = nar.remontadaLocal?nombreLocal:nombreVisitante;
+      const equipoIba = nar.remontadaLocal?nombreVisitante:nombreLocal;
+      parrafos.push(tp('cr.parrafo_remontada', {equipoRemonta:`<b>${escaparHTML(equipoRemonta)}</b>`, equipoIba:escaparHTML(equipoIba)}));
+    } else if(nar.pinchazoLocal || nar.pinchazoVisitante){
+      const equipo = nar.pinchazoLocal?nombreLocal:nombreVisitante;
+      const rival = nar.pinchazoLocal?nombreVisitante:nombreLocal;
+      parrafos.push(tp('cr.parrafo_pinchazo', {equipo:`<b>${escaparHTML(equipo)}</b>`, rival:escaparHTML(rival)}));
+    }
+
+    // Incidencias arbitrales tejidas en la propia narración (no solo
+    // en la lista lateral de tarjetas), para que también formen parte
+    // del relato y no sean un dato suelto.
+    if(tarjetas.length){
+      const frasesTarjetas=tarjetas.map(tj=>{
+        const equipo = tj.team==='home' ? nombreLocal : nombreVisitante;
+        const color = t(tj.tarjeta==='roja' ? 'cr.tarjeta_roja' : 'cr.tarjeta_amarilla');
+        return tp('cr.tarjeta_relato', {jugador:`<b>${escaparHTML(tj.jugador && tj.jugador.name || 'Jugador')}</b>`, equipo:escaparHTML(equipo), color, minuto:tj.minute});
+      });
+      parrafos.push(`${t('cr.parrafo_incidencias_intro')} ${frasesTarjetas.join(' ')}`);
+    }
+
+    // Lectura táctica a partir de la posesión, cuando el dato está
+    // disponible — da contexto de CÓMO se llegó al resultado, no solo
+    // del qué.
+    if(datos.posesionLocal!=null){
+      if(Math.abs(datos.posesionLocal-50)<=8){
+        parrafos.push(tp('cr.tactico_equilibrado', {posesionLocal:datos.posesionLocal, posesionVisitante:100-datos.posesionLocal}));
+      } else {
+        const equipoDominante = datos.posesionLocal>50 ? nombreLocal : nombreVisitante;
+        const posesionDominante = datos.posesionLocal>50 ? datos.posesionLocal : 100-datos.posesionLocal;
+        parrafos.push(tp('cr.tactico_dominio', {equipo:`<b>${escaparHTML(equipoDominante)}</b>`, posesion:posesionDominante}));
+      }
+    }
+
+    // Cierre, con veredicto
     if(empate){
       parrafos.push(tp('cr.cierre_empate', {golesLocal, golesVisitante}));
     } else {
@@ -155,14 +211,14 @@
       }));
     }
 
-    // Párrafo 4 (opcional): si hubo rueda de prensa previa esta
-    // jornada, se menciona si la promesa se cumplió o no.
+    // Opcional: si hubo rueda de prensa previa esta jornada, se
+    // menciona si la promesa se cumplió o no.
     if(datos.prensa && datos.prensa.outcome && datos.prensa.outcome!=='neutral' && datos.prensaEquipo){
       const clave = datos.prensa.outcome==='correct' ? 'cr.prensa_acierto' : 'cr.prensa_fallo';
       parrafos.push(tp(clave, {equipo:`<b>${escaparHTML(datos.prensaEquipo)}</b>`, promesa:escaparHTML(datos.prensa.label||'')}));
     }
 
-    return parrafos.map(p=>`<p>${p}</p>`).join('\n');
+    return { lead, cuerpo: parrafos.map(p=>`<p>${p}</p>`).join('\n') };
   }
 
   // ---------- MVP: el goleador del gol decisivo si hay ganador claro,
@@ -227,7 +283,7 @@
   //   prensa:{label, outcome:'correct'|'wrong'|'neutral'}, prensaEquipo,
   // }
   function generarHTML(datos){
-    const cuerpoCronica = construirCronica(datos);
+    const cronica = construirCronica(datos);
     const mvp = elegirMVP(datos);
     const tarjetasHTML = filaTarjetas(datos);
     const empate = datos.golesLocal===datos.golesVisitante;
@@ -293,10 +349,17 @@
   </div>
 
   <div class="hero-bloque">
-    <div>
-      <div class="foto-wrap">
-        <img id="foto-hero" src="" alt="Jugada del partido">
-        <div class="foto-marco"></div>
+    <div class="foto-relato-col">
+      <!-- Foto más pequeña, a la manera de un periódico real, con el
+           arranque de la crónica ("lead") fluyendo junto a ella en
+           vez de ocupar toda la columna — el resto de la crónica,
+           mucho más extensa, continúa más abajo en "cuerpo". -->
+      <div class="foto-relato-fila">
+        <div class="foto-wrap">
+          <img id="foto-hero" src="" alt="Jugada del partido">
+          <div class="foto-marco"></div>
+        </div>
+        <div class="relato-lead"><p>${cronica.lead}</p></div>
       </div>
       <div class="pie-foto"><b>${escaparHTML(datos.nombreLocal)}</b> · <b>${escaparHTML(datos.nombreVisitante)}</b></div>
     </div>
@@ -319,7 +382,7 @@
     </div>
   </div>
 
-  <div class="cuerpo"><div class="columnas">${cuerpoCronica}</div></div>
+  <div class="cuerpo"><div class="columnas">${cronica.cuerpo}</div></div>
 
   <div class="franja-mvp">
     <div class="mini-titulo">${escaparHTML(t('cr.mvp_partido'))}</div>
@@ -439,11 +502,22 @@
   .firma-linea{ display:flex; justify-content:space-between; align-items:baseline; font-family:'Oswald',sans-serif; font-size:11px; letter-spacing:1.5px; text-transform:uppercase; color:var(--gris-agata); margin:14px 0 0; }
   .firma-linea b{ color:var(--tinta); font-weight:600; }
   .hero-bloque{ display:flex; gap:22px; padding:18px 34px 8px; }
-  .hero-bloque > div:first-child{ flex:1; min-width:0; }
-  .foto-wrap{ position:relative; }
+  .foto-relato-col{ flex:1; min-width:0; }
+  /* Foto reducida (era una columna entera antes) + el arranque de la
+     crónica fluyendo a su lado, como en un periódico real — el hueco
+     que deja la foto más pequeña lo ocupa el texto, así que el bloque
+     completo sigue ocupando el mismo espacio de siempre. */
+  /* La foto va grande y a ancho completo de su columna, con el lead
+     fluyendo justo debajo (no al lado) — a este tamaño ya no cabía
+     bien en fila junto al texto sin dejarlo demasiado estrecho. */
+  .foto-relato-fila{ display:flex; flex-direction:column; gap:10px; }
+  .foto-wrap{ position:relative; width:100%; }
   .foto-wrap img{ width:100%; display:block; filter:contrast(1.04) saturate(0.96); }
   .foto-marco{ position:absolute; inset:0; border:1px solid rgba(0,0,0,.5); pointer-events:none; }
-  .pie-foto{ font-family:'Oswald',sans-serif; font-size:11px; color:var(--gris-agata); padding-top:6px; line-height:1.4; border-top:1px solid var(--gris-linea); }
+  .relato-lead{ font-size:12.5px; line-height:1.58; color:var(--tinta-suave); text-align:justify; }
+  .relato-lead p{ margin:0; }
+  .relato-lead p::first-letter{ font-family:'Anton',sans-serif; font-size:30px; line-height:.7; float:left; margin:2px 4px 0 0; color:var(--tinta); }
+  .pie-foto{ font-family:'Oswald',sans-serif; font-size:11px; color:var(--gris-agata); padding-top:8px; margin-top:10px; line-height:1.4; border-top:1px solid var(--gris-linea); }
   .pie-foto b{ color:var(--tinta-suave); font-weight:500; }
   .entrada{ width:226px; flex-shrink:0; background:var(--papel); border:1.5px solid var(--tinta); position:relative; font-family:'Oswald',sans-serif; }
   .entrada-cab{ text-align:center; padding:14px 10px 9px; border-bottom:1px dashed var(--gris-linea); }

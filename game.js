@@ -463,6 +463,36 @@ function playSound(name, data){
       { const prog=(typeof data==='number')?data:0;
         tone(ctx, 260+prog*420, 0, 0.05, 'sine', 0.05+prog*0.04, 0.0001); }
       break;
+    case 'stopbar_click': // minijuego "Parada Perfecta" (entreno intenso)
+      // — pulsación del botón de parar, un clic seco y neutro, el mismo
+      // en cada intento (el resultado se anuncia con hit/miss aparte).
+      tone(ctx, 340, 0, 0.045, 'square', 0.09, 0.0001);
+      break;
+    case 'stopbar_hit': // aguja detenida dentro de la zona amarilla —
+      // el tono sube con el combo alcanzado (data.combo) para que cada
+      // acierto seguido se sienta más satisfactorio que el anterior.
+      { const combo=(data && typeof data.combo==='number')?data.combo:1;
+        const base=520+Math.min(combo,5)*90;
+        tone(ctx, base, 0, 0.08, 'triangle', 0.13, 0.0001);
+        tone(ctx, base*1.5, 0.05, 0.11, 'triangle', 0.10, 0.0001); }
+      break;
+    case 'stopbar_miss': // combo roto — zumbido grave y corto, sin
+      // llegar a sonar punitivo (el jugador sigue teniendo intentos).
+      tone(ctx, 160, 0, 0.09, 'sawtooth', 0.11, 0.0001);
+      tone(ctx, 110, 0.07, 0.10, 'sawtooth', 0.08, 0.0001);
+      break;
+    case 'stopbar_final': // fin del minijuego — pequeña fanfarria
+      // ascendente solo si se logró algún combo relevante (data.comboMax).
+      { const comboMax=(data && typeof data.comboMax==='number')?data.comboMax:0;
+        if(comboMax>=3){
+          [660,880,1046,1318].forEach((f,i)=>tone(ctx, f, i*0.09, 0.22, 'triangle', 0.13, 0.0001));
+        } else if(comboMax>0){
+          tone(ctx, 660, 0, 0.14, 'triangle', 0.11, 0.0001);
+          tone(ctx, 880, 0.1, 0.16, 'triangle', 0.11, 0.0001);
+        } else {
+          tone(ctx, 380, 0, 0.16, 'sine', 0.08, 0.0001);
+        } }
+      break;
   }
 }
 
