@@ -2796,6 +2796,7 @@ body.liga-manager-screen .ranking-btn-label-lm{display:inline}
 .lm-barra-fila{ display:flex; align-items:center; gap:8px; }
 .lm-barra-fila i{ font-size:13px; flex-shrink:0; width:16px; text-align:center; }
 .lm-barra-label{ font-size:10px; color:var(--lm-text-muted); letter-spacing:.3px; width:76px; flex-shrink:0; }
+.lm-barra-valor{ font-size:10.5px; font-weight:700; width:32px; flex-shrink:0; text-align:right; }
 .lm-barra-track{ flex:1; height:6px; background:var(--lm-surface-0); border-radius:3px; overflow:hidden; }
 .lm-barra-fill{ height:100%; border-radius:3px; transition:width .3s ease; }
 /* Barra que acaba de cambiar tras elegir un nodo: arranca bien
@@ -3522,11 +3523,22 @@ body.liga-manager-screen .ranking-btn-label-lm{display:inline}
   cursor:pointer;transition:background .15s ease,transform .15s ease;
 }
 .lm-pitch-lupa-btn:hover{background:rgba(201,162,39,.85);color:var(--lm-gold-tint);transform:scale(1.08)}
-/* Misma animación de ondas que el botón JUGAR/SEGUIR (lmJugarPulse),
-   aquí siempre activa (no depende de 1 minuto sin tocar nada) — para
-   que la lupa de información del club se note de un vistazo sobre el
-   campo. */
-.lm-pitch-lupa-btn{animation:lmJugarPulse 1.8s ease-in-out infinite}
+/* Ondas que emanan siempre hacia afuera (nunca hacia dentro), en bucle
+   continuo, para que la lupa de información del club se note de un
+   vistazo sobre el campo. Dos anillos (::before/::after) desfasados
+   crecen y se desvanecen sin volver nunca a contraerse. */
+.lm-pitch-lupa-btn{overflow:visible}
+.lm-pitch-lupa-btn::before,.lm-pitch-lupa-btn::after{
+  content:'';position:absolute;inset:0;border-radius:50%;
+  border:1.5px solid rgba(230,201,74,.75);
+  animation:lmLupaOndaLoop 1.8s cubic-bezier(.25,.6,.4,1) infinite;
+  pointer-events:none;
+}
+.lm-pitch-lupa-btn::after{animation-delay:.9s}
+@keyframes lmLupaOndaLoop{
+  0%{transform:scale(1);opacity:.65}
+  100%{transform:scale(1.85);opacity:0}
+}
 
 /* Popup de información del club — nivel de estadio + estadísticas
    generales, diseño profesional con imagen a todo lo ancho arriba. */

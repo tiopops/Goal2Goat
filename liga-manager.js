@@ -2150,11 +2150,18 @@
   // calendario — ayudan a decidir con criterio antes de elegir nodo. ----------
   function renderBarrasEstadoHTML(){
     const b=calcularBarrasEstado();
+    const moralRaw=state.moral||0;
+    const aficionRaw=(state.estadio&&state.estadio.satisfaccion)||0;
     const filas=[
-      {key:'formaFisica', icon:'ph-heartbeat', label:t('lm.barra_forma_fisica')},
-      {key:'riesgoLesion', icon:'ph-bandaids', label:t('lm.barra_riesgo_lesion')},
-      {key:'moral', icon:'ph-hand-fist', label:t('lm.barra_moral')},
-      {key:'aficion', icon:'ph-megaphone', label:t('lm.barra_aficion')},
+      {key:'formaFisica', icon:'ph-heartbeat', label:t('lm.barra_forma_fisica'), valor:`${b.formaFisica.pct}%`},
+      {key:'riesgoLesion', icon:'ph-bandaids', label:t('lm.barra_riesgo_lesion'), valor:`${b.riesgoLesion.pct}%`},
+      // El número mostrado aquí es el MISMO valor bruto (con el mismo
+      // signo) que aparece en "Información del club" y en "Estado del
+      // estadio" — solo cambia el ancho de la barra, que sigue siendo
+      // un % relativo al rango completo (-50..50 / -100..100), para que
+      // nunca parezca que "no coincide" entre pantallas.
+      {key:'moral', icon:'ph-hand-fist', label:t('lm.barra_moral'), valor:`${moralRaw>0?'+':''}${moralRaw}`},
+      {key:'aficion', icon:'ph-megaphone', label:t('lm.barra_aficion'), valor:`${aficionRaw>0?'+':''}${aficionRaw}`},
     ];
     return `<div class="lm-barras-estado">
       <div class="lm-barras-estado-titulo">${t('lm.barras_estado_titulo')}</div>
@@ -2163,6 +2170,7 @@
         return `<div class="lm-barra-fila">
           <i class="ph ph-bold ${f.icon}" style="color:${d.color}"></i>
           <span class="lm-barra-label">${f.label}</span>
+          <span class="lm-barra-valor" style="color:${d.color}">${f.valor}</span>
           <div class="lm-barra-track"><div class="lm-barra-fill" data-barra-key="${f.key}" style="width:${d.pct}%;background:${d.color};--bc:${d.color}"></div></div>
         </div>`;
       }).join('')}
