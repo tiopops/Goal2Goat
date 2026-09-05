@@ -794,7 +794,18 @@
         const fatigaMult = LM_TABLA_FATIGA_ENTRENO_INTENSO[fallosDia]!=null ? LM_TABLA_FATIGA_ENTRENO_INTENSO[fallosDia] : 1;
         proyeccion+=desgastePromedio*fatigaMult;
       }
-      else if(nodo.tipo==='entreno' || nodo.tipo==='amistoso') proyeccion+=desgastePromedio;
+      // OJO: el amistoso NO cuenta aquí, aposta. A diferencia del
+      // entreno (cuyo desgaste real no se aplica hasta procesar toda la
+      // semana, así que esta proyección es la única pista que hay
+      // mientras tanto), el amistoso aplica su fatiga real de verdad en
+      // cuanto se cierra su pop-up de resultado (aplicarConsecuenciasAmistoso,
+      // que muta p.fatigue directamente) — y esa mutación ya se refleja
+      // sola en fatigaBase de arriba. Sumar aquí también el desgaste
+      // proyectado del amistoso hacía que la barra "reaccionara" en el
+      // mismo instante de ELEGIR el nodo (antes de ver el resultado), y
+      // encima la contaba dos veces una vez resuelto. Ninguna de las 4
+      // barras debe moverse por elegir un nodo, solo por resolverlo.
+      else if(nodo.tipo==='entreno') proyeccion+=desgastePromedio;
       else if(nodo.tipo==='descanso') proyeccion-=4;
     });
     return Math.max(0, Math.min(100, proyeccion));
@@ -8830,7 +8841,7 @@
     let fase='jugando'; // 'jugando' | 'resuelto'
     let resultadoTipo=null; // 'exito' | 'fallo' | 'pillado'
     let calidadQuemada=false;
-    let rafId=null, ultimoTs=null, ultimoLatidoTramo=-1;
+    let rafId=null, ultimoTs=null, ultimoLatidoTramo=-1, ultimoSonidoCrecTs=0;
 
     const overlay=document.createElement('div');
     overlay.id='lmScoutingMinijuegoOverlay';
@@ -8972,10 +8983,7 @@
       const btnPlantarse=overlay.querySelector('#lmScoutBtnPlantarse');
       if(btnPlantarse) btnPlantarse.disabled=true;
       if(typeof window.playSound==='function') window.playSound('select');
-      // Sonido continuo de "riser" (estilo casino/tragaperras) que se va
-      // agudizando a la vez que crece el círculo — arranca aquí, se
-      // actualiza en cada frame de avanzarCirculo() y se corta en soltar().
-      if(typeof window.scoutRiserStart==='function') window.scoutRiserStart();
+      ultimoSonidoCrecTs=0;
       if(!rafId) rafId=requestAnimationFrame(avanzarCirculo);
     }
 
@@ -9009,7 +9017,15 @@
       // al 100% y se queda ahí esperando a que se suelte.
       valor=Math.min(100, valor + cfgCirculo.velocidad*factorAceleracion*dt);
       latidoSiToca();
-      if(typeof window.scoutRiserUpdate==='function') window.scoutRiserUpdate(valor);
+      // Mismo sonido y misma cadencia (throttle de 90ms) que al arrastrar
+      // un sobre de fichajes para abrirlo — un "raspado" de tono creciente
+      // con el progreso, en vez de un tono continuo — es el que de verdad
+      // se sintió adictivo, estilo casino/tragaperras.
+      { const ahoraSon=Date.now();
+        if(ahoraSon-ultimoSonidoCrecTs>90){
+          ultimoSonidoCrecTs=ahoraSon;
+          if(typeof window.playSound==='function') window.playSound('envelope_drag', valor/100);
+        } }
       actualizarCirculoDOM();
       if(valor<100) rafId=requestAnimationFrame(avanzarCirculo);
       else rafId=null;
@@ -9019,11 +9035,6 @@
       if(!sujetando) return;
       sujetando=false;
       if(rafId){ cancelAnimationFrame(rafId); rafId=null; }
-      // Corta el riser justo al soltar, tanto si se supera la franja como
-      // si descubren al ojeador — es el único punto por el que pasan
-      // TODOS los caminos de soltar (botón, salir del área, cancelar el
-      // toque, o perder el foco de la ventana).
-      if(typeof window.scoutRiserStop==='function') window.scoutRiserStop();
       const btn=overlay.querySelector('#lmScoutBtnMantener');
       if(btn) btn.classList.remove('lm-scout-mini-pulsando');
       if(fase!=='jugando') return;
