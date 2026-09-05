@@ -8774,19 +8774,53 @@
     return Math.min(cfg.riesgoTope, cfg.riesgoBase + (paso-1)*cfg.riesgoPaso);
   }
 
+  // Geometría de las franjas objetivo del minijuego de scouting por
+  // dificultad — la franja 1 (interior) es la más ancha/permisiva y
+  // cada franja siguiente hacia afuera es más estrecha, y "velocidad"
+  // es la base de crecimiento del círculo (se acelera aún más cuanto
+  // más alto sube, ver factorAceleracion en avanzarCirculo). Comparte
+  // dificultad con LM_SCOUTING_DIFICULTADES (color/ganancia/bonus).
+  const LM_SCOUTING_ZONAS_CIRCULO={
+    facil:   {velocidad:16, zonas:[[8,32],[42,58],[66,76],[84,89]]},
+    normal:  {velocidad:20, zonas:[[10,28],[44,55],[67,73],[85,88]]},
+    dificil: {velocidad:24, zonas:[[12,25],[46,54],[68,72],[86,88]]},
+  };
+  const LM_SCOUTING_ZONA_COLORES=['#4caf7a','#e6c94a','#e08a3e','#e24b4a'];
+  // La calidad del informe es DIRECTAMENTE el resultado del propio
+  // minijuego — nada de una probabilidad base oculta previa a jugar:
+  // 0 franjas superadas = 0%, y cada franja despejada sube a un
+  // escalón fijo (índice = zonasSuperadas). Sin bonus añadidos por
+  // fuera del círculo.
+  const LM_SCOUTING_CALIDAD_POR_ZONAS=[0, 0.30, 0.50, 0.70, 0.95];
+
   // Abre el minijuego del nodo de scouting. "dificultad" es el subtipo
   // del nodo elegido en el árbol ('facil'|'normal'|'dificil'); si no
   // llega (partidas guardadas antiguas, o llamada directa), se trata
-  // como 'normal' — el comportamiento original.
+  // como 'normal'.
+  //
+  // Mecánica (rediseñada, estilo "prueba de pulso" de casino): un
+  // círculo dorado crece desde el centro mientras se mantiene pulsado
+  // el botón. Alrededor hay 4 franjas de color, cada vez más estrechas
+  // hacia afuera — hay que SOLTAR justo cuando el borde del círculo
+  // está dentro de la franja activa para superarla (sube la calidad
+  // del informe) y poder seguir hacia la siguiente, más difícil. Si se
+  // suelta fuera de la franja (corto o pasado) o si el círculo se sale
+  // del rango sin soltar, el ojeador queda descubierto: fin del
+  // intento, sin sobre. Se puede plantarse en cualquier momento para
+  // asegurar la calidad ya conseguida.
   function abrirMinijuegoScouting(onCerrado, dificultad){
     const cfgDificultad=lmCfgDificultadScouting(dificultad);
     dificultad = LM_SCOUTING_DIFICULTADES[dificultad] ? dificultad : 'normal';
-    const MAX_PASOS=6;
-    let probActual=calcularProbabilidadBaseSobreFichajes();
-    let pasos=0;
-    let fase='jugando'; // 'jugando' | 'animando' | 'resuelto'
+    const cfgCirculo=LM_SCOUTING_ZONAS_CIRCULO[dificultad] || LM_SCOUTING_ZONAS_CIRCULO.normal;
+    let probActual=0; // 0% hasta que superes tu primera franja
+    let valor=0;          // 0-100, el % que ha crecido el círculo
+    let zonaIdx=0;        // franja objetivo actual
+    let zonasSuperadas=0;
+    let sujetando=false;
+    let fase='jugando'; // 'jugando' | 'resuelto'
     let resultadoTipo=null; // 'exito' | 'fallo' | 'pillado'
     let calidadQuemada=false;
+    let rafId=null, ultimoTs=null, ultimoLatidoTramo=-1;
 
     const overlay=document.createElement('div');
     overlay.id='lmScoutingMinijuegoOverlay';
@@ -8799,76 +8833,56 @@
     // quiniela, más abajo).
     document.body.appendChild(overlay);
 
-    function claseMeterParaProb(p){
-      if(p>=0.5) return 'lm-scout-mini-meter-fill-alta';
-      if(p>=0.25) return 'lm-scout-mini-meter-fill-media';
-      return 'lm-scout-mini-meter-fill-baja';
-    }
-    function claseRiesgoParaValor(r){
-      if(r>=0.45) return 'lm-scout-mini-risk-fill-alta';
-      if(r>=0.22) return 'lm-scout-mini-risk-fill-media';
-      return 'lm-scout-mini-risk-fill-baja';
-    }
-
-    function claseBtnEmpujarParaRiesgo(r){
-      if(r>=0.45) return 'lm-scout-mini-btn-empujar-alta';
-      if(r>=0.22) return 'lm-scout-mini-btn-empujar-media';
-      return '';
-    }
-
-    // Intensidad (0.12–1) de la onda de tensión que late detrás de la
-    // cifra de riesgo — YA NO es un interruptor todo-o-nada a partir
-    // de un umbral: la onda está siempre ahí (0.12 = apenas
-    // perceptible, para que se note que existe desde el primer
-    // empujón) y crece de forma continua con el riesgo real hasta
-    // saturar en 1 sobre un riesgo del 65%.
-    function intensidadOndaRiesgo(r){
-      return Math.max(0.12, Math.min(1, r/0.65));
-    }
-
-    // Latido de corazón sincronizado con el propio ritmo del CSS del
-    // número de riesgo (lmScoutNumeroLatido/lmScoutHeartbeatOnda, ambos
-    // a 1.15s por ciclo) — mientras el riesgo esté visible en pantalla,
-    // suena al mismo compás; se para en cuanto deja de estar visible
-    // (resuelto, o al cerrar el minijuego).
-    let latidoInterval=null;
-    function gestionarLatido(activo){
-      if(activo && !latidoInterval){
-        latidoInterval=setInterval(()=>{ if(typeof window.playSound==='function') window.playSound('scout_heartbeat'); }, 1150);
-      } else if(!activo && latidoInterval){
-        clearInterval(latidoInterval);
-        latidoInterval=null;
+    // Latido de corazón cada vez que el % del círculo cruza un tramo de
+    // 8 puntos — como el crecimiento se acelera con el propio valor,
+    // el latido se oye cada vez más rápido según se acerca a las
+    // franjas finales, sin necesidad de gestionar un intervalo aparte.
+    function latidoSiToca(){
+      const tramo=Math.floor(valor/8);
+      if(tramo>ultimoLatidoTramo){
+        ultimoLatidoTramo=tramo;
+        if(typeof window.playSound==='function') window.playSound('scout_heartbeat');
       }
     }
+
+    const CX=100, CY=100, R_MIN=8, R_MAX=92;
+    function pctToR(pct){ return R_MIN + (pct/100)*(R_MAX-R_MIN); }
+
+    function zonasSVGHTML(){
+      return cfgCirculo.zonas.map((z,i)=>{
+        const [min,max]=z;
+        const rCenter=pctToR((min+max)/2);
+        const widthPx=Math.max(pctToR(max)-pctToR(min), 3);
+        const color=LM_SCOUTING_ZONA_COLORES[i]||LM_SCOUTING_ZONA_COLORES[LM_SCOUTING_ZONA_COLORES.length-1];
+        const claseEstado = i<zonaIdx ? ' superada' : (i===zonaIdx && fase==='jugando' ? ' activa' : '');
+        const opacidad = i<zonaIdx ? 0.5 : (i===zonaIdx ? 0.6 : 0.22);
+        return `<circle class="lm-scout-mini-zona-ring${claseEstado}" cx="${CX}" cy="${CY}" r="${rCenter}" fill="none" stroke="${color}" stroke-width="${widthPx}" opacity="${opacidad}"></circle>`;
+      }).join('');
+    }
+
     function pintar(){
       const pct=Math.round(probActual*100);
-      const puedeSeguir = fase==='jugando' && pasos<MAX_PASOS;
-      const puedePlantarse = fase==='jugando';
-      // El medidor de riesgo se queda visible también mientras se
-      // resuelve el paso (fase 'animando'), no solo mientras se puede
-      // seguir eligiendo — así el jugador lo ve rellenarse en vivo en
-      // vez de que desaparezca de golpe al pulsar ACERCARSE.
-      const mostrarRiesgo = fase!=='resuelto' && pasos<MAX_PASOS;
-      gestionarLatido(mostrarRiesgo);
-      const riesgoSiguiente = lmRiesgoDescubiertaScouting(pasos+1, dificultad);
-      // Nivel de riesgo YA superado (el de los pasos ya dados, o 0 si
-      // todavía no se ha empujado ninguna vez). En REPOSO la barra se
-      // queda aquí, NO en un adelanto del riesgo del próximo paso —
-      // antes mostraba ese adelanto en reposo y luego, al pulsar
-      // ACERCARSE, la re-renderizaba de golpe con el valor ya superado
-      // (más bajo) antes de animarla de vuelta hasta el mismo valor de
-      // siempre: un salto hacia atrás visible que parecía un fallo.
-      // Ahora reposo y punto de partida de la animación son el MISMO
-      // valor, así que avanzarPaso() siempre anima un crecimiento de
-      // verdad, nunca un salto. El aviso de peligro del próximo paso lo
-      // da el propio botón ACERCARSE (se tiñe/pulsa según ese riesgo).
-      const riesgoPctBase = pasos>0 ? Math.round(lmRiesgoDescubiertaScouting(pasos, dificultad)*100) : 0;
+      const puedePulsar = fase==='jugando' && zonaIdx<cfgCirculo.zonas.length;
+      const puedePlantarse = fase==='jugando' && !sujetando;
+      const zonaTxt = zonaIdx<cfgCirculo.zonas.length
+        ? tp('lm.scoutmini_zona', {n:zonaIdx+1, total:cfgCirculo.zonas.length})
+        : t('lm.scoutmini_zona_completa');
       let resultadoTexto='';
+      let estrellasHTML='';
       if(fase==='resuelto'){
         if(resultadoTipo==='pillado'){
           resultadoTexto = calidadQuemada ? t('lm.scoutmini_resultado_pillado_calidad') : t('lm.scoutmini_resultado_pillado');
+        } else if(resultadoTipo==='exito'){
+          resultadoTexto = t('lm.scoutmini_resultado_exito');
+          // En vez de un %, 1/2/3 estrellas según cuántas franjas
+          // superaste — más intuitivo y más "premio" que una cifra.
+          const estrellas=Math.max(1, Math.min(3, zonasSuperadas));
+          estrellasHTML = `<div class="lm-scout-mini-estrellas">${Array.from({length:3}).map((_,i)=>
+            `<i class="ph ${i<estrellas?'ph-fill':'ph-bold'} ph-star"></i>`
+          ).join('')}</div>`;
         } else {
-          resultadoTexto = resultadoTipo==='exito' ? t('lm.scoutmini_resultado_exito') : t('lm.scoutmini_resultado_fallo');
+          resultadoTexto = (resultadoTipo==='fallo' ? t('lm.scoutmini_resultado_fallo') : '')
+            + ' ' + tp('lm.scoutmini_calidad_conseguida', {n:pct});
         }
       }
       // Confeti dorado solo en el reveal de éxito — el "chispazo" de
@@ -8881,32 +8895,37 @@
       overlay.innerHTML=`
         <div class="lm-dilemma-card lm-scout-mini-card" id="lmScoutMiniCard">
           ${confetiHTML}
-          <div class="lm-scout-mini-eyebrow">${t('lm.scoutmini_eyebrow')}${pasos>0 && fase!=='resuelto' ? ` · ${tp('lm.scoutmini_paso', {n:pasos})}` : ''}</div>
+          <div class="lm-scout-mini-eyebrow">${t('lm.scoutmini_eyebrow')}</div>
           <div class="lm-amistoso-dificultad-badge" style="border-color:${cfgDificultad.color};color:${cfgDificultad.color}">
             <i class="ph ph-bold ph-binoculars"></i> ${t('lm.dificultad_lbl').toUpperCase()} ${t('lm.dificultad_'+dificultad).toUpperCase()}
           </div>
           <div class="lm-dilemma-title lm-scout-mini-title"><i class="ph ph-bold ph-binoculars"></i>${t('lm.scoutmini_titulo')}</div>
-          <div class="lm-scout-mini-meter-wrap">
-            <div class="lm-scout-mini-meter-label"><i class="ph ph-bold ph-magnifying-glass"></i>${t('lm.scoutmini_label_informe')}</div>
-            <div class="lm-scout-mini-meter-track">
-              <div class="lm-scout-mini-meter-fill ${claseMeterParaProb(probActual)}" id="lmScoutMeterFill" style="width:${pct}%"><span class="lm-scout-mini-meter-sheen"></span></div>
+          ${fase==='jugando' ? `
+          <div class="lm-scout-mini-circulo-wrap" id="lmScoutCirculoWrap">
+            <svg viewBox="0 0 200 200">
+              <circle cx="${CX}" cy="${CY}" r="${R_MAX+3}" fill="none" stroke="rgba(255,255,255,.06)" stroke-width="1"></circle>
+              <g id="lmScoutZonasGroup">${zonasSVGHTML()}</g>
+              <circle id="lmScoutCirculoValor" cx="${CX}" cy="${CY}" r="${pctToR(valor)}" fill="url(#lmScoutGradVal)"></circle>
+              <defs>
+                <radialGradient id="lmScoutGradVal" cx="50%" cy="45%" r="65%">
+                  <stop offset="0%" stop-color="#fff2c2"></stop>
+                  <stop offset="55%" stop-color="#e6c94a"></stop>
+                  <stop offset="100%" stop-color="#b9860f"></stop>
+                </radialGradient>
+              </defs>
+            </svg>
+            <div class="lm-scout-mini-circulo-centro">
+              <div class="lm-scout-mini-circulo-pct" id="lmScoutCirculoPct">${Math.round(valor)}%</div>
+              <div class="lm-scout-mini-circulo-zonalbl" id="lmScoutCirculoZonaLbl">${zonaTxt}</div>
             </div>
-            <div class="lm-scout-mini-pct" id="lmScoutMeterPct">${pct}<span class="lm-scout-mini-pct-simbolo">%</span></div>
           </div>
-          <div class="lm-scout-mini-informe-nota">${t('lm.scoutmini_informe_nota')}</div>
-          ${mostrarRiesgo ? `
-          <div class="lm-scout-mini-meter-wrap lm-scout-mini-risk-wrap">
-            <div class="lm-scout-mini-meter-label lm-scout-mini-risk-label"><i class="ph ph-bold ph-eye"></i>${t('lm.scoutmini_label_riesgo')}</div>
-            <div class="lm-scout-mini-risk-track">
-              <div class="lm-scout-mini-risk-fill ${claseRiesgoParaValor(riesgoPctBase/100)}" id="lmScoutRiskFill" style="width:${riesgoPctBase}%"></div>
-            </div>
-            <div class="lm-scout-mini-risk-pct lm-scout-mini-risk-pct-onda ${riesgoPctBase>=45?'lm-scout-mini-risk-pct-alta':''}" id="lmScoutRiskPct" style="--oi:${intensidadOndaRiesgo(riesgoPctBase/100)}">${riesgoPctBase}%</div>
-          </div>` : ''}
+          <div class="lm-scout-mini-hold-nota">${t('lm.scoutmini_hold_nota')}</div>` : ''}
+          ${estrellasHTML}
           ${fase==='resuelto' ? `<div class="lm-scout-mini-resultado lm-scout-mini-resultado-${resultadoTipo}">${resultadoTexto}</div>` : ''}
           <div class="lm-scout-mini-actions">
             ${fase==='resuelto'
               ? `<button type="button" id="lmScoutBtnContinuar" class="mode-card-btn mode-card-btn-gold">${t('lm.continuar')}</button>`
-              : `<button type="button" id="lmScoutBtnEmpujar" class="mode-card-btn mode-card-btn-amarillo ${claseBtnEmpujarParaRiesgo(riesgoSiguiente)}" ${puedeSeguir?'':'disabled'}><i class="ph ph-bold ph-footprints"></i> ${t('lm.scoutmini_empujar')}</button>
+              : `<button type="button" id="lmScoutBtnMantener" class="mode-card-btn mode-card-btn-amarillo lm-scout-mini-hold-btn" ${puedePulsar?'':'disabled'}><i class="ph ph-bold ph-footprints"></i> ${t('lm.scoutmini_empujar')}</button>
                  <button type="button" id="lmScoutBtnPlantarse" class="mode-card-btn mode-card-btn-rojo" ${puedePlantarse?'':'disabled'}><i class="ph ph-bold ph-hand-palm"></i> ${t('lm.scoutmini_plantarse')}</button>`}
           </div>
         </div>`;
@@ -8915,111 +8934,108 @@
 
     function cablear(){
       const btnPlantarse=overlay.querySelector('#lmScoutBtnPlantarse');
-      const btnEmpujar=overlay.querySelector('#lmScoutBtnEmpujar');
+      const btnMantener=overlay.querySelector('#lmScoutBtnMantener');
       const btnContinuar=overlay.querySelector('#lmScoutBtnContinuar');
       if(btnPlantarse) btnPlantarse.addEventListener('click', ()=>{
-        if(fase!=='jugando') return;
+        if(fase!=='jugando' || sujetando) return;
         if(typeof window.playSound==='function') window.playSound('select');
         resolver('banco');
       });
-      if(btnEmpujar) btnEmpujar.addEventListener('click', ()=>{
-        if(fase!=='jugando' || pasos>=MAX_PASOS) return;
-        if(typeof window.playSound==='function') window.playSound('select');
-        avanzarPaso();
-      });
+      if(btnMantener){
+        btnMantener.addEventListener('pointerdown', empezarPulsacion);
+        btnMantener.addEventListener('pointerup', soltar);
+        btnMantener.addEventListener('pointerleave', soltar);
+        btnMantener.addEventListener('pointercancel', soltar);
+      }
       if(btnContinuar) btnContinuar.addEventListener('click', ()=>{
         if(typeof window.playSound==='function') window.playSound('select');
-        gestionarLatido(false);
+        window.removeEventListener('blur', soltar);
         overlay.remove();
         if(typeof onCerrado==='function') onCerrado();
       });
     }
 
-    function avanzarPaso(){
-      const riesgo=lmRiesgoDescubiertaScouting(pasos+1, dificultad);
-      const riesgoPctObjetivo=Math.round(riesgo*100);
-      // Punto de partida real de la animación: el riesgo ya superado
-      // hasta ahora (0 si es el primer empujón) — así la barra CRECE
-      // desde donde está en vez de reiniciarse a 0 en cada empujón,
-      // como pedía el diseño (debe sentirse acumulativo y adictivo).
-      const riesgoPctBase = pasos>0 ? Math.round(lmRiesgoDescubiertaScouting(pasos, dificultad)*100) : 0;
-      let ticks=0;
-      const totalTicks=8+Math.floor(Math.random()*3);
-      const velocidad=Math.max(55, 95-Math.round(riesgo*50));
-      fase='animando';
-      pintar();
-      const card=overlay.querySelector('#lmScoutMiniCard');
-      // El medidor de riesgo se rellena EN VIVO durante toda la
-      // tensión, CRECIENDO desde el riesgo ya superado hasta ahora
-      // (riesgoPctBase) hasta el nuevo valor real de este paso — nunca
-      // desde 0, para que se sienta acumulativo (cada empujón añade
-      // riesgo sobre el anterior, no lo resetea) — la barra de
-      // transición CSS dura lo mismo que la propia animación de
-      // suspense (ticks × velocidad), así que el número y el relleno
-      // terminan de subir justo cuando se revela el resultado.
-      const riskFillEl=overlay.querySelector('#lmScoutRiskFill');
-      const riskPctEl=overlay.querySelector('#lmScoutRiskPct');
-      const duracionTotalMs=totalTicks*velocidad;
-      // La anchura se controla a mano, fotograma a fotograma, en el
-      // mismo bucle que cuenta el número — NO con una transición CSS
-      // "de un tirón": esa técnica podía saltarse la animación en
-      // algunos casos (el navegador no siempre respeta un cambio de
-      // transition+width dentro del mismo frame) y la barra no se veía
-      // crecer aunque el número sí subiera. Fotograma a fotograma es
-      // infalible.
-      if(riskFillEl) riskFillEl.style.transition='background .2s ease, box-shadow .2s ease';
-      if(riskPctEl){
-        const inicioTs=performance.now();
-        const contarRiesgo=()=>{
-          if(!overlay.contains(riskPctEl)) return;
-          const t2=Math.min(1,(performance.now()-inicioTs)/duracionTotalMs);
-          const pctEnVivo=riesgoPctBase+t2*(riesgoPctObjetivo-riesgoPctBase);
-          if(riskFillEl){
-            riskFillEl.style.width=pctEnVivo+'%';
-            riskFillEl.className='lm-scout-mini-risk-fill '+claseRiesgoParaValor(pctEnVivo/100);
-          }
-          riskPctEl.textContent=Math.round(pctEnVivo)+'%';
-          riskPctEl.classList.toggle('lm-scout-mini-risk-pct-alta', pctEnVivo>=45);
-          // La onda de tensión se actualiza EN VIVO al mismo ritmo que
-          // la cifra — así se nota crecer de verdad mientras el
-          // contador sube, no solo de golpe entre un empujón y otro.
-          riskPctEl.style.setProperty('--oi', intensidadOndaRiesgo(pctEnVivo/100));
-          if(t2<1) requestAnimationFrame(contarRiesgo);
-        };
-        requestAnimationFrame(contarRiesgo);
+    function empezarPulsacion(e){
+      if(e) e.preventDefault();
+      if(fase!=='jugando' || zonaIdx>=cfgCirculo.zonas.length) return;
+      sujetando=true;
+      ultimoTs=null;
+      ultimoLatidoTramo=-1;
+      const btn=overlay.querySelector('#lmScoutBtnMantener');
+      if(btn) btn.classList.add('lm-scout-mini-pulsando');
+      const btnPlantarse=overlay.querySelector('#lmScoutBtnPlantarse');
+      if(btnPlantarse) btnPlantarse.disabled=true;
+      if(typeof window.playSound==='function') window.playSound('select');
+      if(!rafId) rafId=requestAnimationFrame(avanzarCirculo);
+    }
+
+    function actualizarCirculoDOM(){
+      const circuloEl=overlay.querySelector('#lmScoutCirculoValor');
+      const pctEl=overlay.querySelector('#lmScoutCirculoPct');
+      if(circuloEl){
+        circuloEl.setAttribute('r', pctToR(valor));
+        // Aviso visual (sin decidir nada todavía) de que ya te has
+        // pasado de la franja activa — para que se note el peligro
+        // mientras decides si soltar ya o arriesgarte a que crezca más.
+        const zonaObjetivo=cfgCirculo.zonas[zonaIdx];
+        circuloEl.classList.toggle('lm-scout-mini-circulo-peligro', !!(zonaObjetivo && valor>zonaObjetivo[1]));
       }
-      // Tensión creciente: ticks de "spin" cada vez más rápidos según
-      // sube el riesgo, con el medidor de riesgo pulsando — antes de
-      // revelar si el ojeador ha pasado desapercibido o le han pillado.
-      if(card) card.classList.add('lm-scout-mini-card-tension');
-      const tension=setInterval(()=>{
-        ticks++;
-        if(typeof window.playSound==='function') window.playSound('spin');
-        if(ticks>=totalTicks){
-          clearInterval(tension);
-          if(card) card.classList.remove('lm-scout-mini-card-tension');
-          const pillado=Math.random()<riesgo;
-          pasos++;
-          if(pillado){
-            // Sobresalto real: sonido de derrota, sacudida de la
-            // tarjeta Y un flash rojo que invade el overlay entero (no
-            // solo la tarjeta) — el riesgo tenía que sentirse de
-            // verdad, no ser un simple cambio de texto.
-            if(typeof window.playSound==='function') window.playSound('defeat');
-            overlay.classList.add('lm-scout-mini-overlay-flash-rojo');
-            setTimeout(()=>overlay.classList.remove('lm-scout-mini-overlay-flash-rojo'), 550);
-            if(card){ card.classList.add('lm-scout-mini-card-pillado'); setTimeout(()=>card.classList.remove('lm-scout-mini-card-pillado'), 500); }
-            resolver('pillado');
-          } else {
-            const ganancia=cfgDificultad.gananciaMin+Math.random()*(cfgDificultad.gananciaMax-cfgDificultad.gananciaMin);
-            probActual=Math.min(0.95, probActual+ganancia);
-            if(typeof window.playSound==='function') window.playSound('reveal');
-            if(card){ card.classList.add('lm-scout-mini-card-seguro'); setTimeout(()=>card.classList.remove('lm-scout-mini-card-seguro'), 450); }
-            fase='jugando';
-            pintar();
-          }
-        }
-      }, velocidad);
+      if(pctEl) pctEl.textContent=Math.round(valor)+'%';
+    }
+
+    function avanzarCirculo(ts){
+      if(!sujetando){ rafId=null; return; }
+      if(ultimoTs==null) ultimoTs=ts;
+      const dt=(ts-ultimoTs)/1000;
+      ultimoTs=ts;
+      // A mayor % ya alcanzado, más rápido crece el círculo — cuadrar
+      // la franja de las últimas zonas exige mucha más precisión y
+      // reflejos que la primera.
+      const factorAceleracion=1 + Math.pow(valor/100, 1.3)*4.5;
+      // El círculo sigue creciendo mientras se mantiene pulsado, SIN
+      // decidir nada todavía aunque se pase de la franja — el
+      // resultado (superada o descubierto) solo se decide al SOLTAR,
+      // nunca mientras el dedo/ratón sigue pulsado. Como mucho llega
+      // al 100% y se queda ahí esperando a que se suelte.
+      valor=Math.min(100, valor + cfgCirculo.velocidad*factorAceleracion*dt);
+      latidoSiToca();
+      actualizarCirculoDOM();
+      if(valor<100) rafId=requestAnimationFrame(avanzarCirculo);
+      else rafId=null;
+    }
+
+    function soltar(){
+      if(!sujetando) return;
+      sujetando=false;
+      if(rafId){ cancelAnimationFrame(rafId); rafId=null; }
+      const btn=overlay.querySelector('#lmScoutBtnMantener');
+      if(btn) btn.classList.remove('lm-scout-mini-pulsando');
+      if(fase!=='jugando') return;
+      const zonaObjetivo=cfgCirculo.zonas[zonaIdx];
+      if(!zonaObjetivo) return;
+      if(valor>=zonaObjetivo[0] && valor<=zonaObjetivo[1]){
+        zonasSuperadas++;
+        zonaIdx++;
+        probActual=LM_SCOUTING_CALIDAD_POR_ZONAS[Math.min(zonasSuperadas, LM_SCOUTING_CALIDAD_POR_ZONAS.length-1)];
+        if(typeof window.playSound==='function') window.playSound('reveal');
+        const card=overlay.querySelector('#lmScoutMiniCard');
+        if(card){ card.classList.add('lm-scout-mini-card-seguro'); setTimeout(()=>card.classList.remove('lm-scout-mini-card-seguro'), 450); }
+        guardarEstado();
+        pintar();
+      } else {
+        // Soltar fuera de la franja (corto o pasado) también descubre
+        // al ojeador, igual que pasarse del rango sin soltar.
+        dispararDescubierto();
+      }
+    }
+
+    function dispararDescubierto(){
+      const card=overlay.querySelector('#lmScoutMiniCard');
+      if(typeof window.playSound==='function') window.playSound('defeat');
+      overlay.classList.add('lm-scout-mini-overlay-flash-rojo');
+      setTimeout(()=>overlay.classList.remove('lm-scout-mini-overlay-flash-rojo'), 550);
+      if(card){ card.classList.add('lm-scout-mini-card-pillado'); setTimeout(()=>card.classList.remove('lm-scout-mini-card-pillado'), 500); }
+      resolver('pillado');
     }
 
     function resolver(motivo){
@@ -9049,6 +9065,11 @@
       guardarEstado();
       pintar();
     }
+
+    // Red de seguridad: si el dedo/ratón se suelta fuera del botón (p.
+    // ej. cambia de ventana a media pulsación), no debe quedarse
+    // "pulsando" para siempre.
+    window.addEventListener('blur', soltar);
 
     // A propósito SIN habilitarCierreOverlay mientras se juega: un
     // clic fuera accidental no puede saltarse la decisión de

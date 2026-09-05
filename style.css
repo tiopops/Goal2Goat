@@ -4600,27 +4600,32 @@ body.liga-manager-screen .ranking-btn-label-lm{display:inline}
   display:flex;align-items:center;justify-content:center;padding:14px;
   transition:background .3s ease;
 }
+/* Paleta propia del minijuego rediseñado (círculo de precisión): oro
+   y ámbar de casino en vez del morado/lavanda del antiguo sistema de
+   pasos — colores y luces nuevos para una mecánica nueva, coherentes
+   con el propio círculo dorado que crece en el centro de la tarjeta. */
 .lm-scout-mini-card{
-  border-color:#8a7fd6;width:372px;max-width:92vw;
+  border-color:#d9a441;width:372px;max-width:92vw;
   padding:24px 26px 22px;position:relative;overflow:hidden;
   background:
-    radial-gradient(120% 90% at 50% -10%, rgba(167,139,250,.18), transparent 60%),
-    linear-gradient(165deg,#171420,#0a0d12 70%);
-  box-shadow:0 0 0 1px rgba(167,139,250,.16),0 30px 70px rgba(0,0,0,.7),inset 0 1px 0 rgba(255,255,255,.03);
+    radial-gradient(120% 90% at 50% -10%, rgba(230,201,74,.20), transparent 60%),
+    linear-gradient(165deg,#201808,#0d0a05 70%);
+  box-shadow:0 0 0 1px rgba(230,201,74,.22),0 30px 70px rgba(0,0,0,.7),inset 0 1px 0 rgba(255,255,255,.03);
 }
 /* Rejilla neón de fondo, igual que Parada Perfecta — mismo lenguaje
-   visual "casino" en los dos minijuegos del árbol de nodos. */
+   visual "casino" en los dos minijuegos del árbol de nodos, ahora en
+   tono dorado propio de este minijuego. */
 .lm-scout-mini-card::before{
   content:'';position:absolute;inset:0;pointer-events:none;opacity:.35;border-radius:inherit;
   background-image:
-    linear-gradient(rgba(167,139,250,.06) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(167,139,250,.06) 1px, transparent 1px);
+    linear-gradient(rgba(230,201,74,.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(230,201,74,.07) 1px, transparent 1px);
   background-size:34px 34px;
   mask-image:radial-gradient(ellipse at 50% 40%, #000 10%, transparent 72%);
 }
 .lm-scout-mini-eyebrow{
-  font-size:9.5px;letter-spacing:2.4px;text-align:center;color:#c4b5fd;
-  font-weight:700;margin-bottom:6px;text-shadow:0 0 10px rgba(196,181,253,.6);
+  font-size:9.5px;letter-spacing:2.4px;text-align:center;color:#f0d666;
+  font-weight:700;margin-bottom:6px;text-shadow:0 0 10px rgba(240,214,102,.6);
   display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap;position:relative;z-index:1;
 }
 /* Insignia de dificultad del nodo (fácil/normal/difícil) — mismo
@@ -4633,16 +4638,16 @@ body.liga-manager-screen .ranking-btn-label-lm{display:inline}
 }
 .lm-scout-mini-title{
   justify-content:center;text-align:center;font-size:26px;margin:0 0 16px;letter-spacing:2px;
-  text-shadow:0 0 14px rgba(196,181,253,.55),0 0 28px rgba(196,181,253,.25);position:relative;z-index:1;
+  text-shadow:0 0 14px rgba(230,201,74,.55),0 0 28px rgba(230,201,74,.25);position:relative;z-index:1;
 }
-.lm-scout-mini-title i{color:#a78bfa;font-size:22px;filter:drop-shadow(0 0 8px rgba(167,139,250,.7))}
+.lm-scout-mini-title i{color:#e6c94a;font-size:22px;filter:drop-shadow(0 0 8px rgba(230,201,74,.7))}
 .lm-scout-mini-meter-wrap{margin:14px 0 4px;transition:transform .2s ease;position:relative;z-index:1}
 .lm-scout-mini-meter-label{
   display:flex;align-items:center;gap:6px;
   font-size:10px;letter-spacing:1.4px;text-transform:uppercase;color:var(--lm-text-dim);
   text-align:left;margin-bottom:5px;font-weight:700;
 }
-.lm-scout-mini-meter-label i{font-size:11px;color:#c4b5fd}
+.lm-scout-mini-meter-label i{font-size:11px;color:#e6c94a}
 .lm-scout-mini-risk-label i{color:#e29a8a}
 /* La palabra GRATIS/FREE/etc. ya no se repite como etiqueta suelta
    junto a "calidad del informe" (quedaba redundante) — ahora solo
@@ -4652,7 +4657,7 @@ body.liga-manager-screen .ranking-btn-label-lm{display:inline}
 .lm-gratis-verde{ color:#5dcaa5; font-weight:700; }
 .lm-scout-mini-meter-track{
   width:100%;height:22px;border-radius:4px;background:rgba(0,0,0,.4);
-  border:1px solid rgba(167,139,250,.35);overflow:hidden;position:relative;
+  border:1px solid rgba(230,201,74,.35);overflow:hidden;position:relative;
   box-shadow:inset 0 2px 6px rgba(0,0,0,.6);
 }
 /* Clara al principio, cada vez más dorada e intensa según sube la
@@ -4682,6 +4687,20 @@ body.liga-manager-screen .ranking-btn-label-lm{display:inline}
   text-shadow:0 0 20px rgba(255,207,64,.4);
 }
 .lm-scout-mini-pct-simbolo{font-size:.55em;color:var(--lm-text-muted);margin-left:1px}
+/* Sin barra/medidor visual — a petición: la calidad del informe es
+   directamente el % que consigues jugando el círculo, así que se
+   muestra como una simple línea de texto con el número en dorado, sin
+   ninguna barra de progreso independiente por encima. */
+.lm-scout-mini-informe-linea{
+  display:flex;align-items:center;justify-content:center;gap:6px;
+  font-size:11px;letter-spacing:.3px;text-transform:uppercase;color:var(--lm-text-dim);
+  font-weight:700;margin:14px 0 2px;position:relative;z-index:1;
+}
+.lm-scout-mini-informe-linea i{font-size:12px;color:#e6c94a}
+.lm-scout-mini-pct-inline{
+  font-family:'Bebas Neue',Impact,sans-serif;font-size:16px;letter-spacing:.5px;
+  color:#fff;text-shadow:0 0 12px rgba(230,201,74,.5);
+}
 /* Aclaración explícita de que ese % ES la probabilidad real de sobre
    — para que quede claro que conseguirlo o no depende directamente de
    esta barra, no de un sorteo aparte. Más grande que antes (se leía
@@ -4750,6 +4769,27 @@ body.liga-manager-screen .ranking-btn-label-lm{display:inline}
   animation:lmScoutHeartbeatOnda 1.15s cubic-bezier(.16,.72,.32,1) infinite;
 }
 .lm-scout-mini-risk-pct-onda::after{animation-delay:.16s}
+/* Estrellas de calidad del sobre conseguido (1 a 3), en vez de un % —
+   grandes y centradas, con la misma luz dorada de casino del resto del
+   minijuego; las vacías se quedan en contorno tenue. */
+.lm-scout-mini-estrellas{
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  margin:16px 0 4px;position:relative;z-index:1;
+}
+.lm-scout-mini-estrellas i{
+  font-size:34px;color:#e6c94a;
+  filter:drop-shadow(0 0 10px rgba(230,201,74,.6));
+  animation:lmScoutEstrellaPop .4s cubic-bezier(.22,1,.36,1) backwards;
+}
+.lm-scout-mini-estrellas i.ph-bold{color:rgba(255,255,255,.18);filter:none}
+.lm-scout-mini-estrellas i:nth-child(1){animation-delay:.05s}
+.lm-scout-mini-estrellas i:nth-child(2){animation-delay:.16s}
+.lm-scout-mini-estrellas i:nth-child(3){animation-delay:.27s}
+@keyframes lmScoutEstrellaPop{
+  0%{transform:scale(.2);opacity:0}
+  70%{transform:scale(1.18);opacity:1}
+  100%{transform:scale(1);opacity:1}
+}
 .lm-scout-mini-resultado{
   font-size:12.5px;line-height:1.55;padding:12px 14px;margin:14px 0 4px;
   border-left:3px solid transparent;
@@ -4832,6 +4872,47 @@ body.liga-manager-screen .ranking-btn-label-lm{display:inline}
   100%{background:rgba(0,0,0,.82)}
 }
 .lm-scout-mini-overlay-flash-rojo{animation:lmScoutOverlayFlashRojo .55s ease-out}
+
+/* Círculo de precisión del minijuego de scouting (sustituye al antiguo
+   medidor de riesgo por pasos): un círculo dorado crece desde el
+   centro mientras se mantiene pulsado, rodeado de franjas de color
+   cada vez más estrechas hacia afuera — hay que soltar justo dentro
+   de la franja activa (la que pulsa/brilla) para superarla. */
+.lm-scout-mini-circulo-wrap{
+  width:196px;height:196px;margin:16px auto 6px;position:relative;
+  user-select:none;-webkit-user-select:none;touch-action:none;
+}
+.lm-scout-mini-circulo-wrap svg{width:100%;height:100%;display:block;overflow:visible}
+.lm-scout-mini-zona-ring{transition:opacity .25s ease,filter .25s ease}
+.lm-scout-mini-zona-ring.activa{filter:drop-shadow(0 0 6px currentColor);animation:lmScoutZonaPulse 1.3s ease-in-out infinite}
+@keyframes lmScoutZonaPulse{0%,100%{opacity:.55}50%{opacity:.95}}
+#lmScoutCirculoValor{filter:drop-shadow(0 0 14px rgba(255,215,90,.75)) drop-shadow(0 0 26px rgba(230,201,74,.35));transition:filter .15s ease}
+/* Ya te has pasado de la franja activa mientras sigues pulsando — SIN
+   perder todavía (eso solo se decide al soltar), pero con un aviso
+   rojo bien visible para que sientas el peligro de seguir aguantando. */
+#lmScoutCirculoValor.lm-scout-mini-circulo-peligro{
+  filter:drop-shadow(0 0 16px rgba(255,45,85,.85)) drop-shadow(0 0 30px rgba(255,45,85,.5));
+  animation:lmScoutCirculoPeligroPulso .5s ease-in-out infinite;
+}
+@keyframes lmScoutCirculoPeligroPulso{0%,100%{opacity:1}50%{opacity:.82}}
+.lm-scout-mini-circulo-centro{
+  position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+  text-align:center;pointer-events:none;
+}
+.lm-scout-mini-circulo-pct{
+  font-family:'Bebas Neue',Impact,sans-serif;font-size:30px;line-height:1;color:#fff;
+  text-shadow:0 2px 8px rgba(0,0,0,.6);
+}
+.lm-scout-mini-circulo-zonalbl{font-size:9.5px;color:var(--lm-text-dim);letter-spacing:1px;margin-top:2px;text-transform:uppercase}
+.lm-scout-mini-hold-nota{font-size:10px;color:var(--lm-text-dim);text-align:center;margin:2px 0 4px}
+.lm-scout-mini-hold-btn{
+  position:relative;transition:transform .1s ease,box-shadow .1s ease;
+  touch-action:none;user-select:none;-webkit-user-select:none;
+}
+.lm-scout-mini-hold-btn.lm-scout-mini-pulsando{
+  transform:scale(.97);
+  box-shadow:0 0 0 3px rgba(230,201,74,.55),0 0 20px rgba(230,201,74,.45) !important;
+}
 
 /* ---------- Minijuego "Parada Perfecta" (entreno intenso) ---------- */
 .lm-pp-card{
