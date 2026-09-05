@@ -8864,9 +8864,6 @@
       const pct=Math.round(probActual*100);
       const puedePulsar = fase==='jugando' && zonaIdx<cfgCirculo.zonas.length;
       const puedePlantarse = fase==='jugando' && !sujetando;
-      const zonaTxt = zonaIdx<cfgCirculo.zonas.length
-        ? tp('lm.scoutmini_zona', {n:zonaIdx+1, total:cfgCirculo.zonas.length})
-        : t('lm.scoutmini_zona_completa');
       let resultadoTexto='';
       let estrellasHTML='';
       if(fase==='resuelto'){
@@ -8916,7 +8913,6 @@
             </svg>
             <div class="lm-scout-mini-circulo-centro">
               <div class="lm-scout-mini-circulo-pct" id="lmScoutCirculoPct">${Math.round(valor)}%</div>
-              <div class="lm-scout-mini-circulo-zonalbl" id="lmScoutCirculoZonaLbl">${zonaTxt}</div>
             </div>
           </div>
           <div class="lm-scout-mini-hold-nota">${t('lm.scoutmini_hold_nota')}</div>` : ''}
