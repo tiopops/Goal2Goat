@@ -2931,9 +2931,19 @@
             // se pintaba justo antes de abrir este pop-up, así que la
             // barra de afición se quedaba con el valor de antes del
             // partido hasta la siguiente vez que algo más disparase
-            // un repintado por su cuenta.
+            // un repintado por su cuenta. OJO: el árbol de nodos pinta
+            // su PROPIA copia de las barras de estado (renderBarrasEstadoHTML
+            // dentro de renderArbolNodosOverlayHTML), así que repintar
+            // solo con render() (la pantalla de fuera) no bastaba —
+            // esas barras del árbol se quedaban congeladas con el valor
+            // de antes del amistoso hasta que el jugador elegía el
+            // siguiente nodo (que sí llama a pintarArbolNodos() por su
+            // cuenta). Por eso aquí hay que llamar TAMBIÉN a
+            // pintarArbolNodos() justo al cerrar el pop-up, para que el
+            // cambio se vea de inmediato y no en el nodo siguiente.
             if(eraAmistoso && state.ultimoAmistosoResultado){
               mostrarResultadoAmistosoPopup(state.ultimoAmistosoResultado, ()=>{
+                pintarArbolNodos();
                 if(typeof render==='function') render();
               });
             }
@@ -8962,6 +8972,10 @@
       const btnPlantarse=overlay.querySelector('#lmScoutBtnPlantarse');
       if(btnPlantarse) btnPlantarse.disabled=true;
       if(typeof window.playSound==='function') window.playSound('select');
+      // Sonido continuo de "riser" (estilo casino/tragaperras) que se va
+      // agudizando a la vez que crece el círculo — arranca aquí, se
+      // actualiza en cada frame de avanzarCirculo() y se corta en soltar().
+      if(typeof window.scoutRiserStart==='function') window.scoutRiserStart();
       if(!rafId) rafId=requestAnimationFrame(avanzarCirculo);
     }
 
@@ -8995,6 +9009,7 @@
       // al 100% y se queda ahí esperando a que se suelte.
       valor=Math.min(100, valor + cfgCirculo.velocidad*factorAceleracion*dt);
       latidoSiToca();
+      if(typeof window.scoutRiserUpdate==='function') window.scoutRiserUpdate(valor);
       actualizarCirculoDOM();
       if(valor<100) rafId=requestAnimationFrame(avanzarCirculo);
       else rafId=null;
@@ -9004,6 +9019,11 @@
       if(!sujetando) return;
       sujetando=false;
       if(rafId){ cancelAnimationFrame(rafId); rafId=null; }
+      // Corta el riser justo al soltar, tanto si se supera la franja como
+      // si descubren al ojeador — es el único punto por el que pasan
+      // TODOS los caminos de soltar (botón, salir del área, cancelar el
+      // toque, o perder el foco de la ventana).
+      if(typeof window.scoutRiserStop==='function') window.scoutRiserStop();
       const btn=overlay.querySelector('#lmScoutBtnMantener');
       if(btn) btn.classList.remove('lm-scout-mini-pulsando');
       if(fase!=='jugando') return;
