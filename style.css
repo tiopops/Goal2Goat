@@ -104,6 +104,18 @@ body.dark-theme .version-tag{color:#555}
   color:var(--gold);letter-spacing:.5px;line-height:1;
 }
 .lm-once-media-lbl{font-size:8px;color:#777;font-weight:700;letter-spacing:.8px}
+/* Fichas de habilidades de Liga Manager actualmente en efecto (p.ej.
+   Factor Campo si el próximo partido es en casa) — mismo verde
+   (--accent) que ya usa la descripción de una habilidad activa en su
+   propia tarjeta de la pestaña Habilidades, para reconocerse de un
+   vistazo como parte del mismo sistema. El nombre de la habilidad se
+   ve al pasar el ratón por encima (title). */
+.lm-skill-activa-badge{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:18px;height:18px;border-radius:50%;flex-shrink:0;
+  background:rgba(46,204,113,.14);border:1px solid var(--accent);color:var(--accent);
+  font-size:10px;margin-left:2px;
+}
 #ligaManagerScreen .bench-title,
 #ligaManagerScreen .lm-staff-bar-title{color:#ccc}
 
@@ -3510,6 +3522,11 @@ body.liga-manager-screen .ranking-btn-label-lm{display:inline}
   cursor:pointer;transition:background .15s ease,transform .15s ease;
 }
 .lm-pitch-lupa-btn:hover{background:rgba(201,162,39,.85);color:var(--lm-gold-tint);transform:scale(1.08)}
+/* Misma animación de ondas que el botón JUGAR/SEGUIR (lmJugarPulse),
+   aquí siempre activa (no depende de 1 minuto sin tocar nada) — para
+   que la lupa de información del club se note de un vistazo sobre el
+   campo. */
+.lm-pitch-lupa-btn{animation:lmJugarPulse 1.8s ease-in-out infinite}
 
 /* Popup de información del club — nivel de estadio + estadísticas
    generales, diseño profesional con imagen a todo lo ancho arriba. */
@@ -4615,14 +4632,12 @@ body.liga-manager-screen .ranking-btn-label-lm{display:inline}
 }
 .lm-scout-mini-meter-label i{font-size:11px;color:#c4b5fd}
 .lm-scout-mini-risk-label i{color:#e29a8a}
-/* Etiqueta "GRATIS" junto a la calidad del informe — el sobre de este
-   minijuego nunca cuesta nada, y ahora se ve desde el primer vistazo,
-   no solo al final si se consigue. */
-.lm-scout-mini-tag-gratis{
-  font-family:'Bebas Neue',Impact,sans-serif;font-size:9px;letter-spacing:1px;
-  color:#0c1016;background:#5dcaa5;border-radius:10px;padding:1px 6px;
-  box-shadow:0 0 8px rgba(93,202,165,.5);margin-left:2px;
-}
+/* La palabra GRATIS/FREE/etc. ya no se repite como etiqueta suelta
+   junto a "calidad del informe" (quedaba redundante) — ahora solo
+   aparece una vez, dentro del propio texto descriptivo de abajo
+   (.lm-scout-mini-informe-nota), resaltada en verde para que llame la
+   atención sin necesitar una pastilla aparte. */
+.lm-gratis-verde{ color:#5dcaa5; font-weight:700; }
 .lm-scout-mini-meter-track{
   width:100%;height:22px;border-radius:4px;background:rgba(0,0,0,.4);
   border:1px solid rgba(167,139,250,.35);overflow:hidden;position:relative;
@@ -4890,6 +4905,7 @@ body.liga-manager-screen .ranking-btn-label-lm{display:inline}
 .lm-pp-stat{flex:1;background:#11161d;border:1px solid #1c2530;border-radius:10px;padding:10px 6px}
 .lm-pp-stat-n{font-family:'Bebas Neue',Impact,sans-serif;font-size:19px;color:#fff}
 .lm-pp-stat-n.lm-pp-pos{color:#5dcaa5;text-shadow:0 0 10px rgba(93,202,165,.5)}
+.lm-pp-stat-n.lm-pp-neg{color:#ff2d55;text-shadow:0 0 10px rgba(255,45,85,.5)}
 .lm-pp-stat-l{font-size:8.5px;letter-spacing:1px;text-transform:uppercase;color:#6b7280;margin-top:2px}
 .lm-pp-particulas{position:absolute;inset:0;pointer-events:none;overflow:visible;z-index:5}
 .lm-pp-particula{

@@ -787,7 +787,11 @@
         // en vez del desgaste plano de siempre.
         const comboDia = state.diasEntrenoIntensoCombo ? state.diasEntrenoIntensoCombo[dia.fecha] : undefined;
         if(comboDia==null) return;
-        const fatigaMult = LM_TABLA_FATIGA_ENTRENO_INTENSO[comboDia]!=null ? LM_TABLA_FATIGA_ENTRENO_INTENSO[comboDia] : 1;
+        // La fatiga depende de los FALLOS del minijuego (el esfuerzo/
+        // riesgo real encajado), no del combo — el combo solo mide lo
+        // bien que ha ido el entreno de cara a la mejora de stats.
+        const fallosDia = state.diasEntrenoIntensoFallos ? (state.diasEntrenoIntensoFallos[dia.fecha]||0) : 0;
+        const fatigaMult = LM_TABLA_FATIGA_ENTRENO_INTENSO[fallosDia]!=null ? LM_TABLA_FATIGA_ENTRENO_INTENSO[fallosDia] : 1;
         proyeccion+=desgastePromedio*fatigaMult;
       }
       else if(nodo.tipo==='entreno' || nodo.tipo==='amistoso') proyeccion+=desgastePromedio;
@@ -1613,9 +1617,11 @@
           // estado ya consistente.
           if(LM_MINIJUEGO_ENTRENO_INTENSO_ACTIVO && typeof abrirMinijuegoParadaPerfecta==='function'){
             setTimeout(()=>{
-              abrirMinijuegoParadaPerfecta((comboMax)=>{
+              abrirMinijuegoParadaPerfecta((comboMax, fallos)=>{
                 if(!state.diasEntrenoIntensoCombo) state.diasEntrenoIntensoCombo={};
+                if(!state.diasEntrenoIntensoFallos) state.diasEntrenoIntensoFallos={};
                 state.diasEntrenoIntensoCombo[fechaISOdia]=comboMax;
+                state.diasEntrenoIntensoFallos[fechaISOdia]=fallos||0;
                 guardarEstado();
                 if(typeof onEntrenoIntensoCerrado==='function') onEntrenoIntensoCerrado();
               });
@@ -1843,8 +1849,15 @@
         // pese a prometerlo en su descripción.
         const esIntensoConCombo = !!(nodoDelDia && nodoDelDia.subtipo==='intenso');
         const comboMaxDia = esIntensoConCombo && state.diasEntrenoIntensoCombo ? (state.diasEntrenoIntensoCombo[iso]||0) : 0;
+        // La mejora de stats depende del COMBO (lo bien resuelto que
+        // salió el entreno); la fatiga depende de los FALLOS (el
+        // desgaste físico real de forzar el cuerpo e ir fallando
+        // paradas), no del mismo número — antes ambas usaban comboMax,
+        // así que un entreno perfecto (0 fallos) apenas sumaba fatiga
+        // pese a ser, por definición, el más intenso de todos.
+        const fallosDia = esIntensoConCombo && state.diasEntrenoIntensoFallos ? (state.diasEntrenoIntensoFallos[iso]||0) : 0;
         const bonusIntenso = esIntensoConCombo ? (LM_TABLA_BONUS_ENTRENO_INTENSO[comboMaxDia]!=null ? LM_TABLA_BONUS_ENTRENO_INTENSO[comboMaxDia] : 1) : 1;
-        const fatigaMultIntenso = esIntensoConCombo ? (LM_TABLA_FATIGA_ENTRENO_INTENSO[comboMaxDia]!=null ? LM_TABLA_FATIGA_ENTRENO_INTENSO[comboMaxDia] : 1) : 1;
+        const fatigaMultIntenso = esIntensoConCombo ? (LM_TABLA_FATIGA_ENTRENO_INTENSO[fallosDia]!=null ? LM_TABLA_FATIGA_ENTRENO_INTENSO[fallosDia] : 1) : 1;
         if(esIntensoConCombo && comboMaxDia>0) textos.push(tp('lm.dia_entreno_intenso_combo', {combo:comboMaxDia}));
         const idsEnPlanHoy=new Set(plan.map(({jugador:j})=>j.id));
         // Jugadores del Plan de Entrenamiento del preparador físico:
@@ -2710,7 +2723,7 @@
       overlay.innerHTML=`
         <div class="lm-amistoso-resultado-card lm-amistoso-suspense">
           <div class="lm-amistoso-dificultad-badge" style="border-color:${colorDificultad};color:${colorDificultad}">
-            <i class="ph ph-bold ph-soccer-ball"></i> ${t(claveDificultad).toUpperCase()}
+            <i class="ph ph-bold ph-soccer-ball"></i> ${t('lm.dificultad_lbl').toUpperCase()} ${t('lm.dificultad_'+(resultado.dificultad==='facil'||resultado.dificultad==='dificil'?resultado.dificultad:'normal')).toUpperCase()}
           </div>
           <div class="lm-amistoso-marcador-vivo ${destacar?'lm-amistoso-marcador-vivo-destello':''}">
             ${crestHTML(state.escudo||null,26)}
@@ -2731,7 +2744,7 @@
         <div class="lm-amistoso-resultado-card">
           <button class="lm-popup-close-x" data-cerrar-amistoso title="${t('common.close')||'Cerrar'}">×</button>
           <div class="lm-amistoso-dificultad-badge" style="border-color:${colorDificultad};color:${colorDificultad}">
-            <i class="ph ph-bold ph-soccer-ball"></i> ${t(claveDificultad).toUpperCase()}
+            <i class="ph ph-bold ph-soccer-ball"></i> ${t('lm.dificultad_lbl').toUpperCase()} ${t('lm.dificultad_'+(resultado.dificultad==='facil'||resultado.dificultad==='dificil'?resultado.dificultad:'normal')).toUpperCase()}
           </div>
           <div class="lm-amistoso-resultado-titulo" style="color:${colorResultado}">
             <i class="ph ph-bold ${iconoResultado}"></i> ${t(claveResultado)}
@@ -4197,6 +4210,31 @@
     }catch(e){ window._lmSkillsCache=window._lmSkillsCache||{}; }
   }
   function lmSkillActiva(id){ return !!(window._lmSkillsCache && window._lmSkillsCache[id]); }
+  // Habilidades cuyo efecto depende del contexto (jugar en casa/fuera,
+  // racha actual...) — no de si se han comprado y activado sin más
+  // (esas serían pasivas SIEMPRE, no aporta nada avisar de ellas aquí).
+  // Se muestran como fichas verdes junto a la nota media del once
+  // titular EXACTAMENTE cuando su condición se cumple de verdad para
+  // el próximo partido, con el nombre de la habilidad al pasar el
+  // ratón por encima — mismo icono y color que en la pestaña de
+  // habilidades del perfil, para que se reconozcan de un vistazo.
+  function lmHabilidadesActivasAhora(esLocal){
+    const activas=[];
+    if(esLocal===true && lmSkillActiva('lm_factor_campo')) activas.push('lm_factor_campo');
+    if(esLocal===false && lmSkillActiva('lm_contraataque_letal')) activas.push('lm_contraataque_letal');
+    if((state.rachaResultados||0)>=3 && lmSkillActiva('lm_mentalidad_ganadora')) activas.push('lm_mentalidad_ganadora');
+    if((state.rachaResultados||0)===-1 && lmSkillActiva('lm_revancha')) activas.push('lm_revancha');
+    return activas;
+  }
+  function lmHabilidadesActivasAhoraHTML(esLocal){
+    const ids=lmHabilidadesActivasAhora(esLocal);
+    if(!ids.length) return '';
+    return ids.map(id=>{
+      const def=LM_SKILL_DEFS.find(d=>d.id===id);
+      if(!def) return '';
+      return `<span class="lm-skill-activa-badge" title="${def.name}"><i class="ph ph-bold ${def.phIcon}"></i></span>`;
+    }).join('');
+  }
   async function renderLigaManagerSkillsTab(omitirRecarga){
     await reRenderPanelConservandoScroll('lmProfileNotesPane', ()=>renderLigaManagerSkillsTabImpl(omitirRecarga));
   }
@@ -4267,7 +4305,17 @@
           }
           if(typeof window.unlockLMAchievement==='function' && LM_SKILL_DEFS.every(d=>lmSkillActiva(d.id))) window.unlockLMAchievement('lm_all_skills', false);
           try{
-            await window._fbDb.collection('users').doc(user.uid).set({ligaManagerSkills:window._lmSkillsCache, scratchPoints:window._lmScratchPoints}, {merge:true});
+            // OJO: antes esto era .set({ligaManagerSkills:window._lmSkillsCache}, {merge:true}) —
+            // con merge:true, Firestore fusiona el mapa "ligaManagerSkills" campo a
+            // campo con el que ya hubiera en el documento, así que una clave BORRADA
+            // localmente (al desactivar una habilidad) nunca desaparecía de verdad
+            // en el servidor: el merge solo añade/actualiza claves presentes, no
+            // elimina las ausentes. Resultado: la habilidad parecía desactivarse en
+            // el momento, pero al volver a entrar (recarga real desde Firestore)
+            // seguía constando como activa. .update() con el objeto completo SÍ
+            // reemplaza el campo entero (igual que ya hace correctamente el mismo
+            // sistema de habilidades en Copa Leyendas, en game.js).
+            await window._fbDb.collection('users').doc(user.uid).update({ligaManagerSkills:window._lmSkillsCache, scratchPoints:window._lmScratchPoints});
           }catch(e){}
           renderLigaManagerSkillsTab(true);
         });
@@ -7810,6 +7858,17 @@
     const {total, max, nivelEstadio}=calcularEstrellasClub();
     const estadio=state.estadio||{campo:100,satisfaccion:0,aforoTotal:0,ultimaAsistencia:null};
     const monedaInfo=MONEDAS[state.moneda]||MONEDAS.EUR;
+    // Asistencia PREVISTA para el próximo partido: solo tiene sentido si
+    // se juega en casa (fuera no hay ingreso de entradas propio que
+    // predecir) — mismo cálculo real que usa el partido de verdad
+    // (calcularAsistencia), con el clima ya sorteado para esta jornada.
+    const j=state.jornadaActual-1;
+    const proximaJornada = j<38 ? state.calendario[j] : null;
+    const miProximoPartido = proximaJornada ? proximaJornada.find(p=>p.home.id==='lm_0'||p.away.id==='lm_0') : null;
+    const proximoEsLocal = !!(miProximoPartido && miProximoPartido.home.id==='lm_0');
+    const asistenciaPrevistaTxt = proximoEsLocal
+      ? calcularAsistencia(climaDelPartido() ? climaDelPartido().id : null).asistentes.toLocaleString('es-ES')
+      : '—';
     overlay.innerHTML=`
       <div class="lm-dilemma-card lm-infoclub-card">
         ${xCerrarHTML()}
@@ -7822,28 +7881,28 @@
         </div>
         <div class="lm-infoclub-stats-grid">
           <div class="lm-infoclub-stat">
-            <div class="lm-infoclub-stat-top"><i class="ph ph-bold ph-coins"></i><div class="lm-infoclub-stat-val">${formatoDinero(state.capital||0)}</div></div><div class="lm-infoclub-stat-label">${t('lm.capital')}</div>
+            <div class="lm-infoclub-stat-top"><i class="ph ph-bold ph-users" style="color:#c9a227"></i><div class="lm-infoclub-stat-val">${(estadio.aforoTotal||0).toLocaleString('es-ES')}</div></div><div class="lm-infoclub-stat-label">${t('lm.aforo_maximo')}</div>
           </div>
           <div class="lm-infoclub-stat">
-            <div class="lm-infoclub-stat-top"><i class="ph ph-bold ph-users"></i><div class="lm-infoclub-stat-val">${(estadio.aforoTotal||0).toLocaleString('es-ES')}</div></div><div class="lm-infoclub-stat-label">${t('lm.aforo_maximo')}</div>
+            <div class="lm-infoclub-stat-top"><i class="ph ph-bold ph-chart-line-up" style="color:#5b9bd5"></i><div class="lm-infoclub-stat-val">${asistenciaPrevistaTxt}</div></div><div class="lm-infoclub-stat-label">${t('lm.asistencia_prevista')}</div>
           </div>
           <div class="lm-infoclub-stat">
-            <div class="lm-infoclub-stat-top"><i class="ph ph-bold ph-ticket"></i><div class="lm-infoclub-stat-val">${((estadio.ultimaAsistencia&&estadio.ultimaAsistencia.asistentes)||0).toLocaleString('es-ES')}</div></div><div class="lm-infoclub-stat-label">${t('lm.ultima_asistencia')}</div>
+            <div class="lm-infoclub-stat-top"><i class="ph ph-bold ph-ticket" style="color:#5dcaa5"></i><div class="lm-infoclub-stat-val">${((estadio.ultimaAsistencia&&estadio.ultimaAsistencia.asistentes)||0).toLocaleString('es-ES')}</div></div><div class="lm-infoclub-stat-label">${t('lm.ultima_asistencia')}</div>
           </div>
           <div class="lm-infoclub-stat">
-            <div class="lm-infoclub-stat-top"><i class="ph ph-bold ph-money"></i><div class="lm-infoclub-stat-val">${monedaInfo.symbol}${state.precioEntrada||0}</div></div><div class="lm-infoclub-stat-label">${t('lm.precio_entrada')}</div>
+            <div class="lm-infoclub-stat-top"><i class="ph ph-bold ph-money" style="color:#4caf7a"></i><div class="lm-infoclub-stat-val">${monedaInfo.symbol}${state.precioEntrada||0}</div></div><div class="lm-infoclub-stat-label">${t('lm.precio_entrada')}</div>
           </div>
           <div class="lm-infoclub-stat">
-            <div class="lm-infoclub-stat-top"><i class="ph ph-bold ph-smiley"></i><div class="lm-infoclub-stat-val">${estadio.satisfaccion||0}</div></div><div class="lm-infoclub-stat-label">${t('lm.satisfaccion_afición')}</div>
+            <div class="lm-infoclub-stat-top"><i class="ph ph-bold ph-smiley" style="color:#e6c94a"></i><div class="lm-infoclub-stat-val">${estadio.satisfaccion||0}</div></div><div class="lm-infoclub-stat-label">${t('lm.satisfaccion_afición')}</div>
           </div>
           <div class="lm-infoclub-stat">
-            <div class="lm-infoclub-stat-top"><i class="ph ph-bold ph-heartbeat"></i><div class="lm-infoclub-stat-val">${state.moral||0}</div></div><div class="lm-infoclub-stat-label">${t('lm.moral_equipo')}</div>
+            <div class="lm-infoclub-stat-top"><i class="ph ph-bold ph-heartbeat" style="color:#ff6b85"></i><div class="lm-infoclub-stat-val">${state.moral||0}</div></div><div class="lm-infoclub-stat-label">${t('lm.moral_equipo')}</div>
           </div>
           <div class="lm-infoclub-stat">
-            <div class="lm-infoclub-stat-top"><i class="ph ph-bold ph-grass"></i><div class="lm-infoclub-stat-val">${estadio.campo||0}%</div></div><div class="lm-infoclub-stat-label">${t('lm.estado_cesped')}</div>
+            <div class="lm-infoclub-stat-top"><i class="ph ph-bold ph-grass" style="color:#5cb85c"></i><div class="lm-infoclub-stat-val">${estadio.campo||0}%</div></div><div class="lm-infoclub-stat-label">${t('lm.estado_cesped')}</div>
           </div>
           <div class="lm-infoclub-stat">
-            <div class="lm-infoclub-stat-top"><i class="ph ph-bold ph-users-three"></i><div class="lm-infoclub-stat-val">${(state.plantilla||[]).length}</div></div><div class="lm-infoclub-stat-label">${t('lm.plantilla')}</div>
+            <div class="lm-infoclub-stat-top"><i class="ph ph-bold ph-users-three" style="color:#8a7fd6"></i><div class="lm-infoclub-stat-val">${(state.plantilla||[]).length}</div></div><div class="lm-infoclub-stat-label">${t('lm.plantilla')}</div>
           </div>
         </div>
         <div class="lm-popup-actions"><button id="lmInfoClubCerrar" class="mode-card-btn mode-card-btn-gold">${t('lm.cerrar')}</button></div>
@@ -8759,6 +8818,20 @@
       return Math.max(0.12, Math.min(1, r/0.65));
     }
 
+    // Latido de corazón sincronizado con el propio ritmo del CSS del
+    // número de riesgo (lmScoutNumeroLatido/lmScoutHeartbeatOnda, ambos
+    // a 1.15s por ciclo) — mientras el riesgo esté visible en pantalla,
+    // suena al mismo compás; se para en cuanto deja de estar visible
+    // (resuelto, o al cerrar el minijuego).
+    let latidoInterval=null;
+    function gestionarLatido(activo){
+      if(activo && !latidoInterval){
+        latidoInterval=setInterval(()=>{ if(typeof window.playSound==='function') window.playSound('scout_heartbeat'); }, 1150);
+      } else if(!activo && latidoInterval){
+        clearInterval(latidoInterval);
+        latidoInterval=null;
+      }
+    }
     function pintar(){
       const pct=Math.round(probActual*100);
       const puedeSeguir = fase==='jugando' && pasos<MAX_PASOS;
@@ -8768,6 +8841,7 @@
       // seguir eligiendo — así el jugador lo ve rellenarse en vivo en
       // vez de que desaparezca de golpe al pulsar ACERCARSE.
       const mostrarRiesgo = fase!=='resuelto' && pasos<MAX_PASOS;
+      gestionarLatido(mostrarRiesgo);
       const riesgoSiguiente = lmRiesgoDescubiertaScouting(pasos+1, dificultad);
       // Nivel de riesgo YA superado (el de los pasos ya dados, o 0 si
       // todavía no se ha empujado ninguna vez). En REPOSO la barra se
@@ -8801,11 +8875,11 @@
           ${confetiHTML}
           <div class="lm-scout-mini-eyebrow">${t('lm.scoutmini_eyebrow')}${pasos>0 && fase!=='resuelto' ? ` · ${tp('lm.scoutmini_paso', {n:pasos})}` : ''}</div>
           <div class="lm-amistoso-dificultad-badge" style="border-color:${cfgDificultad.color};color:${cfgDificultad.color}">
-            <i class="ph ph-bold ph-binoculars"></i> ${t('lm.dificultad_'+dificultad).toUpperCase()}
+            <i class="ph ph-bold ph-binoculars"></i> ${t('lm.dificultad_lbl').toUpperCase()} ${t('lm.dificultad_'+dificultad).toUpperCase()}
           </div>
           <div class="lm-dilemma-title lm-scout-mini-title"><i class="ph ph-bold ph-binoculars"></i>${t('lm.scoutmini_titulo')}</div>
           <div class="lm-scout-mini-meter-wrap">
-            <div class="lm-scout-mini-meter-label"><i class="ph ph-bold ph-magnifying-glass"></i>${t('lm.scoutmini_label_informe')}<span class="lm-scout-mini-tag-gratis">${t('lm.scoutmini_tag_gratis')}</span></div>
+            <div class="lm-scout-mini-meter-label"><i class="ph ph-bold ph-magnifying-glass"></i>${t('lm.scoutmini_label_informe')}</div>
             <div class="lm-scout-mini-meter-track">
               <div class="lm-scout-mini-meter-fill ${claseMeterParaProb(probActual)}" id="lmScoutMeterFill" style="width:${pct}%"><span class="lm-scout-mini-meter-sheen"></span></div>
             </div>
@@ -8847,6 +8921,7 @@
       });
       if(btnContinuar) btnContinuar.addEventListener('click', ()=>{
         if(typeof window.playSound==='function') window.playSound('select');
+        gestionarLatido(false);
         overlay.remove();
         if(typeof onCerrado==='function') onCerrado();
       });
@@ -8948,8 +9023,17 @@
         probActual=0;
         resolverTiradaSobreFichajes(0);
       } else {
-        const exito = probActual>0 ? resolverTiradaSobreFichajes(probActual, true, cfgDificultad.bonusNivelSobre) : false;
+        // Pequeña protección anti-mala-racha (invisible, no se muestra
+        // en el %): cada tirada fallida seguida sube un poco la
+        // probabilidad REAL de la siguiente, sin tocar lo que se ve en
+        // pantalla — no siempre toca, pero una racha larga de mala
+        // suerte (p.ej. 4 seguidas con un 40% de calidad) se vuelve
+        // cada vez menos probable en vez de poder repetirse sin límite.
+        const bonusPity = Math.min(0.15, (state.scoutingRachaFallosSobre||0)*0.03);
+        const probConPity = probActual>0 ? Math.min(0.95, probActual+bonusPity) : 0;
+        const exito = probActual>0 ? resolverTiradaSobreFichajes(probConPity, true, cfgDificultad.bonusNivelSobre) : false;
         resultadoTipo = exito ? 'exito' : 'fallo';
+        state.scoutingRachaFallosSobre = exito ? 0 : (state.scoutingRachaFallosSobre||0)+1;
         // Recompensa satisfactoria de verdad: sonido de victoria propio
         // (no el "reveal" genérico) en cuanto se confirma el sobre.
         if(exito && typeof window.playSound==='function') window.playSound('victory');
@@ -8989,21 +9073,25 @@
   // combo de 5 nota mucho más que un combo de 2, pero nunca se acerca a
   // sentirse como un "x5" del entrenamiento normal.
   const LM_TABLA_BONUS_ENTRENO_INTENSO = {0:1, 1:1.22, 2:1.40, 3:1.55, 4:1.66, 5:1.75};
-  // Mismo comboMax -> multiplicador sobre el desgaste (fatiga) de ese
-  // día. Crece mucho más despacio que el bonus de mejora (máximo +20% a
-  // combo 5) para que perseguir el combo máximo siga mereciendo la pena
-  // de verdad — si el cansancio subiera al mismo ritmo, no tendría
-  // sentido arriesgar.
-  const LM_TABLA_FATIGA_ENTRENO_INTENSO = {0:1, 1:1.06, 2:1.11, 3:1.15, 4:1.18, 5:1.20};
+  // Número de FALLOS (no el combo) -> multiplicador sobre el desgaste
+  // (fatiga) de ese día. Antes usaba el mismo comboMax que la tabla de
+  // arriba, así que un entreno perfecto (combo 5, 0 fallos) apenas
+  // sumaba fatiga — al revés de lo que tendría sentido para un entreno
+  // "intenso". Ahora la fatiga depende de cuánto se ha forzado el
+  // cuerpo fallando paradas: incluso con 0 fallos hay una fatiga base
+  // notable (+35%, sigue siendo un entreno intenso de por sí), y cada
+  // fallo la sube más.
+  const LM_TABLA_FATIGA_ENTRENO_INTENSO = {0:1.35, 1:1.45, 2:1.55, 3:1.65, 4:1.75, 5:1.85};
 
-  // Abre el minijuego. onCerrado(comboMax) se llama al pulsar CONTINUAR
-  // en la pantalla final, con el mejor combo alcanzado durante los 5
+  // Abre el minijuego. onCerrado(comboMax, fallos) se llama al pulsar
+  // CONTINUAR en la pantalla final, con el mejor combo y el total de
+  // fallos alcanzados durante los 5
   // intentos — quien llama es responsable de guardarlo (en
   // state.diasEntrenoIntensoCombo[fechaISOdia]) antes de continuar.
   function abrirMinijuegoParadaPerfecta(onCerrado){
     const MAX_INTENTOS=5;
     const ANCHO_ZONA_INICIAL=24, ANCHO_ZONA_MIN=6.5, VELOCIDAD_TOPE=2.6;
-    let intento=0, combo=0, comboMax=0;
+    let intento=0, combo=0, comboMax=0, fallos=0;
     let anchoZonaPct=ANCHO_ZONA_INICIAL, posAguja=0, velocidad=0.95, dir=1;
     let corriendo=true, terminado=false, ultimoTs=null, rafId=null;
     let zonaActual={left:0, width:0};
@@ -9144,6 +9232,7 @@
         anchoZonaPct=Math.max(ANCHO_ZONA_MIN, anchoZonaPct*0.62);
         velocidad=Math.min(VELOCIDAD_TOPE, velocidad*1.18);
       } else {
+        fallos++;
         marcarIntento(intento, false);
         pista.classList.remove('lm-pp-flash-miss'); void pista.offsetWidth; pista.classList.add('lm-pp-flash-miss');
         card.classList.remove('lm-pp-shake'); void card.offsetWidth; card.classList.add('lm-pp-shake');
@@ -9168,12 +9257,17 @@
 
     function mostrarFinal(){
       const bonusMult=LM_TABLA_BONUS_ENTRENO_INTENSO[comboMax]!=null?LM_TABLA_BONUS_ENTRENO_INTENSO[comboMax]:1;
-      const fatigaMult=LM_TABLA_FATIGA_ENTRENO_INTENSO[comboMax]!=null?LM_TABLA_FATIGA_ENTRENO_INTENSO[comboMax]:1;
+      // La fatiga depende de los FALLOS, no del combo — un entreno
+      // perfecto sigue siendo intenso de por sí (fatiga base alta),
+      // y cada fallo la sube más.
+      const fatigaMult=LM_TABLA_FATIGA_ENTRENO_INTENSO[fallos]!=null?LM_TABLA_FATIGA_ENTRENO_INTENSO[fallos]:1;
       const bonusPct=Math.round((bonusMult-1)*100);
       const fatigaPct=Math.round((fatigaMult-1)*100);
       overlay.querySelector('#lmPpComboFinal').textContent=comboMax;
       overlay.querySelector('#lmPpFinalBonus').textContent=(comboMax>0?'+':'')+bonusPct+'%';
-      overlay.querySelector('#lmPpFinalFatiga').textContent=(comboMax>0?'+':'')+fatigaPct+'%';
+      const finalFatigaEl=overlay.querySelector('#lmPpFinalFatiga');
+      finalFatigaEl.textContent='+'+fatigaPct+'%';
+      finalFatigaEl.classList.add('lm-pp-neg');
       const desc = comboMax===0 ? t('lm.pp_desc_0')
         : comboMax>=5 ? t('lm.pp_desc_max')
         : comboMax>=3 ? t('lm.pp_desc_alto')
@@ -9197,7 +9291,7 @@
       document.removeEventListener('keydown', onKeydown);
       if(rafId) cancelAnimationFrame(rafId);
       overlay.remove();
-      if(typeof onCerrado==='function') onCerrado(comboMax);
+      if(typeof onCerrado==='function') onCerrado(comboMax, fallos);
     });
 
     pintarIntentos();
@@ -10641,6 +10735,7 @@
               <span class="lm-once-media-chip" title="${t('lm.media_once_titular_tt')}">
                 <span class="lm-once-media-num">${plantillaPrincipalSinSancion.length?Math.round(plantillaPrincipalSinSancion.reduce((s,p)=>s+(p.overall||0),0)/plantillaPrincipalSinSancion.length):0}</span>
                 <span class="lm-once-media-lbl">${t('lm.media_equipo')}</span>
+                ${lmHabilidadesActivasAhoraHTML(esLocal)}
               </span>
             </span>
             <span style="display:flex;align-items:center;gap:8px">

@@ -129,13 +129,21 @@
     // Lead: contexto de cómo arrancó el partido — se muestra junto a
     // la foto en portada, así que se queda como párrafo propio y NO
     // se repite luego en el cuerpo.
+    // Frase de ambiente, a modo de arranque de crónica real (quién
+    // llenó las gradas, bajo qué clima) — antes el "lead" empezaba
+    // directamente en el primer gol, sin situar la escena primero.
+    const ambienteBits=[];
+    if(datos.espectadores) ambienteBits.push(tp('cr.ambiente_asistencia', {n:escaparHTML(datos.espectadores)}));
+    if(datos.clima) ambienteBits.push(tp('cr.ambiente_clima', {clima:escaparHTML(datos.clima)}));
+    const ambiente = ambienteBits.length ? ambienteBits.join(' ')+' ' : '';
+
     let lead;
     if(goles.length===0){
-      lead=tp('cr.pocas_ocasiones', {estadio:escaparHTML(datos.estadio||t('cr.final')), local:escaparHTML(nombreLocal), visitante:escaparHTML(nombreVisitante)});
+      lead=ambiente+tp('cr.pocas_ocasiones', {estadio:escaparHTML(datos.estadio||t('cr.final')), local:escaparHTML(nombreLocal), visitante:escaparHTML(nombreVisitante)});
     } else {
       const primerGol=goles[0];
       const equipoPrimerGol = primerGol.team==='home' ? nombreLocal : nombreVisitante;
-      lead=tp('cr.abre_marcador', {
+      lead=ambiente+tp('cr.abre_marcador', {
         minuto:primerGol.minute,
         jugador:`<b>${escaparHTML(primerGol.jugador && primerGol.jugador.name || 'Jugador')}</b>`,
         equipo:escaparHTML(equipoPrimerGol), estadio:escaparHTML(datos.estadio||''),
@@ -354,12 +362,12 @@
            arranque de la crónica ("lead") fluyendo junto a ella en
            vez de ocupar toda la columna — el resto de la crónica,
            mucho más extensa, continúa más abajo en "cuerpo". -->
-      <div class="foto-relato-fila">
+      <div class="relato-lead">
         <div class="foto-wrap">
           <img id="foto-hero" src="" alt="Jugada del partido">
           <div class="foto-marco"></div>
         </div>
-        <div class="relato-lead"><p>${cronica.lead}</p></div>
+        <p>${cronica.lead}</p>
       </div>
       <div class="pie-foto"><b>${escaparHTML(datos.nombreLocal)}</b> · <b>${escaparHTML(datos.nombreVisitante)}</b></div>
     </div>
@@ -507,14 +515,14 @@
      crónica fluyendo a su lado, como en un periódico real — el hueco
      que deja la foto más pequeña lo ocupa el texto, así que el bloque
      completo sigue ocupando el mismo espacio de siempre. */
-  /* La foto va grande y a ancho completo de su columna, con el lead
-     fluyendo justo debajo (no al lado) — a este tamaño ya no cabía
-     bien en fila junto al texto sin dejarlo demasiado estrecho. */
-  .foto-relato-fila{ display:flex; flex-direction:column; gap:10px; }
-  .foto-wrap{ position:relative; width:100%; }
+  /* Foto pequeña, flotando dentro del propio párrafo del "lead" (como
+     en un periódico de verdad) en vez de ocupar ella sola una columna
+     entera — el texto la rodea y sigue fluyendo a su alrededor. */
+  .relato-lead{ font-size:12.5px; line-height:1.58; color:var(--tinta-suave); text-align:justify; overflow:hidden; }
+  .relato-lead::after{ content:''; display:table; clear:both; }
+  .foto-wrap{ position:relative; float:left; width:190px; max-width:44%; margin:2px 16px 8px 0; }
   .foto-wrap img{ width:100%; display:block; filter:contrast(1.04) saturate(0.96); }
   .foto-marco{ position:absolute; inset:0; border:1px solid rgba(0,0,0,.5); pointer-events:none; }
-  .relato-lead{ font-size:12.5px; line-height:1.58; color:var(--tinta-suave); text-align:justify; }
   .relato-lead p{ margin:0; }
   .relato-lead p::first-letter{ font-family:'Anton',sans-serif; font-size:30px; line-height:.7; float:left; margin:2px 4px 0 0; color:var(--tinta); }
   .pie-foto{ font-family:'Oswald',sans-serif; font-size:11px; color:var(--gris-agata); padding-top:8px; margin-top:10px; line-height:1.4; border-top:1px solid var(--gris-linea); }

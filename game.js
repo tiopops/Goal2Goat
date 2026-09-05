@@ -493,6 +493,13 @@ function playSound(name, data){
           tone(ctx, 380, 0, 0.16, 'sine', 0.08, 0.0001);
         } }
       break;
+    case 'scout_heartbeat': // minijuego de scouting — latido "lub-dub"
+      // grave sincronizado con el propio pulso visual del riesgo
+      // (misma cadencia de 1.15s), discreto para no cansar en partidas
+      // largas de varios empujones seguidos.
+      tone(ctx, 95, 0, 0.09, 'sine', 0.10, 0.0001);
+      tone(ctx, 80, 0.16, 0.11, 'sine', 0.085, 0.0001);
+      break;
   }
 }
 
