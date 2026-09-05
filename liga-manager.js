@@ -7899,7 +7899,7 @@
             <div class="lm-infoclub-stat-top"><i class="ph ph-bold ph-heartbeat" style="color:#ff6b85"></i><div class="lm-infoclub-stat-val">${state.moral||0}</div></div><div class="lm-infoclub-stat-label">${t('lm.moral_equipo')}</div>
           </div>
           <div class="lm-infoclub-stat">
-            <div class="lm-infoclub-stat-top"><i class="ph ph-bold ph-grass" style="color:#5cb85c"></i><div class="lm-infoclub-stat-val">${estadio.campo||0}%</div></div><div class="lm-infoclub-stat-label">${t('lm.estado_cesped')}</div>
+            <div class="lm-infoclub-stat-top"><i class="ph ph-bold ph-plant" style="color:#5cb85c"></i><div class="lm-infoclub-stat-val">${estadio.campo||0}%</div></div><div class="lm-infoclub-stat-label">${t('lm.estado_cesped')}</div>
           </div>
           <div class="lm-infoclub-stat">
             <div class="lm-infoclub-stat-top"><i class="ph ph-bold ph-users-three" style="color:#8a7fd6"></i><div class="lm-infoclub-stat-val">${(state.plantilla||[]).length}</div></div><div class="lm-infoclub-stat-label">${t('lm.plantilla')}</div>
@@ -12201,7 +12201,7 @@
           ${xCerrarHTML()}
           <div class="lm-dilemma-title"><i class="ph ph-bold ph-shield-check"></i> ${t('lm.seguridad_estadio')}</div>
           <div style="margin-bottom:10px">
-            <div style="display:flex;justify-content:space-between;font-size:10px;color:#999;margin-bottom:2px"><span><i class="ph ph-bold ph-grass"></i> ${t('lm.estado_cesped')}</span><span>${(state.estadio&&state.estadio.campo)||0}%</span></div>
+            <div style="display:flex;justify-content:space-between;font-size:10px;color:#999;margin-bottom:2px"><span><i class="ph ph-bold ph-plant"></i> ${t('lm.estado_cesped')}</span><span>${(state.estadio&&state.estadio.campo)||0}%</span></div>
             ${campoBarraHTML((state.estadio&&state.estadio.campo)||0, true)}
           </div>
           <div class="lm-seguridad-resumen">
@@ -12405,7 +12405,7 @@
           <div class="lm-dilemma-title"><i class="ph ph-bold ph-flag-pennant"></i> ${t('lm.titulo_mantenimiento')}</div>
           <button type="button" class="mode-card-btn mode-card-btn-gold" id="lmSeguridadEstadioBtn" style="width:100%;margin-bottom:4px"><i class="ph ph-bold ph-shield-check"></i> ${t('lm.seguridad_estadio')}</button>
           <div style="margin-bottom:10px">
-            <div style="display:flex;justify-content:space-between;font-size:10px;color:#999;margin-bottom:2px"><span><i class="ph ph-bold ph-grass"></i> ${t('lm.estado_cesped')}</span><span>${est.campo||0}%</span></div>
+            <div style="display:flex;justify-content:space-between;font-size:10px;color:#999;margin-bottom:2px"><span><i class="ph ph-bold ph-plant"></i> ${t('lm.estado_cesped')}</span><span>${est.campo||0}%</span></div>
             ${campoBarraHTML(est.campo||0, true)}
           </div>
           ${renderNivelesMantenimientoHTML()}
