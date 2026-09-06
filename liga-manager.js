@@ -5416,7 +5416,19 @@
     // de soltarlo) sin tener que mutar state.precioEntrada de verdad.
     const precio=precioOverride!==undefined?precioOverride:(state.precioEntrada===undefined?15:state.precioEntrada);
     const tolerancia=nivelDeDG('toleranciaPrecio');
-    const penalizacionPrecio=Math.max(0,(precio-10))*0.012*(1-tolerancia*0.22);
+    // El castigo por precio ya NO es un simple lineal por euro de más —
+    // ahora es progresivo (crece cada vez más rápido cuanto más se sube
+    // el precio, en vez de un mismo % fijo por euro) Y depende de cómo
+    // esté la afición y la trayectoria del equipo: con la afición
+    // contenta y el equipo en buena racha, una entrada cara se perdona
+    // bastante; con la afición ya harta y el equipo de capa caída, la
+    // misma subida de precio hunde la asistencia mucho más. 'normalizado'
+    // (satisfacción 0-1, ya calculado arriba) pesa más que la moral
+    // porque es la señal más directa de "cómo está la afición ahora".
+    const saludAficionYResultados=Math.max(0, Math.min(1, normalizado*0.7 + (((state.moral||0)+50)/100)*0.3));
+    const factorTolerancia = 1.6 - saludAficionYResultados*1.1; // ~0.5 (afición encantada/equipo en racha) a 1.6 (afición harta/mala racha)
+    const excesoPrecio=Math.max(0,(precio-10));
+    const penalizacionPrecio=Math.pow(excesoPrecio,1.2)*0.0012*factorTolerancia*(1-tolerancia*0.22);
     // Los disturbios ya castigaban la satisfacción a largo plazo (ver
     // procesarDisturbiosTrasPartido), pero eso tarda semanas en
     // notarse. Aquí se añade el golpe directo e inmediato de ESTE
@@ -12728,7 +12740,7 @@
             <div class="lm-estadio-bar-label"><i class="ph ph-bold ph-ticket"></i><span>${t('lm.precio_de_la_entrada')}</span><span id="lmPrecioEntradaValor">${formatoDinero(state.precioEntrada)}</span></div>
             <input type="range" id="lmPrecioEntradaSlider" min="5" max="60" step="1" value="${state.precioEntrada}" class="lm-precio-slider">
             <div class="lm-aforo-nota">Más caro = más ingreso por entrada, pero menos afición vendrá a verte (se nota menos cuanto más nivel tengas en Relaciones con la Afición).</div>
-            <div class="lm-infoclub-stats-grid" style="margin-top:10px">
+            <div class="lm-infoclub-stats-grid" style="margin-top:8px">
               <div class="lm-infoclub-stat">
                 <div class="lm-infoclub-stat-top"><i class="ph ph-bold ph-chart-line-up" style="color:#5b9bd5"></i><div class="lm-infoclub-stat-val" id="lmDGAsistenciaPrevistaVal">${dgAsistenciaTxt}</div></div><div class="lm-infoclub-stat-label">${t('lm.asistencia_prevista')}</div>
               </div>

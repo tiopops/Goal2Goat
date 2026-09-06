@@ -4581,6 +4581,35 @@ body.liga-manager-screen .ranking-btn-label-lm{display:inline}
 .lm-dilemma-card-mant .lm-dilemma-title i{color:#4caf50}
 .lm-dilemma-card-dg{border-color:#e6c94a}
 .lm-dilemma-card-dg .lm-dilemma-title i{color:#e6c94a}
+/* La interfaz del Director General junta capital + préstamo + precio de
+   entrada/previsiones + niveles + 10 cartas en la misma tarjeta —
+   apenas cabía en pantalla sin hacer mucho scroll. Se condensa aquí
+   SOLO para esta tarjeta (todas las clases de abajo son compartidas con
+   médico/mantenimiento/etc., así que nunca se tocan en general) reduciendo
+   paddings/márgenes/alturas mínimas, sin quitar ni un bloque de información. */
+.lm-dilemma-card-dg{padding:14px 18px}
+.lm-dilemma-card-dg .lm-dilemma-title{margin:2px 0 6px}
+.lm-dilemma-card-dg .lm-capital-box{padding:8px 12px;margin:8px 0;gap:8px}
+.lm-dilemma-card-dg .lm-capital-icon{font-size:24px}
+.lm-dilemma-card-dg .lm-prestamo-box{padding:8px 12px;margin:8px 0}
+.lm-dilemma-card-dg .lm-precio-box{padding:8px 12px;margin:8px 0}
+.lm-dilemma-card-dg .lm-aforo-nota{margin-top:3px}
+.lm-dilemma-card-dg .lm-infoclub-stat{padding:6px 8px;gap:1px}
+.lm-dilemma-card-dg .med-niveles-grid{gap:6px;margin-top:8px}
+.lm-dilemma-card-dg .med-nivel-row{padding:6px 8px;gap:6px}
+.lm-dilemma-card-dg .med-nivel-desc{line-height:1.2}
+.lm-dilemma-card-dg .lm-staff-bar-capital{margin:8px 0 6px!important}
+.lm-dilemma-card-dg .med-card-grid{gap:6px;margin-top:4px}
+.lm-dilemma-card-dg .med-card{padding:8px 8px 8px}
+.lm-dilemma-card-dg .med-card-tag{padding:5px 0}
+.lm-dilemma-card-dg .med-card-icon{font-size:30px;margin-top:22px;margin-bottom:4px}
+.lm-dilemma-card-dg .med-card-title{min-height:22px;margin-bottom:4px}
+.lm-dilemma-card-dg .med-card-divider{margin-bottom:4px}
+.lm-dilemma-card-dg .med-card-desc{min-height:32px;margin-bottom:5px;line-height:1.3}
+.lm-dilemma-card-dg .med-card-dificultad{min-height:22px;margin-bottom:5px}
+.lm-dilemma-card-dg .med-card-progress{margin-bottom:3px}
+.lm-dilemma-card-dg .med-card-progress-label{min-height:12px;margin-bottom:5px}
+.lm-dilemma-card-dg .lm-popup-actions{margin-top:8px}
 .lm-dilemma-card-dd{border-color:var(--lm-text-soft)}
 .lm-dilemma-card-dd .lm-dilemma-title i{color:var(--lm-text-soft)}
 .lm-dilemma-card-pf{border-color:#e08a3e}
