@@ -3298,42 +3298,42 @@
   // en el idioma que esté usando el jugador ahora mismo, aunque haya
   // escrito la pregunta en otro.
   const LM_AYUDA_FAQ=[
-    {id:'sobres', keywords:['sobre','sobres','fichaje sobre','abrir sobre','oficina de fichajes','pack','envelope','packs','enveloppe','busta','buste','umschlag'], respuestaKey:'ayuda.faq_sobres', dondeKey:'ayuda.faq_sobres_donde'},
-    {id:'fichaje_estrella', keywords:['fichaje estrella','jugador real','estrella','star signing','jugador de otro equipo'], respuestaKey:'ayuda.faq_fichaje_estrella', dondeKey:'ayuda.faq_fichaje_estrella_donde'},
-    {id:'traspasos', keywords:['traspaso','traspasos','vender jugador','poner en venta','venta','ofertas de traspaso','transfer','vendre','verkaufen','vendere'], respuestaKey:'ayuda.faq_traspasos', dondeKey:'ayuda.faq_traspasos_donde'},
-    {id:'agencia_traspasos', keywords:['agencia de traspasos','traspasos expres','acelerar ofertas','mejores ofertas'], respuestaKey:'ayuda.faq_agencia_traspasos', dondeKey:'ayuda.faq_agencia_traspasos_donde'},
-    {id:'info_plantilla', keywords:['salario','salarios','informacion de la plantilla','informacion de plantilla','sueldo','sueldos','renegociar','subir sueldo','nomina jugadores'], respuestaKey:'ayuda.faq_info_plantilla', dondeKey:'ayuda.faq_info_plantilla_donde'},
-    {id:'jugador_quiere_marcharse', keywords:['quiere marcharse','se quiere ir','abandonar el club','fuga de jugador','oferta salarial','plazo renegociar'], respuestaKey:'ayuda.faq_jugador_marcharse', dondeKey:'ayuda.faq_jugador_quiere_marcharse_donde'},
-    {id:'prestamo', keywords:['prestamo','prestamos','banco','pedir dinero','interes','intereses','loan','pret','darlehen','prestito'], respuestaKey:'ayuda.faq_prestamo', dondeKey:'ayuda.faq_prestamo_donde'},
-    {id:'precio_entrada', keywords:['precio de la entrada','precio entrada','asistencia prevista','ingresos previstos','ticket price','subir el precio'], respuestaKey:'ayuda.faq_precio_entrada', dondeKey:'ayuda.faq_precio_entrada_donde'},
-    {id:'capital', keywords:['capital','dinero','numeros rojos','quiebra','bancarrota','sin dinero','finanzas del club'], respuestaKey:'ayuda.faq_capital', dondeKey:'ayuda.faq_capital_donde'},
-    {id:'moral', keywords:['moral','animo del equipo','vestuario'], respuestaKey:'ayuda.faq_moral', dondeKey:'ayuda.faq_moral_donde'},
-    {id:'aficion', keywords:['aficion','afición','satisfaccion aficion','grada','graderio','fans'], respuestaKey:'ayuda.faq_aficion', dondeKey:'ayuda.faq_aficion_donde'},
-    {id:'disturbios', keywords:['disturbio','disturbios','pelea en la grada','violencia estadio'], respuestaKey:'ayuda.faq_disturbios', dondeKey:'ayuda.faq_disturbios_donde'},
-    {id:'seguridad_estadio', keywords:['seguridad','guardias','seguridad del estadio','vigilantes'], respuestaKey:'ayuda.faq_seguridad', dondeKey:'ayuda.faq_seguridad_estadio_donde'},
-    {id:'estado_campo', keywords:['estado del campo','cesped','césped','mantenimiento del campo'], respuestaKey:'ayuda.faq_campo', dondeKey:'ayuda.faq_estado_campo_donde'},
-    {id:'medico', keywords:['medico','médico','lesion','lesiones','lesionado','recuperacion lesion'], respuestaKey:'ayuda.faq_medico', dondeKey:'ayuda.faq_medico_donde'},
-    {id:'preparador_fisico', keywords:['preparador fisico','preparador físico','fatiga','resistencia','cansancio','recuperacion fisica'], respuestaKey:'ayuda.faq_preparador', dondeKey:'ayuda.faq_preparador_fisico_donde'},
-    {id:'entrenamiento', keywords:['entrenamiento','entrenar','plan de entrenamiento','mejorar estadisticas','subir estadisticas'], respuestaKey:'ayuda.faq_entrenamiento', dondeKey:'ayuda.faq_entrenamiento_donde'},
-    {id:'director_general', keywords:['director general','proyectos director general','patrocinio','estadio ampliar'], respuestaKey:'ayuda.faq_director_general', dondeKey:'ayuda.faq_director_general_donde'},
-    {id:'director_deportivo', keywords:['director deportivo','ojeadores','red de ojeadores','ojeo','cartas del director deportivo'], respuestaKey:'ayuda.faq_director_deportivo', dondeKey:'ayuda.faq_director_deportivo_donde'},
-    {id:'proyectos_nivel', keywords:['proyecto','proyectos','nivel del proyecto','dificultad del proyecto','dados','tirada'], respuestaKey:'ayuda.faq_proyectos', dondeKey:'ayuda.faq_proyectos_nivel_donde'},
-    {id:'habilidades', keywords:['habilidad','habilidades','activar habilidad','puntos de habilidad','skill','skills'], respuestaKey:'ayuda.faq_habilidades', dondeKey:'ayuda.faq_habilidades_donde'},
-    {id:'quiniela', keywords:['quiniela','apuesta','boleto','rellenar quiniela'], respuestaKey:'ayuda.faq_quiniela', dondeKey:'ayuda.faq_quiniela_donde'},
-    {id:'amistosos', keywords:['amistoso','amistosos','arbol de nodos','calendario semanal','dia de descanso'], respuestaKey:'ayuda.faq_amistosos', dondeKey:'ayuda.faq_amistosos_donde'},
-    {id:'jugar_jornada', keywords:['jugar jornada','como jugar','jugar partido','seguir jornada','boton jugar'], respuestaKey:'ayuda.faq_jugar_jornada', dondeKey:'ayuda.faq_jugar_jornada_donde'},
-    {id:'formacion', keywords:['formacion','formación','posiciones','colocar jugador','tactica','táctica'], respuestaKey:'ayuda.faq_formacion', dondeKey:'ayuda.faq_formacion_donde'},
-    {id:'once_banquillo', keywords:['once titular','banquillo','suplentes','titular','sustituir jugador'], respuestaKey:'ayuda.faq_once_banquillo', dondeKey:'ayuda.faq_once_banquillo_donde'},
-    {id:'orden_plantilla', keywords:['orden de la plantilla','ordenar plantilla','llegada posicion puntos dorsal','modo ninguno'], respuestaKey:'ayuda.faq_orden_plantilla', dondeKey:'ayuda.faq_orden_plantilla_donde'},
-    {id:'sancion', keywords:['sancion','sanción','tarjeta roja','expulsado','partidos de sancion'], respuestaKey:'ayuda.faq_sancion', dondeKey:'ayuda.faq_sancion_donde'},
-    {id:'clasificacion', keywords:['clasificacion','clasificación','tabla de la liga','posicion en la liga'], respuestaKey:'ayuda.faq_clasificacion', dondeKey:'ayuda.faq_clasificacion_donde'},
-    {id:'correo_interno', keywords:['correo','correo interno','mensajes del club','bandeja de entrada'], respuestaKey:'ayuda.faq_correo', dondeKey:'ayuda.faq_correo_interno_donde'},
-    {id:'historial_fichajes', keywords:['historial de fichajes','historial de ventas','historico de fichajes'], respuestaKey:'ayuda.faq_historial', dondeKey:'ayuda.faq_historial_fichajes_donde'},
-    {id:'modo_visual', keywords:['modo automatico','modo manager','ver el partido','visor del partido'], respuestaKey:'ayuda.faq_modo_visual', dondeKey:'ayuda.faq_modo_visual_donde'},
-    {id:'nomina', keywords:['nomina','nómina','gastos mensuales','pagar sueldos'], respuestaKey:'ayuda.faq_nomina', dondeKey:'ayuda.faq_nomina_donde'},
-    {id:'cuerpo_tecnico', keywords:['cuerpo tecnico','cuerpo técnico','contratar personal','trabajadores','vacante'], respuestaKey:'ayuda.faq_cuerpo_tecnico', dondeKey:'ayuda.faq_cuerpo_tecnico_donde'},
-    {id:'escudo', keywords:['escudo','personalizar escudo','editor de escudo'], respuestaKey:'ayuda.faq_escudo', dondeKey:'ayuda.faq_escudo_donde'},
-    {id:'logros', keywords:['logro','logros','achievement','achievements'], respuestaKey:'ayuda.faq_logros', dondeKey:'ayuda.faq_logros_donde'},
+    {id:'sobres', keywords:['sobre','sobres','sobres de fichajes','fichaje sobre','abrir sobre','abrir un sobre','conseguir jugadores nuevos','fichar jugadores nuevos','comprar jugadores','oficina de fichajes','pack','envelope','packs','enveloppe','busta','buste','umschlag'], respuestaKey:'ayuda.faq_sobres', dondeKey:'ayuda.faq_sobres_donde'},
+    {id:'fichaje_estrella', keywords:['fichaje estrella','fichaje de estrella','jugador real','jugador legendario','crack','fichar a un crack','estrella','star signing','jugador de otro equipo'], respuestaKey:'ayuda.faq_fichaje_estrella', dondeKey:'ayuda.faq_fichaje_estrella_donde'},
+    {id:'traspasos', keywords:['traspaso','traspasos','vender jugador','vender a un jugador','poner en venta','poner a la venta','venta','ofertas por mis jugadores','ofertas de traspaso','ingresos por venta','transfer','vendre','verkaufen','vendere'], respuestaKey:'ayuda.faq_traspasos', dondeKey:'ayuda.faq_traspasos_donde'},
+    {id:'agencia_traspasos', keywords:['agencia de traspasos','proyecto de traspasos','traspasos expres','acelerar ofertas','mejorar las ofertas de traspaso','mejores ofertas'], respuestaKey:'ayuda.faq_agencia_traspasos', dondeKey:'ayuda.faq_agencia_traspasos_donde'},
+    {id:'info_plantilla', keywords:['salario','salarios','informacion de la plantilla','informacion de plantilla','ver la plantilla','gestionar salarios','sueldo','sueldos','sueldo de los jugadores','ficha de jugador','renegociar','subir sueldo','nomina jugadores'], respuestaKey:'ayuda.faq_info_plantilla', dondeKey:'ayuda.faq_info_plantilla_donde'},
+    {id:'jugador_quiere_marcharse', keywords:['quiere marcharse','se quiere ir','jugador descontento','jugador enfadado','no quiere renovar','amenaza con irse','abandonar el club','fuga de jugador','oferta salarial','plazo renegociar'], respuestaKey:'ayuda.faq_jugador_marcharse', dondeKey:'ayuda.faq_jugador_quiere_marcharse_donde'},
+    {id:'prestamo', keywords:['prestamo','prestamos','pedir un prestamo','pedir credito','devolver el prestamo','cuota del prestamo','deuda','banco','pedir dinero','interes','intereses','loan','pret','darlehen','prestito'], respuestaKey:'ayuda.faq_prestamo', dondeKey:'ayuda.faq_prestamo_donde'},
+    {id:'precio_entrada', keywords:['precio de la entrada','precio de las entradas','precio entrada','subir entradas','subir el precio','bajar el precio de la entrada','taquilla','asistencia prevista','ingresos previstos','ticket price'], respuestaKey:'ayuda.faq_precio_entrada', dondeKey:'ayuda.faq_precio_entrada_donde'},
+    {id:'capital', keywords:['capital','cuanto dinero tengo','cuanto dinero dispongo','de cuanto capital dispongo','cuanto capital tengo','cuanta pasta tengo','saldo disponible','presupuesto del club','fondos disponibles','tesoreria','cuentas del club','dinero','numeros rojos','quiebra','bancarrota','sin dinero','finanzas del club','money','how much money do i have','wieviel geld','combien d argent','quanto denaro','quanto dinheiro'], respuestaKey:'ayuda.faq_capital', dondeKey:'ayuda.faq_capital_donde'},
+    {id:'moral', keywords:['moral','estado de animo','confianza del equipo','felicidad plantilla','animo del equipo','vestuario'], respuestaKey:'ayuda.faq_moral', dondeKey:'ayuda.faq_moral_donde'},
+    {id:'aficion', keywords:['aficion','afición','nivel de aficion','popularidad del equipo','simpatia de la aficion','satisfaccion aficion','grada','graderio','fans'], respuestaKey:'ayuda.faq_aficion', dondeKey:'ayuda.faq_aficion_donde'},
+    {id:'disturbios', keywords:['disturbio','disturbios','incidentes en el estadio','problemas en la grada','pelea en la grada','violencia estadio'], respuestaKey:'ayuda.faq_disturbios', dondeKey:'ayuda.faq_disturbios_donde'},
+    {id:'seguridad_estadio', keywords:['seguridad','contratar guardias','nivel de seguridad','guardias','seguridad del estadio','vigilantes'], respuestaKey:'ayuda.faq_seguridad', dondeKey:'ayuda.faq_seguridad_estadio_donde'},
+    {id:'estado_campo', keywords:['estado del campo','calidad del cesped','mantenimiento del cesped','desgaste del campo','cesped','césped','mantenimiento del campo'], respuestaKey:'ayuda.faq_campo', dondeKey:'ayuda.faq_estado_campo_donde'},
+    {id:'medico', keywords:['medico','médico','lesiones de jugadores','tiempo de recuperacion','parte medico','lesion','lesiones','lesionado','recuperacion lesion'], respuestaKey:'ayuda.faq_medico', dondeKey:'ayuda.faq_medico_donde'},
+    {id:'preparador_fisico', keywords:['preparador fisico','preparador físico','nivel de fatiga','cansancio de jugadores','plan fisico','fatiga','resistencia','cansancio','recuperacion fisica'], respuestaKey:'ayuda.faq_preparador', dondeKey:'ayuda.faq_preparador_fisico_donde'},
+    {id:'entrenamiento', keywords:['entrenamiento','entrenar','quien entrena','elegir jugadores para entrenar','mejora de estadisticas jugador','plan de entrenamiento','mejorar estadisticas','subir estadisticas'], respuestaKey:'ayuda.faq_entrenamiento', dondeKey:'ayuda.faq_entrenamiento_donde'},
+    {id:'director_general', keywords:['director general','proyectos del club','patrocinadores','ampliar el estadio','proyectos director general','patrocinio','estadio ampliar'], respuestaKey:'ayuda.faq_director_general', dondeKey:'ayuda.faq_director_general_donde'},
+    {id:'director_deportivo', keywords:['director deportivo','ojear jugadores','scouting','fichajes del director deportivo','ojeadores','red de ojeadores','ojeo','cartas del director deportivo'], respuestaKey:'ayuda.faq_director_deportivo', dondeKey:'ayuda.faq_director_deportivo_donde'},
+    {id:'proyectos_nivel', keywords:['proyecto','proyectos','como funcionan los proyectos','subir de nivel un proyecto','tirar los dados','nivel del proyecto','dificultad del proyecto','dados','tirada'], respuestaKey:'ayuda.faq_proyectos', dondeKey:'ayuda.faq_proyectos_nivel_donde'},
+    {id:'habilidades', keywords:['habilidad','habilidades','puntos de habilidad','desbloquear habilidades','activar una habilidad','activar habilidad','skill','skills'], respuestaKey:'ayuda.faq_habilidades', dondeKey:'ayuda.faq_habilidades_donde'},
+    {id:'quiniela', keywords:['quiniela','jugar la quiniela','pronosticos','apostar resultados','apuesta','boleto','rellenar quiniela'], respuestaKey:'ayuda.faq_quiniela', dondeKey:'ayuda.faq_quiniela_donde'},
+    {id:'amistosos', keywords:['amistoso','amistosos','partido amistoso','jugar amistosos','descansar jugadores','arbol de nodos','calendario semanal','dia de descanso'], respuestaKey:'ayuda.faq_amistosos', dondeKey:'ayuda.faq_amistosos_donde'},
+    {id:'jugar_jornada', keywords:['jugar jornada','avanzar jornada','simular partido','empezar el partido','como jugar','jugar partido','seguir jornada','boton jugar'], respuestaKey:'ayuda.faq_jugar_jornada', dondeKey:'ayuda.faq_jugar_jornada_donde'},
+    {id:'formacion', keywords:['formacion','formación','cambiar la formacion','esquema tactico','colocar el once','posiciones','colocar jugador','tactica','táctica'], respuestaKey:'ayuda.faq_formacion', dondeKey:'ayuda.faq_formacion_donde'},
+    {id:'once_banquillo', keywords:['once titular','quien juega','titulares y suplentes','hacer cambios','banquillo','suplentes','titular','sustituir jugador'], respuestaKey:'ayuda.faq_once_banquillo', dondeKey:'ayuda.faq_once_banquillo_donde'},
+    {id:'orden_plantilla', keywords:['orden de la plantilla','cambiar el orden','ordenar por posicion','modo de orden ninguno','ordenar plantilla','llegada posicion puntos dorsal','modo ninguno'], respuestaKey:'ayuda.faq_orden_plantilla', dondeKey:'ayuda.faq_orden_plantilla_donde'},
+    {id:'sancion', keywords:['sancion','sanción','jugador expulsado','cuantos partidos de sancion','tarjeta roja directa','tarjeta roja','expulsado','partidos de sancion'], respuestaKey:'ayuda.faq_sancion', dondeKey:'ayuda.faq_sancion_donde'},
+    {id:'clasificacion', keywords:['clasificacion','clasificación','posicion en la tabla','puntos de liga','tabla de posiciones','tabla de la liga','posicion en la liga'], respuestaKey:'ayuda.faq_clasificacion', dondeKey:'ayuda.faq_clasificacion_donde'},
+    {id:'correo_interno', keywords:['correo','correo interno','mensajes recibidos','notificaciones del club','leer correo','mensajes del club','bandeja de entrada'], respuestaKey:'ayuda.faq_correo', dondeKey:'ayuda.faq_correo_interno_donde'},
+    {id:'historial_fichajes', keywords:['historial de fichajes','ventas anteriores','fichajes anteriores','registro de traspasos','historial de ventas','historico de fichajes'], respuestaKey:'ayuda.faq_historial', dondeKey:'ayuda.faq_historial_fichajes_donde'},
+    {id:'modo_visual', keywords:['modo automatico','modo manager','ver el partido en directo','modo simulado','elegir como ver el partido','ver el partido','visor del partido'], respuestaKey:'ayuda.faq_modo_visual', dondeKey:'ayuda.faq_modo_visual_donde'},
+    {id:'nomina', keywords:['nomina','nómina','total de sueldos','cuanto pago de sueldos','gastos en salarios','gastos mensuales','pagar sueldos'], respuestaKey:'ayuda.faq_nomina', dondeKey:'ayuda.faq_nomina_donde'},
+    {id:'cuerpo_tecnico', keywords:['cuerpo tecnico','cuerpo técnico','contratar trabajador','puesto vacante','personal del club','contratar personal','trabajadores','vacante'], respuestaKey:'ayuda.faq_cuerpo_tecnico', dondeKey:'ayuda.faq_cuerpo_tecnico_donde'},
+    {id:'escudo', keywords:['escudo','cambiar el escudo','diseñar el escudo','logo del equipo','personalizar escudo','editor de escudo'], respuestaKey:'ayuda.faq_escudo', dondeKey:'ayuda.faq_escudo_donde'},
+    {id:'logros', keywords:['logro','logros','conseguir logros','ver mis logros','trofeos del perfil','achievement','achievements'], respuestaKey:'ayuda.faq_logros', dondeKey:'ayuda.faq_logros_donde'},
   ];
   // Palabras clave (multi-idioma) que delatan una pregunta de tipo
   // "¿DÓNDE...?" — cuando el texto las contiene, se prioriza la
@@ -11501,7 +11501,7 @@
               <div class="lm-ayuda-wrap">
                 <div class="lm-ayuda-chat" id="lmAyudaChat" style="${lmAyudaChatHistorial.length?'':'display:none'}">${lmAyudaChatHistorial.map(m=>`<div class="lm-ayuda-burbuja lm-ayuda-burbuja-${m.tipo}">${m.texto}</div>`).join('')}</div>
                 <div class="lm-ayuda-input-row">
-                  <input type="text" id="lmAyudaInput" class="lm-ayuda-input" maxlength="140" placeholder="${t('lm.ayuda_placeholder')}" />
+                  <input type="text" id="lmAyudaInput" class="lm-ayuda-input" maxlength="140" placeholder="${t('lm.ayuda_placeholder')}" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
                   <button type="button" id="lmAyudaBuscarBtn" class="lm-ayuda-buscar-btn" title="${t('lm.ayuda_buscar_tt')}"><i class="ph ph-bold ph-magnifying-glass"></i></button>
                 </div>
               </div>
@@ -11963,6 +11963,7 @@
         state.plantilla=[...titularCongelado, ...bancoCongelado];
       }
       lmSortMode=siguienteModo;
+      state.lmSortMode=siguienteModo;
       guardarEstado();
       render();
     });
@@ -13899,15 +13900,27 @@
     const overlay=document.createElement('div');
     overlay.id='lmSalariosOverlay';
     const STEP_OFERTA_FRACCION=0.05; // cada pulsación de +/- mueve un 5% del salario justo
+    // El orden de la tabla se calcula UNA SOLA VEZ, al abrir la
+    // interfaz (alerta primero, luego por salario) — y ya NO se vuelve
+    // a calcular nunca más mientras esté abierta. Antes pintar()
+    // reordenaba en cada repintado según el salario/alerta ACTUAL, así
+    // que tocar un botón (subir un salario, hacer una oferta...) podía
+    // cambiar el orden de golpe y la interfaz "saltaba". Ahora, aunque
+    // los valores cambien, cada jugador se queda siempre en la misma
+    // fila de la tabla; solo cambia lo que pone en esa fila.
+    const ordenFijoIds=[...(state.plantilla||[])].sort((a,b)=>{
+      const aAlerta=a.quiereMarcharse?1:0, bAlerta=b.quiereMarcharse?1:0;
+      if(aAlerta!==bAlerta) return bAlerta-aAlerta;
+      return (b.salario||0)-(a.salario||0);
+    }).map(p=>p.id);
     function pintar(){
-      const jugadores=[...(state.plantilla||[])].sort((a,b)=>{
-        const aAlerta=a.quiereMarcharse?1:0, bAlerta=b.quiereMarcharse?1:0;
-        if(aAlerta!==bAlerta) return bAlerta-aAlerta;
-        return (b.salario||0)-(a.salario||0);
-      });
+      // Se recorre el orden ya congelado, mirando los datos actuales de
+      // cada jugador (un jugador que ya no esté en la plantilla —
+      // vendido, se marchó... — simplemente desaparece de la lista).
+      const jugadores=ordenFijoIds.map(id=>(state.plantilla||[]).find(p=>p.id===id)).filter(Boolean);
       const totalNomina=jugadores.reduce((s,p)=>s+(p.salario||0),0);
       const numAlertas=jugadores.filter(p=>p.quiereMarcharse).length;
-      const tarjetas=jugadores.map(p=>{
+      const filas=jugadores.map(p=>{
         const chequeo=puedeVenderJugador(p.id);
         let accionVenta;
         if(p.enVenta){
@@ -13916,12 +13929,13 @@
           accionVenta=`<button class="lm-salario-btn" data-venta="${p.id}" title="${chequeo.ok?'':chequeo.motivo}" ${chequeo.ok?'':'disabled'}>${t('lm.poner_en_venta')}</button>`;
         }
         const tier=lmTierOverall(p.overall||0);
-        let bloqueSalario;
+        let celdaSalario;
         if(p.quiereMarcharse){
           const demandado=salarioDeseadoJugador(p);
           const jornadasRestantes=Math.max(0, (p.jornadaLimiteRenegociar||0)-state.jornadaActual);
+          let bloqueOferta;
           if(p.ofertaSalarialPendiente){
-            bloqueSalario=`
+            bloqueOferta=`
               <div class="lm-info-salario-fila"><span>${t('lm.oferta_enviada')}</span><strong>${formatoDinero(p.ofertaSalarialPendiente.monto)}</strong></div>
               <div class="lm-info-salario-stepper">
                 <button class="lm-salario-btn" data-oferta-menos="${p.id}"><i class="ph ph-bold ph-minus"></i></button>
@@ -13930,43 +13944,46 @@
               </div>
               <div class="lm-info-alerta-nota">${t('lm.oferta_pendiente_nota')}</div>`;
           } else {
-            bloqueSalario=`
+            bloqueOferta=`
               <button class="lm-salario-btn lm-salario-btn-oferta" data-oferta-crear="${p.id}"><i class="ph ph-bold ph-handshake"></i> ${t('lm.hacer_oferta_btn')}</button>`;
           }
-          bloqueSalario=`
+          celdaSalario=`
             <div class="lm-info-alerta-titulo"><i class="ph ph-bold ph-warning-circle"></i> ${t('lm.quiere_marcharse_titulo')}</div>
             <div class="lm-info-salario-fila"><span>${t('lm.tabla_salario')}</span><strong>${formatoDinero(p.salario||0)}</strong></div>
             <div class="lm-info-salario-fila"><span>${t('lm.pide_aprox')}</span><strong>${formatoDinero(demandado)}</strong></div>
             <div class="lm-info-alerta-plazo">${tp('lm.quedan_n_jornadas', {n:jornadasRestantes})}</div>
-            ${bloqueSalario}`;
+            ${bloqueOferta}`;
         } else {
           const step=Math.max(200, Math.round(salarioDeseadoJugador(p)*STEP_OFERTA_FRACCION));
-          bloqueSalario=`
-            <div class="lm-info-salario-fila"><span>${t('lm.tabla_salario')}</span><strong>${formatoDinero(p.salario||0)}</strong></div>
+          celdaSalario=`
+            <div class="lm-info-salario-fila"><strong>${formatoDinero(p.salario||0)}</strong></div>
             <div class="lm-info-salario-stepper">
               <button class="lm-salario-btn" data-salario-menos="${p.id}" data-step="${step}"><i class="ph ph-bold ph-minus"></i></button>
               <button class="lm-salario-btn" data-salario-mas="${p.id}" data-step="${step}"><i class="ph ph-bold ph-plus"></i></button>
             </div>`;
         }
-        return `<div class="lm-info-plantilla-card lm-info-plantilla-card-${tier}${p.quiereMarcharse?' lm-info-plantilla-card-alerta':''}" id="lm-info-card-${p.id}">
-          <div class="lm-info-card-header">
-            <span class="lm-info-card-dorsal">${p.numero!=null?p.numero:'-'}</span>
-            <span class="lm-info-card-nombre">${p.name}${p.injured?` <span class="cross" title="${t('lm.tt_lesionado')}">✚</span>`:''}</span>
-            <span class="lm-info-card-pos">${p.position}</span>
-            <span class="lm-info-card-overall lm-info-card-overall-${tier}">${p.overall||0}</span>
-          </div>
-          <div class="lm-info-card-body">${bloqueSalario}</div>
-          <div class="lm-info-card-footer">${accionVenta}</div>
-        </div>`;
+        return `<tr class="lm-info-plantilla-fila lm-info-plantilla-fila-${tier}${p.quiereMarcharse?' lm-info-plantilla-fila-alerta':''}" id="lm-info-card-${p.id}">
+          <td class="lm-info-td-dorsal">${p.numero!=null?p.numero:'-'}</td>
+          <td class="lm-info-td-nombre">${p.name}${p.injured?` <span class="cross" title="${t('lm.tt_lesionado')}">✚</span>`:''}</td>
+          <td class="lm-info-td-pos">${p.position}</td>
+          <td class="lm-info-td-overall lm-info-td-overall-${tier}">${p.overall||0}</td>
+          <td class="lm-info-td-salario">${celdaSalario}</td>
+          <td class="lm-info-td-accion">${accionVenta}</td>
+        </tr>`;
       }).join('');
       const scrollTopPrevio=overlay.scrollTop;
       overlay.innerHTML=`
-        <div class="lm-dilemma-card lm-dilemma-card-dd" style="max-width:820px;text-align:left">
+        <div class="lm-dilemma-card lm-dilemma-card-dd" style="max-width:920px;text-align:left">
           ${xCerrarHTML()}
           <div class="lm-dilemma-title"><i class="ph ph-bold ph-file-text"></i> ${t('lm.info_plantilla_btn')}</div>
           <div class="lm-setup-desc" style="text-align:center;margin-bottom:8px">${t('lm.nomina_total')} <strong>${formatoDinero(totalNomina)}/mes</strong> · plantilla: <strong>${jugadores.length}</strong>${numAlertas?` · <strong class="lm-capital-neg">${tp('lm.n_jugadores_en_alerta', {n:numAlertas})}</strong>`:''} · ${t('lm.info_plantilla_nota_venta')}</div>
-          <div class="lm-info-plantilla-grid-wrap">
-            <div class="lm-info-plantilla-grid">${tarjetas || `<div class="lm-info-plantilla-vacio">${t('lm.sin_jugadores_plantilla')}</div>`}</div>
+          <div class="lm-info-plantilla-tabla-wrap">
+            ${jugadores.length ? `<table class="lm-info-plantilla-tabla">
+              <thead><tr>
+                <th>#</th><th>${t('lm.tabla_jugador')}</th><th>Pos</th><th>${t('lm.tabla_punt')}</th><th>${t('lm.tabla_salario')}</th><th></th>
+              </tr></thead>
+              <tbody>${filas}</tbody>
+            </table>` : `<div class="lm-info-plantilla-vacio">${t('lm.sin_jugadores_plantilla')}</div>`}
           </div>
           <div class="lm-popup-actions lm-popup-actions-compact">
             ${esModoMantener?'':`<button id="lmSalariosCerrar" class="mode-card-btn mode-card-btn-gold">${t('lm.cerrar')}</button>`}
@@ -14646,6 +14663,15 @@
       setupStep=1;
       formacionCategoriaVista=null;
       seleccionJugador=null;
+      // El modo de orden de la PLANTILLA (incluido "Ninguno") vive en
+      // una variable de módulo, no dentro de "state" — así que si no se
+      // restaura aquí, cada vez que se recarga la partida (cerrar y
+      // volver a abrir el navegador, etc.) el modo se olvidaba y volvía
+      // a "POSICIÓN" por defecto, lo que en la práctica REORGANIZABA la
+      // tabla de golpe aunque el jugador hubiera dejado el modo
+      // "Ninguno" activo. Ahora se guarda en el propio estado y se
+      // recupera tal cual se dejó.
+      lmSortMode=state.lmSortMode||'position';
       lmCargarUpgradeCache().then(()=>render());
       lmCargarSkillsCache();
       cargarEscudosRandomManifest();
