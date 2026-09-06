@@ -3420,8 +3420,10 @@ body.liga-manager-screen .ranking-btn-label-lm{display:inline}
 .lm-salario-btn{
   padding:4px 9px;font-size:9px;border-radius:5px;cursor:pointer;
   background:var(--lm-surface-2);color:var(--lm-text);border:1px solid #444;font-family:inherit;font-weight:600;
+  transition:background .15s,border-color .15s,transform .1s;
 }
 .lm-salario-btn:hover:not(:disabled){background:var(--lm-surface-3);border-color:#c9a227}
+.lm-salario-btn:active:not(:disabled){transform:scale(.93)}
 .lm-salario-btn:disabled{opacity:.35;cursor:not-allowed}
 .lm-salario-btn-retirar{background:#3a2020;border-color:#c0392b}
 .lm-salario-btn-retirar:hover{background:#4a2828}
@@ -3443,14 +3445,36 @@ body.liga-manager-screen .ranking-btn-label-lm{display:inline}
 @keyframes lmPulsoAlerta{0%,100%{transform:scale(1)}50%{transform:scale(1.15)}}
 .lm-info-plantilla-tabla-wrap{max-height:520px;overflow-y:auto;padding-right:4px}
 .lm-info-plantilla-vacio{text-align:center;color:var(--lm-text-dim);font-size:12px;padding:20px}
-.lm-info-plantilla-tabla{width:100%;border-collapse:collapse;font-size:11.5px}
+.lm-info-plantilla-tabla{width:100%;border-collapse:collapse;font-size:12.5px}
 .lm-info-plantilla-tabla thead th{
   position:sticky;top:0;background:var(--lm-surface-1);color:var(--lm-text-dim);
   font-size:10px;text-transform:uppercase;letter-spacing:.4px;text-align:left;
   padding:7px 8px;border-bottom:1px solid var(--lm-border);z-index:1;
 }
-.lm-info-plantilla-fila{border-left:4px solid #6b6b6b;background:var(--lm-surface-2)}
-.lm-info-plantilla-fila td{padding:7px 8px;border-bottom:1px solid var(--lm-border);vertical-align:middle}
+.lm-info-plantilla-fila{border-left:4px solid #6b6b6b;background:var(--lm-surface-2);transition:background .15s}
+.lm-info-plantilla-tabla tbody tr:hover td{background:var(--lm-surface-3)}
+.lm-info-plantilla-fila td{padding:8px;border-bottom:1px solid var(--lm-border);vertical-align:middle}
+/* Avatar-iniciales: ancla visual por jugador en vez de una fila de puro
+   texto — círculo con la inicial del nombre, coloreado por tier, sin
+   depender de fotos reales que este juego no tiene. */
+.lm-info-avatar{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:24px;height:24px;border-radius:50%;margin-right:8px;
+  font-family:'Bebas Neue',Impact,sans-serif;font-size:12px;font-weight:700;
+  vertical-align:middle;flex-shrink:0;
+}
+.lm-info-avatar-oro{background:rgba(230,201,74,.18);color:#e6c94a;border:1px solid rgba(230,201,74,.45)}
+.lm-info-avatar-plata{background:rgba(215,224,230,.14);color:#d7e0e6;border:1px solid rgba(215,224,230,.35)}
+.lm-info-avatar-bronce{background:rgba(217,171,122,.16);color:#d9ab7a;border:1px solid rgba(217,171,122,.4)}
+/* Destello breve cuando el valor de esta celda concreta acaba de
+   cambiar (subir/bajar salario, overall tras un entrenamiento) — da
+   feedback inmediato de que el clic surtió efecto, sin animar el resto
+   de la fila ni el resto de la tabla. */
+@keyframes lmValorCambioFlash{
+  0%{background:rgba(230,201,74,.35)}
+  100%{background:transparent}
+}
+.lm-valor-cambio{animation:lmValorCambioFlash .7s ease-out}
 .lm-info-plantilla-fila-oro{border-left-color:#e6c94a}
 .lm-info-plantilla-fila-plata{border-left-color:#9fb0bd}
 .lm-info-plantilla-fila-bronce{border-left-color:#8a6a4a}
@@ -3471,6 +3495,14 @@ body.liga-manager-screen .ranking-btn-label-lm{display:inline}
   font-family:'Bebas Neue',Impact,sans-serif;font-size:15px;letter-spacing:.5px;
   color:var(--lm-text);white-space:nowrap;width:1%;text-align:center;
 }
+/* Color por línea del campo (portero/defensa/medio/ataque) — mismo
+   patrón que el overall: solo el TEXTO cambia de color, nunca una
+   chapa de fondo, para diferenciar las posiciones de un vistazo sin
+   volver a los "recuadros de colores" que no le gustaban. */
+.lm-info-td-pos-por{color:#e6c94a}
+.lm-info-td-pos-def{color:#7ea6d6}
+.lm-info-td-pos-med{color:#7ed6a0}
+.lm-info-td-pos-del{color:#e07a6e}
 /* Puntuación: sin recuadro de color de fondo (el jugador no quería
    "recuadros de colores") — el número en sí es lo que destaca, grande
    y en negrita, coloreado según el nivel del jugador (oro/plata/
@@ -3494,6 +3526,10 @@ body.liga-manager-screen .ranking-btn-label-lm{display:inline}
 .lm-info-alerta-titulo{color:#f08a80;font-weight:800;font-size:11px;display:flex;align-items:center;gap:5px;letter-spacing:.4px}
 .lm-info-alerta-plazo{color:#f08a80;font-size:10px;font-weight:600}
 .lm-info-alerta-nota{color:var(--lm-text-dim);font-size:9.5px;line-height:1.3;margin-top:2px}
+/* Nota de "el jugador decidirá..." convertida en icono con tooltip
+   (antes era una línea de texto fija que alargaba la fila) — el dato
+   sigue disponible al pasar el ratón, pero ya no infla la altura. */
+.lm-info-tooltip-icon{color:var(--lm-text-dim);font-size:12px;cursor:help;flex-shrink:0}
 .lm-salario-btn-oferta{background:rgba(230,201,74,.14);border-color:#c9a227;color:#e6c94a;padding:7px 9px}
 .lm-salario-btn-oferta:hover{background:rgba(230,201,74,.24)}
 

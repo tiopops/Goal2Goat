@@ -14273,6 +14273,18 @@
     // cambien, cada jugador se queda siempre en la misma fila de la
     // tabla; solo cambia lo que pone en esa fila.
     const ordenFijoIds=lmOrdenVisualPlantillaActual().map(p=>p.id);
+    // Recuerda el último salario/puntuación pintado de cada jugador para
+    // poder marcar con un breve destello (.lm-valor-cambio) SOLO la
+    // celda que de verdad acaba de cambiar de valor — así subir un
+    // salario con +/- da feedback visual inmediato en vez de que el
+    // número cambie en seco sin que se note el clic.
+    const lmValoresAnterioresPlantilla={};
+    function lmCategoriaPosicionPlantilla(pos){
+      if(pos==='POR') return 'por';
+      if(pos==='MC') return 'med';
+      if(pos==='EI'||pos==='ED'||pos==='DC') return 'del';
+      return 'def'; // DFC, LI, LD
+    }
     function pintar(){
       // Se recorre el orden ya congelado, mirando los datos actuales de
       // cada jugador (un jugador que ya no esté en la plantilla —
@@ -14306,8 +14318,8 @@
                 <button class="lm-salario-btn" data-oferta-menos="${p.id}"><i class="ph ph-bold ph-minus"></i></button>
                 <button class="lm-salario-btn" data-oferta-mas="${p.id}"><i class="ph ph-bold ph-plus"></i></button>
                 <button class="lm-salario-btn lm-salario-btn-retirar" data-oferta-retirar="${p.id}">${t('lm.retirar_oferta')}</button>
-              </div>
-              <div class="lm-info-alerta-nota">${t('lm.oferta_pendiente_nota')}</div>`;
+                <i class="ph ph-bold ph-info lm-info-tooltip-icon" title="${t('lm.oferta_pendiente_nota')}"></i>
+              </div>`;
           } else {
             bloqueOferta=`
               <button class="lm-salario-btn lm-salario-btn-oferta" data-oferta-crear="${p.id}"><i class="ph ph-bold ph-handshake"></i> ${t('lm.hacer_oferta_btn')}</button>`;
@@ -14327,12 +14339,26 @@
               <button class="lm-salario-btn" data-salario-mas="${p.id}" data-step="${step}"><i class="ph ph-bold ph-plus"></i></button>
             </div>`;
         }
+        // Destello de "valor recién cambiado": se compara contra lo que
+        // se pintó la última vez que se llamó a pintar() para ESTE
+        // jugador concreto (nunca contra el resto de la plantilla), así
+        // que subir un salario con +/- o que suba el overall tras un
+        // entrenamiento se nota al momento en esa celda, sin animar el
+        // resto de la fila. En el primer pintado no hay "anterior"
+        // todavía, así que nunca destella nada nada más abrir la
+        // interfaz.
+        const anterior=lmValoresAnterioresPlantilla[p.id];
+        const cambioSalario=anterior && anterior.salario!==p.salario;
+        const cambioOverall=anterior && anterior.overall!==(p.overall||0);
+        lmValoresAnterioresPlantilla[p.id]={salario:p.salario, overall:p.overall||0};
+        const categoriaPos=lmCategoriaPosicionPlantilla(p.position);
+        const inicialAvatar=(p.name||'?').trim().charAt(0).toUpperCase();
         return `<tr class="lm-info-plantilla-fila lm-info-plantilla-fila-${tier}${p.quiereMarcharse?' lm-info-plantilla-fila-alerta':''}" id="lm-info-card-${p.id}">
           <td class="lm-info-td-dorsal">${p.numero!=null?p.numero:'-'}</td>
-          <td class="lm-info-td-nombre">${p.name}${p.injured?` <span class="cross" title="${t('lm.tt_lesionado')}">✚</span>`:''}</td>
-          <td class="lm-info-td-pos">${p.position}</td>
-          <td class="lm-info-td-overall lm-info-td-overall-${tier}">${p.overall||0}</td>
-          <td class="lm-info-td-salario">${celdaSalario}</td>
+          <td class="lm-info-td-nombre"><span class="lm-info-avatar lm-info-avatar-${tier}">${inicialAvatar}</span>${p.name}${p.injured?` <span class="cross" title="${t('lm.tt_lesionado')}">✚</span>`:''}</td>
+          <td class="lm-info-td-pos lm-info-td-pos-${categoriaPos}">${p.position}</td>
+          <td class="lm-info-td-overall lm-info-td-overall-${tier}${cambioOverall?' lm-valor-cambio':''}">${p.overall||0}</td>
+          <td class="lm-info-td-salario${cambioSalario?' lm-valor-cambio':''}">${celdaSalario}</td>
           <td class="lm-info-td-accion">${accionVenta}</td>
         </tr>`;
       }).join('');
