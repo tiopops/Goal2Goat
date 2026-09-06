@@ -3713,6 +3713,47 @@
     const inpEl=document.getElementById('lmAyudaInput');
     if(inpEl) inpEl.value=lmAyudaInputValor;
   }
+  // Construye la interfaz del chat de ayuda — un único bloque, nunca los
+  // dos a la vez (comparten ids: lmAyudaFlotante/lmAyudaChat/lmAyudaInput/
+  // lmAyudaBuscarBtn), según el tipo de interfaz:
+  //  - Móvil: vuelve a vivir DENTRO de la caja CÓMO JUGAR, con su lupa de
+  //    siempre que revela el chat debajo (como estaba antes de que
+  //    existiera el flotante de escritorio).
+  //  - Escritorio: el icono flotante fijo en la esquina inferior derecha.
+  // El propio abrir/cerrar (lmAbrirAyudaFlotante/lmCerrarAyudaFlotante)
+  // no cambia entre los dos: los dos casos comparten el mismo id de
+  // contenedor y la misma clase de estado "abierta", así que no hace
+  // falta ninguna lógica adicional para que el toggle funcione en ambos.
+  function lmAyudaInterfazHTML(esMovil){
+    const chatBloqueInterno=`
+      <div class="lm-ayuda-wrap">
+        <div class="lm-ayuda-chat" id="lmAyudaChat" style="${(lmAyudaChatHistorial.length||lmAyudaEscribiendo)?'':'display:none'}">${lmRenderBurbujasAyudaHTML()}</div>
+        <div class="lm-ayuda-input-row">
+          <input type="text" id="lmAyudaInput" class="lm-ayuda-input" maxlength="140" placeholder="${t('lm.ayuda_placeholder')}" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
+          <button type="button" id="lmAyudaBuscarBtn" class="lm-ayuda-buscar-btn" title="${t('lm.ayuda_buscar_tt')}"><i class="ph ph-bold ph-magnifying-glass"></i></button>
+        </div>
+      </div>`;
+    if(esMovil){
+      return `
+      <div id="lmAyudaFlotante" class="lm-ayuda-embebida${lmAyudaFlotanteAbierta?' lm-ayuda-flotante-abierta':''}">
+        <button type="button" id="lmAyudaFlotanteBtn" class="lm-howto-lupa-btn" title="${t('lm.howto_lupa_tt')}"><i class="ph ph-bold ph-magnifying-glass"></i></button>
+        ${chatBloqueInterno}
+      </div>`;
+    }
+    return `
+      <div id="lmAyudaFlotante" class="lm-ayuda-flotante${lmAyudaFlotanteAbierta?' lm-ayuda-flotante-abierta':''}">
+        <div class="lm-ayuda-flotante-panel">
+          <div class="lm-ayuda-flotante-header">
+            <span><i class="ph ph-bold ph-chat-circle-dots"></i> ${t('lm.ayuda_flotante_titulo')}</span>
+            <button type="button" id="lmAyudaFlotanteCerrar" class="lm-ayuda-flotante-cerrar" aria-label="Cerrar"><i class="ph ph-bold ph-x"></i></button>
+          </div>
+          ${chatBloqueInterno}
+        </div>
+        <button type="button" id="lmAyudaFlotanteBtn" class="lm-ayuda-flotante-btn" title="${t('lm.howto_lupa_tt')}">
+          <i class="ph ph-bold ph-chat-circle-dots"></i>
+        </button>
+      </div>`;
+  }
   // Los catálogos de cartas (MEDICO_CARTAS_BASE, etc.) son const que se
   // evalúan una sola vez al cargar el archivo — si el nombre/descripción
   // se tradujera AL DEFINIR la carta, se quedaría congelado en el
@@ -11315,6 +11356,13 @@
   function renderInner(){
     const root=document.getElementById('ligaManagerScreen');
     if(!root) return;
+    // El chat de ayuda vive en un sitio distinto según la interfaz: en
+    // escritorio es el icono flotante de la esquina (ver más abajo,
+    // fuera de .lm-app-grid); en móvil vuelve a estar DENTRO de la caja
+    // CÓMO JUGAR, como estaba antes de que existiera el flotante — así
+    // que solo se construye/coloca uno de los dos, nunca los dos a la
+    // vez (mismos ids en ambos casos, por eso no pueden coexistir).
+    const esMovilAyuda=(typeof window!=='undefined' && window.innerWidth<=1050);
 
     if(!state || !state.setupComplete){
       renderSetup();
@@ -11808,6 +11856,7 @@
               <button id="lmReplayTutorialBtn" style="width:100%;margin-top:12px;font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:1px;font-size:16px;background:none;border:1px solid var(--gold);color:var(--gold);border-radius:6px;padding:9px 14px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px">
                 <i class="ph ph-bold ph-play-circle" style="font-size:20px"></i> ${t('lm.howto_ver_tutorial')}
               </button>
+              ${esMovilAyuda?lmAyudaInterfazHTML(true):''}
             </div>
           </div>
           <div class="box collapsible-box collapsed" id="lmStatsGuideBox">
@@ -11831,24 +11880,7 @@
         </div>
 
       </div>
-      <div id="lmAyudaFlotante" class="lm-ayuda-flotante${lmAyudaFlotanteAbierta?' lm-ayuda-flotante-abierta':''}">
-        <div class="lm-ayuda-flotante-panel">
-          <div class="lm-ayuda-flotante-header">
-            <span><i class="ph ph-bold ph-chat-circle-dots"></i> ${t('lm.ayuda_flotante_titulo')}</span>
-            <button type="button" id="lmAyudaFlotanteCerrar" class="lm-ayuda-flotante-cerrar" aria-label="Cerrar"><i class="ph ph-bold ph-x"></i></button>
-          </div>
-          <div class="lm-ayuda-wrap">
-            <div class="lm-ayuda-chat" id="lmAyudaChat" style="${(lmAyudaChatHistorial.length||lmAyudaEscribiendo)?'':'display:none'}">${lmRenderBurbujasAyudaHTML()}</div>
-            <div class="lm-ayuda-input-row">
-              <input type="text" id="lmAyudaInput" class="lm-ayuda-input" maxlength="140" placeholder="${t('lm.ayuda_placeholder')}" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
-              <button type="button" id="lmAyudaBuscarBtn" class="lm-ayuda-buscar-btn" title="${t('lm.ayuda_buscar_tt')}"><i class="ph ph-bold ph-magnifying-glass"></i></button>
-            </div>
-          </div>
-        </div>
-        <button type="button" id="lmAyudaFlotanteBtn" class="lm-ayuda-flotante-btn" title="${t('lm.howto_lupa_tt')}">
-          <i class="ph ph-bold ph-chat-circle-dots"></i>
-        </button>
-      </div>
+      ${esMovilAyuda?'':lmAyudaInterfazHTML(false)}
     `;
 
     if(clima) aplicarClimaVisualLM(clima.id);

@@ -3615,13 +3615,18 @@ body.liga-manager-screen .ranking-btn-label-lm{display:inline}
 .lm-ayuda-chat + .lm-ayuda-input-row .lm-ayuda-input{border-radius:0}
 .lm-ayuda-chat + .lm-ayuda-input-row .lm-ayuda-buscar-btn{border-radius:0}
 
-/* ── Widget flotante de chat de ayuda ──────────────────────────────
-   El buscador de dudas ya NO vive dentro de "CÓMO JUGAR" (que ha
-   vuelto a ser solo el tutorial de siempre): en escritorio es un icono
-   circular fijo en la esquina inferior derecha, igual que los widgets
-   de chat de soporte de cualquier web, que despliega este mismo panel
-   al pulsarlo. En móvil no existe ningún acceso a este chat (ver el
-   @media más abajo), tal y como se pidió. */
+/* ── Chat de ayuda: dos interfaces, un mismo bloque ────────────────
+   En escritorio es un icono circular fijo en la esquina inferior
+   derecha, igual que los widgets de chat de soporte de cualquier web,
+   que despliega un panel flotante al pulsarlo (.lm-ayuda-flotante). En
+   móvil vuelve a vivir DENTRO de la caja CÓMO JUGAR, con su lupa de
+   siempre que revela el chat justo debajo (.lm-ayuda-embebida) — como
+   estaba antes de que existiera el flotante de escritorio. Los dos
+   comparten los mismos ids (lmAyudaFlotante/lmAyudaChat/lmAyudaInput/
+   lmAyudaBuscarBtn) y solo uno de los dos existe en el DOM a la vez
+   (lo decide JS según el ancho de pantalla al renderizar), así que el
+   propio abrir/cerrar no necesita ninguna lógica distinta entre los
+   dos casos. */
 .lm-ayuda-flotante{
   /* z-index a propósito POR DEBAJO de los overlays modales de Liga
      Manager (todos usan z-index:10) — si hay una ventana como
@@ -3635,6 +3640,23 @@ body.liga-manager-screen .ranking-btn-label-lm{display:inline}
 @media(max-width:1050px){
   .lm-ayuda-flotante{display:none!important}
 }
+/* Interfaz móvil (dentro de CÓMO JUGAR): la lupa siempre visible al
+   final del tutorial, el chat debajo oculto hasta que se pulsa —
+   reutiliza el mismo estado "abierta" que el flotante de escritorio. */
+.lm-ayuda-embebida{margin-top:12px}
+@media(min-width:1051px){
+  .lm-ayuda-embebida{display:none!important}
+}
+.lm-howto-lupa-btn{
+  -webkit-appearance:none;appearance:none;
+  width:32px;height:32px;border-radius:6px;flex-shrink:0;padding:0;
+  background:none;border:1px solid var(--gold);color:var(--gold);outline:none;
+  display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;
+  transition:background .15s,color .15s;
+}
+.lm-howto-lupa-btn:hover{background:rgba(230,201,74,.14)}
+.lm-ayuda-embebida .lm-ayuda-wrap{display:none;margin-top:8px}
+.lm-ayuda-embebida.lm-ayuda-flotante-abierta .lm-ayuda-wrap{display:flex}
 .lm-ayuda-flotante-btn{
   -webkit-appearance:none;appearance:none;
   width:56px;height:56px;min-width:56px;min-height:56px;max-width:56px;max-height:56px;
