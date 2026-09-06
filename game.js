@@ -875,6 +875,16 @@ function toggleCollapsible(boxId){
   if(box.classList.contains('collapsed') && typeof window.limpiarAyudaBusqueda==='function'){
     window.limpiarAyudaBusqueda(boxId);
   }
+  // Al DESPLEGAR una caja de tutorial/ayuda (CÓMO JUGAR, GUÍA DE
+  // ESTADÍSTICAS, GLOSARIO...), hacer scroll para que quede visible
+  // toda la interfaz que se acaba de abrir, no solo su cabecera.
+  if(!box.classList.contains('collapsed')){
+    requestAnimationFrame(()=>{
+      const alto=box.getBoundingClientRect().height;
+      const cabe=alto<=(window.innerHeight*0.92);
+      box.scrollIntoView({behavior:'smooth', block: cabe?'center':'start'});
+    });
+  }
 }
 
 /* ========= ¿SABÍAS QUÉ...? TIPS ========= */

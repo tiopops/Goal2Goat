@@ -3480,7 +3480,7 @@ body.liga-manager-screen .ranking-btn-label-lm{display:inline}
 .lm-ayuda-chat{
   display:flex;flex-direction:column;gap:6px;max-height:220px;overflow-y:auto;
   padding:10px;background:#0b1410;border:1px solid var(--lm-border);border-bottom:none;
-  border-radius:10px 10px 0 0;
+  border-radius:0;
   background-image:radial-gradient(circle at 20% 20%, rgba(255,255,255,.02) 0, transparent 60%);
 }
 .lm-ayuda-burbuja{
@@ -3497,19 +3497,20 @@ body.liga-manager-screen .ranking-btn-label-lm{display:inline}
 .lm-ayuda-chat + .lm-ayuda-input-row{margin-top:0}
 .lm-ayuda-input{
   flex:1;min-width:0;background:var(--lm-surface-1);border:1px solid var(--lm-border);color:var(--lm-text);
-  font-size:12px;font-family:inherit;padding:9px 12px;border-radius:20px 0 0 20px;outline:none;
+  font-size:12px;font-family:inherit;padding:9px 12px;border-radius:0;outline:none;
 }
 .lm-ayuda-input:focus{border-color:#c9a227}
 .lm-ayuda-input::placeholder{color:var(--lm-text-dim)}
 .lm-ayuda-buscar-btn{
   flex:0 0 auto;width:38px;background:var(--gold);color:#1a1a1a;border:1px solid #c9a227;border-left:none;
-  border-radius:0 20px 20px 0;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px;
+  border-radius:0;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px;
 }
 .lm-ayuda-buscar-btn:hover{filter:brightness(1.08)}
-/* Cuando ya hay chat encima, el cuadro de texto pierde su redondeo
-   superior para quedar pegado a él, como una sola pieza. */
-.lm-ayuda-chat + .lm-ayuda-input-row .lm-ayuda-input{border-radius:0 0 0 20px}
-.lm-ayuda-chat + .lm-ayuda-input-row .lm-ayuda-buscar-btn{border-radius:0 0 20px 0}
+/* Esquinas en punta en todo el bloque (chat + cuadro de texto + lupa),
+   sin redondeos en ningún estado — pedido explícito: nada de esquinas
+   redondas en la textbox de "CÓMO JUGAR/AYUDA". */
+.lm-ayuda-chat + .lm-ayuda-input-row .lm-ayuda-input{border-radius:0}
+.lm-ayuda-chat + .lm-ayuda-input-row .lm-ayuda-buscar-btn{border-radius:0}
 .lm-match-actions button:disabled{opacity:.45;cursor:not-allowed;transform:none}
 .lm-btn-jugar{background:var(--gold);color:var(--lm-gold-tint);border:none}
 
