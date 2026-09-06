@@ -5452,15 +5452,32 @@
     const saludAficionYResultados=Math.max(0, Math.min(1, normalizado*0.7 + (((state.moral||0)+50)/100)*0.3));
     const factorTolerancia = 2.2 - saludAficionYResultados*1.7; // ~0.5 (afición encantada/equipo en racha) a 2.2 (afición harta/mala racha)
     const excesoPrecio=Math.max(0,(precio-10));
-    const factorPrecio = 1/(1 + Math.pow(excesoPrecio,1.15)*0.01*factorTolerancia*(1-tolerancia*0.22));
+    // Decaimiento base, suave y progresivo — el que ya había, se nota
+    // desde el primer euro por encima del precio de referencia.
+    const factorBase = 1/(1 + Math.pow(excesoPrecio,1.15)*0.006*factorTolerancia*(1-tolerancia*0.22));
+    // Además del decaimiento suave de siempre, hay un "precio tolerable"
+    // (distinto según cómo esté la afición y la trayectoria del equipo:
+    // desde 10€ con la afición harta y mala racha, hasta 55€ con la
+    // afición encantada y el equipo en gran forma) a partir del cual la
+    // asistencia YA NO baja poco a poco — se DESPLOMA de verdad, con una
+    // curva mucho más pronunciada. Es lo que pide el propio director
+    // general al ver los ingresos: pasado ese punto, cobrar más por
+    // entrada deja de compensar la gente que deja de venir, así que los
+    // ingresos previstos dejan de subir con el precio y se hunden.
+    const precioTolerable = 10 + saludAficionYResultados*45;
+    const excesoSobreTolerable = Math.max(0, precio-precioTolerable);
+    const factorDesplome = 1/(1 + Math.pow(excesoSobreTolerable,2)*0.02*(1-tolerancia*0.15));
+    const factorPrecio = factorBase*factorDesplome;
     let pct=pctSinPrecio*factorPrecio;
     if(state.directorGeneralBonos && state.directorGeneralBonos.boostAsistencia){ pct+=state.directorGeneralBonos.boostAsistencia; }
-    // El suelo mínimo baja de 10% a 5%: con el modelo anterior (resta
-    // fija) 10% ya dejaba ver "algo" de progresión antes de tocar
-    // fondo, pero con afición/resultados malos el precio necesita poder
-    // seguir hundiendo la asistencia de forma visible en vez de topar
-    // enseguida con el mismo suelo de siempre.
-    pct=Math.max(0.05, Math.min(0.99, pct));
+    // El suelo mínimo baja de 10% a 1%: con un suelo más alto (probado
+    // con 5%), en cuanto la asistencia lo tocaba, seguir subiendo el
+    // precio volvía a subir los ingresos previstos (mismo número mínimo
+    // de asistentes × un precio cada vez mayor) — justo lo contrario de
+    // un desplome real. Con el suelo tan bajo, ese pequeño núcleo de
+    // aficionados incondicionales sigue sin desaparecer del todo, pero
+    // los ingresos se quedan hundidos de verdad en vez de repuntar.
+    pct=Math.max(0.01, Math.min(0.99, pct));
     const aforoBloqueado=fraccionAforoBloqueadoPorDisturbios();
     return {asistentes:Math.round(aforo*pct*(1-aforoBloqueado)), aforo, pct, aforoBloqueado, penalizacionDisturbios};
   }
