@@ -4515,6 +4515,13 @@ body.liga-manager-screen .ranking-btn-label-lm{display:inline}
 #lmAvisoPlantillaTecnicaOverlay .lm-dilemma-title{justify-content:center;text-align:center}
 #lmAvisoQuinielaOverlay .lm-dilemma-title{justify-content:center;text-align:center}
 #lmAvisoEntrenamientoSinPlanOverlay .lm-dilemma-title{justify-content:center;text-align:center}
+#lmConfirmarPrestamoOverlay .lm-dilemma-title{justify-content:center;text-align:center}
+#lmConfirmarPrestamoOverlay .lm-popup-actions{justify-content:center}
+#lmConfirmarPrestamoOverlay .lm-popup-actions button{flex:1;max-width:190px}
+/* Cifras clave del préstamo (cuota, % de interés, importes en €)
+   destacadas en dorado dentro del texto del popup de confirmación, para
+   que salten a la vista antes de aceptar. */
+.lm-prestamo-destacado{color:var(--gold);font-weight:700}
 .lm-dilemma-card{
   background:var(--lm-surface-2);border:1px solid #c9a227;border-radius:0;
   padding:22px 26px;max-width:340px;text-align:center;

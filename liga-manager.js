@@ -8195,11 +8195,11 @@
       <div class="lm-dilemma-card" style="max-width:400px">
         <div class="lm-dilemma-title"><i class="ph ph-bold ph-hand-coins"></i>${t('lm.confirmar_prestamo_titulo')}</div>
         <div class="lm-dilemma-text" style="margin:10px 0 16px">${tp('lm.confirmar_prestamo_texto', {
-          monto:formatoDinero(paquete.monto),
-          total:formatoDinero(totalADevolver),
-          cuota:formatoDinero(cuotaPorJornada),
-          plazo:paquete.plazoJornadas,
-          interes:Math.round(paquete.interes*100)
+          monto:'<span class="lm-prestamo-destacado">'+formatoDinero(paquete.monto)+'</span>',
+          total:'<span class="lm-prestamo-destacado">'+formatoDinero(totalADevolver)+'</span>',
+          cuota:'<span class="lm-prestamo-destacado">'+formatoDinero(cuotaPorJornada)+'</span>',
+          plazo:'<span class="lm-prestamo-destacado">'+paquete.plazoJornadas+'</span>',
+          interes:'<span class="lm-prestamo-destacado">'+Math.round(paquete.interes*100)+'%</span>'
         })}</div>
         <div class="lm-popup-actions lm-popup-actions-compact">
           <button id="lmConfirmarPrestamoCancelar" class="mode-card-btn mode-card-btn-secondary">${t('lm.cancelar_btn')}</button>
@@ -8417,16 +8417,45 @@
   // Se llama una vez por jornada jugada (nunca en jornadas de descanso
   // sin partido) — descuenta la cuota fija, y si con la última cuota el
   // saldo queda saldado, cierra el préstamo del todo.
+  // Si no hay capital suficiente para pagar la cuota de un mes, esta NO
+  // se pierde ni se perdona: se acumula como "arrastre" (p.arrastreImpagado)
+  // sobre la cuota del mes siguiente, y así sucesivamente mientras no
+  // haya dinero para ponerse al día. Llegada la ÚLTIMA cuota programada
+  // del préstamo, se salda TODO lo que quede pendiente de golpe, sin
+  // excepción y aunque el capital se quede en números rojos — nunca
+  // puede quedar un préstamo a medio pagar una vez cumplido su plazo
+  // (si eso deja el capital en negativo, es la propia mecánica ya
+  // programada de fin de temporada la que decide que la partida se
+  // pierde).
   function procesarCuotaPrestamo(){
     const p=state.prestamoBancario;
     if(!p) return;
-    const cuota=Math.min(p.cuotaPorJornada, p.saldoRestante);
-    state.capital=Math.round((state.capital||0)-cuota);
-    p.saldoRestante=Math.round(p.saldoRestante-cuota);
-    p.cuotasPagadas=(p.cuotasPagadas||0)+1;
-    registrarMovimientoFinanciero('Cuota de préstamo', -cuota, state.jornadaActual);
-    if(typeof window.playSound==='function') window.playSound('loan_payment');
-    if(p.saldoRestante<=0) state.prestamoBancario=null;
+    const numeroCuotaActual=(p.cuotasPagadas||0)+1;
+    const esUltimaCuota=numeroCuotaActual>=p.plazoJornadas;
+    if(esUltimaCuota){
+      const totalPendiente=p.saldoRestante;
+      state.capital=Math.round((state.capital||0)-totalPendiente);
+      registrarMovimientoFinanciero('Liquidación final de préstamo', -totalPendiente, state.jornadaActual);
+      if(typeof window.playSound==='function') window.playSound('loan_payment');
+      state.prestamoBancario=null;
+      return;
+    }
+    const arrastrePrevio=p.arrastreImpagado||0;
+    const cuotaDebida=Math.min(p.cuotaPorJornada+arrastrePrevio, p.saldoRestante);
+    if((state.capital||0)>=cuotaDebida){
+      state.capital=Math.round((state.capital||0)-cuotaDebida);
+      p.saldoRestante=Math.round(p.saldoRestante-cuotaDebida);
+      p.arrastreImpagado=0;
+      p.cuotasPagadas=numeroCuotaActual;
+      registrarMovimientoFinanciero('Cuota de préstamo', -cuotaDebida, state.jornadaActual);
+      if(typeof window.playSound==='function') window.playSound('loan_payment');
+    } else {
+      // No hay capital suficiente este mes: no se descuenta nada ahora,
+      // el importe pendiente se acumula para la siguiente cuota.
+      p.arrastreImpagado=cuotaDebida;
+      p.cuotasPagadas=numeroCuotaActual;
+      registrarMovimientoFinanciero('Cuota de préstamo impagada (aplazada)', 0, state.jornadaActual);
+    }
   }
   // Red de seguridad definitiva contra el "préstamo de última hora": si
   // por cualquier motivo (paquete elegido justo en el límite, redondeos)
@@ -8452,6 +8481,7 @@
         <div class="lm-estadio-bar-label"><i class="ph ph-bold ph-bank"></i><span>${t('lm.prestamo_activo_titulo')}</span><span class="${p.saldoRestante>0?'lm-capital-neg':''}">${formatoDinero(p.saldoRestante)}</span></div>
         <div class="lm-prestamo-progreso-track"><div class="lm-prestamo-progreso-fill" style="width:${progreso}%"></div></div>
         <div class="lm-aforo-nota">${tp('lm.prestamo_cuota_nota', {cuota:formatoDinero(p.cuotaPorJornada), pagadas:jornadasPagadas, total:p.plazoJornadas})}</div>
+        ${(p.arrastreImpagado||0)>0 ? `<div class="lm-aforo-nota lm-capital-neg">${tp('lm.prestamo_cuota_atrasada', {monto:formatoDinero(p.arrastreImpagado)})}</div>` : ''}
       `;
     }
     const paquetes=paquetesPrestamoDisponibles();
@@ -9783,7 +9813,11 @@
     // habilidades del juego (bonus continuo, no de un solo uso).
     const descuentoNegociador = (costeBase>0 && typeof lmSkillActiva==='function' && lmSkillActiva('lm_negociador_nato')) ? 0.08 : 0;
     const coste=Math.round(costeBase*(1-lmDescuentoSobres()-descuentoNegociador));
-    if((state.capital||0)<coste) return null;
+    // Los fichajes por sobre son SIEMPRE con capital disponible de
+    // verdad: nunca a crédito, y nunca estando en números rojos (aunque
+    // el sobre fuera gratis, si el capital ya está en negativo no se
+    // permite abrirlo). El llamador debe avisar al jugador del motivo.
+    if((state.capital||0)<coste) return 'sin_capital';
     if(coste>0){
       state.capital-=coste;
       registrarMovimientoFinanciero('Sobre de fichajes (nivel '+sobre.nivel+')', -coste, state.jornadaActual);
@@ -11550,6 +11584,7 @@
         const mailId=btn.getAttribute('data-abrir-sobre-correo');
         const sobreId=btn.getAttribute('data-sobre-id');
         const jugadores=abrirSobrePorId(sobreId);
+        if(jugadores==='sin_capital'){ mostrarAvisoJuego(t('lm.sobre_sin_capital_texto'), t('lm.sobre_sin_capital_titulo')); render(); return; }
         if(!jugadores){ render(); return; }
         mostrarRevelacionSobreDesdeCorreo(jugadores, (fichadoNombre)=>{
           const mail=(state.correoInterno||[]).find(m=>m.id===mailId);
@@ -13272,6 +13307,7 @@
         if(!lista.length) return;
         const sobreId=lista[lista.length-1].id;
         const jugadores=abrirSobrePorId(sobreId);
+        if(jugadores==='sin_capital'){ mostrarAvisoJuego(t('lm.sobre_sin_capital_texto'), t('lm.sobre_sin_capital_titulo')); render(); return; }
         if(!jugadores){ render(); return; }
         mostrarRevelacionSobreDesdeCorreo(jugadores, ()=>{ guardarEstado(); overlay.remove(); render(); });
       });
