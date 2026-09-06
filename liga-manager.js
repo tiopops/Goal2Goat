@@ -3366,15 +3366,15 @@
     {id:'habilidades', keywords:['habilidad','habilidades','puntos de habilidad','desbloquear habilidades','activar una habilidad','activar habilidad','donde veo las habilidades','donde puedo ver mis habilidades','ver mis habilidades','skill','skills'], respuestaKey:'ayuda.faq_habilidades', dondeKey:'ayuda.faq_habilidades_donde', destino:'perfil_habilidades'},
     {id:'quiniela', keywords:['quiniela','jugar la quiniela','pronosticos','apostar resultados','apuesta','boleto','rellenar quiniela'], respuestaKey:'ayuda.faq_quiniela', dondeKey:'ayuda.faq_quiniela_donde', destino:'quiniela'},
     {id:'amistosos', keywords:['amistoso','amistosos','partido amistoso','jugar amistosos','descansar jugadores','arbol de nodos','calendario semanal','dia de descanso'], respuestaKey:'ayuda.faq_amistosos', dondeKey:'ayuda.faq_amistosos_donde', destino:'amistosos'},
-    {id:'jugar_jornada', keywords:['jugar jornada','avanzar jornada','simular partido','empezar el partido','como jugar','jugar partido','seguir jornada','boton jugar'], respuestaKey:'ayuda.faq_jugar_jornada', dondeKey:'ayuda.faq_jugar_jornada_donde'},
-    {id:'formacion', keywords:['formacion','formación','cambiar la formacion','esquema tactico','colocar el once','posiciones','colocar jugador','tactica','táctica'], respuestaKey:'ayuda.faq_formacion', dondeKey:'ayuda.faq_formacion_donde'},
-    {id:'once_banquillo', keywords:['once titular','quien juega','titulares y suplentes','hacer cambios','banquillo','suplentes','titular','sustituir jugador'], respuestaKey:'ayuda.faq_once_banquillo', dondeKey:'ayuda.faq_once_banquillo_donde'},
-    {id:'orden_plantilla', keywords:['orden de la plantilla','cambiar el orden','ordenar por posicion','modo de orden ninguno','ordenar plantilla','llegada posicion puntos dorsal','modo ninguno'], respuestaKey:'ayuda.faq_orden_plantilla', dondeKey:'ayuda.faq_orden_plantilla_donde'},
+    {id:'jugar_jornada', keywords:['jugar jornada','avanzar jornada','simular partido','empezar el partido','como jugar','jugar partido','seguir jornada','boton jugar'], respuestaKey:'ayuda.faq_jugar_jornada', dondeKey:'ayuda.faq_jugar_jornada_donde', destino:'jugar_jornada'},
+    {id:'formacion', keywords:['formacion','formación','cambiar la formacion','esquema tactico','colocar el once','posiciones','colocar jugador','tactica','táctica'], respuestaKey:'ayuda.faq_formacion', dondeKey:'ayuda.faq_formacion_donde', destino:'pitch'},
+    {id:'once_banquillo', keywords:['once titular','quien juega','titulares y suplentes','hacer cambios','banquillo','suplentes','titular','sustituir jugador'], respuestaKey:'ayuda.faq_once_banquillo', dondeKey:'ayuda.faq_once_banquillo_donde', destino:'pitch'},
+    {id:'orden_plantilla', keywords:['orden de la plantilla','cambiar el orden','ordenar por posicion','modo de orden ninguno','ordenar plantilla','llegada posicion puntos dorsal','modo ninguno'], respuestaKey:'ayuda.faq_orden_plantilla', dondeKey:'ayuda.faq_orden_plantilla_donde', destino:'orden_plantilla'},
     {id:'sancion', keywords:['sancion','sanción','jugador expulsado','cuantos partidos de sancion','tarjeta roja directa','tarjeta roja','expulsado','partidos de sancion'], respuestaKey:'ayuda.faq_sancion', dondeKey:'ayuda.faq_sancion_donde'},
     {id:'clasificacion', keywords:['clasificacion','clasificación','posicion en la tabla','puntos de liga','tabla de posiciones','tabla de la liga','posicion en la liga'], respuestaKey:'ayuda.faq_clasificacion', dondeKey:'ayuda.faq_clasificacion_donde', destino:'clasificacion'},
-    {id:'correo_interno', keywords:['correo','correo interno','mensajes recibidos','notificaciones del club','leer correo','mensajes del club','bandeja de entrada'], respuestaKey:'ayuda.faq_correo', dondeKey:'ayuda.faq_correo_interno_donde'},
+    {id:'correo_interno', keywords:['correo','correo interno','mensajes recibidos','notificaciones del club','leer correo','mensajes del club','bandeja de entrada'], respuestaKey:'ayuda.faq_correo', dondeKey:'ayuda.faq_correo_interno_donde', destino:'correo'},
     {id:'historial_fichajes', keywords:['historial de fichajes','ventas anteriores','fichajes anteriores','registro de traspasos','historial de ventas','historico de fichajes'], respuestaKey:'ayuda.faq_historial', dondeKey:'ayuda.faq_historial_fichajes_donde', destino:'historial'},
-    {id:'modo_visual', keywords:['modo automatico','modo manager','ver el partido en directo','modo simulado','elegir como ver el partido','ver el partido','visor del partido'], respuestaKey:'ayuda.faq_modo_visual', dondeKey:'ayuda.faq_modo_visual_donde'},
+    {id:'modo_visual', keywords:['modo automatico','modo manager','ver el partido en directo','modo simulado','elegir como ver el partido','ver el partido','visor del partido'], respuestaKey:'ayuda.faq_modo_visual', dondeKey:'ayuda.faq_modo_visual_donde', destino:'modo_visual'},
     {id:'nomina', keywords:['nomina','nómina','total de sueldos','cuanto pago de sueldos','gastos en salarios','gastos mensuales','pagar sueldos'], respuestaKey:'ayuda.faq_nomina', dondeKey:'ayuda.faq_nomina_donde', destino:'dg'},
     {id:'cuerpo_tecnico', keywords:['cuerpo tecnico','cuerpo técnico','contratar trabajador','puesto vacante','personal del club','contratar personal','trabajadores','vacante'], respuestaKey:'ayuda.faq_cuerpo_tecnico', dondeKey:'ayuda.faq_cuerpo_tecnico_donde', destino:'trabajadores'},
     {id:'escudo', keywords:['escudo','cambiar el escudo','diseñar el escudo','logo del equipo','personalizar escudo','editor de escudo'], respuestaKey:'ayuda.faq_escudo', dondeKey:'ayuda.faq_escudo_donde'},
@@ -3404,7 +3404,7 @@
     {id:'escudo_persiste', keywords:['tengo que crear el escudo cada partida','el escudo se guarda','el nombre del equipo se guarda entre partidas','no me pide el escudo otra vez','does the crest save between games'], respuestaKey:'ayuda.faq_escudo_persiste', dondeKey:'ayuda.faq_escudo_persiste_donde'},
     {id:'escudo_capas', keywords:['capas del escudo','patron de colores del escudo','decoracion del escudo','corona o laurel en el escudo','icono del escudo','crest layers pattern decoration'], respuestaKey:'ayuda.faq_escudo_capas', dondeKey:'ayuda.faq_escudo_capas_donde'},
     {id:'mejoras_goat', keywords:['mejoras con puntos goat','tienda de mejoras','ampliar el banquillo','mas dados por partido','mas rerolls','descuento en sobres con puntos','donde veo las mejoras','donde puedo ver las mejoras','ver las mejoras','goat points upgrades shop'], respuestaKey:'ayuda.faq_mejoras_goat', dondeKey:'ayuda.faq_mejoras_goat_donde', destino:'perfil_mejoras'},
-    {id:'mejoras_reembolso', keywords:['puedo bajar el nivel de una mejora','recuperar puntos de una mejora','deshacer una mejora comprada','revertir mejora','refund upgrade points'], respuestaKey:'ayuda.faq_mejoras_reembolso', dondeKey:'ayuda.faq_mejoras_reembolso_donde'},
+    {id:'mejoras_reembolso', keywords:['puedo bajar el nivel de una mejora','recuperar puntos de una mejora','deshacer una mejora comprada','revertir mejora','refund upgrade points'], respuestaKey:'ayuda.faq_mejoras_reembolso', dondeKey:'ayuda.faq_mejoras_reembolso_donde', destino:'perfil_mejoras'},
     {id:'puntos_goat_origen', keywords:['de donde salen los puntos goat','como consigo puntos goat','puntos goat compartidos','logros dan puntos','where do goat points come from'], respuestaKey:'ayuda.faq_puntos_goat_origen', dondeKey:'ayuda.faq_puntos_goat_origen_donde'},
     {id:'giro_tactico', keywords:['giro tactico','carta tactica en el descanso','cambiar el partido en el descanso','que es el giro tactico','tactical twist halftime card'], respuestaKey:'ayuda.faq_giro_tactico', dondeKey:'ayuda.faq_giro_tactico_donde'},
     {id:'giro_tactico_riesgo', keywords:['cuantos usos tiene el giro tactico','limite de giro tactico por temporada','giro tactico riesgo de tarjeta','tactical twist uses limit'], respuestaKey:'ayuda.faq_giro_tactico_riesgo', dondeKey:'ayuda.faq_giro_tactico_riesgo_donde'},
@@ -3416,14 +3416,14 @@
     {id:'nodo_hitos', keywords:['hitos de nodos','recompensas por repetir el mismo tipo de nodo','5 y 10 veces el mismo nodo','acumular nodos del mismo tipo','node type milestones rewards'], respuestaKey:'ayuda.faq_nodo_hitos', dondeKey:'ayuda.faq_nodo_hitos_donde', destino:'amistosos'},
     {id:'nodo_amistoso_dificultad', keywords:['dificultad del amistoso facil normal dificil','elegir dificultad del scouting','amistoso dificil da mas recompensa','friendly match difficulty tiers'], respuestaKey:'ayuda.faq_nodo_amistoso_dificultad', dondeKey:'ayuda.faq_nodo_amistoso_dificultad_donde', destino:'amistosos'},
     {id:'quiniela_premio', keywords:['premio de la quiniela','cuanto gano si acierto todo en la quiniela','recompensa quiniela perfecta','cuantos rasgos gano en la quiniela','pool bet prize formula'], respuestaKey:'ayuda.faq_quiniela_premio', dondeKey:'ayuda.faq_quiniela_premio_donde', destino:'quiniela'},
-    {id:'rasgos_jugador', keywords:['que son los rasgos de los jugadores','como se consiguen los rasgos','rasgo permanente jugador','traits bonus permanente'], respuestaKey:'ayuda.faq_rasgos_jugador', dondeKey:'ayuda.faq_rasgos_jugador_donde'},
-    {id:'rasgos_lista', keywords:['lista de rasgos disponibles','que rasgos existen','rasgo versatil','rasgo killer','rasgo lider','rasgo velocista','list of player traits'], respuestaKey:'ayuda.faq_rasgos_lista', dondeKey:'ayuda.faq_rasgos_lista_donde'},
-    {id:'fuera_de_posicion', keywords:['jugador fuera de posicion penalizacion','colocar jugador en posicion que no domina','penalizacion por jugar fuera de su posicion','rendimiento fuera de posicion','out of position penalty'], respuestaKey:'ayuda.faq_fuera_de_posicion', dondeKey:'ayuda.faq_fuera_de_posicion_donde'},
+    {id:'rasgos_jugador', keywords:['que son los rasgos de los jugadores','como se consiguen los rasgos','rasgo permanente jugador','traits bonus permanente'], respuestaKey:'ayuda.faq_rasgos_jugador', dondeKey:'ayuda.faq_rasgos_jugador_donde', destino:'info_plantilla'},
+    {id:'rasgos_lista', keywords:['lista de rasgos disponibles','que rasgos existen','rasgo versatil','rasgo killer','rasgo lider','rasgo velocista','list of player traits'], respuestaKey:'ayuda.faq_rasgos_lista', dondeKey:'ayuda.faq_rasgos_lista_donde', destino:'info_plantilla'},
+    {id:'fuera_de_posicion', keywords:['jugador fuera de posicion penalizacion','colocar jugador en posicion que no domina','penalizacion por jugar fuera de su posicion','rendimiento fuera de posicion','out of position penalty'], respuestaKey:'ayuda.faq_fuera_de_posicion', dondeKey:'ayuda.faq_fuera_de_posicion_donde', destino:'pitch'},
     {id:'dados_reintentos_cambios', keywords:['dados reintentos y cambios de carta por partido','cuantos dados tengo por partido','cuantos rerolls tengo','cuantos cambios de carta puedo hacer','dice rerolls card changes per match'], respuestaKey:'ayuda.faq_dados_reintentos_cambios', dondeKey:'ayuda.faq_dados_reintentos_cambios_donde'},
     {id:'liga_personalizada', keywords:['liga personalizada','importar mis propios equipos','subir un excel de equipos','crear mi propia liga','custom league import excel'], respuestaKey:'ayuda.faq_liga_personalizada', dondeKey:'ayuda.faq_liga_personalizada_donde'},
     {id:'quiebra', keywords:['quiebra del club','se puede perder la partida por dinero','bancarrota fin de la partida','cuando termina la partida por deudas','club bankruptcy end game'], respuestaKey:'ayuda.faq_quiebra', dondeKey:'ayuda.faq_quiebra_donde', destino:'dg'},
     {id:'moral_rango', keywords:['rango de la moral','de cuanto a cuanto va la moral','moral maxima y minima','numero exacto de la moral','morale numeric range'], respuestaKey:'ayuda.faq_moral_rango', dondeKey:'ayuda.faq_moral_rango_donde'},
-    {id:'logros_niveles', keywords:['niveles de dificultad de los logros','logros basico intermedio dificil mitico','cuantos puntos da cada logro','achievement tiers points'], respuestaKey:'ayuda.faq_logros_niveles', dondeKey:'ayuda.faq_logros_niveles_donde'},
+    {id:'logros_niveles', keywords:['niveles de dificultad de los logros','logros basico intermedio dificil mitico','cuantos puntos da cada logro','achievement tiers points'], respuestaKey:'ayuda.faq_logros_niveles', dondeKey:'ayuda.faq_logros_niveles_donde', destino:'perfil_logros'},
     {id:'medico_cartas_especiales', keywords:['cartas especiales del medico','milagro de vestuario','cirugia de precision','recuperacion expres lesion','medical department special cards'], respuestaKey:'ayuda.faq_medico_cartas_especiales', dondeKey:'ayuda.faq_medico_cartas_especiales_donde', destino:'medico'},
     {id:'medico_prevencion_lesion', keywords:['reducir el riesgo de lesion con el medico','proyecto de prevencion muscular','prevencion osea nivel medico','medical team injury prevention level'], respuestaKey:'ayuda.faq_medico_prevencion_lesion', dondeKey:'ayuda.faq_medico_prevencion_lesion_donde', destino:'medico'},
     {id:'mantenimiento_cartas_especiales', keywords:['cartas especiales de mantenimiento','riego de emergencia cesped','renovacion total del cesped','recuperar el cesped al instante','pitch maintenance special cards'], respuestaKey:'ayuda.faq_mantenimiento_cartas_especiales', dondeKey:'ayuda.faq_mantenimiento_cartas_especiales_donde', destino:'estado_estadio', staffDestino:'mantenimiento'},
@@ -3433,18 +3433,21 @@
     {id:'estadio_ampliacion', keywords:['ampliar el estadio','proyecto de aforo del estadio','aumentar la capacidad del estadio','stadium capacity expansion project'], respuestaKey:'ayuda.faq_estadio_ampliacion', dondeKey:'ayuda.faq_estadio_ampliacion_donde', destino:'dg'},
     {id:'patrocinio_ingreso', keywords:['proyecto de patrocinio','aumentar ingresos por patrocinador','merchandising ingresos proyecto','sponsorship income project'], respuestaKey:'ayuda.faq_patrocinio_ingreso', dondeKey:'ayuda.faq_patrocinio_ingreso_donde', destino:'dg'},
     {id:'tolerancia_precio', keywords:['proyecto de tolerancia al precio','la aficion tolera mejor subir el precio','reducir enfado por precio de entrada','ticket price tolerance project'], respuestaKey:'ayuda.faq_tolerancia_precio', dondeKey:'ayuda.faq_tolerancia_precio_donde', destino:'dg'},
-    {id:'habilidades_categorias', keywords:['categorias de habilidades','habilidades de tactica plantilla economia','tipos de habilidades disponibles','skill categories tactics squad economy'], respuestaKey:'ayuda.faq_habilidades_categorias', dondeKey:'ayuda.faq_habilidades_categorias_donde'},
+    {id:'habilidades_categorias', keywords:['categorias de habilidades','habilidades de tactica plantilla economia','tipos de habilidades disponibles','skill categories tactics squad economy'], respuestaKey:'ayuda.faq_habilidades_categorias', dondeKey:'ayuda.faq_habilidades_categorias_donde', destino:'perfil_habilidades'},
     {id:'proyectos_reintento', keywords:['que pasa si fallo un proyecto','fallar la tirada de dados de un proyecto','se pierde la carta si fallo','puedo reintentar un proyecto','failed project card retry'], respuestaKey:'ayuda.faq_proyectos_reintento', dondeKey:'ayuda.faq_proyectos_reintento_donde'},
-    {id:'correo_remitentes', keywords:['de quien recibo correos','remitentes del correo interno','tipos de mensajes del correo','quien me manda correo','internal mail senders'], respuestaKey:'ayuda.faq_correo_remitentes', dondeKey:'ayuda.faq_correo_remitentes_donde'},
+    {id:'correo_remitentes', keywords:['de quien recibo correos','remitentes del correo interno','tipos de mensajes del correo','quien me manda correo','internal mail senders'], respuestaKey:'ayuda.faq_correo_remitentes', dondeKey:'ayuda.faq_correo_remitentes_donde', destino:'correo'},
     {id:'aficion_disturbios_penalizacion', keywords:['penalizacion de asistencia por disturbios','cuanto baja la asistencia por disturbios','tope de penalizacion por disturbios','riot attendance penalty cap'], respuestaKey:'ayuda.faq_aficion_disturbios_penalizacion', dondeKey:'ayuda.faq_aficion_disturbios_penalizacion_donde', destino:'seguridad', staffDestino:'mantenimiento'},
     {id:'sobre_hitos_recompensa', keywords:['recompensas de scouting sobre garantizado','sobre nivel superior hito','elegir entre dos jugadores al abrir sobre','scouting milestone free pack reward'], respuestaKey:'ayuda.faq_sobre_hitos_recompensa', dondeKey:'ayuda.faq_sobre_hitos_recompensa_donde', destino:'dd'},
-    {id:'banquillo_tamano', keywords:['tamaño del banquillo','cuantos suplentes caben por defecto','ampliar el banquillo con puntos','bench size default upgrade'], respuestaKey:'ayuda.faq_banquillo_tamano', dondeKey:'ayuda.faq_banquillo_tamano_donde'},
+    {id:'banquillo_tamano', keywords:['tamaño del banquillo','cuantos suplentes caben por defecto','ampliar el banquillo con puntos','bench size default upgrade'], respuestaKey:'ayuda.faq_banquillo_tamano', dondeKey:'ayuda.faq_banquillo_tamano_donde', destino:'perfil_mejoras'},
     {id:'traspasos_rechazo', keywords:['puedo rechazar una oferta de traspaso','no quiero vender a mi jugador','rechazar oferta por un jugador','estoy obligado a vender','reject transfer offer'], respuestaKey:'ayuda.faq_traspasos_rechazo', dondeKey:'ayuda.faq_traspasos_rechazo_donde', destino:'info_plantilla'},
     {id:'glosario', keywords:['glosario','donde veo el glosario','donde esta el glosario','diccionario de terminos','que significan los terminos del juego','glossary'], respuestaKey:'ayuda.faq_glosario', dondeKey:'ayuda.faq_glosario_donde', destino:'glosario'},
     {id:'tutorial_de_nuevo', keywords:['ver el tutorial de nuevo','repetir el tutorial','volver a ver el tutorial','como repito el tutorial','donde esta el tutorial','replay tutorial','watch tutorial again'], respuestaKey:'ayuda.faq_tutorial_de_nuevo', dondeKey:'ayuda.faq_tutorial_de_nuevo_donde', destino:'tutorial'},
     {id:'menu_perfil', keywords:['menu de perfil','donde veo mi perfil','donde esta mi perfil','abrir mi perfil','ver mi perfil','profile menu'], respuestaKey:'ayuda.faq_menu_perfil', dondeKey:'ayuda.faq_menu_perfil_donde', destino:'perfil'},
     {id:'tickets_puntos', keywords:['como consigo puntos para las habilidades','como consigo puntos para las mejoras','como consigo puntos goat','de donde salen los puntos para mejorar','ganar puntos con boletos','ganar puntos con tickets','como gano puntos goat','how do i get points for skills or upgrades'], respuestaKey:'ayuda.faq_tickets_puntos', dondeKey:'ayuda.faq_tickets_puntos_donde', destino:'tickets'},
     {id:'tickets_frecuencia', keywords:['cada cuanto se genera un ticket','cada cuanto llega un ticket nuevo','cada cuanto tengo un boleto nuevo','cuantos tickets puedo acumular','cuantos boletos como maximo','how often does a new ticket appear'], respuestaKey:'ayuda.faq_tickets_frecuencia', dondeKey:'ayuda.faq_tickets_frecuencia_donde', destino:'tickets'},
+    {id:'info_club', keywords:['informacion del club','información del club','lupa del campo','icono de la lupa','aforo maximo','asistencia prevista','ultima asistencia','satisfaccion de la aficion','club information','info club'], respuestaKey:'ayuda.faq_info_club', dondeKey:'ayuda.faq_info_club_donde', destino:'info_club'},
+    {id:'abandonar_liga', keywords:['abandonar liga','salir de la liga','dejar la temporada','volver al menu principal','terminar la partida','abandonar la temporada','salir de la partida','leave league','quit league'], respuestaKey:'ayuda.faq_abandonar_liga', dondeKey:'ayuda.faq_abandonar_liga_donde', destino:'perfil_ajustes'},
+    {id:'perfil_estadisticas', keywords:['pestaña de estadisticas','pestaña estadisticas del perfil','donde veo mis estadisticas','ver mis estadisticas de la temporada','estadisticas de mi perfil','profile stats tab'], respuestaKey:'ayuda.faq_perfil_estadisticas', dondeKey:'ayuda.faq_perfil_estadisticas_donde', destino:'perfil_estadisticas'},
   ];
   // Enlaces directos que puede ofrecer una respuesta del buscador de
   // AYUDA: cada "destino" es una pantalla real del juego, con la
@@ -3497,6 +3500,35 @@
       setTimeout(()=>{ if(typeof window.switchProfileTab==='function') window.switchProfileTab('upgrades'); }, 80);
     }},
     tickets:{labelKey:'lm.ayuda_link_tickets', fn:()=>{ if(typeof window.openTicketOverlay==='function') window.openTicketOverlay(); }},
+    info_club:{labelKey:'lm.ayuda_link_info_club', fn:()=>abrirInfoClub()},
+    pitch:{labelKey:'lm.ayuda_link_pitch', fn:()=>{
+      const el=document.getElementById('lmPitchBox');
+      if(el) el.scrollIntoView({behavior:'smooth', block:'center'});
+    }},
+    jugar_jornada:{labelKey:'lm.ayuda_link_jugar_jornada', fn:()=>{
+      const b=document.getElementById('lmJugarBtn');
+      if(b) b.scrollIntoView({behavior:'smooth', block:'center'});
+    }},
+    correo:{labelKey:'lm.ayuda_link_correo', fn:()=>{
+      const box=document.querySelector('.lm-correo-box');
+      if(box) box.scrollIntoView({behavior:'smooth', block:'center'});
+    }},
+    modo_visual:{labelKey:'lm.ayuda_link_modo_visual', fn:()=>{
+      const b=document.querySelector('.lm-modo-visual-btn');
+      if(b) b.scrollIntoView({behavior:'smooth', block:'center'});
+    }},
+    orden_plantilla:{labelKey:'lm.ayuda_link_orden_plantilla', fn:()=>{
+      const b=document.getElementById('lmSortBtn');
+      if(b) b.scrollIntoView({behavior:'smooth', block:'center'});
+    }},
+    perfil_estadisticas:{labelKey:'lm.ayuda_link_perfil_estadisticas', fn:()=>{
+      if(typeof window.showProfileModal==='function') window.showProfileModal();
+      setTimeout(()=>{ if(typeof window.switchProfileTab==='function') window.switchProfileTab('stats'); }, 80);
+    }},
+    perfil_ajustes:{labelKey:'lm.ayuda_link_perfil_ajustes', fn:()=>{
+      if(typeof window.showProfileModal==='function') window.showProfileModal();
+      setTimeout(()=>{ if(typeof window.switchProfileTab==='function') window.switchProfileTab('user'); }, 80);
+    }},
   };
   // Palabras clave (multi-idioma) que delatan una pregunta de tipo
   // "¿DÓNDE...?" — cuando el texto las contiene, se prioriza la
