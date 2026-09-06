@@ -31,6 +31,8 @@ window.TRANSLATIONS = {
   'lm.jornada_de': {es:'de', en:'of', pt:'de', fr:'sur', de:'von', it:'di'},
   'lm.aforo_maximo': {es:'AFORO MÁXIMO', en:'MAX CAPACITY', pt:'CAPACIDADE MÁXIMA', fr:'CAPACITÉ MAXIMALE', de:'MAX. KAPAZITÄT', it:'CAPIENZA MASSIMA'},
   'lm.asistencia_prevista': {es:'ASISTENCIA PREVISTA', en:'PREDICTED ATTENDANCE', pt:'ASSISTÊNCIA PREVISTA', fr:'AFFLUENCE PREVUE', de:'ERWARTETE ZUSCHAUERZAHL', it:'AFFLUENZA PREVISTA'},
+  'lm.ingresos_previstos_entradas': {es:'INGRESOS PREVISTOS', en:'PROJECTED REVENUE', pt:'RECEITA PREVISTA', fr:'REVENUS PREVUS', de:'ERWARTETE EINNAHMEN', it:'ENTRATE PREVISTE'},
+  'lm.previsiones_nota_estimacion': {es:'Estimación según precio, forma del equipo y afición — no es una cifra exacta.', en:'Estimate based on price, team form and fan support — not an exact figure.', pt:'Estimativa com base no preço, na forma da equipa e no apoio da afição — não é um valor exato.', fr:'Estimation selon le prix, la forme de l’équipe et le soutien des supporters — ce n’est pas un chiffre exact.', de:'Schätzung basierend auf Preis, Mannschaftsform und Fanunterstützung — keine exakte Zahl.', it:'Stima basata su prezzo, forma della squadra e supporto dei tifosi — non è una cifra esatta.'},
   'lm.capital': {es:'CAPITAL', en:'BUDGET', pt:'CAPITAL', fr:'CAPITAL', de:'KAPITAL', it:'CAPITALE'},
   'lm.plantilla': {es:'PLANTILLA', en:'SQUAD', pt:'ELENCO', fr:'EFFECTIF', de:'KADER', it:'ROSA'},
 

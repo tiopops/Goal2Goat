@@ -5387,7 +5387,7 @@
       return nivel>=3 ? s+(z.w*z.h)/areaTotal : s;
     }, 0);
   }
-  function calcularAsistencia(weatherId){
+  function calcularAsistencia(weatherId, precioOverride){
     const est=state.estadio||{};
     const aforo=est.aforoTotal||12000;
     // Curva de asistencia NO lineal a propósito: antes era casi una
@@ -5410,7 +5410,11 @@
     // cada euro de más resta asistencia — mitigado por el nivel de
     // Relaciones con la Afición del Director General (el "caché" del
     // club: cuanto más grande eres, mejor toleras subir el precio).
-    const precio=state.precioEntrada===undefined?15:state.precioEntrada;
+    // precioOverride permite previsualizar el efecto de un precio que
+    // TODAVÍA no se ha confirmado (p.ej. mientras se arrastra el slider
+    // de precio de la entrada en la interfaz del Director General, antes
+    // de soltarlo) sin tener que mutar state.precioEntrada de verdad.
+    const precio=precioOverride!==undefined?precioOverride:(state.precioEntrada===undefined?15:state.precioEntrada);
     const tolerancia=nivelDeDG('toleranciaPrecio');
     const penalizacionPrecio=Math.max(0,(precio-10))*0.012*(1-tolerancia*0.22);
     // Los disturbios ya castigaban la satisfacción a largo plazo (ver
@@ -5433,6 +5437,18 @@
     pct=Math.max(0.10, Math.min(0.99, pct));
     const aforoBloqueado=fraccionAforoBloqueadoPorDisturbios();
     return {asistentes:Math.round(aforo*pct*(1-aforoBloqueado)), aforo, pct, aforoBloqueado, penalizacionDisturbios};
+  }
+  // Devuelve true si el próximo partido de liga del jugador es en casa —
+  // solo entonces tiene sentido enseñar una previsión de asistencia/
+  // ingresos por entradas (fuera de casa no hay taquilla propia que
+  // estimar). Mismo criterio que ya usaba abrirInfoClub(), factorizado
+  // aquí para poder reutilizarlo también en la interfaz del Director
+  // General.
+  function proximoPartidoLigaEsLocal(){
+    const j=state.jornadaActual-1;
+    const proximaJornada = j<38 ? state.calendario[j] : null;
+    const miProximoPartido = proximaJornada ? proximaJornada.find(p=>p.home.id==='lm_0'||p.away.id==='lm_0') : null;
+    return !!(miProximoPartido && miProximoPartido.home.id==='lm_0');
   }
   // Moral del equipo (-50..50) — CALCO del rango y espíritu del sistema
   // de moral de Copa Leyendas (teamMorale), pero propio de Liga Manager:
@@ -12685,6 +12701,17 @@
       }).join('');
 
       const scrollTopPrevio=overlay.scrollTop;
+      // Previsión de asistencia/ingresos por entradas del próximo
+      // partido, con el precio ACTUAL ya guardado (state.precioEntrada)
+      // — el mismo cálculo real que usa calcularAsistencia() al jugar el
+      // partido, así que es una estimación próxima a la de verdad, no un
+      // número inventado aparte. Solo tiene sentido si el próximo
+      // partido es en casa; fuera no hay taquilla propia que prever.
+      const precioActualDG=state.precioEntrada===undefined?15:state.precioEntrada;
+      const dgEsLocalProximo=proximoPartidoLigaEsLocal();
+      const dgPrevista = dgEsLocalProximo ? calcularAsistencia(climaDelPartido()?climaDelPartido().id:null, precioActualDG) : null;
+      const dgAsistenciaTxt = dgPrevista ? dgPrevista.asistentes.toLocaleString('es-ES') : '—';
+      const dgIngresosTxt = dgPrevista ? formatoDinero(dgPrevista.asistentes*precioActualDG) : '—';
       overlay.innerHTML=`
         <div class="lm-dilemma-card lm-dilemma-card-dg" style="max-width:640px">
           ${xCerrarHTML()}
@@ -12701,6 +12728,15 @@
             <div class="lm-estadio-bar-label"><i class="ph ph-bold ph-ticket"></i><span>${t('lm.precio_de_la_entrada')}</span><span id="lmPrecioEntradaValor">${formatoDinero(state.precioEntrada)}</span></div>
             <input type="range" id="lmPrecioEntradaSlider" min="5" max="60" step="1" value="${state.precioEntrada}" class="lm-precio-slider">
             <div class="lm-aforo-nota">Más caro = más ingreso por entrada, pero menos afición vendrá a verte (se nota menos cuanto más nivel tengas en Relaciones con la Afición).</div>
+            <div class="lm-infoclub-stats-grid" style="margin-top:10px">
+              <div class="lm-infoclub-stat">
+                <div class="lm-infoclub-stat-top"><i class="ph ph-bold ph-chart-line-up" style="color:#5b9bd5"></i><div class="lm-infoclub-stat-val" id="lmDGAsistenciaPrevistaVal">${dgAsistenciaTxt}</div></div><div class="lm-infoclub-stat-label">${t('lm.asistencia_prevista')}</div>
+              </div>
+              <div class="lm-infoclub-stat">
+                <div class="lm-infoclub-stat-top"><i class="ph ph-bold ph-coin" style="color:#4caf7a"></i><div class="lm-infoclub-stat-val" id="lmDGIngresosPrevistosVal">${dgIngresosTxt}</div></div><div class="lm-infoclub-stat-label">${t('lm.ingresos_previstos_entradas')}</div>
+              </div>
+            </div>
+            <div class="lm-aforo-nota" style="margin-top:4px;font-style:italic">${t('lm.previsiones_nota_estimacion')}</div>
           </div>
           ${renderNivelesDGHTML()}
           <div class="lm-staff-bar-capital" style="justify-content:center;margin:10px 0 8px"><span><i class="ph ph-bold ph-dice-five"></i> ${t('lm.dados')}: <strong>${state.diceAvailable}</strong></span><span><i class="ph ph-bold ph-arrows-clockwise"></i> ${t('lm.rerrolls')}: <strong>${state.dadoRerollsDisponibles||0}</strong></span><span><i class="ph ph-bold ph-cards"></i> ${t('lm.cambios')}: <strong>${Math.max(0,lmCambiosCartaPorPartido()-(state.directorGeneralCambiosUsados||0))}/${lmCambiosCartaPorPartido()}</strong></span></div>
@@ -12721,8 +12757,22 @@
       // arrastre, así que aquí solo se actualiza el texto (barato); el
       // guardado real y el repintado completo del hub se dejan para
       // 'change' (al soltar), que es cuando de verdad se confirma el valor.
+      // La previsión de asistencia/ingresos por entradas SÍ se recalcula
+      // en cada 'input' (sin esperar a soltar el slider) — pasando el
+      // precio aún sin confirmar como precioOverride a calcularAsistencia,
+      // para no tener que mutar state.precioEntrada solo para
+      // previsualizar. Si el próximo partido es fuera de casa (dgPrevista
+      // null) no hay nada que recalcular, se queda en el "—" de siempre.
+      const asistenciaValEl=document.getElementById('lmDGAsistenciaPrevistaVal');
+      const ingresosValEl=document.getElementById('lmDGIngresosPrevistosVal');
       if(slider) slider.addEventListener('input', ()=>{
-        if(valorSliderEl) valorSliderEl.textContent=formatoDinero(parseInt(slider.value,10));
+        const precioTmp=parseInt(slider.value,10);
+        if(valorSliderEl) valorSliderEl.textContent=formatoDinero(precioTmp);
+        if(dgPrevista){
+          const previstaTmp=calcularAsistencia(climaDelPartido()?climaDelPartido().id:null, precioTmp);
+          if(asistenciaValEl) asistenciaValEl.textContent=previstaTmp.asistentes.toLocaleString('es-ES');
+          if(ingresosValEl) ingresosValEl.textContent=formatoDinero(previstaTmp.asistentes*precioTmp);
+        }
       });
       if(slider) slider.addEventListener('change', ()=>{
         state.precioEntrada=parseInt(slider.value,10);
