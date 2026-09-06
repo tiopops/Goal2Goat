@@ -2611,7 +2611,8 @@ body.liga-manager-screen .ranking-btn-label-lm{display:inline}
 #ligaManagerScreen .lm-lp-guardada-borrar,
 #ligaManagerScreen .lm-correo-notif-dot,
 #ligaManagerScreen .lm-nodos-leyenda-btn,
-#ligaManagerScreen .lm-nodo-acumulado-check{border-radius:50%!important} /* controles circulares, quedan al margen de la regla anterior */
+#ligaManagerScreen .lm-nodo-acumulado-check,
+#ligaManagerScreen .lm-ayuda-flotante-btn{border-radius:50%!important} /* controles circulares, quedan al margen de la regla anterior */
 #ligaManagerScreen .lm-nodo-reclamar-btn{border-radius:5px!important}
 /* Las flechas de reordenar columnas van cuadradas con las esquinas
    redondeadas, no circulares. */

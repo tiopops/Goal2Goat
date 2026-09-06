@@ -14347,7 +14347,7 @@
     // reordenar de mayor a menor sueldo es justo el objetivo del modo,
     // así que un cambio de salario SÍ debe mover la fila (no es el bug
     // de "salta la interfaz" de otras pantallas).
-    let lmModoOrdenSalarios=lmSortMode;
+    let lmModoOrdenSalarios='salario';
     const LM_ORDEN_SALARIOS_LABELS={...LM_SORT_LABELS, salario:'SALARIO'};
     const LM_ORDEN_SALARIOS_NEXT={...LM_SORT_NEXT, ninguno:'salario', salario:'arrival'};
     // Cambios de salario "en borrador": los botones +/- de un jugador
