@@ -12526,6 +12526,28 @@
       }
     }
   }
+  // La interfaz de ayuda (textbox+lupa embebido en CÓMO JUGAR en móvil,
+  // burbuja flotante en escritorio) se decide en cada render() según el
+  // ancho de pantalla EN ESE MOMENTO — pero render() normalmente solo se
+  // llama al cambiar algo del estado del juego, nunca por sí solo al
+  // redimensionar la ventana. Sin este listener, pasar de móvil a
+  // escritorio (o al revés) con la ventana ya abierta —achicar/ampliar
+  // el navegador, rotar una tablet, salir del modo responsive del
+  // inspector— dejaba la interfaz "atascada" en la que tocó la última
+  // vez que se renderizó: la burbuja flotante podía desaparecer sin
+  // más. Se compara contra el último ancho conocido para no forzar un
+  // render() completo en CADA pixel de resize, solo al cruzar de verdad
+  // el punto de corte de 1050px.
+  let lmUltimoEsMovilAyuda=(typeof window!=='undefined' && window.innerWidth<=1050);
+  if(typeof window!=='undefined'){
+    window.addEventListener('resize', ()=>{
+      const ahoraEsMovil=window.innerWidth<=1050;
+      if(ahoraEsMovil!==lmUltimoEsMovilAyuda){
+        lmUltimoEsMovilAyuda=ahoraEsMovil;
+        if(document.body.classList.contains('liga-manager-screen')) render();
+      }
+    });
+  }
 
   /* ---------- 12a. Selección unificada campo ↔ plantilla/banquillo,
      igual que Copa Leyendas: un clic selecciona, el siguiente clic (en
