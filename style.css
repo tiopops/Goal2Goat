@@ -3640,23 +3640,15 @@ body.liga-manager-screen .ranking-btn-label-lm{display:inline}
 @media(max-width:1050px){
   .lm-ayuda-flotante{display:none!important}
 }
-/* Interfaz móvil (dentro de CÓMO JUGAR): la lupa siempre visible al
-   final del tutorial, el chat debajo oculto hasta que se pulsa —
-   reutiliza el mismo estado "abierta" que el flotante de escritorio. */
-.lm-ayuda-embebida{margin-top:12px}
+/* Interfaz móvil (dentro de CÓMO JUGAR, justo encima de VER TUTORIAL DE
+   NUEVO): el textbox con su lupa de buscar a la derecha está SIEMPRE
+   visible, sin ningún icono intermedio que haya que pulsar antes — el
+   bloque de burbujas de chat encima solo aparece cuando hay historial
+   (eso ya lo decide lmAyudaChat con su propio display:none inline). */
+.lm-ayuda-embebida{margin:0 0 12px}
 @media(min-width:1051px){
   .lm-ayuda-embebida{display:none!important}
 }
-.lm-howto-lupa-btn{
-  -webkit-appearance:none;appearance:none;
-  width:32px;height:32px;border-radius:6px;flex-shrink:0;padding:0;
-  background:none;border:1px solid var(--gold);color:var(--gold);outline:none;
-  display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;
-  transition:background .15s,color .15s;
-}
-.lm-howto-lupa-btn:hover{background:rgba(230,201,74,.14)}
-.lm-ayuda-embebida .lm-ayuda-wrap{display:none;margin-top:8px}
-.lm-ayuda-embebida.lm-ayuda-flotante-abierta .lm-ayuda-wrap{display:flex}
 .lm-ayuda-flotante-btn{
   -webkit-appearance:none;appearance:none;
   width:56px;height:56px;min-width:56px;min-height:56px;max-width:56px;max-height:56px;

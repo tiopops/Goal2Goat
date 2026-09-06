@@ -3716,14 +3716,15 @@
   // Construye la interfaz del chat de ayuda — un único bloque, nunca los
   // dos a la vez (comparten ids: lmAyudaFlotante/lmAyudaChat/lmAyudaInput/
   // lmAyudaBuscarBtn), según el tipo de interfaz:
-  //  - Móvil: vuelve a vivir DENTRO de la caja CÓMO JUGAR, con su lupa de
-  //    siempre que revela el chat debajo (como estaba antes de que
-  //    existiera el flotante de escritorio).
-  //  - Escritorio: el icono flotante fijo en la esquina inferior derecha.
-  // El propio abrir/cerrar (lmAbrirAyudaFlotante/lmCerrarAyudaFlotante)
-  // no cambia entre los dos: los dos casos comparten el mismo id de
-  // contenedor y la misma clase de estado "abierta", así que no hace
-  // falta ninguna lógica adicional para que el toggle funcione en ambos.
+  //  - Móvil: vuelve a vivir DENTRO de la caja CÓMO JUGAR, encima del
+  //    botón de VER TUTORIAL DE NUEVO — el textbox (con la lupa de
+  //    buscar a la derecha, dentro de la propia fila) está SIEMPRE
+  //    visible, sin ningún icono que haya que pulsar antes para
+  //    revelarlo; el bloque de burbujas de chat encima del textbox solo
+  //    aparece cuando hay historial (como antes de que existiera el
+  //    flotante de escritorio).
+  //  - Escritorio: el icono flotante fijo en la esquina inferior derecha
+  //    que despliega este mismo textbox+chat dentro de un panel.
   function lmAyudaInterfazHTML(esMovil){
     const chatBloqueInterno=`
       <div class="lm-ayuda-wrap">
@@ -3735,8 +3736,7 @@
       </div>`;
     if(esMovil){
       return `
-      <div id="lmAyudaFlotante" class="lm-ayuda-embebida${lmAyudaFlotanteAbierta?' lm-ayuda-flotante-abierta':''}">
-        <button type="button" id="lmAyudaFlotanteBtn" class="lm-howto-lupa-btn" title="${t('lm.howto_lupa_tt')}"><i class="ph ph-bold ph-magnifying-glass"></i></button>
+      <div id="lmAyudaFlotante" class="lm-ayuda-embebida">
         ${chatBloqueInterno}
       </div>`;
     }
@@ -11853,10 +11853,10 @@
               <div class="howto-step"><span class="howto-num">4</span><div>${t('lm.howto_paso4')}</div></div>
               <div class="howto-step"><span class="howto-num">5</span><div>${t('lm.howto_paso5')}</div></div>
               <div class="howto-step"><span class="howto-num">6</span><div>${t('lm.howto_paso6')}</div></div>
+              ${esMovilAyuda?lmAyudaInterfazHTML(true):''}
               <button id="lmReplayTutorialBtn" style="width:100%;margin-top:12px;font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:1px;font-size:16px;background:none;border:1px solid var(--gold);color:var(--gold);border-radius:6px;padding:9px 14px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px">
                 <i class="ph ph-bold ph-play-circle" style="font-size:20px"></i> ${t('lm.howto_ver_tutorial')}
               </button>
-              ${esMovilAyuda?lmAyudaInterfazHTML(true):''}
             </div>
           </div>
           <div class="box collapsible-box collapsed" id="lmStatsGuideBox">
