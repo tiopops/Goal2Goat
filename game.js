@@ -896,6 +896,12 @@ function toggleCollapsible(boxId){
       const cabe=alto<=(window.innerHeight*0.92);
       box.scrollIntoView({behavior:'smooth', block: cabe?'center':'start'});
     });
+    // Al desplegar justo "CÓMO JUGAR/AYUDA", arranca el cronómetro de
+    // 30s de inactividad del buscador de dudas — si el jugador se deja
+    // la caja abierta sin escribir nada, se contrae ella sola.
+    if(boxId==='lmHowToPlayBox' && typeof window.lmIniciarInactividadAyuda==='function'){
+      window.lmIniciarInactividadAyuda();
+    }
   }
 }
 

@@ -1435,6 +1435,16 @@ body.dark-theme .strategy-desc{background:#0a0c0d}
   flex-shrink:0;margin-left:8px;line-height:1;
 }
 .collapsible-box.collapsed .collapse-arrow{transform:rotate(-90deg)}
+/* Lupa de acceso directo al buscador de "CÓMO JUGAR/AYUDA" — vive
+   dentro de la cabecera clicable (que colapsa/expande la caja), así
+   que necesita su propio hit-area y detener la propagación del clic
+   (ver el onclick inline que llama a event.stopPropagation()). */
+.lm-howto-lupa-btn{
+  flex-shrink:0;width:24px;height:24px;border-radius:6px;
+  background:rgba(201,162,39,.12);border:1px solid rgba(201,162,39,.4);color:var(--gold);
+  display:flex;align-items:center;justify-content:center;font-size:12px;cursor:pointer;
+}
+.lm-howto-lupa-btn:hover{background:rgba(201,162,39,.22)}
 .collapsible-box.collapsed .howto-content{
   display:none;
 }
@@ -3415,7 +3425,7 @@ body.liga-manager-screen .ranking-btn-label-lm{display:inline}
 .lm-salario-btn:disabled{opacity:.35;cursor:not-allowed}
 .lm-salario-btn-retirar{background:#3a2020;border-color:#c0392b}
 .lm-salario-btn-retirar:hover{background:#4a2828}
-.lm-venta-estado{font-size:9px;color:#e6c94a;margin-right:6px}
+.lm-venta-estado{font-size:9px;color:#e6c94a;margin-bottom:4px;white-space:nowrap}
 
 /* INFORMACIÓN DE LA PLANTILLA — tabla (como la antigua tabla de
    "salarios"), con las mejoras: fila en rojo bien visible para quien
@@ -3454,17 +3464,29 @@ body.liga-manager-screen .ranking-btn-label-lm{display:inline}
   text-align:center;width:1%;white-space:nowrap;
 }
 .lm-info-td-nombre{font-weight:700;color:var(--lm-text);white-space:nowrap}
-.lm-info-td-pos{font-size:9px;color:var(--lm-text-dim);background:rgba(255,255,255,.06);border-radius:4px;padding:2px 6px;white-space:nowrap;width:1%}
-.lm-info-td-overall{
-  font-family:'Bebas Neue',Impact,sans-serif;font-size:13px;text-align:center;width:1%;
-  color:#000;font-weight:700;
+/* Posición: antes iba metida en una cajita gris que la dejaba
+   diminuta y sin fuerza — ahora es texto en mayúsculas, negrita y bien
+   grande, sin ningún recuadro de fondo, para que se lea a la primera. */
+.lm-info-td-pos{
+  font-family:'Bebas Neue',Impact,sans-serif;font-size:15px;letter-spacing:.5px;
+  color:var(--lm-text);white-space:nowrap;width:1%;text-align:center;
 }
-.lm-info-td-overall span, .lm-info-td-overall{border-radius:5px}
-.lm-info-td-overall-oro{background:#e6c94a}
-.lm-info-td-overall-plata{background:#c3cdd6}
-.lm-info-td-overall-bronce{background:#c99a6c}
+/* Puntuación: sin recuadro de color de fondo (el jugador no quería
+   "recuadros de colores") — el número en sí es lo que destaca, grande
+   y en negrita, coloreado según el nivel del jugador (oro/plata/
+   bronce) solo en el TEXTO, nunca como una chapa rellena. */
+.lm-info-td-overall{
+  font-family:'Bebas Neue',Impact,sans-serif;font-size:20px;text-align:center;width:1%;
+  font-weight:700;white-space:nowrap;
+}
+.lm-info-td-overall-oro{color:#e6c94a}
+.lm-info-td-overall-plata{color:#d7e0e6}
+.lm-info-td-overall-bronce{color:#d9ab7a}
 .lm-info-td-salario{min-width:190px}
-.lm-info-td-accion{white-space:nowrap;width:1%}
+.lm-info-td-accion{white-space:nowrap;width:1%;text-align:center}
+/* PONER EN VENTA / RETIRAR: el mismo tamaño fijo en los dos estados,
+   para que no cambie de ancho según lo larga que sea la palabra. */
+.lm-salario-btn-accion{width:118px;padding:7px 9px;font-size:10px}
 .lm-info-salario-fila{display:flex;justify-content:space-between;align-items:center;gap:8px;color:var(--lm-text-dim)}
 .lm-info-salario-fila strong{color:var(--lm-text);font-size:12px}
 .lm-info-salario-stepper{display:flex;gap:6px;align-items:center;margin-top:3px}

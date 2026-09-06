@@ -3297,6 +3297,45 @@
   // Cronómetro pendiente de la respuesta con retraso (para poder
   // cancelarlo limpio si la caja se minimiza a media espera).
   let lmAyudaTimeoutRespuesta=null;
+  // Cronómetro de inactividad del buscador de AYUDA: si pasan 30s sin
+  // que el jugador escriba nada en el textbox, la propia caja CÓMO
+  // JUGAR/AYUDA se contrae sola (y con ella se vacía la conversación,
+  // vía el mismo gancho de toggleCollapsible/limpiarAyudaBusqueda que
+  // ya se usa al minimizarla a mano).
+  let lmAyudaInactividadTimer=null;
+  const LM_AYUDA_INACTIVIDAD_MS=30000;
+  function lmReiniciarInactividadAyuda(){
+    if(lmAyudaInactividadTimer){ clearTimeout(lmAyudaInactividadTimer); lmAyudaInactividadTimer=null; }
+    lmAyudaInactividadTimer=setTimeout(()=>{
+      lmAyudaInactividadTimer=null;
+      const box=document.getElementById('lmHowToPlayBox');
+      if(box && !box.classList.contains('collapsed') && typeof window.toggleCollapsible==='function'){
+        window.toggleCollapsible('lmHowToPlayBox');
+      }
+    }, LM_AYUDA_INACTIVIDAD_MS);
+  }
+  function lmDetenerInactividadAyuda(){
+    if(lmAyudaInactividadTimer){ clearTimeout(lmAyudaInactividadTimer); lmAyudaInactividadTimer=null; }
+  }
+  window.lmIniciarInactividadAyuda=lmReiniciarInactividadAyuda;
+  // Botón de la lupa en la cabecera de "CÓMO JUGAR/AYUDA": abre la caja
+  // directamente (si estaba contraída) y deja el textbox ya enfocado,
+  // listo para escribir — sin tener que desplegar la caja a mano y
+  // luego buscar el cuadro de texto.
+  function abrirAyudaDirecta(){
+    const box=document.getElementById('lmHowToPlayBox');
+    if(!box) return;
+    if(box.classList.contains('collapsed')){
+      if(typeof window.toggleCollapsible==='function') window.toggleCollapsible('lmHowToPlayBox');
+    } else {
+      lmReiniciarInactividadAyuda();
+    }
+    requestAnimationFrame(()=>{
+      const inp=document.getElementById('lmAyudaInput');
+      if(inp) inp.focus();
+    });
+  }
+  window.abrirAyudaDirecta=abrirAyudaDirecta;
   // Batería de preguntas frecuentes del buscador de "CÓMO JUGAR/AYUDA".
   // Cada entrada lleva una lista de palabras clave (en varios idiomas,
   // para que reconozca la pregunta sea cual sea el idioma activo) y la
@@ -3315,9 +3354,9 @@
     {id:'capital', keywords:['capital','cuanto dinero tengo','cuanto dinero dispongo','de cuanto capital dispongo','cuanto capital tengo','cuanta pasta tengo','saldo disponible','presupuesto del club','fondos disponibles','tesoreria','cuentas del club','dinero','numeros rojos','quiebra','bancarrota','sin dinero','finanzas del club','money','how much money do i have','wieviel geld','combien d argent','quanto denaro','quanto dinheiro'], respuestaKey:'ayuda.faq_capital', dondeKey:'ayuda.faq_capital_donde', destino:'dg'},
     {id:'moral', keywords:['moral','estado de animo','confianza del equipo','felicidad plantilla','animo del equipo','vestuario'], respuestaKey:'ayuda.faq_moral', dondeKey:'ayuda.faq_moral_donde'},
     {id:'aficion', keywords:['aficion','afición','nivel de aficion','popularidad del equipo','simpatia de la aficion','satisfaccion aficion','grada','graderio','fans'], respuestaKey:'ayuda.faq_aficion', dondeKey:'ayuda.faq_aficion_donde', destino:'dg'},
-    {id:'disturbios', keywords:['disturbio','disturbios','incidentes en el estadio','problemas en la grada','pelea en la grada','violencia estadio'], respuestaKey:'ayuda.faq_disturbios', dondeKey:'ayuda.faq_disturbios_donde', destino:'estado_estadio'},
-    {id:'seguridad_estadio', keywords:['seguridad','contratar guardias','nivel de seguridad','guardias','seguridad del estadio','vigilantes'], respuestaKey:'ayuda.faq_seguridad', dondeKey:'ayuda.faq_seguridad_estadio_donde', destino:'seguridad'},
-    {id:'estado_campo', keywords:['estado del campo','calidad del cesped','mantenimiento del cesped','desgaste del campo','cesped','césped','mantenimiento del campo'], respuestaKey:'ayuda.faq_campo', dondeKey:'ayuda.faq_estado_campo_donde', destino:'estado_estadio'},
+    {id:'disturbios', keywords:['disturbio','disturbios','incidentes en el estadio','problemas en la grada','pelea en la grada','violencia estadio'], respuestaKey:'ayuda.faq_disturbios', dondeKey:'ayuda.faq_disturbios_donde', destino:'estado_estadio', staffDestino:'mantenimiento'},
+    {id:'seguridad_estadio', keywords:['seguridad','contratar guardias','nivel de seguridad','guardias','seguridad del estadio','vigilantes'], respuestaKey:'ayuda.faq_seguridad', dondeKey:'ayuda.faq_seguridad_estadio_donde', destino:'seguridad', staffDestino:'mantenimiento'},
+    {id:'estado_campo', keywords:['estado del campo','calidad del cesped','mantenimiento del cesped','desgaste del campo','cesped','césped','mantenimiento del campo','quien se encarga del cesped','quien cuida el cesped'], respuestaKey:'ayuda.faq_campo', dondeKey:'ayuda.faq_estado_campo_donde', destino:'estado_estadio', staffDestino:'mantenimiento'},
     {id:'medico', keywords:['medico','médico','lesiones de jugadores','tiempo de recuperacion','parte medico','lesion','lesiones','lesionado','recuperacion lesion'], respuestaKey:'ayuda.faq_medico', dondeKey:'ayuda.faq_medico_donde', destino:'medico'},
     {id:'preparador_fisico', keywords:['preparador fisico','preparador físico','nivel de fatiga','cansancio de jugadores','plan fisico','fatiga','resistencia','cansancio','recuperacion fisica'], respuestaKey:'ayuda.faq_preparador', dondeKey:'ayuda.faq_preparador_fisico_donde', destino:'pf'},
     {id:'entrenamiento', keywords:['entrenamiento','entrenar','quien entrena','elegir jugadores para entrenar','mejora de estadisticas jugador','plan de entrenamiento','mejorar estadisticas','subir estadisticas'], respuestaKey:'ayuda.faq_entrenamiento', dondeKey:'ayuda.faq_entrenamiento_donde', destino:'pf'},
@@ -3340,6 +3379,67 @@
     {id:'cuerpo_tecnico', keywords:['cuerpo tecnico','cuerpo técnico','contratar trabajador','puesto vacante','personal del club','contratar personal','trabajadores','vacante'], respuestaKey:'ayuda.faq_cuerpo_tecnico', dondeKey:'ayuda.faq_cuerpo_tecnico_donde', destino:'trabajadores'},
     {id:'escudo', keywords:['escudo','cambiar el escudo','diseñar el escudo','logo del equipo','personalizar escudo','editor de escudo'], respuestaKey:'ayuda.faq_escudo', dondeKey:'ayuda.faq_escudo_donde'},
     {id:'logros', keywords:['logro','logros','conseguir logros','ver mis logros','trofeos del perfil','achievement','achievements'], respuestaKey:'ayuda.faq_logros', dondeKey:'ayuda.faq_logros_donde'},
+    // Preguntas centradas en TIEMPOS de juego — cada cuánto pasa algo,
+    // cuánto tarda en resolverse, cuántas jornadas de plazo hay... Se
+    // añaden como temas propios (no como simples palabras sueltas
+    // dentro de un tema ya existente) porque la pregunta en sí es
+    // distinta: no es "qué es un sobre" sino "cada cuánto llega uno".
+    {id:'sobres_frecuencia', keywords:['cada cuanto llega un sobre','cada cuanto tiempo llega un sobre','cada cuanto aparece un sobre','cada cuanto sale un sobre','frecuencia de sobres','con que frecuencia llegan sobres','how often do i get a pack','how often packs arrive'], respuestaKey:'ayuda.faq_sobres_frecuencia', dondeKey:'ayuda.faq_sobres_frecuencia_donde', destino:'dd'},
+    {id:'tiempo_traspaso', keywords:['cuanto tarda una oferta de traspaso','cuantas jornadas tarda un traspaso','cuanto tarda en venderse un jugador','cuanto se tarda en vender a un jugador','tiempo de espera del traspaso','how long does a transfer offer take'], respuestaKey:'ayuda.faq_tiempo_traspaso', dondeKey:'ayuda.faq_tiempo_traspaso_donde', destino:'dd'},
+    {id:'tiempo_prestamo', keywords:['cuanto tarda el prestamo','cuantas jornadas dura el prestamo','en cuanto tiempo se paga el prestamo','duracion del prestamo','cuanto tardo en devolver el prestamo','how long is the loan'], respuestaKey:'ayuda.faq_tiempo_prestamo', dondeKey:'ayuda.faq_tiempo_prestamo_donde', destino:'dg'},
+    {id:'tiempo_lesion', keywords:['cuanto tarda en recuperarse un jugador','cuantas jornadas de baja','tiempo de recuperacion de una lesion','cuanto dura una lesion','cuanto tarda en curarse un jugador','how long does an injury last'], respuestaKey:'ayuda.faq_tiempo_lesion', dondeKey:'ayuda.faq_tiempo_lesion_donde', destino:'medico'},
+    {id:'tiempo_renegociar', keywords:['cuanto tarda un jugador en marcharse','cuanto tiempo tengo para renegociar','cuantas jornadas tengo para renegociar','plazo para retener a un jugador','cuanto tarda en decidir la oferta salarial','how long before a player leaves'], respuestaKey:'ayuda.faq_tiempo_renegociar', dondeKey:'ayuda.faq_tiempo_renegociar_donde', destino:'info_plantilla'},
+    {id:'tiempo_quiniela', keywords:['cada cuanto hay quiniela','con que frecuencia se juega la quiniela','cada cuanto se rellena la quiniela','how often is the pool bet'], respuestaKey:'ayuda.faq_tiempo_quiniela', dondeKey:'ayuda.faq_tiempo_quiniela_donde', destino:'quiniela'},
+    {id:'tiempo_amistosos', keywords:['cada cuanto hay amistosos','con que frecuencia hay amistosos','cada cuanto puedo jugar un amistoso','how often are there friendlies'], respuestaKey:'ayuda.faq_tiempo_amistosos', dondeKey:'ayuda.faq_tiempo_amistosos_donde', destino:'amistosos'},
+    {id:'tiempo_fatiga', keywords:['cuanto tarda un jugador en recuperar la fatiga','cuanto tarda en recuperarse la fatiga','cada cuanto se recupera la fatiga','how long to recover fatigue'], respuestaKey:'ayuda.faq_tiempo_fatiga', dondeKey:'ayuda.faq_tiempo_fatiga_donde', destino:'pf'},
+    {id:'tiempo_sancion', keywords:['cuantos partidos dura una sancion','cuantas jornadas dura una sancion','cuanto tiempo esta sancionado un jugador','how long does a suspension last'], respuestaKey:'ayuda.faq_tiempo_sancion', dondeKey:'ayuda.faq_tiempo_sancion_donde'},
+    {id:'tiempo_cooldown_salarial', keywords:['cada cuanto puede pedir subida de sueldo un jugador','cada cuanto se puede quejar un jugador del salario','cuantas peticiones salariales hay por temporada','how often can a player ask for a raise'], respuestaKey:'ayuda.faq_tiempo_cooldown_salarial', dondeKey:'ayuda.faq_tiempo_cooldown_salarial_donde', destino:'info_plantilla'},
+    {id:'tiempo_temporada', keywords:['cuanto dura la temporada','cuantas jornadas tiene la temporada','cuando termina la temporada','how long is the season'], respuestaKey:'ayuda.faq_tiempo_temporada', dondeKey:'ayuda.faq_tiempo_temporada_donde'},
+    {id:'tarjetas_amarillas_acumuladas', keywords:['tarjetas amarillas acumuladas','acumulacion de amarillas','cuantas amarillas para sancion','5 amarillas sancion','acumular tarjetas amarillas','se acumulan las amarillas','yellow card accumulation','how many yellow cards suspension'], respuestaKey:'ayuda.faq_tarjetas_amarillas_acumuladas', dondeKey:'ayuda.faq_tarjetas_amarillas_acumuladas_donde'},
+    {id:'sancion_roja_directa', keywords:['tarjeta roja directa cuantos partidos','roja directa sancion','expulsion directa partidos','cuanto dura una roja directa','direct red card suspension'], respuestaKey:'ayuda.faq_sancion_roja_directa', dondeKey:'ayuda.faq_sancion_roja_directa_donde'},
+    {id:'gravedad_lesion', keywords:['gravedad de la lesion','tipos de lesion leve moderada grave','cuantas jornadas leve moderada grave','niveles de gravedad de lesiones','injury severity levels'], respuestaKey:'ayuda.faq_gravedad_lesion', dondeKey:'ayuda.faq_gravedad_lesion_donde', destino:'medico'},
+    {id:'lesion_riesgo_dificultad', keywords:['la dificultad del partido afecta a las lesiones','mas lesiones en partidos dificiles','riesgo de lesion segun dificultad','does match difficulty affect injuries'], respuestaKey:'ayuda.faq_lesion_riesgo_dificultad', dondeKey:'ayuda.faq_lesion_riesgo_dificultad_donde', destino:'medico'},
+    {id:'finiquito', keywords:['finiquito','cuanto cuesta despedir','indemnizacion por despido','coste de despedir a un trabajador','severance pay firing staff'], respuestaKey:'ayuda.faq_finiquito', dondeKey:'ayuda.faq_finiquito_donde', destino:'trabajadores'},
+    {id:'cuerpo_tecnico_niveles', keywords:['niveles del cuerpo tecnico','estrellas de los trabajadores','candidatos nuevos cada mes','chollo de trabajador','rareza de los trabajadores','staff star levels'], respuestaKey:'ayuda.faq_cuerpo_tecnico_niveles', dondeKey:'ayuda.faq_cuerpo_tecnico_niveles_donde', destino:'trabajadores'},
+    {id:'escudo_persiste', keywords:['tengo que crear el escudo cada partida','el escudo se guarda','el nombre del equipo se guarda entre partidas','no me pide el escudo otra vez','does the crest save between games'], respuestaKey:'ayuda.faq_escudo_persiste', dondeKey:'ayuda.faq_escudo_persiste_donde'},
+    {id:'escudo_capas', keywords:['capas del escudo','patron de colores del escudo','decoracion del escudo','corona o laurel en el escudo','icono del escudo','crest layers pattern decoration'], respuestaKey:'ayuda.faq_escudo_capas', dondeKey:'ayuda.faq_escudo_capas_donde'},
+    {id:'mejoras_goat', keywords:['mejoras con puntos goat','tienda de mejoras','ampliar el banquillo','mas dados por partido','mas rerolls','descuento en sobres con puntos','goat points upgrades shop'], respuestaKey:'ayuda.faq_mejoras_goat', dondeKey:'ayuda.faq_mejoras_goat_donde'},
+    {id:'mejoras_reembolso', keywords:['puedo bajar el nivel de una mejora','recuperar puntos de una mejora','deshacer una mejora comprada','revertir mejora','refund upgrade points'], respuestaKey:'ayuda.faq_mejoras_reembolso', dondeKey:'ayuda.faq_mejoras_reembolso_donde'},
+    {id:'puntos_goat_origen', keywords:['de donde salen los puntos goat','como consigo puntos goat','puntos goat compartidos','logros dan puntos','where do goat points come from'], respuestaKey:'ayuda.faq_puntos_goat_origen', dondeKey:'ayuda.faq_puntos_goat_origen_donde'},
+    {id:'giro_tactico', keywords:['giro tactico','carta tactica en el descanso','cambiar el partido en el descanso','que es el giro tactico','tactical twist halftime card'], respuestaKey:'ayuda.faq_giro_tactico', dondeKey:'ayuda.faq_giro_tactico_donde'},
+    {id:'giro_tactico_riesgo', keywords:['cuantos usos tiene el giro tactico','limite de giro tactico por temporada','giro tactico riesgo de tarjeta','tactical twist uses limit'], respuestaKey:'ayuda.faq_giro_tactico_riesgo', dondeKey:'ayuda.faq_giro_tactico_riesgo_donde'},
+    {id:'minijuego_scouting', keywords:['minijuego de ojeadores','minijuego de scouting','como funciona el minijuego de ojear','scouting minigame'], respuestaKey:'ayuda.faq_minijuego_scouting', dondeKey:'ayuda.faq_minijuego_scouting_donde', destino:'amistosos'},
+    {id:'minijuego_entreno_intenso', keywords:['minijuego de entreno intenso','parar el puntero entrenamiento','minijuego parada perfecta','intense training minigame'], respuestaKey:'ayuda.faq_minijuego_entreno_intenso', dondeKey:'ayuda.faq_minijuego_entreno_intenso_donde', destino:'amistosos'},
+    {id:'nodo_medios', keywords:['rueda de prensa','nodo de medios','entrevista antes del partido','ultimo dia de la semana siempre prensa','press conference node'], respuestaKey:'ayuda.faq_nodo_medios', dondeKey:'ayuda.faq_nodo_medios_donde', destino:'amistosos'},
+    {id:'nodo_tactica', keywords:['nodo de tactica sube la moral','dia de tactica arbol de nodos','que hace elegir tactica en el arbol','tactics node morale'], respuestaKey:'ayuda.faq_nodo_tactica', dondeKey:'ayuda.faq_nodo_tactica_donde', destino:'amistosos'},
+    {id:'arbol_semana_estructura', keywords:['como funciona el arbol de la semana','estructura del calendario semanal','que tipos de nodos hay','primer dia entrenar o descansar','weekly node tree structure'], respuestaKey:'ayuda.faq_arbol_semana_estructura', dondeKey:'ayuda.faq_arbol_semana_estructura_donde', destino:'amistosos'},
+    {id:'nodo_hitos', keywords:['hitos de nodos','recompensas por repetir el mismo tipo de nodo','5 y 10 veces el mismo nodo','acumular nodos del mismo tipo','node type milestones rewards'], respuestaKey:'ayuda.faq_nodo_hitos', dondeKey:'ayuda.faq_nodo_hitos_donde', destino:'amistosos'},
+    {id:'nodo_amistoso_dificultad', keywords:['dificultad del amistoso facil normal dificil','elegir dificultad del scouting','amistoso dificil da mas recompensa','friendly match difficulty tiers'], respuestaKey:'ayuda.faq_nodo_amistoso_dificultad', dondeKey:'ayuda.faq_nodo_amistoso_dificultad_donde', destino:'amistosos'},
+    {id:'quiniela_premio', keywords:['premio de la quiniela','cuanto gano si acierto todo en la quiniela','recompensa quiniela perfecta','cuantos rasgos gano en la quiniela','pool bet prize formula'], respuestaKey:'ayuda.faq_quiniela_premio', dondeKey:'ayuda.faq_quiniela_premio_donde', destino:'quiniela'},
+    {id:'rasgos_jugador', keywords:['que son los rasgos de los jugadores','como se consiguen los rasgos','rasgo permanente jugador','traits bonus permanente'], respuestaKey:'ayuda.faq_rasgos_jugador', dondeKey:'ayuda.faq_rasgos_jugador_donde'},
+    {id:'rasgos_lista', keywords:['lista de rasgos disponibles','que rasgos existen','rasgo versatil','rasgo killer','rasgo lider','rasgo velocista','list of player traits'], respuestaKey:'ayuda.faq_rasgos_lista', dondeKey:'ayuda.faq_rasgos_lista_donde'},
+    {id:'fuera_de_posicion', keywords:['jugador fuera de posicion penalizacion','colocar jugador en posicion que no domina','penalizacion por jugar fuera de su posicion','rendimiento fuera de posicion','out of position penalty'], respuestaKey:'ayuda.faq_fuera_de_posicion', dondeKey:'ayuda.faq_fuera_de_posicion_donde'},
+    {id:'dados_reintentos_cambios', keywords:['dados reintentos y cambios de carta por partido','cuantos dados tengo por partido','cuantos rerolls tengo','cuantos cambios de carta puedo hacer','dice rerolls card changes per match'], respuestaKey:'ayuda.faq_dados_reintentos_cambios', dondeKey:'ayuda.faq_dados_reintentos_cambios_donde'},
+    {id:'liga_personalizada', keywords:['liga personalizada','importar mis propios equipos','subir un excel de equipos','crear mi propia liga','custom league import excel'], respuestaKey:'ayuda.faq_liga_personalizada', dondeKey:'ayuda.faq_liga_personalizada_donde'},
+    {id:'quiebra', keywords:['quiebra del club','se puede perder la partida por dinero','bancarrota fin de la partida','cuando termina la partida por deudas','club bankruptcy end game'], respuestaKey:'ayuda.faq_quiebra', dondeKey:'ayuda.faq_quiebra_donde', destino:'dg'},
+    {id:'moral_rango', keywords:['rango de la moral','de cuanto a cuanto va la moral','moral maxima y minima','numero exacto de la moral','morale numeric range'], respuestaKey:'ayuda.faq_moral_rango', dondeKey:'ayuda.faq_moral_rango_donde'},
+    {id:'logros_niveles', keywords:['niveles de dificultad de los logros','logros basico intermedio dificil mitico','cuantos puntos da cada logro','achievement tiers points'], respuestaKey:'ayuda.faq_logros_niveles', dondeKey:'ayuda.faq_logros_niveles_donde'},
+    {id:'medico_cartas_especiales', keywords:['cartas especiales del medico','milagro de vestuario','cirugia de precision','recuperacion expres lesion','medical department special cards'], respuestaKey:'ayuda.faq_medico_cartas_especiales', dondeKey:'ayuda.faq_medico_cartas_especiales_donde', destino:'medico'},
+    {id:'medico_prevencion_lesion', keywords:['reducir el riesgo de lesion con el medico','proyecto de prevencion muscular','prevencion osea nivel medico','medical team injury prevention level'], respuestaKey:'ayuda.faq_medico_prevencion_lesion', dondeKey:'ayuda.faq_medico_prevencion_lesion_donde', destino:'medico'},
+    {id:'mantenimiento_cartas_especiales', keywords:['cartas especiales de mantenimiento','riego de emergencia cesped','renovacion total del cesped','recuperar el cesped al instante','pitch maintenance special cards'], respuestaKey:'ayuda.faq_mantenimiento_cartas_especiales', dondeKey:'ayuda.faq_mantenimiento_cartas_especiales_donde', destino:'estado_estadio', staffDestino:'mantenimiento'},
+    {id:'dg_cartas_especiales', keywords:['cartas especiales del director general','patrocinio puntual','venta especial de merchandising','evento corporativo ingreso','general manager special cards'], respuestaKey:'ayuda.faq_dg_cartas_especiales', dondeKey:'ayuda.faq_dg_cartas_especiales_donde', destino:'dg'},
+    {id:'dd_cartas_especiales', keywords:['cartas especiales del director deportivo','ojeo urgente sobre gratis','venta de jugador rapida','informe de ojeo expres','sporting director special cards'], respuestaKey:'ayuda.faq_dd_cartas_especiales', dondeKey:'ayuda.faq_dd_cartas_especiales_donde', destino:'dd'},
+    {id:'pf_cartas_especiales', keywords:['cartas especiales del preparador fisico','entrenamiento tecnico +3','pretemporada intensiva','recuperacion expres resistencia','physical trainer special cards'], respuestaKey:'ayuda.faq_pf_cartas_especiales', dondeKey:'ayuda.faq_pf_cartas_especiales_donde', destino:'pf'},
+    {id:'estadio_ampliacion', keywords:['ampliar el estadio','proyecto de aforo del estadio','aumentar la capacidad del estadio','stadium capacity expansion project'], respuestaKey:'ayuda.faq_estadio_ampliacion', dondeKey:'ayuda.faq_estadio_ampliacion_donde', destino:'dg'},
+    {id:'patrocinio_ingreso', keywords:['proyecto de patrocinio','aumentar ingresos por patrocinador','merchandising ingresos proyecto','sponsorship income project'], respuestaKey:'ayuda.faq_patrocinio_ingreso', dondeKey:'ayuda.faq_patrocinio_ingreso_donde', destino:'dg'},
+    {id:'tolerancia_precio', keywords:['proyecto de tolerancia al precio','la aficion tolera mejor subir el precio','reducir enfado por precio de entrada','ticket price tolerance project'], respuestaKey:'ayuda.faq_tolerancia_precio', dondeKey:'ayuda.faq_tolerancia_precio_donde', destino:'dg'},
+    {id:'habilidades_categorias', keywords:['categorias de habilidades','habilidades de tactica plantilla economia','tipos de habilidades disponibles','skill categories tactics squad economy'], respuestaKey:'ayuda.faq_habilidades_categorias', dondeKey:'ayuda.faq_habilidades_categorias_donde'},
+    {id:'proyectos_reintento', keywords:['que pasa si fallo un proyecto','fallar la tirada de dados de un proyecto','se pierde la carta si fallo','puedo reintentar un proyecto','failed project card retry'], respuestaKey:'ayuda.faq_proyectos_reintento', dondeKey:'ayuda.faq_proyectos_reintento_donde'},
+    {id:'correo_remitentes', keywords:['de quien recibo correos','remitentes del correo interno','tipos de mensajes del correo','quien me manda correo','internal mail senders'], respuestaKey:'ayuda.faq_correo_remitentes', dondeKey:'ayuda.faq_correo_remitentes_donde'},
+    {id:'aficion_disturbios_penalizacion', keywords:['penalizacion de asistencia por disturbios','cuanto baja la asistencia por disturbios','tope de penalizacion por disturbios','riot attendance penalty cap'], respuestaKey:'ayuda.faq_aficion_disturbios_penalizacion', dondeKey:'ayuda.faq_aficion_disturbios_penalizacion_donde', destino:'seguridad', staffDestino:'mantenimiento'},
+    {id:'sobre_hitos_recompensa', keywords:['recompensas de scouting sobre garantizado','sobre nivel superior hito','elegir entre dos jugadores al abrir sobre','scouting milestone free pack reward'], respuestaKey:'ayuda.faq_sobre_hitos_recompensa', dondeKey:'ayuda.faq_sobre_hitos_recompensa_donde', destino:'dd'},
+    {id:'banquillo_tamano', keywords:['tamaño del banquillo','cuantos suplentes caben por defecto','ampliar el banquillo con puntos','bench size default upgrade'], respuestaKey:'ayuda.faq_banquillo_tamano', dondeKey:'ayuda.faq_banquillo_tamano_donde'},
+    {id:'traspasos_rechazo', keywords:['puedo rechazar una oferta de traspaso','no quiero vender a mi jugador','rechazar oferta por un jugador','estoy obligado a vender','reject transfer offer'], respuestaKey:'ayuda.faq_traspasos_rechazo', dondeKey:'ayuda.faq_traspasos_rechazo_donde', destino:'info_plantilla'},
   ];
   // Enlaces directos que puede ofrecer una respuesta del buscador de
   // AYUDA: cada "destino" es una pantalla real del juego, con la
@@ -3364,6 +3464,7 @@
     quiniela:{labelKey:'lm.ayuda_link_quiniela', fn:()=>abrirBoletoQuiniela()},
     amistosos:{labelKey:'lm.ayuda_link_amistosos', fn:()=>abrirArbolNodosSemana()},
     trabajadores:{labelKey:'lm.ayuda_link_trabajadores', fn:()=>abrirTrabajadores()},
+    mantenimiento:{labelKey:'lm.ayuda_link_mantenimiento', fn:()=>abrirMantenimiento()},
   };
   // Palabras clave (multi-idioma) que delatan una pregunta de tipo
   // "¿DÓNDE...?" — cuando el texto las contiene, se prioriza la
@@ -3372,8 +3473,20 @@
   // siempre la misma respuesta sin importar si preguntaban "qué es" o
   // "dónde está".
   const LM_AYUDA_PALABRAS_DONDE=['donde','dónde','en que parte','en que pantalla','en que menu','en que menú','en que pestaña','en que boton','en que botón','where','onde','où','ou est','wo ist','wo finde','dove'];
+  // Palabras clave de pregunta de tipo "¿QUIÉN...?" — cuando el tema
+  // preguntado es una función que lleva un empleado del cuerpo técnico
+  // (mantenimiento, médico, preparador físico, director general,
+  // director deportivo...), este tipo de pregunta prioriza el enlace a
+  // la interfaz de ESE empleado por encima del enlace habitual del
+  // tema (ver "staffDestino" en LM_AYUDA_FAQ) — así "¿quién se encarga
+  // del césped?" lleva a Mantenimiento y Seguridad en vez de al simple
+  // popup informativo del estado del estadio.
+  const LM_AYUDA_PALABRAS_QUIEN=['quien','quién','quien se encarga','quien es responsable','quien esta a cargo','quien lleva','de quien depende','who','who is responsible','who handles','who takes care','wer','wer ist zustandig','wer kummert sich','qui','qui s occupe','qui est responsable','chi','chi si occupa','di chi e responsabile'];
   function lmNormalizarTextoAyuda(s){
     return (s||'').toString().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').trim();
+  }
+  function lmEsPreguntaQuien(textoNormalizado){
+    return LM_AYUDA_PALABRAS_QUIEN.some(p=>textoNormalizado.includes(lmNormalizarTextoAyuda(p)));
   }
   function lmEsPreguntaDonde(textoNormalizado){
     return LM_AYUDA_PALABRAS_DONDE.some(p=>textoNormalizado.includes(lmNormalizarTextoAyuda(p)));
@@ -3432,7 +3545,13 @@
     // Si la pregunta es de tipo "dónde" y la entrada tiene respuesta de
     // ubicación propia, se devuelve esa en vez de la explicación general.
     const claveRespuesta=(lmEsPreguntaDonde(texto) && mejor.dondeKey) ? mejor.dondeKey : mejor.respuestaKey;
-    return {...mejor, claveRespuesta};
+    // Si la pregunta es de tipo "quién" (quién se encarga de esto) y el
+    // tema tiene un empleado del cuerpo técnico asociado, el enlace de
+    // la respuesta apunta a SU interfaz en vez del enlace habitual del
+    // tema — para no mandar a "¿quién se encarga del césped?" al mero
+    // popup informativo del estado del estadio.
+    const destino=(lmEsPreguntaQuien(texto) && mejor.staffDestino) ? mejor.staffDestino : mejor.destino;
+    return {...mejor, claveRespuesta, destino};
   }
   function lmEscaparHtmlAyuda(s){
     const d=document.createElement('div');
@@ -3446,6 +3565,7 @@
   function limpiarAyudaBusqueda(boxId){
     if(boxId!=='lmHowToPlayBox') return;
     if(lmAyudaTimeoutRespuesta){ clearTimeout(lmAyudaTimeoutRespuesta); lmAyudaTimeoutRespuesta=null; }
+    lmDetenerInactividadAyuda();
     lmAyudaEscribiendo=false;
     if(!lmAyudaChatHistorial.length && !lmAyudaInputValor) return;
     lmAyudaChatHistorial=[];
@@ -11586,7 +11706,7 @@
             }
           })()}
           <div class="box collapsible-box collapsed" id="lmHowToPlayBox">
-            <h3 class="collapsible-header" onclick="toggleCollapsible('lmHowToPlayBox')"><span>${t('lm.howto_titulo')}</span> <span class="collapse-arrow">▾</span></h3>
+            <h3 class="collapsible-header" onclick="toggleCollapsible('lmHowToPlayBox')"><span>${t('lm.howto_titulo')}</span> <span style="display:flex;align-items:center;gap:8px"><button type="button" class="lm-howto-lupa-btn" title="${t('lm.howto_lupa_tt')}" onclick="event.stopPropagation(); if(typeof abrirAyudaDirecta==='function') abrirAyudaDirecta();"><i class="ph ph-bold ph-magnifying-glass"></i></button><span class="collapse-arrow">▾</span></span></h3>
             <div class="howto-content">
               <div class="howto-step"><span class="howto-num">1</span><div>${t('lm.howto_paso1')}</div></div>
               <div class="howto-step"><span class="howto-num">2</span><div>${t('lm.howto_paso2')}</div></div>
@@ -12070,7 +12190,7 @@
     const ayudaInputEl=document.getElementById('lmAyudaInput');
     if(ayudaInputEl){
       ayudaInputEl.value=lmAyudaInputValor;
-      ayudaInputEl.addEventListener('input', ()=>{ lmAyudaInputValor=ayudaInputEl.value; });
+      ayudaInputEl.addEventListener('input', ()=>{ lmAyudaInputValor=ayudaInputEl.value; lmReiniciarInactividadAyuda(); });
       ayudaInputEl.addEventListener('keydown', (e)=>{
         if(e.key==='Enter'){ e.preventDefault(); ejecutarBusquedaAyudaLM(); }
       });
@@ -12108,6 +12228,7 @@
       const texto=(lmAyudaInputValor||'').trim();
       if(!texto) return;
       if(lmAyudaTimeoutRespuesta){ clearTimeout(lmAyudaTimeoutRespuesta); lmAyudaTimeoutRespuesta=null; }
+      lmReiniciarInactividadAyuda(); // enviar una pregunta también cuenta como actividad, reinicia los 30s
       if(typeof window.playSound==='function') window.playSound('select');
       // 1) La burbuja de la PREGUNTA aparece al instante, con su propio
       // sonido de "mensaje enviado" — como en cualquier app de chat de
@@ -14044,23 +14165,50 @@
     if(overall>=72) return 'plata';
     return 'bronce';
   }
+  // Mismo orden que se ve AHORA MISMO en el ONCE TITULAR + BANQUILLO de
+  // la pantalla principal (según el modo de orden activo, lmSortMode):
+  // titulares primero (en ese orden) y banquillo después — se duplica
+  // aquí en vez de reutilizar la función interna de render() porque esa
+  // vive anidada dentro de render() y no es accesible desde fuera.
+  // Usado para que INFORMACIÓN DE LA PLANTILLA arranque exactamente con
+  // la disposición que el jugador ya tiene organizada, en vez de un
+  // orden propio (alerta+salario) que no se correspondía con nada.
+  function lmOrdenVisualPlantillaActual(){
+    const titularIds=new Set(Object.values(state.alineacion||{}).filter(Boolean));
+    const posOrderLM=['POR','DFC','LI','LD','MC','EI','ED','DC'];
+    function posicionEfectiva(p){
+      const slot=slotDeJugador(p.id);
+      return slot?basePos(slot):p.position;
+    }
+    function ordenar(lista){
+      if(lmSortMode==='position'){
+        return [...lista].sort((a,b)=>{
+          const ai=posOrderLM.indexOf(posicionEfectiva(a)), bi=posOrderLM.indexOf(posicionEfectiva(b));
+          return (ai===-1?99:ai)-(bi===-1?99:bi);
+        });
+      }
+      if(lmSortMode==='rating') return [...lista].sort((a,b)=>efectivoOverall(b)-efectivoOverall(a));
+      if(lmSortMode==='numero') return [...lista].sort((a,b)=>(a.numero||99)-(b.numero||99));
+      return lista; // 'arrival' y 'ninguno': tal cual está el array
+    }
+    const titulares=ordenar((state.plantilla||[]).filter(p=>titularIds.has(p.id)));
+    const banquillo=(state.plantilla||[]).filter(p=>!titularIds.has(p.id));
+    return [...titulares, ...banquillo];
+  }
   function abrirSalariosDD(esModoMantener, jugadorDestacarId){
     const overlay=document.createElement('div');
     overlay.id='lmSalariosOverlay';
     const STEP_OFERTA_FRACCION=0.05; // cada pulsación de +/- mueve un 5% del salario justo
     // El orden de la tabla se calcula UNA SOLA VEZ, al abrir la
-    // interfaz (alerta primero, luego por salario) — y ya NO se vuelve
-    // a calcular nunca más mientras esté abierta. Antes pintar()
-    // reordenaba en cada repintado según el salario/alerta ACTUAL, así
-    // que tocar un botón (subir un salario, hacer una oferta...) podía
-    // cambiar el orden de golpe y la interfaz "saltaba". Ahora, aunque
-    // los valores cambien, cada jugador se queda siempre en la misma
-    // fila de la tabla; solo cambia lo que pone en esa fila.
-    const ordenFijoIds=[...(state.plantilla||[])].sort((a,b)=>{
-      const aAlerta=a.quiereMarcharse?1:0, bAlerta=b.quiereMarcharse?1:0;
-      if(aAlerta!==bAlerta) return bAlerta-aAlerta;
-      return (b.salario||0)-(a.salario||0);
-    }).map(p=>p.id);
+    // interfaz — igual que el once titular + banquillo se ven AHORA
+    // MISMO en la pantalla principal — y ya NO se vuelve a calcular
+    // nunca más mientras esté abierta. Antes pintar() reordenaba en
+    // cada repintado según el salario/alerta ACTUAL, así que tocar un
+    // botón (subir un salario, hacer una oferta...) podía cambiar el
+    // orden de golpe y la interfaz "saltaba". Ahora, aunque los valores
+    // cambien, cada jugador se queda siempre en la misma fila de la
+    // tabla; solo cambia lo que pone en esa fila.
+    const ordenFijoIds=lmOrdenVisualPlantillaActual().map(p=>p.id);
     function pintar(){
       // Se recorre el orden ya congelado, mirando los datos actuales de
       // cada jugador (un jugador que ya no esté en la plantilla —
@@ -14070,11 +14218,16 @@
       const numAlertas=jugadores.filter(p=>p.quiereMarcharse).length;
       const filas=jugadores.map(p=>{
         const chequeo=puedeVenderJugador(p.id);
+        // Los dos estados posibles (poner en venta / ya en venta) se
+        // apilan siempre igual — texto de estado arriba (si lo hay) y
+        // el botón debajo, con la MISMA clase y el MISMO ancho fijo en
+        // los dos casos — así "RETIRAR" nunca sale más pequeño ni
+        // desalineado que "PONER EN VENTA" solo por tener menos letras.
         let accionVenta;
         if(p.enVenta){
-          accionVenta=`<span class="lm-venta-estado">${t('lm.en_venta_jornada')} (J${p.ventaResolverJornada})</span> <button class="lm-salario-btn lm-salario-btn-retirar" data-retirar-venta="${p.id}">${t('lm.retirar')}</button>`;
+          accionVenta=`<div class="lm-venta-estado">${t('lm.en_venta_jornada')} (J${p.ventaResolverJornada})</div><button type="button" class="lm-salario-btn lm-salario-btn-accion lm-salario-btn-retirar" data-retirar-venta="${p.id}">${t('lm.retirar')}</button>`;
         } else {
-          accionVenta=`<button class="lm-salario-btn" data-venta="${p.id}" title="${chequeo.ok?'':chequeo.motivo}" ${chequeo.ok?'':'disabled'}>${t('lm.poner_en_venta')}</button>`;
+          accionVenta=`<button type="button" class="lm-salario-btn lm-salario-btn-accion" data-venta="${p.id}" title="${chequeo.ok?'':chequeo.motivo}" ${chequeo.ok?'':'disabled'}>${t('lm.poner_en_venta')}</button>`;
         }
         const tier=lmTierOverall(p.overall||0);
         let celdaSalario;
@@ -14119,7 +14272,19 @@
           <td class="lm-info-td-accion">${accionVenta}</td>
         </tr>`;
       }).join('');
+      // El scroll que hay que conservar entre repintados NO es solo el
+      // del overlay (que suele ni moverse, porque la tarjeta cabe
+      // entera): la propia tabla vive dentro de un contenedor interno
+      // con su scroll aparte (lm-info-plantilla-tabla-wrap, con
+      // max-height y overflow-y:auto). Antes solo se guardaba el
+      // scroll del overlay, así que al tocar un botón (subir un
+      // salario, poner en venta...) el contenedor interno se
+      // reconstruía siempre con scrollTop=0 — de ahí que la interfaz
+      // "saltara arriba del todo" con cada clic aunque el overlay en sí
+      // no se hubiera movido.
       const scrollTopPrevio=overlay.scrollTop;
+      const wrapPrevio=overlay.querySelector('.lm-info-plantilla-tabla-wrap');
+      const wrapScrollPrevio=wrapPrevio?wrapPrevio.scrollTop:0;
       overlay.innerHTML=`
         <div class="lm-dilemma-card lm-dilemma-card-dd" style="max-width:920px;text-align:left">
           ${xCerrarHTML()}
@@ -14138,6 +14303,8 @@
           </div>
         </div>`;
       overlay.scrollTop=scrollTopPrevio;
+      const wrapNuevo=overlay.querySelector('.lm-info-plantilla-tabla-wrap');
+      if(wrapNuevo) wrapNuevo.scrollTop=wrapScrollPrevio;
       const xBtnSal=overlay.querySelector('[data-cerrar-x]');
       if(xBtnSal) xBtnSal.addEventListener('click', ()=>overlay.remove());
       const btnCerrarSal=document.getElementById('lmSalariosCerrar');
