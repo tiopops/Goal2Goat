@@ -460,8 +460,14 @@ function playSound(name, data){
       // sobre para abrirlo — el tono sube con el progreso (0 a 1
       // recibido en data), generando anticipación hasta el momento
       // de la apertura, como el "raspado" de un rasca satisfactorio.
-      { const prog=(typeof data==='number')?data:0;
-        tone(ctx, 260+prog*420, 0, 0.05, 'sine', 0.05+prog*0.04, 0.0001); }
+      // También reutilizado por el minijuego de scouting (círculo
+      // creciendo) — ahí se pasa un objeto {prog, volMult} en vez de
+      // un número suelto, para poder sonar un pelín más alto sin tocar
+      // el volumen del sobre de fichajes original.
+      { const esObjeto = data && typeof data==='object';
+        const prog = esObjeto ? (data.prog||0) : ((typeof data==='number')?data:0);
+        const volMult = esObjeto && typeof data.volMult==='number' ? data.volMult : 1;
+        tone(ctx, 260+prog*420, 0, 0.05, 'sine', (0.05+prog*0.04)*volMult, 0.0001); }
       break;
     case 'stopbar_click': // minijuego "Parada Perfecta" (entreno intenso)
       // — pulsación del botón de parar, un clic seco y neutro, el mismo

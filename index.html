@@ -120,7 +120,11 @@
         <button id="musicToggleHeader" class="settings-item" title="Activar/desactivar música de fondo">
           <span class="topbar-dot on"></span><span class="topbar-label" data-i18n="settings.music">MÚSICA</span>
         </button>
-        <button id="themeToggleHeader" class="settings-item" title="Cambiar tema claro/oscuro">
+        <!-- Oculto a propósito: el cambio a tema claro da más problemas
+             que ventajas ahora mismo. NO se borra el botón (el toggle
+             de JS y el estado guardado siguen intactos por si se
+             reactiva más adelante), solo se oculta de aquí. -->
+        <button id="themeToggleHeader" class="settings-item" title="Cambiar tema claro/oscuro" style="display:none">
           <span class="topbar-dot on"></span><span class="topbar-label" data-i18n="settings.theme">TEMA OSCURO</span>
         </button>
         <button class="settings-item" onclick="toggleSettingsMenu();document.getElementById('langPopup').style.display='flex'">
@@ -357,11 +361,17 @@
             <input type="range" id="musicVolumeSlider" class="volume-slider" min="0" max="100" value="18" title="Volumen de la música">
           </div>
         </div>
-        <label class="profile-field-label" data-i18n="settings.preferences">PREFERENCIAS</label>
-        <div class="profile-settings-row">
-          <button id="themeToggle" class="settings-item" title="Cambiar tema claro/oscuro">
-            <span class="topbar-dot on"></span><span class="topbar-label" data-i18n="settings.theme">TEMA OSCURO</span>
-          </button>
+        <!-- Oculto a propósito (igual que el de arriba, en el desplegable
+             de ajustes de la cabecera): el tema claro da más problemas que
+             ventajas ahora mismo. Se deja el botón y la etiqueta intactos,
+             solo ocultos, para poder reactivarlo sin rehacer nada. -->
+        <div style="display:none">
+          <label class="profile-field-label" data-i18n="settings.preferences">PREFERENCIAS</label>
+          <div class="profile-settings-row">
+            <button id="themeToggle" class="settings-item" title="Cambiar tema claro/oscuro">
+              <span class="topbar-dot on"></span><span class="topbar-label" data-i18n="settings.theme">TEMA OSCURO</span>
+            </button>
+          </div>
         </div>
         <div style="display:none">
           <label class="profile-field-label" for="preferredTeamNameInput" data-i18n="settings.team_name">NOMBRE DEL EQUIPO</label>

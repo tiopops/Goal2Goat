@@ -9024,7 +9024,9 @@
       { const ahoraSon=Date.now();
         if(ahoraSon-ultimoSonidoCrecTs>90){
           ultimoSonidoCrecTs=ahoraSon;
-          if(typeof window.playSound==='function') window.playSound('envelope_drag', valor/100);
+          // volMult>1: un pelín más alto que el sobre de fichajes, a
+          // petición expresa — se oía demasiado bajito en el minijuego.
+          if(typeof window.playSound==='function') window.playSound('envelope_drag', {prog:valor/100, volMult:1.8});
         } }
       actualizarCirculoDOM();
       if(valor<100) rafId=requestAnimationFrame(avanzarCirculo);
