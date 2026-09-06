@@ -5433,8 +5433,12 @@
     const bonusPrecioBajo = precio<10 ? Math.min(0.12, (10-precio)*0.012) : 0;
     // Asistencia SIN contar todavía el efecto del precio — esta es la
     // base "cómo está el club" (afición + moral + clima + disturbios +
-    // bonus de rebaja de precio si aplica).
-    const pctSinPrecio=Math.max(0, baseSatisfaccion+bonusMoral+bonusPrecioBajo-penalizacionClima-penalizacionDisturbios);
+    // bonus de rebaja de precio si aplica). Suelo mínimo pequeño (2%):
+    // incluso con el club hundido, siempre queda un núcleo de
+    // incondicionales a precio normal — que ese núcleo pueda seguir
+    // encogiéndose de verdad si ADEMÁS se sube mucho el precio lo pone
+    // el factor de precio de más abajo, no este suelo.
+    const pctSinPrecio=Math.max(0.02, baseSatisfaccion+bonusMoral+bonusPrecioBajo-penalizacionClima-penalizacionDisturbios);
     // El efecto del precio se aplica MULTIPLICANDO sobre esa base (no
     // restando un % fijo aparte) — así, si la afición ya está mal Y el
     // equipo va mal, subir el precio sigue notándose de verdad en vez
@@ -5446,22 +5450,48 @@
     // una mala racha — es la respuesta directa a "si subo el precio con
     // la afición y los resultados mal, la asistencia (y sus ingresos)
     // tienen que seguir bajando de verdad, no quedarse igual".
-    // 'normalizado' (satisfacción 0-1, ya calculado arriba) pesa más que
-    // la moral porque es la señal más directa de "cómo está la afición
-    // ahora mismo".
-    const saludAficionYResultados=Math.max(0, Math.min(1, normalizado*0.7 + (((state.moral||0)+50)/100)*0.3));
-    const factorTolerancia = 2.2 - saludAficionYResultados*1.7; // ~0.5 (afición encantada/equipo en racha) a 2.2 (afición harta/mala racha)
+    // "Salud global del club" — cuánto tolera la afición que se suba el
+    // precio de la entrada. No es solo la satisfacción del momento: se
+    // compone de CINCO señales reales del estado del club, cada una con
+    // su propio peso:
+    //  1) satisfacción de la afición (normalizado) — la más directa, 35%
+    //  2) moral del vestuario ahora mismo — 20%
+    //  3) racha reciente de resultados (rachaResultados: victorias o
+    //     derrotas seguidas) — 15%, la sensación de "estamos a tope" o
+    //     "esto va cuesta abajo" pesa tanto como el resultado en sí
+    //  4) posición en la clasificación — 15%, los resultados de TODA la
+    //     temporada, no solo los últimos partidos (un equipo colista no
+    //     perdona una entrada cara aunque acabe de ganar un partido suelto)
+    //  5) estado del césped — 15%, un campo cuidado transmite un club que
+    //     funciona bien; uno descuidado ya predispone mal a la afición
+    // antes incluso de mirar el precio.
+    const normalizadoMoral=Math.max(0, Math.min(1, ((state.moral||0)+50)/100));
+    const rachaNorm=Math.max(0, Math.min(1, ((state.rachaResultados||0)+5)/10)); // racha -5..5 -> 0..1
+    let posicionNorm=0.5;
+    try{
+      const tabla=typeof calcularClasificacion==='function' ? calcularClasificacion() : [];
+      const idx=tabla.findIndex(f=>f.id==='lm_0');
+      if(idx>=0 && tabla.length>1) posicionNorm=1-(idx/(tabla.length-1)); // 1º=1, último=0
+    }catch(e){}
+    const campoNorm=Math.max(0, Math.min(1, (est.campo==null?90:est.campo)/100));
+    const saludSinDisturbios = normalizado*0.35 + normalizadoMoral*0.20 + rachaNorm*0.15 + posicionNorm*0.15 + campoNorm*0.15;
+    // Los disturbios son una crisis AGUDA y de ahora mismo, así que
+    // restan tolerancia aparte, por encima de la salud "de fondo" del
+    // club — un club que por lo demás va bien pero tiene disturbios
+    // activos también pierde paciencia con el precio, aunque no tanto
+    // como uno que ya lo tenía todo mal.
+    const disturbiosNorm=Math.min(1, disturbiosSeveridad/15);
+    const saludAficionYResultados=Math.max(0, Math.min(1, saludSinDisturbios - disturbiosNorm*0.25));
+    const factorTolerancia = 2.2 - saludAficionYResultados*1.7; // ~0.5 (todo a favor) a 2.2 (todo en contra)
     const excesoPrecio=Math.max(0,(precio-10));
     // Decaimiento base, suave y progresivo — el que ya había, se nota
     // desde el primer euro por encima del precio de referencia.
     const factorBase = 1/(1 + Math.pow(excesoPrecio,1.15)*0.006*factorTolerancia*(1-tolerancia*0.22));
     // Además del decaimiento suave de siempre, hay un "precio tolerable"
-    // (distinto según cómo esté la afición y la trayectoria del equipo:
-    // desde 10€ con la afición harta y mala racha, hasta 55€ con la
-    // afición encantada y el equipo en gran forma) a partir del cual la
+    // (distinto según la salud global de arriba: desde 10€ con todo en
+    // contra, hasta 55€ con todo a favor) a partir del cual la
     // asistencia YA NO baja poco a poco — se DESPLOMA de verdad, con una
-    // curva mucho más pronunciada. Es lo que pide el propio director
-    // general al ver los ingresos: pasado ese punto, cobrar más por
+    // curva mucho más pronunciada. Pasado ese punto, cobrar más por
     // entrada deja de compensar la gente que deja de venir, así que los
     // ingresos previstos dejan de subir con el precio y se hunden.
     const precioTolerable = 10 + saludAficionYResultados*45;
@@ -5470,14 +5500,16 @@
     const factorPrecio = factorBase*factorDesplome;
     let pct=pctSinPrecio*factorPrecio;
     if(state.directorGeneralBonos && state.directorGeneralBonos.boostAsistencia){ pct+=state.directorGeneralBonos.boostAsistencia; }
-    // El suelo mínimo baja de 10% a 1%: con un suelo más alto (probado
-    // con 5%), en cuanto la asistencia lo tocaba, seguir subiendo el
-    // precio volvía a subir los ingresos previstos (mismo número mínimo
-    // de asistentes × un precio cada vez mayor) — justo lo contrario de
-    // un desplome real. Con el suelo tan bajo, ese pequeño núcleo de
-    // aficionados incondicionales sigue sin desaparecer del todo, pero
-    // los ingresos se quedan hundidos de verdad en vez de repuntar.
-    pct=Math.max(0.01, Math.min(0.99, pct));
+    // SIN suelo mínimo artificial (antes había uno, primero al 10% y
+    // luego al 1%): cualquier suelo fijo hace que, en cuanto el precio lo
+    // toca, seguir subiéndolo YA NO cambia la asistencia — se queda
+    // "congelada" el resto del recorrido del slider, y encima los
+    // ingresos previstos (asistencia mínima fija × precio cada vez
+    // mayor) vuelven a subir en vez de seguir hundidos. Sin suelo, la
+    // fórmula decae de forma continua durante TODO el rango de precio,
+    // así que asistencia e ingresos previstos siguen cambiando (bajando)
+    // hasta el mismo final del slider, nunca se quedan planos.
+    pct=Math.max(0, Math.min(0.99, pct));
     const aforoBloqueado=fraccionAforoBloqueadoPorDisturbios();
     return {asistentes:Math.round(aforo*pct*(1-aforoBloqueado)), aforo, pct, aforoBloqueado, penalizacionDisturbios};
   }
@@ -8305,12 +8337,14 @@
   // y la cuota se descuenta una fracción igual cada jornada (no de golpe
   // al mes) para que el impacto sea más gradual y predecible.
   const PAQUETES_PRESTAMO=[
-    // Intereses subidos respecto a la versión original (8/14/22%) — a
-    // ese precio pedir préstamos en cadena salía casi gratis y no había
-    // freno real para abusar de ellos. Ahora cada tramo pesa de verdad.
-    {id:'pequeno', monto:60000,  interes:0.16, plazoJornadas:6},
-    {id:'medio',   monto:150000, interes:0.26, plazoJornadas:10},
-    {id:'grande',  monto:300000, interes:0.38, plazoJornadas:16},
+    // Intereses subidos dos veces ya (8/14/22% -> 16/26/38%) y ahora una
+    // tercera (16/26/38% -> 25/40/58%) — el préstamo tiene que doler de
+    // verdad y quedar como la ÚLTIMA opción cuando todo lo demás (subir
+    // el precio, vender jugadores, etc.) no basta, nunca una forma barata
+    // de conseguir capital fácil sin plan real para devolverlo.
+    {id:'pequeno', monto:60000,  interes:0.25, plazoJornadas:6},
+    {id:'medio',   monto:150000, interes:0.40, plazoJornadas:10},
+    {id:'grande',  monto:300000, interes:0.58, plazoJornadas:16},
   ];
   // Solo se ofrecen los paquetes cuyo plazo cabe ENTERO dentro de lo que
   // queda de temporada — así nunca es posible pedir un préstamo tan
