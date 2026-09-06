@@ -3274,8 +3274,101 @@
   // Ordenación de la tabla PLANTILLA — mismo sistema de 3 modos que
   // CONVOCADOS en Copa Leyendas (LLEGADA/POSICIÓN/PUNTOS, un botón cíclico).
   let lmSortMode='position';
-  const LM_SORT_LABELS={arrival:'LLEGADA', position:'POSICIÓN', rating:'PUNTOS', numero:'DORSAL'};
-  const LM_SORT_NEXT={arrival:'position', position:'rating', rating:'numero', numero:'arrival'};
+  const LM_SORT_LABELS={arrival:'LLEGADA', position:'POSICIÓN', rating:'PUNTOS', numero:'DORSAL', ninguno:'NINGUNO'};
+  // 'ninguno' es distinto de 'arrival': al entrar en este modo se
+  // "congela" de golpe el orden que se estuviera viendo en ese momento
+  // (con el modo anterior) dentro del propio array state.plantilla —
+  // a partir de ahí, cambiar de sitio a un jugador en el banquillo o
+  // en el once NUNCA reordena la lista, solo actualiza la columna de
+  // posición de cada uno (ver el "congelado" en el manejador del botón
+  // de orden, más abajo).
+  const LM_SORT_NEXT={arrival:'position', position:'rating', rating:'numero', numero:'ninguno', ninguno:'arrival'};
+  // Buscador de dudas de "CÓMO JUGAR/AYUDA" — historial de chat en
+  // memoria (no se guarda en el estado de la partida, es un apoyo
+  // puntual): se mantiene mientras la caja siga abierta y sobrevive a
+  // los muchos render() que ocurren mientras tanto, pero se vacía del
+  // todo en cuanto se minimiza la caja (ver toggleCollapsible en
+  // game.js, que llama a limpiarAyudaBusqueda).
+  let lmAyudaChatHistorial=[];
+  let lmAyudaInputValor='';
+  // Batería de preguntas frecuentes del buscador de "CÓMO JUGAR/AYUDA".
+  // Cada entrada lleva una lista de palabras clave (en varios idiomas,
+  // para que reconozca la pregunta sea cual sea el idioma activo) y la
+  // clave de traducción de la respuesta — así la respuesta siempre sale
+  // en el idioma que esté usando el jugador ahora mismo, aunque haya
+  // escrito la pregunta en otro.
+  const LM_AYUDA_FAQ=[
+    {id:'sobres', keywords:['sobre','sobres','fichaje sobre','abrir sobre','oficina de fichajes','pack','envelope','packs','enveloppe','busta','buste','umschlag'], respuestaKey:'ayuda.faq_sobres'},
+    {id:'fichaje_estrella', keywords:['fichaje estrella','jugador real','estrella','star signing','jugador de otro equipo'], respuestaKey:'ayuda.faq_fichaje_estrella'},
+    {id:'traspasos', keywords:['traspaso','traspasos','vender jugador','poner en venta','venta','ofertas de traspaso','transfer','vendre','verkaufen','vendere'], respuestaKey:'ayuda.faq_traspasos'},
+    {id:'agencia_traspasos', keywords:['agencia de traspasos','traspasos expres','acelerar ofertas','mejores ofertas'], respuestaKey:'ayuda.faq_agencia_traspasos'},
+    {id:'info_plantilla', keywords:['salario','salarios','informacion de la plantilla','informacion de plantilla','sueldo','sueldos','renegociar','subir sueldo','nomina jugadores'], respuestaKey:'ayuda.faq_info_plantilla'},
+    {id:'jugador_quiere_marcharse', keywords:['quiere marcharse','se quiere ir','abandonar el club','fuga de jugador','oferta salarial','plazo renegociar'], respuestaKey:'ayuda.faq_jugador_marcharse'},
+    {id:'prestamo', keywords:['prestamo','prestamos','banco','pedir dinero','interes','intereses','loan','pret','darlehen','prestito'], respuestaKey:'ayuda.faq_prestamo'},
+    {id:'precio_entrada', keywords:['precio de la entrada','precio entrada','asistencia prevista','ingresos previstos','ticket price','subir el precio'], respuestaKey:'ayuda.faq_precio_entrada'},
+    {id:'capital', keywords:['capital','dinero','numeros rojos','quiebra','bancarrota','sin dinero','finanzas del club'], respuestaKey:'ayuda.faq_capital'},
+    {id:'moral', keywords:['moral','animo del equipo','vestuario'], respuestaKey:'ayuda.faq_moral'},
+    {id:'aficion', keywords:['aficion','afición','satisfaccion aficion','grada','graderio','fans'], respuestaKey:'ayuda.faq_aficion'},
+    {id:'disturbios', keywords:['disturbio','disturbios','pelea en la grada','violencia estadio'], respuestaKey:'ayuda.faq_disturbios'},
+    {id:'seguridad_estadio', keywords:['seguridad','guardias','seguridad del estadio','vigilantes'], respuestaKey:'ayuda.faq_seguridad'},
+    {id:'estado_campo', keywords:['estado del campo','cesped','césped','mantenimiento del campo'], respuestaKey:'ayuda.faq_campo'},
+    {id:'medico', keywords:['medico','médico','lesion','lesiones','lesionado','recuperacion lesion'], respuestaKey:'ayuda.faq_medico'},
+    {id:'preparador_fisico', keywords:['preparador fisico','preparador físico','fatiga','resistencia','cansancio','recuperacion fisica'], respuestaKey:'ayuda.faq_preparador'},
+    {id:'entrenamiento', keywords:['entrenamiento','entrenar','plan de entrenamiento','mejorar estadisticas','subir estadisticas'], respuestaKey:'ayuda.faq_entrenamiento'},
+    {id:'director_general', keywords:['director general','proyectos director general','patrocinio','estadio ampliar'], respuestaKey:'ayuda.faq_director_general'},
+    {id:'director_deportivo', keywords:['director deportivo','ojeadores','red de ojeadores','ojeo','cartas del director deportivo'], respuestaKey:'ayuda.faq_director_deportivo'},
+    {id:'proyectos_nivel', keywords:['proyecto','proyectos','nivel del proyecto','dificultad del proyecto','dados','tirada'], respuestaKey:'ayuda.faq_proyectos'},
+    {id:'habilidades', keywords:['habilidad','habilidades','activar habilidad','puntos de habilidad','skill','skills'], respuestaKey:'ayuda.faq_habilidades'},
+    {id:'quiniela', keywords:['quiniela','apuesta','boleto','rellenar quiniela'], respuestaKey:'ayuda.faq_quiniela'},
+    {id:'amistosos', keywords:['amistoso','amistosos','arbol de nodos','calendario semanal','dia de descanso'], respuestaKey:'ayuda.faq_amistosos'},
+    {id:'jugar_jornada', keywords:['jugar jornada','como jugar','jugar partido','seguir jornada','boton jugar'], respuestaKey:'ayuda.faq_jugar_jornada'},
+    {id:'formacion', keywords:['formacion','formación','posiciones','colocar jugador','tactica','táctica'], respuestaKey:'ayuda.faq_formacion'},
+    {id:'once_banquillo', keywords:['once titular','banquillo','suplentes','titular','sustituir jugador'], respuestaKey:'ayuda.faq_once_banquillo'},
+    {id:'orden_plantilla', keywords:['orden de la plantilla','ordenar plantilla','llegada posicion puntos dorsal','modo ninguno'], respuestaKey:'ayuda.faq_orden_plantilla'},
+    {id:'sancion', keywords:['sancion','sanción','tarjeta roja','expulsado','partidos de sancion'], respuestaKey:'ayuda.faq_sancion'},
+    {id:'clasificacion', keywords:['clasificacion','clasificación','tabla de la liga','posicion en la liga'], respuestaKey:'ayuda.faq_clasificacion'},
+    {id:'correo_interno', keywords:['correo','correo interno','mensajes del club','bandeja de entrada'], respuestaKey:'ayuda.faq_correo'},
+    {id:'historial_fichajes', keywords:['historial de fichajes','historial de ventas','historico de fichajes'], respuestaKey:'ayuda.faq_historial'},
+    {id:'modo_visual', keywords:['modo automatico','modo manager','ver el partido','visor del partido'], respuestaKey:'ayuda.faq_modo_visual'},
+    {id:'nomina', keywords:['nomina','nómina','gastos mensuales','pagar sueldos'], respuestaKey:'ayuda.faq_nomina'},
+    {id:'cuerpo_tecnico', keywords:['cuerpo tecnico','cuerpo técnico','contratar personal','trabajadores','vacante'], respuestaKey:'ayuda.faq_cuerpo_tecnico'},
+    {id:'escudo', keywords:['escudo','personalizar escudo','editor de escudo'], respuestaKey:'ayuda.faq_escudo'},
+    {id:'logros', keywords:['logro','logros','achievement','achievements'], respuestaKey:'ayuda.faq_logros'},
+  ];
+  function lmNormalizarTextoAyuda(s){
+    return (s||'').toString().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').trim();
+  }
+  function lmBuscarRespuestaAyuda(pregunta){
+    const texto=lmNormalizarTextoAyuda(pregunta);
+    if(!texto) return null;
+    let mejor=null, mejorPuntuacion=0;
+    LM_AYUDA_FAQ.forEach(entry=>{
+      let puntuacion=0;
+      entry.keywords.forEach(k=>{
+        const kn=lmNormalizarTextoAyuda(k);
+        if(kn && texto.includes(kn)) puntuacion+=kn.split(' ').length; // las frases de varias palabras pesan más que una palabra suelta
+      });
+      if(puntuacion>mejorPuntuacion){ mejorPuntuacion=puntuacion; mejor=entry; }
+    });
+    return mejor;
+  }
+  function lmEscaparHtmlAyuda(s){
+    const d=document.createElement('div');
+    d.textContent=s;
+    return d.innerHTML;
+  }
+  // Se llama desde toggleCollapsible (game.js) al minimizar la caja de
+  // "CÓMO JUGAR/AYUDA" — vacía tanto el texto escrito como todo el
+  // historial de chat, para que la próxima vez que se abra empiece de
+  // cero.
+  function limpiarAyudaBusqueda(boxId){
+    if(boxId!=='lmHowToPlayBox') return;
+    if(!lmAyudaChatHistorial.length && !lmAyudaInputValor) return;
+    lmAyudaChatHistorial=[];
+    lmAyudaInputValor='';
+    if(typeof render==='function') render();
+  }
+  window.limpiarAyudaBusqueda=limpiarAyudaBusqueda;
   // Los catálogos de cartas (MEDICO_CARTAS_BASE, etc.) son const que se
   // evalúan una sola vez al cargar el archivo — si el nombre/descripción
   // se tradujera AL DEFINIR la carta, se quedaría congelado en el
@@ -4347,6 +4440,13 @@
             await window._fbDb.collection('users').doc(user.uid).update({ligaManagerSkills:window._lmSkillsCache, scratchPoints:window._lmScratchPoints});
           }catch(e){}
           renderLigaManagerSkillsTab(true);
+          // Si una habilidad activa estaba mostrando su icono junto a la
+          // nota media del once titular (lmHabilidadesActivasAhoraHTML),
+          // desactivarla aquí no refrescaba esa pantalla de fondo por sí
+          // sola — se quedaba con el icono "fantasma" hasta el próximo
+          // render por otro motivo. Se repinta también la pantalla
+          // principal al instante para que el icono desaparezca ya.
+          if(typeof render==='function') render();
         });
         grid.appendChild(btn);
       });
@@ -4662,7 +4762,7 @@
       directorDeportivoCambiosUsados:0,
       directorDeportivoCartasAgotadas:[],
       directorDeportivoHistorial:[],
-      directorDeportivoNiveles:{calidadOjeo:0, ahorroSalarial:0, sobresFichajes:0, costeSobres:0},
+      directorDeportivoNiveles:{calidadOjeo:0, agenteTraspasos:0, sobresFichajes:0, costeSobres:0},
       // Sobres de fichajes: ya NO se abren directamente desde la tarjeta.
       // Se generan solos con el tiempo (más a menudo cuanto más subida
       // esté la carta "Sobres de Fichajes") y avisan por correo cuando
@@ -5904,6 +6004,7 @@
     // jornada avance — antes un error sin capturar aquí dejaba todo el
     // juego bloqueado sin ningún aviso.
     try{ procesarOfertasTraspaso(); }catch(e){ console.error('procesarOfertasTraspaso:', e); }
+    try{ procesarPeticionesSalariales(); }catch(e){ console.error('procesarPeticionesSalariales:', e); }
     try{ generarCorreosTrasJornada(); }catch(e){ console.error('generarCorreosTrasJornada:', e); }
     try{ resolverQuinielaSiToca(j); }catch(e){ console.error('resolverQuinielaSiToca:', e); }
     try{ procesarCuotaPrestamo(); }catch(e){ console.error('procesarCuotaPrestamo:', e); }
@@ -9674,7 +9775,7 @@
     {id:'gira_promocional',        tipo:'directa', nombre:'Gira Promocional',        icon:'ph-airplane-tilt',dificultad:6, desc:'Ingreso instantáneo de capital y un pequeño impulso a la moral'},
     {id:'sobres_fichajes',   tipo:'nivel', track:'sobresFichajes', nombre:'Oficina de Fichajes',      icon:'ph-envelope-open', dificultadBase:9, dificultadPaso:5, desc:'Acorta el tiempo entre sobres de fichajes — llegarán con más frecuencia por correo. A nivel alto, aumenta también la posibilidad de que aparezca un fichaje estrella real'},
     {id:'red_ojeadores',     tipo:'nivel', track:'calidadOjeo',    nombre:'Red de Ojeadores',        icon:'ph-binoculars',    dificultadBase:8, dificultadPaso:4, desc:'Mejora la calidad de los jugadores que salen en los sobres'},
-    {id:'negociacion_contratos',tipo:'nivel', track:'ahorroSalarial', nombre:'Negociación de Contratos', icon:'ph-handshake', dificultadBase:8, dificultadPaso:4, desc:'Reduce el salario de los jugadores fichados por sobre'},
+    {id:'agencia_traspasos',tipo:'nivel', track:'agenteTraspasos', nombre:'Agencia de Traspasos Exprés', icon:'ph-lightning', dificultadBase:8, dificultadPaso:4, desc:'Acelera la resolución de las ofertas por tus jugadores en venta y consigue mejores ofertas de los clubes rivales'},
     {id:'formacion_cantera', tipo:'nivel', track:'costeSobres',    nombre:'Formación de Cantera',    icon:'ph-graduation-cap',dificultadBase:8, dificultadPaso:4, desc:'Tu academia forma talento desde la base: cada canterano que llega por sobre nace con un nivel superior al habitual'}
   ];
   function cartaDefDD(id){ return DIRECTOR_DEPORTIVO_CARTAS_BASE.find(c=>c.id===id); }
@@ -9726,9 +9827,8 @@
     const posiciones=['POR','DFC','LI','LD','MC','EI','ED','DC'];
     const position = (posicionForzada && posiciones.includes(posicionForzada)) ? posicionForzada : posiciones[Math.floor(Math.random()*posiciones.length)];
     const variar=()=>Math.max(30,Math.min(96, overall+Math.floor(Math.random()*13)-6));
-    const ahorro=nivelDeDD('ahorroSalarial')*0.12;
     const descuentoOportunidad = esOportunidad ? 0.35 : 0;
-    const salario=Math.round(calcularSalario(overall)*(1-ahorro)*(1-descuentoOportunidad));
+    const salario=Math.round(calcularSalario(overall)*(1-descuentoOportunidad));
     return {
       id:'s'+Date.now()+Math.floor(Math.random()*100000), name:nombreJugadorAleatorio(), position, overall,
       attack:variar(), defense:variar(), pace:variar(), passing:variar(), technique:variar(),
@@ -9897,7 +9997,14 @@
     const chequeo=puedeVenderJugador(jugadorId);
     if(!chequeo.ok) return chequeo;
     jugador.enVenta=true;
-    jugador.ventaResolverJornada=state.jornadaActual+1+Math.floor(Math.random()*3);
+    // Agencia de Traspasos Exprés: cada nivel recorta el tiempo de
+    // espera hasta que llegan las ofertas — de hasta 3 jornadas de
+    // margen a nivel 0, hasta siempre 1 jornada (la mínima posible) con
+    // el proyecto al máximo.
+    const nivelAgencia=nivelDeDD('agenteTraspasos');
+    const esperaBase=1+Math.floor(Math.random()*3);
+    const espera=Math.max(1, esperaBase-nivelAgencia);
+    jugador.ventaResolverJornada=state.jornadaActual+espera;
     guardarEstado();
     return {ok:true};
   }
@@ -9919,8 +10026,13 @@
     const numOfertas=1+Math.floor(Math.random()*3);
     const clubesDisponibles=equiposDeLaLigaActual();
     if(typeof shuffle==='function') shuffle(clubesDisponibles); // shuffle() muta en el sitio, no devuelve nada
+    // Agencia de Traspasos Exprés: cada nivel también presiona al alza
+    // las ofertas que llegan de los clubes rivales — hasta un 45% más
+    // de dinero por jugador con el proyecto al máximo (nivel 3).
+    const nivelAgencia=nivelDeDD('agenteTraspasos');
+    const boostOfertas=1+nivelAgencia*0.15;
     const ofertas=clubesDisponibles.slice(0,numOfertas).map(c=>({
-      club:c.name, monto:Math.round(jugador.overall*(280+Math.random()*220))
+      club:c.name, monto:Math.round(jugador.overall*(280+Math.random()*220)*boostOfertas)
     })).sort((a,b)=>b.monto-a.monto);
     jugador.enVenta=false;
     jugador.ventaResolverJornada=null;
@@ -9967,6 +10079,146 @@
     mail.resultadoTexto='Rechazaste todas las ofertas — el jugador sigue en la plantilla.';
     guardarEstado();
   }
+
+  /* ---------- 9f. PETICIONES SALARIALES — un jugador de calidad que se
+     considera mal pagado (su salario actual se ha quedado muy por
+     debajo de lo que valdría hoy, normalmente porque ha mejorado con
+     el entrenamiento desde que se le fichó) puede plantear que se
+     quiere marchar. Avisa por correo con un plazo de 4 jornadas: si en
+     ese tiempo no se le hace una oferta de subida que acepte, se
+     marcha gratis (sin finiquito). Pensado para que ocurra pocas veces
+     por temporada (2-3), nunca una lluvia mensual de fugas. ---------- */
+  // "Lo que considera justo" para su nivel actual — la MISMA fórmula
+  // que ya se usa para fichar (calcularSalario): el salario con el que
+  // llega un jugador de sobre es, por definición, el que él mismo
+  // consideraría bueno para su nivel de entonces. Si luego mejora de
+  // estadísticas y su salario no sube con él, este valor crece más
+  // rápido que lo que cobra — y ahí nace el descontento.
+  function salarioDeseadoJugador(p){ return calcularSalario(p.overall||50); }
+  // Límites de ajuste manual de salario: nunca por debajo de la mitad
+  // de lo que un jugador de ese nivel considera justo (recorte fuerte
+  // pero no absurdo), ni por encima del 150% (para no poder "comprar"
+  // artificialmente la felicidad de todo el vestuario a golpe de
+  // talonario sin límite).
+  function salarioMinPermitido(p){ return Math.max(1000, Math.round(salarioDeseadoJugador(p)*0.5)); }
+  function salarioMaxPermitido(p){ return Math.round(salarioDeseadoJugador(p)*1.5); }
+  const UMBRAL_OVERALL_PETICION_SALARIAL=75; // solo jugadores realmente buenos protestan
+  const JORNADAS_PLAZO_RENEGOCIACION=4;
+  const COOLDOWN_PETICION_SALARIAL=4; // jornadas de margen tras resolverse una, antes de que pueda surgir otra
+  const PROB_PETICION_SALARIAL_POR_JORNADA=0.10;
+  // Decide si el jugador acepta una oferta concreta: cuanto mejor sea,
+  // más exigente — necesita que la oferta se acerque más a lo que él
+  // considera que vale para convencerse (una estrella casi exige el
+  // 100% de su valor justo; uno más discreto se conforma con bastante
+  // menos). Alrededor del umbral hay un margen de probabilidad suave,
+  // no un todo-o-nada: una oferta generosa casi siempre convence, una
+  // tacaña casi nunca, y las intermedias dependen un poco de la suerte.
+  function evaluarOfertaSalarial(p, montoOferta){
+    const demandado=salarioDeseadoJugador(p);
+    const ratioOferta=demandado>0 ? montoOferta/demandado : 1;
+    const exigencia=Math.min(0.97, 0.68+Math.max(0, (p.overall||50)-55)*0.007);
+    const prob=Math.max(0, Math.min(1, (ratioOferta-exigencia+0.15)/0.30));
+    return Math.random()<prob;
+  }
+  // Plantea (o sustituye) una oferta de subida pendiente para un
+  // jugador que se quiere marchar — no se aplica al momento: el
+  // jugador la valorará cuando se juegue la siguiente jornada.
+  function hacerOfertaSalarial(jugadorId, monto){
+    const p=(state.plantilla||[]).find(x=>x.id===jugadorId);
+    if(!p || !p.quiereMarcharse) return false;
+    const min=salarioMinPermitido(p), max=salarioMaxPermitido(p);
+    p.ofertaSalarialPendiente={monto:Math.max(min, Math.min(max, Math.round(monto)))};
+    guardarEstado();
+    return true;
+  }
+  function retirarOfertaSalarial(jugadorId){
+    const p=(state.plantilla||[]).find(x=>x.id===jugadorId);
+    if(!p) return;
+    p.ofertaSalarialPendiente=null;
+    guardarEstado();
+  }
+  // Ajuste directo e inmediato de salario — para cualquier jugador que
+  // NO esté en plena crisis de renegociación (a esos se les hace una
+  // OFERTA con hacerOfertaSalarial, que él decide aceptar o no).
+  function ajustarSalarioDirecto(jugadorId, nuevoSalario){
+    const p=(state.plantilla||[]).find(x=>x.id===jugadorId);
+    if(!p || p.quiereMarcharse) return false;
+    const min=salarioMinPermitido(p), max=salarioMaxPermitido(p);
+    p.salario=Math.max(min, Math.min(max, Math.round(nuevoSalario)));
+    guardarEstado();
+    return true;
+  }
+  // Se llama una vez por jornada jugada. Primero resuelve lo que ya
+  // estaba en marcha (ofertas pendientes y plazos cumplidos) y solo
+  // después, si queda hueco, se plantea si surge una petición nueva —
+  // nunca al revés, para que una petición recién nacida no se
+  // resuelva en la misma jornada en la que aparece.
+  function procesarPeticionesSalariales(){
+    if(!state.trabajadores || !state.trabajadores.directorDeportivo) return;
+    (state.plantilla||[]).filter(p=>p.quiereMarcharse).forEach(p=>{
+      if(p.ofertaSalarialPendiente){
+        const monto=p.ofertaSalarialPendiente.monto;
+        const acepta=evaluarOfertaSalarial(p, monto);
+        p.ofertaSalarialPendiente=null;
+        if(acepta){
+          p.salario=monto;
+          p.quiereMarcharse=false;
+          p.jornadaLimiteRenegociar=null;
+          state.dsCooldownHasta=state.jornadaActual+COOLDOWN_PETICION_SALARIAL;
+          if(typeof enviarCorreo==='function'){
+            enviarCorreo('directorDeportivo', tp('correo.salario_aceptado.asunto', {jugador:p.name}),
+              tp('correo.salario_aceptado.cuerpo', {jugador:p.name, salario:formatoDinero(monto)}),
+              {asunto:'correo.salario_aceptado.asunto', paramsAsunto:{jugador:p.name}, cuerpo:'correo.salario_aceptado.cuerpo', paramsCuerpo:{jugador:p.name, salario:formatoDinero(monto)}});
+          }
+          return;
+        }
+        // Oferta rechazada: si además coincide con el plazo límite, se
+        // marcha aquí mismo — no hace falta esperar a la comprobación
+        // de plazo de más abajo, aunque el resultado sería el mismo.
+      }
+      if(state.jornadaActual>=(p.jornadaLimiteRenegociar||0)){
+        state.plantilla=(state.plantilla||[]).filter(x=>x.id!==p.id);
+        if(state.alineacion){ Object.keys(state.alineacion).forEach(k=>{ if(state.alineacion[k]===p.id) delete state.alineacion[k]; }); }
+        if(!state.directorDeportivoHistorial) state.directorDeportivoHistorial=[];
+        state.directorDeportivoHistorial.unshift({tipo:'fuga', nombre:p.name, position:p.position, overall:p.overall, jornada:state.jornadaActual});
+        state.dsCooldownHasta=state.jornadaActual+COOLDOWN_PETICION_SALARIAL;
+        if(typeof enviarCorreo==='function'){
+          enviarCorreo('directorDeportivo', tp('correo.salario_fuga.asunto', {jugador:p.name}),
+            tp('correo.salario_fuga.cuerpo', {jugador:p.name}),
+            {asunto:'correo.salario_fuga.asunto', paramsAsunto:{jugador:p.name}, cuerpo:'correo.salario_fuga.cuerpo', paramsCuerpo:{jugador:p.name}});
+        }
+      }
+    });
+    // ¿Surge una petición nueva? Solo si no hay ya alguien en pleno
+    // conflicto, ha pasado el margen de enfriamiento desde la última
+    // vez, y el Director Deportivo no ha mandado ya otro correo esta
+    // misma jornada (mismo criterio que las ofertas de traspaso, para
+    // no saturar el correo con dos avisos importantes el mismo día).
+    if((state.plantilla||[]).some(p=>p.quiereMarcharse)) return;
+    if(state.jornadaActual<(state.dsCooldownHasta||0)) return;
+    if(state.correoUltimoEnviado && state.correoUltimoEnviado.directorDeportivo===state.jornadaActual) return;
+    const candidatos=(state.plantilla||[]).filter(p=>!p.enVenta && (p.overall||0)>=UMBRAL_OVERALL_PETICION_SALARIAL && (p.salario||0)<salarioDeseadoJugador(p)*0.85);
+    if(!candidatos.length) return;
+    if(Math.random()>=PROB_PETICION_SALARIAL_POR_JORNADA) return;
+    const elegido=candidatos[Math.floor(Math.random()*candidatos.length)];
+    elegido.quiereMarcharse=true;
+    elegido.jornadaLimiteRenegociar=state.jornadaActual+JORNADAS_PLAZO_RENEGOCIACION;
+    elegido.ofertaSalarialPendiente=null;
+    if(!state.correoInterno) state.correoInterno=[];
+    if(!state.correoUltimoEnviado) state.correoUltimoEnviado={};
+    state.correoInterno.unshift({
+      id:'mail'+Date.now()+Math.floor(Math.random()*100000), rol:'directorDeportivo',
+      asunto:tp('correo.salario_alerta.asunto', {jugador:elegido.name}),
+      cuerpo:tp('correo.salario_alerta.cuerpo', {jugador:elegido.name, plazo:JORNADAS_PLAZO_RENEGOCIACION}),
+      jornada:state.jornadaActual, leido:false,
+      tipoEspecial:'jugador_quiere_marcharse', jugadorId:elegido.id, jugadorNombre:elegido.name,
+      claveAsunto:'correo.salario_alerta.asunto', paramsAsunto:{jugador:elegido.name},
+      claveCuerpo:'correo.salario_alerta.cuerpo', paramsCuerpo:{jugador:elegido.name, plazo:JORNADAS_PLAZO_RENEGOCIACION}
+    });
+    if(state.correoInterno.length>40) state.correoInterno=state.correoInterno.slice(0,40);
+    state.correoUltimoEnviado.directorDeportivo=state.jornadaActual;
+    guardarEstado();
+  }
   function aplicarEfectoDirectaDD(def){
     switch(def.id){
       case 'ojeo_urgente': {
@@ -10009,7 +10261,7 @@
     }
   }
   function aplicarNivelMejoraDD(def){
-    if(!state.directorDeportivoNiveles) state.directorDeportivoNiveles={calidadOjeo:0, ahorroSalarial:0, sobresFichajes:0, costeSobres:0};
+    if(!state.directorDeportivoNiveles) state.directorDeportivoNiveles={calidadOjeo:0, agenteTraspasos:0, sobresFichajes:0, costeSobres:0};
     const nivelNuevo=Math.min(NIVEL_MAXIMO_EQUIPO, nivelDeDD(def.track)+1);
     state.directorDeportivoNiveles[def.track]=nivelNuevo;
     const maxAlcanzado=nivelNuevo>=NIVEL_MAXIMO_EQUIPO;
@@ -10778,7 +11030,7 @@
     if(!state.directorDeportivoCartas || !state.directorDeportivoCartas.length) state.directorDeportivoCartas=inicializarCartasDD();
     if(!state.directorDeportivoCartasAgotadas) state.directorDeportivoCartasAgotadas=[];
     if(!state.directorDeportivoHistorial) state.directorDeportivoHistorial=[];
-    if(!state.directorDeportivoNiveles) state.directorDeportivoNiveles={calidadOjeo:0, ahorroSalarial:0, sobresFichajes:0, costeSobres:0};
+    if(!state.directorDeportivoNiveles) state.directorDeportivoNiveles={calidadOjeo:0, agenteTraspasos:0, sobresFichajes:0, costeSobres:0};
     if(!state.directorDeportivoBonos) state.directorDeportivoBonos={};
     if(!state.trabajadores){
       state.trabajadores={
@@ -10906,7 +11158,11 @@
       }
       if(lmSortMode==='rating') return [...lista].sort((a,b)=>efectivoOverall(b)-efectivoOverall(a));
       if(lmSortMode==='numero') return [...lista].sort((a,b)=>(a.numero||99)-(b.numero||99));
-      return lista; // 'arrival' = orden de llegada = orden del array tal cual
+      // 'arrival' (orden de llegada) y 'ninguno' (congelado manualmente
+      // al activar el modo, ver el botón de orden) comparten el mismo
+      // comportamiento aquí: ninguno de los dos reordena nada, se
+      // limitan a devolver el array tal cual está.
+      return lista;
     }
     const plantillaPrincipal=ordenarPlantilla(state.plantilla.filter(p=>titularIds.has(p.id)));
     // Para la media del once, un sancionado no cuenta — su hueco pesa
@@ -11157,6 +11413,10 @@
                     } else {
                       extra=`<div class="lm-correo-resultado">${t('lm.quiniela_ya_rellenada')}</div>`;
                     }
+                  } else if(c.tipoEspecial==='jugador_quiere_marcharse'){
+                    const sigueEnCrisis=(state.plantilla||[]).some(p=>p.id===c.jugadorId && p.quiereMarcharse);
+                    extra=`<div class="lm-correo-ofertas"><button class="lm-correo-oferta-btn" data-ir-info-plantilla="${c.jugadorId||''}"><i class="ph ph-bold ph-user-focus"></i> ${t('lm.ir_info_plantilla_btn')}</button></div>
+                      ${sigueEnCrisis?'':`<div class="lm-correo-resultado">${t('lm.situacion_ya_resuelta')}</div>`}`;
                   } else if(c.tipoEspecial==='nuevos_candidatos'){
                     extra=`<div class="lm-correo-ofertas"><button class="lm-correo-oferta-btn" data-ir-contratar="1"><i class="ph ph-bold ph-user-plus"></i> ${t('lm.contratar_btn')}</button></div>`;
                   } else if(c.tipoEspecial==='grada_descontenta'){
@@ -11201,6 +11461,13 @@
               <div class="howto-step"><span class="howto-num">4</span><div>${t('lm.howto_paso4')}</div></div>
               <div class="howto-step"><span class="howto-num">5</span><div>${t('lm.howto_paso5')}</div></div>
               <div class="howto-step"><span class="howto-num">6</span><div>${t('lm.howto_paso6')}</div></div>
+              <div class="lm-ayuda-wrap">
+                ${lmAyudaChatHistorial.length ? `<div class="lm-ayuda-chat" id="lmAyudaChat">${lmAyudaChatHistorial.map(m=>`<div class="lm-ayuda-burbuja lm-ayuda-burbuja-${m.tipo}">${m.texto}</div>`).join('')}</div>` : ''}
+                <div class="lm-ayuda-input-row">
+                  <input type="text" id="lmAyudaInput" class="lm-ayuda-input" maxlength="140" placeholder="${t('lm.ayuda_placeholder')}" />
+                  <button type="button" id="lmAyudaBuscarBtn" class="lm-ayuda-buscar-btn" title="${t('lm.ayuda_buscar_tt')}"><i class="ph ph-bold ph-magnifying-glass"></i></button>
+                </div>
+              </div>
               <button id="lmReplayTutorialBtn" style="width:100%;margin-top:12px;font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:1px;font-size:16px;background:none;border:1px solid var(--gold);color:var(--gold);border-radius:6px;padding:9px 14px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px">
                 <i class="ph ph-bold ph-play-circle" style="font-size:20px"></i> ${t('lm.howto_ver_tutorial')}
               </button>
@@ -11570,6 +11837,13 @@
         abrirTrabajadores();
       });
     });
+    root.querySelectorAll('[data-ir-info-plantilla]').forEach(btn=>{
+      btn.addEventListener('click', (e)=>{
+        e.stopPropagation();
+        if(typeof window.playSound==='function') window.playSound('select');
+        abrirSalariosDD(false, btn.getAttribute('data-ir-info-plantilla')||null);
+      });
+    });
     root.querySelectorAll('[data-ir-seguridad]').forEach(btn=>{
       btn.addEventListener('click', (e)=>{
         e.stopPropagation();
@@ -11637,9 +11911,55 @@
     const sortBtn=document.getElementById('lmSortBtn');
     if(sortBtn) sortBtn.addEventListener('click', ()=>{
       if(typeof window.playSound==='function') window.playSound('select');
-      lmSortMode=LM_SORT_NEXT[lmSortMode];
+      const siguienteModo=LM_SORT_NEXT[lmSortMode];
+      if(siguienteModo==='ninguno'){
+        // Se congela AHORA, con el modo todavía activo de antes de
+        // cambiar: el once titular tal y como se estuviera viendo (con
+        // ese modo anterior) pasa primero, seguido del banquillo en su
+        // orden actual — y ese combinado se convierte en el nuevo orden
+        // real de state.plantilla. A partir de aquí, mover jugadores
+        // entre banquillo y once (o cambiarlos de posición) ya no
+        // reordena nada: solo cambia la posición de cada uno.
+        const idsTitularAhora=new Set(Object.values(state.alineacion||{}).filter(Boolean));
+        const titularCongelado=ordenarPlantilla(state.plantilla.filter(p=>idsTitularAhora.has(p.id)));
+        const bancoCongelado=state.plantilla.filter(p=>!idsTitularAhora.has(p.id));
+        state.plantilla=[...titularCongelado, ...bancoCongelado];
+      }
+      lmSortMode=siguienteModo;
+      guardarEstado();
       render();
     });
+    // Buscador de dudas de "CÓMO JUGAR/AYUDA": el input conserva lo
+    // escrito entre renders (se restaura aquí porque el innerHTML se
+    // reconstruye entero cada vez), y tanto Enter como el botón de la
+    // lupa disparan la misma búsqueda por palabras clave.
+    const ayudaInputEl=document.getElementById('lmAyudaInput');
+    if(ayudaInputEl){
+      ayudaInputEl.value=lmAyudaInputValor;
+      ayudaInputEl.addEventListener('input', ()=>{ lmAyudaInputValor=ayudaInputEl.value; });
+      ayudaInputEl.addEventListener('keydown', (e)=>{
+        if(e.key==='Enter'){ e.preventDefault(); ejecutarBusquedaAyudaLM(); }
+      });
+    }
+    const ayudaBtnEl=document.getElementById('lmAyudaBuscarBtn');
+    if(ayudaBtnEl) ayudaBtnEl.addEventListener('click', ()=>{ ejecutarBusquedaAyudaLM(); });
+    function ejecutarBusquedaAyudaLM(){
+      const texto=(lmAyudaInputValor||'').trim();
+      if(!texto) return;
+      if(typeof window.playSound==='function') window.playSound('select');
+      lmAyudaChatHistorial.push({tipo:'pregunta', texto:lmEscaparHtmlAyuda(texto)});
+      const encontrada=lmBuscarRespuestaAyuda(texto);
+      lmAyudaChatHistorial.push({tipo:'respuesta', texto:encontrada?t(encontrada.respuestaKey):t('lm.ayuda_sin_respuesta')});
+      if(lmAyudaChatHistorial.length>40) lmAyudaChatHistorial=lmAyudaChatHistorial.slice(-40);
+      lmAyudaInputValor='';
+      render();
+      requestAnimationFrame(()=>{
+        const chatEl=document.getElementById('lmAyudaChat');
+        if(chatEl) chatEl.scrollTop=chatEl.scrollHeight;
+        const inpEl=document.getElementById('lmAyudaInput');
+        if(inpEl) inpEl.focus();
+      });
+    }
     const medicoBtn=document.getElementById('lmMedicoBtn');
     if(medicoBtn) medicoBtn.addEventListener('click', ()=>{
       if(bloqueadoPorVacante('medico')) return;
@@ -13076,7 +13396,7 @@
 
   const NIVELES_DD_INFO=[
     {track:'calidadOjeo',     get label(){return t('nivel.dd.red_ojeadores.label');},        icon:'ph-binoculars',      get desc(){return t('nivel.dd.red_ojeadores.desc');}},
-    {track:'ahorroSalarial',  get label(){return t('nivel.dd.negociacion.label');},icon:'ph-handshake',       get desc(){return t('nivel.dd.negociacion.desc');}},
+    {track:'agenteTraspasos', get label(){return t('nivel.dd.traspasos.label');}, icon:'ph-lightning',       get desc(){return t('nivel.dd.traspasos.desc');}},
     {track:'sobresFichajes',  get label(){return t('nivel.dd.red_activa.label');}, icon:'ph-envelope-open',   get desc(){return t('nivel.dd.red_activa.desc');}},
     {track:'costeSobres',     get label(){return t('nivel.dd.cantera.label');},    icon:'ph-graduation-cap',  get desc(){return t('nivel.dd.cantera.desc');}}
   ];
@@ -13266,7 +13586,8 @@
         <div class="lm-dilemma-card lm-dilemma-card-dd" style="max-width:640px">
           ${xCerrarHTML()}
           <div class="lm-dilemma-title"><i class="ph ph-bold ph-binoculars"></i> ${t('lm.titulo_dd')}</div>
-          <button type="button" class="mode-card-btn mode-card-btn-gold" id="lmInfoPlantillaDDBtn" style="width:100%;margin:10px 0"><i class="ph ph-bold ph-scroll"></i> ${t('lm.info_plantilla_btn')}</button>
+          <button type="button" class="mode-card-btn mode-card-btn-gold" id="lmInfoPlantillaDDBtn" style="width:100%;margin:10px 0;position:relative"><i class="ph ph-bold ph-scroll"></i> ${t('lm.info_plantilla_btn')}${(state.plantilla||[]).some(p=>p.quiereMarcharse)?`<span class="lm-alerta-salarial-badge">!</span>`:''}</button>
+          <div class="lm-info-plantilla-desc">${t('lm.info_plantilla_desc')}</div>
           <div class="lm-precio-box">
             <div class="lm-estadio-bar-label"><i class="ph ph-bold ph-magnifying-glass"></i><span>${t('lm.posicion_objetivo_ojeadores')}</span></div>
             <select id="lmPosicionOjeoSelect" class="lm-ojeo-select">
@@ -13496,12 +13817,14 @@
         ${historial.length ? `
         <div class="lm-historial-dd-lista">
           ${historial.slice(0,12).map(h=>`
-            <div class="lm-historial-dd-item ${h.tipo==='venta'?'lm-historial-dd-venta':'lm-historial-dd-fichaje'}">
-              <i class="ph ph-bold ${h.tipo==='venta'?'ph-arrow-circle-up':'ph-arrow-circle-down'}"></i>
+            <div class="lm-historial-dd-item ${h.tipo==='venta'?'lm-historial-dd-venta':(h.tipo==='fuga'?'lm-historial-dd-fuga':'lm-historial-dd-fichaje')}">
+              <i class="ph ph-bold ${h.tipo==='venta'?'ph-arrow-circle-up':(h.tipo==='fuga'?'ph-door-open':'ph-arrow-circle-down')}"></i>
               <div class="lm-historial-dd-texto">
                 ${h.tipo==='venta'
                   ? `Vendiste a <strong>${h.nombre}</strong> (${h.position}, ${h.overall}) a ${h.destino} por <strong>${formatoDinero(h.monto)}</strong>`
-                  : `Fichaste a <strong>${h.nombre}</strong> (${h.position}, ${h.overall})${h.estrella?` — fichaje estrella, procedente de ${h.procedencia}`:' desde un sobre'}`}
+                  : h.tipo==='fuga'
+                    ? `<strong>${h.nombre}</strong> (${h.position}, ${h.overall}) abandonó el club sin finiquito por una renegociación salarial no resuelta a tiempo`
+                    : `Fichaste a <strong>${h.nombre}</strong> (${h.position}, ${h.overall})${h.estrella?` — fichaje estrella, procedente de ${h.procedencia}`:' desde un sobre'}`}
               </div>
               <span class="lm-historial-dd-jornada">J${h.jornada}</span>
             </div>`).join('')}
@@ -13520,39 +13843,86 @@
       });
     }
   }
-  function abrirSalariosDD(esModoMantener){
+  // Franja de color por calidad, solo para distinguir a golpe de vista
+  // en la parrilla de tarjetas — nada cambia en el juego, es puramente
+  // visual (igual que las estrellas de nivel de los proyectos).
+  function lmTierOverall(overall){
+    if(overall>=85) return 'oro';
+    if(overall>=72) return 'plata';
+    return 'bronce';
+  }
+  function abrirSalariosDD(esModoMantener, jugadorDestacarId){
     const overlay=document.createElement('div');
     overlay.id='lmSalariosOverlay';
+    const STEP_OFERTA_FRACCION=0.05; // cada pulsación de +/- mueve un 5% del salario justo
     function pintar(){
-      const jugadores=[...(state.plantilla||[])].sort((a,b)=>(b.salario||0)-(a.salario||0));
+      const jugadores=[...(state.plantilla||[])].sort((a,b)=>{
+        const aAlerta=a.quiereMarcharse?1:0, bAlerta=b.quiereMarcharse?1:0;
+        if(aAlerta!==bAlerta) return bAlerta-aAlerta;
+        return (b.salario||0)-(a.salario||0);
+      });
       const totalNomina=jugadores.reduce((s,p)=>s+(p.salario||0),0);
-      const filas=jugadores.map(p=>{
+      const numAlertas=jugadores.filter(p=>p.quiereMarcharse).length;
+      const tarjetas=jugadores.map(p=>{
         const chequeo=puedeVenderJugador(p.id);
-        let accion;
+        let accionVenta;
         if(p.enVenta){
-          accion=`<span class="lm-venta-estado">EN VENTA (J${p.ventaResolverJornada})</span> <button class="lm-salario-btn lm-salario-btn-retirar" data-retirar-venta="${p.id}">${t('lm.retirar')}</button>`;
+          accionVenta=`<span class="lm-venta-estado">${t('lm.en_venta_jornada')} (J${p.ventaResolverJornada})</span> <button class="lm-salario-btn lm-salario-btn-retirar" data-retirar-venta="${p.id}">${t('lm.retirar')}</button>`;
         } else {
-          accion=`<button class="lm-salario-btn" data-venta="${p.id}" title="${chequeo.ok?'':chequeo.motivo}" ${chequeo.ok?'':'disabled'}>${t('lm.poner_en_venta')}</button>`;
+          accionVenta=`<button class="lm-salario-btn" data-venta="${p.id}" title="${chequeo.ok?'':chequeo.motivo}" ${chequeo.ok?'':'disabled'}>${t('lm.poner_en_venta')}</button>`;
         }
-        return `<tr>
-          <td>${p.name}${p.injured?` <span class="cross" title="${t('lm.tt_lesionado')}">✚</span>`:''}</td>
-          <td>${p.position}</td>
-          <td>${p.overall}</td>
-          <td>${formatoDinero(p.salario||0)}</td>
-          <td class="lm-salario-accion-td">${accion}</td>
-        </tr>`;
+        const tier=lmTierOverall(p.overall||0);
+        let bloqueSalario;
+        if(p.quiereMarcharse){
+          const demandado=salarioDeseadoJugador(p);
+          const jornadasRestantes=Math.max(0, (p.jornadaLimiteRenegociar||0)-state.jornadaActual);
+          if(p.ofertaSalarialPendiente){
+            bloqueSalario=`
+              <div class="lm-info-salario-fila"><span>${t('lm.oferta_enviada')}</span><strong>${formatoDinero(p.ofertaSalarialPendiente.monto)}</strong></div>
+              <div class="lm-info-salario-stepper">
+                <button class="lm-salario-btn" data-oferta-menos="${p.id}"><i class="ph ph-bold ph-minus"></i></button>
+                <button class="lm-salario-btn" data-oferta-mas="${p.id}"><i class="ph ph-bold ph-plus"></i></button>
+                <button class="lm-salario-btn lm-salario-btn-retirar" data-oferta-retirar="${p.id}">${t('lm.retirar_oferta')}</button>
+              </div>
+              <div class="lm-info-alerta-nota">${t('lm.oferta_pendiente_nota')}</div>`;
+          } else {
+            bloqueSalario=`
+              <button class="lm-salario-btn lm-salario-btn-oferta" data-oferta-crear="${p.id}"><i class="ph ph-bold ph-handshake"></i> ${t('lm.hacer_oferta_btn')}</button>`;
+          }
+          bloqueSalario=`
+            <div class="lm-info-alerta-titulo"><i class="ph ph-bold ph-warning-circle"></i> ${t('lm.quiere_marcharse_titulo')}</div>
+            <div class="lm-info-salario-fila"><span>${t('lm.tabla_salario')}</span><strong>${formatoDinero(p.salario||0)}</strong></div>
+            <div class="lm-info-salario-fila"><span>${t('lm.pide_aprox')}</span><strong>${formatoDinero(demandado)}</strong></div>
+            <div class="lm-info-alerta-plazo">${tp('lm.quedan_n_jornadas', {n:jornadasRestantes})}</div>
+            ${bloqueSalario}`;
+        } else {
+          const step=Math.max(200, Math.round(salarioDeseadoJugador(p)*STEP_OFERTA_FRACCION));
+          bloqueSalario=`
+            <div class="lm-info-salario-fila"><span>${t('lm.tabla_salario')}</span><strong>${formatoDinero(p.salario||0)}</strong></div>
+            <div class="lm-info-salario-stepper">
+              <button class="lm-salario-btn" data-salario-menos="${p.id}" data-step="${step}"><i class="ph ph-bold ph-minus"></i></button>
+              <button class="lm-salario-btn" data-salario-mas="${p.id}" data-step="${step}"><i class="ph ph-bold ph-plus"></i></button>
+            </div>`;
+        }
+        return `<div class="lm-info-plantilla-card lm-info-plantilla-card-${tier}${p.quiereMarcharse?' lm-info-plantilla-card-alerta':''}" id="lm-info-card-${p.id}">
+          <div class="lm-info-card-header">
+            <span class="lm-info-card-dorsal">${p.numero!=null?p.numero:'-'}</span>
+            <span class="lm-info-card-nombre">${p.name}${p.injured?` <span class="cross" title="${t('lm.tt_lesionado')}">✚</span>`:''}</span>
+            <span class="lm-info-card-pos">${p.position}</span>
+            <span class="lm-info-card-overall lm-info-card-overall-${tier}">${p.overall||0}</span>
+          </div>
+          <div class="lm-info-card-body">${bloqueSalario}</div>
+          <div class="lm-info-card-footer">${accionVenta}</div>
+        </div>`;
       }).join('');
       const scrollTopPrevio=overlay.scrollTop;
       overlay.innerHTML=`
-        <div class="lm-dilemma-card lm-dilemma-card-dd" style="max-width:640px;text-align:left">
+        <div class="lm-dilemma-card lm-dilemma-card-dd" style="max-width:820px;text-align:left">
           ${xCerrarHTML()}
-          <div class="lm-dilemma-title"><i class="ph ph-bold ph-file-text"></i> SALARIOS DE LA PLANTILLA</div>
-          <div class="lm-setup-desc" style="text-align:center;margin-bottom:8px">${t('lm.nomina_total')} <strong>${formatoDinero(totalNomina)}/mes</strong> · plantilla: <strong>${jugadores.length}</strong> · al poner en venta, el Director Deportivo avisará por correo en 1-3 jornadas con las ofertas que lleguen.</div>
-          <div class="lm-salarios-tabla-wrap">
-            <table class="lm-salarios-tabla">
-              <thead><tr><th>${t('lm.tabla_jugador')}</th><th>Pos</th><th>${t('lm.tabla_punt')}</th><th>${t('lm.tabla_salario')}</th><th></th></tr></thead>
-              <tbody>${filas || `<tr><td colspan="5" style="text-align:center">${t('lm.sin_jugadores_plantilla')}</td></tr>`}</tbody>
-            </table>
+          <div class="lm-dilemma-title"><i class="ph ph-bold ph-file-text"></i> ${t('lm.info_plantilla_btn')}</div>
+          <div class="lm-setup-desc" style="text-align:center;margin-bottom:8px">${t('lm.nomina_total')} <strong>${formatoDinero(totalNomina)}/mes</strong> · plantilla: <strong>${jugadores.length}</strong>${numAlertas?` · <strong class="lm-capital-neg">${tp('lm.n_jugadores_en_alerta', {n:numAlertas})}</strong>`:''} · ${t('lm.info_plantilla_nota_venta')}</div>
+          <div class="lm-info-plantilla-grid-wrap">
+            <div class="lm-info-plantilla-grid">${tarjetas || `<div class="lm-info-plantilla-vacio">${t('lm.sin_jugadores_plantilla')}</div>`}</div>
           </div>
           <div class="lm-popup-actions lm-popup-actions-compact">
             ${esModoMantener?'':`<button id="lmSalariosCerrar" class="mode-card-btn mode-card-btn-gold">${t('lm.cerrar')}</button>`}
@@ -13592,10 +13962,75 @@
           pintar();
         });
       });
+      overlay.querySelectorAll('[data-salario-mas]').forEach(btn=>{
+        btn.addEventListener('click', ()=>{
+          const jugadorId=btn.getAttribute('data-salario-mas');
+          const p=(state.plantilla||[]).find(x=>x.id===jugadorId);
+          if(!p) return;
+          if(typeof window.playSound==='function') window.playSound('select');
+          ajustarSalarioDirecto(jugadorId, (p.salario||0)+parseInt(btn.getAttribute('data-step'),10));
+          pintar();
+        });
+      });
+      overlay.querySelectorAll('[data-salario-menos]').forEach(btn=>{
+        btn.addEventListener('click', ()=>{
+          const jugadorId=btn.getAttribute('data-salario-menos');
+          const p=(state.plantilla||[]).find(x=>x.id===jugadorId);
+          if(!p) return;
+          if(typeof window.playSound==='function') window.playSound('select');
+          ajustarSalarioDirecto(jugadorId, (p.salario||0)-parseInt(btn.getAttribute('data-step'),10));
+          pintar();
+        });
+      });
+      overlay.querySelectorAll('[data-oferta-crear]').forEach(btn=>{
+        btn.addEventListener('click', ()=>{
+          const jugadorId=btn.getAttribute('data-oferta-crear');
+          const p=(state.plantilla||[]).find(x=>x.id===jugadorId);
+          if(!p) return;
+          if(typeof window.playSound==='function') window.playSound('select');
+          const inicial=Math.max(p.salario||0, Math.round(salarioDeseadoJugador(p)*0.9));
+          hacerOfertaSalarial(jugadorId, inicial);
+          pintar();
+        });
+      });
+      overlay.querySelectorAll('[data-oferta-mas]').forEach(btn=>{
+        btn.addEventListener('click', ()=>{
+          const jugadorId=btn.getAttribute('data-oferta-mas');
+          const p=(state.plantilla||[]).find(x=>x.id===jugadorId);
+          if(!p || !p.ofertaSalarialPendiente) return;
+          if(typeof window.playSound==='function') window.playSound('select');
+          const step=Math.max(200, Math.round(salarioDeseadoJugador(p)*STEP_OFERTA_FRACCION));
+          hacerOfertaSalarial(jugadorId, p.ofertaSalarialPendiente.monto+step);
+          pintar();
+        });
+      });
+      overlay.querySelectorAll('[data-oferta-menos]').forEach(btn=>{
+        btn.addEventListener('click', ()=>{
+          const jugadorId=btn.getAttribute('data-oferta-menos');
+          const p=(state.plantilla||[]).find(x=>x.id===jugadorId);
+          if(!p || !p.ofertaSalarialPendiente) return;
+          if(typeof window.playSound==='function') window.playSound('select');
+          const step=Math.max(200, Math.round(salarioDeseadoJugador(p)*STEP_OFERTA_FRACCION));
+          hacerOfertaSalarial(jugadorId, p.ofertaSalarialPendiente.monto-step);
+          pintar();
+        });
+      });
+      overlay.querySelectorAll('[data-oferta-retirar]').forEach(btn=>{
+        btn.addEventListener('click', ()=>{
+          const jugadorId=btn.getAttribute('data-oferta-retirar');
+          if(typeof window.playSound==='function') window.playSound('select');
+          retirarOfertaSalarial(jugadorId);
+          pintar();
+        });
+      });
     }
     document.getElementById('ligaManagerScreen').appendChild(overlay);
     habilitarCierreOverlay(overlay, ()=>overlay.remove());
     pintar();
+    if(jugadorDestacarId){
+      const tarjeta=overlay.querySelector('#lm-info-card-'+jugadorDestacarId);
+      if(tarjeta && tarjeta.scrollIntoView) tarjeta.scrollIntoView({block:'center'});
+    }
   }
 
   const NIVELES_PF_INFO=[

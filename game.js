@@ -867,6 +867,14 @@ function toggleCollapsible(boxId){
   if(!box) return;
   playSound('select');
   box.classList.toggle("collapsed");
+  // Al minimizar "CÓMO JUGAR/AYUDA" (o su equivalente de Liga Manager),
+  // el buscador de dudas se vacía del todo — tanto el texto escrito
+  // como la respuesta tipo chat que se estuviera mostrando. Así cada
+  // vez que se reabre empieza limpio, en vez de dejar una respuesta
+  // vieja pegada de una consulta anterior.
+  if(box.classList.contains('collapsed') && typeof window.limpiarAyudaBusqueda==='function'){
+    window.limpiarAyudaBusqueda(boxId);
+  }
 }
 
 /* ========= ¿SABÍAS QUÉ...? TIPS ========= */

@@ -3398,6 +3398,7 @@ body.liga-manager-screen .ranking-btn-label-lm{display:inline}
 .lm-historial-dd-item i{font-size:16px;flex-shrink:0}
 .lm-historial-dd-fichaje i{color:#5dcaa5}
 .lm-historial-dd-venta i{color:#e6c94a}
+.lm-historial-dd-fuga i{color:#e24b4a}
 .lm-historial-dd-texto{flex:1;line-height:1.4}
 .lm-historial-dd-jornada{font-size:10px;color:var(--lm-text-dim);flex-shrink:0}
 .lm-historial-dd-vacio{font-size:12px;color:var(--lm-text-dim);text-align:center;padding:10px}
@@ -3415,6 +3416,100 @@ body.liga-manager-screen .ranking-btn-label-lm{display:inline}
 .lm-salario-btn-retirar{background:#3a2020;border-color:#c0392b}
 .lm-salario-btn-retirar:hover{background:#4a2828}
 .lm-venta-estado{font-size:9px;color:#e6c94a;margin-right:6px}
+
+/* INFORMACIÓN DE LA PLANTILLA — parrilla de tarjetas (sustituye a la
+   antigua tabla de "salarios", ahora se distingue cada jugador de un
+   vistazo por su tarjeta propia en vez de una fila más en una columna
+   larga). Tono de borde por nivel (oro/plata/bronce) y una tarjeta en
+   rojo bien visible para quien se quiere marchar. */
+.lm-info-plantilla-desc{font-size:11px;color:var(--lm-text-dim);text-align:center;margin:2px 0 10px;line-height:1.4}
+.lm-alerta-salarial-badge{
+  position:absolute;top:-6px;right:-6px;background:#e24b4a;color:#fff;font-size:10px;font-weight:800;
+  width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  border:2px solid var(--lm-surface-2);animation:lmPulsoAlerta 1.4s ease-in-out infinite;
+}
+@keyframes lmPulsoAlerta{0%,100%{transform:scale(1)}50%{transform:scale(1.15)}}
+.lm-info-plantilla-grid-wrap{max-height:520px;overflow-y:auto;padding-right:4px}
+.lm-info-plantilla-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px}
+.lm-info-plantilla-vacio{grid-column:1/-1;text-align:center;color:var(--lm-text-dim);font-size:12px;padding:20px}
+.lm-info-plantilla-card{
+  background:var(--lm-surface-2);border:1px solid var(--lm-border);border-radius:10px;
+  padding:10px;display:flex;flex-direction:column;gap:8px;border-left:4px solid #6b6b6b;
+}
+.lm-info-plantilla-card-oro{border-left-color:#e6c94a}
+.lm-info-plantilla-card-plata{border-left-color:#9fb0bd}
+.lm-info-plantilla-card-bronce{border-left-color:#8a6a4a}
+.lm-info-plantilla-card-alerta{
+  background:rgba(226,75,74,.10);border-color:rgba(226,75,74,.5);border-left-color:#e24b4a;
+  animation:lmPulsoTarjetaAlerta 2.2s ease-in-out infinite;
+}
+@keyframes lmPulsoTarjetaAlerta{0%,100%{box-shadow:0 0 0 rgba(226,75,74,0)}50%{box-shadow:0 0 12px rgba(226,75,74,.35)}}
+.lm-info-card-header{display:flex;align-items:center;gap:6px}
+.lm-info-card-dorsal{
+  font-family:'Bebas Neue',Impact,sans-serif;font-size:14px;color:var(--lm-text-dim);
+  background:rgba(0,0,0,.25);border-radius:5px;padding:1px 6px;flex-shrink:0;
+}
+.lm-info-card-nombre{flex:1;min-width:0;font-weight:700;font-size:12px;color:var(--lm-text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lm-info-card-pos{font-size:9px;color:var(--lm-text-dim);background:rgba(255,255,255,.06);border-radius:4px;padding:2px 6px;flex-shrink:0}
+.lm-info-card-overall{
+  font-family:'Bebas Neue',Impact,sans-serif;font-size:13px;flex-shrink:0;
+  border-radius:5px;padding:1px 7px;color:#000;font-weight:700;
+}
+.lm-info-card-overall-oro{background:#e6c94a}
+.lm-info-card-overall-plata{background:#c3cdd6}
+.lm-info-card-overall-bronce{background:#c99a6c}
+.lm-info-card-body{display:flex;flex-direction:column;gap:5px;font-size:11px}
+.lm-info-salario-fila{display:flex;justify-content:space-between;align-items:center;color:var(--lm-text-dim)}
+.lm-info-salario-fila strong{color:var(--lm-text);font-size:12px}
+.lm-info-salario-stepper{display:flex;gap:6px;align-items:center}
+.lm-info-salario-stepper .lm-salario-btn{flex:0 0 auto;padding:4px 10px}
+.lm-info-alerta-titulo{color:#f08a80;font-weight:800;font-size:11px;display:flex;align-items:center;gap:5px;letter-spacing:.4px}
+.lm-info-alerta-plazo{color:#f08a80;font-size:10px;font-weight:600}
+.lm-info-alerta-nota{color:var(--lm-text-dim);font-size:9.5px;line-height:1.3}
+.lm-salario-btn-oferta{width:100%;background:rgba(230,201,74,.14);border-color:#c9a227;color:#e6c94a;padding:7px 9px}
+.lm-salario-btn-oferta:hover{background:rgba(230,201,74,.24)}
+.lm-info-card-footer{margin-top:2px}
+.lm-info-card-footer .lm-salario-btn{width:100%}
+
+/* Buscador de dudas de "CÓMO JUGAR/AYUDA" — burbujas estilo chat de
+   WhatsApp integradas encima del propio cuadro de texto, pero con la
+   paleta oscura y dorada del resto de Liga Manager en vez del verde
+   real de WhatsApp (salvo el acento de la burbuja del jugador, que sí
+   guarda ese verde para que se reconozca el patrón a la primera). */
+.lm-ayuda-wrap{display:flex;flex-direction:column;gap:0;margin-top:4px}
+.lm-ayuda-chat{
+  display:flex;flex-direction:column;gap:6px;max-height:220px;overflow-y:auto;
+  padding:10px;background:#0b1410;border:1px solid var(--lm-border);border-bottom:none;
+  border-radius:10px 10px 0 0;
+  background-image:radial-gradient(circle at 20% 20%, rgba(255,255,255,.02) 0, transparent 60%);
+}
+.lm-ayuda-burbuja{
+  max-width:86%;padding:7px 11px;border-radius:11px;font-size:11.5px;line-height:1.42;
+  word-wrap:break-word;box-shadow:0 1px 2px rgba(0,0,0,.25);
+}
+.lm-ayuda-burbuja-pregunta{
+  align-self:flex-end;background:#1f7a52;color:#eafff2;border-bottom-right-radius:3px;
+}
+.lm-ayuda-burbuja-respuesta{
+  align-self:flex-start;background:var(--lm-surface-2);color:var(--lm-text);border:1px solid var(--lm-border);border-bottom-left-radius:3px;
+}
+.lm-ayuda-input-row{display:flex;gap:0}
+.lm-ayuda-chat + .lm-ayuda-input-row{margin-top:0}
+.lm-ayuda-input{
+  flex:1;min-width:0;background:var(--lm-surface-1);border:1px solid var(--lm-border);color:var(--lm-text);
+  font-size:12px;font-family:inherit;padding:9px 12px;border-radius:20px 0 0 20px;outline:none;
+}
+.lm-ayuda-input:focus{border-color:#c9a227}
+.lm-ayuda-input::placeholder{color:var(--lm-text-dim)}
+.lm-ayuda-buscar-btn{
+  flex:0 0 auto;width:38px;background:var(--gold);color:#1a1a1a;border:1px solid #c9a227;border-left:none;
+  border-radius:0 20px 20px 0;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px;
+}
+.lm-ayuda-buscar-btn:hover{filter:brightness(1.08)}
+/* Cuando ya hay chat encima, el cuadro de texto pierde su redondeo
+   superior para quedar pegado a él, como una sola pieza. */
+.lm-ayuda-chat + .lm-ayuda-input-row .lm-ayuda-input{border-radius:0 0 0 20px}
+.lm-ayuda-chat + .lm-ayuda-input-row .lm-ayuda-buscar-btn{border-radius:0 0 20px 0}
 .lm-match-actions button:disabled{opacity:.45;cursor:not-allowed;transform:none}
 .lm-btn-jugar{background:var(--gold);color:var(--lm-gold-tint);border:none}
 
