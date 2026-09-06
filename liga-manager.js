@@ -8180,6 +8180,46 @@
     });
   }
 
+  // Popup de confirmación antes de contratar un préstamo bancario — se
+  // abre DESDE DENTRO del popup del Director General ya abierto, así que
+  // necesita su propia regla de z-index de máxima prioridad para
+  // quedar por encima (ver #lmConfirmarPrestamoOverlay en style.css).
+  function mostrarConfirmarPrestamo(paqueteId, confirmarCallback){
+    const paquete=paquetesPrestamoDisponibles().find(p=>p.id===paqueteId);
+    if(!paquete) return;
+    const totalADevolver=Math.round(paquete.monto*(1+paquete.interes));
+    const cuotaPorJornada=Math.round(totalADevolver/paquete.plazoJornadas);
+    const overlay=document.createElement('div');
+    overlay.id='lmConfirmarPrestamoOverlay';
+    overlay.innerHTML=`
+      <div class="lm-dilemma-card" style="max-width:400px">
+        <div class="lm-dilemma-title"><i class="ph ph-bold ph-hand-coins"></i>${t('lm.confirmar_prestamo_titulo')}</div>
+        <div class="lm-dilemma-text" style="margin:10px 0 16px">${tp('lm.confirmar_prestamo_texto', {
+          monto:formatoDinero(paquete.monto),
+          total:formatoDinero(totalADevolver),
+          cuota:formatoDinero(cuotaPorJornada),
+          plazo:paquete.plazoJornadas,
+          interes:Math.round(paquete.interes*100)
+        })}</div>
+        <div class="lm-popup-actions lm-popup-actions-compact">
+          <button id="lmConfirmarPrestamoCancelar" class="mode-card-btn mode-card-btn-secondary">${t('lm.cancelar_btn')}</button>
+          <button id="lmConfirmarPrestamoConfirmar" class="mode-card-btn mode-card-btn-gold">${t('lm.aceptar_btn')}</button>
+        </div>
+      </div>`;
+    document.body.appendChild(overlay);
+    const cerrar=()=>overlay.remove();
+    habilitarCierreOverlay(overlay, cerrar);
+    document.getElementById('lmConfirmarPrestamoCancelar').addEventListener('click', ()=>{
+      if(typeof window.playSound==='function') window.playSound('select');
+      cerrar();
+    });
+    document.getElementById('lmConfirmarPrestamoConfirmar').addEventListener('click', ()=>{
+      if(typeof window.playSound==='function') window.playSound('select');
+      cerrar();
+      confirmarCallback();
+    });
+  }
+
   function mostrarAvisoJuego(mensaje, titulo){
     const overlay=document.createElement('div');
     overlay.id='lmAvisoOverlay';
@@ -12860,11 +12900,14 @@
       overlay.querySelectorAll('[data-prestamo]').forEach(btn=>{
         btn.addEventListener('click', ()=>{
           const paqueteId=btn.getAttribute('data-prestamo');
-          if(solicitarPrestamo(paqueteId)){
-            renderHub();
-            overlay.remove();
-            abrirDirectorGeneral(); // reabre el popup ya con el préstamo activo mostrado
-          }
+          if(typeof window.playSound==='function') window.playSound('select');
+          mostrarConfirmarPrestamo(paqueteId, ()=>{
+            if(solicitarPrestamo(paqueteId)){
+              renderHub();
+              overlay.remove();
+              abrirDirectorGeneral(); // reabre el popup ya con el préstamo activo mostrado
+            }
+          });
         });
       });
       const xBtnDG=overlay.querySelector('[data-cerrar-x]');
