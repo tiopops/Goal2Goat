@@ -3497,6 +3497,39 @@ body.liga-manager-screen .ranking-btn-label-lm{display:inline}
 .lm-ayuda-burbuja-respuesta{
   align-self:flex-start;background:var(--lm-surface-2);color:var(--lm-text);border:1px solid var(--lm-border);border-bottom-left-radius:3px;
 }
+/* Animación de aparición tipo WhatsApp — solo se aplica a la burbuja
+   recién añadida (marca "nuevo" en lmAyudaChatHistorial), nunca a las
+   que ya llevaban un rato en pantalla, para que no "parpadeen" en cada
+   repintado. */
+@keyframes lmAyudaBurbujaPop{
+  from{opacity:0; transform:translateY(8px) scale(.94);}
+  to{opacity:1; transform:translateY(0) scale(1);}
+}
+.lm-ayuda-burbuja-nueva{animation:lmAyudaBurbujaPop .32s cubic-bezier(.34,1.56,.64,1) both}
+/* Los "tres puntitos" de "escribiendo..." — mismo aspecto que la
+   burbuja de respuesta, pero solo con los puntos animados dentro. */
+.lm-ayuda-typing{display:flex;gap:4px;align-items:center;padding:10px 14px}
+.lm-ayuda-typing span{
+  width:6px;height:6px;border-radius:50%;background:var(--lm-text-dim);opacity:.45;
+  animation:lmAyudaTypingBounce 1.1s infinite ease-in-out;
+}
+.lm-ayuda-typing span:nth-child(2){animation-delay:.15s}
+.lm-ayuda-typing span:nth-child(3){animation-delay:.3s}
+@keyframes lmAyudaTypingBounce{
+  0%,60%,100%{transform:translateY(0);opacity:.45}
+  30%{transform:translateY(-4px);opacity:1}
+}
+/* Enlace directo dentro de una respuesta del chat ("Abrir Director
+   General"...) — reutiliza el acento dorado, como una acción destacada
+   dentro de la propia burbuja. */
+.lm-ayuda-link-btn{
+  display:flex;align-items:center;gap:6px;margin-top:7px;width:100%;
+  background:rgba(230,201,74,.14);border:1px solid #c9a227;color:#e6c94a;
+  border-radius:8px;padding:6px 10px;font-size:10.5px;font-weight:700;
+  cursor:pointer;font-family:inherit;justify-content:center;
+}
+.lm-ayuda-link-btn:hover{background:rgba(230,201,74,.24)}
+.lm-ayuda-link-btn i{font-size:13px}
 .lm-ayuda-input-row{display:flex;gap:0}
 .lm-ayuda-chat + .lm-ayuda-input-row{margin-top:0}
 .lm-ayuda-input{

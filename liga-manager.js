@@ -3291,6 +3291,12 @@
   // game.js, que llama a limpiarAyudaBusqueda).
   let lmAyudaChatHistorial=[];
   let lmAyudaInputValor='';
+  // true mientras se muestran los "tres puntitos" de "escribiendo..."
+  // antes de que aparezca la respuesta real (ver ejecutarBusquedaAyudaLM).
+  let lmAyudaEscribiendo=false;
+  // Cronómetro pendiente de la respuesta con retraso (para poder
+  // cancelarlo limpio si la caja se minimiza a media espera).
+  let lmAyudaTimeoutRespuesta=null;
   // Batería de preguntas frecuentes del buscador de "CÓMO JUGAR/AYUDA".
   // Cada entrada lleva una lista de palabras clave (en varios idiomas,
   // para que reconozca la pregunta sea cual sea el idioma activo) y la
@@ -3298,43 +3304,67 @@
   // en el idioma que esté usando el jugador ahora mismo, aunque haya
   // escrito la pregunta en otro.
   const LM_AYUDA_FAQ=[
-    {id:'sobres', keywords:['sobre','sobres','sobres de fichajes','fichaje sobre','abrir sobre','abrir un sobre','conseguir jugadores nuevos','fichar jugadores nuevos','comprar jugadores','oficina de fichajes','pack','envelope','packs','enveloppe','busta','buste','umschlag'], respuestaKey:'ayuda.faq_sobres', dondeKey:'ayuda.faq_sobres_donde'},
-    {id:'fichaje_estrella', keywords:['fichaje estrella','fichaje de estrella','jugador real','jugador legendario','crack','fichar a un crack','estrella','star signing','jugador de otro equipo'], respuestaKey:'ayuda.faq_fichaje_estrella', dondeKey:'ayuda.faq_fichaje_estrella_donde'},
-    {id:'traspasos', keywords:['traspaso','traspasos','vender jugador','vender a un jugador','poner en venta','poner a la venta','venta','ofertas por mis jugadores','ofertas de traspaso','ingresos por venta','transfer','vendre','verkaufen','vendere'], respuestaKey:'ayuda.faq_traspasos', dondeKey:'ayuda.faq_traspasos_donde'},
-    {id:'agencia_traspasos', keywords:['agencia de traspasos','proyecto de traspasos','traspasos expres','acelerar ofertas','mejorar las ofertas de traspaso','mejores ofertas'], respuestaKey:'ayuda.faq_agencia_traspasos', dondeKey:'ayuda.faq_agencia_traspasos_donde'},
-    {id:'info_plantilla', keywords:['salario','salarios','informacion de la plantilla','informacion de plantilla','ver la plantilla','gestionar salarios','sueldo','sueldos','sueldo de los jugadores','ficha de jugador','renegociar','subir sueldo','nomina jugadores'], respuestaKey:'ayuda.faq_info_plantilla', dondeKey:'ayuda.faq_info_plantilla_donde'},
-    {id:'jugador_quiere_marcharse', keywords:['quiere marcharse','se quiere ir','jugador descontento','jugador enfadado','no quiere renovar','amenaza con irse','abandonar el club','fuga de jugador','oferta salarial','plazo renegociar'], respuestaKey:'ayuda.faq_jugador_marcharse', dondeKey:'ayuda.faq_jugador_quiere_marcharse_donde'},
-    {id:'prestamo', keywords:['prestamo','prestamos','pedir un prestamo','pedir credito','devolver el prestamo','cuota del prestamo','deuda','banco','pedir dinero','interes','intereses','loan','pret','darlehen','prestito'], respuestaKey:'ayuda.faq_prestamo', dondeKey:'ayuda.faq_prestamo_donde'},
-    {id:'precio_entrada', keywords:['precio de la entrada','precio de las entradas','precio entrada','subir entradas','subir el precio','bajar el precio de la entrada','taquilla','asistencia prevista','ingresos previstos','ticket price'], respuestaKey:'ayuda.faq_precio_entrada', dondeKey:'ayuda.faq_precio_entrada_donde'},
-    {id:'capital', keywords:['capital','cuanto dinero tengo','cuanto dinero dispongo','de cuanto capital dispongo','cuanto capital tengo','cuanta pasta tengo','saldo disponible','presupuesto del club','fondos disponibles','tesoreria','cuentas del club','dinero','numeros rojos','quiebra','bancarrota','sin dinero','finanzas del club','money','how much money do i have','wieviel geld','combien d argent','quanto denaro','quanto dinheiro'], respuestaKey:'ayuda.faq_capital', dondeKey:'ayuda.faq_capital_donde'},
+    {id:'sobres', keywords:['sobre','sobres','sobres de fichajes','fichaje sobre','abrir sobre','abrir un sobre','conseguir jugadores nuevos','fichar jugadores nuevos','comprar jugadores','oficina de fichajes','pack','envelope','packs','enveloppe','busta','buste','umschlag'], respuestaKey:'ayuda.faq_sobres', dondeKey:'ayuda.faq_sobres_donde', destino:'dd'},
+    {id:'fichaje_estrella', keywords:['fichaje estrella','fichaje de estrella','jugador real','jugador legendario','crack','fichar a un crack','estrella','star signing','jugador de otro equipo'], respuestaKey:'ayuda.faq_fichaje_estrella', dondeKey:'ayuda.faq_fichaje_estrella_donde', destino:'dd'},
+    {id:'traspasos', keywords:['traspaso','traspasos','vender jugador','vender a un jugador','poner en venta','poner a la venta','venta','ofertas por mis jugadores','ofertas de traspaso','ingresos por venta','transfer','vendre','verkaufen','vendere'], respuestaKey:'ayuda.faq_traspasos', dondeKey:'ayuda.faq_traspasos_donde', destino:'info_plantilla'},
+    {id:'agencia_traspasos', keywords:['agencia de traspasos','proyecto de traspasos','traspasos expres','acelerar ofertas','mejorar las ofertas de traspaso','mejores ofertas'], respuestaKey:'ayuda.faq_agencia_traspasos', dondeKey:'ayuda.faq_agencia_traspasos_donde', destino:'dd'},
+    {id:'info_plantilla', keywords:['salario','salarios','informacion de la plantilla','informacion de plantilla','ver la plantilla','gestionar salarios','sueldo','sueldos','sueldo de los jugadores','ficha de jugador','renegociar','subir sueldo','nomina jugadores'], respuestaKey:'ayuda.faq_info_plantilla', dondeKey:'ayuda.faq_info_plantilla_donde', destino:'info_plantilla'},
+    {id:'jugador_quiere_marcharse', keywords:['quiere marcharse','se quiere ir','jugador descontento','jugador enfadado','no quiere renovar','amenaza con irse','abandonar el club','fuga de jugador','oferta salarial','plazo renegociar'], respuestaKey:'ayuda.faq_jugador_marcharse', dondeKey:'ayuda.faq_jugador_quiere_marcharse_donde', destino:'info_plantilla'},
+    {id:'prestamo', keywords:['prestamo','prestamos','pedir un prestamo','pedir credito','devolver el prestamo','cuota del prestamo','deuda','banco','pedir dinero','interes','intereses','loan','pret','darlehen','prestito'], respuestaKey:'ayuda.faq_prestamo', dondeKey:'ayuda.faq_prestamo_donde', destino:'dg'},
+    {id:'precio_entrada', keywords:['precio de la entrada','precio de las entradas','precio entrada','subir entradas','subir el precio','bajar el precio de la entrada','taquilla','asistencia prevista','ingresos previstos','ticket price'], respuestaKey:'ayuda.faq_precio_entrada', dondeKey:'ayuda.faq_precio_entrada_donde', destino:'dg'},
+    {id:'capital', keywords:['capital','cuanto dinero tengo','cuanto dinero dispongo','de cuanto capital dispongo','cuanto capital tengo','cuanta pasta tengo','saldo disponible','presupuesto del club','fondos disponibles','tesoreria','cuentas del club','dinero','numeros rojos','quiebra','bancarrota','sin dinero','finanzas del club','money','how much money do i have','wieviel geld','combien d argent','quanto denaro','quanto dinheiro'], respuestaKey:'ayuda.faq_capital', dondeKey:'ayuda.faq_capital_donde', destino:'dg'},
     {id:'moral', keywords:['moral','estado de animo','confianza del equipo','felicidad plantilla','animo del equipo','vestuario'], respuestaKey:'ayuda.faq_moral', dondeKey:'ayuda.faq_moral_donde'},
-    {id:'aficion', keywords:['aficion','afición','nivel de aficion','popularidad del equipo','simpatia de la aficion','satisfaccion aficion','grada','graderio','fans'], respuestaKey:'ayuda.faq_aficion', dondeKey:'ayuda.faq_aficion_donde'},
-    {id:'disturbios', keywords:['disturbio','disturbios','incidentes en el estadio','problemas en la grada','pelea en la grada','violencia estadio'], respuestaKey:'ayuda.faq_disturbios', dondeKey:'ayuda.faq_disturbios_donde'},
-    {id:'seguridad_estadio', keywords:['seguridad','contratar guardias','nivel de seguridad','guardias','seguridad del estadio','vigilantes'], respuestaKey:'ayuda.faq_seguridad', dondeKey:'ayuda.faq_seguridad_estadio_donde'},
-    {id:'estado_campo', keywords:['estado del campo','calidad del cesped','mantenimiento del cesped','desgaste del campo','cesped','césped','mantenimiento del campo'], respuestaKey:'ayuda.faq_campo', dondeKey:'ayuda.faq_estado_campo_donde'},
-    {id:'medico', keywords:['medico','médico','lesiones de jugadores','tiempo de recuperacion','parte medico','lesion','lesiones','lesionado','recuperacion lesion'], respuestaKey:'ayuda.faq_medico', dondeKey:'ayuda.faq_medico_donde'},
-    {id:'preparador_fisico', keywords:['preparador fisico','preparador físico','nivel de fatiga','cansancio de jugadores','plan fisico','fatiga','resistencia','cansancio','recuperacion fisica'], respuestaKey:'ayuda.faq_preparador', dondeKey:'ayuda.faq_preparador_fisico_donde'},
-    {id:'entrenamiento', keywords:['entrenamiento','entrenar','quien entrena','elegir jugadores para entrenar','mejora de estadisticas jugador','plan de entrenamiento','mejorar estadisticas','subir estadisticas'], respuestaKey:'ayuda.faq_entrenamiento', dondeKey:'ayuda.faq_entrenamiento_donde'},
-    {id:'director_general', keywords:['director general','proyectos del club','patrocinadores','ampliar el estadio','proyectos director general','patrocinio','estadio ampliar'], respuestaKey:'ayuda.faq_director_general', dondeKey:'ayuda.faq_director_general_donde'},
-    {id:'director_deportivo', keywords:['director deportivo','ojear jugadores','scouting','fichajes del director deportivo','ojeadores','red de ojeadores','ojeo','cartas del director deportivo'], respuestaKey:'ayuda.faq_director_deportivo', dondeKey:'ayuda.faq_director_deportivo_donde'},
+    {id:'aficion', keywords:['aficion','afición','nivel de aficion','popularidad del equipo','simpatia de la aficion','satisfaccion aficion','grada','graderio','fans'], respuestaKey:'ayuda.faq_aficion', dondeKey:'ayuda.faq_aficion_donde', destino:'dg'},
+    {id:'disturbios', keywords:['disturbio','disturbios','incidentes en el estadio','problemas en la grada','pelea en la grada','violencia estadio'], respuestaKey:'ayuda.faq_disturbios', dondeKey:'ayuda.faq_disturbios_donde', destino:'estado_estadio'},
+    {id:'seguridad_estadio', keywords:['seguridad','contratar guardias','nivel de seguridad','guardias','seguridad del estadio','vigilantes'], respuestaKey:'ayuda.faq_seguridad', dondeKey:'ayuda.faq_seguridad_estadio_donde', destino:'seguridad'},
+    {id:'estado_campo', keywords:['estado del campo','calidad del cesped','mantenimiento del cesped','desgaste del campo','cesped','césped','mantenimiento del campo'], respuestaKey:'ayuda.faq_campo', dondeKey:'ayuda.faq_estado_campo_donde', destino:'estado_estadio'},
+    {id:'medico', keywords:['medico','médico','lesiones de jugadores','tiempo de recuperacion','parte medico','lesion','lesiones','lesionado','recuperacion lesion'], respuestaKey:'ayuda.faq_medico', dondeKey:'ayuda.faq_medico_donde', destino:'medico'},
+    {id:'preparador_fisico', keywords:['preparador fisico','preparador físico','nivel de fatiga','cansancio de jugadores','plan fisico','fatiga','resistencia','cansancio','recuperacion fisica'], respuestaKey:'ayuda.faq_preparador', dondeKey:'ayuda.faq_preparador_fisico_donde', destino:'pf'},
+    {id:'entrenamiento', keywords:['entrenamiento','entrenar','quien entrena','elegir jugadores para entrenar','mejora de estadisticas jugador','plan de entrenamiento','mejorar estadisticas','subir estadisticas'], respuestaKey:'ayuda.faq_entrenamiento', dondeKey:'ayuda.faq_entrenamiento_donde', destino:'pf'},
+    {id:'director_general', keywords:['director general','proyectos del club','patrocinadores','ampliar el estadio','proyectos director general','patrocinio','estadio ampliar'], respuestaKey:'ayuda.faq_director_general', dondeKey:'ayuda.faq_director_general_donde', destino:'dg'},
+    {id:'director_deportivo', keywords:['director deportivo','ojear jugadores','scouting','fichajes del director deportivo','ojeadores','red de ojeadores','ojeo','cartas del director deportivo'], respuestaKey:'ayuda.faq_director_deportivo', dondeKey:'ayuda.faq_director_deportivo_donde', destino:'dd'},
     {id:'proyectos_nivel', keywords:['proyecto','proyectos','como funcionan los proyectos','subir de nivel un proyecto','tirar los dados','nivel del proyecto','dificultad del proyecto','dados','tirada'], respuestaKey:'ayuda.faq_proyectos', dondeKey:'ayuda.faq_proyectos_nivel_donde'},
     {id:'habilidades', keywords:['habilidad','habilidades','puntos de habilidad','desbloquear habilidades','activar una habilidad','activar habilidad','skill','skills'], respuestaKey:'ayuda.faq_habilidades', dondeKey:'ayuda.faq_habilidades_donde'},
-    {id:'quiniela', keywords:['quiniela','jugar la quiniela','pronosticos','apostar resultados','apuesta','boleto','rellenar quiniela'], respuestaKey:'ayuda.faq_quiniela', dondeKey:'ayuda.faq_quiniela_donde'},
-    {id:'amistosos', keywords:['amistoso','amistosos','partido amistoso','jugar amistosos','descansar jugadores','arbol de nodos','calendario semanal','dia de descanso'], respuestaKey:'ayuda.faq_amistosos', dondeKey:'ayuda.faq_amistosos_donde'},
+    {id:'quiniela', keywords:['quiniela','jugar la quiniela','pronosticos','apostar resultados','apuesta','boleto','rellenar quiniela'], respuestaKey:'ayuda.faq_quiniela', dondeKey:'ayuda.faq_quiniela_donde', destino:'quiniela'},
+    {id:'amistosos', keywords:['amistoso','amistosos','partido amistoso','jugar amistosos','descansar jugadores','arbol de nodos','calendario semanal','dia de descanso'], respuestaKey:'ayuda.faq_amistosos', dondeKey:'ayuda.faq_amistosos_donde', destino:'amistosos'},
     {id:'jugar_jornada', keywords:['jugar jornada','avanzar jornada','simular partido','empezar el partido','como jugar','jugar partido','seguir jornada','boton jugar'], respuestaKey:'ayuda.faq_jugar_jornada', dondeKey:'ayuda.faq_jugar_jornada_donde'},
     {id:'formacion', keywords:['formacion','formación','cambiar la formacion','esquema tactico','colocar el once','posiciones','colocar jugador','tactica','táctica'], respuestaKey:'ayuda.faq_formacion', dondeKey:'ayuda.faq_formacion_donde'},
     {id:'once_banquillo', keywords:['once titular','quien juega','titulares y suplentes','hacer cambios','banquillo','suplentes','titular','sustituir jugador'], respuestaKey:'ayuda.faq_once_banquillo', dondeKey:'ayuda.faq_once_banquillo_donde'},
     {id:'orden_plantilla', keywords:['orden de la plantilla','cambiar el orden','ordenar por posicion','modo de orden ninguno','ordenar plantilla','llegada posicion puntos dorsal','modo ninguno'], respuestaKey:'ayuda.faq_orden_plantilla', dondeKey:'ayuda.faq_orden_plantilla_donde'},
     {id:'sancion', keywords:['sancion','sanción','jugador expulsado','cuantos partidos de sancion','tarjeta roja directa','tarjeta roja','expulsado','partidos de sancion'], respuestaKey:'ayuda.faq_sancion', dondeKey:'ayuda.faq_sancion_donde'},
-    {id:'clasificacion', keywords:['clasificacion','clasificación','posicion en la tabla','puntos de liga','tabla de posiciones','tabla de la liga','posicion en la liga'], respuestaKey:'ayuda.faq_clasificacion', dondeKey:'ayuda.faq_clasificacion_donde'},
+    {id:'clasificacion', keywords:['clasificacion','clasificación','posicion en la tabla','puntos de liga','tabla de posiciones','tabla de la liga','posicion en la liga'], respuestaKey:'ayuda.faq_clasificacion', dondeKey:'ayuda.faq_clasificacion_donde', destino:'clasificacion'},
     {id:'correo_interno', keywords:['correo','correo interno','mensajes recibidos','notificaciones del club','leer correo','mensajes del club','bandeja de entrada'], respuestaKey:'ayuda.faq_correo', dondeKey:'ayuda.faq_correo_interno_donde'},
-    {id:'historial_fichajes', keywords:['historial de fichajes','ventas anteriores','fichajes anteriores','registro de traspasos','historial de ventas','historico de fichajes'], respuestaKey:'ayuda.faq_historial', dondeKey:'ayuda.faq_historial_fichajes_donde'},
+    {id:'historial_fichajes', keywords:['historial de fichajes','ventas anteriores','fichajes anteriores','registro de traspasos','historial de ventas','historico de fichajes'], respuestaKey:'ayuda.faq_historial', dondeKey:'ayuda.faq_historial_fichajes_donde', destino:'historial'},
     {id:'modo_visual', keywords:['modo automatico','modo manager','ver el partido en directo','modo simulado','elegir como ver el partido','ver el partido','visor del partido'], respuestaKey:'ayuda.faq_modo_visual', dondeKey:'ayuda.faq_modo_visual_donde'},
-    {id:'nomina', keywords:['nomina','nómina','total de sueldos','cuanto pago de sueldos','gastos en salarios','gastos mensuales','pagar sueldos'], respuestaKey:'ayuda.faq_nomina', dondeKey:'ayuda.faq_nomina_donde'},
-    {id:'cuerpo_tecnico', keywords:['cuerpo tecnico','cuerpo técnico','contratar trabajador','puesto vacante','personal del club','contratar personal','trabajadores','vacante'], respuestaKey:'ayuda.faq_cuerpo_tecnico', dondeKey:'ayuda.faq_cuerpo_tecnico_donde'},
+    {id:'nomina', keywords:['nomina','nómina','total de sueldos','cuanto pago de sueldos','gastos en salarios','gastos mensuales','pagar sueldos'], respuestaKey:'ayuda.faq_nomina', dondeKey:'ayuda.faq_nomina_donde', destino:'dg'},
+    {id:'cuerpo_tecnico', keywords:['cuerpo tecnico','cuerpo técnico','contratar trabajador','puesto vacante','personal del club','contratar personal','trabajadores','vacante'], respuestaKey:'ayuda.faq_cuerpo_tecnico', dondeKey:'ayuda.faq_cuerpo_tecnico_donde', destino:'trabajadores'},
     {id:'escudo', keywords:['escudo','cambiar el escudo','diseñar el escudo','logo del equipo','personalizar escudo','editor de escudo'], respuestaKey:'ayuda.faq_escudo', dondeKey:'ayuda.faq_escudo_donde'},
     {id:'logros', keywords:['logro','logros','conseguir logros','ver mis logros','trofeos del perfil','achievement','achievements'], respuestaKey:'ayuda.faq_logros', dondeKey:'ayuda.faq_logros_donde'},
   ];
+  // Enlaces directos que puede ofrecer una respuesta del buscador de
+  // AYUDA: cada "destino" es una pantalla real del juego, con la
+  // función que la abre y la clave de traducción del texto del botón.
+  // Cuando la duda resuelta tiene un "destino" asociado (campo
+  // "destino" en LM_AYUDA_FAQ), la respuesta incluye este enlace para
+  // saltar directo a esa interfaz, en vez de dejar al jugador
+  // buscándola él solo. Las funciones se referencian por nombre tal
+  // cual (no por window.*) porque están declaradas más abajo en este
+  // mismo módulo — al ser "function" con hoisting, ya están disponibles
+  // aunque este objeto se defina antes en el archivo.
+  const LM_AYUDA_DESTINOS={
+    dg:{labelKey:'lm.ayuda_link_dg', fn:()=>abrirDirectorGeneral()},
+    dd:{labelKey:'lm.ayuda_link_dd', fn:()=>abrirDirectorDeportivo()},
+    info_plantilla:{labelKey:'lm.ayuda_link_info_plantilla', fn:()=>abrirSalariosDD(false,null)},
+    medico:{labelKey:'lm.ayuda_link_medico', fn:()=>abrirMedico()},
+    pf:{labelKey:'lm.ayuda_link_pf', fn:()=>abrirPreparadorFisico()},
+    seguridad:{labelKey:'lm.ayuda_link_seguridad', fn:()=>abrirSeguridadEstadio()},
+    estado_estadio:{labelKey:'lm.ayuda_link_estado_estadio', fn:()=>abrirEstadoEstadio(false)},
+    clasificacion:{labelKey:'lm.ayuda_link_clasificacion', fn:()=>abrirClasificacionLM()},
+    historial:{labelKey:'lm.ayuda_link_historial', fn:()=>abrirHistorialFichajesDD(false)},
+    quiniela:{labelKey:'lm.ayuda_link_quiniela', fn:()=>abrirBoletoQuiniela()},
+    amistosos:{labelKey:'lm.ayuda_link_amistosos', fn:()=>abrirArbolNodosSemana()},
+    trabajadores:{labelKey:'lm.ayuda_link_trabajadores', fn:()=>abrirTrabajadores()},
+  };
   // Palabras clave (multi-idioma) que delatan una pregunta de tipo
   // "¿DÓNDE...?" — cuando el texto las contiene, se prioriza la
   // respuesta de UBICACIÓN (dondeKey) de la mejor entrada encontrada
@@ -3348,9 +3378,47 @@
   function lmEsPreguntaDonde(textoNormalizado){
     return LM_AYUDA_PALABRAS_DONDE.some(p=>textoNormalizado.includes(lmNormalizarTextoAyuda(p)));
   }
+  // Charla corriente — saludos, "gracias", despedidas, "vale"/"ok"...
+  // El jugador escribe así muy a menudo (es lo normal cuando se le
+  // habla a algo que "contesta"), y antes esos mensajes no encontraban
+  // ningún tema del FAQ y caían siempre en "no he encontrado una
+  // respuesta a tu duda", lo cual quedaba raro y nada natural. Ahora se
+  // reconocen aparte y tienen su propia respuesta simpática — algunas
+  // con más de una variante para que no suene siempre a lo mismo.
+  const LM_AYUDA_SMALLTALK=[
+    {tipo:'saludo', keywords:['hola','holaa','holaaa','buenas','buenos dias','buenas tardes','buenas noches','hey','hi','hello','ola','oi','salut','coucou','hallo','servus','ciao','buongiorno','buonasera'], respuestaKeys:['ayuda.chat_saludo_1','ayuda.chat_saludo_2']},
+    {tipo:'como_estas', keywords:['como estas','que tal','como te va','como andas','how are you','how are things','como vai','tudo bem','comment ca va','wie geht','come stai','come va'], respuestaKeys:['ayuda.chat_como_estas']},
+    {tipo:'gracias', keywords:['gracias','muchas gracias','mil gracias','te lo agradezco','muy amable','te agradezco','thank you','thanks','thx','ty','obrigado','obrigada','merci','merci beaucoup','danke','danke schon','vielen dank','grazie','grazie mille'], respuestaKeys:['ayuda.chat_gracias_1','ayuda.chat_gracias_2']},
+    {tipo:'afirmacion', keywords:['vale','ok','okay','okey','entendido','genial','perfecto','de acuerdo','estupendo','guay','gotcha','got it','entendi','entendido gracias','compris','verstanden','capito','va bene'], respuestaKeys:['ayuda.chat_afirmacion']},
+    {tipo:'disculpa', keywords:['perdon','perdona','disculpa','disculpas','lo siento','fue mi error','sorry','my bad','desculpa','desculpe','pardon','je suis desole','entschuldigung','es tut mir leid','scusa','mi dispiace'], respuestaKeys:['ayuda.chat_disculpa']},
+    {tipo:'despedida', keywords:['adios','hasta luego','hasta pronto','nos vemos','me voy','chau','bye','goodbye','see you','see ya','tchau','ate logo','ate mais','au revoir','a bientot','tschuss','auf wiedersehen','arrivederci','a presto'], respuestaKeys:['ayuda.chat_despedida']},
+  ];
+  // Solo se activa con mensajes CORTOS (pocas palabras) — así una
+  // pregunta larga que de casualidad contenga "gracias" en medio (poco
+  // probable, pero por si acaso) sigue yendo a la búsqueda normal del
+  // FAQ en vez de secuestrarla la charla corriente.
+  const LM_AYUDA_MAX_PALABRAS_SMALLTALK=6;
+  function lmDetectarSmallTalk(textoNormalizado){
+    if(textoNormalizado.split(/\s+/).filter(Boolean).length>LM_AYUDA_MAX_PALABRAS_SMALLTALK) return null;
+    let mejor=null, mejorPuntuacion=0;
+    LM_AYUDA_SMALLTALK.forEach(entry=>{
+      entry.keywords.forEach(k=>{
+        const kn=lmNormalizarTextoAyuda(k);
+        if(!kn || !textoNormalizado.includes(kn)) return;
+        const puntuacion=kn.split(' ').length;
+        if(puntuacion>mejorPuntuacion){ mejorPuntuacion=puntuacion; mejor=entry; }
+      });
+    });
+    if(!mejor) return null;
+    const opciones=mejor.respuestaKeys;
+    const claveRespuesta=opciones[Math.floor(Math.random()*opciones.length)];
+    return {id:'smalltalk_'+mejor.tipo, claveRespuesta, destino:null};
+  }
   function lmBuscarRespuestaAyuda(pregunta){
     const texto=lmNormalizarTextoAyuda(pregunta);
     if(!texto) return null;
+    const smallTalk=lmDetectarSmallTalk(texto);
+    if(smallTalk) return smallTalk;
     let mejor=null, mejorPuntuacion=0;
     LM_AYUDA_FAQ.forEach(entry=>{
       let puntuacion=0;
@@ -3377,6 +3445,8 @@
   // cero.
   function limpiarAyudaBusqueda(boxId){
     if(boxId!=='lmHowToPlayBox') return;
+    if(lmAyudaTimeoutRespuesta){ clearTimeout(lmAyudaTimeoutRespuesta); lmAyudaTimeoutRespuesta=null; }
+    lmAyudaEscribiendo=false;
     if(!lmAyudaChatHistorial.length && !lmAyudaInputValor) return;
     lmAyudaChatHistorial=[];
     lmAyudaInputValor='';
@@ -3388,6 +3458,30 @@
     pintarChatAyudaLM();
   }
   window.limpiarAyudaBusqueda=limpiarAyudaBusqueda;
+  // Genera el HTML de todas las burbujas del chat (historial real +, si
+  // toca, los "tres puntitos" de "escribiendo..."). Compartido entre el
+  // primer pintado (dentro del template de render()) y las
+  // actualizaciones quirúrgicas de pintarChatAyudaLM, para que las dos
+  // vías dibujen exactamente lo mismo. Cada burbuja de respuesta que
+  // tenga un "destino" asociado (ver LM_AYUDA_DESTINOS) incluye su
+  // propio botón de acceso directo a esa pantalla del juego.
+  function lmRenderBurbujasAyudaHTML(){
+    let html=lmAyudaChatHistorial.map(m=>{
+      const destinoInfo=(m.tipo==='respuesta' && m.destino) ? LM_AYUDA_DESTINOS[m.destino] : null;
+      const enlace=destinoInfo ? `<button type="button" class="lm-ayuda-link-btn" data-ayuda-ir="${m.destino}"><i class="ph ph-bold ph-arrow-square-out"></i> ${t(destinoInfo.labelKey)}</button>` : '';
+      return `<div class="lm-ayuda-burbuja lm-ayuda-burbuja-${m.tipo}${m.nuevo?' lm-ayuda-burbuja-nueva':''}">${m.texto}${enlace}</div>`;
+    }).join('');
+    if(lmAyudaEscribiendo){
+      html+=`<div class="lm-ayuda-burbuja lm-ayuda-burbuja-respuesta lm-ayuda-typing lm-ayuda-burbuja-nueva"><span></span><span></span><span></span></div>`;
+    }
+    return html;
+  }
+  // Tras pintar, se apaga la marca "nuevo" de todo lo ya mostrado — así
+  // la animación de aparición (pop) solo se reproduce la primera vez
+  // que una burbuja se dibuja, nunca en repintados posteriores.
+  function lmApagarMarcaNuevoAyuda(){
+    lmAyudaChatHistorial.forEach(m=>{ m.nuevo=false; });
+  }
   // Actualiza SOLO el chat de "CÓMO JUGAR/AYUDA" y el valor del input,
   // tocando el DOM directamente en vez de reconstruir toda la interfaz
   // con render() — así nunca se altera la clase "collapsed" de la caja
@@ -3395,14 +3489,16 @@
   function pintarChatAyudaLM(){
     const chatEl=document.getElementById('lmAyudaChat');
     if(chatEl){
-      if(lmAyudaChatHistorial.length){
+      const hayAlgo=lmAyudaChatHistorial.length>0 || lmAyudaEscribiendo;
+      if(hayAlgo){
         chatEl.style.display='';
-        chatEl.innerHTML=lmAyudaChatHistorial.map(m=>`<div class="lm-ayuda-burbuja lm-ayuda-burbuja-${m.tipo}">${m.texto}</div>`).join('');
+        chatEl.innerHTML=lmRenderBurbujasAyudaHTML();
       } else {
         chatEl.style.display='none';
         chatEl.innerHTML='';
       }
     }
+    lmApagarMarcaNuevoAyuda();
     const inpEl=document.getElementById('lmAyudaInput');
     if(inpEl) inpEl.value=lmAyudaInputValor;
   }
@@ -11499,7 +11595,7 @@
               <div class="howto-step"><span class="howto-num">5</span><div>${t('lm.howto_paso5')}</div></div>
               <div class="howto-step"><span class="howto-num">6</span><div>${t('lm.howto_paso6')}</div></div>
               <div class="lm-ayuda-wrap">
-                <div class="lm-ayuda-chat" id="lmAyudaChat" style="${lmAyudaChatHistorial.length?'':'display:none'}">${lmAyudaChatHistorial.map(m=>`<div class="lm-ayuda-burbuja lm-ayuda-burbuja-${m.tipo}">${m.texto}</div>`).join('')}</div>
+                <div class="lm-ayuda-chat" id="lmAyudaChat" style="${(lmAyudaChatHistorial.length||lmAyudaEscribiendo)?'':'display:none'}">${lmRenderBurbujasAyudaHTML()}</div>
                 <div class="lm-ayuda-input-row">
                   <input type="text" id="lmAyudaInput" class="lm-ayuda-input" maxlength="140" placeholder="${t('lm.ayuda_placeholder')}" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
                   <button type="button" id="lmAyudaBuscarBtn" class="lm-ayuda-buscar-btn" title="${t('lm.ayuda_buscar_tt')}"><i class="ph ph-bold ph-magnifying-glass"></i></button>
@@ -11981,29 +12077,81 @@
     }
     const ayudaBtnEl=document.getElementById('lmAyudaBuscarBtn');
     if(ayudaBtnEl) ayudaBtnEl.addEventListener('click', ()=>{ ejecutarBusquedaAyudaLM(); });
-    function ejecutarBusquedaAyudaLM(){
-      const texto=(lmAyudaInputValor||'').trim();
-      if(!texto) return;
-      if(typeof window.playSound==='function') window.playSound('select');
-      lmAyudaChatHistorial.push({tipo:'pregunta', texto:lmEscaparHtmlAyuda(texto)});
-      const encontrada=lmBuscarRespuestaAyuda(texto);
-      lmAyudaChatHistorial.push({tipo:'respuesta', texto:encontrada?t(encontrada.claveRespuesta):t('lm.ayuda_sin_respuesta')});
-      if(lmAyudaChatHistorial.length>40) lmAyudaChatHistorial=lmAyudaChatHistorial.slice(-40);
-      lmAyudaInputValor='';
-      // Pintado quirúrgico: NUNCA se llama a render() aquí. render()
-      // reconstruye todo el HTML del hub y su plantilla deja siempre la
-      // caja "collapsible-box" con la clase "collapsed" a fuego, así que
-      // un render() completo minimizaba de golpe la caja CÓMO
-      // JUGAR/AYUDA aunque estuviera abierta (el usuario lo veía como
-      // que Enter "minimizaba la ventana"). Actualizando solo el chat y
-      // el input a mano, la caja nunca se toca y se queda tal cual está.
-      pintarChatAyudaLM();
+    // Delegado en el propio contenedor del chat: los enlaces "Abrir
+    // Director General" (etc.) que aparecen dentro de una respuesta se
+    // regeneran en cada pintado quirúrgico (pintarChatAyudaLM), así que
+    // en vez de volver a engancharlos uno a uno cada vez, se escucha
+    // una sola vez aquí arriba, en el contenedor que nunca se destruye.
+    const ayudaChatEl=document.getElementById('lmAyudaChat');
+    if(ayudaChatEl){
+      ayudaChatEl.addEventListener('click', (e)=>{
+        const btn=e.target.closest && e.target.closest('[data-ayuda-ir]');
+        if(!btn) return;
+        const destino=LM_AYUDA_DESTINOS[btn.getAttribute('data-ayuda-ir')];
+        if(!destino || typeof destino.fn!=='function') return;
+        if(typeof window.playSound==='function') window.playSound('select');
+        destino.fn();
+      });
+    }
+    // El primer pintado (el de este propio render()) también cuenta
+    // como "ya mostrado" — evita que una burbuja recién llegada
+    // reproduzca su animación de aparición una segunda vez si algo
+    // dispara un render() completo justo después.
+    lmApagarMarcaNuevoAyuda();
+    function lmScrollAyudaAbajo(){
       requestAnimationFrame(()=>{
         const chatEl=document.getElementById('lmAyudaChat');
         if(chatEl) chatEl.scrollTop=chatEl.scrollHeight;
-        const inpEl=document.getElementById('lmAyudaInput');
-        if(inpEl) inpEl.focus();
       });
+    }
+    function ejecutarBusquedaAyudaLM(){
+      const texto=(lmAyudaInputValor||'').trim();
+      if(!texto) return;
+      if(lmAyudaTimeoutRespuesta){ clearTimeout(lmAyudaTimeoutRespuesta); lmAyudaTimeoutRespuesta=null; }
+      if(typeof window.playSound==='function') window.playSound('select');
+      // 1) La burbuja de la PREGUNTA aparece al instante, con su propio
+      // sonido de "mensaje enviado" — como en cualquier app de chat de
+      // verdad.
+      lmAyudaChatHistorial.push({tipo:'pregunta', texto:lmEscaparHtmlAyuda(texto), nuevo:true});
+      if(lmAyudaChatHistorial.length>40) lmAyudaChatHistorial=lmAyudaChatHistorial.slice(-40);
+      lmAyudaInputValor='';
+      // 2) Justo después se muestran los "tres puntitos" de
+      // "escribiendo..." durante medio segundo — la respuesta ya está
+      // calculada de antemano (es instantánea), pero se retiene a
+      // propósito ese ratito para que se sienta como una conversación
+      // real y no como un volcado de texto instantáneo.
+      lmAyudaEscribiendo=true;
+      pintarChatAyudaLM();
+      lmScrollAyudaAbajo();
+      if(typeof window.playSound==='function') window.playSound('chat_enviado');
+      const encontrada=lmBuscarRespuestaAyuda(texto);
+      lmAyudaTimeoutRespuesta=setTimeout(()=>{
+        lmAyudaTimeoutRespuesta=null;
+        lmAyudaEscribiendo=false;
+        // 3) Llega la respuesta real, con su propio sonido de "mensaje
+        // recibido" y, si el tema tiene una pantalla asociada, su
+        // enlace directo para saltar a ella (ver LM_AYUDA_DESTINOS).
+        lmAyudaChatHistorial.push({
+          tipo:'respuesta',
+          texto:encontrada?t(encontrada.claveRespuesta):t('lm.ayuda_sin_respuesta'),
+          destino:encontrada?encontrada.destino:null,
+          nuevo:true,
+        });
+        if(lmAyudaChatHistorial.length>40) lmAyudaChatHistorial=lmAyudaChatHistorial.slice(-40);
+        // Pintado quirúrgico: NUNCA se llama a render() aquí. render()
+        // reconstruye todo el HTML del hub y su plantilla deja siempre
+        // la caja "collapsible-box" con la clase "collapsed" a fuego,
+        // así que un render() completo minimizaba de golpe la caja
+        // CÓMO JUGAR/AYUDA aunque estuviera abierta (el usuario lo veía
+        // como que Enter "minimizaba la ventana"). Actualizando solo el
+        // chat y el input a mano, la caja nunca se toca y se queda tal
+        // cual está.
+        pintarChatAyudaLM();
+        if(typeof window.playSound==='function') window.playSound('chat_recibido');
+        lmScrollAyudaAbajo();
+      }, 550);
+      const inpEl=document.getElementById('lmAyudaInput');
+      if(inpEl) inpEl.focus();
     }
     const medicoBtn=document.getElementById('lmMedicoBtn');
     if(medicoBtn) medicoBtn.addEventListener('click', ()=>{

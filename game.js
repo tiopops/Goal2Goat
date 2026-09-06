@@ -450,6 +450,18 @@ function playSound(name, data){
       tone(ctx, 660, 0, 0.09, 'square', 0.12, 0.0001);
       tone(ctx, 990, 0.08, 0.16, 'square', 0.13, 0.0001);
       break;
+    case 'chat_enviado': // burbuja del jugador en el buscador de AYUDA —
+      // un "whoosh" corto y ascendente, igual que el tic de envío de
+      // cualquier app de mensajería.
+      tone(ctx, 700, 0, 0.035, 'sine', 0.07, 0.0001);
+      tone(ctx, 980, 0.03, 0.05, 'sine', 0.06, 0.0001);
+      break;
+    case 'chat_recibido': // burbuja de respuesta del buscador de AYUDA —
+      // dos notas suaves y cortas, como la notificación de un mensaje
+      // entrante.
+      tone(ctx, 560, 0, 0.05, 'sine', 0.07, 0.0001);
+      tone(ctx, 780, 0.055, 0.07, 'sine', 0.08, 0.0001);
+      break;
     case 'loan_payment': // cuota del préstamo descontada cada jornada —
       // un tintineo metálico breve y seco, discreto (no es una buena
       // noticia, así que no debe sonar celebratorio).
