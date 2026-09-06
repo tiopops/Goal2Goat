@@ -14287,7 +14287,8 @@
   // Usado para que INFORMACIÓN DE LA PLANTILLA arranque exactamente con
   // la disposición que el jugador ya tiene organizada, en vez de un
   // orden propio (alerta+salario) que no se correspondía con nada.
-  function lmOrdenVisualPlantillaActual(){
+  function lmOrdenVisualPlantillaActual(modoOrden){
+    const modo=modoOrden||lmSortMode;
     const titularIds=new Set(Object.values(state.alineacion||{}).filter(Boolean));
     const posOrderLM=['POR','DFC','LI','LD','MC','EI','ED','DC'];
     function posicionEfectiva(p){
@@ -14295,14 +14296,14 @@
       return slot?basePos(slot):p.position;
     }
     function ordenar(lista){
-      if(lmSortMode==='position'){
+      if(modo==='position'){
         return [...lista].sort((a,b)=>{
           const ai=posOrderLM.indexOf(posicionEfectiva(a)), bi=posOrderLM.indexOf(posicionEfectiva(b));
           return (ai===-1?99:ai)-(bi===-1?99:bi);
         });
       }
-      if(lmSortMode==='rating') return [...lista].sort((a,b)=>efectivoOverall(b)-efectivoOverall(a));
-      if(lmSortMode==='numero') return [...lista].sort((a,b)=>(a.numero||99)-(b.numero||99));
+      if(modo==='rating') return [...lista].sort((a,b)=>efectivoOverall(b)-efectivoOverall(a));
+      if(modo==='numero') return [...lista].sort((a,b)=>(a.numero||99)-(b.numero||99));
       return lista; // 'arrival' y 'ninguno': tal cual está el array
     }
     const titulares=ordenar((state.plantilla||[]).filter(p=>titularIds.has(p.id)));
@@ -14313,16 +14314,18 @@
     const overlay=document.createElement('div');
     overlay.id='lmSalariosOverlay';
     const STEP_OFERTA_FRACCION=0.05; // cada pulsación de +/- mueve un 5% del salario justo
-    // El orden de la tabla se calcula UNA SOLA VEZ, al abrir la
-    // interfaz — igual que el once titular + banquillo se ven AHORA
-    // MISMO en la pantalla principal — y ya NO se vuelve a calcular
-    // nunca más mientras esté abierta. Antes pintar() reordenaba en
-    // cada repintado según el salario/alerta ACTUAL, así que tocar un
-    // botón (subir un salario, hacer una oferta...) podía cambiar el
-    // orden de golpe y la interfaz "saltaba". Ahora, aunque los valores
-    // cambien, cada jugador se queda siempre en la misma fila de la
-    // tabla; solo cambia lo que pone en esa fila.
-    const ordenFijoIds=lmOrdenVisualPlantillaActual().map(p=>p.id);
+    // El orden de la tabla se calcula UNA SOLA VEZ por cada modo elegido
+    // — igual que el once titular + banquillo se ven AHORA MISMO en la
+    // pantalla principal — y ya NO se vuelve a recalcular solo mientras
+    // pintar() repinta la ventana. Antes pintar() reordenaba en cada
+    // repintado según el salario/alerta ACTUAL, así que tocar un botón
+    // (subir un salario, hacer una oferta...) podía cambiar el orden de
+    // golpe y la interfaz "saltaba". Ahora, aunque los valores cambien,
+    // cada jugador se queda siempre en la misma fila de la tabla dentro
+    // de un mismo modo; solo cambia lo que pone en esa fila. Al elegir
+    // otro modo con el botón de ordenar SÍ se vuelve a calcular, una vez,
+    // con el nuevo criterio.
+    let ordenFijoIds=lmOrdenVisualPlantillaActual(lmSortMode).map(p=>p.id);
     // Recuerda el último salario/puntuación pintado de cada jugador para
     // poder marcar con un breve destello (.lm-valor-cambio) SOLO la
     // celda que de verdad acaba de cambiar de valor — así subir un
@@ -14335,16 +14338,18 @@
       if(pos==='EI'||pos==='ED'||pos==='DC') return 'del';
       return 'def'; // DFC, LI, LD
     }
-    // Orden de la tabla: por defecto es el orden congelado de siempre
-    // (calcado del once titular + banquillo de la pantalla principal,
-    // fijado al abrir). "SALARIO" es un modo exclusivo de ESTA ventana
-    // que sí se recalcula en cada pintado — a diferencia del modo
-    // congelado, aquí reordenar de mayor a menor sueldo es justo el
-    // objetivo del modo, así que un cambio de salario SÍ debe mover la
-    // fila (no es el bug de "salta la interfaz" de otras pantallas).
-    let lmModoOrdenSalarios='plantilla';
-    const LM_ORDEN_SALARIOS_LABELS={plantilla:'PLANTILLA', salario:'SALARIO'};
-    const LM_ORDEN_SALARIOS_NEXT={plantilla:'salario', salario:'plantilla'};
+    // Formas de listar de ESTA ventana: las mismas 5 que ya tiene el
+    // ONCE TITULAR/BANQUILLO de la pantalla principal (LLEGADA,
+    // POSICIÓN, PUNTOS, DORSAL, NINGUNO — reordenando titulares+
+    // banquillo con el mismo criterio, congelado hasta que se cambie de
+    // modo) más una sexta EXCLUSIVA de esta lista: SALARIO, que sí se
+    // recalcula en cada pintado — a diferencia de las otras 5, aquí
+    // reordenar de mayor a menor sueldo es justo el objetivo del modo,
+    // así que un cambio de salario SÍ debe mover la fila (no es el bug
+    // de "salta la interfaz" de otras pantallas).
+    let lmModoOrdenSalarios=lmSortMode;
+    const LM_ORDEN_SALARIOS_LABELS={...LM_SORT_LABELS, salario:'SALARIO'};
+    const LM_ORDEN_SALARIOS_NEXT={...LM_SORT_NEXT, ninguno:'salario', salario:'arrival'};
     // Cambios de salario "en borrador": los botones +/- de un jugador
     // normal (sin conflicto) ya NO aplican el cambio al instante — solo
     // mueven este valor de prueba, que se queda pendiente de guardar
@@ -14492,6 +14497,12 @@
       if(ordenBtnSal) ordenBtnSal.addEventListener('click', ()=>{
         if(typeof window.playSound==='function') window.playSound('select');
         lmModoOrdenSalarios=LM_ORDEN_SALARIOS_NEXT[lmModoOrdenSalarios];
+        // "SALARIO" se recalcula solo en cada pintar() (ver idsOrdenActivo
+        // más arriba); para cualquiera de los otros 5 modos, el orden se
+        // vuelve a congelar aquí mismo, una vez, con el nuevo criterio.
+        if(lmModoOrdenSalarios!=='salario'){
+          ordenFijoIds=lmOrdenVisualPlantillaActual(lmModoOrdenSalarios).map(p=>p.id);
+        }
         pintar();
       });
       overlay.querySelectorAll('[data-venta]').forEach(btn=>{
