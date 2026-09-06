@@ -1450,6 +1450,7 @@ window.TRANSLATIONS = {
   'lm.quedan_n_jornadas': {es:'Quedan {n} jornadas para negociar', en:'{n} matchdays left to negotiate', pt:'Faltam {n} jornadas para negociar', fr:'Il reste {n} journées pour negocier', de:'Noch {n} Spieltage zum Verhandeln', it:'Restano {n} giornate per negoziare'},
   'lm.n_jugadores_en_alerta': {es:'{n} en alerta', en:'{n} unsettled', pt:'{n} em alerta', fr:'{n} en alerte', de:'{n} in Unruhe', it:'{n} in allerta'},
   'lm.hacer_oferta_btn': {es:'HACER OFERTA DE SUBIDA', en:'MAKE A RAISE OFFER', pt:'FAZER OFERTA DE AUMENTO', fr:'FAIRE UNE OFFRE D AUGMENTATION', de:'GEHALTSERHÖHUNG ANBIETEN', it:'FAI UN OFFERTA DI AUMENTO'},
+  'lm.guardar_salario_btn': {es:'HACER OFERTA', en:'MAKE OFFER', pt:'FAZER OFERTA', fr:'FAIRE UNE OFFRE', de:'ANGEBOT MACHEN', it:'FAI OFFERTA'},
   'lm.oferta_enviada': {es:'Oferta enviada', en:'Offer sent', pt:'Oferta enviada', fr:'Offre envoyee', de:'Angebot gesendet', it:'Offerta inviata'},
   'lm.retirar_oferta': {es:'RETIRAR OFERTA', en:'WITHDRAW OFFER', pt:'RETIRAR OFERTA', fr:'RETIRER L OFFRE', de:'ANGEBOT ZURÜCKZIEHEN', it:'RITIRA OFFERTA'},
   'lm.oferta_pendiente_nota': {es:'El jugador decidirá cuando juegues la próxima jornada.', en:'The player will decide once you play the next matchday.', pt:'O jogador decidirá quando jogares a próxima jornada.', fr:'Le joueur decidera quand tu joueras la prochaine journee.', de:'Der Spieler entscheidet, sobald du den nächsten Spieltag spielst.', it:'Il giocatore decidera quando giocherai la prossima giornata.'},

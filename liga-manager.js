@@ -14285,11 +14285,31 @@
       if(pos==='EI'||pos==='ED'||pos==='DC') return 'del';
       return 'def'; // DFC, LI, LD
     }
+    // Orden de la tabla: por defecto es el orden congelado de siempre
+    // (calcado del once titular + banquillo de la pantalla principal,
+    // fijado al abrir). "SALARIO" es un modo exclusivo de ESTA ventana
+    // que sí se recalcula en cada pintado — a diferencia del modo
+    // congelado, aquí reordenar de mayor a menor sueldo es justo el
+    // objetivo del modo, así que un cambio de salario SÍ debe mover la
+    // fila (no es el bug de "salta la interfaz" de otras pantallas).
+    let lmModoOrdenSalarios='plantilla';
+    const LM_ORDEN_SALARIOS_LABELS={plantilla:'PLANTILLA', salario:'SALARIO'};
+    const LM_ORDEN_SALARIOS_NEXT={plantilla:'salario', salario:'plantilla'};
+    // Cambios de salario "en borrador": los botones +/- de un jugador
+    // normal (sin conflicto) ya NO aplican el cambio al instante — solo
+    // mueven este valor de prueba, que se queda pendiente de guardar
+    // hasta pulsar HACER OFERTA. Vive fuera de pintar() para que
+    // sobreviva a los repintados mientras la ventana sigue abierta.
+    const lmSalarioStagedEdicion={};
     function pintar(){
-      // Se recorre el orden ya congelado, mirando los datos actuales de
-      // cada jugador (un jugador que ya no esté en la plantilla —
-      // vendido, se marchó... — simplemente desaparece de la lista).
-      const jugadores=ordenFijoIds.map(id=>(state.plantilla||[]).find(p=>p.id===id)).filter(Boolean);
+      // Se recorre el orden activo (congelado o por salario según el
+      // modo elegido), mirando los datos actuales de cada jugador (uno
+      // que ya no esté en la plantilla — vendido, se marchó... —
+      // simplemente desaparece de la lista).
+      const idsOrdenActivo = lmModoOrdenSalarios==='salario'
+        ? [...(state.plantilla||[])].sort((a,b)=>(b.salario||0)-(a.salario||0)).map(p=>p.id)
+        : ordenFijoIds;
+      const jugadores=idsOrdenActivo.map(id=>(state.plantilla||[]).find(p=>p.id===id)).filter(Boolean);
       const totalNomina=jugadores.reduce((s,p)=>s+(p.salario||0),0);
       const numAlertas=jugadores.filter(p=>p.quiereMarcharse).length;
       const filas=jugadores.map(p=>{
@@ -14306,7 +14326,20 @@
           accionVenta=`<button type="button" class="lm-salario-btn lm-salario-btn-accion" data-venta="${p.id}" title="${chequeo.ok?'':chequeo.motivo}" ${chequeo.ok?'':'disabled'}>${t('lm.poner_en_venta')}</button>`;
         }
         const tier=lmTierOverall(p.overall||0);
-        let celdaSalario;
+        // Destello de "valor recién cambiado": se compara contra lo que
+        // se pintó la última vez que se llamó a pintar() para ESTE
+        // jugador concreto (nunca contra el resto de la plantilla), así
+        // que GUARDAR un salario nuevo o que suba el overall tras un
+        // entrenamiento se nota al momento en esa celda, sin animar el
+        // resto de la fila. En el primer pintado no hay "anterior"
+        // todavía, así que nunca destella nada nada más abrir la
+        // interfaz.
+        const anterior=lmValoresAnterioresPlantilla[p.id];
+        const cambioSalario=anterior && anterior.salario!==p.salario;
+        const cambioOverall=anterior && anterior.overall!==(p.overall||0);
+        lmValoresAnterioresPlantilla[p.id]={salario:p.salario, overall:p.overall||0};
+        const categoriaPos=lmCategoriaPosicionPlantilla(p.position);
+        let tdsSalario;
         if(p.quiereMarcharse){
           const demandado=salarioDeseadoJugador(p);
           const jornadasRestantes=Math.max(0, (p.jornadaLimiteRenegociar||0)-state.jornadaActual);
@@ -14324,41 +14357,36 @@
             bloqueOferta=`
               <button class="lm-salario-btn lm-salario-btn-oferta" data-oferta-crear="${p.id}"><i class="ph ph-bold ph-handshake"></i> ${t('lm.hacer_oferta_btn')}</button>`;
           }
-          celdaSalario=`
+          const celdaAlerta=`
             <div class="lm-info-alerta-titulo"><i class="ph ph-bold ph-warning-circle"></i> ${t('lm.quiere_marcharse_titulo')}</div>
             <div class="lm-info-salario-fila"><span>${t('lm.tabla_salario')}</span><strong>${formatoDinero(p.salario||0)}</strong></div>
             <div class="lm-info-salario-fila"><span>${t('lm.pide_aprox')}</span><strong>${formatoDinero(demandado)}</strong></div>
             <div class="lm-info-alerta-plazo">${tp('lm.quedan_n_jornadas', {n:jornadasRestantes})}</div>
             ${bloqueOferta}`;
+          tdsSalario=`<td class="lm-info-td-salario lm-info-td-salario-alerta" colspan="3">${celdaAlerta}</td>`;
         } else {
           const step=Math.max(200, Math.round(salarioDeseadoJugador(p)*STEP_OFERTA_FRACCION));
-          celdaSalario=`
-            <div class="lm-info-salario-fila"><strong>${formatoDinero(p.salario||0)}</strong></div>
+          const minPermitido=salarioMinPermitido(p), maxPermitido=salarioMaxPermitido(p);
+          const staged=lmSalarioStagedEdicion[p.id];
+          const hayPendiente=staged!==undefined && staged!==p.salario;
+          const valorMostrado=hayPendiente?staged:(p.salario||0);
+          const celdaValor=hayPendiente
+            ? `<div class="lm-info-salario-actual-tachado">${formatoDinero(p.salario||0)}</div><div class="lm-info-salario-pendiente">${formatoDinero(valorMostrado)}</div>`
+            : `<div class="lm-info-salario-fila"><strong>${formatoDinero(p.salario||0)}</strong></div>`;
+          const celdaAjustar=`
             <div class="lm-info-salario-stepper">
-              <button class="lm-salario-btn" data-salario-menos="${p.id}" data-step="${step}"><i class="ph ph-bold ph-minus"></i></button>
-              <button class="lm-salario-btn" data-salario-mas="${p.id}" data-step="${step}"><i class="ph ph-bold ph-plus"></i></button>
+              <button class="lm-salario-btn" data-salario-menos="${p.id}" data-step="${step}" ${valorMostrado<=minPermitido?'disabled':''}><i class="ph ph-bold ph-minus"></i></button>
+              <button class="lm-salario-btn" data-salario-mas="${p.id}" data-step="${step}" ${valorMostrado>=maxPermitido?'disabled':''}><i class="ph ph-bold ph-plus"></i></button>
             </div>`;
+          const celdaOferta=`<button type="button" class="lm-salario-btn lm-salario-btn-oferta" data-guardar-salario="${p.id}" ${hayPendiente?'':'disabled'}>${t('lm.guardar_salario_btn')}</button>`;
+          tdsSalario=`<td class="lm-info-td-salario${cambioSalario?' lm-valor-cambio':''}">${celdaValor}</td><td class="lm-info-td-ajustar">${celdaAjustar}</td><td class="lm-info-td-oferta">${celdaOferta}</td>`;
         }
-        // Destello de "valor recién cambiado": se compara contra lo que
-        // se pintó la última vez que se llamó a pintar() para ESTE
-        // jugador concreto (nunca contra el resto de la plantilla), así
-        // que subir un salario con +/- o que suba el overall tras un
-        // entrenamiento se nota al momento en esa celda, sin animar el
-        // resto de la fila. En el primer pintado no hay "anterior"
-        // todavía, así que nunca destella nada nada más abrir la
-        // interfaz.
-        const anterior=lmValoresAnterioresPlantilla[p.id];
-        const cambioSalario=anterior && anterior.salario!==p.salario;
-        const cambioOverall=anterior && anterior.overall!==(p.overall||0);
-        lmValoresAnterioresPlantilla[p.id]={salario:p.salario, overall:p.overall||0};
-        const categoriaPos=lmCategoriaPosicionPlantilla(p.position);
-        const inicialAvatar=(p.name||'?').trim().charAt(0).toUpperCase();
         return `<tr class="lm-info-plantilla-fila lm-info-plantilla-fila-${tier}${p.quiereMarcharse?' lm-info-plantilla-fila-alerta':''}" id="lm-info-card-${p.id}">
           <td class="lm-info-td-dorsal">${p.numero!=null?p.numero:'-'}</td>
-          <td class="lm-info-td-nombre"><span class="lm-info-avatar lm-info-avatar-${tier}">${inicialAvatar}</span>${p.name}${p.injured?` <span class="cross" title="${t('lm.tt_lesionado')}">✚</span>`:''}</td>
+          <td class="lm-info-td-nombre"><i class="ph ph-bold ph-user lm-info-avatar-icon lm-info-td-pos-${categoriaPos}"></i>${p.name}${p.injured?` <span class="cross" title="${t('lm.tt_lesionado')}">✚</span>`:''}</td>
           <td class="lm-info-td-pos lm-info-td-pos-${categoriaPos}">${p.position}</td>
           <td class="lm-info-td-overall lm-info-td-overall-${tier}${cambioOverall?' lm-valor-cambio':''}">${p.overall||0}</td>
-          <td class="lm-info-td-salario${cambioSalario?' lm-valor-cambio':''}">${celdaSalario}</td>
+          ${tdsSalario}
           <td class="lm-info-td-accion">${accionVenta}</td>
         </tr>`;
       }).join('');
@@ -14378,12 +14406,18 @@
       overlay.innerHTML=`
         <div class="lm-dilemma-card lm-dilemma-card-dd" style="max-width:920px;text-align:left">
           ${xCerrarHTML()}
-          <div class="lm-dilemma-title"><i class="ph ph-bold ph-file-text"></i> ${t('lm.info_plantilla_btn')}</div>
+          <div class="lm-dilemma-title" style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+            <span><i class="ph ph-bold ph-file-text"></i> ${t('lm.info_plantilla_btn')}</span>
+            <button type="button" id="lmSalariosOrdenBtn" class="lm-sort-btn" title="${t('lm.tt_cambiar_orden')}" aria-label="Cambiar orden">
+              <span id="lmSalariosOrdenLabel">${LM_ORDEN_SALARIOS_LABELS[lmModoOrdenSalarios]}</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M7 12h10M11 18h2"/></svg>
+            </button>
+          </div>
           <div class="lm-setup-desc" style="text-align:center;margin-bottom:8px">${t('lm.nomina_total')} <strong>${formatoDinero(totalNomina)}/mes</strong> · plantilla: <strong>${jugadores.length}</strong>${numAlertas?` · <strong class="lm-capital-neg">${tp('lm.n_jugadores_en_alerta', {n:numAlertas})}</strong>`:''} · ${t('lm.info_plantilla_nota_venta')}</div>
           <div class="lm-info-plantilla-tabla-wrap">
             ${jugadores.length ? `<table class="lm-info-plantilla-tabla">
               <thead><tr>
-                <th>#</th><th>${t('lm.tabla_jugador')}</th><th>Pos</th><th>${t('lm.tabla_punt')}</th><th>${t('lm.tabla_salario')}</th><th></th>
+                <th>#</th><th>${t('lm.tabla_jugador')}</th><th>Pos</th><th>${t('lm.tabla_punt')}</th><th>${t('lm.tabla_salario')}</th><th></th><th></th><th></th>
               </tr></thead>
               <tbody>${filas}</tbody>
             </table>` : `<div class="lm-info-plantilla-vacio">${t('lm.sin_jugadores_plantilla')}</div>`}
@@ -14401,6 +14435,12 @@
       if(btnCerrarSal) btnCerrarSal.addEventListener('click', ()=>{
         if(typeof window.playSound==='function') window.playSound('select');
         overlay.remove();
+      });
+      const ordenBtnSal=overlay.querySelector('#lmSalariosOrdenBtn');
+      if(ordenBtnSal) ordenBtnSal.addEventListener('click', ()=>{
+        if(typeof window.playSound==='function') window.playSound('select');
+        lmModoOrdenSalarios=LM_ORDEN_SALARIOS_NEXT[lmModoOrdenSalarios];
+        pintar();
       });
       overlay.querySelectorAll('[data-venta]').forEach(btn=>{
         btn.addEventListener('click', ()=>{
@@ -14428,13 +14468,19 @@
           pintar();
         });
       });
+      // +/- de un jugador SIN conflicto ya no aplican nada al instante:
+      // solo mueven el valor "en borrador" (lmSalarioStagedEdicion). El
+      // cambio real no se guarda en el jugador hasta pulsar HACER
+      // OFERTA (ver data-guardar-salario más abajo) — así el jugador
+      // puede tantear varias veces antes de confirmar.
       overlay.querySelectorAll('[data-salario-mas]').forEach(btn=>{
         btn.addEventListener('click', ()=>{
           const jugadorId=btn.getAttribute('data-salario-mas');
           const p=(state.plantilla||[]).find(x=>x.id===jugadorId);
           if(!p) return;
           if(typeof window.playSound==='function') window.playSound('select');
-          ajustarSalarioDirecto(jugadorId, (p.salario||0)+parseInt(btn.getAttribute('data-step'),10));
+          const base=lmSalarioStagedEdicion[jugadorId]!==undefined?lmSalarioStagedEdicion[jugadorId]:(p.salario||0);
+          lmSalarioStagedEdicion[jugadorId]=Math.min(salarioMaxPermitido(p), base+parseInt(btn.getAttribute('data-step'),10));
           pintar();
         });
       });
@@ -14444,7 +14490,19 @@
           const p=(state.plantilla||[]).find(x=>x.id===jugadorId);
           if(!p) return;
           if(typeof window.playSound==='function') window.playSound('select');
-          ajustarSalarioDirecto(jugadorId, (p.salario||0)-parseInt(btn.getAttribute('data-step'),10));
+          const base=lmSalarioStagedEdicion[jugadorId]!==undefined?lmSalarioStagedEdicion[jugadorId]:(p.salario||0);
+          lmSalarioStagedEdicion[jugadorId]=Math.max(salarioMinPermitido(p), base-parseInt(btn.getAttribute('data-step'),10));
+          pintar();
+        });
+      });
+      overlay.querySelectorAll('[data-guardar-salario]').forEach(btn=>{
+        btn.addEventListener('click', ()=>{
+          const jugadorId=btn.getAttribute('data-guardar-salario');
+          const staged=lmSalarioStagedEdicion[jugadorId];
+          if(staged===undefined) return;
+          if(typeof window.playSound==='function') window.playSound('select');
+          ajustarSalarioDirecto(jugadorId, staged);
+          delete lmSalarioStagedEdicion[jugadorId];
           pintar();
         });
       });
