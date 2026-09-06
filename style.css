@@ -1435,16 +1435,6 @@ body.dark-theme .strategy-desc{background:#0a0c0d}
   flex-shrink:0;margin-left:8px;line-height:1;
 }
 .collapsible-box.collapsed .collapse-arrow{transform:rotate(-90deg)}
-/* Lupa de acceso directo al buscador de "CÓMO JUGAR/AYUDA" — vive
-   dentro de la cabecera clicable (que colapsa/expande la caja), así
-   que necesita su propio hit-area y detener la propagación del clic
-   (ver el onclick inline que llama a event.stopPropagation()). */
-.lm-howto-lupa-btn{
-  flex-shrink:0;width:32px;height:32px;border-radius:7px;
-  background:rgba(201,162,39,.12);border:1px solid rgba(201,162,39,.4);color:var(--gold);
-  display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;
-}
-.lm-howto-lupa-btn:hover{background:rgba(201,162,39,.22)}
 .collapsible-box.collapsed .howto-content{
   display:none;
 }
@@ -3451,6 +3441,16 @@ body.liga-manager-screen .ranking-btn-label-lm{display:inline}
   font-size:10px;text-transform:uppercase;letter-spacing:.4px;text-align:left;
   padding:7px 8px;border-bottom:1px solid var(--lm-border);z-index:1;
 }
+/* Th de "ordenar" integrado en la propia fila de cabecera de la tabla
+   (antes vivía suelto en la barra de título del popup) — el botón se
+   ancla a la derecha de esa celda, que ocupa las 3 últimas columnas
+   (ajustar/oferta/acción) para no descuadrar el resto de cabeceras. */
+.lm-info-plantilla-tabla thead th.lm-info-th-orden{
+  text-align:right;padding-right:6px;
+}
+.lm-info-plantilla-tabla thead th.lm-info-th-orden .lm-sort-btn{
+  display:inline-flex;margin-left:auto;
+}
 .lm-info-plantilla-fila{border-left:4px solid #6b6b6b;background:var(--lm-surface-2);transition:background .15s}
 .lm-info-plantilla-tabla tbody tr:hover td{background:var(--lm-surface-3)}
 .lm-info-plantilla-fila td{padding:8px;border-bottom:1px solid var(--lm-border);vertical-align:middle}
@@ -3613,6 +3613,71 @@ body.liga-manager-screen .ranking-btn-label-lm{display:inline}
    redondas en la textbox de "CÓMO JUGAR/AYUDA". */
 .lm-ayuda-chat + .lm-ayuda-input-row .lm-ayuda-input{border-radius:0}
 .lm-ayuda-chat + .lm-ayuda-input-row .lm-ayuda-buscar-btn{border-radius:0}
+
+/* ── Widget flotante de chat de ayuda ──────────────────────────────
+   El buscador de dudas ya NO vive dentro de "CÓMO JUGAR" (que ha
+   vuelto a ser solo el tutorial de siempre): en escritorio es un icono
+   circular fijo en la esquina inferior derecha, igual que los widgets
+   de chat de soporte de cualquier web, que despliega este mismo panel
+   al pulsarlo. En móvil no existe ningún acceso a este chat (ver el
+   @media más abajo), tal y como se pidió. */
+.lm-ayuda-flotante{
+  /* z-index a propósito POR DEBAJO de los overlays modales de Liga
+     Manager (todos usan z-index:10) — si hay una ventana como
+     INFORMACIÓN DE LA PLANTILLA abierta, esta no debe competir por
+     encima ni tapar sus botones. Por encima del contenido normal de la
+     pantalla (que no usa z-index) le basta con cualquier valor
+     positivo. */
+  position:fixed; right:24px; bottom:24px; z-index:5;
+  display:flex; flex-direction:column; align-items:flex-end; gap:14px;
+}
+@media(max-width:1050px){
+  .lm-ayuda-flotante{display:none!important}
+}
+.lm-ayuda-flotante-btn{
+  width:56px;height:56px;border-radius:50%;flex-shrink:0;
+  background:linear-gradient(145deg,#e6c94a,#c9a227);border:none;color:#1a1006;
+  display:flex;align-items:center;justify-content:center;font-size:26px;cursor:pointer;
+  box-shadow:0 6px 18px rgba(0,0,0,.45),0 0 0 1px rgba(230,201,74,.3);
+  transition:transform .2s ease,box-shadow .2s ease;
+}
+.lm-ayuda-flotante-btn:hover{transform:scale(1.07);box-shadow:0 8px 22px rgba(0,0,0,.5),0 0 0 1px rgba(230,201,74,.45)}
+.lm-ayuda-flotante-btn:active{transform:scale(.94)}
+/* El icono gira ligeramente cuando el panel está abierto — mismo
+   lenguaje visual que cualquier botón de "abrir/cerrar" con estado. */
+.lm-ayuda-flotante-abierta .lm-ayuda-flotante-btn{transform:rotate(90deg)}
+.lm-ayuda-flotante-abierta .lm-ayuda-flotante-btn:hover{transform:rotate(90deg) scale(1.07)}
+.lm-ayuda-flotante-panel{
+  width:360px;max-width:calc(100vw - 48px);
+  background:var(--lm-surface-1);border:1px solid var(--lm-border);border-radius:14px;
+  box-shadow:0 20px 50px rgba(0,0,0,.55),0 0 0 1px rgba(230,201,74,.12);
+  overflow:hidden;display:flex;flex-direction:column;
+  transform-origin:bottom right;
+  /* Estado cerrado: invisible, encogido y desplazado hacia el icono —
+     abrir es la transición inversa, con un ligero rebote al final
+     (cubic-bezier con overshoot) para que se note "vivo" y no un simple
+     fundido plano. */
+  opacity:0;transform:scale(.85) translateY(16px);pointer-events:none;
+  transition:opacity .28s cubic-bezier(.22,.9,.32,1.28),transform .34s cubic-bezier(.22,.9,.32,1.28);
+}
+.lm-ayuda-flotante-abierta .lm-ayuda-flotante-panel{
+  opacity:1;transform:scale(1) translateY(0);pointer-events:auto;
+}
+.lm-ayuda-flotante-header{
+  display:flex;align-items:center;justify-content:space-between;gap:8px;
+  padding:12px 14px;background:linear-gradient(135deg,#1c2620,#111814);
+  color:var(--gold);font-family:'Bebas Neue',Impact,sans-serif;font-size:14px;letter-spacing:1px;
+  border-bottom:1px solid var(--lm-border);
+}
+.lm-ayuda-flotante-header i{margin-right:6px}
+.lm-ayuda-flotante-cerrar{
+  background:none;border:none;color:var(--lm-text-dim);cursor:pointer;font-size:16px;
+  padding:4px;display:flex;align-items:center;justify-content:center;border-radius:6px;
+  transition:color .15s,background .15s;
+}
+.lm-ayuda-flotante-cerrar:hover{color:#fff;background:rgba(255,255,255,.08)}
+.lm-ayuda-flotante-panel .lm-ayuda-wrap{margin-top:0}
+.lm-ayuda-flotante-panel .lm-ayuda-chat{max-height:320px}
 .lm-match-actions button:disabled{opacity:.45;cursor:not-allowed;transform:none}
 .lm-btn-jugar{background:var(--gold);color:var(--lm-gold-tint);border:none}
 

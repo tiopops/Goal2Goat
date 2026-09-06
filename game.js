@@ -879,29 +879,18 @@ function toggleCollapsible(boxId){
   if(!box) return;
   playSound('select');
   box.classList.toggle("collapsed");
-  // Al minimizar "CÓMO JUGAR/AYUDA" (o su equivalente de Liga Manager),
-  // el buscador de dudas se vacía del todo — tanto el texto escrito
-  // como la respuesta tipo chat que se estuviera mostrando. Así cada
-  // vez que se reabre empieza limpio, en vez de dejar una respuesta
-  // vieja pegada de una consulta anterior.
-  if(box.classList.contains('collapsed') && typeof window.limpiarAyudaBusqueda==='function'){
-    window.limpiarAyudaBusqueda(boxId);
-  }
-  // Al DESPLEGAR una caja de tutorial/ayuda (CÓMO JUGAR, GUÍA DE
-  // ESTADÍSTICAS, GLOSARIO...), hacer scroll para que quede visible
-  // toda la interfaz que se acaba de abrir, no solo su cabecera.
+  // Al DESPLEGAR una caja de tutorial (CÓMO JUGAR, GUÍA DE ESTADÍSTICAS,
+  // GLOSARIO...), hacer scroll para que quede visible toda la interfaz
+  // que se acaba de abrir, no solo su cabecera. El buscador de dudas ya
+  // NO vive dentro de estas cajas — es un widget flotante aparte (ver
+  // lmAbrirAyudaFlotante/lmCerrarAyudaFlotante en liga-manager.js), así
+  // que esta función ya no necesita saber nada sobre él.
   if(!box.classList.contains('collapsed')){
     requestAnimationFrame(()=>{
       const alto=box.getBoundingClientRect().height;
       const cabe=alto<=(window.innerHeight*0.92);
       box.scrollIntoView({behavior:'smooth', block: cabe?'center':'start'});
     });
-    // Al desplegar justo "CÓMO JUGAR/AYUDA", arranca el cronómetro de
-    // 30s de inactividad del buscador de dudas — si el jugador se deja
-    // la caja abierta sin escribir nada, se contrae ella sola.
-    if(boxId==='lmHowToPlayBox' && typeof window.lmIniciarInactividadAyuda==='function'){
-      window.lmIniciarInactividadAyuda();
-    }
   }
 }
 

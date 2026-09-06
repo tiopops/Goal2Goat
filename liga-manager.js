@@ -3283,12 +3283,12 @@
   // posición de cada uno (ver el "congelado" en el manejador del botón
   // de orden, más abajo).
   const LM_SORT_NEXT={arrival:'position', position:'rating', rating:'numero', numero:'ninguno', ninguno:'arrival'};
-  // Buscador de dudas de "CÓMO JUGAR/AYUDA" — historial de chat en
-  // memoria (no se guarda en el estado de la partida, es un apoyo
-  // puntual): se mantiene mientras la caja siga abierta y sobrevive a
-  // los muchos render() que ocurren mientras tanto, pero se vacía del
-  // todo en cuanto se minimiza la caja (ver toggleCollapsible en
-  // game.js, que llama a limpiarAyudaBusqueda).
+  // Buscador de dudas del widget flotante de ayuda (solo escritorio) —
+  // historial de chat en memoria (no se guarda en el estado de la
+  // partida, es un apoyo puntual): se mantiene mientras el panel siga
+  // abierto y sobrevive a los muchos render() que ocurren mientras
+  // tanto, pero se vacía del todo en cuanto se cierra (ver
+  // lmCerrarAyudaFlotante más abajo).
   let lmAyudaChatHistorial=[];
   let lmAyudaInputValor='';
   // true mientras se muestran los "tres puntitos" de "escribiendo..."
@@ -3297,45 +3297,61 @@
   // Cronómetro pendiente de la respuesta con retraso (para poder
   // cancelarlo limpio si la caja se minimiza a media espera).
   let lmAyudaTimeoutRespuesta=null;
-  // Cronómetro de inactividad del buscador de AYUDA: si pasan 30s sin
-  // que el jugador escriba nada en el textbox, la propia caja CÓMO
-  // JUGAR/AYUDA se contrae sola (y con ella se vacía la conversación,
-  // vía el mismo gancho de toggleCollapsible/limpiarAyudaBusqueda que
-  // ya se usa al minimizarla a mano).
+  // Cronómetro de inactividad del asistente flotante de ayuda: si pasan
+  // 30s sin que el jugador escriba nada en el textbox, el propio panel
+  // flotante se cierra solo (y con él se vacía la conversación) — igual
+  // que antes hacía con la caja de CÓMO JUGAR/AYUDA, pero ahora el
+  // widget es independiente de esa caja.
   let lmAyudaInactividadTimer=null;
   const LM_AYUDA_INACTIVIDAD_MS=30000;
+  // true mientras el panel flotante de ayuda está desplegado — se
+  // refleja tanto en la clase del contenedor (para la animación CSS)
+  // como en esta variable, para que un render() completo posterior (por
+  // cualquier otro motivo) reconstruya el widget en el estado correcto
+  // en vez de forzarlo siempre a cerrado.
+  let lmAyudaFlotanteAbierta=false;
   function lmReiniciarInactividadAyuda(){
     if(lmAyudaInactividadTimer){ clearTimeout(lmAyudaInactividadTimer); lmAyudaInactividadTimer=null; }
     lmAyudaInactividadTimer=setTimeout(()=>{
       lmAyudaInactividadTimer=null;
-      const box=document.getElementById('lmHowToPlayBox');
-      if(box && !box.classList.contains('collapsed') && typeof window.toggleCollapsible==='function'){
-        window.toggleCollapsible('lmHowToPlayBox');
-      }
+      if(lmAyudaFlotanteAbierta) lmCerrarAyudaFlotante();
     }, LM_AYUDA_INACTIVIDAD_MS);
   }
   function lmDetenerInactividadAyuda(){
     if(lmAyudaInactividadTimer){ clearTimeout(lmAyudaInactividadTimer); lmAyudaInactividadTimer=null; }
   }
-  window.lmIniciarInactividadAyuda=lmReiniciarInactividadAyuda;
-  // Botón de la lupa en la cabecera de "CÓMO JUGAR/AYUDA": abre la caja
-  // directamente (si estaba contraída) y deja el textbox ya enfocado,
-  // listo para escribir — sin tener que desplegar la caja a mano y
-  // luego buscar el cuadro de texto.
-  function abrirAyudaDirecta(){
-    const box=document.getElementById('lmHowToPlayBox');
-    if(!box) return;
-    if(box.classList.contains('collapsed')){
-      if(typeof window.toggleCollapsible==='function') window.toggleCollapsible('lmHowToPlayBox');
-    } else {
-      lmReiniciarInactividadAyuda();
-    }
+  // Abre/cierra el icono flotante de chat (solo visible en escritorio,
+  // esquina inferior derecha). Se manipula la clase del contenedor
+  // directamente en el DOM en vez de forzar un render() completo — el
+  // mismo patrón "quirúrgico" que ya usa pintarChatAyudaLM — así abrir
+  // el chat es instantáneo y no reconstruye el resto del hub.
+  function lmAbrirAyudaFlotante(){
+    lmAyudaFlotanteAbierta=true;
+    const cont=document.getElementById('lmAyudaFlotante');
+    if(cont) cont.classList.add('lm-ayuda-flotante-abierta');
+    lmReiniciarInactividadAyuda();
     requestAnimationFrame(()=>{
       const inp=document.getElementById('lmAyudaInput');
       if(inp) inp.focus();
     });
   }
-  window.abrirAyudaDirecta=abrirAyudaDirecta;
+  function lmCerrarAyudaFlotante(){
+    lmAyudaFlotanteAbierta=false;
+    const cont=document.getElementById('lmAyudaFlotante');
+    if(cont) cont.classList.remove('lm-ayuda-flotante-abierta');
+    lmDetenerInactividadAyuda();
+    if(lmAyudaTimeoutRespuesta){ clearTimeout(lmAyudaTimeoutRespuesta); lmAyudaTimeoutRespuesta=null; }
+    lmAyudaEscribiendo=false;
+    // Vaciar la conversación al cerrar, igual que antes al minimizar la
+    // caja — la próxima vez que se abra el chat empieza de cero.
+    if(lmAyudaChatHistorial.length || lmAyudaInputValor){
+      lmAyudaChatHistorial=[];
+      lmAyudaInputValor='';
+      pintarChatAyudaLM();
+    }
+  }
+  window.lmAbrirAyudaFlotante=lmAbrirAyudaFlotante;
+  window.lmCerrarAyudaFlotante=lmCerrarAyudaFlotante;
   // Batería de preguntas frecuentes del buscador de "CÓMO JUGAR/AYUDA".
   // Cada entrada lleva una lista de palabras clave (en varios idiomas,
   // para que reconozca la pregunta sea cual sea el idioma activo) y la
@@ -3363,7 +3379,7 @@
     {id:'director_general', keywords:['director general','proyectos del club','patrocinadores','ampliar el estadio','proyectos director general','patrocinio','estadio ampliar'], respuestaKey:'ayuda.faq_director_general', dondeKey:'ayuda.faq_director_general_donde', destino:'dg'},
     {id:'director_deportivo', keywords:['director deportivo','ojear jugadores','scouting','fichajes del director deportivo','ojeadores','red de ojeadores','ojeo','cartas del director deportivo'], respuestaKey:'ayuda.faq_director_deportivo', dondeKey:'ayuda.faq_director_deportivo_donde', destino:'dd'},
     {id:'proyectos_nivel', keywords:['proyecto','proyectos','como funcionan los proyectos','subir de nivel un proyecto','tirar los dados','nivel del proyecto','dificultad del proyecto','dados','tirada'], respuestaKey:'ayuda.faq_proyectos', dondeKey:'ayuda.faq_proyectos_nivel_donde'},
-    {id:'habilidades', keywords:['habilidad','habilidades','puntos de habilidad','desbloquear habilidades','activar una habilidad','activar habilidad','donde veo las habilidades','donde puedo ver mis habilidades','ver mis habilidades','skill','skills'], respuestaKey:'ayuda.faq_habilidades', dondeKey:'ayuda.faq_habilidades_donde', destino:'perfil_habilidades'},
+    {id:'habilidades', keywords:['habilidad','habilidades','puntos de habilidad','desbloquear habilidades','activar una habilidad','activar habilidad','donde veo las habilidades','donde puedo ver mis habilidades','ver mis habilidades','donde estan las habilidades','skill','skills'], respuestaKey:'ayuda.faq_habilidades', dondeKey:'ayuda.faq_habilidades_donde', destino:'perfil_habilidades'},
     {id:'quiniela', keywords:['quiniela','jugar la quiniela','pronosticos','apostar resultados','apuesta','boleto','rellenar quiniela'], respuestaKey:'ayuda.faq_quiniela', dondeKey:'ayuda.faq_quiniela_donde', destino:'quiniela'},
     {id:'amistosos', keywords:['amistoso','amistosos','partido amistoso','jugar amistosos','descansar jugadores','arbol de nodos','calendario semanal','dia de descanso'], respuestaKey:'ayuda.faq_amistosos', dondeKey:'ayuda.faq_amistosos_donde', destino:'amistosos'},
     {id:'jugar_jornada', keywords:['jugar jornada','avanzar jornada','simular partido','empezar el partido','como jugar','jugar partido','seguir jornada','boton jugar'], respuestaKey:'ayuda.faq_jugar_jornada', dondeKey:'ayuda.faq_jugar_jornada_donde', destino:'jugar_jornada'},
@@ -3378,7 +3394,7 @@
     {id:'nomina', keywords:['nomina','nómina','total de sueldos','cuanto pago de sueldos','gastos en salarios','gastos mensuales','pagar sueldos'], respuestaKey:'ayuda.faq_nomina', dondeKey:'ayuda.faq_nomina_donde', destino:'dg'},
     {id:'cuerpo_tecnico', keywords:['cuerpo tecnico','cuerpo técnico','contratar trabajador','puesto vacante','personal del club','contratar personal','trabajadores','vacante'], respuestaKey:'ayuda.faq_cuerpo_tecnico', dondeKey:'ayuda.faq_cuerpo_tecnico_donde', destino:'trabajadores'},
     {id:'escudo', keywords:['escudo','cambiar el escudo','diseñar el escudo','logo del equipo','personalizar escudo','editor de escudo'], respuestaKey:'ayuda.faq_escudo', dondeKey:'ayuda.faq_escudo_donde'},
-    {id:'logros', keywords:['logro','logros','conseguir logros','ver mis logros','donde veo los logros','donde puedo ver los logros','trofeos del perfil','achievement','achievements'], respuestaKey:'ayuda.faq_logros', dondeKey:'ayuda.faq_logros_donde', destino:'perfil_logros'},
+    {id:'logros', keywords:['logro','logros','conseguir logros','ver mis logros','donde veo los logros','donde puedo ver los logros','donde estan los logros','trofeos del perfil','achievement','achievements'], respuestaKey:'ayuda.faq_logros', dondeKey:'ayuda.faq_logros_donde', destino:'perfil_logros'},
     // Preguntas centradas en TIEMPOS de juego — cada cuánto pasa algo,
     // cuánto tarda en resolverse, cuántas jornadas de plazo hay... Se
     // añaden como temas propios (no como simples palabras sueltas
@@ -3403,7 +3419,7 @@
     {id:'cuerpo_tecnico_niveles', keywords:['niveles del cuerpo tecnico','estrellas de los trabajadores','candidatos nuevos cada mes','chollo de trabajador','rareza de los trabajadores','staff star levels'], respuestaKey:'ayuda.faq_cuerpo_tecnico_niveles', dondeKey:'ayuda.faq_cuerpo_tecnico_niveles_donde', destino:'trabajadores'},
     {id:'escudo_persiste', keywords:['tengo que crear el escudo cada partida','el escudo se guarda','el nombre del equipo se guarda entre partidas','no me pide el escudo otra vez','does the crest save between games'], respuestaKey:'ayuda.faq_escudo_persiste', dondeKey:'ayuda.faq_escudo_persiste_donde'},
     {id:'escudo_capas', keywords:['capas del escudo','patron de colores del escudo','decoracion del escudo','corona o laurel en el escudo','icono del escudo','crest layers pattern decoration'], respuestaKey:'ayuda.faq_escudo_capas', dondeKey:'ayuda.faq_escudo_capas_donde'},
-    {id:'mejoras_goat', keywords:['mejoras con puntos goat','tienda de mejoras','ampliar el banquillo','mas dados por partido','mas rerolls','descuento en sobres con puntos','donde veo las mejoras','donde puedo ver las mejoras','ver las mejoras','goat points upgrades shop'], respuestaKey:'ayuda.faq_mejoras_goat', dondeKey:'ayuda.faq_mejoras_goat_donde', destino:'perfil_mejoras'},
+    {id:'mejoras_goat', keywords:['mejoras con puntos goat','tienda de mejoras','ampliar el banquillo','mas dados por partido','mas rerolls','descuento en sobres con puntos','donde veo las mejoras','donde puedo ver las mejoras','ver las mejoras','donde estan las mejoras','goat points upgrades shop'], respuestaKey:'ayuda.faq_mejoras_goat', dondeKey:'ayuda.faq_mejoras_goat_donde', destino:'perfil_mejoras'},
     {id:'mejoras_reembolso', keywords:['puedo bajar el nivel de una mejora','recuperar puntos de una mejora','deshacer una mejora comprada','revertir mejora','refund upgrade points'], respuestaKey:'ayuda.faq_mejoras_reembolso', dondeKey:'ayuda.faq_mejoras_reembolso_donde', destino:'perfil_mejoras'},
     {id:'puntos_goat_origen', keywords:['de donde salen los puntos goat','como consigo puntos goat','puntos goat compartidos','logros dan puntos','where do goat points come from'], respuestaKey:'ayuda.faq_puntos_goat_origen', dondeKey:'ayuda.faq_puntos_goat_origen_donde'},
     {id:'giro_tactico', keywords:['giro tactico','carta tactica en el descanso','cambiar el partido en el descanso','que es el giro tactico','tactical twist halftime card'], respuestaKey:'ayuda.faq_giro_tactico', dondeKey:'ayuda.faq_giro_tactico_donde'},
@@ -3591,6 +3607,13 @@
     const claveRespuesta=opciones[Math.floor(Math.random()*opciones.length)];
     return {id:'smalltalk_'+mejor.tipo, claveRespuesta, destino:null};
   }
+  // Palabras "de relleno" para el modo de emergencia de más abajo —
+  // conectores, verbos y pronombres tan comunes que casi cualquier
+  // pregunta los lleva, así que NUNCA deben contar como pista de qué
+  // tema se está preguntando (si contaran, "¿puedo ver el tutorial otra
+  // vez?" podría acabar coincidiendo con cualquier otro tema que
+  // también use la palabra "otra" o "vez" en sus frases clave).
+  const LM_AYUDA_PALABRAS_VACIAS_FALLBACK=new Set(['donde','dónde','esta','está','estan','están','puedo','puedes','ver','veo','encuentro','encontrar','como','cómo','que','qué','el','la','los','las','de','del','en','un','una','unos','unas','para','y','o','mi','mis','tengo','tiene','hay','se','su','sus','al','a','otra','otro','otras','otros','vez','veces','mas','más','nuevo','nueva','nuevos','nuevas','quiero','quisiera','necesito','ahora','aqui','aquí','alli','allí','asi','así','tambien','también','siempre','todavia','todavía','aun','aún','bien','mal','mucho','poco','todo','toda','todos','todas','este','esta','ese','esa','eso','cual','cuál','cuales','cuáles','con','por','sin','sobre','entre','cuanto','cuánto','cuanta','cuánta']);
   function lmBuscarRespuestaAyuda(pregunta){
     const texto=lmNormalizarTextoAyuda(pregunta);
     if(!texto) return null;
@@ -3605,6 +3628,30 @@
       });
       if(puntuacion>mejorPuntuacion){ mejorPuntuacion=puntuacion; mejor=entry; }
     });
+    // Modo de emergencia: ninguna frase clave registrada aparece TAL
+    // CUAL en la pregunta (p. ej. "¿dónde ESTÁN las mejoras?" cuando
+    // solo hay registrado "dónde VEO las mejoras"). En vez de rendirse,
+    // se compara palabra a palabra (ignorando conectores) y se elige el
+    // tema con más palabras "de peso" en común — así cualquier forma de
+    // preguntar por un mismo tema encuentra su sitio, no solo las
+    // frases exactas que se nos ocurrió anticipar.
+    if(!mejor){
+      const tokensPregunta=new Set(texto.split(/\s+/).filter(w=>w.length>4 && !LM_AYUDA_PALABRAS_VACIAS_FALLBACK.has(w)));
+      if(tokensPregunta.size){
+        LM_AYUDA_FAQ.forEach(entry=>{
+          let solapadas=0;
+          const vistas=new Set();
+          entry.keywords.forEach(k=>{
+            lmNormalizarTextoAyuda(k).split(/\s+/).forEach(w=>{
+              if(w.length>4 && !LM_AYUDA_PALABRAS_VACIAS_FALLBACK.has(w) && tokensPregunta.has(w) && !vistas.has(w)){
+                vistas.add(w); solapadas++;
+              }
+            });
+          });
+          if(solapadas>mejorPuntuacion){ mejorPuntuacion=solapadas; mejor=entry; }
+        });
+      }
+    }
     if(!mejor) return null;
     // Si la pregunta es de tipo "dónde" y la entrada tiene respuesta de
     // ubicación propia, se devuelve esa en vez de la explicación general.
@@ -3622,26 +3669,6 @@
     d.textContent=s;
     return d.innerHTML;
   }
-  // Se llama desde toggleCollapsible (game.js) al minimizar la caja de
-  // "CÓMO JUGAR/AYUDA" — vacía tanto el texto escrito como todo el
-  // historial de chat, para que la próxima vez que se abra empiece de
-  // cero.
-  function limpiarAyudaBusqueda(boxId){
-    if(boxId!=='lmHowToPlayBox') return;
-    if(lmAyudaTimeoutRespuesta){ clearTimeout(lmAyudaTimeoutRespuesta); lmAyudaTimeoutRespuesta=null; }
-    lmDetenerInactividadAyuda();
-    lmAyudaEscribiendo=false;
-    if(!lmAyudaChatHistorial.length && !lmAyudaInputValor) return;
-    lmAyudaChatHistorial=[];
-    lmAyudaInputValor='';
-    // Igual que en ejecutarBusquedaAyudaLM: pintado quirúrgico, nunca
-    // render() completo — aquí se llama justo cuando la caja se acaba
-    // de colapsar, y un render() de golpe reconstruiría el hub entero
-    // sin necesidad (y sin ninguna ventaja, porque la caja ya está
-    // oculta por CSS).
-    pintarChatAyudaLM();
-  }
-  window.limpiarAyudaBusqueda=limpiarAyudaBusqueda;
   // Genera el HTML de todas las burbujas del chat (historial real +, si
   // toca, los "tres puntitos" de "escribiendo..."). Compartido entre el
   // primer pintado (dentro del template de render()) y las
@@ -11770,7 +11797,7 @@
             }
           })()}
           <div class="box collapsible-box collapsed" id="lmHowToPlayBox">
-            <h3 class="collapsible-header" onclick="toggleCollapsible('lmHowToPlayBox')"><span>${t('lm.howto_titulo')}</span> <span style="display:flex;align-items:center;gap:8px"><button type="button" class="lm-howto-lupa-btn" title="${t('lm.howto_lupa_tt')}" onclick="event.stopPropagation(); if(typeof abrirAyudaDirecta==='function') abrirAyudaDirecta();"><i class="ph ph-bold ph-magnifying-glass"></i></button><span class="collapse-arrow">▾</span></span></h3>
+            <h3 class="collapsible-header" onclick="toggleCollapsible('lmHowToPlayBox')"><span>${t('lm.howto_titulo')}</span> <span class="collapse-arrow">▾</span></h3>
             <div class="howto-content">
               <div class="howto-step"><span class="howto-num">1</span><div>${t('lm.howto_paso1')}</div></div>
               <div class="howto-step"><span class="howto-num">2</span><div>${t('lm.howto_paso2')}</div></div>
@@ -11778,13 +11805,6 @@
               <div class="howto-step"><span class="howto-num">4</span><div>${t('lm.howto_paso4')}</div></div>
               <div class="howto-step"><span class="howto-num">5</span><div>${t('lm.howto_paso5')}</div></div>
               <div class="howto-step"><span class="howto-num">6</span><div>${t('lm.howto_paso6')}</div></div>
-              <div class="lm-ayuda-wrap">
-                <div class="lm-ayuda-chat" id="lmAyudaChat" style="${(lmAyudaChatHistorial.length||lmAyudaEscribiendo)?'':'display:none'}">${lmRenderBurbujasAyudaHTML()}</div>
-                <div class="lm-ayuda-input-row">
-                  <input type="text" id="lmAyudaInput" class="lm-ayuda-input" maxlength="140" placeholder="${t('lm.ayuda_placeholder')}" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
-                  <button type="button" id="lmAyudaBuscarBtn" class="lm-ayuda-buscar-btn" title="${t('lm.ayuda_buscar_tt')}"><i class="ph ph-bold ph-magnifying-glass"></i></button>
-                </div>
-              </div>
               <button id="lmReplayTutorialBtn" style="width:100%;margin-top:12px;font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:1px;font-size:16px;background:none;border:1px solid var(--gold);color:var(--gold);border-radius:6px;padding:9px 14px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px">
                 <i class="ph ph-bold ph-play-circle" style="font-size:20px"></i> ${t('lm.howto_ver_tutorial')}
               </button>
@@ -11810,6 +11830,24 @@
           </div>
         </div>
 
+      </div>
+      <div id="lmAyudaFlotante" class="lm-ayuda-flotante${lmAyudaFlotanteAbierta?' lm-ayuda-flotante-abierta':''}">
+        <div class="lm-ayuda-flotante-panel">
+          <div class="lm-ayuda-flotante-header">
+            <span><i class="ph ph-bold ph-chat-circle-dots"></i> ${t('lm.ayuda_flotante_titulo')}</span>
+            <button type="button" id="lmAyudaFlotanteCerrar" class="lm-ayuda-flotante-cerrar" aria-label="Cerrar"><i class="ph ph-bold ph-x"></i></button>
+          </div>
+          <div class="lm-ayuda-wrap">
+            <div class="lm-ayuda-chat" id="lmAyudaChat" style="${(lmAyudaChatHistorial.length||lmAyudaEscribiendo)?'':'display:none'}">${lmRenderBurbujasAyudaHTML()}</div>
+            <div class="lm-ayuda-input-row">
+              <input type="text" id="lmAyudaInput" class="lm-ayuda-input" maxlength="140" placeholder="${t('lm.ayuda_placeholder')}" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
+              <button type="button" id="lmAyudaBuscarBtn" class="lm-ayuda-buscar-btn" title="${t('lm.ayuda_buscar_tt')}"><i class="ph ph-bold ph-magnifying-glass"></i></button>
+            </div>
+          </div>
+        </div>
+        <button type="button" id="lmAyudaFlotanteBtn" class="lm-ayuda-flotante-btn" title="${t('lm.howto_lupa_tt')}">
+          <i class="ph ph-bold ph-chat-circle-dots"></i>
+        </button>
       </div>
     `;
 
@@ -12261,6 +12299,18 @@
     }
     const ayudaBtnEl=document.getElementById('lmAyudaBuscarBtn');
     if(ayudaBtnEl) ayudaBtnEl.addEventListener('click', ()=>{ ejecutarBusquedaAyudaLM(); });
+    // Icono flotante de chat (solo escritorio, ver CSS): abre/cierra el
+    // panel con la animación definida en .lm-ayuda-flotante-abierta.
+    const ayudaFlotanteBtn=document.getElementById('lmAyudaFlotanteBtn');
+    if(ayudaFlotanteBtn) ayudaFlotanteBtn.addEventListener('click', ()=>{
+      if(typeof window.playSound==='function') window.playSound('select');
+      if(lmAyudaFlotanteAbierta) lmCerrarAyudaFlotante(); else lmAbrirAyudaFlotante();
+    });
+    const ayudaFlotanteCerrarBtn=document.getElementById('lmAyudaFlotanteCerrar');
+    if(ayudaFlotanteCerrarBtn) ayudaFlotanteCerrarBtn.addEventListener('click', ()=>{
+      if(typeof window.playSound==='function') window.playSound('select');
+      lmCerrarAyudaFlotante();
+    });
     // Delegado en el propio contenedor del chat: los enlaces "Abrir
     // Director General" (etc.) que aparecen dentro de una respuesta se
     // regeneran en cada pintado quirúrgico (pintarChatAyudaLM), así que
@@ -14406,18 +14456,20 @@
       overlay.innerHTML=`
         <div class="lm-dilemma-card lm-dilemma-card-dd" style="max-width:920px;text-align:left">
           ${xCerrarHTML()}
-          <div class="lm-dilemma-title" style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+          <div class="lm-dilemma-title">
             <span><i class="ph ph-bold ph-file-text"></i> ${t('lm.info_plantilla_btn')}</span>
-            <button type="button" id="lmSalariosOrdenBtn" class="lm-sort-btn" title="${t('lm.tt_cambiar_orden')}" aria-label="Cambiar orden">
-              <span id="lmSalariosOrdenLabel">${LM_ORDEN_SALARIOS_LABELS[lmModoOrdenSalarios]}</span>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M7 12h10M11 18h2"/></svg>
-            </button>
           </div>
           <div class="lm-setup-desc" style="text-align:center;margin-bottom:8px">${t('lm.nomina_total')} <strong>${formatoDinero(totalNomina)}/mes</strong> · plantilla: <strong>${jugadores.length}</strong>${numAlertas?` · <strong class="lm-capital-neg">${tp('lm.n_jugadores_en_alerta', {n:numAlertas})}</strong>`:''} · ${t('lm.info_plantilla_nota_venta')}</div>
           <div class="lm-info-plantilla-tabla-wrap">
             ${jugadores.length ? `<table class="lm-info-plantilla-tabla">
               <thead><tr>
-                <th>#</th><th>${t('lm.tabla_jugador')}</th><th>Pos</th><th>${t('lm.tabla_punt')}</th><th>${t('lm.tabla_salario')}</th><th></th><th></th><th></th>
+                <th>#</th><th>${t('lm.tabla_jugador')}</th><th>Pos</th><th>${t('lm.tabla_punt')}</th><th>${t('lm.tabla_salario')}</th>
+                <th class="lm-info-th-orden" colspan="3">
+                  <button type="button" id="lmSalariosOrdenBtn" class="lm-sort-btn" title="${t('lm.tt_cambiar_orden')}" aria-label="Cambiar orden">
+                    <span id="lmSalariosOrdenLabel">${LM_ORDEN_SALARIOS_LABELS[lmModoOrdenSalarios]}</span>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M7 12h10M11 18h2"/></svg>
+                  </button>
+                </th>
               </tr></thead>
               <tbody>${filas}</tbody>
             </table>` : `<div class="lm-info-plantilla-vacio">${t('lm.sin_jugadores_plantilla')}</div>`}
