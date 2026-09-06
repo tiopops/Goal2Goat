@@ -3363,7 +3363,7 @@
     {id:'director_general', keywords:['director general','proyectos del club','patrocinadores','ampliar el estadio','proyectos director general','patrocinio','estadio ampliar'], respuestaKey:'ayuda.faq_director_general', dondeKey:'ayuda.faq_director_general_donde', destino:'dg'},
     {id:'director_deportivo', keywords:['director deportivo','ojear jugadores','scouting','fichajes del director deportivo','ojeadores','red de ojeadores','ojeo','cartas del director deportivo'], respuestaKey:'ayuda.faq_director_deportivo', dondeKey:'ayuda.faq_director_deportivo_donde', destino:'dd'},
     {id:'proyectos_nivel', keywords:['proyecto','proyectos','como funcionan los proyectos','subir de nivel un proyecto','tirar los dados','nivel del proyecto','dificultad del proyecto','dados','tirada'], respuestaKey:'ayuda.faq_proyectos', dondeKey:'ayuda.faq_proyectos_nivel_donde'},
-    {id:'habilidades', keywords:['habilidad','habilidades','puntos de habilidad','desbloquear habilidades','activar una habilidad','activar habilidad','skill','skills'], respuestaKey:'ayuda.faq_habilidades', dondeKey:'ayuda.faq_habilidades_donde'},
+    {id:'habilidades', keywords:['habilidad','habilidades','puntos de habilidad','desbloquear habilidades','activar una habilidad','activar habilidad','donde veo las habilidades','donde puedo ver mis habilidades','ver mis habilidades','skill','skills'], respuestaKey:'ayuda.faq_habilidades', dondeKey:'ayuda.faq_habilidades_donde', destino:'perfil_habilidades'},
     {id:'quiniela', keywords:['quiniela','jugar la quiniela','pronosticos','apostar resultados','apuesta','boleto','rellenar quiniela'], respuestaKey:'ayuda.faq_quiniela', dondeKey:'ayuda.faq_quiniela_donde', destino:'quiniela'},
     {id:'amistosos', keywords:['amistoso','amistosos','partido amistoso','jugar amistosos','descansar jugadores','arbol de nodos','calendario semanal','dia de descanso'], respuestaKey:'ayuda.faq_amistosos', dondeKey:'ayuda.faq_amistosos_donde', destino:'amistosos'},
     {id:'jugar_jornada', keywords:['jugar jornada','avanzar jornada','simular partido','empezar el partido','como jugar','jugar partido','seguir jornada','boton jugar'], respuestaKey:'ayuda.faq_jugar_jornada', dondeKey:'ayuda.faq_jugar_jornada_donde'},
@@ -3378,7 +3378,7 @@
     {id:'nomina', keywords:['nomina','nómina','total de sueldos','cuanto pago de sueldos','gastos en salarios','gastos mensuales','pagar sueldos'], respuestaKey:'ayuda.faq_nomina', dondeKey:'ayuda.faq_nomina_donde', destino:'dg'},
     {id:'cuerpo_tecnico', keywords:['cuerpo tecnico','cuerpo técnico','contratar trabajador','puesto vacante','personal del club','contratar personal','trabajadores','vacante'], respuestaKey:'ayuda.faq_cuerpo_tecnico', dondeKey:'ayuda.faq_cuerpo_tecnico_donde', destino:'trabajadores'},
     {id:'escudo', keywords:['escudo','cambiar el escudo','diseñar el escudo','logo del equipo','personalizar escudo','editor de escudo'], respuestaKey:'ayuda.faq_escudo', dondeKey:'ayuda.faq_escudo_donde'},
-    {id:'logros', keywords:['logro','logros','conseguir logros','ver mis logros','trofeos del perfil','achievement','achievements'], respuestaKey:'ayuda.faq_logros', dondeKey:'ayuda.faq_logros_donde'},
+    {id:'logros', keywords:['logro','logros','conseguir logros','ver mis logros','donde veo los logros','donde puedo ver los logros','trofeos del perfil','achievement','achievements'], respuestaKey:'ayuda.faq_logros', dondeKey:'ayuda.faq_logros_donde', destino:'perfil_logros'},
     // Preguntas centradas en TIEMPOS de juego — cada cuánto pasa algo,
     // cuánto tarda en resolverse, cuántas jornadas de plazo hay... Se
     // añaden como temas propios (no como simples palabras sueltas
@@ -3403,7 +3403,7 @@
     {id:'cuerpo_tecnico_niveles', keywords:['niveles del cuerpo tecnico','estrellas de los trabajadores','candidatos nuevos cada mes','chollo de trabajador','rareza de los trabajadores','staff star levels'], respuestaKey:'ayuda.faq_cuerpo_tecnico_niveles', dondeKey:'ayuda.faq_cuerpo_tecnico_niveles_donde', destino:'trabajadores'},
     {id:'escudo_persiste', keywords:['tengo que crear el escudo cada partida','el escudo se guarda','el nombre del equipo se guarda entre partidas','no me pide el escudo otra vez','does the crest save between games'], respuestaKey:'ayuda.faq_escudo_persiste', dondeKey:'ayuda.faq_escudo_persiste_donde'},
     {id:'escudo_capas', keywords:['capas del escudo','patron de colores del escudo','decoracion del escudo','corona o laurel en el escudo','icono del escudo','crest layers pattern decoration'], respuestaKey:'ayuda.faq_escudo_capas', dondeKey:'ayuda.faq_escudo_capas_donde'},
-    {id:'mejoras_goat', keywords:['mejoras con puntos goat','tienda de mejoras','ampliar el banquillo','mas dados por partido','mas rerolls','descuento en sobres con puntos','goat points upgrades shop'], respuestaKey:'ayuda.faq_mejoras_goat', dondeKey:'ayuda.faq_mejoras_goat_donde'},
+    {id:'mejoras_goat', keywords:['mejoras con puntos goat','tienda de mejoras','ampliar el banquillo','mas dados por partido','mas rerolls','descuento en sobres con puntos','donde veo las mejoras','donde puedo ver las mejoras','ver las mejoras','goat points upgrades shop'], respuestaKey:'ayuda.faq_mejoras_goat', dondeKey:'ayuda.faq_mejoras_goat_donde', destino:'perfil_mejoras'},
     {id:'mejoras_reembolso', keywords:['puedo bajar el nivel de una mejora','recuperar puntos de una mejora','deshacer una mejora comprada','revertir mejora','refund upgrade points'], respuestaKey:'ayuda.faq_mejoras_reembolso', dondeKey:'ayuda.faq_mejoras_reembolso_donde'},
     {id:'puntos_goat_origen', keywords:['de donde salen los puntos goat','como consigo puntos goat','puntos goat compartidos','logros dan puntos','where do goat points come from'], respuestaKey:'ayuda.faq_puntos_goat_origen', dondeKey:'ayuda.faq_puntos_goat_origen_donde'},
     {id:'giro_tactico', keywords:['giro tactico','carta tactica en el descanso','cambiar el partido en el descanso','que es el giro tactico','tactical twist halftime card'], respuestaKey:'ayuda.faq_giro_tactico', dondeKey:'ayuda.faq_giro_tactico_donde'},
@@ -3440,6 +3440,11 @@
     {id:'sobre_hitos_recompensa', keywords:['recompensas de scouting sobre garantizado','sobre nivel superior hito','elegir entre dos jugadores al abrir sobre','scouting milestone free pack reward'], respuestaKey:'ayuda.faq_sobre_hitos_recompensa', dondeKey:'ayuda.faq_sobre_hitos_recompensa_donde', destino:'dd'},
     {id:'banquillo_tamano', keywords:['tamaño del banquillo','cuantos suplentes caben por defecto','ampliar el banquillo con puntos','bench size default upgrade'], respuestaKey:'ayuda.faq_banquillo_tamano', dondeKey:'ayuda.faq_banquillo_tamano_donde'},
     {id:'traspasos_rechazo', keywords:['puedo rechazar una oferta de traspaso','no quiero vender a mi jugador','rechazar oferta por un jugador','estoy obligado a vender','reject transfer offer'], respuestaKey:'ayuda.faq_traspasos_rechazo', dondeKey:'ayuda.faq_traspasos_rechazo_donde', destino:'info_plantilla'},
+    {id:'glosario', keywords:['glosario','donde veo el glosario','donde esta el glosario','diccionario de terminos','que significan los terminos del juego','glossary'], respuestaKey:'ayuda.faq_glosario', dondeKey:'ayuda.faq_glosario_donde', destino:'glosario'},
+    {id:'tutorial_de_nuevo', keywords:['ver el tutorial de nuevo','repetir el tutorial','volver a ver el tutorial','como repito el tutorial','donde esta el tutorial','replay tutorial','watch tutorial again'], respuestaKey:'ayuda.faq_tutorial_de_nuevo', dondeKey:'ayuda.faq_tutorial_de_nuevo_donde', destino:'tutorial'},
+    {id:'menu_perfil', keywords:['menu de perfil','donde veo mi perfil','donde esta mi perfil','abrir mi perfil','ver mi perfil','profile menu'], respuestaKey:'ayuda.faq_menu_perfil', dondeKey:'ayuda.faq_menu_perfil_donde', destino:'perfil'},
+    {id:'tickets_puntos', keywords:['como consigo puntos para las habilidades','como consigo puntos para las mejoras','como consigo puntos goat','de donde salen los puntos para mejorar','ganar puntos con boletos','ganar puntos con tickets','como gano puntos goat','how do i get points for skills or upgrades'], respuestaKey:'ayuda.faq_tickets_puntos', dondeKey:'ayuda.faq_tickets_puntos_donde', destino:'tickets'},
+    {id:'tickets_frecuencia', keywords:['cada cuanto se genera un ticket','cada cuanto llega un ticket nuevo','cada cuanto tengo un boleto nuevo','cuantos tickets puedo acumular','cuantos boletos como maximo','how often does a new ticket appear'], respuestaKey:'ayuda.faq_tickets_frecuencia', dondeKey:'ayuda.faq_tickets_frecuencia_donde', destino:'tickets'},
   ];
   // Enlaces directos que puede ofrecer una respuesta del buscador de
   // AYUDA: cada "destino" es una pantalla real del juego, con la
@@ -3465,6 +3470,33 @@
     amistosos:{labelKey:'lm.ayuda_link_amistosos', fn:()=>abrirArbolNodosSemana()},
     trabajadores:{labelKey:'lm.ayuda_link_trabajadores', fn:()=>abrirTrabajadores()},
     mantenimiento:{labelKey:'lm.ayuda_link_mantenimiento', fn:()=>abrirMantenimiento()},
+    glosario:{labelKey:'lm.ayuda_link_glosario', fn:()=>{
+      const box=document.getElementById('lmGlossaryBox');
+      if(!box) return;
+      if(box.classList.contains('collapsed') && typeof window.toggleCollapsible==='function'){
+        window.toggleCollapsible('lmGlossaryBox');
+      } else {
+        box.scrollIntoView({behavior:'smooth', block:'start'});
+      }
+    }},
+    tutorial:{labelKey:'lm.ayuda_link_tutorial', fn:()=>{
+      const btn=document.getElementById('lmReplayTutorialBtn');
+      if(btn) btn.click();
+    }},
+    perfil:{labelKey:'lm.ayuda_link_perfil', fn:()=>{ if(typeof window.showProfileModal==='function') window.showProfileModal(); }},
+    perfil_habilidades:{labelKey:'lm.ayuda_link_perfil_habilidades', fn:()=>{
+      if(typeof window.showProfileModal==='function') window.showProfileModal();
+      setTimeout(()=>{ if(typeof window.switchProfileTab==='function') window.switchProfileTab('notes'); }, 80);
+    }},
+    perfil_logros:{labelKey:'lm.ayuda_link_perfil_logros', fn:()=>{
+      if(typeof window.showProfileModal==='function') window.showProfileModal();
+      setTimeout(()=>{ if(typeof window.switchProfileTab==='function') window.switchProfileTab('achievements'); }, 80);
+    }},
+    perfil_mejoras:{labelKey:'lm.ayuda_link_perfil_mejoras', fn:()=>{
+      if(typeof window.showProfileModal==='function') window.showProfileModal();
+      setTimeout(()=>{ if(typeof window.switchProfileTab==='function') window.switchProfileTab('upgrades'); }, 80);
+    }},
+    tickets:{labelKey:'lm.ayuda_link_tickets', fn:()=>{ if(typeof window.openTicketOverlay==='function') window.openTicketOverlay(); }},
   };
   // Palabras clave (multi-idioma) que delatan una pregunta de tipo
   // "¿DÓNDE...?" — cuando el texto las contiene, se prioriza la

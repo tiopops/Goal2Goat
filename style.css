@@ -1440,9 +1440,9 @@ body.dark-theme .strategy-desc{background:#0a0c0d}
    que necesita su propio hit-area y detener la propagación del clic
    (ver el onclick inline que llama a event.stopPropagation()). */
 .lm-howto-lupa-btn{
-  flex-shrink:0;width:24px;height:24px;border-radius:6px;
+  flex-shrink:0;width:32px;height:32px;border-radius:7px;
   background:rgba(201,162,39,.12);border:1px solid rgba(201,162,39,.4);color:var(--gold);
-  display:flex;align-items:center;justify-content:center;font-size:12px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;
 }
 .lm-howto-lupa-btn:hover{background:rgba(201,162,39,.22)}
 .collapsible-box.collapsed .howto-content{
