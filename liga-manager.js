@@ -5416,19 +5416,6 @@
     // de soltarlo) sin tener que mutar state.precioEntrada de verdad.
     const precio=precioOverride!==undefined?precioOverride:(state.precioEntrada===undefined?15:state.precioEntrada);
     const tolerancia=nivelDeDG('toleranciaPrecio');
-    // El castigo por precio ya NO es un simple lineal por euro de más —
-    // ahora es progresivo (crece cada vez más rápido cuanto más se sube
-    // el precio, en vez de un mismo % fijo por euro) Y depende de cómo
-    // esté la afición y la trayectoria del equipo: con la afición
-    // contenta y el equipo en buena racha, una entrada cara se perdona
-    // bastante; con la afición ya harta y el equipo de capa caída, la
-    // misma subida de precio hunde la asistencia mucho más. 'normalizado'
-    // (satisfacción 0-1, ya calculado arriba) pesa más que la moral
-    // porque es la señal más directa de "cómo está la afición ahora".
-    const saludAficionYResultados=Math.max(0, Math.min(1, normalizado*0.7 + (((state.moral||0)+50)/100)*0.3));
-    const factorTolerancia = 1.6 - saludAficionYResultados*1.1; // ~0.5 (afición encantada/equipo en racha) a 1.6 (afición harta/mala racha)
-    const excesoPrecio=Math.max(0,(precio-10));
-    const penalizacionPrecio=Math.pow(excesoPrecio,1.2)*0.0012*factorTolerancia*(1-tolerancia*0.22);
     // Los disturbios ya castigaban la satisfacción a largo plazo (ver
     // procesarDisturbiosTrasPartido), pero eso tarda semanas en
     // notarse. Aquí se añade el golpe directo e inmediato de ESTE
@@ -5444,9 +5431,36 @@
     // para intentar llenar igualmente el estadio con entradas más
     // baratas si no puede permitirse pagar más guardias de seguridad.
     const bonusPrecioBajo = precio<10 ? Math.min(0.12, (10-precio)*0.012) : 0;
-    let pct=baseSatisfaccion+bonusMoral+bonusPrecioBajo-penalizacionClima-penalizacionPrecio-penalizacionDisturbios;
+    // Asistencia SIN contar todavía el efecto del precio — esta es la
+    // base "cómo está el club" (afición + moral + clima + disturbios +
+    // bonus de rebaja de precio si aplica).
+    const pctSinPrecio=Math.max(0, baseSatisfaccion+bonusMoral+bonusPrecioBajo-penalizacionClima-penalizacionDisturbios);
+    // El efecto del precio se aplica MULTIPLICANDO sobre esa base (no
+    // restando un % fijo aparte) — así, si la afición ya está mal Y el
+    // equipo va mal, subir el precio sigue notándose de verdad en vez
+    // de quedarse "aplanado" contra un suelo mínimo antes de que el
+    // precio entre siquiera a jugar. También es progresivo: cada euro
+    // de más pesa un poco más que el anterior, y "factorTolerancia" hace
+    // que ese castigo sea mucho más suave con la afición contenta y el
+    // equipo en buena racha, y mucho más duro con la afición harta y
+    // una mala racha — es la respuesta directa a "si subo el precio con
+    // la afición y los resultados mal, la asistencia (y sus ingresos)
+    // tienen que seguir bajando de verdad, no quedarse igual".
+    // 'normalizado' (satisfacción 0-1, ya calculado arriba) pesa más que
+    // la moral porque es la señal más directa de "cómo está la afición
+    // ahora mismo".
+    const saludAficionYResultados=Math.max(0, Math.min(1, normalizado*0.7 + (((state.moral||0)+50)/100)*0.3));
+    const factorTolerancia = 2.2 - saludAficionYResultados*1.7; // ~0.5 (afición encantada/equipo en racha) a 2.2 (afición harta/mala racha)
+    const excesoPrecio=Math.max(0,(precio-10));
+    const factorPrecio = 1/(1 + Math.pow(excesoPrecio,1.15)*0.01*factorTolerancia*(1-tolerancia*0.22));
+    let pct=pctSinPrecio*factorPrecio;
     if(state.directorGeneralBonos && state.directorGeneralBonos.boostAsistencia){ pct+=state.directorGeneralBonos.boostAsistencia; }
-    pct=Math.max(0.10, Math.min(0.99, pct));
+    // El suelo mínimo baja de 10% a 5%: con el modelo anterior (resta
+    // fija) 10% ya dejaba ver "algo" de progresión antes de tocar
+    // fondo, pero con afición/resultados malos el precio necesita poder
+    // seguir hundiendo la asistencia de forma visible en vez de topar
+    // enseguida con el mismo suelo de siempre.
+    pct=Math.max(0.05, Math.min(0.99, pct));
     const aforoBloqueado=fraccionAforoBloqueadoPorDisturbios();
     return {asistentes:Math.round(aforo*pct*(1-aforoBloqueado)), aforo, pct, aforoBloqueado, penalizacionDisturbios};
   }
