@@ -2494,10 +2494,17 @@ body.menu-screen .ranking-btn{display:none!important}
   content:'';position:absolute;inset:0;border-radius:14px;
   border:2px solid rgba(245,211,100,.85);
   box-shadow:0 0 8px 1px rgba(230,201,74,.35);
-  animation:modeCardOndaLoop 2.6s cubic-bezier(.25,.6,.4,1) infinite;
+  opacity:0;
   pointer-events:none;
 }
-.mode-card-onda-wrap::after{animation-delay:1.3s}
+/* Las ondas solo se reproducen mientras el ratón está encima de la
+   ficha (o con foco por teclado): en reposo no hay animación ni
+   anillo visible, igual que pidió el usuario. */
+.mode-card-onda-wrap:hover::before,.mode-card-onda-wrap:hover::after,
+.mode-card-onda-wrap:focus-within::before,.mode-card-onda-wrap:focus-within::after{
+  animation:modeCardOndaLoop 2.6s cubic-bezier(.25,.6,.4,1) infinite;
+}
+.mode-card-onda-wrap:hover::after,.mode-card-onda-wrap:focus-within::after{animation-delay:1.3s}
 @keyframes modeCardOndaLoop{
   0%{transform:scale(1);opacity:.75}
   100%{transform:scale(1.065);opacity:0}
