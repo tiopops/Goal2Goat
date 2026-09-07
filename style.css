@@ -2449,8 +2449,8 @@ body.menu-screen .ranking-btn{display:none!important}
 .menu-dust{position:absolute;inset:0;z-index:0;pointer-events:none;overflow:hidden}
 .menu-dust-mota{
   position:absolute;bottom:-4%;border-radius:50%;
-  background:radial-gradient(circle, rgba(255,221,120,1) 0%, rgba(230,201,74,.7) 50%, rgba(230,201,74,0) 100%);
-  box-shadow:0 0 6px 1px rgba(230,201,74,.55);
+  background:radial-gradient(circle, rgba(245,211,100,.97) 0%, rgba(230,201,74,.55) 55%, rgba(230,201,74,0) 100%);
+  box-shadow:0 0 4px 0.5px rgba(230,201,74,.4);
   opacity:0;
   animation:menuDustFlotar var(--dur,20s) linear infinite;
   animation-delay:var(--retraso,0s);
@@ -2492,15 +2492,15 @@ body.menu-screen .ranking-btn{display:none!important}
 .mode-card-onda-wrap{position:relative;max-width:100%}
 .mode-card-onda-wrap::before,.mode-card-onda-wrap::after{
   content:'';position:absolute;inset:0;border-radius:14px;
-  border:2.5px solid rgba(255,221,120,.95);
-  box-shadow:0 0 14px 1px rgba(230,201,74,.5);
+  border:2px solid rgba(245,211,100,.85);
+  box-shadow:0 0 8px 1px rgba(230,201,74,.35);
   animation:modeCardOndaLoop 2.6s cubic-bezier(.25,.6,.4,1) infinite;
   pointer-events:none;
 }
 .mode-card-onda-wrap::after{animation-delay:1.3s}
 @keyframes modeCardOndaLoop{
-  0%{transform:scale(1);opacity:.9}
-  100%{transform:scale(1.09);opacity:0}
+  0%{transform:scale(1);opacity:.75}
+  100%{transform:scale(1.065);opacity:0}
 }
 @media(prefers-reduced-motion: reduce){
   .mode-card-onda-wrap::before,.mode-card-onda-wrap::after{display:none}

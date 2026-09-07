@@ -182,16 +182,16 @@
     var cont = document.getElementById('menuDust');
     if(!cont || cont.dataset.listo) return;
     cont.dataset.listo = '1';
-    var n = (window.innerWidth || 1024) <= 700 ? 26 : 46;
+    var n = (window.innerWidth || 1024) <= 700 ? 20 : 36;
     var frag = document.createDocumentFragment();
     for(var i=0; i<n; i++){
       var mota = document.createElement('span');
       mota.className = 'menu-dust-mota';
-      var tam = (3 + Math.random()*4.5).toFixed(1);
-      var dur = (11 + Math.random()*12).toFixed(1);
+      var tam = (2.5 + Math.random()*3.5).toFixed(1);
+      var dur = (12 + Math.random()*13).toFixed(1);
       var retraso = (Math.random()*-parseFloat(dur)).toFixed(1);
       var deriva = Math.round(Math.random()*60-30);
-      var opacidadMax = (0.35 + Math.random()*0.45).toFixed(2);
+      var opacidadMax = (0.25 + Math.random()*0.35).toFixed(2);
       mota.style.left = (Math.random()*100).toFixed(1)+'%';
       mota.style.width = tam+'px';
       mota.style.height = tam+'px';
