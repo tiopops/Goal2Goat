@@ -170,7 +170,42 @@
     });
   }
 
+  // Partículas de polvo ambiental del menú principal — puramente
+  // decorativas, generadas una sola vez (marca dataset.listo para no
+  // duplicarlas si wireMenu se llamara más de una vez). Menos motas en
+  // pantallas pequeñas por rendimiento; cada una lleva su propio
+  // tamaño/duración/deriva aleatorios como custom properties CSS, que
+  // es lo que hace que la animación (ver @keyframes menuDustFlotar en
+  // style.css) las mueva de forma distinta a cada una en vez de que
+  // floten todas sincronizadas.
+  function crearPolvoMenu(){
+    var cont = document.getElementById('menuDust');
+    if(!cont || cont.dataset.listo) return;
+    cont.dataset.listo = '1';
+    var n = (window.innerWidth || 1024) <= 700 ? 14 : 26;
+    var frag = document.createDocumentFragment();
+    for(var i=0; i<n; i++){
+      var mota = document.createElement('span');
+      mota.className = 'menu-dust-mota';
+      var tam = (2 + Math.random()*3).toFixed(1);
+      var dur = (14 + Math.random()*14).toFixed(1);
+      var retraso = (Math.random()*-parseFloat(dur)).toFixed(1);
+      var deriva = Math.round(Math.random()*60-30);
+      var opacidadMax = (0.15 + Math.random()*0.35).toFixed(2);
+      mota.style.left = (Math.random()*100).toFixed(1)+'%';
+      mota.style.width = tam+'px';
+      mota.style.height = tam+'px';
+      mota.style.setProperty('--dur', dur+'s');
+      mota.style.setProperty('--retraso', retraso+'s');
+      mota.style.setProperty('--deriva', deriva+'px');
+      mota.style.setProperty('--opacidad-max', opacidadMax);
+      frag.appendChild(mota);
+    }
+    cont.appendChild(frag);
+  }
+
   function wireMenu(){
+    crearPolvoMenu();
     const copaCard = document.getElementById('modeCardCopa');
     const copaBtn  = document.getElementById('modeCardCopaBtn');
 

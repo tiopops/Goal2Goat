@@ -434,7 +434,21 @@ body.dark-theme .version-tag{color:#555}
 .tactadj-btn:hover:not(:disabled){border-color:var(--gold);color:var(--gold)}
 .tactadj-btn:disabled{opacity:.3;cursor:not-allowed}
 .tactadj-btn.pending{background:var(--gold);color:#000;border-color:var(--gold)}
-.stat-bar div{height:100%;background:var(--accent);transition:width .4s ease}
+.stat-bar div{height:100%;background:var(--accent);transition:width .4s ease;position:relative;overflow:hidden}
+.stat-bar div::after{
+  content:'';position:absolute;top:0;left:0;height:100%;width:30%;
+  background:linear-gradient(90deg, transparent 0%, rgba(255,255,255,.65) 50%, transparent 100%);
+  transform:translateX(-250%);
+  animation:g2gBrilloBarra 2.8s linear infinite;
+  pointer-events:none;
+}
+@keyframes g2gBrilloBarra{
+  0%{transform:translateX(-250%)}
+  100%{transform:translateX(350%)}
+}
+@media(prefers-reduced-motion: reduce){
+  .stat-bar div::after{display:none}
+}
 .star-bonus-row{font-size:11px;color:var(--gold);font-weight:600;margin-top:6px;padding-top:6px;border-top:1px solid var(--line);align-items:center;justify-content:space-between}
 
 /* RIVAL BOX */
@@ -2424,6 +2438,34 @@ body.menu-screen .ranking-btn{display:none!important}
   background:radial-gradient(ellipse at 50% 30%,rgba(0,0,0,.1) 0%,rgba(0,0,0,.6) 100%);
 }
 
+/* Partículas de polvo ambiental flotando despacio sobre el fondo del
+   menú principal — puramente decorativas (pointer-events:none), y por
+   debajo de .menu-content (z-index:1) a propósito: se ven flotar sobre
+   la imagen de fondo pero nunca por encima de las tarjetas de modo ni
+   de su texto, para no restarles legibilidad. Cada mota es un <span>
+   generado por JS (ver crearPolvoMenu en main-menu.js) con su propio
+   tamaño/duración/deriva aleatorios vía custom properties, para que no
+   se note ningún patrón repetido. */
+.menu-dust{position:absolute;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+.menu-dust-mota{
+  position:absolute;bottom:-4%;border-radius:50%;
+  background:radial-gradient(circle, rgba(230,201,74,.95) 0%, rgba(230,201,74,.4) 55%, rgba(230,201,74,0) 100%);
+  opacity:0;
+  animation:menuDustFlotar var(--dur,20s) linear infinite;
+  animation-delay:var(--retraso,0s);
+  will-change:transform,opacity;
+}
+@keyframes menuDustFlotar{
+  0%{transform:translate(0,0);opacity:0}
+  8%{opacity:var(--opacidad-max,.3)}
+  50%{transform:translate(var(--deriva,20px),-55vh)}
+  92%{opacity:var(--opacidad-max,.3)}
+  100%{transform:translate(calc(var(--deriva,20px)*1.6),-112vh);opacity:0}
+}
+@media(prefers-reduced-motion: reduce){
+  .menu-dust{display:none}
+}
+
 .menu-content{
   position:relative;z-index:1;
   width:100%;margin:auto;
@@ -2436,6 +2478,30 @@ body.menu-screen .ranking-btn{display:none!important}
 .menu-modes{
   display:flex;gap:32px;justify-content:center;align-items:stretch;
   flex-wrap:wrap;width:100%;max-width:1000px;margin:0 auto;
+}
+
+/* Envoltorio SIN overflow:hidden alrededor de cada ficha de modo, solo
+   para poder pintar las ondas (::before/::after) creciendo hacia
+   afuera de sus bordes — la propia .mode-card necesita su
+   overflow:hidden para las esquinas redondeadas de la imagen de fondo,
+   así que las ondas no pueden vivir dentro de ella. Mismo patrón que
+   la lupa de información del club sobre el campo (.lm-pitch-lupa-btn),
+   con el radio de giro adaptado a un rectángulo grande en vez de un
+   círculo pequeño. */
+.mode-card-onda-wrap{position:relative;max-width:100%}
+.mode-card-onda-wrap::before,.mode-card-onda-wrap::after{
+  content:'';position:absolute;inset:0;border-radius:14px;
+  border:1.5px solid rgba(230,201,74,.75);
+  animation:modeCardOndaLoop 2.6s cubic-bezier(.25,.6,.4,1) infinite;
+  pointer-events:none;
+}
+.mode-card-onda-wrap::after{animation-delay:1.3s}
+@keyframes modeCardOndaLoop{
+  0%{transform:scale(1);opacity:.6}
+  100%{transform:scale(1.045);opacity:0}
+}
+@media(prefers-reduced-motion: reduce){
+  .mode-card-onda-wrap::before,.mode-card-onda-wrap::after{display:none}
 }
 
 .mode-card{
@@ -2799,7 +2865,17 @@ body.liga-manager-screen .ranking-btn-label-lm{display:inline}
 .lm-barra-label{ font-size:10px; color:var(--lm-text-muted); letter-spacing:.3px; width:76px; flex-shrink:0; }
 .lm-barra-valor{ font-size:10.5px; font-weight:700; width:32px; flex-shrink:0; text-align:right; }
 .lm-barra-track{ flex:1; height:6px; background:var(--lm-surface-0); border-radius:3px; overflow:hidden; }
-.lm-barra-fill{ height:100%; border-radius:3px; transition:width .3s ease; }
+.lm-barra-fill{ height:100%; border-radius:3px; transition:width .3s ease; position:relative; overflow:hidden; }
+.lm-barra-fill::after{
+  content:'';position:absolute;top:0;left:0;height:100%;width:30%;
+  background:linear-gradient(90deg, transparent 0%, rgba(255,255,255,.65) 50%, transparent 100%);
+  transform:translateX(-250%);
+  animation:g2gBrilloBarra 2.8s linear infinite;
+  pointer-events:none;
+}
+@media(prefers-reduced-motion: reduce){
+  .lm-barra-fill::after{display:none}
+}
 /* Barra que acaba de cambiar tras elegir un nodo: arranca bien
    iluminada (más brillo + resplandor de su propio color, vía --bc) y
    se va apagando hasta quedar normal, mientras el ancho recorre en
