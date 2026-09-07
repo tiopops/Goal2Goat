@@ -437,7 +437,7 @@ body.dark-theme .version-tag{color:#555}
 .stat-bar div{height:100%;background:var(--accent);transition:width .4s ease;position:relative;overflow:hidden}
 .stat-bar div::after{
   content:'';position:absolute;top:0;left:0;height:100%;width:30%;
-  background:linear-gradient(90deg, transparent 0%, rgba(255,255,255,.65) 50%, transparent 100%);
+  background:linear-gradient(90deg, transparent 0%, rgba(255,255,255,.5) 50%, transparent 100%);
   transform:translateX(-250%);
   animation:g2gBrilloBarra 2.8s linear infinite;
   pointer-events:none;
@@ -2449,7 +2449,8 @@ body.menu-screen .ranking-btn{display:none!important}
 .menu-dust{position:absolute;inset:0;z-index:0;pointer-events:none;overflow:hidden}
 .menu-dust-mota{
   position:absolute;bottom:-4%;border-radius:50%;
-  background:radial-gradient(circle, rgba(230,201,74,.95) 0%, rgba(230,201,74,.4) 55%, rgba(230,201,74,0) 100%);
+  background:radial-gradient(circle, rgba(255,221,120,1) 0%, rgba(230,201,74,.7) 50%, rgba(230,201,74,0) 100%);
+  box-shadow:0 0 6px 1px rgba(230,201,74,.55);
   opacity:0;
   animation:menuDustFlotar var(--dur,20s) linear infinite;
   animation-delay:var(--retraso,0s);
@@ -2491,14 +2492,15 @@ body.menu-screen .ranking-btn{display:none!important}
 .mode-card-onda-wrap{position:relative;max-width:100%}
 .mode-card-onda-wrap::before,.mode-card-onda-wrap::after{
   content:'';position:absolute;inset:0;border-radius:14px;
-  border:1.5px solid rgba(230,201,74,.75);
+  border:2.5px solid rgba(255,221,120,.95);
+  box-shadow:0 0 14px 1px rgba(230,201,74,.5);
   animation:modeCardOndaLoop 2.6s cubic-bezier(.25,.6,.4,1) infinite;
   pointer-events:none;
 }
 .mode-card-onda-wrap::after{animation-delay:1.3s}
 @keyframes modeCardOndaLoop{
-  0%{transform:scale(1);opacity:.6}
-  100%{transform:scale(1.045);opacity:0}
+  0%{transform:scale(1);opacity:.9}
+  100%{transform:scale(1.09);opacity:0}
 }
 @media(prefers-reduced-motion: reduce){
   .mode-card-onda-wrap::before,.mode-card-onda-wrap::after{display:none}
@@ -2868,7 +2870,7 @@ body.liga-manager-screen .ranking-btn-label-lm{display:inline}
 .lm-barra-fill{ height:100%; border-radius:3px; transition:width .3s ease; position:relative; overflow:hidden; }
 .lm-barra-fill::after{
   content:'';position:absolute;top:0;left:0;height:100%;width:30%;
-  background:linear-gradient(90deg, transparent 0%, rgba(255,255,255,.65) 50%, transparent 100%);
+  background:linear-gradient(90deg, transparent 0%, rgba(255,255,255,.5) 50%, transparent 100%);
   transform:translateX(-250%);
   animation:g2gBrilloBarra 2.8s linear infinite;
   pointer-events:none;
