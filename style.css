@@ -3434,7 +3434,15 @@ body.liga-manager-screen .ranking-btn-label-lm{display:inline}
   border:2px solid var(--lm-surface-2);animation:lmPulsoAlerta 1.4s ease-in-out infinite;
 }
 @keyframes lmPulsoAlerta{0%,100%{transform:scale(1)}50%{transform:scale(1.15)}}
-.lm-info-plantilla-tabla-wrap{max-height:520px;overflow-y:auto;overflow-x:auto;padding-right:4px}
+/* Sin scroll horizontal (la tabla nunca se desborda hacia los lados,
+   se ajusta al ancho disponible) y el vertical se queda funcional para
+   poder seguir bajando por la lista, pero sin la barra visible — se
+   oculta con las 3 propiedades de siempre, una por motor de navegador. */
+.lm-info-plantilla-tabla-wrap{
+  max-height:520px;overflow-y:auto;overflow-x:hidden;
+  scrollbar-width:none;-ms-overflow-style:none;
+}
+.lm-info-plantilla-tabla-wrap::-webkit-scrollbar{display:none}
 .lm-info-plantilla-vacio{text-align:center;color:var(--lm-text-dim);font-size:12px;padding:20px}
 .lm-info-plantilla-tabla{width:100%;border-collapse:collapse;font-size:12.5px}
 .lm-info-plantilla-tabla thead th{
@@ -3453,22 +3461,13 @@ body.liga-manager-screen .ranking-btn-label-lm{display:inline}
   display:inline-flex;margin-left:auto;
 }
 /* Cabecera de INFORMACIÓN DE LA PLANTILLA: nómina total y nº de
-   jugadores destacados como "chips" de estadística en vez de texto
-   corrido — mismo tratamiento visual que un dato importante merece en
-   cualquier otra pantalla del juego. */
-.lm-info-plantilla-stats{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;margin:2px 0 10px}
-.lm-info-plantilla-stat{
-  display:flex;align-items:center;gap:8px;padding:8px 14px;
-  background:var(--lm-surface-2);border:1px solid var(--lm-border);border-radius:8px;
+   jugadores destacados dentro del propio texto (mismo párrafo de
+   siempre), no como tarjetas aparte — solo el número resalta en dorado
+   y más grande, el resto de la frase se queda igual. */
+.lm-info-plantilla-resumen-destacado{
+  color:var(--gold);font-family:'Bebas Neue',Impact,sans-serif;
+  font-size:15px;letter-spacing:.4px;font-weight:400;
 }
-.lm-info-plantilla-stat>i{font-size:20px;color:var(--gold);flex-shrink:0}
-.lm-info-plantilla-stat-texto{display:flex;flex-direction:column;line-height:1.15}
-.lm-info-plantilla-stat-valor{font-family:'Bebas Neue',Impact,sans-serif;font-size:18px;letter-spacing:.5px;color:var(--lm-text)}
-.lm-info-plantilla-stat-label{font-size:9.5px;text-transform:uppercase;letter-spacing:.4px;color:var(--lm-text-dim)}
-.lm-info-plantilla-stat-nomina>i{color:#5eead4}
-.lm-info-plantilla-stat-alerta{border-color:#e24b4a}
-.lm-info-plantilla-stat-alerta>i{color:#e24b4a}
-.lm-info-plantilla-stat-alerta .lm-info-plantilla-stat-valor{color:#ff8a83}
 .lm-info-plantilla-fila{border-left:4px solid #6b6b6b;background:var(--lm-surface-2);transition:background .15s}
 .lm-info-plantilla-tabla tbody tr:hover td{background:var(--lm-surface-3)}
 .lm-info-plantilla-fila td{padding:8px;border-bottom:1px solid var(--lm-border);vertical-align:middle}
@@ -3497,7 +3496,10 @@ body.liga-manager-screen .ranking-btn-label-lm{display:inline}
   font-family:'Bebas Neue',Impact,sans-serif;font-size:14px;color:var(--lm-text-dim);
   text-align:center;width:1%;white-space:nowrap;
 }
-.lm-info-td-nombre{font-weight:700;color:var(--lm-text);white-space:nowrap}
+/* white-space normal (no nowrap) a propósito: sin scroll horizontal ya
+   disponible, un nombre largo tiene que poder partirse en dos líneas en
+   vez de forzar el ancho de toda la tabla más allá de la tarjeta. */
+.lm-info-td-nombre{font-weight:700;color:var(--lm-text);white-space:normal;word-break:break-word}
 /* Posición: antes iba metida en una cajita gris que la dejaba
    diminuta y sin fuerza — ahora es texto en mayúsculas, negrita y bien
    grande, sin ningún recuadro de fondo, para que se lea a la primera. */
@@ -3524,8 +3526,8 @@ body.liga-manager-screen .ranking-btn-label-lm{display:inline}
 .lm-info-td-overall-oro{color:#e6c94a}
 .lm-info-td-overall-plata{color:#d7e0e6}
 .lm-info-td-overall-bronce{color:#d9ab7a}
-.lm-info-td-salario{min-width:110px}
-.lm-info-td-salario-alerta{min-width:260px}
+.lm-info-td-salario{min-width:0}
+.lm-info-td-salario-alerta{min-width:0}
 /* AJUSTAR (+/-) y OFERTA (guardar) ahora viven en sus propias columnas,
    separadas del número de salario — antes iban las tres cosas
    apiladas en la misma celda. */

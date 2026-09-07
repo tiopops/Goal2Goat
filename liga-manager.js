@@ -14783,29 +14783,7 @@
           <div class="lm-dilemma-title">
             <span><i class="ph ph-bold ph-file-text"></i> ${t('lm.info_plantilla_btn')}</span>
           </div>
-          <div class="lm-info-plantilla-stats">
-            <div class="lm-info-plantilla-stat lm-info-plantilla-stat-nomina">
-              <i class="ph ph-bold ph-coins"></i>
-              <div class="lm-info-plantilla-stat-texto">
-                <span class="lm-info-plantilla-stat-valor">${formatoDinero(totalNomina)}</span>
-                <span class="lm-info-plantilla-stat-label">${t('lm.nomina_total')}/mes</span>
-              </div>
-            </div>
-            <div class="lm-info-plantilla-stat">
-              <i class="ph ph-bold ph-users-three"></i>
-              <div class="lm-info-plantilla-stat-texto">
-                <span class="lm-info-plantilla-stat-valor">${jugadores.length}</span>
-                <span class="lm-info-plantilla-stat-label">${t('lm.tabla_jugador')}</span>
-              </div>
-            </div>
-            ${numAlertas?`<div class="lm-info-plantilla-stat lm-info-plantilla-stat-alerta">
-              <i class="ph ph-bold ph-warning-circle"></i>
-              <div class="lm-info-plantilla-stat-texto">
-                <span class="lm-info-plantilla-stat-valor">${tp('lm.n_jugadores_en_alerta', {n:numAlertas})}</span>
-              </div>
-            </div>`:''}
-          </div>
-          <div class="lm-setup-desc" style="text-align:center;margin-bottom:8px">${t('lm.info_plantilla_nota_venta')}</div>
+          <div class="lm-setup-desc lm-info-plantilla-resumen">${t('lm.nomina_total')} <strong class="lm-info-plantilla-resumen-destacado">${formatoDinero(totalNomina)}/mes</strong> · plantilla: <strong class="lm-info-plantilla-resumen-destacado">${jugadores.length}</strong>${numAlertas?` · <strong class="lm-info-plantilla-resumen-destacado lm-capital-neg">${tp('lm.n_jugadores_en_alerta', {n:numAlertas})}</strong>`:''} · ${t('lm.info_plantilla_nota_venta')}</div>
           <div class="lm-info-plantilla-tabla-wrap">
             ${jugadores.length ? `<table class="lm-info-plantilla-tabla">
               <thead><tr>
