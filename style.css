@@ -2599,6 +2599,18 @@ body.menu-screen .ranking-btn{display:none!important}
    confundía al ratón en botones que en realidad funcionan bien. */
 .mode-card-btn-secondary{background:#2c3238;color:#ccc;cursor:pointer}
 .mode-card-btn-secondary:hover{background:#333a41}
+/* Estado real [disabled] (atributo HTML) de CUALQUIER .mode-card-btn,
+   sea cual sea su color/variante (gold/secondary/amarillo/rojo): se
+   oscurece y se le quita saturación para que se note a simple vista
+   que ahora mismo no se puede pulsar (p.ej. CONTRATAR/DESPEDIR/GUARDAR
+   guardia en SEGURIDAD DEL ESTADIO), sin depender de que el HTML
+   añada también la clase -disabled de arriba. */
+.mode-card-btn:disabled{
+  background:#23282c!important;color:#5a6167!important;
+  cursor:not-allowed;filter:grayscale(.5);opacity:.65;
+  box-shadow:none;
+}
+.mode-card-btn:disabled:hover{background:#23282c!important}
 /* Variantes amarillo/rojo — mismo tratamiento plano que el resto de
    botones del juego, usadas en el minijuego de scouting: ACERCARSE
    (arriesgar) en amarillo, PLANTARSE (asegurar lo conseguido) en rojo. */
@@ -5813,7 +5825,7 @@ body.light-theme.menu-screen{
     color:var(--lm-text-soft);font-size:14px;display:flex;align-items:center;justify-content:center;
     cursor:pointer;flex-shrink:0;
   }
-  .lm-zona-btn-movil:disabled{opacity:.3}
+  .lm-zona-btn-movil:disabled{background:#1a1e21;border-color:#2a2f33;color:#4a5157;opacity:.6}
   .lm-zona-btn-movil:not(:disabled):active{border-color:var(--gold);color:var(--gold)}
   .lm-zona-fila-num{font-size:11px;color:var(--lm-text);display:flex;align-items:center;gap:3px;flex-shrink:0;min-width:38px;justify-content:center}
   .lm-zona-fila-num i{color:var(--gold)}
@@ -5935,7 +5947,7 @@ body.light-theme.menu-screen{
   color:var(--lm-text);font-size:12px;display:flex;align-items:center;justify-content:center;
   cursor:pointer;padding:0;
 }
-.lm-zona-btn:disabled{opacity:.35;cursor:default}
+.lm-zona-btn:disabled{background:#1a1e21;border-color:#2a2f33;color:#4a5157;opacity:.6;cursor:default}
 .lm-zona-btn:not(:disabled):hover{border-color:var(--gold);color:var(--gold)}
 
 /* Selector de modo de visualización del partido — AUTOMÁTICO / MANAGER,
