@@ -3464,6 +3464,28 @@
     {id:'info_club', keywords:['informacion del club','información del club','lupa del campo','icono de la lupa','aforo maximo','asistencia prevista','ultima asistencia','satisfaccion de la aficion','club information','info club'], respuestaKey:'ayuda.faq_info_club', dondeKey:'ayuda.faq_info_club_donde', destino:'info_club'},
     {id:'abandonar_liga', keywords:['abandonar liga','salir de la liga','dejar la temporada','volver al menu principal','terminar la partida','abandonar la temporada','salir de la partida','leave league','quit league'], respuestaKey:'ayuda.faq_abandonar_liga', dondeKey:'ayuda.faq_abandonar_liga_donde', destino:'perfil_ajustes'},
     {id:'perfil_estadisticas', keywords:['pestaña de estadisticas','pestaña estadisticas del perfil','donde veo mis estadisticas','ver mis estadisticas de la temporada','estadisticas de mi perfil','profile stats tab'], respuestaKey:'ayuda.faq_perfil_estadisticas', dondeKey:'ayuda.faq_perfil_estadisticas_donde', destino:'perfil_estadisticas'},
+    // --- Nuevas (esta ronda): temas de mecánicas que no tenían tema
+    // propio en el buscador — crónica del partido, clima, potencial de
+    // canteranos, desempates de la clasificación, premio de fin de
+    // temporada, qué se mantiene al empezar otra temporada, reparto de
+    // guardias por zona, fórmula de asistencia, valor de traspaso y
+    // liga aleatoria — más un desglose por categoría de las habilidades
+    // (antes solo había una respuesta genérica muy corta para todo el
+    // sistema de habilidades).
+    {id:'cronica_partido', keywords:['cronica del partido','cronica de partido','resumen del partido en texto','relato del partido','informe del partido','texto del resultado','match report','match chronicle'], respuestaKey:'ayuda.faq_cronica_partido', dondeKey:'ayuda.faq_cronica_partido_donde'},
+    {id:'clima_partido', keywords:['clima del partido','tiempo meteorologico partido','afecta el clima al partido','lluvia afecta al resultado','viento calor nieve partido','weather affects match'], respuestaKey:'ayuda.faq_clima_partido', dondeKey:'ayuda.faq_clima_partido_donde'},
+    {id:'jugador_potencial', keywords:['potencial de un jugador','techo de potencial','canterano con potencial','jugador joven promesa','ver el potencial de un jugador','player potential ceiling'], respuestaKey:'ayuda.faq_jugador_potencial', dondeKey:'ayuda.faq_jugador_potencial_donde', destino:'dd'},
+    {id:'clasificacion_desempate', keywords:['criterio de desempate en la clasificacion','como se desempata en la tabla','empate a puntos como se decide','desempate por diferencia de goles','tie break league table'], respuestaKey:'ayuda.faq_clasificacion_desempate', dondeKey:'ayuda.faq_clasificacion_desempate_donde', destino:'clasificacion'},
+    {id:'premio_fin_temporada', keywords:['premio de fin de temporada','recompensa segun posicion final','cuanto gano por acabar la liga','premio economico final de temporada','end of season prize'], respuestaKey:'ayuda.faq_premio_fin_temporada', dondeKey:'ayuda.faq_premio_fin_temporada_donde'},
+    {id:'nueva_temporada_progreso', keywords:['que se mantiene al empezar una nueva temporada','se resetea la plantilla en una temporada nueva','sigo con los mismos jugadores temporada nueva','pierdo mi plantilla temporada nueva','new season what carries over'], respuestaKey:'ayuda.faq_nueva_temporada_progreso', dondeKey:'ayuda.faq_nueva_temporada_progreso_donde'},
+    {id:'guardias_asignados', keywords:['asignar guardias a una zona','guardias disponibles sin asignar','repartir guardias por zonas del estadio','guardias sin asignar a ninguna zona','assign guards zone'], respuestaKey:'ayuda.faq_guardias_asignados', dondeKey:'ayuda.faq_guardias_asignados_donde', destino:'seguridad', staffDestino:'mantenimiento'},
+    {id:'asistencia_estadio', keywords:['que determina la asistencia al estadio','de que depende la asistencia','formula de la asistencia prevista','por que no viene gente al estadio','attendance formula stadium'], respuestaKey:'ayuda.faq_asistencia_estadio', dondeKey:'ayuda.faq_asistencia_estadio_donde', destino:'info_club'},
+    {id:'valor_traspaso_jugador', keywords:['de que depende el precio de venta de un jugador','como se calcula el valor de traspaso','precio de venta segun overall','por que vale tanto un jugador al venderlo','transfer value formula'], respuestaKey:'ayuda.faq_valor_traspaso_jugador', dondeKey:'ayuda.faq_valor_traspaso_jugador_donde', destino:'info_plantilla'},
+    {id:'liga_aleatoria_setup', keywords:['liga aleatoria al crear la partida','que es liga aleatoria','elegir liga al azar al empezar','random league option'], respuestaKey:'ayuda.faq_liga_aleatoria_setup', dondeKey:'ayuda.faq_liga_aleatoria_setup_donde'},
+    {id:'habilidades_categoria_tactica', keywords:['habilidades de tactica que hacen','para que sirven las habilidades de tactica','categoria tactica de habilidades explicada','tactics skill category explained'], respuestaKey:'ayuda.faq_habilidades_categoria_tactica', dondeKey:'ayuda.faq_habilidades_categoria_tactica_donde', destino:'perfil_habilidades'},
+    {id:'habilidades_categoria_gestion', keywords:['habilidades de gestion que hacen','para que sirven las habilidades de gestion','categoria gestion de habilidades explicada','management skill category explained'], respuestaKey:'ayuda.faq_habilidades_categoria_gestion', dondeKey:'ayuda.faq_habilidades_categoria_gestion_donde', destino:'perfil_habilidades'},
+    {id:'habilidades_categoria_apoyo', keywords:['habilidades de apoyo al cuerpo tecnico','para que sirven las habilidades de apoyo','categoria apoyo de habilidades explicada','support staff skill category explained'], respuestaKey:'ayuda.faq_habilidades_categoria_apoyo', dondeKey:'ayuda.faq_habilidades_categoria_apoyo_donde', destino:'perfil_habilidades'},
+    {id:'habilidades_categoria_giro', keywords:['habilidades ligadas al giro tactico','para que sirven las habilidades de giro tactico','categoria giro de habilidades explicada','tactical twist skill category explained'], respuestaKey:'ayuda.faq_habilidades_categoria_giro', dondeKey:'ayuda.faq_habilidades_categoria_giro_donde', destino:'perfil_habilidades'},
   ];
   // Enlaces directos que puede ofrecer una respuesta del buscador de
   // AYUDA: cada "destino" es una pantalla real del juego, con la
@@ -3663,6 +3685,234 @@
     // popup informativo del estado del estadio.
     const destino=(lmEsPreguntaQuien(texto) && mejor.staffDestino) ? mejor.staffDestino : mejor.destino;
     return {...mejor, claveRespuesta, destino};
+  }
+  // ══════════════════════════════════════════════════════════════
+  // "ESTADO VIVO" — motor de respuestas con datos REALES de la
+  // partida en curso (no texto fijo del FAQ). A diferencia de
+  // LM_AYUDA_FAQ, que siempre contesta lo mismo para un mismo tema,
+  // estas respuestas se calculan sobre la marcha leyendo `state`
+  // directamente (dados restantes, media del equipo, lesionados,
+  // posición en la liga...) — así "¿cuántos dados me quedan?" contesta
+  // con el número de verdad de ESTA partida, no una explicación
+  // genérica de cómo funcionan los dados.
+  //
+  // Se ejecuta ANTES que lmBuscarRespuestaAyuda (ver
+  // ejecutarBusquedaAyudaLM): si una pregunta encaja con un tema de
+  // estado vivo, esa respuesta gana y el FAQ estático ni se consulta
+  // para ese turno. Si no encaja con nada de aquí, se devuelve null y
+  // el flujo de siempre (FAQ + smalltalk) sigue exactamente igual que
+  // antes.
+  //
+  // Solo en español a propósito: los otros 5 idiomas del asistente
+  // siguen respondiendo con el FAQ estático de siempre para estos
+  // mismos temas (guardado están sus traducciones), así que aquí basta
+  // con comprobar window.LANG y, si no es 'es', ni intentarlo — nunca
+  // se cuela un texto en español dentro de una conversación en otro
+  // idioma.
+  const LM_AYUDA_ESTADO_VIVO=[
+    {id:'ev_dados_rerolls', keywords:['cuantos dados me quedan','cuantos dados tengo','dados disponibles','cuantos dados llevo','cuantos rerolls tengo','cuantos rerolls me quedan','cuantos reintentos tengo','reintentos disponibles','rerolls disponibles'],
+      fn:(state)=>{
+        const dados=state.diceAvailable||0;
+        const rerollsRestantes=state.dadoRerollsDisponibles||0;
+        const rerollsTotales=(typeof lmRerollsPorPartido==='function')?lmRerollsPorPartido():rerollsRestantes;
+        return `Te quedan ${dados} dado${dados===1?'':'s'} disponible${dados===1?'':'s'} para gastar en los proyectos del cuerpo técnico, y ${rerollsRestantes} de ${rerollsTotales} reintentos (rerolls) de dado por usar todavía.`;
+      }},
+    {id:'ev_proyectos_estrellas', keywords:['cuantas estrellas tengo en proyectos','estrellas de proyectos','progreso de mis proyectos','nivel de mis proyectos del cuerpo tecnico','cuantas estrellas de club tengo','estrellas de nivel de estadio'],
+      fn:(state)=>{
+        const {total,max,nivelEstadio}=(typeof calcularEstrellasClub==='function')?calcularEstrellasClub():{total:0,max:0,nivelEstadio:1};
+        const deptos=[
+          ['médico', state.medicoNiveles], ['mantenimiento', state.mantenimientoNiveles],
+          ['director general', state.directorGeneralNiveles], ['director deportivo', state.directorDeportivoNiveles],
+          ['preparador físico', state.preparadorFisicoNiveles],
+        ];
+        const detalle=deptos.map(([nombre,grupo])=>{
+          if(!grupo) return `${nombre} 0/0`;
+          const t2=Object.values(grupo).reduce((a,b)=>a+(b||0),0);
+          const m2=Object.keys(grupo).length*(typeof NIVEL_MAXIMO_EQUIPO==='number'?NIVEL_MAXIMO_EQUIPO:3);
+          return `${nombre} ${t2}/${m2}`;
+        }).join(', ');
+        return `Llevas ${total}/${max} estrellas de proyectos conseguidas en total (nivel de estadio ${nivelEstadio}/5). Por departamento: ${detalle}.`;
+      }},
+    {id:'ev_cartas_medico', keywords:['cartas de medico','cartas del medico','cuantas cartas de medico tengo','cartas medicas acumuladas','cartas medicas disponibles'],
+      fn:(state)=>{
+        const n=(state.medicoCartas||[]).length;
+        return `Tienes ${n} carta${n===1?'':'s'} disponible${n===1?'':'s'} ahora mismo en el departamento médico (lo habitual son 3 a la vez).`;
+      }},
+    {id:'ev_cartas_mantenimiento', keywords:['cartas de mantenimiento','cuantas cartas de mantenimiento tengo','cartas de mantenimiento acumuladas','cartas de mantenimiento disponibles'],
+      fn:(state)=>{
+        const n=(state.mantenimientoCartas||[]).length;
+        return `Tienes ${n} carta${n===1?'':'s'} disponible${n===1?'':'s'} ahora mismo en Mantenimiento (lo habitual son 3 a la vez).`;
+      }},
+    {id:'ev_cartas_dg', keywords:['cartas del director general','cuantas cartas del director general tengo','cartas de direccion general acumuladas'],
+      fn:(state)=>{
+        const n=(state.directorGeneralCartas||[]).length;
+        return `Tienes ${n} carta${n===1?'':'s'} disponible${n===1?'':'s'} ahora mismo del Director General (lo habitual son 3 a la vez).`;
+      }},
+    {id:'ev_cartas_dd', keywords:['cartas del director deportivo','cuantas cartas del director deportivo tengo','cartas de direccion deportiva acumuladas'],
+      fn:(state)=>{
+        const n=(state.directorDeportivoCartas||[]).length;
+        return `Tienes ${n} carta${n===1?'':'s'} disponible${n===1?'':'s'} ahora mismo del Director Deportivo (lo habitual son 3 a la vez).`;
+      }},
+    {id:'ev_cartas_pf', keywords:['cartas del preparador fisico','cuantas cartas del preparador fisico tengo','cartas de preparacion fisica acumuladas'],
+      fn:(state)=>{
+        const n=(state.preparadorFisicoCartas||[]).length;
+        return `Tienes ${n} carta${n===1?'':'s'} disponible${n===1?'':'s'} ahora mismo del Preparador Físico (lo habitual son 3 a la vez).`;
+      }},
+    {id:'ev_media_equipo', keywords:['cual es la media de mi equipo','media de mi equipo','nota media de mi equipo','valoracion media del equipo','overall medio de mi equipo','media de mi plantilla','media del once'],
+      fn:(state)=>{
+        const statsPlantilla=(typeof calcularStatsEquipoLM==='function')?calcularStatsEquipoLM():{overall:0};
+        const idsXI=Object.values(state.alineacion||{}).filter(Boolean);
+        const titularesXI=idsXI.map(id=>(state.plantilla||[]).find(p=>p.id===id)).filter(Boolean);
+        let fraseXI;
+        if(titularesXI.length){
+          const mediaXI=Math.round(titularesXI.reduce((s,p)=>s+(p.overall||0),0)/titularesXI.length);
+          fraseXI=`tu once titular actual (${titularesXI.length} colocados) tiene una media de ${mediaXI}`;
+        } else {
+          fraseXI='todavía no tienes a nadie colocado en el once titular';
+        }
+        return `La media de toda tu plantilla es ${statsPlantilla.overall||0}, y ${fraseXI}.`;
+      }},
+    {id:'ev_lesionados', keywords:['quien tengo lesionado','jugadores lesionados','lista de lesionados','quien esta lesionado','tengo algun lesionado'],
+      fn:(state)=>{
+        const lesionados=(state.plantilla||[]).filter(p=>p.injured);
+        if(!lesionados.length) return 'Ahora mismo no tienes ningún jugador lesionado.';
+        const detalle=lesionados.map(p=>`${p.name} (${p.injuryWeeks||0} jornada${(p.injuryWeeks||0)===1?'':'s'} de baja)`).join(', ');
+        return `Tienes ${lesionados.length} jugador${lesionados.length===1?'':'es'} lesionado${lesionados.length===1?'':'s'}: ${detalle}.`;
+      }},
+    {id:'ev_sancionados', keywords:['quien tengo sancionado','jugadores sancionados','quien esta expulsado','quien esta sancionado','tarjetas rojas actuales'],
+      fn:(state)=>{
+        const sancionados=(state.plantilla||[]).filter(p=>p.suspendido);
+        if(!sancionados.length) return 'Ahora mismo no tienes ningún jugador sancionado.';
+        const detalle=sancionados.map(p=>`${p.name} (${p.partidosSancion||0} partido${(p.partidosSancion||0)===1?'':'s'} de sanción)`).join(', ');
+        return `Tienes ${sancionados.length} jugador${sancionados.length===1?'':'es'} sancionado${sancionados.length===1?'':'s'}: ${detalle}.`;
+      }},
+    {id:'ev_clasificacion_posicion', keywords:['en que posicion estoy','como voy en la liga','posicion en la clasificacion','posicion de la clasificacion','en que posicion de la clasificacion estoy','como va la clasificacion','cuantos puntos llevo en liga','en que puesto estoy','que puesto tengo en la liga'],
+      fn:(state)=>{
+        const tabla=(typeof calcularClasificacion==='function')?calcularClasificacion():[];
+        const idx=tabla.findIndex(f=>f.id==='lm_0');
+        if(idx<0) return 'Todavía no hay datos de clasificación para esta liga.';
+        const fila=tabla[idx];
+        return `Vas ${idx+1}º de ${tabla.length} con ${fila.pts} puntos (${fila.pg}G ${fila.pe}E ${fila.pp}P, ${fila.gf} goles a favor y ${fila.gc} en contra).`;
+      }},
+    {id:'ev_nomina_total', keywords:['cuanto pago de nomina','nomina total','gastos en sueldos totales','cuanto gasto en salarios al mes','cuanto me cuesta la plantilla al mes'],
+      fn:(state)=>{
+        const n=(typeof calcularNominaMensual==='function')?calcularNominaMensual():{total:0,nominaJugadores:0,nominaStaff:0};
+        const fmt=(typeof formatoDinero==='function')?formatoDinero:(v=>Math.round(v||0)+'€');
+        return `Pagas ${fmt(n.total)} al mes en total: ${fmt(n.nominaJugadores)} en sueldos de jugadores y ${fmt(n.nominaStaff)} en el cuerpo técnico y estadio.`;
+      }},
+    {id:'ev_capital', keywords:['cuanto dinero tengo','cual es mi capital','saldo actual del club','cuanta pasta tengo ahora','de cuanto capital dispongo ahora mismo'],
+      fn:(state)=>{
+        const fmt=(typeof formatoDinero==='function')?formatoDinero:(v=>Math.round(v||0)+'€');
+        const capital=state.capital||0;
+        return capital<0
+          ? `Tu capital está en números rojos: ${fmt(capital)}. Vigila la nómina o pide un préstamo antes de que se agrave.`
+          : `Tu capital actual es de ${fmt(capital)}.`;
+      }},
+    {id:'ev_jornada_actual', keywords:['en que jornada estoy','jornada actual','que jornada toca','numero de jornada actual','en que jornada voy'],
+      fn:(state)=>`Estás en la jornada ${state.jornadaActual||1} de 38.`},
+    {id:'ev_proximo_rival', keywords:['quien es mi proximo rival','contra quien juego','proximo partido rival','quien es el rival de la proxima jornada','a quien me enfrento'],
+      fn:(state)=>{
+        const j=(state.jornadaActual||1)-1;
+        const jornada=(j<38 && state.calendario) ? state.calendario[j] : null;
+        const partido=jornada ? jornada.find(p=>p.home.id==='lm_0'||p.away.id==='lm_0') : null;
+        if(!partido) return 'No hay ningún partido pendiente por delante (la temporada ya ha terminado o está a punto de hacerlo).';
+        const esLocal=partido.home.id==='lm_0';
+        const rival=esLocal?partido.away.name:partido.home.name;
+        return `Tu próximo rival es ${rival}, y juegas ${esLocal?'en casa':'fuera'}.`;
+      }},
+    {id:'ev_alerta_salarial', keywords:['quien quiere marcharse','jugadores descontentos','quien pide subida de sueldo','alerta salarial jugadores','jugador amenaza con irse','quien me quiere dejar'],
+      fn:(state)=>{
+        const fmt=(typeof formatoDinero==='function')?formatoDinero:(v=>Math.round(v||0)+'€');
+        const alertas=(state.plantilla||[]).filter(p=>p.ofertaSalarialPendiente);
+        if(!alertas.length) return 'Ningún jugador tiene ahora mismo una petición salarial pendiente.';
+        const detalle=alertas.map(p=>`${p.name} (pide ${fmt(p.ofertaSalarialPendiente.monto)})`).join(', ');
+        return `Tienes ${alertas.length} jugador${alertas.length===1?'':'es'} con una petición salarial pendiente: ${detalle}.`;
+      }},
+    {id:'ev_estado_cesped', keywords:['como esta el cesped','estado del cesped actual','calidad del campo ahora','en que estado esta el campo'],
+      fn:(state)=>`El estado del césped está al ${((state.estadio&&state.estadio.campo)||0)}%.`},
+    {id:'ev_moral_equipo', keywords:['como esta la moral','moral actual del equipo','nivel de moral del equipo ahora','cual es la moral del equipo'],
+      fn:(state)=>`La moral de tu equipo está en ${state.moral||0} (va de -50 a +50).`},
+    {id:'ev_aficion_satisfaccion', keywords:['como esta la aficion','satisfaccion de la aficion actual','nivel de aficion ahora','como esta de contenta la aficion'],
+      fn:(state)=>`La satisfacción de la afición está en ${((state.estadio&&state.estadio.satisfaccion)||0)} (va de -100 a +100).`},
+    {id:'ev_sobres_pendientes', keywords:['cuantos sobres tengo','sobres pendientes de abrir','sobres disponibles ahora','sobres de fichajes pendientes'],
+      fn:(state)=>{
+        const n=(state.sobresFichajesPendientes||[]).length;
+        return `Tienes ${n}/3 sobres de fichajes pendientes de abrir.`;
+      }},
+    {id:'ev_guardias', keywords:['cuantos guardias tengo','guardias contratados','guardias disponibles sin asignar','cuantos guardias libres tengo'],
+      fn:(state)=>{
+        const contratados=state.guardiasContratados||0;
+        const asignados=(typeof guardiasAsignadosTotal==='function')?guardiasAsignadosTotal():0;
+        const libres=(typeof guardiasDisponibles==='function')?guardiasDisponibles():Math.max(0,contratados-asignados);
+        return `Tienes ${contratados} guardia${contratados===1?'':'s'} contratado${contratados===1?'':'s'}, ${asignados} ya asignado${asignados===1?'':'s'} a alguna zona del estadio y ${libres} libre${libres===1?'':'s'} sin asignar.`;
+      }},
+    {id:'ev_plantilla_tamano', keywords:['cuantos jugadores tengo en la plantilla','tamaño de mi plantilla','cuantos jugadores tengo en total','cuantos jugadores tengo en el equipo'],
+      fn:(state)=>{
+        const n=(state.plantilla||[]).length;
+        return `Tu plantilla tiene ${n} jugador${n===1?'':'es'} en total.`;
+      }},
+    {id:'ev_logros_progreso', keywords:['cuantos logros tengo','logros conseguidos','progreso de logros','cuantos logros he desbloqueado','cuantos logros llevo'],
+      fn:()=>{
+        const cache=window._lmAchievementsCache;
+        const total=(typeof LM_ACHIEVEMENT_DEFS!=='undefined')?LM_ACHIEVEMENT_DEFS.length:0;
+        if(!cache) return 'Inicia sesión y abre la pestaña de logros de tu perfil al menos una vez para que pueda contarte cuántos llevas.';
+        const done=[...cache].filter(id=>LM_ACHIEVEMENT_DEFS.find(a=>a.id===id)).length;
+        return `Llevas ${done}/${total} logros conseguidos en Liga Manager.`;
+      }},
+    {id:'ev_habilidades_activas', keywords:['cuantas habilidades tengo activadas','habilidades activas actuales','cuantas habilidades he desbloqueado','cuantas habilidades tengo compradas'],
+      fn:()=>{
+        const cache=window._lmSkillsCache;
+        const total=(typeof LM_SKILL_DEFS!=='undefined')?LM_SKILL_DEFS.length:0;
+        if(!cache) return 'Inicia sesión y abre la pestaña de habilidades de tu perfil al menos una vez para que pueda contarte cuántas tienes activas.';
+        const activas=(typeof LM_SKILL_DEFS!=='undefined')?LM_SKILL_DEFS.filter(d=>lmSkillActiva(d.id)).length:0;
+        return `Tienes ${activas}/${total} habilidades activadas en Liga Manager.`;
+      }},
+    {id:'ev_mejoras_niveles', keywords:['que nivel tienen mis mejoras','nivel de mis mejoras actuales','resumen de mis mejoras','en que nivel tengo mis mejoras'],
+      fn:()=>{
+        if(typeof LM_UPGRADE_DEFS==='undefined') return null;
+        const detalle=LM_UPGRADE_DEFS.map(def=>`${def.name} ${lmNivelMejora(def.id)}/${def.maxLevel}`).join(', ');
+        return `Nivel actual de tus mejoras: ${detalle}.`;
+      }},
+    {id:'ev_prestamo_estado', keywords:['cuanto debo del prestamo','saldo del prestamo','me queda prestamo pendiente','cuotas del prestamo restantes','tengo algun prestamo activo'],
+      fn:(state)=>{
+        const p=state.prestamoBancario;
+        const fmt=(typeof formatoDinero==='function')?formatoDinero:(v=>Math.round(v||0)+'€');
+        if(!p) return 'No tienes ningún préstamo bancario activo ahora mismo.';
+        const cuotasRestantes=Math.max(0,(p.plazoJornadas||0)-(p.cuotasPagadas||0));
+        return `Te quedan ${fmt(p.saldoRestante)} por devolver del préstamo, en ${cuotasRestantes} cuota${cuotasRestantes===1?'':'s'} de ${fmt(p.cuotaPorJornada)} cada una.`;
+      }},
+    {id:'ev_precio_entrada', keywords:['cual es el precio de la entrada actual','a cuanto tengo las entradas','precio actual del ticket','a cuanto esta la entrada ahora'],
+      fn:(state)=>`El precio de la entrada está fijado ahora en ${state.precioEntrada===undefined?15:state.precioEntrada}€.`},
+  ];
+  // Igual que en lmBuscarRespuestaAyuda: coincidencia por frase
+  // completa (no por palabra suelta) y se queda con el tema que sume
+  // más puntuación — así "¿cuántos dados me quedan para este partido?"
+  // encuentra 'ev_dados_rerolls' aunque la frase no sea calcada.
+  function lmRespuestaEstadoVivo(pregunta){
+    // Solo en español — ver comentario de arriba del bloque. window.LANG
+    // no siempre está definido nada más cargar (por defecto es 'es' en
+    // el resto del juego), así que solo bloqueamos si EXPLÍCITAMENTE es
+    // otro idioma distinto.
+    if(window.LANG && window.LANG!=='es') return null;
+    const texto=lmNormalizarTextoAyuda(pregunta);
+    if(!texto) return null;
+    let mejor=null, mejorPuntuacion=0;
+    LM_AYUDA_ESTADO_VIVO.forEach(entry=>{
+      let puntuacion=0;
+      entry.keywords.forEach(k=>{
+        const kn=lmNormalizarTextoAyuda(k);
+        if(kn && texto.includes(kn)) puntuacion+=kn.split(' ').length;
+      });
+      if(puntuacion>mejorPuntuacion){ mejorPuntuacion=puntuacion; mejor=entry; }
+    });
+    if(!mejor) return null;
+    try{
+      const respuesta=mejor.fn(state, texto);
+      return respuesta || null;
+    }catch(e){
+      console.warn('lmRespuestaEstadoVivo handler error ('+mejor.id+'):', e);
+      return null;
+    }
   }
   function lmEscaparHtmlAyuda(s){
     const d=document.createElement('div');
@@ -12391,16 +12641,31 @@
       pintarChatAyudaLM();
       lmScrollAyudaAbajo();
       if(typeof window.playSound==='function') window.playSound('chat_enviado');
-      const encontrada=lmBuscarRespuestaAyuda(texto);
+      // 2.5) Antes de mirar el FAQ estático, se prueba el motor de
+      // ESTADO VIVO (ver lmRespuestaEstadoVivo, definida junto a
+      // lmBuscarRespuestaAyuda): si la pregunta pide un dato real de
+      // ESTA partida (dados restantes, media del equipo, lesionados,
+      // posición en la liga...) esa respuesta con números de verdad
+      // gana y el FAQ ni se consulta este turno. Envuelto en
+      // try/catch a propósito: un fallo ahí NUNCA debe romper el chat
+      // ni impedir que la pregunta caiga de vuelta al FAQ de siempre.
+      let respuestaEstadoVivo=null;
+      try{ respuestaEstadoVivo=lmRespuestaEstadoVivo(texto); }catch(e){ console.warn('lmRespuestaEstadoVivo:', e); }
+      const encontrada=respuestaEstadoVivo?null:lmBuscarRespuestaAyuda(texto);
       lmAyudaTimeoutRespuesta=setTimeout(()=>{
         lmAyudaTimeoutRespuesta=null;
         lmAyudaEscribiendo=false;
         // 3) Llega la respuesta real, con su propio sonido de "mensaje
         // recibido" y, si el tema tiene una pantalla asociada, su
         // enlace directo para saltar a ella (ver LM_AYUDA_DESTINOS).
+        // La respuesta de ESTADO VIVO (si la hay) se escapa igual que
+        // la pregunta del jugador, porque a diferencia de las claves
+        // del FAQ (texto de confianza fijado en i18n.js) puede llevar
+        // dentro nombres de jugadores u otros datos reales de la
+        // partida.
         lmAyudaChatHistorial.push({
           tipo:'respuesta',
-          texto:encontrada?t(encontrada.claveRespuesta):t('lm.ayuda_sin_respuesta'),
+          texto:respuestaEstadoVivo?lmEscaparHtmlAyuda(respuestaEstadoVivo):(encontrada?t(encontrada.claveRespuesta):t('lm.ayuda_sin_respuesta')),
           destino:encontrada?encontrada.destino:null,
           nuevo:true,
         });
@@ -14518,7 +14783,29 @@
           <div class="lm-dilemma-title">
             <span><i class="ph ph-bold ph-file-text"></i> ${t('lm.info_plantilla_btn')}</span>
           </div>
-          <div class="lm-setup-desc" style="text-align:center;margin-bottom:8px">${t('lm.nomina_total')} <strong>${formatoDinero(totalNomina)}/mes</strong> · plantilla: <strong>${jugadores.length}</strong>${numAlertas?` · <strong class="lm-capital-neg">${tp('lm.n_jugadores_en_alerta', {n:numAlertas})}</strong>`:''} · ${t('lm.info_plantilla_nota_venta')}</div>
+          <div class="lm-info-plantilla-stats">
+            <div class="lm-info-plantilla-stat lm-info-plantilla-stat-nomina">
+              <i class="ph ph-bold ph-coins"></i>
+              <div class="lm-info-plantilla-stat-texto">
+                <span class="lm-info-plantilla-stat-valor">${formatoDinero(totalNomina)}</span>
+                <span class="lm-info-plantilla-stat-label">${t('lm.nomina_total')}/mes</span>
+              </div>
+            </div>
+            <div class="lm-info-plantilla-stat">
+              <i class="ph ph-bold ph-users-three"></i>
+              <div class="lm-info-plantilla-stat-texto">
+                <span class="lm-info-plantilla-stat-valor">${jugadores.length}</span>
+                <span class="lm-info-plantilla-stat-label">${t('lm.tabla_jugador')}</span>
+              </div>
+            </div>
+            ${numAlertas?`<div class="lm-info-plantilla-stat lm-info-plantilla-stat-alerta">
+              <i class="ph ph-bold ph-warning-circle"></i>
+              <div class="lm-info-plantilla-stat-texto">
+                <span class="lm-info-plantilla-stat-valor">${tp('lm.n_jugadores_en_alerta', {n:numAlertas})}</span>
+              </div>
+            </div>`:''}
+          </div>
+          <div class="lm-setup-desc" style="text-align:center;margin-bottom:8px">${t('lm.info_plantilla_nota_venta')}</div>
           <div class="lm-info-plantilla-tabla-wrap">
             ${jugadores.length ? `<table class="lm-info-plantilla-tabla">
               <thead><tr>
